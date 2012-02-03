@@ -448,32 +448,32 @@ cdef class BallTree(object):
     --------
     Query for k-nearest neighbors
 
-        # >>> import numpy as np
-        # >>> np.random.seed(0)
-        # >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
-        # >>> ball_tree = BallTree(X, leaf_size=2)
-        # >>> dist, ind = ball_tree.query(X[0], n_neighbors=3)
-        # >>> print ind  # indices of 3 closest neighbors
-        # [0 3 1]
-        # >>> print dist  # distances to 3 closest neighbors
-        # [ 0.          0.19662693  0.29473397]
+        >>> import numpy as np
+        >>> np.random.seed(0)
+        >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+        >>> ball_tree = BallTree(X, leaf_size=2)              # doctest: +SKIP
+        >>> dist, ind = ball_tree.query(X[0], n_neighbors=3)  # doctest: +SKIP
+        >>> print ind  # indices of 3 closest neighbors
+        [0 3 1]
+        >>> print dist  # distances to 3 closest neighbors
+        [ 0.          0.19662693  0.29473397]
 
     Pickle and Unpickle a ball tree (using protocol = 2).  Note that the
     state of the tree is saved in the pickle operation: the tree is not
     rebuilt on un-pickling
 
-        # >>> import numpy as np
-        # >>> import pickle
-        # >>> np.random.seed(0)
-        # >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
-        # >>> ball_tree = BallTree(X, leaf_size=2)
-        # >>> s = pickle.dumps(ball_tree, protocol=2)
-        # >>> ball_tree_copy = pickle.loads(s)
-        # >>> dist, ind = ball_tree_copy.query(X[0], k=3)
-        # >>> print ind  # indices of 3 closest neighbors
-        # [0 3 1]
-        # >>> print dist  # distances to 3 closest neighbors
-        # [ 0.          0.19662693  0.29473397]
+        >>> import numpy as np
+        >>> import pickle
+        >>> np.random.seed(0)
+        >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+        >>> ball_tree = BallTree(X, leaf_size=2)          # doctest: +SKIP
+        >>> s = pickle.dumps(ball_tree, protocol=2)       # doctest: +SKIP
+        >>> ball_tree_copy = pickle.loads(s)              # doctest: +SKIP
+        >>> dist, ind = ball_tree_copy.query(X[0], k=3)   # doctest: +SKIP
+        >>> print ind  # indices of 3 closest neighbors   
+        [0 3 1]
+        >>> print dist  # distances to 3 closest neighbors
+        [ 0.          0.19662693  0.29473397]
     """
     cdef readonly np.ndarray data
     cdef np.ndarray idx_array
@@ -597,15 +597,15 @@ cdef class BallTree(object):
         --------
         Query for k-nearest neighbors
 
-            # >>> import numpy as np
-            # >>> np.random.seed(0)
-            # >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
-            # >>> ball_tree = BallTree(X, leaf_size=2)
-            # >>> dist, ind = ball_tree.query(X[0], k=3)
-            # >>> print ind  # indices of 3 closest neighbors
-            # [0 3 1]
-            # >>> print dist  # distances to 3 closest neighbors
-            # [ 0.          0.19662693  0.29473397]
+            >>> import numpy as np
+            >>> np.random.seed(0)
+            >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+            >>> ball_tree = BallTree(X, leaf_size=2)    # doctest: +SKIP
+            >>> dist, ind = ball_tree.query(X[0], k=3)  # doctest: +SKIP
+            >>> print ind  # indices of 3 closest neighbors
+            [0 3 1]
+            >>> print dist  # distances to 3 closest neighbors
+            [ 0.          0.19662693  0.29473397]
         """
         self.warning_flag = False
 
@@ -633,6 +633,12 @@ cdef class BallTree(object):
                                              dtype=DTYPE)
         cdef np.ndarray idx_array = np.empty((X.shape[0], n_neighbors),
                                              dtype=ITYPE)
+
+        # initialize arrays.  This is only needed for correct behavior of
+        # the warning flag.
+        distances.fill(-9999)
+        idx_array.fill(-9999)
+
         cdef np.ndarray Xi
 
         distances[:] = np.inf
@@ -719,15 +725,15 @@ cdef class BallTree(object):
         --------
         Query for neighbors in a given radius
 
-        # >>> import numpy as np
-        # >>> np.random.seed(0)
-        # >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
-        # >>> ball_tree = BallTree(X, leaf_size=2)
-        # >>> print ball_tree.query_radius(X[0], r=0.3, count_only=True)
-        # 3
-        # >>> ind = ball_tree.query_radius(X[0], r=0.3)
-        # >>> print ind  # indices of neighbors within distance 0.3
-        # [3 0 1]
+        >>> import numpy as np
+        >>> np.random.seed(0)
+        >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+        >>> ball_tree = BallTree(X, leaf_size=2)        # doctest: +SKIP
+        >>> print ball_tree.query_radius(X[0], r=0.3, count_only=True)
+        3
+        >>> ind = ball_tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
+        >>> print ind  # indices of neighbors within distance 0.3
+        [3 0 1]
         """
         if count_only and return_distance:
             raise ValueError("count_only and return_distance "

@@ -257,6 +257,32 @@ Helper Functions
   a 1-d numpy.ndarray.  Currently used in
   ``sklearn.datasets._svmlight_format.pyx``.
 
+- :func:`safe_mask`: Helper function to convert a mask to the format expected
+  by the numpy array or scipy sparse matrix on which to use it (sparse
+  matrices support integer indices only while numpy arrays support both
+  boolean masks and integer indices).
+
+
+Hash Functions
+==============
+
+- :func:`murmurhash3_32` provides a python wrapper for the
+  `MurmurHash3_x86_32` C++ non cryptographic hash function. This hash
+  function is suitable for implementing lookup tables, Bloom filters,
+  Count Min Sketch, feature hashing and implicitly defined sparse
+  random projections::
+
+    >>> from sklearn.utils import murmurhash3_32
+    >>> murmurhash3_32("some feature", seed=0)
+    -384616559
+
+    >>> murmurhash3_32("some feature", seed=0, positive=True)
+    3910350737L
+
+  The ``sklearn.utils.murmurhash`` module can also be "cimported" from
+  other cython modules so as to benefit from the high performance of
+  MurmurHash while skipping the overhead of the Python interpreter.
+
 
 Warnings and Exceptions
 =======================

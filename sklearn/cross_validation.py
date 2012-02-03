@@ -174,6 +174,14 @@ class LeavePOut(object):
                 / factorial(self.p))
 
 
+def _validate_kfold(k, n_samples):
+    if k <= 0:
+        raise ValueError("Cannot have number of folds k below 1.")
+    if k > n_samples:
+        raise ValueError("Cannot have number of folds k=%d greater than"
+                         " the number of samples: %d." % (k, n_samples))
+
+
 class KFold(object):
     """K-Folds cross validation iterator
 
@@ -226,25 +234,26 @@ class KFold(object):
     """
 
     def __init__(self, n, k, indices=True):
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
-        self.n = n
-        self.k = k
+        _validate_kfold(k, n)
+        if abs(n - int(n)) >= np.finfo('f').eps:
+            raise ValueError("n must be an integer")
+        self.n = int(n)
+        if abs(k - int(k)) >= np.finfo('f').eps:
+            raise ValueError("k must be an integer")
+        self.k = int(k)
         self.indices = indices
 
     def __iter__(self):
         n = self.n
         k = self.k
-        j = ceil(n / k)
+        fold_size = n // k
 
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
             if i < k - 1:
-                test_index[i * j:(i + 1) * j] = True
+                test_index[i * fold_size:(i + 1) * fold_size] = True
             else:
-                test_index[i * j:] = True
+                test_index[i * fold_size:] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)
@@ -312,15 +321,14 @@ class StratifiedKFold(object):
     def __init__(self, y, k, indices=True):
         y = np.asarray(y)
         n = y.shape[0]
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
+        _validate_kfold(k, n)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError(
-            'Cannot have number of folds k=%d, smaller than %d, the minimum '
-            'number of labels for any class.' % (k, min_labels))
+        if k > min_labels:
+            raise ValueError("Cannot have number of folds k=%d"
+                             " smaller than %d, the minimum"
+                             " number of labels for any class."
+                             % (k, min_labels))
         self.y = y
         self.k = k
         self.indices = indices
@@ -806,9 +814,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
         supervised learning.
 
     score_func: callable, optional
-        callable taking as arguments the fitted estimator, the
-        test data (X_test) and the test target (y_test) if y is
-        not None.
+        callable, has priority over the score function in the estimator.
+        In a non-supervised setting, where y is None, it takes the test
+        data (X_test) as its only argument. In a supervised setting it takes
+        the test target (y_true) and the test prediction (y_pred) as arguments.
 
     cv: cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -825,7 +834,8 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
-        assert hasattr(estimator, 'score'), ValueError(
+        if not hasattr(estimator, 'score'):
+            raise TypeError(
                 "If no score_func is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)

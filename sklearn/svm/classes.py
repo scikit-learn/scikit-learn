@@ -1,15 +1,18 @@
 from ..base import ClassifierMixin, RegressorMixin
-from ..linear_model.base import CoefSelectTransformerMixin
-from .base import BaseLibLinear, DenseBaseLibSVM
+from ..feature_selection.selector_mixin import SelectorMixin
+from .base import BaseLibLinear, BaseLibSVM
 
 
-class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
+class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     """Linear Support Vector Classification.
 
-    Similar to SVC with parameter kernel='linear', but uses internally
-    liblinear rather than libsvm, so it has more flexibility in the
-    choice of penalties and loss functions and should be faster for
-    huge datasets.
+    Similar to SVC with parameter kernel='linear', but implemented in terms of
+    liblinear rather than libsvm, so it has more flexibility in the choice of
+    penalties and loss functions and should scale better.
+
+    This class supports both dense and sparse input. Use C-ordered arrays or
+    CSR matrices containing 64-bit floats for optimal performance; any other
+    input format will be converted (and copied).
 
     Parameters
     ----------
@@ -63,6 +66,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `raw_coef_` that \
+        follows the internal memory layout of liblinear.
+
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
@@ -73,20 +79,20 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, CoefSelectTransformerMixin):
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
+    **References:**
+    `LIBLINEAR: A Library for Large Linear Classification
+    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+
     See also
     --------
     SVC
-
-    LIBLINEAR -- A Library for Large Linear Classification
-    http://www.csie.ntu.edu.tw/~cjlin/liblinear/
-
     """
 
     # all the implementation is provided by the mixins
     pass
 
 
-class SVC(DenseBaseLibSVM, ClassifierMixin):
+class SVC(BaseLibSVM, ClassifierMixin):
     """C-Support Vector Classification.
 
     Parameters
@@ -140,11 +146,18 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function.
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat \
+        non-trivial. See the section about multi-class classification in the \
+        SVM section of the User Guide for details.
 
     `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
 
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -158,7 +171,7 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=False, shrinking=True, tol=0.001)
+      probability=False, scale_C=None, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -169,14 +182,14 @@ class SVC(DenseBaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=False):
+                 tol=1e-3, cache_size=200, scale_C=None):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                                   C, 0., 0., shrinking, probability,
-                                  cache_size, scale_C)
+                                  cache_size, scale_C, sparse="auto")
 
 
-class NuSVC(DenseBaseLibSVM, ClassifierMixin):
+class NuSVC(BaseLibSVM, ClassifierMixin):
     """Nu-Support Vector Classification.
 
     Parameters
@@ -227,12 +240,19 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of the support vector in the decision function.
+    `dual_coef_` : array, shape = [n_class-1, n_SV]
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat \
+        non-trivial. See the section about multi-class classification in \
+        the SVM section of the User Guide for details.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
 
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -261,10 +281,10 @@ class NuSVC(DenseBaseLibSVM, ClassifierMixin):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                                     tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C=None)
+                                    cache_size, scale_C=False, sparse="auto")
 
 
-class SVR(DenseBaseLibSVM, RegressorMixin):
+class SVR(BaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -329,6 +349,9 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
@@ -343,8 +366,7 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, scale_C=False, shrinking=True,
-      tol=0.001)
+      kernel='rbf', probability=False, scale_C=None, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -352,11 +374,11 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200, scale_C=False):
+                 probability=False, cache_size=200, scale_C=None):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C)
+                                  cache_size, scale_C, sparse="auto")
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -364,14 +386,13 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
             Target values. Array of floating-point numbers.
         cache_size: float, optional
             Specify the size of the cache (in MB)
-
 
         Returns
         -------
@@ -383,7 +404,7 @@ class SVR(DenseBaseLibSVM, RegressorMixin):
                                     **params)
 
 
-class NuSVR(DenseBaseLibSVM, RegressorMixin):
+class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -449,6 +470,9 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
@@ -463,7 +487,7 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, scale_C=False, shrinking=True, tol=0.001)
+       nu=0.1, probability=False, scale_C=None, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -473,11 +497,11 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
-                 scale_C=False):
+                 scale_C=None):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
-                                    tol, C, nu, None, shrinking, probability,
-                                    cache_size, scale_C=scale_C)
+                                    tol, C, nu, 0., shrinking, probability,
+                                    cache_size, scale_C, sparse="auto")
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -485,7 +509,7 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
@@ -500,7 +524,7 @@ class NuSVR(DenseBaseLibSVM, RegressorMixin):
         return super(NuSVR, self).fit(X, y, sample_weight=[], **params)
 
 
-class OneClassSVM(DenseBaseLibSVM):
+class OneClassSVM(BaseLibSVM):
     """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
@@ -542,7 +566,6 @@ class OneClassSVM(DenseBaseLibSVM):
         Scale C with number of samples. It makes the setting of C independant
         of the number of samples.
 
-
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -558,16 +581,20 @@ class OneClassSVM(DenseBaseLibSVM):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
 
     """
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200):
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
+                 nu=0.5, shrinking=True, cache_size=200):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
                                           coef0, tol, 0., nu, 0., shrinking,
-                                          False, cache_size, scale_C=None)
+                                          False, cache_size, scale_C=None,
+                                          sparse="auto")
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
         """
@@ -575,7 +602,7 @@ class OneClassSVM(DenseBaseLibSVM):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -585,10 +612,12 @@ class OneClassSVM(DenseBaseLibSVM):
             Returns self.
 
         Notes
-        ------
-        If X is not a C-ordered contiguous array, it is copied.
+        -----
+        If X is not a C-ordered contiguous array or a scipy.sparse.csr_matrix,
+        it is copied.
 
         """
         super(OneClassSVM, self).fit(
             X, [], class_weight=class_weight, sample_weight=sample_weight,
             **params)
+        return self

@@ -18,6 +18,7 @@ cimport sgd_fast
 from sgd_fast cimport LossFunction, log, sqrt, pow
 
 # Penalty constants
+DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
@@ -45,7 +46,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
               double weight_pos, double weight_neg,
               np.ndarray[double, ndim=1] sample_weight,
               int learning_rate, double eta0,
-              double power_t):
+              double power_t,
+              double t=1.0):
     """Cython impl. of SGD with different loss functions and penalties
 
     This representation assumes X represented using the Compressed Sparse Row
@@ -96,6 +98,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
+    t : double
+        Initial state of the learning rate. This value is equal to the
+        iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
 
     Returns
     -------
@@ -127,7 +133,6 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double wnorm = 0.0
-    cdef double t = 0.0
     cdef double y = 0.0
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
@@ -138,7 +143,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr = NULL
-    if penalty_type != L2:
+    if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
@@ -147,20 +152,8 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
         rho = 1.0
     elif penalty_type == L1:
         rho = 0.0
-    
-    cdef double typw = sqrt(1.0 / sqrt(alpha))
 
-    if learning_rate == OPTIMAL:
-        # computing eta0, the initial learning rate
-        eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
-    else:
-        eta = eta0
-
-    if learning_rate == OPTIMAL:
-        # initialize t such that eta at first example equals eta0
-        t = 1.0 / (eta0 * alpha)
-    else:
-        t = 1.0
+    eta = eta0
 
     t_start = time()
     for epoch in xrange(n_iter):
@@ -191,7 +184,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                     offset, xnnz, -update)
                 if fit_intercept == 1:
                     intercept -= update * 0.01
-            if penalty_type != L1:
+            if penalty_type >= L2:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
                     w *= wscale
@@ -218,7 +211,9 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    w *= wscale
+    if wscale != 1.0:
+        w *= wscale
+
     return w, intercept
 
 

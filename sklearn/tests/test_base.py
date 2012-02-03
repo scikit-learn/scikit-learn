@@ -2,8 +2,14 @@
 # Author: Gael Varoquaux
 # License: BSD
 
-from nose.tools import assert_true, assert_false, assert_equal, \
-    assert_raises
+import numpy as np
+import scipy.sparse as sp
+from numpy.testing import assert_array_equal
+
+from nose.tools import assert_true
+from nose.tools import assert_false
+from nose.tools import assert_equal
+from nose.tools import assert_raises
 from ..base import BaseEstimator, clone, is_classifier
 
 
@@ -11,8 +17,9 @@ from ..base import BaseEstimator, clone, is_classifier
 # A few test classes
 class MyEstimator(BaseEstimator):
 
-    def __init__(self, l1=0):
+    def __init__(self, l1=0, empty=None):
         self.l1 = l1
+        self.empty = empty
 
 
 class K(BaseEstimator):
@@ -50,16 +57,19 @@ def test_clone():
     selector = SelectFpr(f_classif, alpha=0.1)
     new_selector = clone(selector)
     assert_true(selector is not new_selector)
-    assert_equal(selector._get_params(), new_selector._get_params())
+    assert_equal(selector.get_params(), new_selector.get_params())
+
+    selector = SelectFpr(f_classif, alpha=np.zeros((10, 2)))
+    new_selector = clone(selector)
+    assert_true(selector is not new_selector)
 
 
 def test_clone_2():
     """Tests that clone doesn't copy everything.
 
     We first create an estimator, give it an own attribute, and
-    make a copy of its original state. Then we check that the copy doesn't have
-    the specific attribute we manually added to the initial estimator.
-
+    make a copy of its original state. Then we check that the copy doesn't
+    have the specific attribute we manually added to the initial estimator.
     """
     from sklearn.feature_selection import SelectFpr, f_classif
 
@@ -70,26 +80,36 @@ def test_clone_2():
 
 
 def test_clone_buggy():
-    """ Check that clone raises an error on buggy estimators """
+    """Check that clone raises an error on buggy estimators."""
     buggy = Buggy()
     buggy.a = 2
-    assert_raises(AssertionError, clone, buggy)
+    assert_raises(RuntimeError, clone, buggy)
+
+
+def test_clone_empty_array():
+    """Regression test for cloning estimators with empty arrays"""
+    clf = MyEstimator(empty=np.array([]))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty, clf2.empty)
+
+    clf = MyEstimator(empty=sp.csr_matrix(np.array([[0]])))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty.data, clf2.empty.data)
 
 
 def test_repr():
-    """ Smoke test the repr of the
-    """
+    """Smoke test the repr of the base estimator."""
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
-    assert_equal(repr(test),
-                "T(a=K(c=None, d=None), b=K(c=None, d=None))"
-                )
+    assert_equal(
+        repr(test),
+        "T(a=K(c=None, d=None), b=K(c=None, d=None))"
+    )
 
 
 def test_str():
-    """ Smoke test the str of the
-    """
+    """Smoke test the str of the base estimator"""
     my_estimator = MyEstimator()
     str(my_estimator)
 
@@ -97,12 +117,12 @@ def test_str():
 def test_get_params():
     test = T(K(), K())
 
-    assert_true('a__d' in test._get_params(deep=True))
-    assert_true('a__d' not in test._get_params(deep=False))
+    assert_true('a__d' in test.get_params(deep=True))
+    assert_true('a__d' not in test.get_params(deep=False))
 
     test.set_params(a__d=2)
     assert test.a.d == 2
-    assert_raises(AssertionError, test.set_params, a__a=2)
+    assert_raises(ValueError, test.set_params, a__a=2)
 
 
 def test_is_classifier():

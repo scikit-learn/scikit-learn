@@ -5,11 +5,11 @@ Feature importances with forests of trees
 
 This examples shows the use of forests of trees to evaluate the importance of
 features on an artifical classification task. The red plots are the feature
-importances of each individual tree, and the blue plot is the feature importance
-of the whole forest.
+importances of each individual tree, and the blue plot is the feature
+importance of the whole forest.
 
-As expected, the knee in the blue plot suggests that 3 features are informative,
-while the remaining are not.
+As expected, the knee in the blue plot suggests that 3 features are
+informative, while the remaining are not.
 """
 print __doc__
 

@@ -135,7 +135,7 @@
     {% else %}
     <h3>News</h3>
 
-    <p>scikit-learn 0.9 is available
+    <p>scikit-learn 0.10 is available
     for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
     See <a href="{{pathto('whats_new')}}">what's new</a> and tips
     on <a href="{{pathto('install')}}">installing</a>.</p>
@@ -173,10 +173,9 @@
     {% endif %}
     <h3>Citing</h3>
     <p>If you use the software, please consider
-    <a href="about.html#citing-scikit-learn">citing scikit-learn</a>.</p>
+    <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
 
-    <!-- it's 11 when it's empty (?) -->
-    {%- if (toc|length == 11) and (pagename != 'index') %}
+    {%- if (pagename != 'index') %}
     <h3>{{ _('This page') }}</h3>
 	{{ toc }}
     {% endif %}

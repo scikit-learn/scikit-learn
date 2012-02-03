@@ -90,15 +90,20 @@ uses.
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.KFold
-   cross_validation.StratifiedKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeavePLabelOut
    cross_validation.Bootstrap
+   cross_validation.KFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePLabelOut
+   cross_validation.LeavePOut
+   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   cross_validation.cross_val_score
 
 .. _datasets_ref:
 
@@ -120,20 +125,22 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.load_20newsgroups
+   datasets.fetch_20newsgroups
+   datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
-   datasets.load_files
    datasets.load_diabetes
    datasets.load_digits
+   datasets.load_files
    datasets.load_iris
-   datasets.load_linnerud
    datasets.load_lfw_pairs
    datasets.fetch_lfw_pairs
    datasets.load_lfw_people
    datasets.fetch_lfw_people
-   datasets.load_20newsgroups
-   datasets.fetch_20newsgroups
-   datasets.fetch_20newsgroups_vectorized
+   datasets.load_linnerud
    datasets.fetch_olivetti_faces
+   datasets.load_sample_image
+   datasets.load_sample_images
 
 Samples generator
 -----------------
@@ -144,20 +151,20 @@ Samples generator
    :toctree: generated/
    :template: function.rst
 
-   datasets.make_classification
-   datasets.make_multilabel_classification
-   datasets.make_regression
    datasets.make_blobs
+   datasets.make_classification
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
    datasets.make_low_rank_matrix
+   datasets.make_multilabel_classification
+   datasets.make_regression
+   datasets.make_s_curve
    datasets.make_sparse_coded_signal
+   datasets.make_sparse_spd_matrix
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
-   datasets.make_sparse_spd_matrix
    datasets.make_swiss_roll
-   datasets.make_s_curve
 
 
 .. _decomposition_ref:
@@ -415,6 +422,23 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+========================================================
+
+.. automodule:: sklearn.semi_supervised
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   semi_supervised.LabelPropagation
+   semi_supervised.LabelSpreading
 
 .. _lda_ref:
 
@@ -456,6 +480,7 @@ For dense data
 
    linear_model.LinearRegression
    linear_model.Ridge
+   linear_model.RidgeClassifier
    linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
@@ -468,10 +493,13 @@ For dense data
    linear_model.LassoLarsIC
    linear_model.LogisticRegression
    linear_model.OrthogonalMatchingPursuit
+   linear_model.Perceptron
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge
    linear_model.ARDRegression
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogisticRegression
 
 .. autosummary::
    :toctree: generated/
@@ -481,6 +509,7 @@ For dense data
    linear_model.lars_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.lasso_stability_path
 
 For sparse data
 ---------------
@@ -501,7 +530,7 @@ For sparse data
    linear_model.sparse.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
-   linear_model.sparse.LogisticRegression
+   linear_model.LogisticRegression
 
 
 .. _manifold_ref:
@@ -717,10 +746,8 @@ Pairwise metrics
    neighbors.NearestNeighbors
    neighbors.KNeighborsClassifier
    neighbors.RadiusNeighborsClassifier
-   neighbors.NeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
-   neighbors.NeighborsRegressor
    neighbors.BallTree
 
 .. autosummary::
@@ -836,26 +863,6 @@ For dense data
    :template: function.rst
 
    svm.l1_min_c
-
-For sparse data
----------------
-
-.. automodule:: sklearn.svm.sparse
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   svm.sparse.SVC
-   svm.sparse.NuSVC
-   svm.sparse.SVR
-   svm.sparse.NuSVR
-   svm.sparse.OneClassSVM
-   svm.sparse.LinearSVC
 
 Low-level methods
 -----------------

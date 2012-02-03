@@ -4,6 +4,8 @@
 Novelty and Outlier Detection
 ===================================================
 
+.. currentmodule:: sklearn
+
 Many applications require being able to decide whether a new observation
 belongs to the same distribution as exiting observations (it is an
 `inlier`), or should be considered as different (it is an outlier).
@@ -52,19 +54,20 @@ observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
 The One-Class SVM has been introduced in [1] for that purpose and
-implemented in the `sklearn.svm` package in the :class:`OneClassSVM`
-object. It requires the choice of a kernel and a scalar parameter to
-define a frontier.  The RBF kernel is usually chosen although there
-exist no exact formula or algorithm to set its bandwith
-parameter. This is the default in the scikit-learn implementation. The
-:math:`\nu` parameter, also known as the margin of the One-Class SVM,
-corresponds to the probability of finding a new, but regular,
-observation outside the frontier.
+implemented in the :ref:`svm` module in the
+:class:`svm.OneClassSVM` object. It requires the choice of a
+kernel and a scalar parameter to define a frontier.  The RBF kernel is
+usually chosen although there exist no exact formula or algorithm to
+set its bandwith parameter. This is the default in the scikit-learn
+implementation. The :math:`\nu` parameter, also known as the margin of
+the One-Class SVM, corresponds to the probability of finding a new,
+but regular, observation outside the frontier.
 
 .. topic:: Examples:
 
-   * See :ref:`example_svm_plot_oneclass.py` for vizualizing the frontier
-     learned around some data by a :class:`OneClassSVM` object.
+   * See :ref:`example_svm_plot_oneclass.py` for vizualizing the
+     frontier learned around some data by a
+     :class:`svm.OneClassSVM` object.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
    :target: ../auto_examples/svm/plot_oneclasse.html
@@ -84,7 +87,6 @@ of regular observations that can be used to train any tool.
 Fitting an elliptic envelop
 -----------------------------
 
-.. currentmodule:: sklearn.covariance
 
 One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
@@ -92,9 +94,10 @@ distributed). From this assumption, we generaly try to define the
 "shape" of the data, and can define outlying observations as
 observations which stand far enough from the fit shape. 
 
-The scikit-learn provides an object :class:`EllipticEnvelop` that fits a
-robust covariance estimate to the data, and thus fits an ellipse to the
-central data points, ignoring points outside the central mode.
+The scikit-learn provides an object
+:class:`covariance.EllipticEnvelop` that fits a robust covariance
+estimate to the data, and thus fits an ellipse to the central data
+points, ignoring points outside the central mode.
 
 For instance, assuming that the inlier data are Gaussian distributed, it
 will estimate the inlier location and covariance in a robust way (i.e.
@@ -111,9 +114,9 @@ This strategy is illustrated below.
 
    * See :ref:`example_covariance_plot_mahalanobis_distances.py` for
      an illustration of the difference between using a standard
-     (:class:`EmpiricalCovariance`) or a robust estimate (:class:`MinCovDet`)
-     of location and covariance to assess the degree of outlyingness of an
-     observation.
+     (:class:`covariance.EmpiricalCovariance`) or a robust estimate
+     (:class:`covariance.MinCovDet`) of location and covariance to
+     assess the degree of outlyingness of an observation.
 
 One-class SVM versus elliptic envelop
 --------------------------------------
@@ -126,8 +129,9 @@ inlying data is very challenging, and a One-class SVM gives useful
 results in these situations.
 
 The examples below illustrate how the performance of the
-:class:`EllipticEnvelop` degrades as the data is less and less unimodal.
-:class:`OneClassSVM` works better on data with multiple modes.
+:class:`coavariance.EllipticEnvelop` degrades as the data is less and
+less unimodal.  :class:`svm.OneClassSVM` works better on data with
+multiple modes.
 
 .. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_1.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
@@ -146,32 +150,35 @@ The examples below illustrate how the performance of the
 
    *
       - For a inlier mode well-centered and elliptic, the
-        :class:`OneClassSVM` is not able to benefit from the rotational
-        symmetry of the inlier population. In addition, it fits a bit the 
-        outlyers present in the training set. On the opposite, the
-        decision rule based on fitting an :class:`EllipticEnvelop`
-        learns an ellipse, which fits well the inlier distribution.
+        :class:`svm.OneClassSVM` is not able to benefit from the
+        rotational symmetry of the inlier population. In addition, it
+        fits a bit the outlyers present in the training set. On the
+        opposite, the decision rule based on fitting an
+        :class:`covariance.EllipticEnvelop` learns an ellipse, which
+        fits well the inlier distribution.
       - |outlier1| 
 
    * 
-      - As the inlier distribution becomes bimodal, the 
-        :class:`EllipticEnvelop` does not fit well the inliers. However,
-        we can see that the :class:`OneClassSVM` tends to overfit:
-        because it has not model of inliers, it interprets a region
-        where, by chance some outliers are clustered, as inliers.
+      - As the inlier distribution becomes bimodal, the
+        :class:`covariance.EllipticEnvelop` does not fit well the
+        inliers. However, we can see that the :class:`svm.OneClassSVM`
+        tends to overfit: because it has not model of inliers, it
+        interprets a region where, by chance some outliers are
+        clustered, as inliers.
       - |outlier2| 
 
    * 
       - If the inlier distribution is strongly non Gaussian, the
-        :class:`OneClassSVM` is able to recover a reasonable
-        approximation, whereas the :class:`EllipticEnvelop` completely
-        fails.
+        :class:`svm.OneClassSVM` is able to recover a reasonable
+        approximation, whereas the :class:`covariance.EllipticEnvelop`
+        completely fails.
       - |outlier3|
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_outlier_detection.py` for a comparison
-     of the :class:`OneClassSVM` (tuned to perform like an outlier detection
-     method) and a covariance-based outlier detection with :class:`MinCovDet`.
+   * See :ref:`example_covariance_plot_outlier_detection.py` for a
+     comparison of the :class:`svm.OneClassSVM` (tuned to perform like
+     an outlier detection method) and a covariance-based outlier
+     detection with :class:`covariance.MinCovDet`.
 
 

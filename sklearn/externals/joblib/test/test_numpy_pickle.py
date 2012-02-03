@@ -7,6 +7,7 @@ from tempfile import mkdtemp
 import copy
 import shutil
 import os
+import random
 
 import nose
 
@@ -110,56 +111,78 @@ def teardown_module():
 # Tests
 
 def test_standard_types():
-    #""" Test pickling and saving with standard types.
-    #"""
+    # Test pickling and saving with standard types.
     filename = env['filename']
-    for compress in [True, False]:
+    for compress in [0, 1]:
         for member in typelist:
-            numpy_pickle.dump(member, filename, compress=compress)
-            _member = numpy_pickle.load(filename)
+            # Change the file name to avoid side effects between tests
+            this_filename = filename + str(random.randint(0, 1000))
+            numpy_pickle.dump(member, this_filename, compress=compress)
+            _member = numpy_pickle.load(this_filename)
             # We compare the pickled instance to the reloaded one only if it
             # can be compared to a copied one
             if member == copy.deepcopy(member):
                 yield nose.tools.assert_equal, member, _member
 
 
+def test_value_error():
+    # Test inverting the input arguments to dump
+    nose.tools.assert_raises(ValueError, numpy_pickle.dump, 'foo',
+                             dict())
+
 @with_numpy
 def test_numpy_persistence():
     filename = env['filename']
-    a = np.random.random(10)
-    for compress in [True, False]:
-        for obj in (a,), (a, a), [a, a, a]:
-            filenames = numpy_pickle.dump(obj, filename, compress=compress)
+    a = np.random.random((10, 2))
+    for compress, cache_size in ((0, 0), (1, 0), (1, 10)):
+        # We use 'a.T' to have a non C-contiguous array.
+        for index, obj in enumerate(((a,), (a.T,), (a, a), [a, a, a])):
+            # Change the file name to avoid side effects between tests
+            this_filename = filename + str(random.randint(0, 1000))
+            filenames = numpy_pickle.dump(obj, this_filename,
+                                          compress=compress,
+                                          cache_size=cache_size)
+            # Check that one file was created per array
             if not compress:
-                # Check that one file was created per array
-                yield nose.tools.assert_equal, len(filenames), len(obj) + 1
-                # Check that these files do exist
-                for file in filenames:
-                    yield nose.tools.assert_true, \
-                        os.path.exists(os.path.join(env['dir'], file))
-            else:
-                yield nose.tools.assert_equal, len(filenames), 1
+                nose.tools.assert_equal(len(filenames), len(obj) + 1)
+            # Check that these files do exist
+            for file in filenames:
+                nose.tools.assert_true(
+                    os.path.exists(os.path.join(env['dir'], file)))
 
             # Unpickle the object
-            obj_ = numpy_pickle.load(filename)
+            obj_ = numpy_pickle.load(this_filename)
             # Check that the items are indeed arrays
             for item in obj_:
-                yield nose.tools.assert_true, isinstance(item, np.ndarray)
+                nose.tools.assert_true(isinstance(item, np.ndarray))
             # And finally, check that all the values are equal.
-            yield nose.tools.assert_true, np.all(np.array(obj) ==
-                                                np.array(obj_))
+            nose.tools.assert_true(np.all(np.array(obj) ==
+                                                np.array(obj_)))
 
         # Now test with array subclasses
-        obj = np.matrix(np.zeros(10))
-        filenames = numpy_pickle.dump(obj, filename, compress=compress)
-        obj_ = numpy_pickle.load(filename)
-        yield nose.tools.assert_true, isinstance(obj_, np.matrix)
+        for obj in (
+                    np.matrix(np.zeros(10)),
+                    np.core.multiarray._reconstruct(np.memmap, (), np.float)
+                   ):
+            this_filename = filename + str(random.randint(0, 1000))
+            filenames = numpy_pickle.dump(obj, this_filename,
+                                          compress=compress,
+                                          cache_size=cache_size)
+            obj_ = numpy_pickle.load(this_filename)
+            if type(obj) is not np.memmap:
+                # We don't reconstruct memmaps
+                nose.tools.assert_true(isinstance(obj_, type(obj)))
+
+    # Finally smoke test the warning in case of compress + mmap_mode
+    this_filename = filename + str(random.randint(0, 1000))
+    numpy_pickle.dump(a, this_filename, compress=1)
+    numpy_pickle.load(this_filename, mmap_mode='r')
 
 
 @with_numpy
 def test_memmap_persistence():
     a = np.random.random(10)
-    filename = env['filename']
+    filename = env['filename'] + str(random.randint(0, 1000))
     numpy_pickle.dump(a, filename)
     b = numpy_pickle.load(filename, mmap_mode='r')
     if np.__version__ >= '1.3':
@@ -172,9 +195,16 @@ def test_masked_array_persistence():
     # not implemented, but it just delegates to the standard pickler.
     a = np.random.random(10)
     a = np.ma.masked_greater(a, 0.5)
-    filename = env['filename']
+    filename = env['filename'] + str(random.randint(0, 1000))
     numpy_pickle.dump(a, filename)
     b = numpy_pickle.load(filename, mmap_mode='r')
     nose.tools.assert_true(isinstance(b, np.ma.masked_array))
 
 
+def test_z_file():
+    # Test saving and loading data with Zfiles
+    filename = env['filename'] + str(random.randint(0, 1000))
+    data = 'Foo, \n Bar, baz, \n\nfoobar'
+    numpy_pickle.write_zfile(file(filename, 'wb'), data)
+    data_read = numpy_pickle.read_zfile(file(filename, 'rb'))
+    nose.tools.assert_equal(data, data_read)

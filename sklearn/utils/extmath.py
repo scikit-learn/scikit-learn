@@ -4,7 +4,6 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-import warnings
 import numpy as np
 from scipy import linalg
 

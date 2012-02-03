@@ -7,11 +7,15 @@ from nose.tools import assert_true
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
-from ..pairwise import (euclidean_distances, linear_kernel, polynomial_kernel,
-                        rbf_kernel, sigmoid_kernel)
+from ..pairwise import euclidean_distances
+from ..pairwise import linear_kernel
+from ..pairwise import polynomial_kernel
+from ..pairwise import rbf_kernel
+from ..pairwise import sigmoid_kernel
 from .. import pairwise_distances, pairwise_kernels
 from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
+from ..pairwise import _parallel_pairwise
 
 np.random.seed(0)
 
@@ -74,6 +78,21 @@ def test_pairwise_distances():
                   metric="minkowski")
 
 
+def test_pairwise_parallel():
+    rng = np.random.RandomState(0)
+    for func in (np.array, csr_matrix):
+        X = func(rng.random_sample((5, 4)))
+        Y = func(rng.random_sample((3, 4)))
+
+        S = euclidean_distances(X)
+        S2 = _parallel_pairwise(X, None, euclidean_distances, n_jobs=-1)
+        assert_array_almost_equal(S, S2)
+
+        S = euclidean_distances(X, Y)
+        S2 = _parallel_pairwise(X, Y, euclidean_distances, n_jobs=-1)
+        assert_array_almost_equal(S, S2)
+
+
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
     rng = np.random.RandomState(0)
@@ -108,6 +127,18 @@ def test_pairwise_kernels():
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=Y, **kwds)
     assert_array_almost_equal(K1, K2)
+
+
+def test_pairwise_kernels_filter_param():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((2, 4))
+    K = rbf_kernel(X, Y, gamma=0.1)
+    params = {"gamma": 0.1, "blabla": ":)"}
+    K2 = pairwise_kernels(X, Y, metric="rbf", filter_params=True, **params)
+    assert_array_almost_equal(K, K2)
+
+    assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
 
 
 def callable_rbf_kernel(x, y, **kwds):

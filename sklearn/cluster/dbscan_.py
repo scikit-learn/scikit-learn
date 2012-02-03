@@ -60,14 +60,12 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
     """
+    X = np.asarray(X)
     n = X.shape[0]
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
     index_order = np.arange(n)
     random_state.shuffle(index_order)
-    assert len(index_order) == n, ("Index order must be of length n"
-                                   " (%d expected, %d given)"
-                                   % (n, len(index_order)))
     D = pairwise_distances(X, metric=metric)
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
@@ -185,6 +183,6 @@ class DBSCAN(BaseEstimator):
 
         self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
-                                                         **self._get_params())
+                                                         **self.get_params())
         self.components_ = X[self.core_sample_indices_].copy()
         return self

@@ -38,14 +38,15 @@ solution.
     issue is error-prone and often leads to unreproducible results
 
  *  **Persist to disk transparently**: persisting in an efficient way
-    arbitrary objects containing large data is hard. In addition,
-    hand-written persistence does not link easily the file on disk to the
-    execution context of the original Python object. As a result, it is
-    challenging to resume a application status or computational job, eg
+    arbitrary objects containing large data is hard. Using
+    joblib's caching mechanism avoids hand-written persistence and
+    implicitely links the file on disk to the execution context of
+    the original Python object. As a result, joblib's persistence is
+    good for resuming an application status or computational job, eg
     after a crash.
 
-It strives to address these problems while **leaving your code and your
-flow control as unmodified as possible** (no framework, no new
+Joblib strives to address these problems while **leaving your code and
+your flow control as unmodified as possible** (no framework, no new
 paradigms).
 
 Main features
@@ -76,7 +77,7 @@ Main features
       >>> # The above call did not trigger an evaluation
 
 2) **Embarrassingly parallel helper:** to make is easy to write readable
-   parallel code and debug it quickly:
+   parallel code and debug it quickly::
 
       >>> from sklearn.externals.joblib import Parallel, delayed
       >>> from math import sqrt
@@ -91,12 +92,16 @@ Main features
    display streams, and provide a way of compiling a report.
    We want to be able to quickly inspect what has been run.
 
+4) **Fast compressed Persistence**: a replacement for pickle to work
+   efficiently on Python objects containing large data (
+   *joblib.dump* & *joblib.load* ).
+
 ..
     >>> import shutil ; shutil.rmtree('/tmp/joblib/')
 
 """
 
-__version__ = '0.5.7'
+__version__ = '0.6.0b2'
 
 
 from .memory import Memory

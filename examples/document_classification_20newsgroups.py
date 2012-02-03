@@ -33,8 +33,9 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
-from sklearn.svm.sparse import LinearSVC
-from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils.extmath import density
@@ -180,6 +181,7 @@ def benchmark(clf):
     return score, train_time, test_time
 
 for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+                  (Perceptron(n_iter=50), "Perceptron"),
                   (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name

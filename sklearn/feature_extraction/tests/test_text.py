@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import Vectorizer
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.svm.sparse import LinearSVC as LinearSVC
+from sklearn.svm import LinearSVC
 
 import numpy as np
 from nose.tools import assert_equal, assert_equals, \
@@ -319,8 +319,8 @@ def test_dense_vectorizer_pipeline_grid_selection():
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
     # to 100% accuracy models
-    assert_equal(grid_search.best_score, 1.0)
-    best_vectorizer = grid_search.best_estimator.named_steps['vect']
+    assert_equal(grid_search.best_score_, 1.0)
+    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.analyzer.max_n, 1)
 
 

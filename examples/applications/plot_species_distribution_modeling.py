@@ -206,6 +206,5 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
     print "\ntime elapsed: %.2fs" % (time() - t0)
 
 
-if __name__ == '__main__':
-    plot_species_distribution()
-    pl.show()
+plot_species_distribution()
+pl.show()

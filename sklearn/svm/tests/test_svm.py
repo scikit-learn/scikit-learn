@@ -179,7 +179,7 @@ def test_oneclass():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
-    assert_raises(NotImplementedError, lambda: clf.coef_)
+    assert_raises(ValueError, lambda: clf.coef_)
 
 
 def test_tweak_params():
@@ -233,32 +233,22 @@ def test_decision_function():
     Sanity check, test that decision_function implemented in python
     returns the same as the one in libsvm
 
-    TODO: proabably could be simplified
     """
+    # multi class:
     clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
 
-    data = iris.data[0]
+    dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
-    sv_start = np.r_[0, np.cumsum(clf.n_support_)]
-    n_class = 3
-
-    kvalue = np.dot(data, clf.support_vectors_.T)
-
-    dec = np.empty(n_class * (n_class - 1) / 2)
-    p = 0
-    for i in range(n_class):
-        for j in range(i + 1, n_class):
-            coef1 = clf.dual_coef_[j - 1]
-            coef2 = clf.dual_coef_[i]
-            idx1 = slice(sv_start[i], sv_start[i + 1])
-            idx2 = slice(sv_start[j], sv_start[j + 1])
-            s = np.dot(coef1[idx1],  kvalue[idx1]) + \
-                np.dot(coef2[idx2], kvalue[idx2]) + \
-                clf.intercept_[p]
-            dec[p] = s
-            p += 1
-
-    assert_array_almost_equal(-dec, np.ravel(clf.decision_function(data)))
+    assert_array_almost_equal(dec, clf.decision_function(iris.data))
+    # binary:
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+    clf.fit(X, y)
+    dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    assert_array_almost_equal(dec, clf.decision_function(X))
 
 
 def test_weight():
@@ -332,8 +322,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
-                svm.sparse.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -485,6 +474,30 @@ def test_liblinear_predict():
     assert_array_equal(clf.predict(X), (H > 0).astype(int))
 
 
+def test_liblinear_set_coef():
+    # multi-class case
+    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    values = clf.decision_function(iris.data)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(iris.data)
+    assert_array_equal(values, values2)
+
+    # binary-class case
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+
+    clf = svm.LinearSVC().fit(X, y)
+    values = clf.decision_function(X)
+    clf.coef_ = clf.coef_.copy()
+    clf.intercept_ = clf.intercept_.copy()
+    values2 = clf.decision_function(X)
+    assert_array_equal(values, values2)
+
+
 def test_c_samples_scaling():
     """Test C scaling by n_samples
     """
@@ -530,6 +543,36 @@ def test_nu_svc_samples_scaling():
         error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_with_scale < 1e-5)
 
+
+def test_immutable_coef_property():
+    """Check that primal coef modification are not silently ignored"""
+    svms = [
+        svm.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
+        svm.OneClassSVM(kernel='linear').fit(iris.data),
+        svm.sparse.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
+        svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
+    ]
+    for clf in svms:
+        assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
+        assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
+
+
+def test_inheritance():
+    # check that SVC classes can do inheritance
+    class ChildSVC(svm.SVC):
+        def __init__(self, foo=0):
+            self.foo = foo
+            svm.SVC.__init__(self)
+
+    clf = ChildSVC()
+    clf.fit(iris.data, iris.target)
+    clf.predict(iris.data[-1])
+    clf.decision_function(iris.data[-1])
 
 if __name__ == '__main__':
     import nose

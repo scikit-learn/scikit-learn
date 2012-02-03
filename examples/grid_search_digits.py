@@ -14,7 +14,6 @@ to select the best classifier).
 print __doc__
 
 from pprint import pprint
-import numpy as np
 
 from sklearn import datasets
 from sklearn.cross_validation import StratifiedKFold
@@ -54,7 +53,7 @@ for score_name, score_func in scores:
     y_true, y_pred = y[test], clf.predict(X[test])
 
     print "Classification report for the best estimator: "
-    print clf.best_estimator
+    print clf.best_estimator_
     print "Tuned for '%s' with optimal value: %0.3f" % (
         score_name, score_func(y_true, y_pred))
     print classification_report(y_true, y_pred)

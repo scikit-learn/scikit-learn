@@ -26,7 +26,7 @@ data = fetch_olivetti_faces()
 X = data.images.reshape((len(data.images), -1))
 y = data.target
 
-mask = y < 5 # Limit to 5 classes
+mask = y < 5  # Limit to 5 classes
 X = X[mask]
 y = y[mask]
 

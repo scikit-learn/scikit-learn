@@ -61,7 +61,7 @@ HLIST_IMAGE_TEMPLATE = """
     *
 
       .. image:: images/%s
-            :scale: 50
+            :scale: 47
 """
 
 SINGLE_IMAGE = """
@@ -360,4 +360,7 @@ def setup(app):
     #  on Sphinx 1.0.7
     build_image_dir = '_build/html/_images'
     if os.path.exists(build_image_dir):
-        shutil.rmtree(build_image_dir)
+        filelist = os.listdir(build_image_dir)
+        for filename in filelist:
+            if filename.endswith('png'):
+                os.remove(os.path.join(build_image_dir, filename))

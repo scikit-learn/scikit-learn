@@ -2,10 +2,12 @@ from nose.tools import assert_equal, assert_raises, assert_true
 import warnings
 
 import numpy as np
+import scipy.sparse as sp
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
+from sklearn.utils import safe_mask
 
 
 def test_make_rng():
@@ -72,3 +74,16 @@ def test_resample_value_errors():
     assert_raises(ValueError, resample, [0], [0, 1])
     assert_raises(ValueError, resample, [0, 1], [0, 1], n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+
+
+def test_safe_mask():
+    random_state = check_random_state(0)
+    X = random_state.rand(5, 4)
+    X_csr = sp.csr_matrix(X)
+    mask = [False, False, True, True, True]
+
+    mask = safe_mask(X, mask)
+    assert_equal(X[mask].shape[0], 3)
+
+    mask = safe_mask(X_csr, mask)
+    assert_equal(X_csr[mask].shape[0], 3)

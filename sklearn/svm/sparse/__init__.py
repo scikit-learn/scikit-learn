@@ -19,4 +19,4 @@ scipy.sparse.
 # License: New BSD, (C) INRIA 2010
 
 from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC
-from . import libsvm
+from .. import libsvm_sparse as libsvm

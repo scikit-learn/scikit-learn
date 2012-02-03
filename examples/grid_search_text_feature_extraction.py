@@ -54,7 +54,7 @@ import logging
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 
@@ -117,6 +117,6 @@ print
 
 print "Best score: %0.3f" % grid_search.best_score
 print "Best parameters set:"
-best_parameters = grid_search.best_estimator._get_params()
+best_parameters = grid_search.best_estimator.get_params()
 for param_name in sorted(parameters.keys()):
     print "\t%s: %r" % (param_name, best_parameters[param_name])

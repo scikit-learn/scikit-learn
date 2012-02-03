@@ -16,19 +16,17 @@ To be a 'true' metric, it must obey the following four conditions::
     3. d(a, b) == d(b, a), symmetry
     4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
 
-Kernels are measures of similarity, i.e. ``s(a, b) > s(a, c)`` if objects a and b
-are considered "more similar" to objects a and c. A kernel must also be
-positive semi-definite.
+Kernels are measures of similarity, i.e. ``s(a, b) > s(a, c)``
+if objects ``a`` and ``b`` are considered "more similar" to objects
+``a`` and ``c``. A kernel must also be positive semi-definite.
 
-dified Locally Linear EmbeddingUsing Multiple Weights
 There are a number of ways to convert between a distance metric and a
 similarity measure, such as a kernel. Let D be the distance, and S be the
 kernel::
 
-    1. S = np.exp(-D * gamma), where one heuristic for choosing
-       gamma is 1 / num_features
-    2. S = 1. / (D / np.max(D))
-
+    1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
+       ``gamma`` is ``1 / num_features``
+    2. ``S = 1. / (D / np.max(D))``
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -38,9 +36,17 @@ kernel::
 
 import numpy as np
 from scipy.spatial import distance
-from scipy.sparse import csr_matrix, issparse
-from ..utils import safe_asarray, atleast2d_or_csr, deprecated
+from scipy.sparse import csr_matrix
+from scipy.sparse import issparse
+
+from ..utils import safe_asarray
+from ..utils import atleast2d_or_csr
+from ..utils import deprecated
+from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
+from ..externals.joblib import Parallel
+from ..externals.joblib import delayed
+from ..externals.joblib.parallel import cpu_count
 
 
 # Utility Functions
@@ -111,7 +117,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     Y : {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
     Y_norm_squared : array-like, shape = [n_samples_2], optional
-        Pre-computed dot-products of vectors in Y (e.g., ``(Y**2).sum(axis=1)``)
+        Pre-computed dot-products of vectors in Y (e.g.,
+        ``(Y**2).sum(axis=1)``)
 
     squared : boolean, optional
         Return squared Euclidean distances.
@@ -175,7 +182,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-@deprecated("use euclidean_distances instead")
+@deprecated("to be deprecated in v0.11; use euclidean_distances instead")
 def euclidian_distances(*args, **kwargs):
     return euclidean_distances(*args, **kwargs)
 
@@ -379,7 +386,23 @@ def distance_metrics():
     return pairwise_distance_functions
 
 
-def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
+def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
+    """Break the pairwise matrix in n_jobs even slices
+    and compute them in parallel"""
+    if n_jobs < 0:
+        n_jobs = max(cpu_count() + 1 + n_jobs, 1)
+
+    if Y is None:
+        Y = X
+
+    ret = Parallel(n_jobs=n_jobs, verbose=0)(
+            delayed(func)(X, Y[s], **kwds)
+            for s in gen_even_slices(Y.shape[0], n_jobs))
+
+    return np.hstack(ret)
+
+
+def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -434,6 +457,16 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
+    n_jobs : int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -453,19 +486,24 @@ def pairwise_distances(X, Y=None, metric="euclidean", **kwds):
             raise ValueError("X is not square!")
         return X
     elif metric in pairwise_distance_functions:
-        return pairwise_distance_functions[metric](X, Y, **kwds)
+        func = pairwise_distance_functions[metric]
+        if n_jobs == 1:
+            return func(X, Y, **kwds)
+        else:
+            return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
     elif callable(metric):
         # Check matrices first (this is usually done by the metric).
         X, Y = check_pairwise_arrays(X, Y)
         n_x, n_y = X.shape[0], Y.shape[0]
         # Calculate distance for each element in X and Y.
+        # FIXME: can use n_jobs here too
         D = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
             start = 0
             if X is Y:
                 start = i
             for j in range(start, n_y):
-                # Kernel assumed to be symmetric.
+                # distance assumed to be symmetric.
                 D[i][j] = metric(X[i], Y[j], **kwds)
                 if X is Y:
                     D[j][i] = D[i][j]
@@ -518,7 +556,17 @@ def kernel_metrics():
     return pairwise_kernel_functions
 
 
-def pairwise_kernels(X, Y=None, metric="linear", **kwds):
+kernel_params = {
+    "rbf": set(("gamma",)),
+    "sigmoid": set(("gamma", "coef0")),
+    "polynomial": set(("gamma", "degree", "coef0")),
+    "poly": set(("gamma", "degree", "coef0")),
+    "linear": ()
+}
+
+
+def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
+                     n_jobs=1, **kwds):
     """ Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
@@ -555,6 +603,19 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
+    n_jobs : int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
+    filter_params: boolean
+        Whether to filter invalid parameters or not.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the kernel function.
 
@@ -568,11 +629,16 @@ def pairwise_kernels(X, Y=None, metric="linear", **kwds):
 
     """
     if metric == "precomputed":
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X is not square!")
         return X
     elif metric in pairwise_kernel_functions:
-        return pairwise_kernel_functions[metric](X, Y, **kwds)
+        if filter_params:
+            kwds = dict((k, kwds[k]) for k in kwds \
+                                        if k in kernel_params[metric])
+        func = pairwise_kernel_functions[metric]
+        if n_jobs == 1:
+            return func(X, Y, **kwds)
+        else:
+            return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
     elif callable(metric):
         # Check matrices first (this is usually done by the metric).
         X, Y = check_pairwise_arrays(X, Y)

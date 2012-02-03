@@ -5,6 +5,8 @@
 #          L. Buitinck
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 from scipy import stats
 from scipy.sparse import issparse
@@ -211,10 +213,7 @@ def f_regression(X, y, center=True):
 # General class for filter univariate selection
 
 class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
-    """Abstract class, not meant to be used directly
-
-    TODO: convert me to an ABC.
-    """
+    __metaclass__ = ABCMeta
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -225,7 +224,8 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
             function taking two arrays X and y, and returning 2 arrays:
             both scores and pvalues
         """
-        assert callable(score_func), ValueError(
+        if not callable(score_func):
+            raise TypeError(
                 "The score function should be a callable, '%s' (type %s) "
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
@@ -245,6 +245,12 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         mask = self._get_support_mask()
         return mask if not indices else np.where(mask)[0]
+
+    @abstractmethod
+    def _get_support_mask(self):
+        """
+        Must return a boolean mask indicating which features are selected.
+        """
 
     def transform(self, X):
         """
@@ -288,8 +294,9 @@ class SelectPercentile(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         percentile = self.percentile
-        assert percentile <= 100, ValueError('percentile should be \
-                            between 0 and 100 (%f given)' % (percentile))
+        if percentile > 100:
+            raise ValueError("percentile should be between 0 and 100"
+                             " (%f given)" % (percentile))
         # Cater for Nans
         if percentile == 100:
             return np.ones(len(self._pvalues), dtype=np.bool)
@@ -319,8 +326,9 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         k = self.k
-        assert k <= len(self._pvalues), ValueError('cannot select %d features'
-                                    ' among %d ' % (k, len(self._pvalues)))
+        if k > len(self._pvalues):
+            raise ValueError("cannot select %d features among %d"
+                             % (k, len(self._pvalues)))
         alpha = np.sort(self._pvalues)[k - 1]
         return (self._pvalues <= alpha)
 
@@ -429,10 +437,12 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
                         }
 
     def __init__(self, score_func, mode='percentile', param=1e-5):
-        assert callable(score_func), ValueError(
+        if not callable(score_func):
+            raise TypeError(
                 "The score function should be a callable, '%s' (type %s) "
                 "was passed." % (score_func, type(score_func)))
-        assert mode in self._selection_modes, ValueError(
+        if mode not in self._selection_modes:
+            raise ValueError(
                 "The mode passed should be one of %s, '%s', (type %s) "
                 "was passed." % (
                         self._selection_modes.keys(),

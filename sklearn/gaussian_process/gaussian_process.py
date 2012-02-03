@@ -163,8 +163,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.gaussian_process import GaussianProcess
-    >>> from sklearn.utils import array2d
-    >>> X = array2d([1., 3., 5., 6., 7., 8.]).T
+    >>> X = np.array([[1., 3., 5., 6., 7., 8.]]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
     >>> gp.fit(X, y) # doctest: +ELLIPSIS
@@ -179,13 +178,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     **References**:
 
-    .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
-        DACE - A MATLAB Kriging Toolbox.`
+    .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J.
+        Sondergaard.  DACE - A MATLAB Kriging Toolbox.` (2002)
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
 
     .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
-        and M.D.  Morris (1992). Screening, predicting, and computer experiments.
-        Technometrics, 34(1) 15--25.`
+        and M.D.  Morris (1992). Screening, predicting, and computer
+        experiments.  Technometrics, 34(1) 15--25.`
         http://www.jstor.org/pss/1269548
     """
 

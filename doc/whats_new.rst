@@ -1,5 +1,52 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_11:
+
+0.11
+====
+
+Changelog
+---------
+
+   - Merged dense and sparse implementations and added `partial_fit` (support
+     for online/minibatch learning) and warm_start to the :ref:`sgd` module by
+     `Mathieu Blondel`_.
+
+   - Dense and sparse implementations of :ref:`svm` classes and
+     :class:`linear_model.LogisticRegression` merged by `Lars Buitinck`_.
+
+   - Regressors can now be used as base estimator in the :ref:`multiclass`
+     module by `Mathieu Blondel`_.
+
+   - Added Matthews correlation coefficient (:func:`metrics.matthews_corrcoef`)
+     and added macro and micro average options to
+     :func:`metrics.precision_score`, :func:`metrics.recall_score` and
+     :func:`metrics.f1_score` by `Satrajit Ghosh`_.
+
+   - Added n_jobs option to :func:`metrics.pairwise.pairwise_distances`
+     and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
+     by `Mathieu Blondel`_.
+
+    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+      by `Andreas Müller`_.
+
+    - :ref:`randomized_1`: Randomized sparse linear models for feature
+      selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
+
+    - :ref:`label_propagation` for semi-supervised learning, by Clay
+      Woolam. **Note** the semi-supervised API is still work in progress,
+      and may change.
+
+API changes summary
+-------------------
+
+   - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
+     :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
+     :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
+     and/or :class:`RadiusNeighborsRegressor` instead.
+
+   - Sparse classes in the :ref:`sgd` module are now deprecated.
+
 .. _changes_0_10:
 
 0.10
@@ -22,17 +69,18 @@ Changelog
 
    - Fixed a memory leak in in :ref:`svm` module by `Brian Holt`_ (issue #367).
 
-   - Faster tests by `Fabian Pedregosa`_.
+   - Faster tests by `Fabian Pedregosa`_ and others.
 
    - Silhouette Coefficient cluster analysis evaluation metric added as
      :func:`sklearn.metrics.silhouette_score` by Robert Layton.
 
    - Fixed a bug in :ref:`k_means` in the handling of the ``n_init`` parameter:
      the clustering algorithm used to be run ``n_init`` times but the last
-     solution was retained instead of the best solution.
+     solution was retained instead of the best solution by `Olivier Grisel`_.
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
-     predict methods.
+     predict methods; Enhanced test time performance by converting model
+     paramters to fortran-style arrays after fitting (only multi-class).
 
    - Adjusted Mutual Information metric added as
      :func:`sklearn.metrics.adjusted_mutual_info_score` by Robert Layton.
@@ -48,7 +96,7 @@ Changelog
    - :ref:`outlier_detection`: outlier and novelty detection, by
      `Virgile Fritsch`_.
 
-   - :ref:`kernel_approximation`: a transform implement kernel
+   - :ref:`kernel_approximation`: a transform implementing kernel
      approximation for fast SGD on non-linear kernels by
      `Andreas Müller`_.
 
@@ -84,6 +132,8 @@ Changelog
 
    - :class:`sklearn.cross_validation.ShuffleSplit` can subsample the train
      sets as well as the test sets by `Olivier Grisel`_.
+
+   - Errors in the build of the documentation fixed by `Andreas Müller`_.
 
 
 API changes summary
@@ -141,6 +191,45 @@ version 0.9:
     oversampling is now fixed to 10 additional random vectors instead
     of doubling the number of components to extract. The new behavior
     follows the reference paper.
+
+
+People
+------
+
+The following people contributed to scikit-learn since last release:
+
+   * 246  `Andreas Müller`_
+   * 242  `Olivier Grisel`_
+   * 220  `Gilles Louppe`_
+   * 183  `Brian Holt`_
+   * 166  `Gael Varoquaux`_
+   * 144  `Lars Buitinck`_
+   *  73  `Vlad Niculae`_
+   *  65  `Peter Prettenhofer`_
+   *  64  `Fabian Pedregosa`_
+   *  60  Robert Layton
+   *  55  `Mathieu Blondel`_
+   *  52  `Jake Vanderplas`_
+   *  44  Noel Dawe
+   *  38  `Alexandre Gramfort`_
+   *  24  `Virgile Fritsch`_
+   *  23  `Satrajit Ghosh`_
+   *   3  Jan Hendrik Metzen
+   *   3  Kenneth C. Arnold
+   *   3  Shiqiao Du
+   *   3  Tim Sheerman-Chase
+   *   3  `Yaroslav Halchenko`_
+   *   2  Bala Subrahmanyam Varanasi
+   *   2  DraXus
+   *   2  Michael Eickenberg
+   *   1  Bogdan Trach
+   *   1  Félix-Antoine Fortin
+   *   1  Juan Manuel Caicedo Carvajal
+   *   1  Nelle Varoquaux
+   *   1  `Nicolas Pinto`_
+   *   1  Tiziano Zito
+   *   1  Xinfan Meng
+
 
 
 .. _changes_0_9:

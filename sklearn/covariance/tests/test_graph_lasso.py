@@ -52,6 +52,7 @@ def test_graph_lasso_cv(random_state=1):
     orig_stdout = sys.stdout
     try:
         sys.stdout = StringIO()
-        GraphLassoCV(verbose=10, alphas=3).fit(X)
+        # We need verbose very high so that Parallel prints on stdout
+        GraphLassoCV(verbose=100, alphas=3).fit(X)
     finally:
         sys.stdout = orig_stdout

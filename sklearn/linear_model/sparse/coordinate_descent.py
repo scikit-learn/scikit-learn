@@ -28,8 +28,6 @@ class ElasticNet(LinearModel):
         Constant that multiplies the L1 term. Defaults to 1.0
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
-    `coef_` : ndarray of shape n_features
-        The initial coeffients to warm-start the optimization
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
@@ -105,8 +103,8 @@ class ElasticNet(LinearModel):
         # return self for chaining fit and predict calls
         return self
 
-    def predict(self, X):
-        """Predict using the linear model
+    def decision_function(self, X):
+        """Decision function of the linear model
 
         Parameters
         ----------
