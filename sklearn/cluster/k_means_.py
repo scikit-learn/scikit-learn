@@ -14,7 +14,6 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-import operator
 
 from ..base import BaseEstimator
 from ..metrics.pairwise import euclidean_distances
@@ -26,7 +25,6 @@ from ..utils import as_float_array
 from ..utils import safe_asarray
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
-from ..externals.joblib.parallel import cpu_count
 
 from . import _k_means
 
