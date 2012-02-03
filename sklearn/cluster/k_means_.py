@@ -8,6 +8,7 @@
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Robert Layton <robertlayton@gmail.com>
 # License: BSD
 
 import warnings

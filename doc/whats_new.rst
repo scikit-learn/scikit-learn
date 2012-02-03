@@ -40,6 +40,9 @@ Changelog
    - Added BIC/AIC model selection to classical :ref:`gmm` and unified 
      the API with the remainder of scikits learn, by `Bertrand Thirion`_
 
+    - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
+      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
+
 
 API changes summary
 -------------------
