@@ -10,6 +10,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('check_build')
     config.add_subpackage('svm')
+    config.add_subpackage('svm/sparse')
     config.add_subpackage('datasets')
     config.add_subpackage('datasets/tests')
     config.add_subpackage('feature_extraction')
