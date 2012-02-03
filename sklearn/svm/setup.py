@@ -76,6 +76,8 @@ def configuration(parent_package='', top_path=None):
                                   join("src", "libsvm",
                                        "libsvm_sparse_helper.c")])
 
+    config.add_subpackage('sparse')
+
     return config
 
 
