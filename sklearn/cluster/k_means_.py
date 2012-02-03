@@ -149,7 +149,7 @@ def _tolerance(X, tol):
 
 def k_means(X, k, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=-1):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
     """K-means clustering algorithm.
 
     Parameters
@@ -270,13 +270,14 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
                 best_inertia = inertia
     else:
         # parallelisation of k-means runs
+        common_seed = random_state.randint(np.iinfo(np.int32).max)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
             delayed(_kmeans_single)(X, k, max_iter=max_iter, init=init,
                                     verbose=verbose, tol=tol,
                                     precompute_distances=precompute_distances,
                                     x_squared_norms=x_squared_norms,
                                     # Change seed to ensure variety
-                                    random_state=update_state(random_state))
+                                    random_state=common_seed ^ i)
             for i in range(n_init))
         # Get results with the lowest inertia
         labels, inertia, centers = zip(*results)
@@ -290,11 +291,6 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
         best_centers += X_mean
 
     return best_centers, best_labels, best_inertia
-
-
-def update_state(random_state):
-    random_state.randint(np.iinfo(np.int).max)
-    return random_state
 
 
 def _kmeans_single(X, k, max_iter=300, init='k-means++', verbose=False,
@@ -615,6 +611,16 @@ class KMeans(BaseEstimator):
     tol: float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
+    n_jobs: int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -660,7 +666,7 @@ class KMeans(BaseEstimator):
 
     def __init__(self, k=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, precompute_distances=True,
-                 verbose=0, random_state=None, copy_x=True):
+                 verbose=0, random_state=None, copy_x=True, n_jobs=1):
 
         if hasattr(init, '__array__'):
             k = init.shape[0]
@@ -675,6 +681,7 @@ class KMeans(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
         self.copy_x = copy_x
+        self.n_jobs = n_jobs
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
@@ -708,7 +715,8 @@ class KMeans(BaseEstimator):
             X, k=self.k, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
-            tol=self.tol, random_state=self.random_state, copy_x=self.copy_x)
+            tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
+            n_jobs=self.n_jobs)
         return self
 
     def transform(self, X, y=None):
