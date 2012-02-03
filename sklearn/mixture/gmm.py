@@ -454,7 +454,7 @@ class GMM(BaseEstimator):
                 if not cv.shape:
                     cv.shape = (1, 1)
                 self.covars_ = \
-                    _distribute_covar_matrix_to_match_covariance_type(
+                    distribute_covar_matrix_to_match_covariance_type(
                     cv, self._covariance_type, self.n_components)
 
             # EM algorithms
@@ -653,7 +653,7 @@ def _validate_covars(covars, covariance_type, n_components):
                                  "symmetric, positive-definite" % n)
 
 
-def _distribute_covar_matrix_to_match_covariance_type(
+def distribute_covar_matrix_to_match_covariance_type(
     tied_cv, covariance_type, n_components):
     """Create all the covariance matrices from a given template
     """
