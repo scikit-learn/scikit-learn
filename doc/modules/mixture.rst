@@ -81,24 +81,24 @@ Disadvantages of expectation-maximization:
 
 :Number of components: this algorithm will always use all the
    components it has access to, needing held-out data
-   or information theoretical criteria to decide how many components to use 
+   or information theoretical criteria to decide how many components to use
    in the absence of external cues.
 
- .. figure:: ../auto_examples/mixture/images/plot_gmm_selection_1.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_selection_1.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
 
-   **Selecting the number of components in a calssical GMM:** *the BIC
-     criterion is an efficient procedure for that purpose, but holds
-     only in the asymptotic regime (if much data is available).*
+**Selecting the number of components in a calssical GMM:** *the BIC
+criterion is an efficient procedure for that purpose, but holds
+only in the asymptotic regime (if much data is available).*
 
 
 Variational inference
 ---------------------
 
 Variational inference is an extension of expectation-maximization that
-instead of maximizing a lower bound on model evidence (including
+maximizes a lower bound on model evidence (including
 priors) instead of data likelihood.  The principle behind
 variational methods is the same as expectation-maximization (that is
 both are iterative algorithms that alternate between finding the
@@ -162,10 +162,12 @@ Gaussian mixture model.
 An important question is how can the Dirichlet process use an
 infinite, unbounded number of clusters and still be consistent. While
 a full explanation doesn't fit this manual, one can think of its
-chinese restaurant process analogy to help understanding it. The
-chinese restaurant process is a generative story for the Dirichlet
-process. Imagine a chinese restaurant with an infinite number of
-tables, at first all empty. When the first customer of the day
+`chinese restaurant process
+<http://en.wikipedia.org/wiki/Chinese_restaurant_process>`_ analogy
+to help understanding it. The chinese restaurant process is a
+generative story for the Dirichlet process (see for a detailed
+introduction).  Imagine a chinese restaurant with an infinite number
+of tables, at first all empty. When the first customer of the day
 arrives, he sits at the first table. Every following customer will
 then either sit on an occupied table with probability proportional to
 the number of customers in that table or sit in an entirely new table

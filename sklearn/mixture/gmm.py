@@ -16,7 +16,7 @@ from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp
 from .. import cluster
 
-INF_EPS = np.finfo(float).eps
+EPS = np.finfo(float).eps
 
 
 def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
@@ -493,11 +493,10 @@ class GMM(BaseEstimator):
         """
         weights = responsibilities.sum(axis=0)
         weighted_X_sum = np.dot(responsibilities.T, X)
-        inverse_weights = 1.0 / (weights[:, np.newaxis] + 10 * INF_EPS)
+        inverse_weights = 1.0 / (weights[:, np.newaxis] + 10 * EPS)
 
         if 'w' in params:
-            self.weights_ = (weights / (weights.sum() + 10 * INF_EPS) +
-                                 INF_EPS)
+            self.weights_ = (weights / (weights.sum() + 10 * EPS) + EPS)
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:
@@ -699,7 +698,7 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
         post = responsibilities[:, c]
         # Underflow Errors in doing post * X.T are  not important
         np.seterr(under='ignore')
-        avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * INF_EPS)
+        avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * EPS)
         mu = gmm.means_[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu) + min_covar * np.eye(n_features))
     return cv
