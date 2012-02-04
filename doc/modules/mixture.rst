@@ -89,7 +89,7 @@ Disadvantages of expectation-maximization:
    :align: center
    :scale: 50%
 
-**Selecting the number of components in a calssical GMM:** *the BIC
+**Selecting the number of components in a classical GMM:** *the BIC
 criterion is an efficient procedure for that purpose, but holds
 only in the asymptotic regime (if much data is available).*
 
@@ -111,7 +111,7 @@ to the model. Inference is often notably slower, but not usually as
 much so as to render usage unpractical.
 
 Due to its Bayesian nature, the variational algorithm needs more
-hyperparameters than expectation-maximization, the most
+hyper-parameters than expectation-maximization, the most
 important of these being the concentration parameter `alpha`. Specifying
 a high value of alpha leads more often to uniformly-sized mixture
 components, while specifying small (between 0 and 1) values will lead
@@ -139,7 +139,7 @@ But brings with it the following disadvantage:
    parameter, bias the cluster structure either towards uniformity
    or towards a rich-get-richer scenario.
 
-:Hyperparameters: this algorithm needs an extra hyperparameter
+:Hyper-parameters: this algorithm needs an extra hyper-parameter
    that might need experimental tuning via cross-validation.
 
 
@@ -162,11 +162,11 @@ Gaussian mixture model.
 An important question is how can the Dirichlet process use an
 infinite, unbounded number of clusters and still be consistent. While
 a full explanation doesn't fit this manual, one can think of its
-`chinese restaurant process
+`Chinese restaurant process
 <http://en.wikipedia.org/wiki/Chinese_restaurant_process>`_ analogy
-to help understanding it. The chinese restaurant process is a
-generative story for the Dirichlet process (see for a detailed
-introduction).  Imagine a chinese restaurant with an infinite number
+to help understanding it. The Chinese restaurant process is a
+generative construction for the Dirichlet process (see for a detailed
+introduction).  Imagine a Chinese restaurant with an infinite number
 of tables, at first all empty. When the first customer of the day
 arrives, he sits at the first table. Every following customer will
 then either sit on an occupied table with probability proportional to
@@ -179,7 +179,7 @@ the Dirichlet process does clustering with an unbounded number of
 mixture components by assuming a very asymmetrical prior structure
 over the assignments of points to components that is very concentrated
 (this property is known as rich-get-richer, as the full tables in the
-chinese restaurant process only tend to get fuller as the simulation
+Chinese restaurant process only tend to get fuller as the simulation
 progresses).
 
 Variational inference techniques for the Dirichlet process still work
