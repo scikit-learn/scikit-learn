@@ -90,15 +90,20 @@ uses.
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.KFold
-   cross_validation.StratifiedKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeavePLabelOut
    cross_validation.Bootstrap
+   cross_validation.KFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePLabelOut
+   cross_validation.LeavePOut
+   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   cross_validation.cross_val_score
 
 .. _datasets_ref:
 
@@ -417,6 +422,23 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+========================================================
+
+.. automodule:: sklearn.semi_supervised
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   semi_supervised.LabelPropagation
+   semi_supervised.LabelSpreading
 
 .. _lda_ref:
 

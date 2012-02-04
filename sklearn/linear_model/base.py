@@ -34,6 +34,7 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 ### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
 
+
 def center_data(X, y, fit_intercept, normalize=False, copy=True):
     """
     Centers data to have mean zero along axis 0. This is here because

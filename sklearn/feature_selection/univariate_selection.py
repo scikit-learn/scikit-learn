@@ -5,6 +5,8 @@
 #          L. Buitinck
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 from scipy import stats
 from scipy.sparse import issparse
@@ -211,10 +213,7 @@ def f_regression(X, y, center=True):
 # General class for filter univariate selection
 
 class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
-    """Abstract class, not meant to be used directly
-
-    TODO: convert me to an ABC.
-    """
+    __metaclass__ = ABCMeta
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -246,6 +245,12 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         mask = self._get_support_mask()
         return mask if not indices else np.where(mask)[0]
+
+    @abstractmethod
+    def _get_support_mask(self):
+        """
+        Must return a boolean mask indicating which features are selected.
+        """
 
     def transform(self, X):
         """

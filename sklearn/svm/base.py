@@ -724,6 +724,8 @@ class BaseLibLinear(BaseEstimator):
         intercept = intercept.reshape(-1, 1)
 
         self.raw_coef_ = np.hstack((self.raw_coef_[:, : -1], intercept))
+        # We need fortran ordered arrays for the predict
+        self.raw_coef_ = np.asfortranarray(self.raw_coef_)
 
     intercept_ = property(_get_intercept_, _set_intercept_)
 
@@ -745,6 +747,9 @@ class BaseLibLinear(BaseEstimator):
 
         if self.fit_intercept:
             self.raw_coef_ = np.hstack((self.raw_coef_, raw_intercept))
+
+        # We need fortran ordered arrays for the predict
+        self.raw_coef_ = np.asfortranarray(self.raw_coef_)
 
     coef_ = property(_get_coef_, _set_coef_)
 

@@ -330,8 +330,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     reaching its optimal value at 1 and its worst value at 0.
 
     The beta parameter determines the weight of precision in the combined
-    score. ``beta < 1`` lends more weight to precision, while ``beta > 1`` favors
-    precision (``beta == 0`` considers only precision, ``beta == inf`` only recall).
+    score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
+    favors precision (``beta == 0`` considers only precision, ``beta == inf``
+    only recall).
 
     Parameters
     ----------

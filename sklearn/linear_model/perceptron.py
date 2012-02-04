@@ -3,6 +3,7 @@
 
 from .stochastic_gradient import SGDClassifier
 
+
 class Perceptron(SGDClassifier):
     """Perceptron
 
