@@ -49,10 +49,10 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     tol: float, optional
         tolerance for stopping criteria
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match liblinear commandline one should use
+        scale_C=False.
 
     Attributes
     ----------

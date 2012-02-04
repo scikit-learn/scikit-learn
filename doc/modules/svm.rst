@@ -480,19 +480,19 @@ generalization error of the classifier.
 SVC
 ---
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
-classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
+Given training vectors :math:`x_i \in R^p`, i=1,..., n, in two
+classes, and a vector :math:`y \in R^n` such that :math:`y_i \in {1,
 -1}`, SVC solves the following primal problem:
 
 
 .. math::
 
-    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
+    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, n} \zeta_i
 
 
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
-    & \zeta_i \geq 0, i=1, ..., l
+    & \zeta_i \geq 0, i=1, ..., n
 
 Its dual is
 
@@ -505,16 +505,28 @@ Its dual is
    & 0 \leq \alpha_i \leq C, i=1, ..., l
 
 where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
-is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
+is an n by n positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
 x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
 vectors are mapped into a higher (maybe infinite) dimensional space by
-the function :math:`\phi`
+the function :math:`\phi`.
 
 
 The decision function is:
 
-.. math:: sgn(\sum_{i=1}^l y_i \alpha_i K(x_i, x) + \rho)
+.. math:: sgn(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
 
+.. note::
+
+    In practice to have :math:`C` independent of the number of samples :math:`n`,
+    :math:`C` is scaled by :math:`n` (Replace :math:`C` by :math:`\frac{C}{n}` in the
+    equations above). It corresponds to the scale_C parameter which is True
+    by default in all estimators since version 0.11.
+
+.. note::
+
+    While SVM models derived from libsvm and liblinear use *C* as regularization
+    parameter, most other estimators use *alpha*. The relation between both is
+    :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 

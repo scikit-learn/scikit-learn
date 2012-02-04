@@ -55,10 +55,10 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match liblinear commandline one should use
+        scale_C=False.
 
     Attributes
     ----------
@@ -131,10 +131,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False.
 
     Attributes
     ----------
@@ -332,10 +332,10 @@ class SVR(BaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False.
 
     Attributes
     ----------
@@ -454,10 +454,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False.
 
     Attributes
     ----------
@@ -566,10 +566,10 @@ class OneClassSVM(BaseLibSVM):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False.
 
     Attributes
     ----------
