@@ -37,10 +37,10 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0,
         intercept_scaling is appended to the instance vector.
         It must match the fit() method parameter.
 
-    scale_C : bool
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
-        WARNING: This parameter will disappear in v0.12.
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False.
 
     Returns
     -------
