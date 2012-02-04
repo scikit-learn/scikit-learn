@@ -49,7 +49,7 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0,
     """
     import scipy.sparse as sp
 
-    if scale_C is False:
+    if not scale_C:
         warnings.warn('SVM: scale_C will disappear and be assumed to be '
                       'True in scikit-learn 0.12', FutureWarning,
                       stacklevel=2)

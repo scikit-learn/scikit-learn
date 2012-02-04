@@ -85,7 +85,7 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
-        if scale_C is False:
+        if not scale_C:
             warnings.warn('SVM: scale_C will disappear and be assumed to be '
                           'True in scikit-learn 0.12', FutureWarning,
                           stacklevel=2)
@@ -562,7 +562,7 @@ class BaseLibLinear(BaseEstimator):
         self.multi_class = multi_class
         self.scale_C = scale_C
 
-        if scale_C is False:
+        if not scale_C:
             warnings.warn('SVM: scale_C will disappear and be assumed to be '
                           'True in scikit-learn 0.12', FutureWarning,
                           stacklevel=2)
