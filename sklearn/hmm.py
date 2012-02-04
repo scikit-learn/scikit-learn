@@ -28,7 +28,7 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
               ' version 0.11.')
 
 ZEROLOGPROB = -1e200
-INF_EPS = np.finfo(float).eps
+EPS = np.finfo(float).eps
 NEGINF = - np.inf
 
 
@@ -49,7 +49,7 @@ def normalize(A, axis=None):
 
     WARNING: Modifies inplace the array
     """
-    A += INF_EPS
+    A += EPS
     Asum = A.sum(axis)
     if axis and A.ndim > 1:
         # Make sure we don't divide by zero.
@@ -555,11 +555,11 @@ class _BaseHMM(BaseEstimator):
         if 's' in params:
             self._set_startprob(normalize(
                 np.maximum(self.startprob_prior - 1.0 + stats['start'],
-                           INF_EPS)))
+                           EPS)))
         if 't' in params:
             self._set_transmat(normalize(
                 np.maximum(self.transmat_prior - 1.0 + stats['trans'],
-                           INF_EPS), axis=1))
+                           EPS), axis=1))
 
 
 class GaussianHMM(_BaseHMM):
