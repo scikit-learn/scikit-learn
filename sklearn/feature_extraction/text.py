@@ -140,7 +140,7 @@ class WordNGramAnalyzer(BaseEstimator):
                  stop_words="english",
                  token_pattern=DEFAULT_TOKEN_PATTERN):
         self.charset = charset
-        self.stop_words = stop_words
+        self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
