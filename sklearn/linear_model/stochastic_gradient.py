@@ -2,7 +2,7 @@
 #          Mathieu Blondel (partial_fit support)
 #
 # License: BSD Style.
-"""Implementation of Stochastic Gradient Descent (SGD) with dense data."""
+"""Implementation of Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
 import scipy.sparse as sp
