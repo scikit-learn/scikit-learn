@@ -29,7 +29,91 @@ mixture models as generalizing k-means clustering to incorporate
 information about the covariance structure of the data as well as the
 centers of the latent Gaussians.
 
-Unfortunately, fitting the best mixture of Gaussians possible on a
+Different Gaussian mixture models classes
+=========================================
+
+GMM classifier
+---------------
+
+The :class:`GMM` object implements the expectation-maximization (EM)
+algorithm for fitting mixture-of-Gaussian models. It can also draw
+confidence ellipsoids for multivariate models, and compute the
+Bayesian Information Criterion to assess the number of clusters in the
+data. A :meth:`GMM.fit` method is provided that learns a Gaussian
+Mixture Model from train data. Given test data, it can assign to each
+sample the class of the Gaussian it mostly probably belong to using
+the :meth:`GMM.predict` method.
+
+..  
+    Alternatively, the probability of each
+    sample belonging to the various Gaussians may be retrieved using the
+    :meth:`GMM.predict_proba` method.
+
+.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_1.png
+   :target: ../auto_examples/mixture/plot_gmm_classifier.html
+   :align: center
+   :scale: 75%
+
+.. topic:: Examples:
+
+    * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
+      using a GMM as a classifier on the iris dataset.
+
+    * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
+      density estimation.
+      
+    * See :ref:`example_mixture_plot_gmm_model selection.py` for an example
+      of model selection performed with classical GMM.
+
+
+VBGMM classifier: variational Gaussian mixtures
+------------------------------------------------
+
+
+The :class:`VBGMM` object implements a variant of the Gaussian mixture
+model with variational inference algorithms. The API is identical to
+:class:`GMM`. It is essentially a middle-ground between :class:`GMM`
+and :class:`DPGMM`, as it has some of the properties of the Dirichlet
+process.
+
+
+DPGMM classifier: Infinite Gaussian mixtures
+---------------------------------------------
+
+The :class:`DPGMM` object implements a variant of the Gaussian mixture
+model with a variable (but bounded) number of components using the
+Dirichlet Process. The API is identical to :class:`GMM`. 
+
+
+.. figure:: ../auto_examples/mixture/images/plot_gmm_1.png
+   :target: ../auto_examples/mixture/plot_gmm.html
+   :align: center
+   :scale: 70%
+
+The example above compares a Gaussian mixture model fitted with 5
+components on a dataset, to a DPGMM model. We can see that the DPGMM is
+able to limit itself to only 2 components. With very little observations,
+the DPGMM can take a conservative stand, and fit only one component.
+
+.. topic:: Examples:
+
+    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
+      confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
+
+.. topic:: Derivation:
+
+   * See `here <dp-derivation.html>`_ the full derivation of this
+     algorithm.
+
+.. toctree::
+    :hidden:
+
+    dp-derivation.rst
+
+Background on the inference of Gaussian mixture models
+========================================================
+
+Fitting the best mixture of Gaussians possible on a
 given dataset (as measured by the likelihood criterion) is exponential
 in the assumed number of latent Gaussian distributions. For this
 reason most of the time one uses approximate inference techniques in
@@ -89,9 +173,9 @@ Disadvantages of expectation-maximization:
    :align: center
    :scale: 50%
 
-**Selecting the number of components in a classical GMM:** *the BIC
-criterion is an efficient procedure for that purpose, but holds
-only in the asymptotic regime (if much data is available).*
+   **Selecting the number of components in a calssical GMM:** *the BIC
+   criterion is an efficient procedure for that purpose, but holds
+   only in the asymptotic regime (if much data is available).*
 
 
 Variational inference
@@ -217,83 +301,4 @@ The main disadvantages of using the Dirichlet process are:
    finite mixture.
 
     
-GMM classifier
-==============
 
-.. currentmodule:: sklearn.mixture
-
-The :class:`GMM` object implements the expectation-maximization (EM)
-algorithm for fitting mixture-of-Gaussian models. It can also draw
-confidence ellipsoids for multivariate models, and compute the
-Bayesian Information Criterion to assess the number of clusters in the
-data. A :meth:`GMM.fit` method is provided that learns a Gaussian
-Mixture Model from train data. Given test data, it can assign to each
-sample the class of the Gaussian it mostly probably belong to using
-the :meth:`GMM.predict` method.
-
-..  
-    Alternatively, the probability of each
-    sample belonging to the various Gaussians may be retrieved using the
-    :meth:`GMM.predict_proba` method.
-
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_1.png
-   :target: ../auto_examples/mixture/plot_gmm_classifier.html
-   :align: center
-   :scale: 75%
-
-.. topic:: Examples:
-
-    * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
-      using a GMM as a classifier on the iris dataset.
-
-    * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
-      density estimation.
-      
-    * See :ref:`example_mixture_plot_gmm_model selection.py` for an example
-      of model selection performed with classical GMM.
-
-
-Variational Gaussian mixtures: VBGMM classifier
-===============================================
-
-.. currentmodule:: sklearn.mixture
-
-The :class:`VBGMM` object implements a variant of the Gaussian mixture
-model with variational inference algorithms. The API is identical to
-:class:`GMM`. It is essentially a middle-ground between :class:`GMM`
-and :class:`DPGMM`, as it has some of the properties of the Dirichlet
-process.
-
-
-Infinite Gaussian mixtures: DPGMM classifier
-=============================================
-
-The :class:`DPGMM` object implements a variant of the Gaussian mixture
-model with a variable (but bounded) number of components using the
-Dirichlet Process. The API is identical to :class:`GMM`. 
-
-
-.. figure:: ../auto_examples/mixture/images/plot_gmm_1.png
-   :target: ../auto_examples/mixture/plot_gmm.html
-   :align: center
-   :scale: 70%
-
-The example above compares a Gaussian mixture model fitted with 5
-components on a dataset, to a DPGMM model. We can see that the DPGMM is
-able to limit itself to only 2 components. With very little observations,
-the DPGMM can take a conservative stand, and fit only one component.
-
-.. topic:: Examples:
-
-    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
-      confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
-
-.. topic:: Derivation:
-
-   * See `here <dp-derivation.html>`_ the full derivation of this
-     algorithm.
-
-.. toctree::
-    :hidden:
-
-    dp-derivation.rst
