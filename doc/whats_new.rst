@@ -27,8 +27,11 @@ Changelog
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
 
-    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
-      by `Andreas Müller`_.
+   - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+     by `Andreas Müller`_.
+
+   - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
+     to either :ref:`k_means` or :class:`KMeans`, by Robert Layton.
 
     - :ref:`randomized_1`: Randomized sparse linear models for feature
       selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_

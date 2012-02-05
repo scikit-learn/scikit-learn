@@ -52,6 +52,12 @@ criteria is fulfilled. Usually, as in this implementation, the algorithm
 stops when the relative increment in the results between iterations is less than
 the given tolerance value.
 
+A parameter can be given to allow K-means to be run in parallel, called
+`n_jobs`. Giving this parameter a positive value uses that many processors 
+(default=1). A value of -1 uses all processors, with -2 using one less, and so 
+on. Parallelization generally speeds up computation at the cost of memory (in
+this case, multiple copies of centroids need to be stored, one for each job).
+
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
 
@@ -814,7 +820,7 @@ cluster analysis.
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
-  0.5525...
+  0.55...
 
 .. topic:: References
 
