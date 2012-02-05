@@ -242,10 +242,6 @@ class GMM(BaseEstimator):
         _validate_covars(covars, self._covariance_type, self.n_components)
         self.covars_ = covars
 
-    def __repr__(self):
-        return "GMM(covariance_type='%s', n_components=%s)" % \
-            (self._covariance_type, self.n_components)
-
     def eval(self, X):
         """Evaluate the model on data
 
