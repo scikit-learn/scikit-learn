@@ -11,7 +11,7 @@ In that case, AIC also provides the right result (not shown to save time),
 but BIC is better suited if the problem is to identify the right model.
 Unlike Bayesian procedures, such inferences are prior-free.
 
-In that case, the full covariance model with 2 components 
+In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
 """
 print __doc__
