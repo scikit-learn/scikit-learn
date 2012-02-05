@@ -27,15 +27,19 @@ Changelog
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
 
-    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
-      by `Andreas Müller`_.
+   - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+     by `Andreas Müller`_.
 
-    - :ref:`randomized_1`: Randomized sparse linear models for feature
-      selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
+   - :ref:`randomized_1`: Randomized sparse linear models for feature
+     selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
 
-    - :ref:`label_propagation` for semi-supervised learning, by Clay
-      Woolam. **Note** the semi-supervised API is still work in progress,
-      and may change.
+   - :ref:`label_propagation` for semi-supervised learning, by Clay
+     Woolam. **Note** the semi-supervised API is still work in progress,
+     and may change.
+      
+   - Added BIC/AIC model selection to classical :ref:`gmm` and unified 
+     the API with the remainder of scikits learn, by `Bertrand Thirion`_
+
 
 API changes summary
 -------------------
@@ -46,6 +50,9 @@ API changes summary
      and/or :class:`RadiusNeighborsRegressor` instead.
 
    - Sparse classes in the :ref:`sgd` module are now deprecated.
+
+   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
+     `sample` and `score` or `predict` should be used instead. 
 
 .. _changes_0_10:
 
