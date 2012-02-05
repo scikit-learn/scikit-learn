@@ -74,5 +74,7 @@ for i, (clf, title) in enumerate([
     pl.xlim(-6, 4 * np.pi - 6)
     pl.ylim(-5, 5)
     pl.title(title)
+    pl.xticks(())
+    pl.yticks(())
 
 pl.show()
