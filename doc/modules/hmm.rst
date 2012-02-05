@@ -60,7 +60,7 @@ Building HMM and generating samples
 ------------------------------------
 
 You can build an HMM instance by passing the parameters described above to the
-constructer. Then, you can generate samples from the HMM by calling `sample`.::
+constructor. Then, you can generate samples from the HMM by calling `sample`.::
 
     >>> import numpy as np
     >>> from sklearn import hmm
@@ -91,7 +91,7 @@ Training HMM parameters and infering the hidden states
 
 You can train the HMM by calling `fit` method. The input is "the list" of 
 the sequence of observed value. Note, since EM-algorithm is a gradient based
-optimization method, it will generally be stuck at local optimal. You shoul try
+optimization method, it will generally be stuck at local optimal. You should try
 to run `fit` with various initialization and select the highest scored model.
 The score of the model can be calculated by the `score` method. 
 The infered optimal hidden states can be obtained by calling `decode` method. 

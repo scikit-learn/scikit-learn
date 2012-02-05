@@ -278,7 +278,7 @@ class _BaseHMM(BaseEstimator):
 
         Returns
         -------
-        (obs, hidden_states) 
+        (obs, hidden_states)
         obs : array_like, length `n` List of samples
         hidden_states : array_like, length `n` List of hidden states
         """

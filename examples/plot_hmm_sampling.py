@@ -28,7 +28,7 @@ model.covars_ = covars
 X, Z = model.sample(500)
 
 #plot the sampled data
-plt.plot(X[:,0], X[:,1],"-o", label="observable", ms=10, 
+plt.plot(X[:, 0], X[:, 1],"-o", label="observable", ms=10,
         mfc="orange", alpha=0.7)
 plt.legend()
 plt.show()
