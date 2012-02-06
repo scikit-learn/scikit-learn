@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import array2d, safe_asarray
+from ..utils import array2d, safe_asarray, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
@@ -234,10 +234,22 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         Evaluate the function
         """
-        _scores = self.score_func(X, y)
-        self._scores = _scores[0]
-        self._pvalues = _scores[1]
+        scores = self.score_func(X, y)
+        self.scores_ = scores[0]
+        self.pvalues_ = scores[1]
         return self
+
+    @property
+    @deprecated('``_scores`` is deprecated and will be removed in '
+                'version 0.12. Please use ``scores_`` instead.')
+    def _scores(self):
+        return self.scores_
+
+    @property
+    @deprecated('``_pvalues`` is deprecated and will be removed in '
+                'version 0.12. Please use ``scores_`` instead.')
+    def _pvalues(self):
+        return self.pvalues_
 
     def get_support(self, indices=False):
         """
@@ -299,11 +311,11 @@ class SelectPercentile(_AbstractUnivariateFilter):
                              " (%f given)" % (percentile))
         # Cater for Nans
         if percentile == 100:
-            return np.ones(len(self._pvalues), dtype=np.bool)
+            return np.ones(len(self.pvalues_), dtype=np.bool)
         elif percentile == 0:
-            return np.zeros(len(self._pvalues), dtype=np.bool)
-        alpha = stats.scoreatpercentile(self._pvalues, percentile)
-        return (self._pvalues <= alpha)
+            return np.zeros(len(self.pvalues_), dtype=np.bool)
+        alpha = stats.scoreatpercentile(self.pvalues_, percentile)
+        return (self.pvalues_ <= alpha)
 
 
 class SelectKBest(_AbstractUnivariateFilter):
@@ -326,11 +338,11 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         k = self.k
-        if k > len(self._pvalues):
+        if k > len(self.pvalues_):
             raise ValueError("cannot select %d features among %d"
-                             % (k, len(self._pvalues)))
-        alpha = np.sort(self._pvalues)[k - 1]
-        return (self._pvalues <= alpha)
+                             % (k, len(self.pvalues_)))
+        alpha = np.sort(self.pvalues_)[k - 1]
+        return (self.pvalues_ <= alpha)
 
 
 class SelectFpr(_AbstractUnivariateFilter):
@@ -355,7 +367,7 @@ class SelectFpr(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         alpha = self.alpha
-        return self._pvalues < alpha
+        return self.pvalues_ < alpha
 
 
 class SelectFdr(_AbstractUnivariateFilter):
@@ -381,9 +393,9 @@ class SelectFdr(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         alpha = self.alpha
-        sv = np.sort(self._pvalues)
-        threshold = sv[sv < alpha * np.arange(len(self._pvalues))].max()
-        return self._pvalues <= threshold
+        sv = np.sort(self.pvalues_)
+        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
+        return self.pvalues_ <= threshold
 
 
 class SelectFwe(_AbstractUnivariateFilter):
@@ -406,7 +418,7 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         alpha = self.alpha
-        return (self._pvalues < alpha / len(self._pvalues))
+        return (self.pvalues_ < alpha / len(self.pvalues_))
 
 
 ######################################################################
@@ -453,8 +465,8 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         selector = self._selection_modes[self.mode](lambda x: x)
-        selector._pvalues = self._pvalues
-        selector._scores = self._scores
+        selector.pvalues_ = self.pvalues_
+        selector.scores_ = self.scores_
         # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()

@@ -55,7 +55,11 @@ API changes summary
    - Sparse classes in the :ref:`sgd` module are now deprecated.
 
    - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
-     `sample` and `score` or `predict` should be used instead. 
+     `sample` and `score` or `predict` should be used instead.
+
+   - attribute `_scores` and `_pvalues` in univariate feature selection
+     objects are now deprecated.
+     `scores_` or `pvalues_` should be used instead.
 
 .. _changes_0_10:
 
