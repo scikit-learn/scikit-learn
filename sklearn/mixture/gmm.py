@@ -179,7 +179,8 @@ class GMM(BaseEstimator):
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs)
-    GMM(covariance_type='diag', n_components=2)
+    GMM(covariance_type=None, min_covar=0.001, n_components=2, random_state=None,
+      thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -195,7 +196,8 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]])
-    GMM(covariance_type='diag', n_components=2)
+    GMM(covariance_type=None, min_covar=0.001, n_components=2, random_state=None,
+      thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
