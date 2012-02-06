@@ -41,7 +41,7 @@ Changelog
      the API with the remainder of scikit-learn, by `Bertrand Thirion`_
 
    - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
-     to either :ref:`k_means` or :class:`KMeans`, by Robert Layton.
+     to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
 
 API changes summary
@@ -989,3 +989,5 @@ of commits):
 .. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
 
 .. _Satrajit Ghosh: http://www.mit.edu/~satra/
+
+.. _Robert Layton: http://www.twitter.com/robertlayton
