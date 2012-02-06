@@ -28,6 +28,11 @@ warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
               ' version 0.11.')
 
 from .utils import deprecated
+try:
+    from . import _hmmc
+except:
+    _hmmc = None
+
 
 ZEROLOGPROB = -1e200
 EPS = np.finfo(float).eps
@@ -60,11 +65,6 @@ def normalize(A, axis=None):
         shape[axis] = 1
         Asum.shape = shape
     return A / Asum
-
-try:
-    from . import _hmmc
-except:
-    _hmmc = None
 
 
 class _BaseHMM(BaseEstimator):
@@ -479,7 +479,7 @@ class _BaseHMM(BaseEstimator):
                 reverse_state_sequence.append(s)
                 s = frame[s]
 
-            state_sequence = np.array(reversed(reverse_state_sequence))
+            state_sequence = np.array(reverse_state_sequence)[::-1]
 
         return logprob, state_sequence
 
