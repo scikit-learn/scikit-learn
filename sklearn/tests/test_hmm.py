@@ -284,7 +284,7 @@ class GaussianHMMTester(GaussianHMMParams):
                           np.zeros((self.n_components - 2, self.n_features)))
 
         h.covars_ = self.covars_[self.covariance_type]
-        assert_array_almost_equal(h.covars_
+        assert_array_almost_equal(h.covars_,
                 self.expanded_covars[self.covariance_type])
         #self.assertRaises(ValueError, h.__setattr__, 'covars', [])
         #self.assertRaises(ValueError, h.__setattr__, 'covars',
