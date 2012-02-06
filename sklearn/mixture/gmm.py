@@ -136,23 +136,27 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    covariance_type : string (read-only)
-        String describing the type of covariance parameters used by
-        the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+    covariance_type : string
+        String describing the type of covariance parameters used by the GMM. \
+        Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     `weights_` : array, shape (`n_components`,)
         Mixing weights for each mixture component.
+
     `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
+
     `covars_` : array
         Covariance parameters for each mixture component.  The shape
-        depends on `covariance_type`:
+        depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
+
     `converged_` : bool
-        True when convergence was reached in fit(), False
-        otherwise.
+        True when convergence was reached in fit(), False otherwise.
 
 
 
@@ -298,6 +302,7 @@ class GMM(BaseEstimator):
         -------
         logprobs : array_like, shape (n_samples,)
             Log probability of each point in `obs` under the model.
+
         components : array_like, shape (n_samples,)
             Index of the most likelihod mixture components for each observation
         """
