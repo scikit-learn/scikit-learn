@@ -263,7 +263,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
 
     **References**:
 
