@@ -61,6 +61,11 @@ API changes summary
      objects are now deprecated.
      `scores_` or `pvalues_` should be used instead.
 
+   - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
+     :class:`NuSVC`, the `class_weight` parameter is now an initialization
+     parameter, not a parameter to fit. This makes grid searches
+     over this parameter possible.
+
 .. _changes_0_10:
 
 0.10

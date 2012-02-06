@@ -146,7 +146,8 @@ def test_weight():
     for clf in (linear_model.LogisticRegression(),
                 svm.LinearSVC(),
                 svm.SVC()):
-        clf.fit(X_[:180], y_[:180], class_weight={0: 5})
+        clf.set_params(class_weight={0: 5})
+        clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
 

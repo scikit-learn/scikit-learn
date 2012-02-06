@@ -55,6 +55,13 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
     scale_C : bool
         Scale C with number of samples. It makes the setting of C independent
         of the number of samples.
@@ -130,6 +137,13 @@ class SVC(BaseLibSVM, ClassifierMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
     scale_C : bool
         Scale C with number of samples. It makes the setting of C independant
         of the number of samples.
@@ -169,9 +183,10 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
-    >>> clf.fit(X, y)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=None, shrinking=True, tol=0.001)
+    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+            gamma=0.5, kernel='rbf', probability=False, scale_C=None,
+            shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -182,11 +197,11 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=None):
+                 tol=1e-3, cache_size=200, scale_C=None, class_weight=None):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
-                                  C, 0., 0., shrinking, probability,
-                                  cache_size, scale_C, sparse="auto")
+                C, 0., 0., shrinking, probability, cache_size, scale_C,
+                sparse="auto", class_weight=class_weight)
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
@@ -228,6 +243,14 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
+
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
 
     Attributes
     ----------
@@ -280,8 +303,8 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
                  tol=1e-3, cache_size=200):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
-                                    tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C=False, sparse="auto")
+                tol, 0., nu, 0., shrinking, probability, cache_size,
+                scale_C=False, sparse="auto", class_weight=None)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -378,31 +401,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C, sparse="auto")
-
-    def fit(self, X, y, sample_weight=None, **params):
-        """
-        Fit the SVM model according to the given training data and parameters.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
-        y : array, shape = [n_samples]
-            Target values. Array of floating-point numbers.
-        cache_size: float, optional
-            Specify the size of the cache (in MB)
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # we copy this method because SVR does not accept class_weight
-        return super(SVR, self).fit(X, y, sample_weight=sample_weight,
-                                    **params)
-
+                                  cache_size, scale_C, sparse="auto", class_weight=None)
 
 class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
@@ -501,7 +500,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                                     tol, C, nu, 0., shrinking, probability,
-                                    cache_size, scale_C, sparse="auto")
+                                    cache_size, scale_C, sparse="auto", class_weight=None)
 
     def fit(self, X, y, sample_weight=None, **params):
         """
@@ -592,11 +591,10 @@ class OneClassSVM(BaseLibSVM):
                  nu=0.5, shrinking=True, cache_size=200):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
-                                          coef0, tol, 0., nu, 0., shrinking,
-                                          False, cache_size, scale_C=None,
-                                          sparse="auto")
+                coef0, tol, 0., nu, 0., shrinking, False, cache_size,
+                scale_C=None, sparse="auto", class_weight=None)
 
-    def fit(self, X, class_weight={}, sample_weight=None, **params):
+    def fit(self, X, sample_weight=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 
@@ -617,7 +615,6 @@ class OneClassSVM(BaseLibSVM):
         it is copied.
 
         """
-        super(OneClassSVM, self).fit(
-            X, [], class_weight=class_weight, sample_weight=sample_weight,
-            **params)
+        super(OneClassSVM, self).fit( X, [], sample_weight=sample_weight,
+                **params)
         return self
