@@ -199,7 +199,7 @@ def _hc_cut(n_clusters, children, n_leaves):
         cluster labels for each point
 
     """
-    if not n_clusters > n_leaves:
+    if n_clusters > n_leaves:
         raise ValueError('Cannot extract more clusters than samples: '
             '%s clusters where given for a tree with %s leaves.'
             % (n_clusters, n_leaves))
