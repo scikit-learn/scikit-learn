@@ -219,6 +219,12 @@ cdef class Huber(Regression):
 
 
 cdef class WeightVector:
+    """This class implements a dense vector which is represented
+    by a scaler (``wscale``) and a numpy array of dtype float64.
+
+    The class provides methods to a) ``add`` a sparse vector
+    and b) scale the vector.
+    """
 
     def __init__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
         self.w = w
@@ -227,58 +233,17 @@ cdef class WeightVector:
         self.n_features = w.shape[0]
 
     cdef double add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                    int n_features, double c):
+                    int xnnz, double c):
         """Scales example x by constant c and adds it to the weight vector.
 
         Parameters
         ----------
-        X_data_ptr : double*
-            The pointer to the data array of ``X``.
-        offset : unsigned int
-            The offset of the example x in  ``X_data_ptr``.
-            section of the weight vector.
-        n_features : unsigned int
-            The number of features.
-        c : double
-            The scaling constant for the example.
-        Returns
-        -------
-        sq_norm : double
-            The squared norm of the weight vector after the update.
-        """
-        cdef unsigned int j
-        cdef double val
-        cdef double innerprod = 0.0
-        cdef double xsqnorm = 0.0
-
-        # the next two lines save a factor of 2!
-        cdef double wscale = self.wscale
-        cdef DOUBLE* w_data_ptr = self.w_data_ptr
-
-        for j in range(n_features):
-            val = x_data_ptr[j]
-            innerprod += (w_data_ptr[j] * val)
-            xsqnorm += (val * val)
-            self.w_data_ptr[j] += val * (c / wscale)
-
-        # this is needed for PEGASOS only
-        return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
-
-    cdef double add_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
-                           int offset, int xnnz, double c):
-        """Scales sparse sample x by constant c and adds it to the weight vector.
-
-        Parameters
-        ----------
-        X_data_ptr : double*
-            The pointer to the data array of a sp.sparse.csr_matrix ``X``.
-        X_indices_ptr : int*
-            The pointer to the indices (=columns) array of a
-            sp.sparse.csr_matrix ``X``.
-        offset : unsigned int
-            The offset of the example x in ``X_data_ptr`` and ``X_indices_ptr``.
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.int32*
+            The array which holds the feature indices of ``x``.
         xnnz : int
-            The number of non-zero features for example x.
+            The number of non-zero features of ``x``.
         c : double
             The scaling constant for the example.
         Returns
@@ -297,68 +262,39 @@ cdef class WeightVector:
         cdef DOUBLE* w_data_ptr = self.w_data_ptr
 
         for j in range(xnnz):
-            idx = X_indices_ptr[offset + j]
-            val = X_data_ptr[offset + j]
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            w_data_ptr[idx] += val * (c / wscale)
+            self.w_data_ptr[idx] += val * (c / wscale)
 
         # this is needed for PEGASOS only
         return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
-    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int n_features):
+    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
         """Computes the dot product (=inner product) of a sample x
         and the weight vector.
 
         Parameters
         ----------
-        X_data_ptr : double*
-            The pointer to the data array of ``X``.
-        offset : unsigned int
-            The offset of the example x in  ``X_data_ptr``.
-            section of the weight vector.
-        n_features : unsigned int
-            The number of features.
-        Returns
-        -------
-        innerprod : double
-            The inner product of ``x`` and ``w``.
-        """
-        cdef double innerprod = 0.0
-        cdef unsigned int j
-        cdef DOUBLE* w_data_ptr = self.w_data_ptr
-        for j in range(n_features):
-            innerprod += w_data_ptr[j] * x_data_ptr[j]
-        innerprod *= self.wscale
-        return innerprod
-
-    cdef double dot_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
-                           int offset, int xnnz):
-        """Computes the dot product (=inner product) of a sparse sample x
-        and the weight vector.
-
-        Parameters
-        ----------
-        X_data_ptr : DOUBLE*
-            The pointer to the data array of a sp.sparse.csr_matrix ``X``.
-        X_indices_ptr : int*
-            The pointer to the indices (=columns) array of a
-            sp.sparse.csr_matrix ``X``.
-        offset : unsigned int
-            The offset of the example x in ``X_data_ptr`` and ``X_indices_ptr``.
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.int32*
+            The array which holds the feature indices of ``x``.
         xnnz : int
-            The number of non-zero features for example x.
+            The number of non-zero features of ``x``.
         Returns
         -------
         innerprod : double
             The inner product of ``x`` and ``w``.
         """
-        cdef double innerprod = 0.0
         cdef int j
+        cdef int idx
+        cdef double innerprod = 0.0
         cdef DOUBLE* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
-            innerprod += w_data_ptr[X_indices_ptr[offset + j]] * \
-                         X_data_ptr[offset + j]
+            idx = x_ind_ptr[j]
+            innerprod += w_data_ptr[idx] * x_data_ptr[j]
         innerprod *= self.wscale
         return innerprod
 
@@ -370,7 +306,8 @@ cdef class WeightVector:
 
     cdef void reset_wscale(self):
         """Explicitly scales every weight by ``wscale`` and
-        sets ``wscale`` to one. """
+        sets ``wscale`` to one.
+        """
         self.w *= self.wscale
         self.wscale = 1.0
 
@@ -386,39 +323,67 @@ cdef class Dataset:
     """Base class for dataset abstraction. """
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight):
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight):
+        """Get the next example ``x`` from the dataset.
+
+        The feature indices of ``x`` are given by x_ind_ptr[0:nnz].
+        The corresponding feature values are given by
+        x_data_ptr[0:nnz].
+
+        Parameters
+        ----------
+        x_data_ptr : np.float64**
+            A pointer to the double array which holds the feature
+            values of the next example.
+        x_ind_ptr : np.int32**
+            A pointer to the int32 array which holds the feature
+            indices of the next example.
+        nnz : int*
+            A pointer to an int holding the number of non-zero
+            values of the next example.
+        y : np.float64*
+            The target value of the next example.
+        sample_weight : np.float64*
+            The weight of the next example.
+        """
         raise NotImplementedError()
 
     cdef void shuffle(self, seed):
+        """Permutes the ordering of examples.  """
         raise NotImplementedError()
 
 
 cdef class ArrayDataset(Dataset):
-    """Dataset abstraction for a two-dimensional numpy array. """
+    """Dataset abstraction backed by a two-dimensional numpy array
+    of dtype np.float64 and C-style memory layout."""
 
     def __init__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
-                 np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weight):
+                 np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
-        cdef np.ndarray[INTEGER, ndim=1, mode='c'] feature_indices = np.arange(0, self.n_features, dtype=np.int32)
+        cdef np.ndarray[INTEGER, ndim=1,
+                        mode='c'] feature_indices = np.arange(0, self.n_features,
+                                                              dtype=np.int32)
         self.feature_indices = feature_indices
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
         self.current_index = -1
         self.stride = X.strides[0] / X.strides[1]
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
-        self.sample_weight_data = <DOUBLE *> sample_weight.data
+        self.sample_weight_data = <DOUBLE *>sample_weights.data
+
         # Use index array for fast shuffling
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] index = np.arange(0, self.n_samples, dtype=np.int32)
+                        mode='c'] index = np.arange(0, self.n_samples,
+                                                    dtype=np.int32)
         self.index = index
         self.index_data_ptr = <INTEGER *> index.data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight):
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight):
         cdef int current_index = self.current_index
-        if current_index >= self.n_samples:
+        if current_index >= (self.n_samples - 1):
             current_index = -1
 
         current_index += 1
@@ -456,14 +421,15 @@ cdef class CSRDataset(Dataset):
         self.sample_weight_data = <DOUBLE *> sample_weight.data
         # Use index array for fast shuffling
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] index = np.arange(0, self.n_samples, dtype=np.int32)
+                        mode='c'] index = np.arange(0, self.n_samples,
+                                                    dtype=np.int32)
         self.index = index
         self.index_data_ptr = <INTEGER *> index.data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight):
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight):
         cdef int current_index = self.current_index
-        if current_index >= self.n_samples:
+        if current_index >= (self.n_samples - 1):
             current_index = -1
 
         current_index += 1
@@ -556,8 +522,6 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     # get the data information into easy vars
     cdef unsigned int n_samples = dataset.n_samples
     cdef unsigned int n_features = weights.shape[0]
-    print n_samples
-    print n_features
 
     cdef WeightVector w = WeightVector(weights)
 
@@ -565,14 +529,14 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef INTEGER *x_ind_ptr = NULL
 
     # helper variable
-    cdef int nnz
-    cdef double sample_weight
+    cdef int xnnz
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double wnorm = 0.0
-    cdef double y = 0.0
+    cdef DOUBLE y = 0.0
+    cdef DOUBLE sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
@@ -600,22 +564,24 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         if shuffle:
             dataset.shuffle(seed)
         for i in range(n_samples):
-            dataset.next(&x_data_ptr, &x_ind_ptr, &nnz, &y,
+            dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
                          &sample_weight)
 
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = w.dot(x_data_ptr, x_ind_ptr, nnz) + intercept
+            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
             sumloss += loss.loss(p, y)
-            if y > 0:
+
+            if y > 0.0:
                 class_weight = weight_pos
             else:
                 class_weight = weight_neg
+
             update = eta * loss.dloss(p, y) * class_weight * sample_weight
             if update != 0.0:
-                w.add(x_data_ptr, x_ind_ptr, nnz, -update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
                 if fit_intercept == 1:
                     intercept -= update * intercept_decay
             if penalty_type >= L2:
@@ -623,7 +589,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w, q_data_ptr, n_features, u)
+                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
             t += 1
             count += 1
 
@@ -655,8 +621,8 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef void l1penalty(WeightVector w, double *q_data_ptr,
-                    unsigned int n_features, double u):
+cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
+                    INTEGER *x_ind_ptr, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by
@@ -666,15 +632,19 @@ cdef void l1penalty(WeightVector w, double *q_data_ptr,
     Empirical results look better this way...
     """
     cdef double z = 0.0
-    cdef unsigned j = 0
+    cdef int j = 0
+    cdef int idx = 0
     cdef double wscale = w.wscale
     cdef double* w_data_ptr = w.w_data_ptr
-    for j in range(n_features):
-        z = w_data_ptr[j]
-        if (w.wscale * w.w_data_ptr[j]) > 0.0:
-            w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
-                                                        / wscale))
-        elif (wscale * w_data_ptr[j]) < 0.0:
-            w_data_ptr[j] = min(0.0, w_data_ptr[j] + ((u - q_data_ptr[j])
-                                                        / wscale))
-        q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
+    for j in range(xnnz):
+        idx = x_ind_ptr[j]
+        z = w_data_ptr[idx]
+        if (wscale * w_data_ptr[idx]) > 0.0:
+            w_data_ptr[idx] = max(
+                0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
+
+        elif (wscale * w_data_ptr[idx]) < 0.0:
+            w_data_ptr[idx] = min(
+                0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
+
+        q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))

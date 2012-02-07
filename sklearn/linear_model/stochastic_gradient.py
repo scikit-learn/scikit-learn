@@ -425,10 +425,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         if sp.issparse(X):
             X = _tocsr(X)
 
-        coef, intercept = _fit_binary(self, 1, X, y, n_iter,
-                                      self._expanded_class_weight[1],
-                                      self._expanded_class_weight[0],
-                                      sample_weight)
+        coef, intercept = fit_binary(self, 1, X, y, n_iter,
+                                     self._expanded_class_weight[1],
+                                     self._expanded_class_weight[0],
+                                     sample_weight)
 
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
@@ -446,9 +446,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_fit_binary)(self, i, X, y, n_iter,
-                                 self._expanded_class_weight[i], 1.,
-                                 sample_weight)
+            delayed(fit_binary)(self, i, X, y, n_iter,
+                                self._expanded_class_weight[i], 1.,
+                                sample_weight)
             for i in xrange(len(self.classes_)))
 
         for i, (coef, intercept) in enumerate(result):
@@ -474,13 +474,14 @@ def _prepare_fit_binary(est, y, i):
     return y_i, coef, intercept
 
 
-def _fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
-                sample_weight):
+def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
+               sample_weight):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+    assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
         intercept_decay = 0.01
@@ -628,7 +629,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     def _partial_fit(self, X, y, n_iter, sample_weight=None,
                      coef_init=None, intercept_init=None):
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
+        X, y = check_arrays(X, y, sparse_format="csr", copy=False,
+                            dtype=np.float64)
         y = np.asarray(y, dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
