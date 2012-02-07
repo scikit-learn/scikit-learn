@@ -32,6 +32,11 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
     __metaclass__ = ABCMeta
 
+    @property
+    @deprecated("to be removed in v0.12; use ``classes_`` instead.")
+    def _classes(self):
+        return self.classes_
+
     @abstractmethod
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
