@@ -218,10 +218,93 @@ cdef class Huber(Regression):
         return Huber, (self.c,)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
+cdef class WeightVector:
+
+    def __init__(self, np.ndarray[np.float64_t, ndim=1, mode='c'] w):
+        self.w = w
+        self.w_data_ptr = <double *>w.data
+        self.wscale = 1.0
+        self.n_features = w.shape[0]
+
+    cdef double add(self, double *X_data_ptr, unsigned int offset,
+                    unsigned int n_features, double c):
+        """Scales example x by constant c and adds it to the weight vector.
+
+        Parameters
+        ----------
+        X_data_ptr : double*
+            The pointer to the data array of ``X``.
+        offset : unsigned int
+            The offset of the example x in  ``X_data_ptr``.
+            section of the weight vector.
+        n_features : unsigned int
+            The number of features.
+        c : double
+            The scaling constant for the example.
+        Returns
+        -------
+        sq_norm : double
+            The squared norm of the weight vector after the update.
+        """
+        cdef unsigned j
+        cdef double val
+        cdef double innerprod = 0.0
+        cdef double xsqnorm = 0.0
+        for j in range(n_features):
+            val = X_data_ptr[offset + j]
+            innerprod += (self.w_data_ptr[j] * val)
+            xsqnorm += (val * val)
+            self.w_data_ptr[j] += val * (c / self.wscale)
+
+        # TODO this is needed for PEGASOS only
+        return (xsqnorm * c * c) + (2.0 * innerprod * self.wscale * c)
+
+    cdef double dot(self, double *X_data_ptr, unsigned int offset,
+                    unsigned int n_features):
+        """Computes the dot product (=inner product) of a sample x
+        and the weight vector.
+
+        Parameters
+        ----------
+        X_data_ptr : double*
+            The pointer to the data array of ``X``.
+        offset : unsigned int
+            The offset of the example x in  ``X_data_ptr``.
+            section of the weight vector.
+        n_features : unsigned int
+            The number of features.
+        Returns
+        -------
+        innerprod : double
+            The inner product of ``x`` and ``w``.
+        """
+        cdef double innerprod = 0.0
+        cdef int j
+        for j in range(n_features):
+            innerprod += self.w_data_ptr[j] * X_data_ptr[offset + j]
+        innerprod *= self.wscale
+        return innerprod
+
+    cdef void scale(self, double c):
+        """Scales the weight vector by a constant ``c``. """
+        self.wscale *= c
+        if self.wscale < 1e-9:
+            self.reset_wscale()
+
+    cdef void reset_wscale(self):
+        """Explicitly scales every weight by ``wscale`` and
+        sets ``wscale`` to one. """
+        self.w *= self.wscale
+        self.wscale = 1.0
+
+    cdef double norm(self):
+        """Computes the L2 norm of the weight vector.
+        FIXME could be updated after each call to update and scale.
+        """
+        return np.dot(self.w, self.w) * self.wscale * self.wscale
+
+
+def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
@@ -241,7 +324,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
 
     Parameters
     ----------
-    w : ndarray[double, ndim=1]
+    weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
     intercept : double
         The initial intercept
@@ -299,14 +382,15 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
 
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
-    cdef unsigned int n_features = w.shape[0]
+    cdef unsigned int n_features = weights.shape[0]
 
     # Array stride to get to next sample
     cdef int stride = X.strides[0] / X.strides[1]
 
-    cdef double *w_data_ptr = <double *>w.data
     cdef double *X_data_ptr = <double *>X.data
     cdef double *Y_data_ptr = <double *>Y.data
+
+    cdef WeightVector w = WeightVector(weights)
 
     cdef double *sample_weight_data = <double *>sample_weight.data
 
@@ -318,7 +402,6 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
 
     # helper variable
     cdef unsigned int offset = 0
-    cdef double wscale = 1.0
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
@@ -362,8 +445,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
-                ) + intercept
+            p = w.dot(X_data_ptr, offset, n_features) + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
                 class_weight = weight_pos
@@ -372,39 +454,36 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
             update = eta * loss.dloss(p, y) * class_weight * \
                 sample_weight_data[sample_idx]
             if update != 0.0:
-                add(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update)
+                w.add(X_data_ptr, offset, n_features, -update)
                 if fit_intercept == 1:
                     intercept -= update
             if penalty_type >= L2:
-                wscale *= (1.0 - (rho * eta * alpha))
-                if wscale < 1e-9:
-                    w *= wscale
-                    wscale = 1.0
+                w.scale(1.0 - (rho * eta * alpha))
+
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w_data_ptr, wscale, q_data_ptr, n_features, u)
+                l1penalty(w, q_data_ptr, n_features, u)
             t += 1
             count += 1
 
         # report epoch information
         if verbose > 0:
-            wnorm = sqrt(np.dot(w, w) * wscale * wscale)
+            wnorm = w.norm()
             print("Norm: %.2f, NNZs: %d, "\
             "Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm,
-                                                    w.nonzero()[0].shape[0],
+                                                    weights.nonzero()[0].shape[0],
                                                     intercept, count,
                                                     sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
+        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    if wscale != 1.0:
-        w *= wscale
+    w.reset_wscale()
 
-    return w, intercept
+    return weights, intercept
 
 
 cdef inline double max(double a, double b):
@@ -415,33 +494,7 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef double dot(double *w_data_ptr, double *X_data_ptr,
-                unsigned int offset, unsigned int n_features):
-    cdef double sum = 0.0
-    cdef int j
-    for j in xrange(n_features):
-        sum += w_data_ptr[j] * X_data_ptr[offset + j]
-    return sum
-
-
-cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
-                unsigned int offset, unsigned int n_features, double c):
-    """Scales example x by constant c and adds it to the weight vector w"""
-    cdef unsigned j
-    cdef double val
-    cdef double innerprod = 0.0
-    cdef double xsqnorm = 0.0
-    for j in xrange(n_features):
-        val = X_data_ptr[offset + j]
-        innerprod += (w_data_ptr[j] * val)
-        xsqnorm += (val * val)
-        w_data_ptr[j] += val * (c / wscale)
-
-    # TODO this is needed for PEGASOS only
-    return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
-
-
-cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
+cdef void l1penalty(WeightVector w, double *q_data_ptr,
                     unsigned int n_features, double u):
     """Apply the L1 penalty to each updated feature
 
@@ -453,9 +506,11 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     """
     cdef double z = 0.0
     cdef unsigned j = 0
+    cdef double wscale = w.wscale
+    cdef double* w_data_ptr = w.w_data_ptr
     for j in xrange(n_features):
         z = w_data_ptr[j]
-        if (wscale * w_data_ptr[j]) > 0.0:
+        if (w.wscale * w.w_data_ptr[j]) > 0.0:
             w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
                                                         / wscale))
         elif (wscale * w_data_ptr[j]) < 0.0:

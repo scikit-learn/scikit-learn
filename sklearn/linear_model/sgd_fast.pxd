@@ -50,3 +50,20 @@ cdef class Huber(Regression):
     cdef double c
     cpdef double loss(self, double p, double y)
     cpdef double dloss(self, double p, double y)
+
+# -----------------------------------------
+# Headers for Weight Vector Extension Types
+# -----------------------------------------
+
+cdef class WeightVector:
+    cdef w
+    cdef double *w_data_ptr
+    cdef double wscale
+    cdef unsigned int n_features
+    cdef double add(self, double *X_data_ptr, unsigned int offset,
+                    unsigned int n_features, double c)
+    cdef double dot(self, double *X_data_ptr, unsigned int offset,
+                    unsigned int n_features)
+    cdef void scale(self, double c)
+    cdef void reset_wscale(self)
+    cdef double norm(self)
