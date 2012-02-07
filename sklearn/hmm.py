@@ -673,9 +673,9 @@ class GaussianHMM(_BaseHMM):
     >>> from sklearn.hmm import GaussianHMM
     >>> GaussianHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    GaussianHMM(covariance_type=None, covars_prior=0.01, covars_weight=1,
-    means_prior=None, means_weight=0, n_components=2, startprob=None,
-    startprob_prior=1.0, transmat=None, transmat_prior=1.0)
+    GaussianHMM(covariance_type='diag', covars_prior=0.01, covars_weight=1,
+          means_prior=None, means_weight=0, n_components=2, startprob=None,
+          startprob_prior=1.0, transmat=None, transmat_prior=1.0)
 
     See Also
     --------
@@ -989,11 +989,12 @@ class GMMHMM(_BaseHMM):
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, covariance_type='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(covariance_type=None,
-    gmms=[GMM(covariance_type='diag', n_components=10),
-    GMM(covariance_type='diag', n_components=10)],
-    n_components=2, n_mix=10, startprob=None, startprob_prior=1.0,
-    transmat=None, transmat_prior=1.0)
+    GMMHMM(covariance_type='diag', covars_prior=0.01,
+        gmms=[GMM(covariance_type=None, min_covar=0.001, n_components=10,
+        random_state=None, thresh=0.01), GMM(covariance_type=None,
+        min_covar=0.001, n_components=10, random_state=None, thresh=0.01)],
+        n_components=2, n_mix=10, startprob=None, startprob_prior=1.0,
+        transmat=None, transmat_prior=1.0)
 
     See Also
     --------
@@ -1002,7 +1003,7 @@ class GMMHMM(_BaseHMM):
 
     def __init__(self, n_components=1, n_mix=1, startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
-                 gmms=None, covariance_type=None, covars_prior=1e-2):
+                 gmms=None, covariance_type='diag', covars_prior=1e-2):
         """Create a hidden Markov model with GMM emissions.
 
         Parameters
@@ -1028,6 +1029,15 @@ class GMMHMM(_BaseHMM):
                     g = GMM(n_mix, covariance_type=covariance_type)
                 gmms.append(g)
         self.gmms = gmms
+
+    # Read-only properties.
+    @property
+    def covariance_type(self):
+        """Covariance type of the model.
+
+        Must be one of 'spherical', 'tied', 'diag', 'full'.
+        """
+        return self._covariance_type
 
     def _compute_log_likelihood(self, obs):
         return np.array([g.score(obs) for g in self.gmms]).T

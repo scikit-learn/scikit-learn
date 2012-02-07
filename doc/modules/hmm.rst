@@ -64,27 +64,25 @@ constructor. Then, you can generate samples from the HMM by calling `sample`.::
 
     >>> import numpy as np
     >>> from sklearn import hmm
-    >>> import matplotlib.pyplot as plt
     
     >>> startprob = np.array([0.6, 0.3, 0.1])
-    >>> transmat = np.array([[0.7, 0.2, 0.1], [0.3, 0.5, 0.2],
-                        [0.3, 0.3, 0.4]])
+    >>> transmat = np.array([[0.7, 0.2, 0.1], [0.3, 0.5, 0.2], [0.3, 0.3, 0.4]])
     >>> means = np.array([[0.0, 0.0], [3.0, -3.0], [5.0, 10.0]])
     >>> covars = np.tile(np.identity(2), (3, 1, 1))
     >>> model = hmm.GaussianHMM(3, "full", startprob, transmat)
     >>> model.means_ = means
     >>> model.covars_ = covars
-
     >>> X, Z = model.sample(100)
-    >>> plt.plot(X[:,0], X[:,1],"-o", label="observable", ms=10, mfc="orange")
-    >>> plt.legend()
-    >>> plt.show()
+
 
 .. figure:: ../auto_examples/images/plot_hmm_sampling_1.png
-    :target: ../auto_examples/plot_hmm_sampling.html
-    :scake: 75
-    :align: center
+   :target: ../auto_examples/plot_hmm_sampling.html
+   :align: center
+   :scake: 75%
 
+.. topic:: Examples:
+
+ * :ref:`example_plot_hmm_sampling.py`
 
 Training HMM parameters and infering the hidden states
 ------------------------------------------------------
@@ -99,11 +97,10 @@ This time, the input is a single sequence of observed values.::
 
     >>> model2 = hmm.GaussianHMM(3, "full")
     >>> model2.fit([X])
-    >>> print model2.transmat_
-    >>> print model2.means_
-
+    GaussianHMM(covariance_type='full', covars_prior=0.01, covars_weight=1,
+          means_prior=None, means_weight=0, n_components=3, startprob=None,
+          startprob_prior=1.0, transmat=None, transmat_prior=1.0)
     >>> Z2 = model.decode(X)
-    >>> print Z
 
 
 .. topic:: Examples:

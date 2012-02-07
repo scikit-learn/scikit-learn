@@ -303,8 +303,6 @@ class GaussianHMMTester(GaussianHMMParams):
         nobs = len(gaussidx)
         obs = self.prng.randn(nobs, self.n_features) + h.means_[gaussidx]
 
-        print h._covars_, self.covariance_type
-
         ll, posteriors = h.eval(obs)
 
         self.assertEqual(posteriors.shape, (nobs, self.n_components))
