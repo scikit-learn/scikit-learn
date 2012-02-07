@@ -205,7 +205,7 @@ cdef class Huber(Regression):
             return self.c * abs_r - (0.5 * self.c * self.c)
 
     cpdef double dloss(self, double p, double y):
-        cdef double r = p - y  # FIXME y - p
+        cdef double r = p - y
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
             return r
@@ -250,14 +250,19 @@ cdef class WeightVector:
         cdef double val
         cdef double innerprod = 0.0
         cdef double xsqnorm = 0.0
+
+        # the next two lines save a factor of 2!
+        cdef double wscale = self.wscale
+        cdef double* w_data_ptr = self.w_data_ptr
+
         for j in range(n_features):
             val = X_data_ptr[offset + j]
-            innerprod += (self.w_data_ptr[j] * val)
+            innerprod += (w_data_ptr[j] * val)
             xsqnorm += (val * val)
-            self.w_data_ptr[j] += val * (c / self.wscale)
+            self.w_data_ptr[j] += val * (c / wscale)
 
-        # TODO this is needed for PEGASOS only
-        return (xsqnorm * c * c) + (2.0 * innerprod * self.wscale * c)
+        # this is needed for PEGASOS only
+        return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
     cdef double dot(self, double *X_data_ptr, unsigned int offset,
                     unsigned int n_features):
@@ -280,8 +285,9 @@ cdef class WeightVector:
         """
         cdef double innerprod = 0.0
         cdef int j
+        cdef double* w_data_ptr = self.w_data_ptr
         for j in range(n_features):
-            innerprod += self.w_data_ptr[j] * X_data_ptr[offset + j]
+            innerprod += w_data_ptr[j] * X_data_ptr[offset + j]
         innerprod *= self.wscale
         return innerprod
 
@@ -299,7 +305,8 @@ cdef class WeightVector:
 
     cdef double norm(self):
         """Computes the L2 norm of the weight vector.
-        FIXME could be updated after each call to update and scale.
+
+        TODO could be updated after each call to update and scale.
         """
         return np.dot(self.w, self.w) * self.wscale * self.wscale
 
@@ -430,12 +437,12 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] weights,
     eta = eta0
 
     t_start = time()
-    for epoch in xrange(n_iter):
+    for epoch in range(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             np.random.RandomState(seed).shuffle(index)
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             sample_idx = index_data_ptr[i]
 
             # row offset in elem
@@ -508,7 +515,7 @@ cdef void l1penalty(WeightVector w, double *q_data_ptr,
     cdef unsigned j = 0
     cdef double wscale = w.wscale
     cdef double* w_data_ptr = w.w_data_ptr
-    for j in xrange(n_features):
+    for j in range(n_features):
         z = w_data_ptr[j]
         if (w.wscale * w.w_data_ptr[j]) > 0.0:
             w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
