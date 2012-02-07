@@ -60,14 +60,59 @@ cdef class WeightVector:
     cdef DOUBLE *w_data_ptr
     cdef double wscale
     cdef unsigned int n_features
-    cdef double add(self, DOUBLE *X_data_ptr, unsigned int offset,
-                    unsigned int n_features, double c)
+    cdef double add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                    int n_features, double c)
     cdef double add_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
                            int offset, int xnnz, double c)
-    cdef double dot(self, DOUBLE *X_data_ptr, unsigned int offset,
-                    unsigned int n_features)
+    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                    int n_features)
     cdef double dot_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
                            int offset, int xnnz)
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
     cdef double norm(self)
+
+# -----------------------------------------
+# Headers for Dataset Abstractions
+# -----------------------------------------
+
+cdef class Dataset:
+    cdef int n_samples
+
+    cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
+                   int *nnz, double *y, double *sample_weight)
+    cdef void shuffle(self, seed)
+
+
+cdef class ArrayDataset(Dataset):
+    cdef int n_features
+    cdef int current_index
+    cdef int stride
+    cdef DOUBLE *X_data_ptr
+    cdef DOUBLE *Y_data_ptr
+    cdef DOUBLE *sample_weight_data
+    cdef np.ndarray feature_indices
+    cdef INTEGER *feature_indices_ptr
+    cdef np.ndarray index
+    cdef INTEGER *index_data_ptr
+
+    cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
+                   int *nnz, double *y, double *sample_weight)
+    cdef void shuffle(self, seed)
+
+cdef class CSRDataset(Dataset):
+    cdef int current_index
+    cdef int stride
+    cdef DOUBLE *X_data_ptr
+    cdef INTEGER *X_indptr_ptr
+    cdef INTEGER *X_indices_ptr
+    cdef DOUBLE *Y_data_ptr
+    cdef DOUBLE *sample_weight_data
+    cdef np.ndarray feature_indices
+    cdef INTEGER *feature_indices_ptr
+    cdef np.ndarray index
+    cdef INTEGER *index_data_ptr
+
+    cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
+                   int *nnz, double *y, double *sample_weight)
+    cdef void shuffle(self, seed)
