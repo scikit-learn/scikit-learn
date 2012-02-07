@@ -78,7 +78,7 @@ constructor. Then, you can generate samples from the HMM by calling `sample`.::
 .. figure:: ../auto_examples/images/plot_hmm_sampling_1.png
    :target: ../auto_examples/plot_hmm_sampling.html
    :align: center
-   :scake: 75%
+   :scale: 75%
 
 .. topic:: Examples:
 
