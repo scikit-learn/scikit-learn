@@ -15,7 +15,7 @@ cimport numpy as np
 cimport cython
 cimport sgd_fast
 
-from sgd_fast cimport LossFunction, log, sqrt, pow
+from sgd_fast cimport LossFunction, WeightVector, log, sqrt, pow
 
 # Penalty constants
 DEF NO_PENALTY = 0
@@ -29,10 +29,7 @@ DEF OPTIMAL = 2
 DEF INVSCALING = 3
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def plain_sgd(np.ndarray[double, ndim=1] w,
+def plain_sgd(np.ndarray[double, ndim=1] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
@@ -55,7 +52,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
 
     Parameters
     ----------
-    w : ndarray[double, ndim=1]
+    weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
     intercept : double
         The initial intercept
@@ -112,9 +109,10 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     """
     # get the data information into easy vars
     cdef unsigned int n_samples = Y.shape[0]
-    cdef unsigned int n_features = w.shape[0]
+    cdef unsigned int n_features = weights.shape[0]
 
-    cdef double *w_data_ptr = <double *>w.data
+    cdef WeightVector w = WeightVector(weights)
+
     cdef double *X_data_ptr = <double *>X_data.data
     cdef int *X_indptr_ptr = <int *>X_indptr.data
     cdef int *X_indices_ptr = <int *>X_indices.data
@@ -156,12 +154,12 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
     eta = eta0
 
     t_start = time()
-    for epoch in xrange(n_iter):
+    for epoch in range(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             np.random.RandomState(seed).shuffle(index)
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             sample_idx = index_data_ptr[i]
             offset = X_indptr_ptr[sample_idx]
             xnnz = X_indptr_ptr[sample_idx + 1] - offset
@@ -170,8 +168,7 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = (dot(w_data_ptr, X_data_ptr, X_indices_ptr,
-                     offset, xnnz) * wscale) + intercept
+            p = w.dot_sparse(X_data_ptr, X_indices_ptr, offset, xnnz) + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
                 class_weight = weight_pos
@@ -180,41 +177,38 @@ def plain_sgd(np.ndarray[double, ndim=1] w,
             update = eta * loss.dloss(p, y) * class_weight * \
                 sample_weight_data[sample_idx]
             if update != 0.0:
-                add(w_data_ptr, wscale, X_data_ptr, X_indices_ptr,
-                    offset, xnnz, -update)
+                w.add_sparse(X_data_ptr, X_indices_ptr, offset, xnnz, -update)
                 if fit_intercept == 1:
+                    # update intercept with reduced learning rate
+                    # due to dense updates.
                     intercept -= update * 0.01
             if penalty_type >= L2:
-                wscale *= (1.0 - (rho * eta * alpha))
-                if wscale < 1e-9:
-                    w *= wscale
-                    wscale = 1.0
+                w.scale(1.0 - (rho * eta * alpha))
+
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w_data_ptr, wscale, q_data_ptr,
-                          X_indices_ptr, offset, xnnz, u)
+                l1penalty(w, q_data_ptr, X_indices_ptr, offset, xnnz, u)
             t += 1
             count += 1
 
         # report epoche information
         if verbose > 0:
-            wnorm = sqrt(np.dot(w, w) * wscale * wscale)
+            wnorm = w.norm()
             print("Norm: %.2f, NNZs: %d, "\
             "Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm,
-                                                    w.nonzero()[0].shape[0],
+                                                    weights.nonzero()[0].shape[0],
                                                     intercept, count,
                                                     sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
+        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    if wscale != 1.0:
-        w *= wscale
+    w.reset_wscale()
 
-    return w, intercept
+    return weights, intercept
 
 
 cdef inline double max(double a, double b):
@@ -225,33 +219,7 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef double dot(double *w_data_ptr, double *X_data_ptr, int *X_indices_ptr,
-                int offset, int xnnz):
-    cdef double sum = 0.0
-    cdef int j
-    for j in xrange(xnnz):
-        sum += w_data_ptr[X_indices_ptr[offset + j]] * X_data_ptr[offset + j]
-    return sum
-
-
-cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
-                int *X_indices_ptr, int offset, int xnnz, double c):
-    """Scales example x by constant c and adds it to the weight vector w"""
-    cdef int j
-    cdef int idx
-    cdef double val
-    cdef double innerprod = 0.0
-    cdef double xsqnorm = 0.0
-    for j in xrange(xnnz):
-        idx = X_indices_ptr[offset + j]
-        val = X_data_ptr[offset + j]
-        innerprod += (w_data_ptr[idx] * val)
-        xsqnorm += (val * val)
-        w_data_ptr[idx] += val * (c / wscale)
-    return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
-
-
-cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
+cdef void l1penalty(WeightVector w, double *q_data_ptr,
                     int *X_indices_ptr, int offset, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
@@ -261,7 +229,9 @@ cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    for j in xrange(xnnz):
+    cdef double wscale = w.wscale
+    cdef double* w_data_ptr = w.w_data_ptr
+    for j in range(xnnz):
         idx = X_indices_ptr[offset + j]
         z = w_data_ptr[idx]
         if (wscale * w_data_ptr[idx]) > 0.0:

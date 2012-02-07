@@ -246,7 +246,7 @@ cdef class WeightVector:
         sq_norm : double
             The squared norm of the weight vector after the update.
         """
-        cdef unsigned j
+        cdef unsigned int j
         cdef double val
         cdef double innerprod = 0.0
         cdef double xsqnorm = 0.0
@@ -260,6 +260,48 @@ cdef class WeightVector:
             innerprod += (w_data_ptr[j] * val)
             xsqnorm += (val * val)
             self.w_data_ptr[j] += val * (c / wscale)
+
+        # this is needed for PEGASOS only
+        return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+
+    cdef double add_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+                           int offset, int xnnz, double c):
+        """Scales sparse sample x by constant c and adds it to the weight vector.
+
+        Parameters
+        ----------
+        X_data_ptr : double*
+            The pointer to the data array of a sp.sparse.csr_matrix ``X``.
+        X_indices_ptr : int*
+            The pointer to the indices (=columns) array of a
+            sp.sparse.csr_matrix ``X``.
+        offset : unsigned int
+            The offset of the example x in ``X_data_ptr`` and ``X_indices_ptr``.
+        xnnz : int
+            The number of non-zero features for example x.
+        c : double
+            The scaling constant for the example.
+        Returns
+        -------
+        sq_norm : double
+            The squared norm of the weight vector after the update.
+        """
+        cdef int j
+        cdef int idx
+        cdef double val
+        cdef double innerprod = 0.0
+        cdef double xsqnorm = 0.0
+
+        # the next two lines save a factor of 2!
+        cdef double wscale = self.wscale
+        cdef double* w_data_ptr = self.w_data_ptr
+
+        for j in range(xnnz):
+            idx = X_indices_ptr[offset + j]
+            val = X_data_ptr[offset + j]
+            innerprod += (w_data_ptr[idx] * val)
+            xsqnorm += (val * val)
+            w_data_ptr[idx] += val * (c / wscale)
 
         # this is needed for PEGASOS only
         return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
@@ -284,11 +326,40 @@ cdef class WeightVector:
             The inner product of ``x`` and ``w``.
         """
         cdef double innerprod = 0.0
-        cdef int j
+        cdef unsigned int j
         cdef double* w_data_ptr = self.w_data_ptr
         for j in range(n_features):
             innerprod += w_data_ptr[j] * X_data_ptr[offset + j]
         innerprod *= self.wscale
+        return innerprod
+
+    cdef double dot_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+                           int offset, int xnnz):
+        """Computes the dot product (=inner product) of a sparse sample x
+        and the weight vector.
+
+        Parameters
+        ----------
+        X_data_ptr : double*
+            The pointer to the data array of a sp.sparse.csr_matrix ``X``.
+        X_indices_ptr : int*
+            The pointer to the indices (=columns) array of a
+            sp.sparse.csr_matrix ``X``.
+        offset : unsigned int
+            The offset of the example x in ``X_data_ptr`` and ``X_indices_ptr``.
+        xnnz : int
+            The number of non-zero features for example x.
+        Returns
+        -------
+        innerprod : double
+            The inner product of ``x`` and ``w``.
+        """
+        cdef double innerprod = 0.0
+        cdef int j
+        cdef double* w_data_ptr = self.w_data_ptr
+        for j in range(xnnz):
+            innerprod += w_data_ptr[X_indices_ptr[offset + j]] \
+                         * X_data_ptr[offset + j]
         return innerprod
 
     cdef void scale(self, double c):
@@ -391,13 +462,13 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] weights,
     cdef unsigned int n_samples = Y.shape[0]
     cdef unsigned int n_features = weights.shape[0]
 
+    cdef WeightVector w = WeightVector(weights)
+
     # Array stride to get to next sample
     cdef int stride = X.strides[0] / X.strides[1]
 
     cdef double *X_data_ptr = <double *>X.data
     cdef double *Y_data_ptr = <double *>Y.data
-
-    cdef WeightVector w = WeightVector(weights)
 
     cdef double *sample_weight_data = <double *>sample_weight.data
 

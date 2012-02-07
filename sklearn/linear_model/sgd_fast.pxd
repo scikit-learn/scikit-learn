@@ -62,8 +62,12 @@ cdef class WeightVector:
     cdef unsigned int n_features
     cdef double add(self, double *X_data_ptr, unsigned int offset,
                     unsigned int n_features, double c)
+    cdef double add_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+                           int offset, int xnnz, double c)
     cdef double dot(self, double *X_data_ptr, unsigned int offset,
                     unsigned int n_features)
+    cdef double dot_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+                           int offset, int xnnz)
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
     cdef double norm(self)
