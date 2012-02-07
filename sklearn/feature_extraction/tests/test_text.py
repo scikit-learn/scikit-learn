@@ -147,6 +147,14 @@ def test_countvectorizer_custom_vocabulary():
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
+    # try again with a dict vocabulary
+    vocab = {"pizza": 0, "beer": 1}
+    vect = CountVectorizer(vocabulary=vocab)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_equal(vect.vocabulary, vocab)
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
+
 
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
