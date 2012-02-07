@@ -553,5 +553,6 @@ class Memory(Logger):
             In addition, when unpickling, we run the __init__
         """
         # We need to remove 'joblib' from the end of cachedir
-        return (self.__class__, (self.cachedir[:-7],
+        cachedir = self.cachedir[-7] if self.cachedir is not None else None
+        return (self.__class__, (cachedir,
                 self.mmap_mode, self.compress, self._verbose))

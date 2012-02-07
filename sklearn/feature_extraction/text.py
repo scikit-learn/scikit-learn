@@ -9,10 +9,13 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
+from collections import Mapping
 import re
 import unicodedata
+
 import numpy as np
 import scipy.sparse as sp
+
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
@@ -268,7 +271,7 @@ class CountVectorizer(BaseEstimator):
         else:
             self.analyzer = DEFAULT_ANALYZER
         self.fit_vocabulary = vocabulary is None
-        if vocabulary is not None and not isinstance(vocabulary, dict):
+        if vocabulary is not None and not isinstance(vocabulary, Mapping):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
         self.dtype = dtype
