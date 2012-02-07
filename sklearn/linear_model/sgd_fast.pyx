@@ -358,7 +358,9 @@ cdef class WeightVector:
         cdef int j
         cdef DOUBLE* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
-            innerprod += w_data_ptr[X_indices_ptr[offset + j]] * X_data_ptr[offset + j]
+            innerprod += w_data_ptr[X_indices_ptr[offset + j]] * \
+                         X_data_ptr[offset + j]
+        innerprod *= self.wscale
         return innerprod
 
     cdef void scale(self, double c):

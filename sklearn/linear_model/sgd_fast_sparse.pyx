@@ -168,8 +168,6 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            assert xnnz >= 1
-            assert offset >= 0
             p = w.dot_sparse(X_data_ptr, X_indices_ptr, offset, xnnz) + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
