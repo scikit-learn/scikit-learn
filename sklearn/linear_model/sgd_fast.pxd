@@ -57,16 +57,16 @@ cdef class Huber(Regression):
 
 cdef class WeightVector:
     cdef w
-    cdef double *w_data_ptr
+    cdef DOUBLE *w_data_ptr
     cdef double wscale
     cdef unsigned int n_features
-    cdef double add(self, double *X_data_ptr, unsigned int offset,
+    cdef double add(self, DOUBLE *X_data_ptr, unsigned int offset,
                     unsigned int n_features, double c)
-    cdef double add_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+    cdef double add_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
                            int offset, int xnnz, double c)
-    cdef double dot(self, double *X_data_ptr, unsigned int offset,
+    cdef double dot(self, DOUBLE *X_data_ptr, unsigned int offset,
                     unsigned int n_features)
-    cdef double dot_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+    cdef double dot_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
                            int offset, int xnnz)
     cdef void scale(self, double c)
     cdef void reset_wscale(self)

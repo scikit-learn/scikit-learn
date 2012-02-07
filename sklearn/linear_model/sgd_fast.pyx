@@ -220,13 +220,13 @@ cdef class Huber(Regression):
 
 cdef class WeightVector:
 
-    def __init__(self, np.ndarray[np.float64_t, ndim=1, mode='c'] w):
+    def __init__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
         self.w = w
-        self.w_data_ptr = <double *>w.data
+        self.w_data_ptr = <DOUBLE *>w.data
         self.wscale = 1.0
         self.n_features = w.shape[0]
 
-    cdef double add(self, double *X_data_ptr, unsigned int offset,
+    cdef double add(self, DOUBLE *X_data_ptr, unsigned int offset,
                     unsigned int n_features, double c):
         """Scales example x by constant c and adds it to the weight vector.
 
@@ -253,7 +253,7 @@ cdef class WeightVector:
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
-        cdef double* w_data_ptr = self.w_data_ptr
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
 
         for j in range(n_features):
             val = X_data_ptr[offset + j]
@@ -264,7 +264,7 @@ cdef class WeightVector:
         # this is needed for PEGASOS only
         return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
-    cdef double add_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+    cdef double add_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
                            int offset, int xnnz, double c):
         """Scales sparse sample x by constant c and adds it to the weight vector.
 
@@ -294,7 +294,7 @@ cdef class WeightVector:
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
-        cdef double* w_data_ptr = self.w_data_ptr
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
 
         for j in range(xnnz):
             idx = X_indices_ptr[offset + j]
@@ -306,7 +306,7 @@ cdef class WeightVector:
         # this is needed for PEGASOS only
         return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
-    cdef double dot(self, double *X_data_ptr, unsigned int offset,
+    cdef double dot(self, DOUBLE *X_data_ptr, unsigned int offset,
                     unsigned int n_features):
         """Computes the dot product (=inner product) of a sample x
         and the weight vector.
@@ -327,20 +327,20 @@ cdef class WeightVector:
         """
         cdef double innerprod = 0.0
         cdef unsigned int j
-        cdef double* w_data_ptr = self.w_data_ptr
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
         for j in range(n_features):
             innerprod += w_data_ptr[j] * X_data_ptr[offset + j]
         innerprod *= self.wscale
         return innerprod
 
-    cdef double dot_sparse(self, double *X_data_ptr, int *X_indices_ptr,
+    cdef double dot_sparse(self, DOUBLE *X_data_ptr, INTEGER *X_indices_ptr,
                            int offset, int xnnz):
         """Computes the dot product (=inner product) of a sparse sample x
         and the weight vector.
 
         Parameters
         ----------
-        X_data_ptr : double*
+        X_data_ptr : DOUBLE*
             The pointer to the data array of a sp.sparse.csr_matrix ``X``.
         X_indices_ptr : int*
             The pointer to the indices (=columns) array of a
@@ -356,10 +356,9 @@ cdef class WeightVector:
         """
         cdef double innerprod = 0.0
         cdef int j
-        cdef double* w_data_ptr = self.w_data_ptr
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
-            innerprod += w_data_ptr[X_indices_ptr[offset + j]] \
-                         * X_data_ptr[offset + j]
+            innerprod += w_data_ptr[X_indices_ptr[offset + j]] * X_data_ptr[offset + j]
         return innerprod
 
     cdef void scale(self, double c):
@@ -382,17 +381,17 @@ cdef class WeightVector:
         return np.dot(self.w, self.w) * self.wscale * self.wscale
 
 
-def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] weights,
+def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-              np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+              np.ndarray[DOUBLE, ndim=2, mode='c'] X,
+              np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
-              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
+              np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weight,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0):
@@ -467,16 +466,16 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] weights,
     # Array stride to get to next sample
     cdef int stride = X.strides[0] / X.strides[1]
 
-    cdef double *X_data_ptr = <double *>X.data
-    cdef double *Y_data_ptr = <double *>Y.data
+    cdef DOUBLE *X_data_ptr = <DOUBLE *>X.data
+    cdef DOUBLE *Y_data_ptr = <DOUBLE *>Y.data
 
-    cdef double *sample_weight_data = <double *>sample_weight.data
+    cdef DOUBLE *sample_weight_data = <DOUBLE *>sample_weight.data
 
     # Use index array for fast shuffling
-    cdef np.ndarray[np.int32_t, ndim=1,
+    cdef np.ndarray[INTEGER, ndim=1,
                     mode="c"] index = np.arange(n_samples,
                                                 dtype=np.int32)
-    cdef int *index_data_ptr = <int *>index.data
+    cdef INTEGER *index_data_ptr = <INTEGER *>index.data
 
     # helper variable
     cdef unsigned int offset = 0
@@ -493,11 +492,11 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] weights,
     cdef int sample_idx = 0
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] q = None
-    cdef double *q_data_ptr = NULL
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
+    cdef DOUBLE *q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <double *> q.data
+        q_data_ptr = <DOUBLE *> q.data
     cdef double u = 0.0
 
     if penalty_type == L2:
