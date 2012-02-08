@@ -291,9 +291,8 @@ a good combination using either simple empirical rules or data
 driven selection::
 
   >>> clf
-  LinearSVC(loss='l2', C=1.0, dual=True, fit_intercept=True, penalty='l2',
-       multi_class=False, tol=0.0001, intercept_scaling=1)
-
+  LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
+       loss='l2', multi_class=False, penalty='l2', scale_C=None, tol=0.0001)
 
 By default the real model parameters are not initialized. They will be
 tuned automatically from the data by calling the ``fit`` method::
@@ -339,8 +338,9 @@ of the outcome.  This is the case of logistic regression models::
   >>> from sklearn.linear_model import LogisticRegression
   >>> clf2 = LogisticRegression().fit(X, y)
   >>> clf2
-  LogisticRegression(C=1.0, intercept_scaling=1, dual=False, fit_intercept=True,
-            penalty='l2', tol=0.0001)
+  LogisticRegression(C=1.0, dual=False, fit_intercept=True, intercept_scaling=1,
+            penalty='l2', scale_C=False, tol=0.0001)
+
 
 
   >>> clf2.predict_proba(X_new)
@@ -513,19 +513,20 @@ Let us project the iris dataset along those first 3 dimensions::
 The dataset has been "normalized", which means that the data is now centered on
 both components with unit variance::
 
-  >>> X_pca.mean(axis=0)                                   # doctest: +ELLIPSIS
-  array([ -1.44...e-15,   1.73...e-15])
+  >>> import numpy as np
+  >>> np.round(X_pca.mean(axis=0), decimals=5)
+  array([-0.,  0.])
 
-  >>> X_pca.std(axis=0)
+  >>> np.round(X_pca.std(axis=0), decimals=5)
   array([ 1.,  1.])
 
 Furthermore the samples components do no longer carry any linear
 correlation::
 
   >>> import numpy as np
-  >>> np.corrcoef(X_pca.T)                                 # doctest: +ELLIPSIS
-  array([[  1.00...e+00,  -7.58...e-16],
-         [ -7.58...e-16,   1.00...e+00]])
+  >>> np.round(np.corrcoef(X_pca.T), decimals=5)
+  array([[ 1., -0.],
+         [-0.,  1.]])
 
 
 And visualize the dataset using ``pylab``, for instance by defining the
@@ -601,16 +602,16 @@ clustering algorithm (KMeans)::
 
   >>> kmeans = KMeans(3, random_state=rng).fit(X_pca)
 
-  >>> kmeans.cluster_centers_                     # doctest: +ELLIPSIS
-  array([[ 0.33...,  0.90...],
-         [ 0.99..., -0.69...],
-         [-1.28..., -0.43...]])
+  >>> np.round(kmeans.cluster_centers_, decimals=2)
+  array([[ 1.02, -0.71],
+         [ 0.33,  0.89],
+         [-1.29, -0.44]])
 
   >>> kmeans.labels_[:10]
   array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
   >>> kmeans.labels_[-10:]
-  array([1, 1, 0, 1, 1, 1, 0, 1, 1, 0])
+  array([0, 0, 1, 0, 0, 0, 1, 0, 0, 1])
 
 We can plot the assigned cluster labels instead of the target names
 with::
