@@ -508,6 +508,8 @@ th.field-name {
 div.warning-wrapper {
     background-color: #ffaaaa;
     max-width: auto;
-    margin: 0 0 0 0;
     text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
 }
