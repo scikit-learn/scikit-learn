@@ -51,7 +51,7 @@ model = GaussianHMM(n_components, "diag")
 model.fit([X], n_iter=1000)
 
 # predict the optimal sequence of internal hidden state
-_, hidden_states = model.decode(X)
+hidden_states = model.predict(X)
 
 print "done\n"
 

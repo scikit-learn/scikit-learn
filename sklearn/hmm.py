@@ -21,12 +21,6 @@ from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)
 from . import cluster
-import warnings
-warnings.warn('sklearn.hmm is orphaned, undocumented and has known numerical'
-              ' stability issues. If nobody volunteers to write documentation'
-              ' and make it more stable, this module will be removed in'
-              ' version 0.11.')
-
 from .utils import deprecated
 try:
     from . import _hmmc
