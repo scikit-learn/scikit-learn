@@ -56,10 +56,10 @@ cdef class Huber(Regression):
 # -----------------------------------------
 
 cdef class WeightVector:
-    cdef w
+    cdef np.ndarray w
     cdef DOUBLE *w_data_ptr
     cdef double wscale
-    cdef unsigned int n_features
+    cdef Py_ssize_t n_features
     cdef double add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                     int xnnz, double c)
     cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
@@ -73,8 +73,7 @@ cdef class WeightVector:
 # -----------------------------------------
 
 cdef class Dataset:
-    cdef int n_samples
-    cdef DOUBLE *sample_weight_data
+    cdef Py_ssize_t n_samples
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
@@ -82,7 +81,7 @@ cdef class Dataset:
 
 
 cdef class ArrayDataset(Dataset):
-    cdef int n_features
+    cdef Py_ssize_t n_features
     cdef int current_index
     cdef int stride
     cdef DOUBLE *X_data_ptr
@@ -92,6 +91,7 @@ cdef class ArrayDataset(Dataset):
     cdef INTEGER *feature_indices_ptr
     cdef np.ndarray index
     cdef INTEGER *index_data_ptr
+    cdef DOUBLE *sample_weight_data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
@@ -108,6 +108,7 @@ cdef class CSRDataset(Dataset):
     cdef INTEGER *feature_indices_ptr
     cdef np.ndarray index
     cdef INTEGER *index_data_ptr
+    cdef DOUBLE *sample_weight_data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)

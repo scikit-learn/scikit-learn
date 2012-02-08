@@ -411,9 +411,7 @@ cdef class CSRDataset(Dataset):
                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weight):
         self.n_samples = Y.shape[0]
-
         self.current_index = -1
-
         self.X_data_ptr = <DOUBLE *>X_data.data
         self.X_indptr_ptr = <INTEGER *>X_indptr.data
         self.X_indices_ptr = <INTEGER *>X_indices.data
@@ -435,7 +433,6 @@ cdef class CSRDataset(Dataset):
         current_index += 1
         cdef int sample_idx = self.index_data_ptr[current_index]
         cdef int offset = self.X_indptr_ptr[sample_idx]
-
         y[0] = self.Y_data_ptr[sample_idx]
         x_data_ptr[0] = self.X_data_ptr + offset
         x_ind_ptr[0] = self.X_indices_ptr + offset
@@ -470,9 +467,9 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
     intercept : double
-        The initial intercept
+        The initial intercept.
     loss : LossFunction
-        A concrete LossFunction object.
+        A concrete ``LossFunction`` object.
     penalty_type : int
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
@@ -480,7 +477,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     rho : float
         The elastic net hyperparameter.
     dataset : Dataset
-        The dataset abstraction.
+        A concrete ``Dataset`` object.
     n_iter : int
         The number of iterations (epochs).
     fit_intercept : int
@@ -512,7 +509,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     Returns
     -------
-    w : array, shape [n_features]
+    weights : array, shape=[n_features]
         The fitted weight vector.
     intercept : float
         The fitted intercept term.
@@ -520,8 +517,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     """
 
     # get the data information into easy vars
-    cdef unsigned int n_samples = dataset.n_samples
-    cdef unsigned int n_features = weights.shape[0]
+    cdef Py_ssize_t n_samples = dataset.n_samples
+    cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights)
 
@@ -572,7 +569,9 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
             p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-            sumloss += loss.loss(p, y)
+
+            if verbose > 0:
+                sumloss += loss.loss(p, y)
 
             if y > 0.0:
                 class_weight = weight_pos
