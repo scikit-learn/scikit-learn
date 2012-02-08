@@ -105,7 +105,7 @@ class BaseLibSVM(BaseEstimator):
         self.sparse = sparse
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -135,6 +135,11 @@ class BaseLibSVM(BaseEstimator):
         matrices as input.
         """
         self._sparse = sp.isspmatrix(X) if self.sparse == "auto" else self.sparse
+        if class_weight != None:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                    "Using it in the 'fit' method is deprecated.",
+                    DeprecationWarning)
+            self.class_weight = class_weight
         fit = self._sparse_fit if self._sparse else self._dense_fit
         fit(X, y, sample_weight)
         return self
@@ -595,7 +600,7 @@ class BaseLibLinear(BaseEstimator):
                              + error_string)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, y):
+    def fit(self, X, y, class_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -616,6 +621,12 @@ class BaseLibLinear(BaseEstimator):
         self : object
             Returns self.
         """
+
+        if class_weight != None:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                    "Using it in the 'fit' method is deprecated.",
+                    DeprecationWarning)
+            self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.int32).ravel()
