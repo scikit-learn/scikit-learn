@@ -502,26 +502,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                                     tol, C, nu, 0., shrinking, probability,
                                     cache_size, scale_C, sparse="auto", class_weight=None)
 
-    def fit(self, X, y, sample_weight=None, **params):
-        """
-        Fit the SVM model according to the given training data and parameters.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
-        y : array, shape = [n_samples]
-            Target values. Array of floating-point numbers.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # we copy this method because SVR does not accept class_weight
-        return super(NuSVR, self).fit(X, y, sample_weight=[], **params)
-
 
 class OneClassSVM(BaseLibSVM):
     """Unsupervised Outliers Detection.
