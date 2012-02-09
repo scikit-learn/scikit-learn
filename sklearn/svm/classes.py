@@ -400,8 +400,9 @@ class SVR(BaseLibSVM, RegressorMixin):
                  probability=False, cache_size=200, scale_C=None):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
-                                  tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C, sparse="auto", class_weight=None)
+                tol, C, 0., epsilon, shrinking, probability, cache_size,
+                scale_C, sparse="auto", class_weight=None)
+
 
 class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
@@ -499,8 +500,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                  scale_C=None):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
-                                    tol, C, nu, 0., shrinking, probability,
-                                    cache_size, scale_C, sparse="auto", class_weight=None)
+                tol, C, nu, 0., shrinking, probability, cache_size, scale_C,
+                sparse="auto", class_weight=None)
 
 
 class OneClassSVM(BaseLibSVM):
@@ -595,6 +596,6 @@ class OneClassSVM(BaseLibSVM):
         it is copied.
 
         """
-        super(OneClassSVM, self).fit( X, [], sample_weight=sample_weight,
+        super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
                 **params)
         return self

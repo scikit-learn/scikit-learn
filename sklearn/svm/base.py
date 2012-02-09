@@ -694,8 +694,8 @@ class BaseLibLinear(BaseEstimator):
                        else liblinear.decision_function_wrap
 
         dec_func = dfunc_wrap(X, self.raw_coef_, self._get_solver_type(),
-                              self.tol, self.C, self.class_weight_label_,
-                              self.class_weight_, self.label_, self._get_bias())
+                self.tol, self.C, self.class_weight_label_, self.class_weight_,
+                self.label_, self._get_bias())
 
         return dec_func
 
