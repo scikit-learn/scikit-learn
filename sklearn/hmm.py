@@ -22,10 +22,7 @@ from .mixture import (
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)
 from . import cluster
 from .utils import deprecated
-try:
-    from . import _hmmc
-except:
-    _hmmc = None
+from . import _hmmc
 
 
 ZEROLOGPROB = -1e200
@@ -113,7 +110,7 @@ class _BaseHMM(BaseEstimator):
             transmat_prior = 1.0
         self.transmat_prior = transmat_prior
 
-    def eval(self, obs, maxrank=None, beamlogprob=NEGINF):
+    def eval(self, obs):
         """Compute the log probability under the model and compute posteriors
 
         Implements rank and beam pruning in the forward-backward
@@ -124,15 +121,6 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, shape (n, n_features)
             Sequence of n_features-dimensional data points.  Each row
             corresponds to a single point in the sequence.
-        maxrank : int
-            Maximum rank to evaluate for rank pruning.  If not None,
-            only consider the top `maxrank` states in the inner
-            sum of the forward algorithm recursion.  Defaults to None
-            (no rank pruning).  See The HTK Book for more details.
-        beamlogprob : float
-            Width of the beam-pruning beam in log-probability units.
-            Defaults to -numpy.Inf (no beam pruning).  See The HTK
-            Book for more details.
 
         Returns
         -------
@@ -149,10 +137,8 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
-        logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
-                                                    beamlogprob)
-        bwdlattice = self._do_backward_pass(framelogprob, fwdlattice, maxrank,
-                                            beamlogprob)
+        logprob, fwdlattice = self._do_forward_pass(framelogprob)
+        bwdlattice = self._do_backward_pass(framelogprob)
         gamma = fwdlattice + bwdlattice
         # gamma is guaranteed to be correctly normalized by logprob at
         # all frames, unless we do approximate inference using pruning.
@@ -163,7 +149,7 @@ class _BaseHMM(BaseEstimator):
         posteriors /= np.sum(posteriors, axis=1).reshape((-1, 1))
         return logprob, posteriors
 
-    def score(self, obs, maxrank=None, beamlogprob=NEGINF):
+    def score(self, obs):
         """Compute the log probability under the model.
 
         Parameters
@@ -171,15 +157,6 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, shape (n, n_features)
             Sequence of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        maxrank : int
-            Maximum rank to evaluate for rank pruning.  If not None,
-            only consider the top `maxrank` states in the inner
-            sum of the forward algorithm recursion.  Defaults to None
-            (no rank pruning).  See The HTK Book for more details.
-        beamlogprob : float
-            Width of the beam-pruning beam in log-probability units.
-            Defaults to -numpy.Inf (no beam pruning).  See The HTK
-            Book for more details.
 
         Returns
         -------
@@ -193,11 +170,10 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
-        logprob, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
-                                                    beamlogprob)
+        logprob, fwdlattice = self._do_forward_pass(framelogprob)
         return logprob
 
-    def decode(self, obs, maxrank=None, beamlogprob=NEGINF):
+    def decode(self, obs):
         """Find most likely state sequence corresponding to `obs`.
 
         Uses the Viterbi algorithm.
@@ -207,15 +183,6 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        maxrank : int
-            Maximum rank to evaluate for rank pruning.  If not None,
-            only consider the top `maxrank` states in the inner
-            sum of the forward algorithm recursion.  Defaults to None
-            (no rank pruning).  See The HTK Book for more details.
-        beamlogprob : float
-            Width of the beam-pruning beam in log-probability units.
-            Defaults to -numpy.Inf (no beam pruning).  See The HTK
-            Book for more details.
 
         Returns
         -------
@@ -231,11 +198,10 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
-        logprob, state_sequence = self._do_viterbi_pass(framelogprob, maxrank,
-                                                        beamlogprob)
+        logprob, state_sequence = self._do_viterbi_pass(framelogprob)
         return logprob, state_sequence
 
-    def predict(self, obs, maxrank=None, beamlogprob=NEGINF):
+    def predict(self, obs):
         """Find most likely state sequence corresponding to `obs`.
 
         Parameters
@@ -243,25 +209,16 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        maxrank : int
-            Maximum rank to evaluate for rank pruning.  If not None,
-            only consider the top `maxrank` states in the inner
-            sum of the forward algorithm recursion.  Defaults to None
-            (no rank pruning).  See The HTK Book for more details.
-        beamlogprob : float
-            Width of the beam-pruning beam in log-probability units.
-            Defaults to -numpy.Inf (no beam pruning).  See The HTK
-            Book for more details.
 
         Returns
         -------
         states : array_like, shape (n,)
             Index of the most likely states for each observation
         """
-        logprob, state_sequence = self.decode(obs, maxrank, beamlogprob)
+        logprob, state_sequence = self.decode(obs)
         return state_sequence
 
-    def predict_proba(self, obs, maxrank=None, beamlogprob=NEGINF):
+    def predict_proba(self, obs):
         """Compute the posterior probability for each state in the model
 
         Parameters
@@ -269,22 +226,13 @@ class _BaseHMM(BaseEstimator):
         obs : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        maxrank : int
-            Maximum rank to evaluate for rank pruning.  If not None,
-            only consider the top `maxrank` states in the inner
-            sum of the forward algorithm recursion.  Defaults to None
-            (no rank pruning).  See The HTK Book for more details.
-        beamlogprob : float
-            Width of the beam-pruning beam in log-probability units.
-            Defaults to -numpy.Inf (no beam pruning).  See The HTK
-            Book for more details.
 
         Returns
         -------
         T : array-like, shape (n, n_components)
             Returns the probability of the sample for each state in the model.
         """
-        logprob, posteriors = self.eval(obs, maxrank, beamlogprob)
+        logprob, posteriors = self.eval(obs)
         return posteriors
 
     def sample(self, n=1, random_state=None):
@@ -330,8 +278,7 @@ class _BaseHMM(BaseEstimator):
         return self.sample(n, random_state)
 
     def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
-            init_params=string.ascii_letters, maxrank=None,
-            beamlogprob=NEGINF, **kwargs):
+            init_params=string.ascii_letters, **kwargs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
@@ -363,17 +310,6 @@ class _BaseHMM(BaseEstimator):
             startprob, 't' for transmat, 'm' for means, and 'c' for
             covars, etc.  Defaults to all parameters.
 
-        maxrank : int, optional
-            Maximum rank to evaluate for rank pruning.  If not None,
-            only consider the top `maxrank` states in the inner
-            sum of the forward algorithm recursion.  Defaults to None
-            (no rank pruning).  See "The HTK Book" for more details.
-
-        beamlogprob : float, optional
-            Width of the beam-pruning beam in log-probability units.
-            Defaults to -numpy.Inf (no beam pruning).  See "The HTK
-            Book" for more details.
-
         Notes
         -----
         In general, `logprob` should be non-decreasing unless
@@ -391,10 +327,8 @@ class _BaseHMM(BaseEstimator):
             curr_logprob = 0
             for seq in obs:
                 framelogprob = self._compute_log_likelihood(seq)
-                lpr, fwdlattice = self._do_forward_pass(framelogprob, maxrank,
-                                                       beamlogprob)
-                bwdlattice = self._do_backward_pass(framelogprob, fwdlattice,
-                                                   maxrank, beamlogprob)
+                lpr, fwdlattice = self._do_forward_pass(framelogprob)
+                bwdlattice = self._do_backward_pass(framelogprob)
                 gamma = fwdlattice + bwdlattice
                 posteriors = np.exp(gamma.T - logsumexp(gamma, axis=1)).T
                 curr_logprob += lpr
@@ -444,122 +378,35 @@ class _BaseHMM(BaseEstimator):
 
     transmat_ = property(_get_transmat, _set_transmat)
 
-    def _do_viterbi_pass(self, framelogprob, maxrank=None,
-                         beamlogprob=NEGINF):
-        if _hmmc:
-            n_observations, n_components = framelogprob.shape
-            state_sequence, logprob = _hmmc._viterbi(
-                    n_observations, n_components, self._log_startprob,
-                    self._log_transmat, framelogprob)
-        else:
-            nobs = len(framelogprob)
-            lattice = np.zeros((nobs, self.n_components))
-            traceback = np.zeros((nobs, self.n_components), dtype=np.int)
-
-            lattice[0] = self._log_startprob + framelogprob[0]
-            for n in xrange(1, nobs):
-                idx = self._prune_states(lattice[n - 1],
-                                          maxrank, beamlogprob)
-                pr = self._log_transmat[idx].T + lattice[n - 1, idx]
-                lattice[n] = np.max(pr, axis=1) + framelogprob[n]
-                traceback[n] = np.argmax(pr, axis=1)
-            lattice[lattice <= ZEROLOGPROB] = NEGINF
-
-            # Do traceback.
-            reverse_state_sequence = []
-            s = lattice[-1].argmax()
-            logprob = lattice[-1, s]
-            for frame in reversed(traceback):
-                reverse_state_sequence.append(s)
-                s = frame[s]
-
-            state_sequence = np.array(reverse_state_sequence)[::-1]
+    def _do_viterbi_pass(self, framelogprob):
+        n_observations, n_components = framelogprob.shape
+        state_sequence, logprob = _hmmc._viterbi(
+                n_observations, n_components, self._log_startprob,
+                self._log_transmat, framelogprob)
 
         return logprob, state_sequence
 
-    def _do_forward_pass(self, framelogprob, maxrank=None,
-                         beamlogprob=NEGINF):
+    def _do_forward_pass(self, framelogprob):
 
-        nobs = len(framelogprob)
-        fwdlattice = np.zeros((nobs, self.n_components))
-
-        if _hmmc:
-            n_observations, n_components = framelogprob.shape
-            _hmmc._forward(n_observations, n_components, self._log_startprob,
-                    self._log_transmat, framelogprob, fwdlattice)
-        else:
-            fwdlattice[0] = self._log_startprob + framelogprob[0]
-            for n in xrange(1, nobs):
-                idx = self._prune_states(
-                    fwdlattice[n - 1], maxrank, beamlogprob)
-                fwdlattice[n] = (logsumexp(self._log_transmat[idx].T
-                                        + fwdlattice[n - 1, idx], axis=1)
-                                 + framelogprob[n])
-
+        n_observations, n_components = framelogprob.shape
+        fwdlattice = np.zeros((n_observations, n_components))
+        _hmmc._forward(n_observations, n_components, self._log_startprob,
+                self._log_transmat, framelogprob, fwdlattice)
+        
         fwdlattice[fwdlattice <= ZEROLOGPROB] = NEGINF
 
         return logsumexp(fwdlattice[-1]), fwdlattice
 
-    def _do_backward_pass(self, framelogprob, fwdlattice, maxrank=None,
-                          beamlogprob=NEGINF):
-
-        nobs = len(framelogprob)
-        bwdlattice = np.zeros((nobs, self.n_components))
-
-        if _hmmc:
-            n_observations, n_components = framelogprob.shape
-            _hmmc._backward(n_observations, n_components,
-                    self._log_startprob, self._log_transmat,
-                    framelogprob, bwdlattice)
-        else:
-            for n in xrange(nobs - 1, 0, -1):
-                # Do HTK style pruning (p. 137 of HTK Book version 3.4).
-                # Don't bother computing backward probability if
-                # fwdlattice * bwdlattice is more than a certain distance
-                # from the total log likelihood.
-                idx = self._prune_states(
-                    bwdlattice[n] + fwdlattice[n], None, -50)
-                                         #beamlogprob)
-                                         #NEGINF)
-                bwdlattice[n - 1] = logsumexp(self._log_transmat[:, idx] +
-                                           bwdlattice[n, idx] +
-                                           framelogprob[n, idx],
-                                           axis=1)
+    def _do_backward_pass(self, framelogprob):
+        n_observations, n_components = framelogprob.shape
+        bwdlattice = np.zeros((n_observations, n_components))
+        _hmmc._backward(n_observations, n_components,
+                self._log_startprob, self._log_transmat,
+                framelogprob, bwdlattice)
 
         bwdlattice[bwdlattice <= ZEROLOGPROB] = NEGINF
 
         return bwdlattice
-
-    def _prune_states(self, lattice_frame, maxrank, beamlogprob):
-        """ Returns indices of the active states in `lattice_frame`
-        after rank and beam pruning.
-        """
-        # Beam pruning
-        threshlogprob = logsumexp(lattice_frame) + beamlogprob
-        # Rank pruning
-        if maxrank:
-            # How big should our rank pruning histogram be?
-            nbins = 3 * len(lattice_frame)
-
-            lattice_min = lattice_frame[lattice_frame > ZEROLOGPROB].min() - 1
-            hst, bin_edges = np.histogram(lattice_frame, bins=nbins,
-                                    range=(lattice_min, lattice_frame.max()))
-
-            # Want to look at the high ranks.
-            hst = hst[::-1].cumsum()
-            bin_edges = .5 * (bin_edges[:-1] + bin_edges[1:])
-            bin_edges = bin_edges[::-1]
-
-            rankthresh = bin_edges[hst >= min(maxrank,
-                                              self.n_components)].max()
-
-            # Only change the threshold if it is stricter than the beam
-            # threshold.
-            threshlogprob = max(threshlogprob, rankthresh)
-
-        # Which states are active?
-        state_idx, = np.nonzero(lattice_frame >= threshlogprob)
-        return state_idx
 
     def _compute_log_likelihood(self, obs):
         pass

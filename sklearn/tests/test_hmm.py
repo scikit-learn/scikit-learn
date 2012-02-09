@@ -35,29 +35,6 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
         def _init(self):
             pass
 
-    def test_prune_states_no_pruning(self):
-        h = self.StubHMM(10)
-        lattice_frame = np.arange(h.n_components)
-
-        idx = h._prune_states(lattice_frame, None, - np.Inf)
-        assert_array_equal(idx, range(h.n_components))
-
-    def test_prune_states_rank(self):
-        h = self.StubHMM(10)
-        lattice_frame = np.arange(h.n_components)
-
-        idx = h._prune_states(lattice_frame, 1, -np.Inf)
-        assert_array_equal(idx, [lattice_frame.argmax()])
-
-    def test_prune_states_beam(self):
-        h = self.StubHMM(10)
-        lattice_frame = np.arange(h.n_components)
-
-        beamlogprob = -h.n_components / 2
-        idx = h._prune_states(lattice_frame, None, beamlogprob)
-        refidx, = np.nonzero(lattice_frame >= -beamlogprob)
-        assert_array_equal(idx, refidx)
-
     def setup_example_hmm(self):
         # Example from http://en.wikipedia.org/wiki/Forward-backward_algorithm
         h = self.StubHMM(2)
@@ -99,8 +76,7 @@ class TestBaseHMM(SeedRandomNumberGeneratorTestCase):
     def test_do_backward_pass(self):
         h, framelogprob = self.setup_example_hmm()
 
-        fakefwdlattice = np.zeros((len(framelogprob), 2))
-        bwdlattice = h._do_backward_pass(framelogprob, fakefwdlattice)
+        bwdlattice = h._do_backward_pass(framelogprob)
 
         refbwdlattice = np.array([[0.0661, 0.0455],
                                   [0.0906, 0.1503],
