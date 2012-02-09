@@ -1,6 +1,7 @@
 # Hidden Markov Models
 #
 # Author: Ron Weiss <ronweiss@gmail.com>
+# and Shiqiao Du <lucidfrontier.45@gmail.com>
 
 """
 The :mod:`sklearn.hmm` module implements hidden Markov models.
@@ -383,7 +384,6 @@ class _BaseHMM(BaseEstimator):
         state_sequence, logprob = _hmmc._viterbi(
                 n_observations, n_components, self._log_startprob,
                 self._log_transmat, framelogprob)
-
         return logprob, state_sequence
 
     def _do_forward_pass(self, framelogprob):
@@ -392,9 +392,7 @@ class _BaseHMM(BaseEstimator):
         fwdlattice = np.zeros((n_observations, n_components))
         _hmmc._forward(n_observations, n_components, self._log_startprob,
                 self._log_transmat, framelogprob, fwdlattice)
-        
         fwdlattice[fwdlattice <= ZEROLOGPROB] = NEGINF
-
         return logsumexp(fwdlattice[-1]), fwdlattice
 
     def _do_backward_pass(self, framelogprob):
