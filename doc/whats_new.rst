@@ -43,6 +43,10 @@ Changelog
    - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
+   - Added Cython extension module to the :ref:`hmm` module. It contains
+     Forward-Backward algorithm, Viterbi algorithm and helper routine of
+     Baum-Welch algorithm.
+
 
 API changes summary
 -------------------
@@ -56,6 +60,13 @@ API changes summary
 
    - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
      `sample` and `score` or `predict` should be used instead. 
+
+   - methods `rvs` in :class:`_BaseHMM` module are now deprecated.
+     `sample` should be used instead.
+
+   - Beam pruning option in :class:`_BaseHMM` module is removed since it is
+     difficult to be Cythonized. If you are interested, you can look in the
+     history codes by git.
 
 .. _changes_0_10:
 
