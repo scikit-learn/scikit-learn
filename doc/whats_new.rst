@@ -43,9 +43,9 @@ Changelog
    - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
-   - Added Cython extension module to the :ref:`hmm` module. It contains
-     Forward-Backward algorithm, Viterbi algorithm and helper routine of
-     Baum-Welch algorithm.
+   - Beam pruning option in :class:`_BaseHMM` module has been removed since it
+     is difficult to cythonize. If you are interested in contributing a cython
+     version, you can use the python version in the git history as a reference.
 
 
 API changes summary
