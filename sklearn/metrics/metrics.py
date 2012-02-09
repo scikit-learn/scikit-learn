@@ -725,7 +725,7 @@ def precision_recall_curve(y_true, probas_pred):
     The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
     true positives and fn the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
-    
+
     The last precision and recall values are 1. and 0. respectively and do not
     have a corresponding threshold.  This ensures that the graph starts on the
     x axis.
