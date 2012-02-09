@@ -429,12 +429,13 @@ we can do::
   clf__alpha: 0.01
   tfidf__use_idf: True
   vect__analyzer__max_n: 1
+
   >>> score                                              # doctest: +ELLIPSIS
   0.922...
 
 .. note:
 
   A ``GridSearchCV`` object also stores the best classifier that it trained
-  as its ``best_estimator`` attribute. In this case, that isn't much use as
+  as its ``best_estimator_`` attribute. In this case, that isn't much use as
   we trained on a small, 400-document subset of our full training set.
 
