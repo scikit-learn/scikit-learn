@@ -1,12 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator
 from ..utils import array2d, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
-import warnings
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
