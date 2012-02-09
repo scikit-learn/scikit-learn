@@ -36,23 +36,25 @@ description, quoted from the `website
 To download the dataset, go to ``$TUTORIAL_HOME/data/twenty_newsgroups``
 and run the ``fetch_data.py`` script.
 
-Once the data is downloaded, start a Python interpreter (or IPython shell)
-in the ``$TUTORIAL_HOME`` folder and define a variable to hold the list
-of categories to load. In order to get fast execution times for
-this first example we will work on a partial dataset with only 4
-categories out of the 20 available in the dataset::
+In the following we will use the built-in dataset loader for 20 newsgroups
+from scikit-learn. Alternatively it is possible to download the dataset
+manually from the web-site and use the :func:`sklearn.datasets.load_files`
+function by pointing it to the ``20news-bydate-train`` subfolder of the
+uncompressed archive folder.
+
+In order to get faster execution times for this first example we will
+work on a partial dataset with only 4 categories out of the 20 available
+in the dataset::
 
   >>> categories = ['alt.atheism', 'soc.religion.christian',
   ...               'comp.graphics', 'sci.med']
 
 We can now load the list of files matching those categories as follows::
 
-  >>> from sklearn.datasets import load_files
-  >>> twenty_train = load_files('data/twenty_newsgroups/20news-bydate-train',
-  ...                           categories=categories, shuffle=True,
-  ...                           random_state=42)
-  ...
-
+  >>> from sklearn.datasets import fetch_20newsgroups
+  >>> twenty_train = fetch_20newsgroups(
+  ...     subset='train', categories=categories,
+  ...     shuffle=True, random_state=42)
 
 The returned dataset is a ``scikit-learn`` "bunch": a simple holder
 object with fields that can be both accessed as python ``dict``
@@ -69,14 +71,16 @@ reference the filenames are also available::
   2257
   >>> len(twenty_train.filenames)
   2257
-  >>> twenty_train.filenames[0]
-  'data/twenty_newsgroups/20news-bydate-train/comp.graphics/38244'
 
-Let's print the first 2 lines of the first loaded file::
+Let's print the first lines of the first loaded file::
 
-  >>> print "\n".join(twenty_train.data[0].split("\n")[:2])
-  From: clipper@mccarthy.csd.uwo.ca (Khun Yee Fung)
-  Subject: Re: looking for circle algorithm faster than Bresenhams
+  >>> print "\n".join(twenty_train.data[0].split("\n")[:3])
+  Organization: Penn State University
+  From: Andrew Newell <TAN102@psuvm.psu.edu>
+  Subject: Re: Christian Morality is
+
+  >>> print twenty_train.target_names[twenty_train.target[0]]
+  alt.atheism
 
 Supervised learning algorithms will require a category label for each
 document in the training set. In this case the category is the name of the
@@ -89,23 +93,23 @@ index of the category name in the ``target_names`` list. The category
 integer id of each sample is stored in the ``target`` attribute::
 
   >>> twenty_train.target[:10]
-  array([1, 0, 2, 2, 0, 1, 1, 3, 3, 2])
+  array([0, 1, 3, 1, 2, 1, 1, 1, 3, 3])
 
 It is possible to get back the category names as follows::
 
   >>> for t in twenty_train.target[:10]:
   ...     print twenty_train.target_names[t]
   ...
+  alt.atheism
   comp.graphics
-  alt.atheism
+  soc.religion.christian
+  comp.graphics
   sci.med
-  sci.med
-  alt.atheism
+  comp.graphics
   comp.graphics
   comp.graphics
   soc.religion.christian
   soc.religion.christian
-  sci.med
 
 You can notice that the samples have been shuffled randomly (with
 a fixed RNG seed): this is useful if you select only the first
@@ -191,7 +195,7 @@ dictionary of features and transform documents to feature vectors::
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary.get(u'algorithm')
-  1520
+  1512
 
 The index value of a word in the vocabulary is linked to its frequency
 in the whole training corpus.
@@ -243,8 +247,8 @@ Both tf and tf–idf can be computed as follows::
   (2257, 33883)
 
 
-Training a linear classifier
-----------------------------
+Training a classifier
+---------------------
 
 Now that we have our feature, we can train a classifier to try to predict
 the category of a post. Let's start with a naïve Bayes classifier, which
@@ -259,7 +263,6 @@ To try to predict the outcome on a new document we need to extract
 the features using almost the same feature extracting chain as before.
 The difference is that we call ``transform`` instead of ``fit_transform``
 on the transformers, since they have already been fit to the training set::
-
 
   >>> docs_new = ['God is love', 'OpenGL on the GPU is fast']
   >>> X_new_counts = count_vect.transform(docs_new)
@@ -301,10 +304,9 @@ Evaluation of the performance on the test set
 Evaluating the predictive accuracy of the model is equally easy::
 
   >>> import numpy as np
-  >>> twenty_test = load_files('data/twenty_newsgroups/20news-bydate-test',
-  ...                          categories=categories, shuffle=True,
-  ...                          random_state=42)
-  ...
+  >>> twenty_test = fetch_20newsgroups(
+  ...     subset='test', categories=categories,
+  ...     shuffle=True, random_state=42)
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
@@ -316,16 +318,17 @@ the best text classification algorithms (although it's also a bit slower
 than naïve Bayes). We can change the learner by just plugging a different
 classifier object into our pipeline::
 
-  >>> from sklearn.svm.sparse import LinearSVC
+  >>> from sklearn.linear_model import SGDClassifier
   >>> text_clf = Pipeline([
   ...     ('vect', CountVectorizer()),
   ...     ('tfidf', TfidfTransformer()),
-  ...     ('clf', LinearSVC()),
+  ...     ('clf', SGDClassifier(loss='hinge', penalty='l2',
+  ...                           alpha=1e-3, n_iter=5)),
   ... ])
   >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.922...
+  0.906...
 
 ``scikit-learn`` further provides utilities for more detailed performance
 analysis of the results::
@@ -336,33 +339,50 @@ analysis of the results::
   ...     target_names=twenty_test.target_names)
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
-             alt.atheism       0.96      0.81      0.88       319
-           comp.graphics       0.90      0.99      0.94       389
-                 sci.med       0.95      0.93      0.94       396
-  soc.religion.christian       0.90      0.94      0.92       398
-             avg / total       0.92      0.92      0.92      1502
+             alt.atheism       0.95      0.78      0.86       319
+           comp.graphics       0.88      0.99      0.93       389
+                 sci.med       0.95      0.89      0.92       396
+  soc.religion.christian       0.88      0.94      0.91       398
+             avg / total       0.91      0.91      0.91      1502
+
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[259,  10,  13,  37],
-         [  2, 384,   2,   1],
-         [  2,  23, 367,   4],
-         [  8,   8,   6, 376]])
+  array([[250,  14,  15,  40],
+         [  2, 384,   1,   2],
+         [  1,  30, 354,  11],
+         [ 10,  10,   4, 374]])
+
+As expected the confusion matrix shows that posts from the newsgroups
+on atheism and christian are more often confused for one another than
+with computer graphics.
 
 .. note:
 
-  SVC stands for support vector classifier. ``scikit-learn`` also
-  includes support vector machine for regression tasks, which are
-  called SVR.
+  SGD stands for Stochastic Gradient Descent. This is a simple
+  optimization algorithms that is known to be scalable when the dataset
+  has many samples.
+
+  By setting ``loss="hinge"`` and ``penalty="l2"`` we are configuring
+  the classifier model to tune it's parameters for the linear Support
+  Vector Machine cost function.
+
+  Alternatively we could have used ``sklearn.svm.LinearSVC`` (Linear
+  Support Vector Machine Classifier) that provides an alternative
+  optimizer for the same cost function based on the liblinear_ C++
+  library.
+
+.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
 
 Parameter tuning using grid search
 ----------------------------------
 
 We've already encountered some parameters such as ``use_idf`` in the
 ``TfidfTransformer``. Classifiers tend to have many parameters as well;
-e.g., ``MultinomialNB`` includes a smoothing parameter ``alpha``
-and ``LinearSVC`` has a penalty parameter ``C``
-(see the module documentation, or use the Python ``help`` function,
-to get a description of these).
+e.g., ``MultinomialNB`` includes a smoothing parameter ``alpha`` and
+``SGDClassifier`` has a penalty parameter ``alpha`` and configurable loss
+and penalty terms in the objective function (see the module documentation,
+or use the Python ``help`` function, to get a description of these).
 
 Instead of tweaking the parameters of the various components of the
 chain, it is possible to run an exhaustive search of the best
@@ -374,7 +394,7 @@ parameter of either 100 or 1000 for the linear SVM::
   >>> parameters = {
   ...     'vect__analyzer__max_n': (1, 2),
   ...     'tfidf__use_idf': (True, False),
-  ...     'clf__C': (100, 1000),
+  ...     'clf__alpha': (1e-2, 1e-3),
   ... }
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
@@ -402,15 +422,15 @@ optimal parameters out by inspecting the object's ``grid_scores_`` attribute,
 which is a list of parameters/score pairs. To get the best scoring attributes,
 we can do::
 
-  >>> best_parameters, score = max(gs_clf.grid_scores_, key=lambda x: x[1])
+  >>> best_parameters, score, _ = max(gs_clf.grid_scores_, key=lambda x: x[1])
   >>> for param_name in sorted(parameters.keys()):
   ...     print "%s: %r" % (param_name, best_parameters[param_name])
   ...
-  clf__C: 100
+  clf__alpha: 0.01
   tfidf__use_idf: True
   vect__analyzer__max_n: 1
-  >>> score                                               # doctest: +ELLIPSIS
-  0.912...
+  >>> score                                              # doctest: +ELLIPSIS
+  0.922...
 
 .. note:
 
