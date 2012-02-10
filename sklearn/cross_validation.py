@@ -1001,6 +1001,15 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
+    Quick utility that wraps calls to ``check_arrays`` and
+    ``iter(ShuffleSplit(n_samples)).next()`` and application to input
+    data into a single call for splitting (and optionally subsampling)
+    data in a oneliner.
+
+    Parameters
+    ----------
+    TODO
+
     Examples
     --------
     >>> import numpy as np
