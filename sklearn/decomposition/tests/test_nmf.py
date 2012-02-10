@@ -126,13 +126,12 @@ def test_sparse_input():
     """Test that sparse matrices are accepted as input"""
     from scipy.sparse import csr_matrix
 
-    A = np.arange(100).reshape(10, 10)
-    A[np.where(A % 2 == 0)] = 0
+    A = np.abs(random_state.randn(10, 10))
+    A[:, 2*np.arange(5)] = 0
     T1 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
 
     A = csr_matrix(A)
     T2 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
-
     assert_array_almost_equal(T1, T2)
 
 
