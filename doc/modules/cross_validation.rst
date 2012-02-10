@@ -16,7 +16,7 @@ a **training set** ``X_train, y_train`` which is used for learning
 the parameters of a predictive model, and a **testing set** ``X_test,
 y_test`` which is used for evaluating the fitted predictive model.
 
-In scikit-learn such as split can be quickly achieved with the
+In scikit-learn such a random split can be quickly computed with the
 :func:`train_test_split` helper function. Let load the iris data set to
 fit a linear Support Vector Machine model on it::
 
