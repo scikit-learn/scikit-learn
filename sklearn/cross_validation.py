@@ -1008,7 +1008,24 @@ def train_test_split(*arrays, **options):
 
     Parameters
     ----------
-    TODO
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+        Python lists or tuples occurring in arrays are converted to 1D numpy
+        arrays.
+
+    test_fraction : float (default 0.25)
+        Should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the test split.
+
+    train_fraction : float or None (default is None)
+        Should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the train split. If None, the value is
+        automatically set to the complement of the test fraction.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+
+    dtype : a numpy dtype instance, None by default
+        Enforce a specific dtype.
 
     Examples
     --------
@@ -1048,9 +1065,12 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
+
     test_fraction = options.pop('test_fraction', 0.25)
     train_fraction = options.pop('train_fraction', None)
     random_state = options.pop('random_state', None)
+    options['sparse_format'] = 'csr'
+
     arrays = check_arrays(*arrays, **options)
     n_samples = arrays[0].shape[0]
     cv = ShuffleSplit(n_samples, test_fraction=test_fraction,
