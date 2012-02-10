@@ -122,7 +122,7 @@ def check_arrays(*arrays, **options):
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
     if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+        raise TypeError("Unexpected keyword arguments: %r" % options.keys())
 
     if len(arrays) == 0:
         return None

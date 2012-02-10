@@ -20,6 +20,7 @@ from ..linear_model import Ridge
 from ..svm.sparse import SVC as SparseSVC
 from .. import cross_validation
 from ..cross_validation import permutation_test_score
+from ..cross_validation import train_test_split
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -66,6 +67,14 @@ def test_cross_val_score():
 
         scores = cross_validation.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+
+def train_test_split_errors():
+    assert_raises(ValueError, train_test_split)
+    assert_raises(ValueError, train_test_split, range(3), train_fraction=1.1)
+    assert_raises(ValueError, train_test_split, range(3), test_fraction=0.6,
+                  train_fraction=0.6)
+    assert_raises(TypeError, train_test_split, range(3), some_argument=1.1)
 
 
 def test_cross_val_score_with_score_func_classification():

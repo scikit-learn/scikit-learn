@@ -1031,15 +1031,13 @@ def train_test_split(*arrays, **options):
     --------
     >>> import numpy as np
     >>> from sklearn.cross_validation import train_test_split
-    >>> a = np.arange(10).reshape((5, 2))
+    >>> a, b = np.arange(10).reshape((5, 2)), range(5)
     >>> a
     array([[0, 1],
            [2, 3],
            [4, 5],
            [6, 7],
            [8, 9]])
-
-    >>> b = range(5)
     >>> b
     [0, 1, 2, 3, 4]
 
@@ -1050,14 +1048,11 @@ def train_test_split(*arrays, **options):
     array([[4, 5],
            [0, 1],
            [6, 7]])
-
     >>> b_train
     array([2, 0, 3])
-
     >>> a_test
     array([[2, 3],
            [8, 9]])
-
     >>> b_test
     array([1, 4])
 
