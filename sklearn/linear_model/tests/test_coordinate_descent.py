@@ -144,7 +144,7 @@ def test_lasso_path():
 
 def test_enet_path():
     X, y, X_test, y_test = build_dataset()
-    max_iter = 50
+    max_iter = 150
 
     clf = ElasticNetCV(n_alphas=10, eps=1e-3, rho=0.95, cv=5,
             max_iter=max_iter)
