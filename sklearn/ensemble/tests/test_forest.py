@@ -105,14 +105,14 @@ def test_boston():
     """Check consistency on dataset boston house prices."""
     for c in ("mse",):
         # Random forest
-        clf = RandomForestRegressor(n_estimators=10, criterion=c,
+        clf = RandomForestRegressor(n_estimators=5, criterion=c,
                                     random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
         assert score < 3, ("Failed with max_features=None, "
                            "criterion %s and score = %f" % (c, score))
 
-        clf = RandomForestRegressor(n_estimators=10, criterion=c,
+        clf = RandomForestRegressor(n_estimators=5, criterion=c,
                                     max_features=6, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
@@ -120,13 +120,13 @@ def test_boston():
                            "criterion %s and score = %f" % (c, score))
 
         # Extra-trees
-        clf = ExtraTreesRegressor(n_estimators=10, criterion=c, random_state=1)
+        clf = ExtraTreesRegressor(n_estimators=5, criterion=c, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
         assert score < 3, ("Failed with max_features=None, "
                            "criterion %s and score = %f" % (c, score))
 
-        clf = ExtraTreesRegressor(n_estimators=10, criterion=c, max_features=6,
+        clf = ExtraTreesRegressor(n_estimators=5, criterion=c, max_features=6,
                                   random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
@@ -137,7 +137,8 @@ def test_boston():
 def test_probability():
     """Predict probabilities."""
     # Random forest
-    clf = RandomForestClassifier(n_estimators=10, random_state=1)
+    clf = RandomForestClassifier(n_estimators=10, random_state=1,
+            max_features=1, max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -145,7 +146,8 @@ def test_probability():
                               np.exp(clf.predict_log_proba(iris.data)))
 
     # Extra-trees
-    clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
+    clf = ExtraTreesClassifier(n_estimators=10, random_state=1, max_features=1,
+            max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
