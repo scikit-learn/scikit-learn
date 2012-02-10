@@ -13,7 +13,7 @@ from sklearn.svm import LinearSVC
 
 import numpy as np
 from nose.tools import assert_equal, assert_equals, \
-            assert_false, assert_not_equal
+            assert_false, assert_not_equal, assert_true
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
@@ -147,6 +147,14 @@ def test_countvectorizer_custom_vocabulary():
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
+    # try again with a dict vocabulary
+    vocab = {"pizza": 0, "beer": 1}
+    vect = CountVectorizer(vocabulary=vocab)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_equal(vect.vocabulary, vocab)
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
+
 
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
@@ -163,6 +171,17 @@ def test_fit_countvectorizer_twice():
     X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
     X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
     assert_not_equal(X1.shape[1], X2.shape[1])
+
+
+def test_sublinear_tf():
+    X = [[1], [2], [3]]
+    tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
+    tfidf = toarray(tr.fit_transform(X))
+    assert_equal(tfidf[0], 1)
+    assert_true(tfidf[1] > tfidf[0])
+    assert_true(tfidf[2] > tfidf[1])
+    assert_true(tfidf[1] < 2)
+    assert_true(tfidf[2] < 3)
 
 
 def test_vectorizer():

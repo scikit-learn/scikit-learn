@@ -146,7 +146,11 @@ class SVC(BaseLibSVM, ClassifierMixin):
         number of support vector for each class.
 
     `dual_coef_` : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function.
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat \
+        non-trivial. See the section about multi-class classification in the \
+        SVM section of the User Guide for details.
 
     `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
@@ -167,7 +171,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y)
     SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=False, shrinking=True, tol=0.001)
+      probability=False, scale_C=None, shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -178,7 +182,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=False):
+                 tol=1e-3, cache_size=200, scale_C=None):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                                   C, 0., 0., shrinking, probability,
@@ -236,10 +240,14 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     `n_support_` : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of the support vector in the decision function.
+    `dual_coef_` : array, shape = [n_class-1, n_SV]
+        Coefficients of the support vector in the decision function. \
+        For multiclass, coefficient for all 1-vs-1 classifiers. \
+        The layout of the coefficients in the multiclass case is somewhat \
+        non-trivial. See the section about multi-class classification in \
+        the SVM section of the User Guide for details.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
@@ -273,7 +281,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                                     tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C=None, sparse="auto")
+                                    cache_size, scale_C=False, sparse="auto")
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -358,8 +366,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, scale_C=False, shrinking=True,
-      tol=0.001)
+      kernel='rbf', probability=False, scale_C=None, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -367,7 +374,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200, scale_C=False):
+                 probability=False, cache_size=200, scale_C=None):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
@@ -480,7 +487,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, scale_C=False, shrinking=True, tol=0.001)
+       nu=0.1, probability=False, scale_C=None, shrinking=True, tol=0.001)
 
     See also
     --------
@@ -490,7 +497,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
-                 scale_C=False):
+                 scale_C=None):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                                     tol, C, nu, 0., shrinking, probability,

@@ -27,8 +27,21 @@ Changelog
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
 
-    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
-      by `Andreas Müller`_.
+   - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+     by `Andreas Müller`_.
+
+   - :ref:`randomized_l1`: Randomized sparse linear models for feature
+     selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
+
+   - :ref:`label_propagation` for semi-supervised learning, by Clay
+     Woolam. **Note** the semi-supervised API is still work in progress,
+     and may change.
+
+   - Added BIC/AIC model selection to classical :ref:`gmm` and unified 
+     the API with the remainder of scikit-learn, by `Bertrand Thirion`_
+
+   - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
+     to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
 
 API changes summary
@@ -40,6 +53,13 @@ API changes summary
      and/or :class:`RadiusNeighborsRegressor` instead.
 
    - Sparse classes in the :ref:`sgd` module are now deprecated.
+
+   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
+     `sample` and `score` or `predict` should be used instead.
+
+   - attribute `_scores` and `_pvalues` in univariate feature selection
+     objects are now deprecated.
+     `scores_` or `pvalues_` should be used instead.
 
 .. _changes_0_10:
 
@@ -973,3 +993,5 @@ of commits):
 .. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
 
 .. _Satrajit Ghosh: http://www.mit.edu/~satra/
+
+.. _Robert Layton: http://www.twitter.com/robertlayton

@@ -41,19 +41,19 @@ color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
 
 
 for i, (clf, title) in enumerate([
-        (mixture.GMM(n_components=10, cvtype='diag'),
-         "Expectation-maximization"),
-        (mixture.DPGMM(n_components=10, cvtype='diag', alpha=0.01),
+        (mixture.GMM(n_components=10, covariance_type='full'), \
+             "Expectation-maximization"),
+        (mixture.DPGMM(n_components=10, covariance_type='full', alpha=0.01),
          "Dirichlet Process,alpha=0.01"),
-        (mixture.DPGMM(n_components=10, cvtype='diag', alpha=100.),
+        (mixture.DPGMM(n_components=10, covariance_type='diag', alpha=100.),
          "Dirichlet Process,alpha=100.")
         ]):
 
     clf.fit(X, n_iter=100)
     splot = pl.subplot(3, 1, 1 + i)
     Y_ = clf.predict(X)
-    for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars,
-                                                 color_iter)):
+    for i, (mean, covar, color) in enumerate(zip(
+            clf.means_, clf._get_covars(), color_iter)):
         v, w = linalg.eigh(covar)
         u = w[0] / linalg.norm(w[0])
         # as the DP will not use every component it has access to
@@ -74,5 +74,7 @@ for i, (clf, title) in enumerate([
     pl.xlim(-6, 4 * np.pi - 6)
     pl.ylim(-5, 5)
     pl.title(title)
+    pl.xticks(())
+    pl.yticks(())
 
 pl.show()

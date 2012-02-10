@@ -2,7 +2,7 @@
 #          Mathieu Blondel (partial_fit support)
 #
 # License: BSD Style.
-"""Implementation of Stochastic Gradient Descent (SGD) with dense data."""
+"""Implementation of Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
 import scipy.sparse as sp
@@ -146,7 +146,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     See also
     --------
-    LinearSVC, LogisticRegression
+    LinearSVC, LogisticRegression, Perceptron
 
     """
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
@@ -173,7 +173,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     def _set_loss_function(self, loss):
         """Set concrete LossFunction."""
         loss_functions = {
-            "hinge": Hinge(),
+            "hinge": Hinge(1.0),
+            "perceptron": Hinge(0.0),
             "log": Log(),
             "modified_huber": ModifiedHuber(),
         }
@@ -370,7 +371,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         Returns
         -------
         array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
-          The signed 'distances' to the hyperplane(s).
+            The signed 'distances' to the hyperplane(s).
         """
         X = atleast2d_or_csr(X)
         scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
@@ -640,7 +641,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
 
-    def _partial_fit(self, X, y, n_iter, sample_weight=None):
+    def _partial_fit(self, X, y, n_iter, sample_weight=None,
+                     coef_init=None, intercept_init=None):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False)
         y = np.asarray(y, dtype=np.float64, order="C")
 
@@ -652,7 +654,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
-                                         coef_init=None, intercept_init=None)
+                                         coef_init, intercept_init)
 
         self._fit_regressor(X, y, sample_weight, n_iter)
 
@@ -706,26 +708,17 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
-        y = np.asarray(y, dtype=np.float64, order="C")
-
-        n_samples, n_features = X.shape
-        self._check_fit_data(X, y)
-
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
             if intercept_init is None:
                 intercept_init = self.intercept_
 
-        # Allocate datastructures from input arguments
-        self._allocate_parameter_mem(1, n_features,
-                                     coef_init, intercept_init)
-
         # Need to re-initialize in case of multiple call to fit.
         self._init_t()
 
-        return self._partial_fit(X, y, self.n_iter, sample_weight)
+        return self._partial_fit(X, y, self.n_iter, sample_weight,
+                                 coef_init, intercept_init)
 
     def decision_function(self, X):
         """Predict using the linear model
@@ -737,7 +730,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         Returns
         -------
         array, shape = [n_samples]
-           Array containing the predicted class labels.
+           Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
         scores = safe_sparse_dot(X, self.coef_) + self.intercept_
@@ -753,7 +746,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         Returns
         -------
         array, shape = [n_samples]
-           Array containing the predicted class labels.
+           Predicted target values per element in X.
         """
         return self.decision_function(X)
 

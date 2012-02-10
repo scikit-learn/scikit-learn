@@ -15,6 +15,7 @@ cimport numpy as np
 cimport cython
 
 # Penalty constans
+DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
@@ -117,21 +118,33 @@ cdef class ModifiedHuber(Classification):
 
 
 cdef class Hinge(Classification):
-    """SVM loss for binary classification tasks with y in {-1,1}"""
+    """Hinge loss for binary classification tasks with y in {-1,1}
+
+    Parameters
+    ----------
+
+    threshold : float > 0.0
+        Margin threshold. When threshold=1.0, one gets the loss used by SVM.
+        When threshold=0.0, one gets the loss used by the Perceptron.
+    """
+
+    def __init__(self, double threshold):
+        self.threshold = threshold
+
     cpdef double loss(self, double p, double y):
         cdef double z = p * y
-        if z < 1.0:
-            return (1 - z)
+        if z <= self.threshold:
+            return (self.threshold - z)
         return 0.0
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
-        if z < 1.0:
+        if z <= self.threshold:
             return -y
         return 0.0
 
     def __reduce__(self):
-        return Hinge, ()
+        return Hinge, (self.threshold,)
 
 
 cdef class Log(Classification):
@@ -180,7 +193,7 @@ cdef class Huber(Regression):
     http://en.wikipedia.org/wiki/Huber_Loss_Function
     """
 
-    def __init__(self, c):
+    def __init__(self, double c):
         self.c = c
 
     cpdef double loss(self, double p, double y):
@@ -321,7 +334,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     # q vector is only used for L1 regularization
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] q = None
     cdef double *q_data_ptr = NULL
-    if penalty_type != L2:
+    if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
         q_data_ptr = <double *> q.data
     cdef double u = 0.0
@@ -362,7 +375,7 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
                 add(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update)
                 if fit_intercept == 1:
                     intercept -= update
-            if penalty_type != L1:
+            if penalty_type >= L2:
                 wscale *= (1.0 - (rho * eta * alpha))
                 if wscale < 1e-9:
                     w *= wscale
@@ -388,7 +401,9 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    w *= wscale
+    if wscale != 1.0:
+        w *= wscale
+
     return w, intercept
 
 

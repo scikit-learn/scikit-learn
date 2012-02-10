@@ -32,6 +32,39 @@ def _get_class_weight(class_weight, y):
     return weight, weight_label
 
 
+def _one_vs_one_coef(dual_coef, n_support, support_vectors):
+    """Generate primal coefficients from dual coefficients
+    for the one-vs-one multi class LibSVM in the case
+    of a linear kernel."""
+
+    # get 1vs1 weights for all n*(n-1) classifiers.
+    # this is somewhat messy.
+    # shape of dual_coef_ is nSV * (n_classes -1)
+    # see docs for details
+    n_class = dual_coef.shape[0] + 1
+
+    # XXX we could do preallocation of coef but
+    # would have to take care in the sparse case
+    coef = []
+    sv_locs = np.cumsum(np.hstack([[0], n_support]))
+    for class1 in xrange(n_class):
+        # SVs for class1:
+        sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]
+        for class2 in xrange(class1 + 1, n_class):
+            # SVs for class1:
+            sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]
+
+            # dual coef for class1 SVs:
+            alpha1 = dual_coef[class2 - 1, sv_locs[class1]:sv_locs[class1 + 1]]
+            # dual coef for class2 SVs:
+            alpha2 = dual_coef[class1, sv_locs[class2]:sv_locs[class2 + 1]]
+            # build weight for class1 vs class2
+
+            coef.append(safe_sparse_dot(alpha1, sv1)
+                    + safe_sparse_dot(alpha2, sv2))
+    return coef
+
+
 class BaseLibSVM(BaseEstimator):
     """Base class for estimators that use libsvm as backing library
 
@@ -52,7 +85,7 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
-        if not scale_C:
+        if scale_C is None:
             warnings.warn('SVM: scale_C will be True by default in '
                           'scikit-learn 0.11', FutureWarning,
                           stacklevel=2)
@@ -142,21 +175,26 @@ class BaseLibSVM(BaseEstimator):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            if params['scale_C']:
-                params['C'] = params['C'] / float(X.shape[0])
-            del params['scale_C']
-        if 'sparse' in params:
-            del params['sparse']
+        # set default parameters
+        C = self.C
+        if getattr(self, 'scale_C', False):
+            C = self.C / float(X.shape[0])
+        epsilon = self.epsilon
+        if epsilon is None:
+            epsilon = 0.1
 
+        # we don't pass **self.get_params() to allow subclasses to
+        # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=class_weight,
             class_weight_label=class_weight_label,
-            **params)
+            kernel=self.kernel, C=C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
     def _sparse_fit(self, X, y, class_weight=None, sample_weight=None):
         """
@@ -285,18 +323,20 @@ class BaseLibSVM(BaseEstimator):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            del params['scale_C']
-        if "sparse" in params:
-            del params["sparse"]
+        epsilon = self.epsilon
+        if epsilon == None:
+            epsilon = 0.1
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_,
             self.label_, self.probA_, self.probB_,
-            svm_type=svm_type, **params)
+            svm_type=svm_type,
+            kernel=self.kernel, C=self.C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
@@ -355,18 +395,19 @@ class BaseLibSVM(BaseEstimator):
     def _dense_predict_proba(self, X):
         X = self._compute_kernel(X)
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            del params['scale_C']
-        if "sparse" in params:
-            del params["sparse"]
+        epsilon = self.epsilon
+        if epsilon == None:
+            epsilon = 0.1
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
-            svm_type=svm_type, **params)
+            svm_type=svm_type, kernel=self.kernel, C=self.C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
         return pprob
 
@@ -440,26 +481,20 @@ class BaseLibSVM(BaseEstimator):
 
         X = array2d(X, dtype=np.float64, order="C")
 
-        params = self.get_params()
-        if 'scale_C' in params:
-            del params['scale_C']
-        if "sparse" in params:
-            del params["sparse"]
-
+        epsilon = self.epsilon
+        if epsilon == None:
+            epsilon = 0.1
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self.intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
-            **params)
+            kernel=self.kernel, C=self.C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
-        if self.impl != 'one_class':
-            # libsvm has the convention of returning negative values for
-            # rightmost labels, so we invert the sign since our label_ is
-            # sorted by increasing order
-            return - dec_func
-        else:
-            return dec_func
+        return dec_func
 
     def _validate_for_predict(self, X):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
@@ -476,7 +511,19 @@ class BaseLibSVM(BaseEstimator):
         if self.kernel != 'linear':
             raise ValueError('coef_ is only available when using a '
                              'linear kernel')
-        coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+
+        if self.dual_coef_.shape[0] == 1:
+            # binary classifier
+            coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        else:
+            # 1vs1 classifier
+            coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
+                    self.support_vectors_)
+            if sp.issparse(coef[0]):
+                coef = sp.vstack(coef).tocsr()
+            else:
+                coef = np.vstack(coef)
+
         # coef_ being a read-only property it's better to mark the value as
         # immutable to avoid hiding potential bugs for the unsuspecting user
         if sp.issparse(coef):
@@ -504,7 +551,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=False):
+                 scale_C=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -514,6 +561,11 @@ class BaseLibLinear(BaseEstimator):
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.scale_C = scale_C
+
+        if scale_C is None:
+            warnings.warn('LinearSVC: scale_C will be True by default in '
+                          'scikit-learn 0.11', FutureWarning,
+                          stacklevel=2)
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -639,12 +691,7 @@ class BaseLibLinear(BaseEstimator):
                               self.tol, self.C, self.class_weight_label,
                               self.class_weight, self.label_, self._get_bias())
 
-        if len(self.label_) <= 2:
-            # in the two-class case, the decision sign needs be flipped
-            # due to liblinear's design
-            return -dec_func
-        else:
-            return dec_func
+        return dec_func
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
@@ -667,21 +714,18 @@ class BaseLibLinear(BaseEstimator):
     def _get_intercept_(self):
         if self.fit_intercept:
             ret = self.intercept_scaling * self.raw_coef_[:, -1]
-            if len(self.label_) <= 2:
-                ret *= -1
             return ret
         return 0.0
 
     def _set_intercept_(self, intercept):
         self.fit_intercept = True
 
-        if len(self.label_) <= 2:
-            intercept = intercept * -1
-
         intercept /= self.intercept_scaling
         intercept = intercept.reshape(-1, 1)
 
         self.raw_coef_ = np.hstack((self.raw_coef_[:, : -1], intercept))
+        # We need fortran ordered arrays for the predict
+        self.raw_coef_ = np.asfortranarray(self.raw_coef_)
 
     intercept_ = property(_get_intercept_, _set_intercept_)
 
@@ -693,24 +737,19 @@ class BaseLibLinear(BaseEstimator):
 
         # mark the returned value as immutable
         # to avoid silencing potential bugs
-        if len(self.label_) <= 2:
-            ret *= -1
-            ret.flags.writeable = False
-            return ret
-        else:
-            ret.flags.writeable = False
-            return ret
+        ret.flags.writeable = False
+        return ret
 
     def _set_coef_(self, coef):
-        if len(self.label_) <= 2:
-            coef = coef * -1
-
         raw_intercept = self.raw_coef_[:, -1].reshape(-1, 1)
 
         self.raw_coef_ = coef
 
         if self.fit_intercept:
             self.raw_coef_ = np.hstack((self.raw_coef_, raw_intercept))
+
+        # We need fortran ordered arrays for the predict
+        self.raw_coef_ = np.asfortranarray(self.raw_coef_)
 
     coef_ = property(_get_coef_, _set_coef_)
 
