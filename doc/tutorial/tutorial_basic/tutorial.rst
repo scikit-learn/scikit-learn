@@ -26,7 +26,7 @@ We can separate learning problems in a few large categories:
 
  * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_, 
    in which the data comes with additional attributes that we want to predict 
-   (`Click here <http://scikit-learn.org/dev/supervised_learning.html>`_ 
+   (:ref:`Click here <supervised-learning>`
    to go to the Scikit-Learn supervised learning page).This problem 
    can be either:
 
@@ -54,7 +54,7 @@ We can separate learning problems in a few large categories:
    `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or 
    to project the data from a high-dimensional space down to two or thee 
    dimensions for the purpose of *visualization* 
-   (`Click here <http://scikit-learn.org/dev/unsupervised_learning.html>`_ 
+   (:ref:`Click here <unsupervised-learning>` 
    to go to the Scikit-Learn unsupervised learning page).
 
 .. topic:: Training set and testing set
@@ -178,7 +178,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: images/last_digit.png
+.. image:: ../../images/last_digit.png
     :align: center
     :scale: 50
 

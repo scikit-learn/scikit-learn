@@ -31,7 +31,7 @@ pl.ylabel('CV score')
 pl.xlabel('alpha')
 pl.axhline(np.max(scores), linestyle='--', color='.5')
 pl.text(2e-4, np.max(scores)+1e-4, '.489')
-pl.savefig('cv_diabetes.png')
+#pl.savefig('cv_diabetes.png')
 
 ################################################################################
 # Bonus: how much can you trust the selection of alpha?
