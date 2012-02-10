@@ -383,7 +383,7 @@ class LeaveOneLabelOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
@@ -468,7 +468,7 @@ class LeavePLabelOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
@@ -996,3 +996,61 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
 
 permutation_test_score.__test__ = False  # to avoid a pb with nosetests
+
+
+def train_test_split(*arrays, **options):
+    """Split arrays or matrices into random train and test subsets
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cross_validation import train_test_split
+    >>> a = np.arange(10).reshape((5, 2))
+    >>> a
+    array([[0, 1],
+           [2, 3],
+           [4, 5],
+           [6, 7],
+           [8, 9]])
+
+    >>> b = range(5)
+    >>> b
+    [0, 1, 2, 3, 4]
+
+    >>> a_train, a_test, b_train, b_test = train_test_split(
+    ...     a, b, test_fraction=0.33, random_state=42)
+    ...
+    >>> a_train
+    array([[4, 5],
+           [0, 1],
+           [6, 7]])
+
+    >>> b_train
+    array([2, 0, 3])
+
+    >>> a_test
+    array([[2, 3],
+           [8, 9]])
+
+    >>> b_test
+    array([1, 4])
+
+    """
+    n_arrays = len(arrays)
+    if n_arrays == 0:
+        raise ValueError("At least one array required as input")
+    test_fraction = options.pop('test_fraction', 0.25)
+    train_fraction = options.pop('train_fraction', None)
+    random_state = options.pop('random_state', None)
+    arrays = check_arrays(*arrays, **options)
+    n_samples = arrays[0].shape[0]
+    cv = ShuffleSplit(n_samples, test_fraction=test_fraction,
+                      train_fraction=train_fraction,
+                      random_state=random_state,
+                      indices=True)
+    train, test = iter(cv).next()
+    splitted = []
+    for a in arrays:
+        splitted.append(a[train])
+        splitted.append(a[test])
+    return splitted
