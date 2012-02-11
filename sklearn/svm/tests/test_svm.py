@@ -264,8 +264,8 @@ def test_weight():
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
-    for clf in (linear_model.LogisticRegression(C=180), svm.LinearSVC(C=len(X)),
-                svm.SVC(C=len(X))):
+    for clf in (linear_model.LogisticRegression(C=180),
+            svm.LinearSVC(C=len(X)), svm.SVC(C=len(X))):
         clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])
         assert_true(np.sum(y_pred == y_[180:]) >= 11)

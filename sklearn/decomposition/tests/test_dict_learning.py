@@ -109,7 +109,8 @@ def test_dict_learning_online_partial_fit():
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
         # if ii == 1: break
-    assert_true(not np.all(sparse_encode(X, dico1.components_, alpha=100) == 0))
+    assert_true(not np.all(sparse_encode(X, dico1.components_, alpha=100) ==
+        0))
     assert_array_equal(dico1.components_, dico2.components_)
 
 
