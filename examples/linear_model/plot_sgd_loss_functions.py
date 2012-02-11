@@ -16,7 +16,7 @@ from sklearn.linear_model.sgd_fast import Hinge, \
 ###############################################################################
 # Define loss funcitons
 xmin, xmax = -3, 3
-hinge = Hinge()
+hinge = Hinge(1)
 log_loss = lambda z, p: np.log2(1.0 + np.exp(-z))
 modified_huber = ModifiedHuber()
 squared_loss = SquaredLoss()

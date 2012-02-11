@@ -77,6 +77,7 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
 
+
 def test_pairwise_parallel():
     rng = np.random.RandomState(0)
     for func in (np.array, csr_matrix):

@@ -154,6 +154,12 @@ def test_k_means_plus_plus_init():
     _check_fitted_model(k_means)
 
 
+def test_k_means_plus_plus_init_2_jobs():
+    k_means = KMeans(init="k-means++", k=n_clusters, n_jobs=2,
+                     random_state=42).fit(X)
+    _check_fitted_model(k_means)
+
+
 def test_k_means_plus_plus_init_sparse():
     k_means = KMeans(init="k-means++", k=n_clusters, random_state=42)
     k_means.fit(X_csr)
