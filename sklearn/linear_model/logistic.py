@@ -52,7 +52,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
         of the number of samples. To match liblinear commandline one should use
-        scale_C=False.
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
