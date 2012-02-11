@@ -85,9 +85,9 @@ class BaseLibSVM(BaseEstimator):
             self.kernel = 'precomputed'
         else:
             self.kernel = kernel
-        if scale_C is None:
-            warnings.warn('SVM: scale_C will be True by default in '
-                          'scikit-learn 0.11', FutureWarning,
+        if not scale_C:
+            warnings.warn('SVM: scale_C will disappear and be assumed to be '
+                          'True in scikit-learn 0.12', FutureWarning,
                           stacklevel=2)
 
         self.impl = impl
@@ -551,7 +551,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=None):
+                 scale_C=True):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -562,9 +562,9 @@ class BaseLibLinear(BaseEstimator):
         self.multi_class = multi_class
         self.scale_C = scale_C
 
-        if scale_C is None:
-            warnings.warn('LinearSVC: scale_C will be True by default in '
-                          'scikit-learn 0.11', FutureWarning,
+        if not scale_C:
+            warnings.warn('SVM: scale_C will disappear and be assumed to be '
+                          'True in scikit-learn 0.12', FutureWarning,
                           stacklevel=2)
 
         # Check that the arguments given are valid:

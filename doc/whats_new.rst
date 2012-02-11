@@ -69,6 +69,10 @@ API changes summary
      consistent with the Olivetti faces dataset. Use ``images`` and
      ``pairs`` attribute to access the natural images shapes instead.
 
+   - Setting scale_C=True by default in SVM and LogisticRegression
+     models. This allows to have a regularization parameter independent
+     of the number of samples. The scale_C parameter will disappear in v0.12.
+
 .. _changes_0_10:
 
 0.10

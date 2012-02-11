@@ -47,11 +47,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         (and therefore on the intercept) intercept_scaling has to be increased
 
     tol: float, optional
-         tolerance for stopping criteria
+        tolerance for stopping criteria
 
-    scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
-        of the number of samples.
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match liblinear commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -89,7 +90,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1,
-                 scale_C=False):
+                 scale_C=True):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,

@@ -138,14 +138,13 @@ def test_weight():
     """
     Test class weights
     """
-
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
     X_ = sparse.csr_matrix(X_)
-    for clf in (linear_model.LogisticRegression(),
-                svm.LinearSVC(),
-                svm.SVC()):
+    for clf in (linear_model.LogisticRegression(C=180),
+                svm.LinearSVC(C=180),
+                svm.SVC(C=180)):
         clf.fit(X_[:180], y_[:180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
