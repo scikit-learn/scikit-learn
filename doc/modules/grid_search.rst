@@ -6,9 +6,9 @@ Grid Search
 
 .. currentmodule:: sklearn
 
-Grid Search is used to optimize the parameters of a model (e.g. `C`,
-`kernel` and `gamma` for Support Vector Classifier, `alpha` for Lasso,
-etc.) using an internal :ref:`cross_validation` scheme).
+Grid Search is used to optimize the parameters of a model (e.g. ``C``,
+``kernel`` and ``gamma`` for Support Vector Classifier, ``alpha`` for
+Lasso, etc.) using an internal :ref:`cross_validation` scheme).
 
 
 GridSearchCV
@@ -45,14 +45,14 @@ combinations is retained.
 Examples
 ========
 
-See :ref:`example_grid_search_digits.py` for an example of
-Grid Search computation on the digits dataset.
+- See :ref:`example_grid_search_digits.py` for an example of
+  Grid Search computation on the digits dataset.
 
-See :ref:`example_grid_search_text_feature_extraction.py` for an example
-of Grid Search coupling parameters from a text documents feature extractor
-(n-gram count vectorizer and TF-IDF transformer) with a classifier (here
-a linear SVM trained with SGD with either elastic net or L2 penalty)
-using a **pipeline**.
+- See :ref:`example_grid_search_text_feature_extraction.py` for an example
+  of Grid Search coupling parameters from a text documents feature
+  extractor (n-gram count vectorizer and TF-IDF transformer) with a
+  classifier (here a linear SVM trained with SGD with either elastic
+  net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
 
 .. note::
 
