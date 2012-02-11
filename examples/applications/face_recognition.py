@@ -53,11 +53,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
-# reshape the data using the traditional (n_samples, n_features) shape
-faces = lfw_people.data
-n_samples, h, w = faces.shape
+# introspect the images arrays to find the shapes (for plotting)
+n_samples, h, w = lfw_people.images.shape
 
-X = faces.reshape((n_samples, h * w))
+# fot machine learning we use the 2 data directly (as relative pixel
+# positions info is ignored by this model)
+X = lfw_people.data
 n_features = X.shape[1]
 
 # the label to predict is the id of the person

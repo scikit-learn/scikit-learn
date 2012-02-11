@@ -65,6 +65,10 @@ API changes summary
      objects are now deprecated.
      `scores_` or `pvalues_` should be used instead.
 
+   - LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
+     consistent with the Olivetti faces dataset. Use ``images`` and
+     ``pairs`` attribute to access the natural images shapes instead.
+
 .. _changes_0_10:
 
 0.10
