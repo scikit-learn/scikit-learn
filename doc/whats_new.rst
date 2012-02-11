@@ -43,6 +43,10 @@ Changelog
    - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
+   - Improved :ref:`cross_validation` and :ref:`grid_search` documentation
+     and introduced the new :func:`cross_validation.train_test_split`
+     helper function by `Olivier Grisel`_
+
 
 API changes summary
 -------------------
