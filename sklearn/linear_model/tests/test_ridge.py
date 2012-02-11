@@ -4,7 +4,7 @@ from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
                           assert_equal
 from sklearn import datasets
-from sklearn.metrics import mean_square_error
+from sklearn.metrics import mean_squared_error
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import Ridge
@@ -150,7 +150,7 @@ def _test_ridge_loo(filter_):
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
-    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_square_error)
+    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_squared_error)
     ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.best_alpha, best_alpha)
 
