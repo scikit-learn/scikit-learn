@@ -10,7 +10,8 @@ import nose
 import tempfile
 import functools
 
-from ..func_inspect import filter_args, get_func_name, get_func_code
+from ..func_inspect import filter_args, get_func_name, get_func_code, \
+        _clean_win_chars
 from ..memory import Memory
 
 
@@ -151,3 +152,10 @@ def test_filter_args_error_msg():
         sake of the user.
     """
     nose.tools.assert_raises(ValueError, filter_args, f, [])
+
+
+def test_clean_win_chars():
+    string = r'C:\foo\bar\main.py'
+    mangled_string = _clean_win_chars(string)
+    for char in ('\\', ':', '<', '>', '!'):
+        nose.tools.assert_false(char in mangled_string)

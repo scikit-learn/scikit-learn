@@ -9,10 +9,13 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
+from collections import Mapping
 import re
 import unicodedata
+
 import numpy as np
 import scipy.sparse as sp
+
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
@@ -140,7 +143,7 @@ class WordNGramAnalyzer(BaseEstimator):
                  stop_words="english",
                  token_pattern=DEFAULT_TOKEN_PATTERN):
         self.charset = charset
-        self.stop_words = stop_words
+        self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
@@ -268,7 +271,7 @@ class CountVectorizer(BaseEstimator):
         else:
             self.analyzer = DEFAULT_ANALYZER
         self.fit_vocabulary = vocabulary is None
-        if vocabulary is not None and not isinstance(vocabulary, dict):
+        if vocabulary is not None and not isinstance(vocabulary, Mapping):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
         self.dtype = dtype
@@ -462,6 +465,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
+    sublinear_tf : boolean, optional
+        Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
     Notes
     -----
     **References**:
@@ -474,10 +480,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
                  pp. 121–125.`
     """
 
-    def __init__(self, norm='l2', use_idf=True, smooth_idf=True):
+    def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
+                 sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
+        self.sublinear_tf = sublinear_tf
         self.idf_ = None
 
     def fit(self, X, y=None):
@@ -514,6 +522,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
+        if self.sublinear_tf:
+            np.log(X.data, X.data)
+            X.data += 1
+
         if self.use_idf:
             expected_n_features = self.idf_.shape[0]
             if n_features != expected_n_features:
@@ -538,14 +550,16 @@ class Vectorizer(BaseEstimator):
     """
 
     def __init__(self, analyzer=None, max_df=1.0,
-                 max_features=None, norm='l2', use_idf=True, smooth_idf=True):
+                 max_features=None, norm='l2', use_idf=True, smooth_idf=True,
+                 sublinear_tf=False):
         if analyzer is None:
             analyzer = DEFAULT_ANALYZER
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
         self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
-                                      smooth_idf=smooth_idf)
+                                      smooth_idf=smooth_idf,
+                                      sublinear_tf=sublinear_tf)
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""

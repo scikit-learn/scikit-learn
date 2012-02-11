@@ -90,15 +90,20 @@ uses.
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.KFold
-   cross_validation.StratifiedKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeavePLabelOut
    cross_validation.Bootstrap
+   cross_validation.KFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePLabelOut
+   cross_validation.LeavePOut
+   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   cross_validation.cross_val_score
 
 .. _datasets_ref:
 
@@ -417,6 +422,23 @@ From text
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.SkewedChi2Sampler
 
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+========================================================
+
+.. automodule:: sklearn.semi_supervised
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   semi_supervised.LabelPropagation
+   semi_supervised.LabelSpreading
 
 .. _lda_ref:
 
@@ -471,10 +493,13 @@ For dense data
    linear_model.LassoLarsIC
    linear_model.LogisticRegression
    linear_model.OrthogonalMatchingPursuit
+   linear_model.Perceptron
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.BayesianRidge
    linear_model.ARDRegression
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogisticRegression
 
 .. autosummary::
    :toctree: generated/
@@ -484,6 +509,7 @@ For dense data
    linear_model.lars_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.lasso_stability_path
 
 For sparse data
 ---------------

@@ -130,6 +130,7 @@ def test_value_error():
     nose.tools.assert_raises(ValueError, numpy_pickle.dump, 'foo',
                              dict())
 
+
 @with_numpy
 def test_numpy_persistence():
     filename = env['filename']
@@ -169,7 +170,8 @@ def test_numpy_persistence():
                                           compress=compress,
                                           cache_size=cache_size)
             obj_ = numpy_pickle.load(this_filename)
-            if type(obj) is not np.memmap:
+            if (type(obj) is not np.memmap
+                        and hasattr(obj, '__array_prepare__')):
                 # We don't reconstruct memmaps
                 nose.tools.assert_true(isinstance(obj_, type(obj)))
 

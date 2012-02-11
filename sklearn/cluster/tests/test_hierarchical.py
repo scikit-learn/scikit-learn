@@ -119,7 +119,7 @@ def test_connectivity_popagation():
     Check that connectivity in the ward tree is propagated correctly during
     merging.
     """
-    from sklearn.neighbors import kneighbors_graph
+    from sklearn.neighbors import NearestNeighbors
 
     X = np.array([(.014, .120), (.014, .099), (.014, .097),
                   (.017, .153), (.017, .153), (.018, .153),
@@ -127,8 +127,8 @@ def test_connectivity_popagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
                  ])
-
-    connectivity = kneighbors_graph(X, n_neighbors=10)
+    nn = NearestNeighbors(n_neighbors=10, warn_on_equidistant=False).fit(X)
+    connectivity = nn.kneighbors_graph(X)
     ward = Ward(n_clusters=4, connectivity=connectivity)
     # If changes are not propagated correctly, fit crashes with an
     # IndexError

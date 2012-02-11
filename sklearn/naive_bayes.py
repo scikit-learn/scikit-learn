@@ -57,7 +57,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             Predicted target values for X
         """
         jll = self._joint_log_likelihood(X)
-        return self._classes[np.argmax(jll, axis=1)]
+        return self.classes_[np.argmax(jll, axis=1)]
 
     def predict_log_proba(self, X):
         """
@@ -153,7 +153,7 @@ class GaussianNB(BaseNB):
         X = np.asarray(X)
         y = np.asarray(y)
 
-        self._classes = unique_y = np.unique(y)
+        self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
         _, n_features = X.shape
 
@@ -169,7 +169,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
-        for i in xrange(np.size(self._classes)):
+        for i in xrange(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
@@ -237,8 +237,8 @@ class BaseDiscreteNB(BaseNB):
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
-        self._classes = labelbin.classes_
-        n_classes = len(self._classes)
+        self.classes_ = labelbin.classes_
+        n_classes = len(self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
@@ -288,11 +288,11 @@ class BaseDiscreteNB(BaseNB):
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return self.feature_log_prob_[1] if len(self._classes) == 2 \
+        return self.feature_log_prob_[1] if len(self.classes_) == 2 \
                                          else self.feature_log_prob_
 
     def _get_intercept(self):
-        return self.class_log_prior_[1] if len(self._classes) == 2 \
+        return self.class_log_prior_[1] if len(self.classes_) == 2 \
                                         else self.class_log_prior_
 
     coef_ = property(_get_coef)
