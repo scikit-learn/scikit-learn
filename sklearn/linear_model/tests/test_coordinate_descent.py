@@ -5,6 +5,7 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
                           assert_equal
+from nose.tools import assert_true
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
@@ -139,7 +140,7 @@ def test_lasso_path():
     assert_almost_equal(clf.alpha, 0.026, 2)
 
     # test set
-    assert clf.score(X_test, y_test) > 0.99
+    assert_true(clf.score(X_test, y_test) > 0.99)
 
 
 def test_enet_path():
@@ -157,7 +158,7 @@ def test_enet_path():
     assert_almost_equal(clf.alpha, 0.002, 2)
 
     # test set
-    assert clf.score(X_test, y_test) > 0.99
+    assert_true(clf.score(X_test, y_test) > 0.99)
 
 
 def test_path_parameters():

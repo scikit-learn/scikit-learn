@@ -69,8 +69,8 @@ def test_projgrad_nmf_fit_nn_output():
 
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
-    assert nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
-      random_state.randn(6, 5))).reconstruction_err_ < 0.05
+    assert_true(nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
+      random_state.randn(6, 5))).reconstruction_err_ < 0.05)
 
 
 @raises(ValueError)

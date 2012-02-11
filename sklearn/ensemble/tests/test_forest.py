@@ -10,6 +10,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from numpy.testing import assert_almost_equal
+from nose.tools import assert_true
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -174,7 +175,7 @@ def test_importances():
     assert_equal(n_important, 3)
 
     X_new = clf.transform(X, threshold="mean")
-    assert 0 < X_new.shape[1] < X.shape[1]
+    assert_true(0 < X_new.shape[1] < X.shape[1])
 
 
 def test_oob_score_classification():
@@ -195,8 +196,8 @@ def test_oob_score_regression():
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
             boston.target[n_samples / 2:])
-    assert(test_score > clf.oob_score_)
-    assert(clf.oob_score_ > .8)
+    assert_true(test_score > clf.oob_score_)
+    assert_true(clf.oob_score_ > .8)
 
 
 def test_gridsearch():
@@ -222,7 +223,7 @@ def test_parallel():
     forest = RandomForestClassifier(n_estimators=10, n_jobs=3, random_state=0)
 
     forest.fit(iris.data, iris.target)
-    assert 10 == len(forest)
+    assert_true(10 == len(forest))
 
     forest.set_params(n_jobs=1)
     y1 = forest.predict(iris.data)
@@ -234,7 +235,7 @@ def test_parallel():
     forest = RandomForestRegressor(n_estimators=10, n_jobs=3, random_state=0)
 
     forest.fit(boston.data, boston.target)
-    assert 10 == len(forest)
+    assert_true(10 == len(forest))
 
     forest.set_params(n_jobs=1)
     y1 = forest.predict(boston.data)
@@ -260,7 +261,7 @@ def test_pickle():
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(iris.data, iris.target)
-    assert score == score2
+    assert_true(score == score2)
 
     obj = RandomForestRegressor()
     obj.fit(boston.data, boston.target)
@@ -270,7 +271,7 @@ def test_pickle():
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
-    assert score == score2
+    assert_true(score == score2)
 
     # Extra-trees
     obj = ExtraTreesClassifier()
@@ -281,7 +282,7 @@ def test_pickle():
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(iris.data, iris.target)
-    assert score == score2
+    assert_true(score == score2)
 
     obj = ExtraTreesRegressor()
     obj.fit(boston.data, boston.target)
@@ -291,7 +292,7 @@ def test_pickle():
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
-    assert score == score2
+    assert_true(score == score2)
 
 
 if __name__ == "__main__":
