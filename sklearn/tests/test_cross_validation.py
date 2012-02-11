@@ -92,7 +92,7 @@ def test_train_test_split():
 
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear')
+    clf = SVC(kernel='linear', C=len(iris.data) * 4 // 5)
 
     # Default score (should be the accuracy score)
     scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
@@ -144,7 +144,7 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear')
+    svm = SVC(kernel='linear', C=len(X))
     cv = StratifiedKFold(y, 2)
 
     score, scores, pvalue = permutation_test_score(
@@ -160,7 +160,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SparseSVC(kernel='linear')
+    svm_sparse = SparseSVC(kernel='linear', C=len(X))
     cv_sparse = StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = permutation_test_score(
         svm_sparse, X_sparse, y, zero_one_score, cv_sparse,

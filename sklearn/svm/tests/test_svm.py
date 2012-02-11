@@ -30,8 +30,7 @@ def test_libsvm_parameters():
     """
     Test parameters on classes that make use of libsvm.
     """
-
-    clf = svm.SVC(kernel='linear').fit(X, Y)
+    clf = svm.SVC(kernel='linear', C=len(X)).fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
@@ -84,7 +83,7 @@ def test_precomputed():
 
     We test it with a toy dataset and with iris.
     """
-    clf = svm.SVC(kernel='precomputed')
+    clf = svm.SVC(kernel='precomputed', C=len(X))
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
@@ -113,7 +112,7 @@ def test_precomputed():
     # matrix. kernel is just a linear kernel
 
     kfunc = lambda x, y: np.dot(x, y.T)
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(kernel=kfunc, C=len(X))
     clf.fit(X, Y)
     pred = clf.predict(T)
 
@@ -124,8 +123,8 @@ def test_precomputed():
 
     # test a precomputed kernel with the iris dataset
     # and check parameters against a linear SVC
-    clf = svm.SVC(kernel='precomputed')
-    clf2 = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='precomputed', C=len(iris.data))
+    clf2 = svm.SVC(kernel='linear', C=len(iris.data))
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     clf2.fit(iris.data, iris.target)
@@ -145,7 +144,7 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(kernel=kfunc, C=len(X))
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
@@ -156,12 +155,13 @@ def test_SVR():
     """
 
     diabetes = datasets.load_diabetes()
-    for clf in (svm.NuSVR(kernel='linear', nu=.4),
-                svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.),
-                svm.sparse.NuSVR(kernel='linear', nu=.4),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.sparse.SVR(kernel='linear', C=10.)):
+    n_samples = len(diabetes.data)
+    for clf in (svm.NuSVR(kernel='linear', nu=.4, C=n_samples),
+                svm.NuSVR(kernel='linear', nu=.4, C=10. * n_samples),
+                svm.SVR(kernel='linear', C=10. * n_samples),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=n_samples),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10. * n_samples),
+                svm.sparse.SVR(kernel='linear', C=10. * n_samples)):
         clf.fit(diabetes.data, diabetes.target)
         assert clf.score(diabetes.data, diabetes.target) > 0.02
 
@@ -193,7 +193,7 @@ def test_tweak_params():
     The success of this test ensures that the mapping between libsvm and
     the python classifier is complete.
     """
-    clf = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='linear', C=len(X))
     clf.fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
@@ -209,9 +209,9 @@ def test_probability():
     """
 
     for clf in (
-        svm.SVC(probability=True),
+        svm.SVC(probability=True, C=len(X)),
         svm.NuSVC(probability=True),
-        svm.sparse.SVC(probability=True),
+        svm.sparse.SVC(probability=True, C=len(X)),
         svm.sparse.NuSVC(probability=True)):
 
         clf.fit(iris.data, iris.target)
@@ -255,7 +255,7 @@ def test_weight():
     """
     Test class weights
     """
-    clf = svm.SVC()
+    clf = svm.SVC(C=len(X))
     # we give a small weights to class 1
     clf.fit(X, Y, {1: 0.1})
     # so all predicted values belong to class 2
@@ -264,7 +264,8 @@ def test_weight():
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
-    for clf in (linear_model.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
+    for clf in (linear_model.LogisticRegression(C=180), svm.LinearSVC(C=len(X)),
+                svm.SVC(C=len(X))):
         clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])
         assert np.sum(y_pred == y_[180:]) >= 11
@@ -296,8 +297,9 @@ def test_auto_weight():
 
     assert np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2
 
-    for clf in (svm.SVC(kernel='linear'),
-            svm.LinearSVC(), LogisticRegression()):
+    C = len(X)
+    for clf in (svm.SVC(kernel='linear', C=C),
+            svm.LinearSVC(C=C), LogisticRegression(C=C)):
         # check that score is better when class='auto' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced],
                          class_weight={}).predict(X)
@@ -402,7 +404,7 @@ def test_LinearSVC_iris():
     """
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
-    clf = svm.LinearSVC().fit(iris.data, iris.target)
+    clf = svm.LinearSVC(C=len(iris.data)).fit(iris.data, iris.target)
     assert np.mean(clf.predict(iris.data) == iris.target) > 0.8
 
     dec = clf.decision_function(iris.data)
@@ -420,7 +422,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [2, 3]]
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
-                     dual=False, C=1, tol=1e-7)
+                     dual=False, C=4, tol=1e-7)
     assert clf.intercept_scaling == 1, clf.intercept_scaling
     assert clf.fit_intercept
 
