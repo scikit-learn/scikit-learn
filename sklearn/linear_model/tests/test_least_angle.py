@@ -108,6 +108,8 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
+        if a == 0:
+            continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)
@@ -127,6 +129,8 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
                                   tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
+        if a == 0:
+            continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)

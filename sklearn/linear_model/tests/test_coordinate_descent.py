@@ -15,7 +15,7 @@ def test_lasso_zero():
     """Check that the lasso can handle zero data without crashing"""
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    clf = Lasso(alpha=0).fit(X, y)
+    clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
@@ -34,7 +34,7 @@ def test_lasso_toy():
     Y = [-1, 0, 1]       # just a straight line
     T = [[2], [3], [4]]  # test sample
 
-    clf = Lasso(alpha=0)
+    clf = Lasso(alpha=1e-8)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
@@ -78,7 +78,7 @@ def test_enet_toy():
     T = [[2.], [3.], [4.]]  # test sample
 
     # this should be the same as lasso
-    clf = ElasticNet(alpha=0, rho=1.0)
+    clf = ElasticNet(alpha=1e-8, rho=1.0)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
