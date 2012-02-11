@@ -345,6 +345,8 @@ class GridSearchCV(BaseEstimator):
             scores.append((score, estimator))
             cv_scores.append(these_points)
 
+        cv_scores = np.asarray(cv_scores)
+
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = -np.inf
