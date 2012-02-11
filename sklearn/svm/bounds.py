@@ -1,5 +1,6 @@
 import operator
 import numpy as np
+import warnings
 
 
 def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0,
