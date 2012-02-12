@@ -2,13 +2,23 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
+import warnings
+from sys import version_info
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
                           assert_equal
+from nose import SkipTest
 from nose.tools import assert_true
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
+
+
+def check_warnings():
+    if version_info < (2, 6):
+        raise SkipTest("Testing for warnings is not supported in versions \
+        older than Python 2.6")
 
 
 def test_lasso_zero():
@@ -192,6 +202,19 @@ def test_warm_start():
     clf3.fit(X, y)
 
     assert_array_almost_equal(clf3.coef_, clf2.coef_)
+
+
+def test_lasso_alpha_warning():
+    check_warnings()  # Skip if unsupported Python version
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        X = [[-1], [0], [1]]
+        Y = [-1, 0, 1]       # just a straight line
+
+        clf = Lasso(alpha=0)
+        clf.fit(X, Y)
+
+        assert_true(len(w) > 0)  # warnings should be raised
 
 
 if __name__ == '__main__':
