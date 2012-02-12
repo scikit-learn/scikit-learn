@@ -219,11 +219,23 @@ cdef class Huber(Regression):
 
 
 cdef class WeightVector:
-    """This class implements a dense vector which is represented
-    by a scaler (``wscale``) and a numpy array of dtype float64.
+    """Dense vector represented by a scalar and a numpy array.
 
-    The class provides methods to a) ``add`` a sparse vector
-    and b) scale the vector.
+    The class provides methods to ``add`` a sparse vector
+    and scale the vector.
+    Representing a vector explicitly as a scalar times a
+    vector allows for efficient scaling operations.
+
+    Attributes
+    ----------
+    w : ndarray, dtype=np.float64, order='C'
+        The numpy array which backs the weight vector.
+    w_data_ptr : np.float64*
+        A pointer to the data of the numpy array.
+    wscale : double
+        The scale of the vector.
+    n_features : int
+        The number of features (= dimensionality of ``w``).
     """
 
     def __init__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
@@ -272,8 +284,7 @@ cdef class WeightVector:
         return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
     cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
-        """Computes the dot product (=inner product) of a sample x
-        and the weight vector.
+        """Computes the dot product of a sample x and the weight vector.
 
         Parameters
         ----------
@@ -283,6 +294,7 @@ cdef class WeightVector:
             The array which holds the feature indices of ``x``.
         xnnz : int
             The number of non-zero features of ``x``.
+
         Returns
         -------
         innerprod : double
@@ -305,17 +317,12 @@ cdef class WeightVector:
             self.reset_wscale()
 
     cdef void reset_wscale(self):
-        """Explicitly scales every weight by ``wscale`` and
-        sets ``wscale`` to one.
-        """
+        """Scales each coef by ``wscale`` and sets it to one. """
         self.w *= self.wscale
         self.wscale = 1.0
 
     cdef double norm(self):
-        """Computes the L2 norm of the weight vector.
-
-        TODO could be updated after each call to update and scale.
-        """
+        """Computes the L2 norm of the weight vector. """
         return np.dot(self.w, self.w) * self.wscale * self.wscale
 
 
@@ -354,12 +361,29 @@ cdef class Dataset:
 
 
 cdef class ArrayDataset(Dataset):
-    """Dataset abstraction backed by a two-dimensional numpy array
-    of dtype np.float64 and C-style memory layout."""
+    """Dataset backed by a two-dimensional numpy array.
+
+    The dtype of the numpy array is expected to be ``np.float64``
+    and C-style memory layout.
+    """
 
     def __init__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
+        """Dataset backed by a two-dimensional numpy array.
+
+        Paramters
+        ---------
+        X : ndarray, dtype=np.float64, ndim=2, mode='c'
+            The samples; a two-dimensional c-continuous numpy array of
+            dtype np.float64.
+        Y : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The target values; a one-dimensional c-continuous numpy array of
+            dtype np.float64.
+        sample_weights : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The weight of each sample; a one-dimensional c-continuous numpy
+            array of dtype np.float64.
+        """
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
         cdef np.ndarray[INTEGER, ndim=1,
@@ -403,13 +427,33 @@ cdef class ArrayDataset(Dataset):
 
 
 cdef class CSRDataset(Dataset):
-    """Dataset abstraction for a CSR matrix. """
+    """A Dataset backed by a scipy sparse CSR matrix. """
 
     def __init__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] X_data,
                  np.ndarray[INTEGER, ndim=1, mode='c'] X_indptr,
                  np.ndarray[INTEGER, ndim=1, mode='c'] X_indices,
                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weight):
+        """Dataset backed by a scipy sparse CSR matrix.
+
+        Parameters
+        ----------
+        X_data : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The data array of the CSR matrix; a one-dimensional c-continuous
+            numpy array of dtype np.float64.
+        X_indptr : ndarray, dtype=np.int32, ndim=1, mode='c'
+            The index pointer array of the CSR matrix; a one-dimensional
+            c-continuous numpy array of dtype np.int32.
+        X_indices : ndarray, dtype=np.int32, ndim=1, mode='c'
+            The column indices array of the CSR matrix; a one-dimensional
+            c-continuous numpy array of dtype np.int32.
+        Y : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The target values; a one-dimensional c-continuous numpy array of
+            dtype np.float64.
+        sample_weights : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The weight of each sample; a one-dimensional c-continuous numpy
+            array of dtype np.float64.
+        """
         self.n_samples = Y.shape[0]
         self.current_index = -1
         self.X_data_ptr = <DOUBLE *>X_data.data
@@ -458,9 +502,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0):
-    """Cython impl. of SGD for generic loss functions and penalties
-
-    This implementation assumes X represented as a dense array of floats.
+    """Plain SGD for generic loss functions and penalties.
 
     Parameters
     ----------
@@ -626,9 +668,6 @@ cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
 
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
-
-    FIXME: apply penalty over all features or only non-zero?
-    Empirical results look better this way...
     """
     cdef double z = 0.0
     cdef int j = 0
