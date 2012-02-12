@@ -1,4 +1,5 @@
 import nose
+from nose.tools import assert_true
 
 import numpy as np
 from scipy import sparse as sp
@@ -47,13 +48,13 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf.C = min_c
     clf.fit(X, y)
-    assert (np.asarray(clf.coef_) == 0).all()
-    assert (np.asarray(clf.intercept_) == 0).all()
+    assert_true((np.asarray(clf.coef_) == 0).all())
+    assert_true((np.asarray(clf.intercept_) == 0).all())
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert (np.asarray(clf.coef_) != 0).any() or \
-           (np.asarray(clf.intercept_) != 0).any()
+    assert_true((np.asarray(clf.coef_) != 0).any() or \
+                (np.asarray(clf.intercept_) != 0).any())
 
 
 @nose.tools.raises(ValueError)

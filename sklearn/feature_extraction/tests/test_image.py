@@ -6,7 +6,7 @@ import numpy as np
 import scipy as sp
 from scipy import ndimage
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
 
 from ..image import img_to_graph, grid_to_graph
@@ -38,21 +38,21 @@ def test_grid_to_graph():
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size ** 2)
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
-    assert(cs_graph_components(A)[0] == 2)
+    assert_true(cs_graph_components(A)[0] == 2)
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask)
-    assert(cs_graph_components(A)[0] == 1)
+    assert_true(cs_graph_components(A)[0] == 1)
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.bool)
-    assert A.dtype == np.bool
+    assert_true(A.dtype == np.bool)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
-    assert A.dtype == np.int
+    assert_true(A.dtype == np.int)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float)
-    assert A.dtype == np.float
+    assert_true(A.dtype == np.float)
 
 
 def test_connect_regions():
@@ -178,14 +178,14 @@ def test_reconstruct_patches_perfect_color():
 def test_patch_extractor_fit():
     lenas = lena_collection
     extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
-    assert extr == extr.fit(lenas)
+    assert_true(extr == extr.fit(lenas))
 
 
 def test_patch_extractor_max_patches():
     lenas = lena_collection
     extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
     patches = extr.transform(lenas)
-    assert patches.shape == (len(lenas) * 100, 8, 8)
+    assert_true(patches.shape == (len(lenas) * 100, 8, 8))
 
 
 def test_patch_extractor_all_patches():
@@ -195,7 +195,7 @@ def test_patch_extractor_all_patches():
     expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
     patches = extr.transform(lenas)
-    assert patches.shape == (expected_n_patches, p_h, p_w)
+    assert_true(patches.shape == (expected_n_patches, p_h, p_w))
 
 
 def test_patch_extractor_color():
@@ -205,7 +205,7 @@ def test_patch_extractor_color():
     expected_n_patches = len(lenas) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
     patches = extr.transform(lenas)
-    assert patches.shape == (expected_n_patches, p_h, p_w, 3)
+    assert_true(patches.shape == (expected_n_patches, p_h, p_w, 3))
 
 if __name__ == '__main__':
     import nose

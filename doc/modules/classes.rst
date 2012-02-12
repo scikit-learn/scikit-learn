@@ -103,7 +103,10 @@ uses.
    :toctree: generated/
    :template: function.rst
 
+   cross_validation.train_test_split
    cross_validation.cross_val_score
+   cross_validation.permutation_test_score
+   cross_validation.check_cv
 
 .. _datasets_ref:
 

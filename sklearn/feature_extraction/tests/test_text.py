@@ -279,11 +279,11 @@ def test_vectorizer_max_df():
     test_data = [u'abc', u'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
     vect.fit(test_data)
-    assert u'a' in vect.vocabulary.keys()
+    assert_true(u'a' in vect.vocabulary.keys())
     assert_equals(len(vect.vocabulary.keys()), 5)
     vect.max_df = 0.5
     vect.fit(test_data)
-    assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
+    assert_true(u'a' not in vect.vocabulary.keys())  # 'a' is ignored
     assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
 
 

@@ -56,7 +56,7 @@ for i in range(5):
     cm = confusion_matrix(true_labels, predicted_labels,
             labels=lp_model.classes_)
 
-    print ('Iteration %i ' + 70*'_') % i
+    print ('Iteration %i ' + 70 * '_') % i
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
 
