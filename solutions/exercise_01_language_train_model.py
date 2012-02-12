@@ -7,9 +7,10 @@ import sys
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CharNGramAnalyzer
-from sklearn.svm.sparse import LinearSVC
+from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.datasets import load_files
+from sklearn.cross_validation import train_test_split
 from sklearn import metrics
 
 #
@@ -33,17 +34,11 @@ class LowerCasePreprocessor(object):
 
 # the training data folder must be passed as first argument
 languages_data_folder = sys.argv[1]
-dataset = load_files(languages_data_folder, shuffle=True, random_state=42)
+dataset = load_files(languages_data_folder)
 
 # split the dataset in training and test set:
-n_samples_total = dataset.filenames.shape[0]
-split = n_samples_total / 2
-
-docs_train = dataset.data[:split]
-docs_test = dataset.data[split:]
-
-y_train = dataset.target[:split]
-y_test = dataset.target[split:]
+docs_train, docs_test, y_train, y_test = train_test_split(
+    dataset.data, dataset.target, test_fraction=0.5)
 
 
 # Build a an analyzer that split strings into sequence of 1 to 3 characters
@@ -58,7 +53,7 @@ analyzer = CharNGramAnalyzer(
 clf = Pipeline([
     ('vec', CountVectorizer(analyzer=analyzer)),
     ('tfidf', TfidfTransformer(use_idf=False)),
-    ('clf', LinearSVC(loss='l2', penalty='l1', dual=False, C=100)),
+    ('clf', Perceptron()),
 ])
 
 # Fit the pipeline on the training set
@@ -75,8 +70,8 @@ print metrics.classification_report(y_test, y_predicted,
 cm = metrics.confusion_matrix(y_test, y_predicted)
 print cm
 
-# import pylab as pl
-#pl.matshow(cm)
+#import pylab as pl
+#pl.matshow(cm, cmap=pl.cm.jet)
 #pl.show()
 
 # Predict the result on some short new sentences:
@@ -89,4 +84,3 @@ predicted = clf.predict(sentences)
 
 for s, p in zip(sentences, predicted):
     print u'The language of "%s" is "%s"' % (s, dataset.target_names[p])
-
