@@ -23,7 +23,7 @@ from .sgd_fast import ArrayDataset, CSRDataset
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
-def _mkdataset(X, y_i, sample_weight):
+def _make_dataset(X, y_i, sample_weight):
     """Returns Dataset object + intercept_decay"""
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
@@ -493,7 +493,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = _mkdataset(X, y_i, sample_weight)
+    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
     return plain_sgd(coef, intercept, est.loss_function,
                      est.penalty_type, est.alpha, est.rho,
@@ -744,7 +744,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         return self.decision_function(X)
 
     def _fit_regressor(self, X, y, sample_weight, n_iter):
-        dataset, intercept_decay = _mkdataset(X, y, sample_weight)
+        dataset, intercept_decay = _make_dataset(X, y, sample_weight)
 
         self.coef_, intercept = plain_sgd(self.coef_,
                                           self.intercept_[0],
