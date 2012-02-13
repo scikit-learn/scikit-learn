@@ -276,10 +276,10 @@ class _BaseHMM(BaseEstimator):
         eval : Compute the log probability under the model and posteriors
         score : Compute the log probability under the model
         """
-        if self._algorighm.lower() in decoder_algorithms:
-            algorithm = self._algorighm.lower()
-        elif algorithm.lower() in decoder_algorithms:
-            algorithm = algorithm.lower()
+        if self._algorithm in decoder_algorithms:
+            algorithm = self._algorithm
+        elif algorithm in decoder_algorithms:
+            algorithm = algorithm
         decoder = {"viterbi": self._decode_viterbi,
                    "map": self._decode_map}
         logprob, state_sequence = decoder[algorithm](obs)
@@ -429,6 +429,17 @@ class _BaseHMM(BaseEstimator):
             self._do_mstep(stats, params)
 
         return self
+
+    def _get_algorithm(self):
+        "decoder algorithm"
+        return self._algorithm
+
+    def _set_algorithm(self, algorithm):
+        if algorithm not in decoder_algorithms:
+            raise ValueError("algorithm must be one of the decoder_algorithms")
+        self._algorithm = algorithm
+
+    algorithm = property(_get_algorithm, _set_algorithm)
 
     def _get_startprob(self):
         """Mixing startprob for each state."""
@@ -595,9 +606,9 @@ class GaussianHMM(_BaseHMM):
     >>> from sklearn.hmm import GaussianHMM
     >>> GaussianHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    GaussianHMM(covariance_type='diag', covars_prior=0.01, covars_weight=1,
-          means_prior=None, means_weight=0, n_components=2, startprob=None,
-          startprob_prior=1.0, transmat=None, transmat_prior=1.0)
+    GaussianHMM(algorithm='viterbi', covariance_type='diag', covars_prior=0.01,
+        covars_weight=1, means_prior=None, means_weight=0, n_components=2,
+        startprob=None, startprob_prior=1.0, transmat=None, transmat_prior=1.0)
 
     See Also
     --------
@@ -811,8 +822,8 @@ class MultinomialHMM(_BaseHMM):
     >>> from sklearn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(n_components=2, startprob=None, startprob_prior=1.0,
-             transmat=None, transmat_prior=1.0)
+    MultinomialHMM(algorithm='viterbi', n_components=2, startprob=None,
+                   startprob_prior=1.0, transmat=None, transmat_prior=1.0)
 
     See Also
     --------
@@ -913,7 +924,7 @@ class GMMHMM(_BaseHMM):
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, covariance_type='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(covariance_type='diag', covars_prior=0.01,
+    GMMHMM(algorithm='viterbi', covariance_type='diag', covars_prior=0.01,
         gmms=[GMM(covariance_type=None, min_covar=0.001, n_components=10,
         random_state=None, thresh=0.01), GMM(covariance_type=None,
         min_covar=0.001, n_components=10, random_state=None, thresh=0.01)],
