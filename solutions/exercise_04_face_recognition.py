@@ -82,7 +82,7 @@ X_test_pca = pca.transform(X_test)
 
 print "Fitting the classifier to the training set"
 param_grid = {
- 'C': [1, 5, 10, 100],
+ 'C': [1000, 10000, 100000],
  'gamma': [0.0001, 0.001, 0.01, 0.1],
 }
 clf = GridSearchCV(SVC(kernel='rbf'), param_grid,
@@ -106,6 +106,7 @@ print confusion_matrix(y_test, y_pred, labels=selected_target)
 
 n_row = 3
 n_col = 4
+
 
 def title(y_pred, y_test, target_names, i):
     pred_name = target_names[y_pred[i]].rsplit('_', 1)[-1]
