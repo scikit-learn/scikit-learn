@@ -17,8 +17,8 @@
 .. include:: big_toc_css.rst
 
 .. note:: This document is meant to be used with **scikit-learn version
-   0.9+** (i.e. the current state of the master branch at the time of
-   writing: 2011-08-09).
+   0.11+** (i.e. the current state of the master branch at the time of
+   writing: 2012-02-13).
 
 
 .. toctree::
