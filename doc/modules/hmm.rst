@@ -92,7 +92,10 @@ the sequence of observed value. Note, since EM-algorithm is a gradient based
 optimization method, it will generally be stuck at local optimal. You should try
 to run `fit` with various initialization and select the highest scored model.
 The score of the model can be calculated by the `score` method. 
-The infered optimal hidden states can be obtained by calling `predict` method. 
+The infered optimal hidden states can be obtained by calling `predict` method.
+The `predict` method can be specified with decoder algorithm.
+Currently Viterbi algorithm `viterbi`, and maximum a posteriori
+estimation `map` is supported.
 This time, the input is a single sequence of observed values.::
 
     >>> model2 = hmm.GaussianHMM(3, "full")
