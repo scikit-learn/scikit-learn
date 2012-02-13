@@ -230,7 +230,7 @@ class RidgeClassifier(Ridge):
     alpha : float
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
+        Alpha corresponds to (2*C)^-1 in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -240,6 +240,12 @@ class RidgeClassifier(Ridge):
 
     normalize : boolean, optional
         If True, the regressors X are normalized
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    tol: float
+        Precision of the solution.
 
     Attributes
     ----------
@@ -466,15 +472,19 @@ class RidgeCV(LinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
+    score_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (big is good)
+        if None is passed, the score of the estimator is maximized
+
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
         if None is passed, the score of the estimator is maximized
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (big is good)
-        if None is passed, the score of the estimator is maximized
+    cv : cross-validation generator, optional
+        If None, Generalized Cross-Validationn (efficient Leave-One-Out)
+        will be used.
 
     See also
     --------
@@ -503,10 +513,6 @@ class RidgeCV(LinearModel):
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
-
-        cv : cross-validation generator, optional
-            If None, Generalized Cross-Validationn (efficient Leave-One-Out)
-            will be used.
 
         Returns
         -------
@@ -549,13 +555,13 @@ class RidgeClassifierCV(RidgeCV):
         y : array-like, shape = [n_samples]
             Target values.
 
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
         class_weight : dict, optional
             Weights associated with classes in the form
             {class_label : weight}. If not given, all classes are
             supposed to have weight one.
-
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
 
         Returns
         -------
