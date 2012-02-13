@@ -23,6 +23,17 @@ from .sgd_fast import ArrayDataset, CSRDataset
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
+def _mkdataset(X, y_i, sample_weight):
+    """Returns Dataset object + intercept_decay"""
+    if sp.issparse(X):
+        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
+        intercept_decay = 0.01
+    else:
+        dataset = ArrayDataset(X, y_i, sample_weight)
+        intercept_decay = 1.0
+    return dataset, intercept_decay
+
+
 def _tocsr(X):
     """Convert X to CSR matrix, preventing a copy if possible"""
     if sp.isspmatrix_csr(X) and X.dtype == np.float64:
@@ -482,12 +493,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
-        intercept_decay = 0.01
-    else:
-        dataset = ArrayDataset(X, y_i, sample_weight)
-        intercept_decay = 1.0
+    dataset, intercept_decay = _mkdataset(X, y_i, sample_weight)
 
     return plain_sgd(coef, intercept, est.loss_function,
                      est.penalty_type, est.alpha, est.rho,
@@ -630,7 +636,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     def _partial_fit(self, X, y, n_iter, sample_weight=None,
                      coef_init=None, intercept_init=None):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
-                            dtype=np.float64)
+                            check_ccontiguous=True, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
@@ -738,13 +744,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         return self.decision_function(X)
 
     def _fit_regressor(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            dataset = CSRDataset(X.data, X.indptr, X.indices, y, sample_weight)
-            intercept_decay = 0.01
-        else:
-            X = np.asarray(X, dtype=np.float64, order='C')
-            dataset = ArrayDataset(X, y, sample_weight)
-            intercept_decay = 1.0
+        dataset, intercept_decay = _mkdataset(X, y, sample_weight)
 
         self.coef_, intercept = plain_sgd(self.coef_,
                                           self.intercept_[0],
