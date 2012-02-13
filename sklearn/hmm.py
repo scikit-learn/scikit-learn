@@ -29,6 +29,7 @@ from . import _hmmc
 ZEROLOGPROB = -1e200
 EPS = np.finfo(float).eps
 NEGINF = -np.inf
+decoder_algorithms = ("viterbi", "map")
 
 
 def normalize(A, axis=None):
@@ -71,8 +72,23 @@ class _BaseHMM(BaseEstimator):
 
     Attributes
     ----------
-    n_components : int (read-only)
+    n_components : int
         Number of states in the model.
+
+    transmat : array, shape (`n_components`, `n_components`)
+        Matrix of transition probabilities between states.
+
+    startprob : array, shape ('n_components`,)
+        Initial state occupation distribution.
+
+    transmat_prior : array, shape (`n_components`, `n_components`)
+        Matrix of prior transition probabilities between states.
+
+    startprob_prior : array, shape ('n_components`,)
+        Initial state occupation prior distribution.
+
+    algorithm : string, one of the decoder_algorithms
+        decoder algorithm
 
     See Also
     --------
@@ -91,7 +107,7 @@ class _BaseHMM(BaseEstimator):
     # the emission distribution parameters to expose them publically.
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
-                 startprob_prior=None, transmat_prior=None):
+            startprob_prior=None, transmat_prior=None, algorithm="viterbi"):
         self.n_components = n_components
 
         if startprob is None:
@@ -111,6 +127,11 @@ class _BaseHMM(BaseEstimator):
             transmat_prior = 1.0
         self.transmat_prior = transmat_prior
 
+        if algorithm in decoder_algorithms:
+            self._algorithm = algorithm
+        else:
+            self._algorithm = "viterbi"
+
     def eval(self, obs):
         """Compute the log probability under the model and compute posteriors
 
@@ -125,8 +146,8 @@ class _BaseHMM(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n,)
-            Log probabilities of the sequence `obs`
+        logprob : float
+            Log likelihood of the sequence `obs`
         posteriors: array_like, shape (n, n_components)
             Posterior probabilities of each state for each
             observation
@@ -161,8 +182,8 @@ class _BaseHMM(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n,)
-            Log probabilities of each data point in `obs`
+        logprob : float
+            Log likelihood of the `obs`
 
         See Also
         --------
@@ -171,10 +192,10 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
-        logprob, fwdlattice = self._do_forward_pass(framelogprob)
+        logprob, _ = self._do_forward_pass(framelogprob)
         return logprob
 
-    def decode(self, obs):
+    def _decode_viterbi(self, obs):
         """Find most likely state sequence corresponding to `obs`.
 
         Uses the Viterbi algorithm.
@@ -189,7 +210,7 @@ class _BaseHMM(BaseEstimator):
         -------
         viterbi_logprob : float
             Log probability of the maximum likelihood path through the HMM
-        states : array_like, shape (n,)
+        state_sequence : array_like, shape (n,)
             Index of the most likely states for each observation
 
         See Also
@@ -199,10 +220,72 @@ class _BaseHMM(BaseEstimator):
         """
         obs = np.asarray(obs)
         framelogprob = self._compute_log_likelihood(obs)
-        logprob, state_sequence = self._do_viterbi_pass(framelogprob)
+        viterbi_logprob, state_sequence = self._do_viterbi_pass(framelogprob)
+        return viterbi_logprob, state_sequence
+
+    def _decode_map(self, obs):
+        """Find most likely state sequence corresponding to `obs`.
+
+        Uses the maximum a posteriori estimation.
+
+        Parameters
+        ----------
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        map_logprob : float
+            Log probability of the maximum likelihood path through the HMM
+        state_sequence : array_like, shape (n,)
+            Index of the most likely states for each observation
+
+        See Also
+        --------
+        eval : Compute the log probability under the model and posteriors
+        score : Compute the log probability under the model
+        """
+        _, posteriors = self.eval(obs)
+        state_sequence = np.argmax(posteriors, axis=1)
+        map_logprob = np.max(posteriors, axis=1).sum()
+        return map_logprob, state_sequence
+
+    def decode(self, obs, algorithm="viterbi"):
+        """Find most likely state sequence corresponding to `obs`.
+        Uses the selected algorithm for decoding.
+
+        Parameters
+        ----------
+        obs : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        algorithm : string, one of the `decoder_algorithms`
+            decoder algorithm to be used
+
+        Returns
+        -------
+        logprob : float
+            Log probability of the maximum likelihood path through the HMM
+        state_sequence : array_like, shape (n,)
+            Index of the most likely states for each observation
+
+        See Also
+        --------
+        eval : Compute the log probability under the model and posteriors
+        score : Compute the log probability under the model
+        """
+        if self._algorighm.lower() in decoder_algorithms:
+            algorithm = self._algorighm.lower()
+        elif algorithm.lower() in decoder_algorithms:
+            algorithm = algorithm.lower()
+        decoder = {"viterbi": self._decode_viterbi,
+                   "map": self._decode_map}
+        logprob, state_sequence = decoder[algorithm](obs)
         return logprob, state_sequence
 
-    def predict(self, obs):
+    def predict(self, obs, algorithm="viterbi"):
         """Find most likely state sequence corresponding to `obs`.
 
         Parameters
@@ -213,10 +296,10 @@ class _BaseHMM(BaseEstimator):
 
         Returns
         -------
-        states : array_like, shape (n,)
+        state_sequence : array_like, shape (n,)
             Index of the most likely states for each observation
         """
-        logprob, state_sequence = self.decode(obs)
+        _, state_sequence = self.decode(obs, algorithm)
         return state_sequence
 
     def predict_proba(self, obs):
@@ -233,7 +316,7 @@ class _BaseHMM(BaseEstimator):
         T : array-like, shape (n, n_components)
             Returns the probability of the sample for each state in the model.
         """
-        logprob, posteriors = self.eval(obs)
+        _, posteriors = self.eval(obs)
         return posteriors
 
     def sample(self, n=1, random_state=None):
@@ -264,7 +347,7 @@ class _BaseHMM(BaseEstimator):
         obs = [self._generate_sample_from_state(
             currstate, random_state=random_state)]
 
-        for x in xrange(n - 1):
+        for _ in xrange(n - 1):
             rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
             hidden_states.append(currstate)
@@ -523,11 +606,12 @@ class GaussianHMM(_BaseHMM):
 
     def __init__(self, n_components=1, covariance_type='diag', startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
-                 means_prior=None, means_weight=0,
+                 algorithm="viterbi", means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1):
-        super(GaussianHMM, self).__init__(n_components, startprob, transmat,
-                                          startprob_prior=startprob_prior,
-                                          transmat_prior=transmat_prior)
+        _BaseHMM.__init__(self, n_components, startprob, transmat,
+                                        startprob_prior=startprob_prior,
+                                        transmat_prior=transmat_prior,
+                                        algorithm=algorithm)
 
         self._covariance_type = covariance_type
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
@@ -736,7 +820,7 @@ class MultinomialHMM(_BaseHMM):
     """
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
-                 startprob_prior=None, transmat_prior=None):
+            startprob_prior=None, transmat_prior=None, algorithm="viterbi"):
         """Create a hidden Markov model with multinomial emissions.
 
         Parameters
@@ -744,9 +828,10 @@ class MultinomialHMM(_BaseHMM):
         n_components : int
             Number of states.
         """
-        super(MultinomialHMM, self).__init__(n_components, startprob, transmat,
+        _BaseHMM.__init__(self, n_components, startprob, transmat,
                                              startprob_prior=startprob_prior,
-                                             transmat_prior=transmat_prior)
+                                             transmat_prior=transmat_prior,
+                                             algorithm=algorithm)
 
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
@@ -840,9 +925,9 @@ class GMMHMM(_BaseHMM):
     GaussianHMM : HMM with Gaussian emissions
     """
 
-    def __init__(self, n_components=1, n_mix=1, startprob=None,
-                 transmat=None, startprob_prior=None, transmat_prior=None,
-                 gmms=None, covariance_type='diag', covars_prior=1e-2):
+    def __init__(self, n_components=1, n_mix=1, startprob=None, transmat=None,
+            startprob_prior=None, transmat_prior=None, algorithm="viterbi",
+            gmms=None, covariance_type='diag', covars_prior=1e-2):
         """Create a hidden Markov model with GMM emissions.
 
         Parameters
@@ -850,9 +935,10 @@ class GMMHMM(_BaseHMM):
         n_components : int
             Number of states.
         """
-        super(GMMHMM, self).__init__(n_components, startprob, transmat,
+        _BaseHMM.__init__(self, n_components, startprob, transmat,
                                      startprob_prior=startprob_prior,
-                                     transmat_prior=transmat_prior)
+                                     transmat_prior=transmat_prior,
+                                     algorithm=algorithm)
 
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
