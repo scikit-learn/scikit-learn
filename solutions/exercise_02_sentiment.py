@@ -5,10 +5,11 @@
 import sys
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.svm.sparse import LinearSVC
+from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets import load_files
+from sklearn.cross_validation import train_test_split
 from sklearn import metrics
 
 #
@@ -24,18 +25,12 @@ if __name__ == "__main__":
 
     # the training data folder must be passed as first argument
     movie_reviews_data_folder = sys.argv[1]
-    dataset = load_files(movie_reviews_data_folder, shuffle=True, random_state=42)
+    dataset = load_files(movie_reviews_data_folder, shuffle=False)
+    print "n_samples: %d" % len(dataset.data)
 
     # split the dataset in training and test set:
-    n_samples_total = dataset.filenames.shape[0]
-
-    split = (n_samples_total * 3) / 4
-
-    docs_train = dataset.data[:split]
-    docs_test = dataset.data[split:]
-
-    y_train = dataset.target[:split]
-    y_test = dataset.target[split:]
+    docs_train, docs_test, y_train, y_test = train_test_split(
+        dataset.data, dataset.target, test_fraction=0.25, random_state=None)
 
     # Build a vectorizer / classifier pipeline using the previous analyzer
     pipeline = Pipeline([
