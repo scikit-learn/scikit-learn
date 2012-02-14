@@ -90,7 +90,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     See also
     --------
     SVC
-        Implementation of Support Vector Machine classifier using liblsvm:
+        Implementation of Support Vector Machine classifier using libsvm:
         the kernel can be non-linear but its SMO algorithm does not
         scale to large number of samples as LinearSVC does.
 
