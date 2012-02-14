@@ -603,6 +603,7 @@ class GaussianHMM(_BaseHMM):
     covars : array
         Covariance parameters for each state.  The shape depends on
         `_covariance_type`::
+
             (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)           if 'diag',
