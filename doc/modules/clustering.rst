@@ -361,7 +361,7 @@ Drawbacks
 
 
 Adjusted Rand index
-------------------
+-------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -482,7 +482,7 @@ by defining the adjusted Rand index as follows:
 
 
 Adjusted Mutual Information
---------------------------
+---------------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~

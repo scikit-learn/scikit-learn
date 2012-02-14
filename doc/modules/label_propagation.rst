@@ -21,6 +21,8 @@ labeled points and a large amount of unlabeled points.
     labeled data when training the model with the `fit` method. The identifier
     that this implementation uses the integer value :math:`-1`.
 
+.. _label_propagation:
+
 Label Propagation
 =================
 
