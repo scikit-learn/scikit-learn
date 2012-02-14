@@ -8,6 +8,7 @@ cimport numpy as np
 import numpy as np
 import numpy.linalg as linalg
 cimport cython
+import warnings
 
 cdef extern from "math.h":
     double fabs(double f)
@@ -71,6 +72,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int n_iter
+
+    if alpha == 0:
+        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+            " results and is discouraged.")
 
     R = y - np.dot(X, w)
 
@@ -181,6 +186,10 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
 
     cdef double y_norm2 = linalg.norm(y) ** 2
     tol = tol * y_norm2
+
+    if alpha == 0:
+        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+            " results and is discouraged.")
 
     for n_iter in range(max_iter):
         w_max = 0.0
