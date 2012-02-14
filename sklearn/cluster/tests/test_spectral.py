@@ -2,6 +2,7 @@
 
 from cPickle import dumps, loads
 import nose
+from nose.tools import assert_true
 
 import numpy as np
 from numpy.testing import assert_equal
@@ -58,4 +59,4 @@ def test_spectral_clustering_sparse():
     if labels[0] == 0:
         labels = 1 - labels
 
-    assert np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]) > .9
+    assert_true(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]) > .9)

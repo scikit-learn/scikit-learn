@@ -116,8 +116,8 @@ Mathematical Details
 Kernel methods like support vector machines or kernelized
 PCA rely on a property of reproducing kernel Hilbert spaces.
 For any positive definite kernel function `k` (a so called Mercer kernel),
-it is guaranteed that there exists a mapping :math:`\phi` into a Hilber space :math:`\mathcal{H}`,
-such that
+it is guaranteed that there exists a mapping :math:`\phi`
+into a Hilbert space :math:`\mathcal{H}`, such that
 
 .. math::
 

@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, \
                           assert_equal
 from nose import SkipTest
+from nose.tools import assert_true
 
 from .. import DictionaryLearning, MiniBatchDictionaryLearning, SparseCoder, \
                dict_learning_online, sparse_encode
@@ -15,14 +16,14 @@ X = rng.randn(n_samples, n_features)
 def test_dict_learning_shapes():
     n_atoms = 5
     dico = DictionaryLearning(n_atoms).fit(X)
-    assert dico.components_.shape == (n_atoms, n_features)
+    assert_true(dico.components_.shape == (n_atoms, n_features))
 
 
 def test_dict_learning_overcomplete():
     n_atoms = 12
     X = rng.randn(n_samples, n_features)
     dico = DictionaryLearning(n_atoms).fit(X)
-    assert dico.components_.shape == (n_atoms, n_features)
+    assert_true(dico.components_.shape == (n_atoms, n_features))
 
 
 def test_dict_learning_reconstruction():
@@ -45,7 +46,7 @@ def test_dict_learning_nonzero_coefs():
     dico = DictionaryLearning(n_atoms, transform_algorithm='lars',
                               transform_n_nonzero_coefs=3, random_state=0)
     code = dico.fit(X).transform(X[1])
-    assert len(np.flatnonzero(code)) == 3
+    assert_true(len(np.flatnonzero(code)) == 3)
 
     dico.set_params(transform_algorithm='omp')
     code = dico.transform(X[1])
@@ -76,13 +77,13 @@ def test_dict_learning_online_shapes():
 def test_dict_learning_online_estimator_shapes():
     n_atoms = 5
     dico = MiniBatchDictionaryLearning(n_atoms, n_iter=20).fit(X)
-    assert dico.components_.shape == (n_atoms, n_features)
+    assert_true(dico.components_.shape == (n_atoms, n_features))
 
 
 def test_dict_learning_online_overcomplete():
     n_atoms = 12
     dico = MiniBatchDictionaryLearning(n_atoms, n_iter=20).fit(X)
-    assert dico.components_.shape == (n_atoms, n_features)
+    assert_true(dico.components_.shape == (n_atoms, n_features))
 
 
 def test_dict_learning_online_initialization():
@@ -108,7 +109,8 @@ def test_dict_learning_online_partial_fit():
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
         # if ii == 1: break
-    assert not np.all(sparse_encode(X, dico1.components_, alpha=100) == 0)
+    assert_true(not np.all(sparse_encode(X, dico1.components_, alpha=100) ==
+        0))
     assert_array_equal(dico1.components_, dico2.components_)
 
 
@@ -126,8 +128,8 @@ def test_sparse_encode_error():
     V = rng.randn(n_atoms, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
-    assert not np.all(code == 0)
-    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    assert_true(not np.all(code == 0))
+    assert_true(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1)
 
 
 def test_sparse_coder_estimator():
@@ -136,5 +138,5 @@ def test_sparse_coder_estimator():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
                        transform_alpha=0.001).transform(X)
-    assert not np.all(code == 0)
-    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    assert_true(not np.all(code == 0))
+    assert_true(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1)

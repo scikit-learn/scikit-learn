@@ -279,7 +279,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            n_iter=2000)
         clf.fit(X, Y)
         assert_array_equal(clf.coef_[0, 1:-1], np.zeros((4,)))
-
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 

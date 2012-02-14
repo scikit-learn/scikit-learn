@@ -1,13 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
-
+from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
                           assert_equal
 from sklearn import datasets
-from sklearn.metrics import mean_square_error
+from sklearn.metrics import mean_squared_error
 
 from sklearn.linear_model.base import LinearRegression
-
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
@@ -52,10 +51,10 @@ def test_ridge():
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert_equal(ridge.coef_.shape, (X.shape[1], ))
-    assert ridge.score(X, y) > 0.5
+    assert_true(ridge.score(X, y) > 0.5)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert ridge.score(X, y) > 0.5
+    assert_true(ridge.score(X, y) > 0.5)
 
     # With more features than samples
     n_samples, n_features = 5, 10
@@ -63,10 +62,10 @@ def test_ridge():
     X = np.random.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
-    assert ridge.score(X, y) > .9
+    assert_true(ridge.score(X, y) > .9)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert ridge.score(X, y) > 0.9
+    assert_true(ridge.score(X, y) > 0.9)
 
 
 def test_toy_ridge_object():
@@ -151,7 +150,7 @@ def _test_ridge_loo(filter_):
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
-    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_square_error)
+    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_squared_error)
     ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.best_alpha, best_alpha)
 
@@ -221,14 +220,14 @@ def _test_ridge_classifiers(filter_):
         clf.fit(filter_(X_iris), y_iris)
         assert_equal(clf.coef_.shape, (n_classes, n_features))
         y_pred = clf.predict(filter_(X_iris))
-        assert np.mean(y_iris == y_pred) >= 0.8
+        assert_true(np.mean(y_iris == y_pred) >= 0.8)
 
     n_samples = X_iris.shape[0]
     cv = KFold(n_samples, 5)
     clf = RidgeClassifierCV(cv=cv)
     clf.fit(filter_(X_iris), y_iris)
     y_pred = clf.predict(filter_(X_iris))
-    assert np.mean(y_iris == y_pred) >= 0.8
+    assert_true(np.mean(y_iris == y_pred) >= 0.8)
 
 
 def _test_tolerance(filter_):
@@ -240,7 +239,7 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert score >= score2
+    assert_true(score >= score2)
 
 
 def test_dense_sparse():

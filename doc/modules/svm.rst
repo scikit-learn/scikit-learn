@@ -84,7 +84,7 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.5, kernel='rbf', probability=False, scale_C=None, shrinking=True,
+    gamma=0.5, kernel='rbf', probability=False, scale_C=True, shrinking=True,
     tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
@@ -123,7 +123,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=1.0, kernel='rbf', probability=False, scale_C=None, shrinking=True,
+    gamma=1.0, kernel='rbf', probability=False, scale_C=True, shrinking=True,
     tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -137,7 +137,7 @@ two classes, only one model is trained::
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
     intercept_scaling=1, loss='l2', multi_class=False, penalty='l2',
-    scale_C=None, tol=0.0001)
+    scale_C=True, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -263,7 +263,7 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, scale_C=None,
+    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, scale_C=True,
     shrinking=True, tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
@@ -457,7 +457,7 @@ vectors and the test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='precomputed', probability=False, scale_C=None,
+    gamma=0.0, kernel='precomputed', probability=False, scale_C=True,
     shrinking=True, tol=0.001)
     >>> # predict on training examples
     >>> clf.predict(gram)
@@ -484,19 +484,19 @@ generalization error of the classifier.
 SVC
 ---
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
-classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
+Given training vectors :math:`x_i \in R^p`, i=1,..., n, in two
+classes, and a vector :math:`y \in R^n` such that :math:`y_i \in {1,
 -1}`, SVC solves the following primal problem:
 
 
 .. math::
 
-    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
+    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, n} \zeta_i
 
 
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
-    & \zeta_i \geq 0, i=1, ..., l
+    & \zeta_i \geq 0, i=1, ..., n
 
 Its dual is
 
@@ -509,16 +509,28 @@ Its dual is
    & 0 \leq \alpha_i \leq C, i=1, ..., l
 
 where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
-is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
+is an n by n positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
 x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
 vectors are mapped into a higher (maybe infinite) dimensional space by
-the function :math:`\phi`
+the function :math:`\phi`.
 
 
 The decision function is:
 
-.. math:: sgn(\sum_{i=1}^l y_i \alpha_i K(x_i, x) + \rho)
+.. math:: sgn(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
 
+.. note::
+
+    In practice to have :math:`C` independent of the number of samples :math:`n`,
+    :math:`C` is scaled by :math:`n` (Replace :math:`C` by :math:`\frac{C}{n}` in the
+    equations above). It corresponds to the scale_C parameter which is True
+    by default in all estimators since version 0.11.
+
+.. note::
+
+    While SVM models derived from libsvm and liblinear use *C* as regularization
+    parameter, most other estimators use *alpha*. The relation between both is
+    :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 

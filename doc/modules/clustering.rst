@@ -360,8 +360,8 @@ Drawbacks
   is known).
 
 
-Ajusted Rand index
-------------------
+Adjusted Rand index
+-------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -481,8 +481,8 @@ by defining the adjusted Rand index as follows:
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
-Ajusted Mutual Information
---------------------------
+Adjusted Mutual Information
+---------------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~

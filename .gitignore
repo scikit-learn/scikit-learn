@@ -3,6 +3,7 @@
 *~
 .#*
 *.swp
+*.swo
 .DS_Store
 build
 sklearn/datasets/__config__.py
@@ -36,4 +37,3 @@ nips2010_pdf/
 *.nt.bz2
 *.tar.gz
 *.tgz
-joblib

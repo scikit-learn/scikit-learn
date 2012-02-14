@@ -2,10 +2,12 @@
 Todo: cross-check the F-value with stats model
 """
 
-from ..univariate_selection import (f_classif, f_regression, f_oneway,
+from sklearn.feature_selection.univariate_selection import (f_classif,
+                                    f_regression, f_oneway,
                                     SelectPercentile, SelectKBest,
                                     SelectFpr, SelectFdr, SelectFwe,
                                     GenericUnivariateSelect)
+from nose.tools import assert_true
 import numpy as np
 from numpy.testing import assert_array_equal
 from scipy import stats
@@ -22,8 +24,8 @@ def test_f_oneway_vs_scipy_stats():
     X2 = 1 + np.random.randn(10, 3)
     f, pv = stats.f_oneway(X1, X2)
     f2, pv2 = f_oneway(X1, X2)
-    assert np.allclose(f, f2)
-    assert np.allclose(pv, pv2)
+    assert_true(np.allclose(f, f2))
+    assert_true(np.allclose(pv, pv2))
 
 
 def test_f_classif():

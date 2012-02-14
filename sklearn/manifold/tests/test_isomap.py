@@ -1,6 +1,8 @@
 from itertools import product
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from nose.tools import assert_true
+
 
 from sklearn import datasets
 from sklearn import manifold
@@ -104,7 +106,7 @@ def test_transform():
     X_iso2 = iso.transform(X + noise)
 
     # Make sure the rms error on re-embedding is comparable to noise_scale
-    assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale
+    assert_true(np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale)
 
 
 def test_pipeline():
