@@ -8,11 +8,11 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
     liblinear rather than libsvm, so it has more flexibility in the choice of
-    penalties and loss functions and should scale better.
+    penalties and loss functions and should scale better (to large numbers of
+    samples).
 
-    This class supports both dense and sparse input. Use C-ordered arrays or
-    CSR matrices containing 64-bit floats for optimal performance; any other
-    input format will be converted (and copied).
+    This class supports both dense and sparse input and the multiclass support
+    is handled according to a one-vs-the-rest scheme.
 
     Parameters
     ----------
@@ -80,6 +80,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
+    The underlying implementation (liblinear) uses a sparse internal
+    representation for the data that will incur a memory copy.
+
     **References:**
     `LIBLINEAR: A Library for Large Linear Classification
     <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
@@ -87,6 +90,27 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     See also
     --------
     SVC
+        Implementation of Support Vector Machine classifier using liblsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+        Furthermore SVC multi-class mode is implemented using one
+        vs one scheme while LinearSVC uses one vs the rest. It is
+        possible to implement one vs the rest with SVC by using the
+        :class:`sklearn.multiclass.OneVsRestClassifier` wrapper.
+
+        Finally SVC can fit dense data without memory copy if the input
+        is C-contiguous. Sparse data will still incur memory copy though.
+
+    sklearn.linear_model.SGDClassifier
+        SGDClassifier can optimize the same cost function as LinearSVC
+        by adjusting the penalty and loss parameters. Furthermore
+        SGDClassifier is scalable to large number of samples as it uses
+        a Stochastic Gradient Descent optimizer.
+
+        Finally SGDClassifier can fit both dense and sparse data without
+        memory copy if the input is C-contiguous or CSR.
+
     """
 
     # all the implementation is provided by the mixins
@@ -95,6 +119,12 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
 class SVC(BaseLibSVM, ClassifierMixin):
     """C-Support Vector Classification.
+
+    The implementations is a based on libsvm. The fit time complexity
+    is more than quadratic with the number of samples which makes it hard
+    to scale to dataset with more than a couple of 10000 samples.
+
+    The multiclass support is handled according to a one-vs-one scheme.
 
     Parameters
     ----------
@@ -179,7 +209,14 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     See also
     --------
-    SVR, LinearSVC
+    SVR
+        Support Vector Machine for Regression implemented using libsvm.
+
+    LinearSVC
+        Scalable Linear Support Vector Machine for classififcation
+        implemented using liblinear. Check the See also section of
+        LinearSVC for more comparison element.
+
     """
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
@@ -193,6 +230,11 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
     """Nu-Support Vector Classification.
+
+    Similar to SVC but uses a parameter to control the number of support
+    vectors.
+
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -274,7 +316,12 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     See also
     --------
-    SVC, LinearSVC, SVR
+    SVC
+        Support Vector Machine for classification using libsvm.
+
+    LinearSVC
+        Scalable linear Support Vector Machine for classification using
+        liblinear.
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
@@ -290,6 +337,8 @@ class SVR(BaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
+
+    The implementations is a based on libsvm.
 
     Parameters
     ----------
@@ -374,6 +423,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     See also
     --------
     NuSVR
+        Support Vector Machine for regression implemented using libsvm
+        using a parameter to control the number of support vectors.
+
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
@@ -384,8 +436,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                                   cache_size, scale_C, sparse="auto")
 
     def fit(self, X, y, sample_weight=None, **params):
-        """
-        Fit the SVM model according to the given training data and parameters.
+        """Fit the SVM model according to the given training data.
 
         Parameters
         ----------
@@ -413,6 +464,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     Similar to NuSVC, for regression, uses a parameter nu to control
     the number of support vectors. However, unlike NuSVC, where nu
     replaces C, here nu replaces with the parameter epsilon of SVR.
+
+    The implementations is a based on libsvm.
 
     Parameters
     ----------
@@ -495,7 +548,12 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     See also
     --------
-    NuSVC, SVR
+    NuSVC
+        Support Vector Machine for classification implemented with libsvm
+        with a parameter to control the number of support vectors.
+
+    SVR
+        epsilon Support Vector Machine for regression implemented with libsvm.
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
@@ -532,6 +590,8 @@ class OneClassSVM(BaseLibSVM):
     """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
+
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -602,8 +662,7 @@ class OneClassSVM(BaseLibSVM):
                                           sparse="auto")
 
     def fit(self, X, class_weight={}, sample_weight=None, **params):
-        """
-        Detects the soft boundary of the set of samples X.
+        """Detects the soft boundary of the set of samples X.
 
         Parameters
         ----------
@@ -618,8 +677,7 @@ class OneClassSVM(BaseLibSVM):
 
         Notes
         -----
-        If X is not a C-ordered contiguous array or a scipy.sparse.csr_matrix,
-        it is copied.
+        If X is not a C-ordered contiguous array it is copied.
 
         """
         super(OneClassSVM, self).fit(
