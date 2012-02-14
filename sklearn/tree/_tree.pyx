@@ -737,10 +737,11 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             c += 1
 
         # Better than the best so far?
-        criterion.update(0, c, y_ptr, X_argsorted_i, sample_mask_ptr)
+        n_left = criterion.update(0, c, y_ptr, X_argsorted_i, sample_mask_ptr)
         error = criterion.eval()
         
-        # TODO only consider splits that respect min_leaf
+        if n_left < min_leaf or (n_samples - n_left) < min_leaf:
+            continue
 
         if error < best_error:
             best_i = i

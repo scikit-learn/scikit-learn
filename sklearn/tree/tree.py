@@ -293,7 +293,7 @@ def _build_tree(X, y, is_classification, criterion,
         # Split samples
         if depth < max_depth and n_node_samples >= min_split \
            and n_node_samples >= 2 * min_leaf:
-            feature, threshold, best_error, init_error = find_split( X, y,
+            feature, threshold, best_error, init_error = find_split(X, y,
                     X_argsorted, sample_mask, n_node_samples, min_leaf,
                     max_features, criterion, random_state)
 
