@@ -413,6 +413,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
+        # set min_split sensibly
+        self.min_split = max(self.min_split, 2 * self.min_leaf)
+
         # Convert data
         X = np.asarray(X, dtype=DTYPE, order='F')
         n_samples, self.n_features_ = X.shape
