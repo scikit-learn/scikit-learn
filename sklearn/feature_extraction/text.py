@@ -141,13 +141,15 @@ class WordNGramAnalyzer(BaseEstimator):
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
                  stop_words="english",
-                 token_pattern=DEFAULT_TOKEN_PATTERN):
+                 token_pattern=DEFAULT_TOKEN_PATTERN,
+                 unicode_error='strict'):
         self.charset = charset
         self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
         self.token_pattern = token_pattern
+        self.unicode_error = unicode_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -156,7 +158,8 @@ class WordNGramAnalyzer(BaseEstimator):
             text_document = text_document.read()
 
         if isinstance(text_document, bytes):
-            text_document = text_document.decode(self.charset, 'ignore')
+            text_document = text_document.decode(self.charset,
+                                                 self.unicode_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
@@ -195,11 +198,12 @@ class CharNGramAnalyzer(BaseEstimator):
     white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
-                 min_n=3, max_n=6):
+                 min_n=3, max_n=6, unicode_error='strict'):
         self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
+        self.unicode_error = unicode_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -208,7 +212,8 @@ class CharNGramAnalyzer(BaseEstimator):
             text_document = text_document.read()
 
         if isinstance(text_document, bytes):
-            text_document = text_document.decode(self.charset, 'ignore')
+            text_document = text_document.decode(self.charset,
+                                                 self.unicode_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
