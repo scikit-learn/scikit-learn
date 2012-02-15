@@ -121,9 +121,15 @@ def test_word_analyzer_unigrams_and_bigrams():
 
 def test_unicode_decode_error():
     # decode_error default to strict, so this should fail
-    wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None, charset='ascii')
+    # First, encode (as bytes) a unicode string.
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    assert_raises(UnicodeDecodeError, wa.analyze, text)
+    text_bytes =  text.encode('utf-8')
+    # Then let the Analyzer try to decode it as ascii. It should fail,
+    # because we have given it an incorrect charset.
+    wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None, charset='ascii')
+    assert_raises(UnicodeDecodeError, wa.analyze, text_bytes)
+    ca = CharNGramAnalyzer(min_n=1, max_n=2, charset='ascii')
+    assert_raises(UnicodeDecodeError, ca.analyze, text_bytes)
 
 
 def test_char_ngram_analyzer():
