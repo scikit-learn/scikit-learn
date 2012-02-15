@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from nose.tools import assert_true
 
 from sklearn import linear_model, datasets
 
@@ -24,10 +25,10 @@ def test_simple():
         eps = 1e-3
         ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert ocur == i + 1
+            assert_true(ocur == i + 1)
         else:
             # no more than max_pred variables can go into the active set
-            assert ocur == X.shape[1]
+            assert_true(ocur == X.shape[1])
 
 
 def test_simple_precomputed():
@@ -46,10 +47,10 @@ def test_simple_precomputed():
         eps = 1e-3
         ocur = len(cov[C - eps < abs(cov)])
         if i < X.shape[1]:
-            assert ocur == i + 1
+            assert_true(ocur == i + 1)
         else:
             # no more than max_pred variables can go into the active set
-            assert ocur == X.shape[1]
+            assert_true(ocur == X.shape[1])
 
 
 def test_lars_lstsq():
@@ -82,9 +83,9 @@ def test_collinearity():
     y = np.array([1., 0., 0])
 
     _, _, coef_path_ = linear_model.lars_path(X, y, alpha_min=0.01)
-    assert (not np.isnan(coef_path_).any())
+    assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
-    assert (residual ** 2).sum() < 1.  # just make sure it's bounded
+    assert_true((residual ** 2).sum() < 1.)  # just make sure it's bounded
 
 
 def test_singular_matrix():
@@ -107,10 +108,12 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
+        if a == 0:
+            continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)
-        assert error < 0.01
+        assert_true(error < 0.01)
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2):
@@ -118,7 +121,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
         err = np.linalg.norm(clf1.coef_ - clf2.coef_)
-        assert err < 1e-3
+        assert_true(err < 1e-3)
 
     # same test, with normalized data
     X = diabetes.data
@@ -126,10 +129,12 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
                                   tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
+        if a == 0:
+            continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)
-        assert error < 0.01
+        assert_true(error < 0.01)
 
 
 def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
@@ -146,7 +151,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
-        assert error < 0.01
+        assert_true(error < 0.01)
 
     alphas_min = [10, 0.9, 1e-4]
     # same test, with normalization
@@ -158,7 +163,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
-        assert error < 0.01
+        assert_true(error < 0.01)
 
 
 def test_lars_add_features():
@@ -172,13 +177,13 @@ def test_lars_add_features():
     H = 1. / (np.arange(1, n + 1) + np.arange(n)[:, np.newaxis])
     clf = linear_model.Lars(fit_intercept=False).fit(
         H, np.arange(n))
-    assert np.all(np.isfinite(clf.coef_))
+    assert_true(np.all(np.isfinite(clf.coef_)))
 
 
 def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
     lars.fit(X, y)
-    assert len(lars.coef_.nonzero()[0]) == 6
+    assert_true(len(lars.coef_.nonzero()[0]) == 6)
 
 
 def test_lars_cv():
@@ -214,9 +219,9 @@ def test_lasso_lars_ic():
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
     nonzero_aic = np.where(lars_aic.coef_)[0]
-    assert lars_bic.alpha_ > lars_aic.alpha_
-    assert len(nonzero_bic) < len(nonzero_aic)
-    assert np.max(nonzero_bic) < diabetes.data.shape[1]
+    assert_true(lars_bic.alpha_ > lars_aic.alpha_)
+    assert_true(len(nonzero_bic) < len(nonzero_aic))
+    assert_true(np.max(nonzero_bic) < diabetes.data.shape[1])
 
 
 if __name__ == '__main__':

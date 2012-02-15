@@ -40,8 +40,12 @@ Changelog
    - Added BIC/AIC model selection to classical :ref:`gmm` and unified 
      the API with the remainder of scikit-learn, by `Bertrand Thirion`_
 
-   - :ref:`k-means:` can now be run in parallel, using the `n_jobs` argument
+   - :ref:`k_means` can now be run in parallel, using the `n_jobs` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
+
+   - Improved :ref:`cross_validation` and :ref:`grid_search` documentation
+     and introduced the new :func:`cross_validation.train_test_split`
+     helper function by `Olivier Grisel`_
 
 
 API changes summary
@@ -60,6 +64,14 @@ API changes summary
    - attribute `_scores` and `_pvalues` in univariate feature selection
      objects are now deprecated.
      `scores_` or `pvalues_` should be used instead.
+
+   - LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
+     consistent with the Olivetti faces dataset. Use ``images`` and
+     ``pairs`` attribute to access the natural images shapes instead.
+
+   - Setting scale_C=True by default in SVM and LogisticRegression
+     models. This allows to have a regularization parameter independent
+     of the number of samples. The scale_C parameter will disappear in v0.12.
 
 .. _changes_0_10:
 

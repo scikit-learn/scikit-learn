@@ -10,7 +10,10 @@ from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_equal
 from nose.tools import assert_raises
-from ..base import BaseEstimator, clone, is_classifier
+from sklearn.base import BaseEstimator, clone, is_classifier
+from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
 
 
 #############################################################################
@@ -121,14 +124,11 @@ def test_get_params():
     assert_true('a__d' not in test.get_params(deep=False))
 
     test.set_params(a__d=2)
-    assert test.a.d == 2
+    assert_true(test.a.d == 2)
     assert_raises(ValueError, test.set_params, a__a=2)
 
 
 def test_is_classifier():
-    from ..svm import SVC
-    from ..pipeline import Pipeline
-    from ..grid_search import GridSearchCV
     svc = SVC()
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))

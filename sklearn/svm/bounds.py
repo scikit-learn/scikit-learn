@@ -1,8 +1,10 @@
 import operator
 import numpy as np
+import warnings
 
 
-def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
+def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0,
+             scale_C=True):
     """
     Return the maximum value for C that yields a model with coefficients
     and intercept set to zero for l1 penalized classifiers,
@@ -36,12 +38,22 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
         intercept_scaling is appended to the instance vector.
         It must match the fit() method parameter.
 
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False.
+
     Returns
     -------
     l1_min_c: float
         minimum value for C
     """
     import scipy.sparse as sp
+
+    if not scale_C:
+        warnings.warn('SVM: scale_C will disappear and be assumed to be '
+                      'True in scikit-learn 0.12', FutureWarning,
+                      stacklevel=2)
 
     if loss not in ('l2', 'log'):
         raise ValueError('loss type not in ("l2", "log")')
@@ -76,6 +88,9 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
             _y[i, y != c] = -1
 
     den = np.max(np.abs(dot(_y, X)))
+    if scale_C:
+        den /= X.shape[0]
+
     if den == 0.0:
         raise ValueError('Ill-posed l1_min_c calculation')
     if loss == 'l2':

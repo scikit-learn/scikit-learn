@@ -30,8 +30,7 @@ def test_libsvm_parameters():
     """
     Test parameters on classes that make use of libsvm.
     """
-
-    clf = svm.SVC(kernel='linear').fit(X, Y)
+    clf = svm.SVC(kernel='linear', C=len(X)).fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
@@ -47,23 +46,23 @@ def test_libsvm_iris():
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
-        assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
+        assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.9)
 
     assert_array_equal(clf.label_, np.sort(clf.label_))
 
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
     pred = svm.libsvm.predict(iris.data, *model)
-    assert np.mean(pred == iris.target) > .95
+    assert_true(np.mean(pred == iris.target) > .95)
 
     model = svm.libsvm.fit(iris.data,
             iris.target.astype(np.float64), kernel='linear')
     pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
-    assert np.mean(pred == iris.target) > .95
+    assert_true(np.mean(pred == iris.target) > .95)
 
     pred = svm.libsvm.cross_validation(iris.data,
             iris.target.astype(np.float64), 5, kernel='linear')
-    assert np.mean(pred == iris.target) > .95
+    assert_true(np.mean(pred == iris.target) > .95)
 
 
 def test_single_sample_1d():
@@ -84,7 +83,7 @@ def test_precomputed():
 
     We test it with a toy dataset and with iris.
     """
-    clf = svm.SVC(kernel='precomputed')
+    clf = svm.SVC(kernel='precomputed', C=len(X))
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
@@ -113,7 +112,7 @@ def test_precomputed():
     # matrix. kernel is just a linear kernel
 
     kfunc = lambda x, y: np.dot(x, y.T)
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(kernel=kfunc, C=len(X))
     clf.fit(X, Y)
     pred = clf.predict(T)
 
@@ -124,8 +123,8 @@ def test_precomputed():
 
     # test a precomputed kernel with the iris dataset
     # and check parameters against a linear SVC
-    clf = svm.SVC(kernel='precomputed')
-    clf2 = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='precomputed', C=len(iris.data))
+    clf2 = svm.SVC(kernel='linear', C=len(iris.data))
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     clf2.fit(iris.data, iris.target)
@@ -145,7 +144,7 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(kernel=kfunc, C=len(X))
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
@@ -156,14 +155,15 @@ def test_SVR():
     """
 
     diabetes = datasets.load_diabetes()
-    for clf in (svm.NuSVR(kernel='linear', nu=.4),
-                svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.),
-                svm.sparse.NuSVR(kernel='linear', nu=.4),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.sparse.SVR(kernel='linear', C=10.)):
+    n_samples = len(diabetes.data)
+    for clf in (svm.NuSVR(kernel='linear', nu=.4, C=n_samples),
+                svm.NuSVR(kernel='linear', nu=.4, C=10. * n_samples),
+                svm.SVR(kernel='linear', C=10. * n_samples),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=n_samples),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10. * n_samples),
+                svm.sparse.SVR(kernel='linear', C=10. * n_samples)):
         clf.fit(diabetes.data, diabetes.target)
-        assert clf.score(diabetes.data, diabetes.target) > 0.02
+        assert_true(clf.score(diabetes.data, diabetes.target) > 0.02)
 
 
 def test_oneclass():
@@ -193,7 +193,7 @@ def test_tweak_params():
     The success of this test ensures that the mapping between libsvm and
     the python classifier is complete.
     """
-    clf = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='linear', C=len(X))
     clf.fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
@@ -209,9 +209,9 @@ def test_probability():
     """
 
     for clf in (
-        svm.SVC(probability=True),
+        svm.SVC(probability=True, C=len(X)),
         svm.NuSVC(probability=True),
-        svm.sparse.SVC(probability=True),
+        svm.sparse.SVC(probability=True, C=len(X)),
         svm.sparse.NuSVC(probability=True)):
 
         clf.fit(iris.data, iris.target)
@@ -219,8 +219,8 @@ def test_probability():
         prob_predict = clf.predict_proba(iris.data)
         assert_array_almost_equal(
             np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-        assert np.mean(np.argmax(prob_predict, 1)
-                       == clf.predict(iris.data)) > 0.9
+        assert_true(np.mean(np.argmax(prob_predict, 1)
+                       == clf.predict(iris.data)) > 0.9)
 
         assert_almost_equal(clf.predict_proba(iris.data),
                             np.exp(clf.predict_log_proba(iris.data)), 8)
@@ -255,7 +255,7 @@ def test_weight():
     """
     Test class weights
     """
-    clf = svm.SVC()
+    clf = svm.SVC(C=len(X))
     # we give a small weights to class 1
     clf.fit(X, Y, {1: 0.1})
     # so all predicted values belong to class 2
@@ -264,10 +264,11 @@ def test_weight():
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
-    for clf in (linear_model.LogisticRegression(), svm.LinearSVC(), svm.SVC()):
+    for clf in (linear_model.LogisticRegression(C=180),
+            svm.LinearSVC(C=len(X)), svm.SVC(C=len(X))):
         clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
         y_pred = clf.predict(X_[180:])
-        assert np.sum(y_pred == y_[180:]) >= 11
+        assert_true(np.sum(y_pred == y_[180:]) >= 11)
 
 
 def test_sample_weights():
@@ -294,17 +295,18 @@ def test_auto_weight():
     X, y = iris.data[:, :2], iris.target
     unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
 
-    assert np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2
+    assert_true(np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2)
 
-    for clf in (svm.SVC(kernel='linear'),
-            svm.LinearSVC(), LogisticRegression()):
+    C = len(X)
+    for clf in (svm.SVC(kernel='linear', C=C),
+            svm.LinearSVC(C=C), LogisticRegression(C=C)):
         # check that score is better when class='auto' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced],
                          class_weight={}).predict(X)
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],
                                   class_weight='auto').predict(X)
-        assert metrics.f1_score(y, y_pred) <= \
-                metrics.f1_score(y, y_pred_balanced)
+        assert_true(metrics.f1_score(y, y_pred) <=
+                    metrics.f1_score(y, y_pred_balanced))
 
 
 def test_bad_input():
@@ -324,11 +326,11 @@ def test_bad_input():
     # Test with arrays that are non-contiguous.
     for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
-        assert Xf.flags['C_CONTIGUOUS'] == False
+        assert_true(Xf.flags['C_CONTIGUOUS'] == False)
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
         yf = yf[:, -1]
-        assert yf.flags['F_CONTIGUOUS'] == False
-        assert yf.flags['C_CONTIGUOUS'] == False
+        assert_true(yf.flags['F_CONTIGUOUS'] == False)
+        assert_true(yf.flags['C_CONTIGUOUS'] == False)
         clf.fit(Xf, yf)
         assert_array_equal(clf.predict(T), true_result)
 
@@ -375,7 +377,7 @@ def test_LinearSVC():
     clf = svm.LinearSVC().fit(X, Y)
 
     # by default should have intercept
-    assert clf.fit_intercept
+    assert_true(clf.fit_intercept)
 
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
@@ -402,8 +404,8 @@ def test_LinearSVC_iris():
     """
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
-    clf = svm.LinearSVC().fit(iris.data, iris.target)
-    assert np.mean(clf.predict(iris.data) == iris.target) > 0.8
+    clf = svm.LinearSVC(C=len(iris.data)).fit(iris.data, iris.target)
+    assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.8)
 
     dec = clf.decision_function(iris.data)
     pred = np.argmax(dec, 1)
@@ -420,9 +422,9 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [2, 3]]
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
-                     dual=False, C=1, tol=1e-7)
-    assert clf.intercept_scaling == 1, clf.intercept_scaling
-    assert clf.fit_intercept
+                     dual=False, C=4, tol=1e-7)
+    assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
+    assert_true(clf.fit_intercept)
 
     # when intercept_scaling is low the intercept value is highly "penalized"
     # by regularization
@@ -435,7 +437,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     clf.intercept_scaling = 100
     clf.fit(X, y)
     intercept1 = clf.intercept_
-    assert intercept1 < -1
+    assert_true(intercept1 < -1)
 
     # when intercept_scaling is sufficiently high, the intercept value
     # doesn't depend on intercept_scaling value
