@@ -1,0 +1,309 @@
+============================================================
+Unsupervised learning: seeking representations of the data
+============================================================
+
+Clustering: grouping observations together
+============================================
+
+.. topic:: The problem solved in clustering
+
+    Given the iris dataset, if we knew that there were 3 types of iris, but
+    did not have access to a taxonomist to label them: we could try a
+    **clustering task**: split the observations in well-separated group
+    called *clusters*.
+
+..   
+   >>> # Set the PRNG   
+   >>> import numpy as np
+   >>> np.random.seed(1)
+   >>> # Import pylab
+   >>> import pylab as pl
+
+
+K-means clustering
+-------------------
+
+Note that their exists many different clustering criteria and associated
+algorithm. The simplest clustering algorithm is the k-means.
+
+.. image:: k_means_iris_3.png
+    :scale: 70
+    :align: right
+
+
+:: 
+
+    >>> from scikits.learn import cluster, datasets
+    >>> iris = datasets.load_iris()
+    >>> X_iris = iris.data
+    >>> y_iris = iris.target
+
+    >>> k_means = cluster.KMeans(k=3)
+    >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
+    KMeans(copy_x=True, init='k-means++', k=3, max_iter=300,...
+    >>> print k_means.labels_[::10]
+    [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
+    >>> print y_iris[::10]
+    [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
+
+.. |k_means_iris_bad_init| image:: k_means_iris_bad_init.png
+   :scale: 63
+
+.. |k_means_iris_8| image:: k_means_iris_8.png
+   :scale: 63
+
+.. |cluster_iris_truth| image:: cluster_iris_truth.png
+   :scale: 63
+
+.. warning:: 
+   
+    There is absolutely no garanty of recovering a ground truth. First
+    choosing the right number of clusters is hard. Second, the algorithm
+    is sensitive to initialization, and can fall in local minima,
+    although in the `scikits.learn` we play many tricks to mitigate this
+    issue.
+
+    .. list-table::
+        :class: centered
+        
+        * 
+        
+            - |k_means_iris_bad_init|
+
+            - |k_means_iris_8|
+
+            - |cluster_iris_truth|
+
+        * 
+        
+            - **Bad initialization**
+            
+            - **8 clusters**
+            
+            - **Ground truth**
+
+    **Don't over-interpret clustering results**
+
+.. |lena| image:: lena.png
+   :scale: 30
+
+.. |lena_regular| image:: lena_regular.png
+   :scale: 30
+
+.. |lena_compressed| image:: lena_compressed.png
+   :scale: 30
+
+.. |lena_histogram| image:: lena_histogram.png
+   :scale: 40
+
+.. topic:: **Application example: vector quantization**
+
+    Clustering in general and KMeans in particular, can be seen as a way
+    of choosing a small number of examplars to compress the information,
+    a problem sometimes known as vector quantization. For instance, this
+    can be used to posterize an image::
+
+    >>> import scipy as sp
+    >>> lena = sp.lena()
+    >>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
+    >>> k_means = cluster.KMeans(k=5, n_init=1)
+    >>> k_means.fit(X) # doctest: +ELLIPSIS
+    KMeans(copy_x=True, init='k-means++', k=5, ...
+    >>> values = k_means.cluster_centers_.squeeze()
+    >>> labels = k_means.labels_
+    >>> lena_compressed = np.choose(labels, values)
+    >>> lena_compressed.shape = lena.shape
+
+    .. list-table::
+      :class: centered 
+
+      *
+        - |lena|
+
+        - |lena_compressed|
+
+        - |lena_regular|
+
+        - |lena_histogram|
+
+      *
+
+        - Raw image
+
+        - K-means quantization
+
+        - Equal bins
+
+        - Image histogram
+
+
+Hierarchical clustering: Ward
+------------------------------
+
+For estimating a large number of clusters, top-down approaches are both
+statisticaly ill-posed, and slow. Hierarchical clustering is a bottom-up
+approach that merges successively observations together and is
+particularly useful when the clusters of interest are made of only a few
+observations. *Ward* clustering minimizes a criterion similar to k-means
+in a bottom-up approach. When the number of clusters is large, it is much
+more computationally efficient than k-means.
+
+Connectivity-constrained clustering
+.....................................
+
+With Ward clustering, it is possible to specify which samples can be
+clustered together by giving a connectivity graph. Graphs in the scikit
+are represented by their adjacency matrix. Often a sparse matrix is used.
+This can be useful for instance to retrieve connect regions when
+clustering an image:
+
+.. image:: lena_ward.png
+    :scale: 70
+    :align: right
+
+::
+
+    >>> # Downsample the image by a factor of 4
+    >>> lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
+    >>> X = np.reshape(lena, (-1, 1))
+
+    >>> # the structure of the data: pixels connected to their neighbors
+    >>> from scikits.learn.feature_extraction.image import grid_to_graph
+    >>> connectivity = grid_to_graph(*lena.shape)
+
+    >>> ward = cluster.Ward(n_clusters=30, connectivity=connectivity)
+    >>> ward.fit(X) # doctest: +ELLIPSIS
+    Ward(connectivity=...
+    >>> labels = np.reshape(ward.labels_, lena.shape)
+
+..  To generate the image
+    >>> pl.imsave('lena_ward.png', labels)
+
+
+Feature agglomeration
+......................
+
+We have seen that sparsity could be used to mitigate the curse of
+dimensionality, *i.e* the insufficience of observations compared to the
+number of features. Another approach is to merge together similar
+features: **feature agglomeration**. This approach can be implementing by
+clustering in the feature direction, in other words clustering the
+transposed data.
+
+.. image:: digits_agglo.png
+    :align: right
+    :scale: 57
+
+::
+
+   >>> digits = datasets.load_digits()
+   >>> images = digits.images
+   >>> X = np.reshape(images, (len(images), -1))
+   >>> connectivity = grid_to_graph(*images[0].shape)
+
+   >>> agglo = cluster.WardAgglomeration(connectivity=connectivity,
+   ...                                   n_clusters=32)
+   >>> agglo.fit(X) # doctest: +ELLIPSIS
+   WardAgglomeration(connectivity=...
+   >>> X_reduced = agglo.transform(X)
+
+   >>> X_approx = agglo.inverse_transform(X_reduced)
+   >>> images_approx = np.reshape(X_approx, images.shape)
+
+.. topic:: `transform` and `inverse_transform` methods
+
+   Some estimators expose a `transform` method, for instance to reduce
+   the dimensionality of the dataset.
+
+Decompositions: from a signal to components and loadings
+===========================================================
+
+.. topic:: **Components and loadings**
+
+   If X is our multivariate data, the problem that we are trying to solve
+   is to rewrite it on a different observation basis: we want to learn
+   loadings L and a set of components C such that *X = L C*.
+   Different criteria exist to choose the components
+
+Principal component analysis: PCA
+-----------------------------------
+
+Principal component analysis select the successive components that
+explain the maximum variance in the signal.
+
+.. |pca_3d_axis| image:: pca_3d_axis.jpg
+   :scale: 70
+
+.. |pca_3d_aligned| image:: pca_3d_aligned.jpg
+   :scale: 70
+
+.. rst-class:: centered
+
+   |pca_3d_axis| |pca_3d_aligned|
+
+The point cloud spanned by the observations above is very flat in one
+direction: one of the 3 univariate features can almost be exactly
+computed using the 2 other. PCA finds the directions in which the data is
+not *flat*
+
+When used to *transform* data, PCA can reduce the dimensionality of the
+data by projecting on a principal subspace.
+
+.. np.random.seed(0)
+
+::
+
+    >>> # Create a signal with only 2 useful dimensions
+    >>> x1 = np.random.normal(size=100)
+    >>> x2 = np.random.normal(size=100)
+    >>> x3 = x1 + x2
+    >>> X = np.c_[x1, x2, x3]
+
+    >>> from scikits.learn import decomposition
+    >>> pca = decomposition.PCA()
+    >>> pca.fit(X)
+    PCA(copy=True, n_components=None, whiten=False)
+    >>> print pca.explained_variance_  # doctest: +ELLIPSIS
+    [  2.46782...e+00   8.054...e-01   9.7...e-33]
+
+    >>> # As we can see, only the 2 first components are useful
+    >>> pca.n_components = 2
+    >>> X_reduced = pca.fit_transform(X)
+    >>> X_reduced.shape
+    (100, 2)
+
+.. Eigenfaces here?
+
+Indenpendant Component Analysis: ICA
+-------------------------------------
+
+ICA selects components so that the distribution of their loadings carries
+a maximum amount of independant information. It is able to recover
+**non-Gaussian** independant signals:
+
+.. image:: plot_ica_blind_source_separation_1.png
+   :scale: 70
+   :align: center
+
+.. np.random.seed(0)
+
+::
+
+    >>> # Generate sample data
+    >>> time = np.linspace(0, 10, 2000)
+    >>> s1 = np.sin(2 * time)  # Signal 1 : sinusoidal signal
+    >>> s2 = np.sign(np.sin(3 * time))  # Signal 2 : square signal
+    >>> S = np.c_[s1, s2]
+    >>> S += 0.2 * np.random.normal(size=S.shape)  # Add noise
+    >>> S /= S.std(axis=0)  # Standardize data
+    >>> # Mix data
+    >>> A = np.array([[1, 1], [0.5, 2]])  # Mixing matrix
+    >>> X = np.dot(S, A.T)  # Generate observations
+
+    >>> # Compute ICA
+    >>> ica = decomposition.FastICA()
+    >>> S_ = ica.fit(X).transform(X)  # Get the estimated sources
+    >>> A_ = ica.get_mixing_matrix()  # Get estimated mixing matrix
+    >>> np.allclose(X, np.dot(S_, A_.T))
+    True
+
