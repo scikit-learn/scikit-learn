@@ -171,8 +171,29 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
+<<<<<<< HEAD
     `converged_` : bool
         True when convergence was reached in fit(), False otherwise.
+=======
+    converged_ : bool
+        True when convergence was reached in fit(), False
+        otherwise.
+
+    Methods
+    -------
+    eval(X)
+        Compute a lower-bound of the log likelihood of `X` under the model
+        and an approximate posterior distribution over mixture components.
+    fit(X)
+        Estimate the posterior of themodel parameters from `X` using the
+        variational mean-field algorithm.
+    predict(X)
+        Find most likely mixtures components for each observation in `X`.
+    rvs(n=1)
+        Generate `n` samples from the posterior for the model.
+    score(X)
+        Compute the log likelihood of `X` under the model.
+>>>>>>> b4d4a9f... removed the decode
 
     See Also
     --------
@@ -802,6 +823,25 @@ class VBGMM(DPGMM):
         True when convergence was reached in fit(), False
         otherwise.
 
+<<<<<<< HEAD
+=======
+    Methods
+    -------
+    eval(X)
+        Compute a lower-bound of the log likelihood of `X` under the model
+        and an approximate posterior distribution over mixture components.
+    fit(X)
+        Estimate the posterior of themodel parameters from `X` using the
+        variational mean-field algorithm.
+    predict(X)
+        Find most likely mixtures components for each observation in `X`.
+    rvs(n=1)
+        Generate `n` samples from the posterior for the model.
+    score(X)
+        Compute the log likelihood of `X` under the model.
+
+
+>>>>>>> b4d4a9f... removed the decode
     See Also
     --------
     GMM : Finite Gaussian mixture model fit with EM

@@ -159,6 +159,22 @@ class GMM(BaseEstimator):
         True when convergence was reached in fit(), False otherwise.
 
 
+<<<<<<< HEAD
+=======
+    Methods
+    -------
+    eval(X) -> predict_proba
+        Compute the log likelihood of X under the model and the
+        posterior distribution over mixture components.
+    fit(X)
+        Estimate model parameters from X using the EM algorithm.
+    predict(X)
+        Find most likely mixtures components for each observation in X.
+    rvs(n=1, random_state=None)
+        Generate `n` samples from the model.
+    score(X)
+        Compute the log likelihood of X under the model.
+>>>>>>> b4d4a9f... removed the decode
 
     See Also
     --------
@@ -370,6 +386,7 @@ class GMM(BaseEstimator):
         logprob, posteriors = self.eval(X)
         return logprob, posteriors.argmax(axis=1)
 
+<<<<<<< HEAD
     def score(self, X):
         """Compute the log probability under the model.
 
@@ -387,6 +404,8 @@ class GMM(BaseEstimator):
         logprob, _ = self.eval(X)
         return logprob
 
+=======
+>>>>>>> b4d4a9f... removed the decode
     def predict(self, X):
         """Predict label for data.
 
@@ -398,8 +417,13 @@ class GMM(BaseEstimator):
         -------
         C : array, shape = (n_samples,)
         """
+<<<<<<< HEAD
         logprob, responsibilities = self.eval(X)
         return responsibilities.argmax(axis=1)
+=======
+        logprob, posteriors = self.eval(X)
+        return posteriors.argmax(axis=1)
+>>>>>>> b4d4a9f... removed the decode
 
     def predict_proba(self, X):
         """Predict posterior probability of data under each Gaussian
