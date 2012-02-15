@@ -7,11 +7,12 @@ TODO: remove hard coded numerical results when possible
 import numpy as np
 from scipy import linalg
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
-                          assert_almost_equal
+                          assert_almost_equal, assert_equal
 from nose.tools import assert_raises, assert_true
 
 from sklearn import svm, linear_model, datasets, metrics
 from sklearn.datasets.samples_generator import make_classification
+from sklearn.multiclass import OneVsRestClassifier
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -175,7 +176,7 @@ def test_oneclass():
     pred = clf.predict(T)
 
     assert_array_almost_equal(pred, [-1, -1, -1])
-    assert_array_almost_equal(clf.intercept_, [-1.008], decimal=3)
+    assert_array_almost_equal(clf.intercept_, [1.008], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
@@ -240,6 +241,7 @@ def test_decision_function():
     dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
     assert_array_almost_equal(dec, clf.decision_function(iris.data))
+
     # binary:
     X = [[2, 1],
          [3, 1],
@@ -248,7 +250,10 @@ def test_decision_function():
     y = [0, 0, 1, 1]
     clf.fit(X, y)
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    prediction = clf.predict(X)
     assert_array_almost_equal(dec, clf.decision_function(X))
+    assert_array_almost_equal(prediction, (clf.decision_function(X) >
+        0).astype(np.int).ravel())
 
 
 def test_weight():
@@ -575,6 +580,14 @@ def test_inheritance():
     clf.fit(iris.data, iris.target)
     clf.predict(iris.data[-1])
     clf.decision_function(iris.data[-1])
+
+
+def test_ovr_fit_predict_svc():
+    ovr = OneVsRestClassifier(svm.SVC())
+    ovr.fit(iris.data, iris.target)
+    assert_equal(len(ovr.estimators_), 3)
+    assert_true(ovr.score(iris.data, iris.target) > .9)
+
 
 if __name__ == '__main__':
     import nose
