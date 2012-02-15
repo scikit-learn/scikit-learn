@@ -27,7 +27,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     Parameters
     ----------
     graph: sparse matrix or 2D array (preferably LIL matrix)
-        Adjency matrix of the graph
+        Adjacency matrix of the graph
     source : node label
        Starting node for path
     cutoff : integer, optional
@@ -61,8 +61,6 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
             if v not in seen:
                 seen[v] = level     # set the level of vertex v
                 neighbors = np.array(graph.rows[v])
-                # Restrict to the upper triangle
-                neighbors = neighbors[neighbors > v]
                 next_level.update(neighbors)
         if cutoff is not None and cutoff <= level:
             break
