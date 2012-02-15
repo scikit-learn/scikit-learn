@@ -401,6 +401,13 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        # We use return_log=True to avoid a useless exponentiation
+=======
+>>>>>>> removed the decode in dpgmm and removed return_log in eval
+>>>>>>> 2826ac7... removed the decode in dpgmm and removed return_log in eval
         logprob, _ = self.eval(X)
         return logprob
 
@@ -643,7 +650,11 @@ class GMM(BaseEstimator):
 >>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         return self
 
+<<<<<<< HEAD
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
+=======
+    def _do_mstep(self, X, posteriors, params, min_covar=0):
+>>>>>>> 2826ac7... removed the decode in dpgmm and removed return_log in eval
         """ Perform the Mstep of the EM algorithm and return the class weihgts.
         """
         weights = responsibilities.sum(axis=0)
@@ -665,8 +676,11 @@ class GMM(BaseEstimator):
             self.covars_ = covar_mstep_func(
                 self, X, posteriors, weighted_X_sum, inverse_weights, min_covar)
 
+<<<<<<< HEAD
         # FIXME: why return the weights ?
 >>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
+=======
+>>>>>>> 2826ac7... removed the decode in dpgmm and removed return_log in eval
         return weights
 
     def _n_parameters(self):
