@@ -7,12 +7,24 @@
 #
 # License: BSD Style.
 
+
 import numpy as np
 import sys
 from time import time
 
 cimport numpy as np
 cimport cython
+
+
+cdef extern from "math.h":
+    cdef extern double exp(double x)
+    cdef extern double log(double x)
+    cdef extern double sqrt(double x)
+    cdef extern double pow(double x, double y)
+
+ctypedef np.float64_t DOUBLE
+ctypedef np.int32_t INTEGER
+
 
 # Penalty constans
 DEF NO_PENALTY = 0
