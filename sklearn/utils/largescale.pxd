@@ -3,6 +3,10 @@
 cimport numpy as np
 
 
+cdef extern from "math.h":
+    cdef extern double sqrt(double x)
+
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
 

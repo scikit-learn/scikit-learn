@@ -45,6 +45,10 @@ def configuration(parent_package='', top_path=None):
          sources=['graph_shortest_path.c'],
          include_dirs=[numpy.get_include()])
 
+    config.add_extension('largescale',
+         sources=['largescale.c'],
+         include_dirs=[numpy.get_include()])
+
     return config
 
 
