@@ -27,5 +27,5 @@ pl.ylim(y_min, y_max)
 pl.xticks(())
 pl.yticks(())
 
-pl.savefig('iris_dataset.png')
+
 

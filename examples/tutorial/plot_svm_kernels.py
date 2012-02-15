@@ -59,5 +59,5 @@ for kernel in ('linear', 'rbf', 'poly'):
 
     pl.xticks(())
     pl.yticks(())
-    pl.savefig('svm_kernel_%s.png' % kernel)
+
 

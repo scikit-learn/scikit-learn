@@ -70,5 +70,5 @@ z_pca_plane.shape = (2, 2)
 ax.set_xticks(())
 ax.set_yticks(())
 ax.set_zticks(())
-pl.savefig('pca_3d.png')
+#pl.savefig('pca_3d.png')
 

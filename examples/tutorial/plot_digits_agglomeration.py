@@ -42,5 +42,5 @@ pl.imshow(np.reshape(agglo.labels_, images[0].shape),
 pl.xticks(())
 pl.yticks(())
 pl.title('Labels')
-pl.savefig('digits_agglo.png')
+
 

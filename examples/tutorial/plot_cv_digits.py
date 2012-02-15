@@ -32,5 +32,5 @@ pl.text(gammas[np.argmax(scores)], .9*np.max(scores), '%.3f' % np.max(scores),
         verticalalignment='top',
         horizontalalignment='center',
         )
-pl.savefig('cv_digits.png', dpi=100)
+
 

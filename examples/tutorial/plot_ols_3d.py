@@ -33,12 +33,12 @@ ax.set_zlabel('Y')
 ax.set_xticks(())
 ax.set_yticks(())
 ax.set_zticks(())
-pl.savefig('diabetes_ols_diag.png')
+#pl.savefig('diabetes_ols_diag.png')
 ax.elev = -.5
 ax.azim = 0
-pl.savefig('diabetes_ols_x1.png')
+#pl.savefig('diabetes_ols_x1.png')
 ax.elev = -.5
 ax.azim = 90
-pl.savefig('diabetes_ols_x2.png')
+#pl.savefig('diabetes_ols_x2.png')
 
 

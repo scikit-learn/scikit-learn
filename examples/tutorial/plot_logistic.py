@@ -39,5 +39,5 @@ pl.xticks(())
 pl.yticks(())
 pl.ylim(-.25, 1.25)
 pl.xlim(-4, 10)
-pl.savefig('logistic_regression.png')
+
 

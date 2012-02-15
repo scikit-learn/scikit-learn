@@ -52,6 +52,6 @@ v1 /= v1[-1]
 ax.set_xticks(())
 ax.set_yticks(())
 ax.set_zticks(())
-pl.savefig('cluster_iris_pca.png')
+
 
 

@@ -27,7 +27,7 @@ regular_labels = np.searchsorted(regular_values, lena) - 1
 regular_values = .5*(regular_values[1:] + regular_values[:-1])
 regular_lena = np.choose(regular_labels.ravel(), regular_values)
 regular_lena.shape = lena.shape
-pl.imsave('lena_regular.png', regular_lena, cmap=pl.cm.gray, vmin=vmin, 
+#pl.imsave('lena_regular.png', regular_lena, cmap=pl.cm.gray, vmin=vmin, 
             vmax=vmax)
 
 pl.figure(1, figsize=(3, 2.2))
@@ -43,5 +43,5 @@ for center_1, center_2 in zip(values[:-1], values[1:]):
 for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
     pl.axvline(.5*(center_1+center_2), color='b', linestyle='--')
 
-pl.savefig('lena_histogram.png', dpi=150)
+
 

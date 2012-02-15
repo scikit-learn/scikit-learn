@@ -43,5 +43,3 @@ for name, clf in classifiers.iteritems():
     pl.xticks(())
     pl.yticks(())
 
-    pl.savefig('iris_%s.png' % name)
-

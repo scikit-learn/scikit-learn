@@ -31,5 +31,5 @@ ax.set_yticks(())
 ax.set_xlabel('X')
 ax.set_ylabel('y')
 ax.set_xlim(0, 2)
-pl.savefig('ols_variance.png')
+
 

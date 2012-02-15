@@ -37,7 +37,6 @@ for name, est in estimators.iteritems():
     ax.set_xlabel('Petal width')
     ax.set_ylabel('Sepal length')
     ax.set_zlabel('Petal length')
-    pl.savefig('%s.png' % name)
 
 # Plot the ground truth
 pl.cla()

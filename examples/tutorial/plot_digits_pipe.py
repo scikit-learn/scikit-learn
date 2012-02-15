@@ -24,7 +24,6 @@ pl.plot(pca.explained_variance_, linewidth=2)
 pl.axis('tight')
 pl.xlabel('n_components')
 pl.ylabel('explained_variance_')
-pl.savefig('pca_digits_spectrum.png')
 
 ################################################################################
 # Prediction

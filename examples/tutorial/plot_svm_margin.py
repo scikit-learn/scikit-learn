@@ -56,5 +56,5 @@ for name, penality in (('', 1), ('_no_penalty', .2e-2)):
 
     pl.xticks(())
     pl.yticks(())
-    pl.savefig('svm_margin%s.png' % name)
+
 
