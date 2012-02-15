@@ -197,7 +197,7 @@ class BaseLibSVM(BaseEstimator):
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
         self._intercept_ = self.intercept_.copy()
-        if len(self.label_) == 2:
+        if len(self.label_) == 2 and self.impl != 'one_class':
             self.intercept_ *= -1
 
     def _sparse_fit(self, X, y, class_weight=None, sample_weight=None):
@@ -279,7 +279,7 @@ class BaseLibSVM(BaseEstimator):
                  int(self.shrinking), int(self.probability))
 
         self._intercept_ = self.intercept_.copy()
-        if len(self.label_) == 2:
+        if len(self.label_) == 2 and self.impl != 'one_class':
             self.intercept_ *= -1
 
         n_class = len(self.label_) - 1
@@ -502,7 +502,7 @@ class BaseLibSVM(BaseEstimator):
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
-        if len(self.label_) == 2:
+        if len(self.label_) == 2 and self.impl != 'one_class':
             return -dec_func
 
         return dec_func
