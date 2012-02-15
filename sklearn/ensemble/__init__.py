@@ -4,6 +4,8 @@ classification and regression.
 """
 
 from .base import BaseEnsemble
+from .bagging import BaggedClassifier
+from .bagging import BaggedRegressor
 from .forest import RandomForestClassifier
 from .forest import RandomForestRegressor
 from .forest import ExtraTreesClassifier
