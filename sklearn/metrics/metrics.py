@@ -15,6 +15,7 @@ better
 import numpy as np
 
 from ..utils import check_arrays
+from ..utils import deprecated
 
 
 def unique_labels(*lists_of_labels):
@@ -212,7 +213,8 @@ def auc(x, y):
     return area
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def precision_score(y_true, y_pred, labels=None, pos_label=1,
+                    average='weighted'):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the
@@ -328,8 +330,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     reaching its optimal value at 1 and its worst value at 0.
 
     The beta parameter determines the weight of precision in the combined
-    score. ``beta < 1`` lends more weight to precision, while ``beta > 1`` favors
-    precision (``beta == 0`` considers only precision, ``beta == inf`` only recall).
+    score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
+    favors precision (``beta == 0`` considers only precision, ``beta == inf``
+    only recall).
 
     Parameters
     ----------
@@ -449,7 +452,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average="weighted"):
+                                    pos_label=1, average=None):
     """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -723,6 +726,10 @@ def precision_recall_curve(y_true, probas_pred):
     true positives and fn the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
+    The last precision and recall values are 1. and 0. respectively and do not
+    have a corresponding threshold.  This ensures that the graph starts on the
+    x axis.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
@@ -733,10 +740,10 @@ def precision_recall_curve(y_true, probas_pred):
 
     Returns
     -------
-    precision : array, shape = [n]
+    precision : array, shape = [n + 1]
         Precision values
 
-    recall : array, shape = [n]
+    recall : array, shape = [n + 1]
         Recall values
 
     thresholds : array, shape = [n]
@@ -878,8 +885,29 @@ def zero_one(y_true, y_pred):
     return np.sum(y_pred != y_true)
 
 
+def mean_squared_error(y_true, y_pred):
+    """Mean squared error regression loss
+
+    Return a a positive floating point value (the best value is 0.0).
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    loss : float
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    return np.mean((y_pred - y_true) ** 2)
+
+
+@deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
+            instead; to be removed in v0.12""")
 def mean_square_error(y_true, y_pred):
-    """Mean square error regression loss
+    """Cumulated square error regression loss
 
     Positive floating point value: the best value is 0.0.
 

@@ -103,8 +103,7 @@ class OutlierDetectionMixin(ClassifierMixin):
             raise Exception("Please fit data before predicting")
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
-            X_centered = X - self.location_
-            values = self.decision_function(X_centered, raw_mahalanobis=True)
+            values = self.decision_function(X, raw_mahalanobis=True)
             is_inlier[values <= self.threshold] = 1
         else:
             raise NotImplemented("You must provide a contamination rate.")

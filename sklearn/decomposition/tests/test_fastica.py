@@ -4,10 +4,12 @@ Test the fastica algorithm.
 
 import numpy as np
 from numpy.testing import assert_almost_equal
+from nose.tools import assert_true
 
 from scipy import stats
+import itertools
 
-from .. import FastICA, fastica
+from .. import FastICA, fastica, PCA
 from ..fastica_ import _gs_decorrelation
 
 
@@ -36,11 +38,11 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert (w ** 2).sum() < 1.e-10
+    assert_true((w ** 2).sum() < 1.e-10)
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
-    assert((tmp[:5] ** 2).sum() < 1.e-10)
+    assert_true((tmp[:5] ** 2).sum() < 1.e-10)
 
 
 def test_fastica(add_noise=False):
@@ -67,31 +69,37 @@ def test_fastica(add_noise=False):
 
     center_and_norm(m)
 
-    algorithm = ['parallel', 'deflation']
-    non_linearity = ['logcosh', 'exp', 'cube']
-    for nl in non_linearity:
-        for algo in algorithm:
+    algos = ['parallel', 'deflation']
+    nls = ['logcosh', 'exp', 'cube']
+    whitening = [True, False]
+    for algo, nl, whiten in itertools.product(algos, nls, whitening):
+        if whiten:
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
-            s_ = s_.T
-            # Check that the mixing model described in the docstring holds:
+        else:
+            X = PCA(n_components=2, whiten=True).fit_transform(m.T)
+            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo,
+                                     whiten=False)
+        s_ = s_.T
+        # Check that the mixing model described in the docstring holds:
+        if whiten:
             assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
-            center_and_norm(s_)
-            s1_, s2_ = s_
-            # Check to see if the sources have been estimated
-            # in the wrong order
-            if abs(np.dot(s1_, s2)) > abs(np.dot(s1_, s1)):
-                s2_, s1_ = s_
-            s1_ *= np.sign(np.dot(s1_, s1))
-            s2_ *= np.sign(np.dot(s2_, s2))
+        center_and_norm(s_)
+        s1_, s2_ = s_
+        # Check to see if the sources have been estimated
+        # in the wrong order
+        if abs(np.dot(s1_, s2)) > abs(np.dot(s1_, s1)):
+            s2_, s1_ = s_
+        s1_ *= np.sign(np.dot(s1_, s1))
+        s2_ *= np.sign(np.dot(s2_, s2))
 
-            # Check that we have estimated the original sources
-            if add_noise == False:
-                assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=2)
-                assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=2)
-            else:
-                assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=1)
-                assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
+        # Check that we have estimated the original sources
+        if add_noise == False:
+            assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=2)
+            assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=2)
+        else:
+            assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=1)
+            assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
     ica = FastICA(fun=nl, algorithm=algo)

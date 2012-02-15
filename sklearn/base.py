@@ -55,16 +55,19 @@ def clone(estimator, safe=True):
         param2 = params_set[name]
         if isinstance(param1, np.ndarray):
             # For most ndarrays, we do not test for complete equality
-            if (param1.ndim > 0
-                and param1.shape[0] > 0
-                and isinstance(param2, np.ndarray)
-                and param2.ndim > 0
-                and param2.shape[0] > 0):
+            if not isinstance(param2, type(param1)):
+                equality_test = False
+            elif (param1.ndim > 0
+                    and param1.shape[0] > 0
+                    and isinstance(param2, np.ndarray)
+                    and param2.ndim > 0
+                    and param2.shape[0] > 0):
                 equality_test = (
                     param1.shape == param2.shape
                     and param1.dtype == param2.dtype
-                    and param1[0] == param2[0]
-                    and param1[-1] == param2[-1]
+                    # We have to use '.flat' for 2D arrays
+                    and param1.flat[0] == param2.flat[0]
+                    and param1.flat[-1] == param2.flat[-1]
                 )
             else:
                 equality_test = np.all(param1 == param2)

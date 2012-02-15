@@ -2,19 +2,30 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
 
+import warnings
+from sys import version_info
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
                           assert_equal
+from nose import SkipTest
+from nose.tools import assert_true
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
+
+
+def check_warnings():
+    if version_info < (2, 6):
+        raise SkipTest("Testing for warnings is not supported in versions \
+        older than Python 2.6")
 
 
 def test_lasso_zero():
     """Check that the lasso can handle zero data without crashing"""
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    clf = Lasso(alpha=0).fit(X, y)
+    clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
@@ -33,7 +44,7 @@ def test_lasso_toy():
     Y = [-1, 0, 1]       # just a straight line
     T = [[2], [3], [4]]  # test sample
 
-    clf = Lasso(alpha=0)
+    clf = Lasso(alpha=1e-8)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
@@ -77,7 +88,7 @@ def test_enet_toy():
     T = [[2.], [3.], [4.]]  # test sample
 
     # this should be the same as lasso
-    clf = ElasticNet(alpha=0, rho=1.0)
+    clf = ElasticNet(alpha=1e-8, rho=1.0)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
@@ -130,21 +141,21 @@ def build_dataset():
 
 def test_lasso_path():
     X, y, X_test, y_test = build_dataset()
-    max_iter = 50
+    max_iter = 150
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
-    assert_almost_equal(clf.alpha, 0.011, 2)
+    assert_almost_equal(clf.alpha, 0.026, 2)
 
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
     clf.fit(X, y)
-    assert_almost_equal(clf.alpha, 0.011, 2)
+    assert_almost_equal(clf.alpha, 0.026, 2)
 
     # test set
-    assert clf.score(X_test, y_test) > 0.85
+    assert_true(clf.score(X_test, y_test) > 0.99)
 
 
 def test_enet_path():
     X, y, X_test, y_test = build_dataset()
-    max_iter = 50
+    max_iter = 150
 
     clf = ElasticNetCV(n_alphas=10, eps=1e-3, rho=0.95, cv=5,
             max_iter=max_iter)
@@ -157,7 +168,7 @@ def test_enet_path():
     assert_almost_equal(clf.alpha, 0.002, 2)
 
     # test set
-    assert clf.score(X_test, y_test) > 0.99
+    assert_true(clf.score(X_test, y_test) > 0.99)
 
 
 def test_path_parameters():
@@ -191,6 +202,19 @@ def test_warm_start():
     clf3.fit(X, y)
 
     assert_array_almost_equal(clf3.coef_, clf2.coef_)
+
+
+def test_lasso_alpha_warning():
+    check_warnings()  # Skip if unsupported Python version
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        X = [[-1], [0], [1]]
+        Y = [-1, 0, 1]       # just a straight line
+
+        clf = Lasso(alpha=0)
+        clf.fit(X, Y)
+
+        assert_true(len(w) > 0)  # warnings should be raised
 
 
 if __name__ == '__main__':

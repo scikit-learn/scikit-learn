@@ -156,7 +156,8 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities using DecisionTreeClassifier."""
-    clf = tree.DecisionTreeClassifier()
+    clf = tree.DecisionTreeClassifier(max_depth=1, max_features=1,
+            random_state=42)
     clf.fit(iris.data, iris.target)
 
     prob_predict = clf.predict_proba(iris.data)

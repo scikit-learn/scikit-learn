@@ -7,6 +7,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_equal
 
 from nose import SkipTest
+from nose.tools import assert_true
 
 from .. import SparsePCA, MiniBatchSparsePCA
 from ...utils import check_random_state
@@ -74,7 +75,7 @@ def test_fit_transform():
         spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
                          random_state=0).fit(Y)
         U2 = spca.transform(Y)
-    assert not np.all(spca_lars.components_ == 0)
+    assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,
@@ -139,7 +140,7 @@ def test_mini_batch_fit_transform():
     else:  # we can efficiently use parallelism
         U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                 random_state=0).fit(Y).transform(Y)
-    assert not np.all(spca_lars.components_ == 0)
+    assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd', alpha=alpha,
