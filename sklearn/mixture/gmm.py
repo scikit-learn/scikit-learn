@@ -159,6 +159,22 @@ class GMM(BaseEstimator):
         True when convergence was reached in fit(), False otherwise.
 
 
+<<<<<<< HEAD
+=======
+    Methods
+    -------
+    eval(X) -> predict_proba
+        Compute the log likelihood of X under the model and the
+        posterior distribution over mixture components.
+    fit(X)
+        Estimate model parameters from X using the EM algorithm.
+    predict(X)
+        Find most likely mixtures components for each observation in X.
+    rvs(n=1, random_state=None)
+        Generate `n` samples from the model.
+    score(X)
+        Compute the log likelihood of X under the model.
+>>>>>>> b4d4a9f... removed the decode
 
     See Also
     --------
@@ -225,6 +241,7 @@ class GMM(BaseEstimator):
         self.converged_ = False
 
     def _get_covars(self):
+<<<<<<< HEAD
         """Covariance parameters for each mixture component.
         The shape depends on `cvtype`::
 
@@ -241,12 +258,66 @@ class GMM(BaseEstimator):
             return [self.covars_] * self.n_components
         elif self._covariance_type == 'spherical':
             return [np.diag(cov) for cov in self.covars_]
+=======
+        """Return covars as a full matrix."""
+        if self.cvtype == 'full':
+            return self.covars_
+        elif self.cvtype == 'diag':
+            return [np.diag(cov) for cov in self.covars_]
+        elif self.cvtype == 'tied':
+            return [self.covars_] * self.n_components
+        elif self.cvtype == 'spherical':
+            return [np.eye(self.n_features) * f for f in self.covars_]
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
     def _set_covars(self, covars):
         """Provide values for covariance"""
         covars = np.asarray(covars)
+<<<<<<< HEAD
         _validate_covars(covars, self._covariance_type, self.n_components)
         self.covars_ = covars
+=======
+        _validate_covars(covars, self._cvtype, self.n_components,
+                self.n_features)
+        self.covars_ = covars
+
+    covars = property(_get_covars, _set_covars)
+
+    def _get_means(self):
+        """Mean parameters for each mixture component."""
+        return self.means_
+
+    def _set_means(self, means):
+        """Provide values for means"""
+        means = np.asarray(means)
+        if hasattr(self, 'n_features') and \
+               means.shape != (self.n_components, self.n_features):
+            raise ValueError('means must have shape ' +
+                    '(n_components, n_features)')
+        self.means_ = means.copy()
+        self.n_features = self.means_.shape[1]
+
+    means = property(_get_means, _set_means)
+
+    def __repr__(self):
+        return "GMM(cvtype='%s', n_components=%s)" % (self._cvtype,
+                self.n_components)
+
+    def _get_weights(self):
+        """Mixing weights for each mixture component."""
+        return np.exp(self._log_weights)
+
+    def _set_weights(self, weights):
+        """Provide value for micture weights"""
+        if len(weights) != self.n_components:
+            raise ValueError('weights must have length n_components')
+        if not np.allclose(np.sum(weights), 1.0):
+            raise ValueError('weights must sum to 1.0')
+
+        self._log_weights = np.log(np.asarray(weights).copy())
+
+    weights = property(_get_weights, _set_weights)
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
     def eval(self, X):
         """Evaluate the model on data
@@ -281,8 +352,14 @@ class GMM(BaseEstimator):
                 X, self.means_, self.covars_, self._covariance_type)
                + np.log(self.weights_))
         logprob = logsumexp(lpr, axis=1)
+<<<<<<< HEAD
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
+=======
+
+        posteriors = np.exp(lpr - logprob[:, np.newaxis])
+        return logprob, posteriors
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
     @deprecated("""will be removed in v0.12;
     use the score or predict method instead, depending on the question""")
@@ -309,6 +386,7 @@ class GMM(BaseEstimator):
         logprob, posteriors = self.eval(X)
         return logprob, posteriors.argmax(axis=1)
 
+<<<<<<< HEAD
     def score(self, X):
         """Compute the log probability under the model.
 
@@ -326,6 +404,8 @@ class GMM(BaseEstimator):
         logprob, _ = self.eval(X)
         return logprob
 
+=======
+>>>>>>> b4d4a9f... removed the decode
     def predict(self, X):
         """Predict label for data.
 
@@ -337,8 +417,13 @@ class GMM(BaseEstimator):
         -------
         C : array, shape = (n_samples,)
         """
+<<<<<<< HEAD
         logprob, responsibilities = self.eval(X)
         return responsibilities.argmax(axis=1)
+=======
+        logprob, posteriors = self.eval(X)
+        return posteriors.argmax(axis=1)
+>>>>>>> b4d4a9f... removed the decode
 
     def predict_proba(self, X):
         """Predict posterior probability of data under each Gaussian
@@ -396,6 +481,7 @@ class GMM(BaseEstimator):
             # number of those occurrences
             num_comp_in_X = comp_in_X.sum()
             if num_comp_in_X > 0:
+<<<<<<< HEAD
                 if self._covariance_type == 'tied':
                     cv = self.covars_
                 elif self._covariance_type == 'spherical':
@@ -405,6 +491,16 @@ class GMM(BaseEstimator):
                 X[comp_in_X] = sample_gaussian(
                     self.means_[comp], cv, self._covariance_type,
                     num_comp_in_X, random_state=random_state).T
+=======
+                if self._cvtype == 'tied':
+                    cv = self.covars_
+                else:
+                    cv = self.covars_[comp]
+                X[comp_in_X] = sample_gaussian(
+                    self.means_[comp], cv, self._cvtype, num_comp_in_X,
+                    random_state=random_state
+                ).T
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         return X
 
     def fit(self, X, n_iter=100, n_init=1, thresh=1e-2, params='wmc',
@@ -442,6 +538,7 @@ class GMM(BaseEstimator):
         """
         ## initialization step
         X = np.asarray(X)
+<<<<<<< HEAD
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.shape[0] < self.n_components:
@@ -499,6 +596,51 @@ class GMM(BaseEstimator):
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
             self.weights_ = best_params['weights']
+=======
+
+        if hasattr(self, 'n_features') and self.n_features != X.shape[1]:
+            raise ValueError('Unexpected number of dimensions, got %s but '
+                             'expected %s' % (X.shape[1], self.n_features))
+
+        self.n_features = X.shape[1]
+
+        if 'm' in init_params:
+            self.means_ = cluster.KMeans(
+                k=self.n_components).fit(X).cluster_centers_
+        elif not hasattr(self, 'means'):
+                self.means_ = np.zeros((self.n_components, self.n_features))
+
+        if 'w' in init_params or not hasattr(self, 'weights'):
+            self.weights = np.tile(1.0 / self.n_components, self.n_components)
+
+        if 'c' in init_params:
+            cv = np.cov(X.T)
+            if not cv.shape:
+                cv.shape = (1, 1)
+            self.covars_ = _distribute_covar_matrix_to_match_cvtype(
+                cv, self._cvtype, self.n_components)
+        elif not hasattr(self, 'covars'):
+                self.covars = _distribute_covar_matrix_to_match_cvtype(
+                    np.eye(self.n_features), self.cvtype, self.n_components)
+
+        # EM algorithm
+        logprob = []
+        # reset self.converged_ to False
+        self.converged_ = False
+        for i in xrange(n_iter):
+            # Expectation step
+            curr_logprob, posteriors = self.eval(X)
+            logprob.append(curr_logprob.sum())
+
+            # Check for convergence.
+            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
+                self.converged_ = True
+                break
+
+            # Maximization step
+            self._do_mstep(X, posteriors, params, self.min_covar)
+
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
@@ -513,10 +655,18 @@ class GMM(BaseEstimator):
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:
+<<<<<<< HEAD
             covar_mstep_func = _covar_mstep_funcs[self._covariance_type]
             self.covars_ = covar_mstep_func(
                 self, X, responsibilities, weighted_X_sum, inverse_weights,
                 min_covar)
+=======
+            covar_mstep_func = _covar_mstep_funcs[self._cvtype]
+            self.covars_ = covar_mstep_func(
+                self, X, posteriors, weighted_X_sum, inverse_weights, min_covar)
+
+        # FIXME: why return the weights ?
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         return weights
 
     def _n_parameters(self):
@@ -688,7 +838,11 @@ def distribute_covar_matrix_to_match_covariance_type(
 def _covar_mstep_diag(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
     """Performing the covariance M step for diagonal cases"""
+<<<<<<< HEAD
     avg_X2 = np.dot(responsibilities.T, X * X) * norm
+=======
+    avg_X2 = np.dot(posteriors.T, X * X) * norm
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
     avg_means2 = gmm.means_ ** 2
     avg_X_means = gmm.means_ * weighted_X_sum * norm
     return avg_X2 - 2 * avg_X_means + avg_means2 + min_covar
@@ -708,12 +862,20 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
     n_features = X.shape[1]
     cv = np.empty((gmm.n_components, n_features, n_features))
     for c in xrange(gmm.n_components):
+<<<<<<< HEAD
         post = responsibilities[:, c]
         # Underflow Errors in doing post * X.T are  not important
         np.seterr(under='ignore')
         avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * EPS)
         mu = gmm.means_[c][np.newaxis]
         cv[c] = (avg_cv - np.dot(mu.T, mu) + min_covar * np.eye(n_features))
+=======
+        post = posteriors[:, c]
+        avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * INF_EPS)
+        mu = gmm.means_[c][np.newaxis]
+        cv[c] = (avg_cv - np.dot(mu.T, mu)
+                 + min_covar * np.eye(gmm.n_features))
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
     return cv
 
 
@@ -722,8 +884,38 @@ def _covar_mstep_tied(gmm, X, responsibilities, weighted_X_sum, norm,
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     n_features = X.shape[1]
     avg_X2 = np.dot(X.T, X)
+<<<<<<< HEAD
     avg_means2 = np.dot(gmm.means_.T, weighted_X_sum)
     return (avg_X2 - avg_means2 + min_covar * np.eye(n_features)) / X.shape[0]
+=======
+    avg_means2 = np.dot(gmm.means_.T, gmm.means_)
+    return (avg_X2 - avg_means2 + min_covar * np.eye(gmm.n_features))
+
+
+def _covar_mstep_slow(gmm, X, posteriors, weighted_X_sum, norm, min_covar):
+    """Covariance optimization -- slow method"""
+    w = posteriors.sum(axis=0)
+    covars = np.zeros(gmm.covars_.shape)
+    for c in xrange(gmm.n_components):
+        mu = gmm.means_[c]
+        #cv = np.dot(mu.T, mu)
+        avg_X2 = np.zeros((gmm.n_features, gmm.n_features))
+        for t, o in enumerate(X):
+            avg_X2 += posteriors[t, c] * np.outer(o, o)
+        cv = (avg_X2 / w[c]
+              - 2 * np.outer(weighted_X_sum[c] / w[c], mu)
+              + np.outer(mu, mu)
+              + min_covar * np.eye(gmm.n_features))
+        if gmm.cvtype == 'spherical':
+            covars[c] = np.diag(cv).mean()
+        elif gmm.cvtype == 'diag':
+            covars[c] = np.diag(cv)
+        elif gmm.cvtype == 'full':
+            covars[c] = cv
+        elif gmm.cvtype == 'tied':
+            covars += cv / gmm.n_components
+    return covars
+>>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
 
 _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
