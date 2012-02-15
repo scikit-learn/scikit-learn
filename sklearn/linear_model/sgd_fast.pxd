@@ -60,8 +60,10 @@ cdef class WeightVector:
     cdef DOUBLE *w_data_ptr
     cdef double wscale
     cdef Py_ssize_t n_features
-    cdef double add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                    int xnnz, double c)
+    cdef double sq_norm
+
+    cdef void add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                  int xnnz, double c)
     cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                     int xnnz)
     cdef void scale(self, double c)

@@ -236,6 +236,8 @@ cdef class WeightVector:
         The scale of the vector.
     n_features : int
         The number of features (= dimensionality of ``w``).
+    sq_norm : double
+        The squared norm of ``w``.
     """
 
     def __init__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
@@ -243,10 +245,13 @@ cdef class WeightVector:
         self.w_data_ptr = <DOUBLE *>w.data
         self.wscale = 1.0
         self.n_features = w.shape[0]
+        self.sq_norm = np.dot(w, w)
 
-    cdef double add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                    int xnnz, double c):
+    cdef void add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                  int xnnz, double c):
         """Scales example x by constant c and adds it to the weight vector.
+
+        This operation updates ``sq_norm``.
 
         Parameters
         ----------
@@ -258,10 +263,6 @@ cdef class WeightVector:
             The number of non-zero features of ``x``.
         c : double
             The scaling constant for the example.
-        Returns
-        -------
-        sq_norm : double
-            The squared norm of the weight vector after the update.
         """
         cdef int j
         cdef int idx
@@ -280,8 +281,7 @@ cdef class WeightVector:
             xsqnorm += (val * val)
             self.w_data_ptr[idx] += val * (c / wscale)
 
-        # this is needed for PEGASOS only
-        return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+        self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
     cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
         """Computes the dot product of a sample x and the weight vector.
@@ -311,19 +311,23 @@ cdef class WeightVector:
         return innerprod
 
     cdef void scale(self, double c):
-        """Scales the weight vector by a constant ``c``. """
+        """Scales the weight vector by a constant ``c``.
+
+        It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
+        small we call ``reset_swcale``."""
         self.wscale *= c
+        self.sq_norm *= (c * c)
         if self.wscale < 1e-9:
             self.reset_wscale()
 
     cdef void reset_wscale(self):
-        """Scales each coef by ``wscale`` and sets it to one. """
+        """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
         self.w *= self.wscale
         self.wscale = 1.0
 
     cdef double norm(self):
-        """Computes the L2 norm of the weight vector. """
-        return np.dot(self.w, self.w) * self.wscale * self.wscale
+        """The L2 norm of the weight vector. """
+        return sqrt(self.sq_norm)
 
 
 cdef class Dataset:
