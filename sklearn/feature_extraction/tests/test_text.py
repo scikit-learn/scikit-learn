@@ -119,6 +119,13 @@ def test_word_analyzer_unigrams_and_bigrams():
     assert_equal(wa.analyze(text), expected)
 
 
+def test_unicode_decode_error():
+    # decode_error default to strict, so this should fail
+    wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None, charset='ascii')
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    assert_raises(UnicodeDecodeError, wa.analyze, text)
+
+
 def test_char_ngram_analyzer():
     cnga = CharNGramAnalyzer(min_n=3, max_n=6)
 

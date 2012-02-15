@@ -2,6 +2,7 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Robert Layton <robertlayton@gmail.com>
 #
 # License: BSD Style.
 """
@@ -136,20 +137,21 @@ class WordNGramAnalyzer(BaseEstimator):
     The stop words argument may be "english" for a built-in list of English
     stop words or a collection of strings. Note that stop word filtering is
     performed after preprocessing, which may include accent stripping.
+
     """
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
                  stop_words="english",
                  token_pattern=DEFAULT_TOKEN_PATTERN,
-                 unicode_error='strict'):
+                 decode_error='strict'):
         self.charset = charset
         self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
         self.token_pattern = token_pattern
-        self.unicode_error = unicode_error
+        self.decode_error = decode_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -159,7 +161,7 @@ class WordNGramAnalyzer(BaseEstimator):
 
         if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset,
-                                                 self.unicode_error)
+                                                 self.decode_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
@@ -198,12 +200,12 @@ class CharNGramAnalyzer(BaseEstimator):
     white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
-                 min_n=3, max_n=6, unicode_error='strict'):
+                 min_n=3, max_n=6, decode_error='strict'):
         self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
-        self.unicode_error = unicode_error
+        self.decode_error = decode_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -213,7 +215,7 @@ class CharNGramAnalyzer(BaseEstimator):
 
         if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset,
-                                                 self.unicode_error)
+                                                 self.decode_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
