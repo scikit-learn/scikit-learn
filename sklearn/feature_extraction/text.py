@@ -144,14 +144,14 @@ class WordNGramAnalyzer(BaseEstimator):
                  preprocessor=DEFAULT_PREPROCESSOR,
                  stop_words="english",
                  token_pattern=DEFAULT_TOKEN_PATTERN,
-                 decode_error='strict'):
+                 charset_error='strict'):
         self.charset = charset
         self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
         self.token_pattern = token_pattern
-        self.decode_error = decode_error
+        self.charset_error = charset_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -161,7 +161,7 @@ class WordNGramAnalyzer(BaseEstimator):
 
         if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset,
-                                                 self.decode_error)
+                                                 self.charset_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
@@ -200,12 +200,12 @@ class CharNGramAnalyzer(BaseEstimator):
     white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
-                 min_n=3, max_n=6, decode_error='strict'):
+                 min_n=3, max_n=6, charset_error='strict'):
         self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
-        self.decode_error = decode_error
+        self.charset_error = charset_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -215,7 +215,7 @@ class CharNGramAnalyzer(BaseEstimator):
 
         if isinstance(text_document, bytes):
             text_document = text_document.decode(self.charset,
-                                                 self.decode_error)
+                                                 self.charset_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
