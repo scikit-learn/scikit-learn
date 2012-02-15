@@ -12,7 +12,6 @@ is called with the same input arguments.
 from __future__ import with_statement
 import os
 import shutil
-import sys
 import time
 import pydoc
 try:
@@ -215,7 +214,7 @@ class MemorizedFunc(Logger):
         """
         coerce_mmap = (self.mmap_mode is not None)
         argument_hash = hash(filter_args(self.func, self.ignore,
-                             *args, **kwargs),
+                             args, kwargs),
                              coerce_mmap=coerce_mmap)
         output_dir = os.path.join(self._get_func_dir(self.func),
                                   argument_hash)
@@ -377,7 +376,7 @@ class MemorizedFunc(Logger):
             output directory.
         """
         argument_dict = filter_args(self.func, self.ignore,
-                                    *args, **kwargs)
+                                    args, kwargs)
 
         input_repr = dict((k, repr(v)) for k, v in argument_dict.iteritems())
         if json is not None:
@@ -553,6 +552,6 @@ class Memory(Logger):
             In addition, when unpickling, we run the __init__
         """
         # We need to remove 'joblib' from the end of cachedir
-        cachedir = self.cachedir[-7] if self.cachedir is not None else None
+        cachedir = self.cachedir[:-7] if self.cachedir is not None else None
         return (self.__class__, (cachedir,
                 self.mmap_mode, self.compress, self._verbose))
