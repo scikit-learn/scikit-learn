@@ -64,7 +64,7 @@ def test_regression_toy():
 
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
-    clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
+    clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
     from StringIO import StringIO
 
@@ -229,7 +229,7 @@ def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
     assert_raises(ValueError,
-                  tree.DecisionTreeClassifier(min_split=-1).fit,
+                  tree.DecisionTreeClassifier(min_samples_leaf=-1).fit,
                   X, y)
 
     assert_raises(ValueError,
@@ -298,10 +298,10 @@ def test_error():
     assert_raises(ValueError, clf.predict, Xt)
 
 
-def test_min_leaf():
+def test_min_samples_leaf():
     """Test if leafs contain more than leaf_count training examples"""
     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-        clf = tree_class(min_leaf=5).fit(iris.data, iris.target)
+        clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
 
         # apply tree
         out = np.empty((iris.data.shape[0], ), dtype=np.int32)

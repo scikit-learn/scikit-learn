@@ -88,20 +88,20 @@ slightly greater increase in bias::
     >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100,
     ...     random_state=0)
 
-    >>> clf = DecisionTreeClassifier(max_depth=None, min_split=1,
+    >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=1,
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.978...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
-    ...     min_split=1, random_state=0)
+    ...     min_samples_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
-    ...     min_split=1, random_state=0)
+    ...     min_samples_split=1, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean() > 0.999
     True
@@ -124,7 +124,7 @@ greater the increase in bias. Empiricial good default values are
 ``max_features=n_features`` for regression problems, and
 ``max_features=sqrt(n_features)`` for classification tasks (where ``n_features``
 is the number of features in the data). The best results are also usually
-reached when setting ``max_depth=None`` in combination with ``min_split=1``
+reached when setting ``max_depth=None`` in combination with ``min_samples_split=1``
 (i.e., when fully developping the trees). Bear in mind though that these values
 are usually not optimal. The best parameter values should always be cross-
 validated. In addition, note that bootstrap samples are used by default in

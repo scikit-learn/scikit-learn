@@ -268,7 +268,7 @@ class Tree(object):
 
 
 def _build_tree(X, y, is_classification, criterion,
-                max_depth, min_split, min_leaf,
+                max_depth, min_samples_split, min_samples_leaf,
                 min_density, max_features, random_state, n_classes, find_split,
                 sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data."""
@@ -291,10 +291,10 @@ def _build_tree(X, y, is_classification, criterion,
                              "with an empty sample_mask")
 
         # Split samples
-        if depth < max_depth and n_node_samples >= min_split \
-           and n_node_samples >= 2 * min_leaf:
+        if depth < max_depth and n_node_samples >= min_samples_split \
+           and n_node_samples >= 2 * min_samples_leaf:
             feature, threshold, best_error, init_error = find_split(X, y,
-                    X_argsorted, sample_mask, n_node_samples, min_leaf,
+                    X_argsorted, sample_mask, n_node_samples, min_samples_leaf,
                     max_features, criterion, random_state)
 
         else:
@@ -373,16 +373,16 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
     """
     def __init__(self, criterion,
                        max_depth,
-                       min_split,
-                       min_leaf,
+                       min_samples_split,
+                       min_samples_leaf,
                        min_density,
                        max_features,
                        compute_importances,
                        random_state):
         self.criterion = criterion
         self.max_depth = max_depth
-        self.min_split = min_split
-        self.min_leaf = min_leaf
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
         self.compute_importances = compute_importances
@@ -413,8 +413,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        # set min_split sensibly
-        self.min_split = max(self.min_split, 2 * self.min_leaf)
+        # set min_samples_split sensibly
+        self.min_samples_split = max(self.min_samples_split, 2 * self.min_samples_leaf)
 
         # Convert data
         X = np.asarray(X, dtype=DTYPE, order='F')
@@ -466,10 +466,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
-        if self.min_split <= 0:
-            raise ValueError("min_split must be greater than zero.")
-        if self.min_leaf <= 0:
-            raise ValueError("min_leaf must be greater than zero.")
+        if self.min_samples_split <= 0:
+            raise ValueError("min_samples_split must be greater than zero.")
+        if self.min_samples_leaf <= 0:
+            raise ValueError("min_samples_leaf must be greater than zero.")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if self.min_density < 0.0 or self.min_density > 1.0:
@@ -479,7 +479,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         # Build tree
         self.tree_ = _build_tree(X, y, is_classification, criterion, max_depth,
-                self.min_split, self.min_leaf, self.min_density, max_features,
+                self.min_samples_split, self.min_samples_leaf, self.min_density, max_features,
                 self.random_state, self.n_classes_, self.find_split_,
                 sample_mask=sample_mask, X_argsorted=X_argsorted)
 
@@ -553,13 +553,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_split
+        all leaves are pure or until all leaves contain less than min_samples_split
         samples.
 
-    min_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
 
-    min_leaf : integer, optional (default=1)
+    min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
     min_density : float, optional (default=0.1)
@@ -641,16 +641,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """
     def __init__(self, criterion="gini",
                        max_depth=None,
-                       min_split=1,
-                       min_leaf=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features=None,
                        compute_importances=False,
                        random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
-                                                     min_split,
-                                                     min_leaf,
+                                                     min_samples_split,
+                                                     min_samples_leaf,
                                                      min_density,
                                                      max_features,
                                                      compute_importances,
@@ -714,13 +714,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_split
+        all leaves are pure or until all leaves contain less than min_samples_split
         samples.
 
-    min_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
 
-    min_leaf : integer, optional (default=1)
+    min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
     min_density : float, optional (default=0.1)
@@ -804,16 +804,16 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """
     def __init__(self, criterion="mse",
                        max_depth=None,
-                       min_split=1,
-                       min_leaf=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features=None,
                        compute_importances=False,
                        random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
-                                                    min_split,
-                                                    min_leaf,
+                                                    min_samples_split,
+                                                    min_samples_leaf,
                                                     min_density,
                                                     max_features,
                                                     compute_importances,
@@ -845,16 +845,16 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     """
     def __init__(self, criterion="gini",
                        max_depth=None,
-                       min_split=1,
-                       min_leaf=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
                        random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
-                                                  min_split,
-                                                  min_leaf,
+                                                  min_samples_split,
+                                                  min_samples_leaf,
                                                   min_density,
                                                   max_features,
                                                   compute_importances,
@@ -892,16 +892,16 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     """
     def __init__(self, criterion="mse",
                        max_depth=None,
-                       min_split=1,
-                       min_leaf=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
                        random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
-                                                 min_split,
-                                                 min_leaf,
+                                                 min_samples_split,
+                                                 min_samples_leaf,
                                                  min_density,
                                                  max_features,
                                                  compute_importances,
