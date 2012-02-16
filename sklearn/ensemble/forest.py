@@ -432,9 +432,9 @@ class RandomForestClassifier(ForestClassifier):
         Note: this parameter is tree-specific.
 
     min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leafs.
-        A split is discarded if after the split, one of the leafs would contain
-        less then ``min_samples_leaf`` samples.
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -563,9 +563,9 @@ class RandomForestRegressor(ForestRegressor):
         Note: this parameter is tree-specific.
 
     min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leafs.
-        A split is discarded if after the split, one of the leafs would contain
-        less then ``min_samples_leaf`` samples.
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -695,9 +695,9 @@ class ExtraTreesClassifier(ForestClassifier):
         Note: this parameter is tree-specific.
 
     min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leafs.
-        A split is discarded if after the split, one of the leafs would contain
-        less then ``min_samples_leaf`` samples.
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -829,9 +829,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Note: this parameter is tree-specific.
 
     min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leafs.
-        A split is discarded if after the split, one of the leafs would contain
-        less then ``min_samples_leaf`` samples.
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)

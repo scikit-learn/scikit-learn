@@ -414,7 +414,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             Returns self.
         """
         # set min_samples_split sensibly
-        self.min_samples_split = max(self.min_samples_split, 2 * self.min_samples_leaf)
+        self.min_samples_split = max(self.min_samples_split, 2 *
+                self.min_samples_leaf)
 
         # Convert data
         X = np.asarray(X, dtype=DTYPE, order='F')
@@ -479,9 +480,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         # Build tree
         self.tree_ = _build_tree(X, y, is_classification, criterion, max_depth,
-                self.min_samples_split, self.min_samples_leaf, self.min_density, max_features,
-                self.random_state, self.n_classes_, self.find_split_,
-                sample_mask=sample_mask, X_argsorted=X_argsorted)
+                self.min_samples_split, self.min_samples_leaf,
+                self.min_density, max_features, self.random_state,
+                self.n_classes_, self.find_split_, sample_mask=sample_mask,
+                X_argsorted=X_argsorted)
 
         # Compute feature importances
         if self.compute_importances:
@@ -553,8 +555,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_samples_split
-        samples.
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
 
     min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
@@ -714,8 +716,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_samples_split
-        samples.
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
 
     min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.

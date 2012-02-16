@@ -299,7 +299,7 @@ def test_error():
 
 
 def test_min_samples_leaf():
-    """Test if leafs contain more than leaf_count training examples"""
+    """Test if leaves contain more than leaf_count training examples"""
     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
         clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
 

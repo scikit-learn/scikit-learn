@@ -250,7 +250,7 @@ Tips on practical use
     the data.  Try ``min_samples_leaf=5`` as an initial value.
     The main difference between the two is that ``min_samples_leaf`` guarantees
     a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leafs, though ``min_samples_split`` is more common
+    create arbitrary small leaves, though ``min_samples_split`` is more common
     in the literature.
 
   * Balance your dataset before training to prevent the tree from creating
