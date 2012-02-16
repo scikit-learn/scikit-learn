@@ -7,12 +7,11 @@ TODO: remove hard coded numerical results when possible
 import numpy as np
 from scipy import linalg
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
-                          assert_almost_equal, assert_equal
+                          assert_almost_equal
 from nose.tools import assert_raises, assert_true
 
 from sklearn import svm, linear_model, datasets, metrics
 from sklearn.datasets.samples_generator import make_classification
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.utils import check_random_state
 
 # toy sample
@@ -613,13 +612,6 @@ def test_inheritance():
     clf.fit(iris.data, iris.target)
     clf.predict(iris.data[-1])
     clf.decision_function(iris.data[-1])
-
-
-def test_ovr_fit_predict_svc():
-    ovr = OneVsRestClassifier(svm.SVC())
-    ovr.fit(iris.data, iris.target)
-    assert_equal(len(ovr.estimators_), 3)
-    assert_true(ovr.score(iris.data, iris.target) > .9)
 
 
 if __name__ == '__main__':

@@ -196,6 +196,8 @@ class BaseLibSVM(BaseEstimator):
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
         if len(self.label_) == 2 and self.impl != 'one_class':
             self.intercept_ *= -1
@@ -278,6 +280,8 @@ class BaseLibSVM(BaseEstimator):
                  sample_weight, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
         if len(self.label_) == 2 and self.impl != 'one_class':
             self.intercept_ *= -1
@@ -502,6 +506,8 @@ class BaseLibSVM(BaseEstimator):
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function.
         if len(self.label_) == 2 and self.impl != 'one_class':
             return -dec_func
 
