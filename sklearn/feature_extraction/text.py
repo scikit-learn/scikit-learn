@@ -138,6 +138,33 @@ class WordNGramAnalyzer(BaseEstimator):
     stop words or a collection of strings. Note that stop word filtering is
     performed after preprocessing, which may include accent stripping.
 
+    Parameters
+    ----------
+    charset: string
+        If bytes are given to analyze, this charset is used to decode.
+    min_n: integer
+        The lower boundary of the range of n-values for different n-grams to be
+        extracted.
+    max_n: integer
+        The upper boundary of the range of n-values for different n-grams to be
+        extracted. All values of n such that min_n <= n <= max_n will be used.
+    preprocessor: callable
+        A callable that preprocesses the text document before tokens are
+        extracted.
+    stop_words: string, list, or None
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned. The default is "english" and is currently the only
+        supported string value.
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+        If None, no stop words will be used.
+    token_pattern: string
+        Regular expression denoting what constitutes a "token".
+    charset_error: string
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
     """
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
@@ -195,6 +222,26 @@ class CharNGramAnalyzer(BaseEstimator):
     such as Chinese and German for instance.
 
     Because of this, it can be considered a basic morphological analyzer.
+
+    
+    Parameters
+    ----------
+    charset: string
+        If bytes are given to analyze, this charset is used to decode.
+    min_n: integer
+        The lower boundary of the range of n-values for different n-grams to be
+        extracted.
+    max_n: integer
+        The upper boundary of the range of n-values for different n-grams to be
+        extracted. All values of n such that min_n <= n <= max_n will be used.
+    preprocessor: callable
+        A callable that preprocesses the text document before tokens are
+        extracted.
+    charset_error: string
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
     """
 
     white_spaces = re.compile(ur"\s\s+")
