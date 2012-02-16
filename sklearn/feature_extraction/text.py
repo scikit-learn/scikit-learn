@@ -223,7 +223,7 @@ class CharNGramAnalyzer(BaseEstimator):
 
     Because of this, it can be considered a basic morphological analyzer.
 
-    
+
     Parameters
     ----------
     charset: string
