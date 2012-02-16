@@ -140,6 +140,7 @@ class WordNGramAnalyzer(BaseEstimator):
 
     Parameters
     ----------
+    
     charset: string
         If bytes are given to analyze, this charset is used to decode.
     min_n: integer
@@ -293,6 +294,7 @@ class CountVectorizer(BaseEstimator):
 
     Parameters
     ----------
+    
     analyzer: WordNGramAnalyzer or CharNGramAnalyzer, optional
 
     vocabulary: dict or iterable, optional
