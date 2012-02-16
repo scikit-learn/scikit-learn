@@ -1,3 +1,19 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+=========================================================
+The Digit Dataset
+=========================================================
+This dataset is made up of 1797 8x8 images. Each image,
+like the one shown below, is of a hand-written digit.
+In order to ultilise an 8x8 figure like this, we'd have to
+first transform it into a feature vector with lengh 64.
+
+"""
+print __doc__
+
+
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
 # License: BSD
