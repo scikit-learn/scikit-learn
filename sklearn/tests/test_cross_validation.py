@@ -11,7 +11,7 @@ from ..datasets import make_regression
 from ..datasets import load_iris
 from ..metrics import zero_one_score
 from ..metrics import f1_score
-from ..metrics import mean_square_error
+from ..metrics import mean_squared_error
 from ..metrics import r2_score
 from ..metrics import explained_variance_score
 from ..cross_validation import StratifiedKFold
@@ -129,8 +129,8 @@ def test_cross_val_score_with_score_func_regression():
 
     # Mean squared error
     mse_scores = cross_validation.cross_val_score(reg, X, y, cv=5,
-                                           score_func=mean_square_error)
-    expected_mse = [4578.47, 3319.02, 1646.29, 1639.58, 10092.00]
+                                           score_func=mean_squared_error)
+    expected_mse = np.array([763.07, 553.16, 274.38, 273.26, 1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
