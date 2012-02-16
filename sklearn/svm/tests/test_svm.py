@@ -275,17 +275,12 @@ def test_decision_function():
     assert_array_almost_equal(dec, clf.decision_function(iris.data))
 
     # binary:
-    X = [[2, 1],
-         [3, 1],
-         [1, 3],
-         [2, 3]]
-    y = [0, 0, 1, 1]
-    clf.fit(X, y)
+    clf.fit(X, Y)
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
     prediction = clf.predict(X)
     assert_array_almost_equal(dec, clf.decision_function(X))
-    assert_array_almost_equal(prediction, (clf.decision_function(X) >
-        0).astype(np.int).ravel())
+    assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X) >
+        0).astype(np.int).ravel()])
 
 
 def test_weight():
