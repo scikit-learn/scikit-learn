@@ -160,7 +160,7 @@ class WordNGramAnalyzer(BaseEstimator):
         If None, no stop words will be used.
     token_pattern: string
         Regular expression denoting what constitutes a "token".
-    charset_error: string
+    charset_error: {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `charset`. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
@@ -237,7 +237,7 @@ class CharNGramAnalyzer(BaseEstimator):
     preprocessor: callable
         A callable that preprocesses the text document before tokens are
         extracted.
-    charset_error: string
+    charset_error: {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `charset`. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
