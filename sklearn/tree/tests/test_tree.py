@@ -64,7 +64,7 @@ def test_regression_toy():
 
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
-    clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
+    clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
     from StringIO import StringIO
 
@@ -229,7 +229,7 @@ def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
     assert_raises(ValueError,
-                  tree.DecisionTreeClassifier(min_split=-1).fit,
+                  tree.DecisionTreeClassifier(min_samples_leaf=-1).fit,
                   X, y)
 
     assert_raises(ValueError,
@@ -258,7 +258,6 @@ def test_error():
     # predict before fitting
     clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict, T)
-
     # predict on vector with different dims
     clf.fit(X, y)
     t = np.asarray(T)
@@ -297,6 +296,23 @@ def test_error():
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
+
+
+def test_min_samples_leaf():
+    """Test if leaves contain more than leaf_count training examples"""
+    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
+        clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
+
+        # apply tree
+        out = np.empty((iris.data.shape[0], ), dtype=np.int32)
+        X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+        tree._tree._apply_tree(X, clf.tree_.children, clf.tree_.feature,
+                clf.tree_.threshold, out)
+        # count node occurences
+        node_counts = np.bincount(out)
+        # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]
+        assert np.min(leaf_count) >= 5
 
 
 def test_pickle():
