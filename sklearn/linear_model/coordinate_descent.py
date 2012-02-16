@@ -553,6 +553,7 @@ class LinearModelCV(LinearModel):
         n_folds = len(folds)
         # XXX: need to store the whole path later
         best_mse = np.inf
+        mse_rho_path = list()
         for rho_i, rho in enumerate(rhos):
             if self.verbose and len(rhos) > 0:
                 print '%s: rho %s, % 2i out of % 2i' % (
@@ -575,7 +576,9 @@ class LinearModelCV(LinearModel):
 
             mse = np.mean(mse_alphas, axis=0)
             i_best_alpha = np.argmin(mse)
-            if mse[i_best_alpha] < best_mse:
+            this_best_mse = mse[i_best_alpha]
+            mse_rho_path.append(this_best_mse)
+            if this_best_mse < best_mse:
                 model = models[i_best_alpha]
                 mse_path = mse_alphas.T
                 best_rho = rho
@@ -586,6 +589,7 @@ class LinearModelCV(LinearModel):
                 model.rho = best_rho
                 model.fit(X, y)
             self.rho_ = model.rho
+            self.mse_rho_path_ = mse_rho_path
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.alpha = model.alpha
