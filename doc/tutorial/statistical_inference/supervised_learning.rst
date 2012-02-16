@@ -5,12 +5,14 @@ Supervised learning: predicting an output variable from high-dimensional observa
 
 .. topic:: The problem solved in supervised learning
 
-   Supervised learning consists in learning the link between two
+   :ref:`Supervised learning <supervised-learning>` 
+   consists in learning the link between two
    datasets: the observed data `X`, and an external variable `y` that we
    are trying to predict, usually called `target` or `labels`. Most often, 
    `y` is a 1D array of length `n_samples`. 
    
-   All supervised estimators in the `scikit-learn` implement a `fit(X, y)`
+   All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_ 
+   in the `scikit-learn` implement a `fit(X, y)`
    method to fit the model, and a `predict(X)` method that, given
    unlabeled observations `X`, returns predicts the corresponding labels
    `y`.
@@ -26,6 +28,10 @@ Supervised learning: predicting an output variable from high-dimensional observa
    In the `scikit-learn`, for classification tasks, `y` is a vector of
    integers.
 
+   Note: See the :ref:`Introduction to machine learning with Scikit-learn
+   Tutorial <introduction>` for a quick run-through on the basic machine
+   learning vocabulary used within Scikit-learn.
+
 Nearest neighbor and the curse of dimensionality
 =================================================
 
@@ -36,19 +42,20 @@ Nearest neighbor and the curse of dimensionality
     their petal and sepal length and width::
 
         >>> import numpy as np
-        >>> from scikits.learn import datasets
+        >>> from sklearn import datasets
         >>> iris = datasets.load_iris()
         >>> iris_X = iris.data
         >>> iris_y = iris.target
         >>> np.unique(iris_y)
         array([0, 1, 2])
 
-k-Nearest neigbhors classifier
+k-Nearest neighbors classifier
 -------------------------------
 
-The simplest possible classifier is the nearest neighbor: given a new
-observation `x_test`, find in the training set (i.e. the data used to train
-the estimator) the observation with the closest feature vector.
+The simplest possible classifier is the 
+`nearest neighbor <http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
+given a new observation `x_test`, find in the training set (i.e. the data 
+used to train the estimator) the observation with the closest feature vector.
 
 .. topic:: Training set and testing set
 
