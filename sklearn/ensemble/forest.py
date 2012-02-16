@@ -423,12 +423,18 @@ class RandomForestClassifier(ForestClassifier):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_split
-        samples.
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -500,7 +506,8 @@ class RandomForestClassifier(ForestClassifier):
     def __init__(self, n_estimators=10,
                        criterion="gini",
                        max_depth=None,
-                       min_split=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=True,
@@ -511,8 +518,9 @@ class RandomForestClassifier(ForestClassifier):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -521,7 +529,8 @@ class RandomForestClassifier(ForestClassifier):
 
         self.criterion = criterion
         self.max_depth = max_depth
-        self.min_split = min_split
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
 
@@ -545,12 +554,18 @@ class RandomForestRegressor(ForestRegressor):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_split
-        samples.
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -622,7 +637,8 @@ class RandomForestRegressor(ForestRegressor):
     def __init__(self, n_estimators=10,
                        criterion="mse",
                        max_depth=None,
-                       min_split=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=True,
@@ -633,8 +649,9 @@ class RandomForestRegressor(ForestRegressor):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -643,7 +660,8 @@ class RandomForestRegressor(ForestRegressor):
 
         self.criterion = criterion
         self.max_depth = max_depth
-        self.min_split = min_split
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
 
@@ -668,12 +686,18 @@ class ExtraTreesClassifier(ForestClassifier):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_split
-        samples.
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -747,7 +771,8 @@ class ExtraTreesClassifier(ForestClassifier):
     def __init__(self, n_estimators=10,
                        criterion="gini",
                        max_depth=None,
-                       min_split=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=False,
@@ -758,8 +783,9 @@ class ExtraTreesClassifier(ForestClassifier):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -768,7 +794,8 @@ class ExtraTreesClassifier(ForestClassifier):
 
         self.criterion = criterion
         self.max_depth = max_depth
-        self.min_split = min_split
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
 
@@ -793,12 +820,18 @@ class ExtraTreesRegressor(ForestRegressor):
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than min_split
-        samples.
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=1)
         The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
     min_density : float, optional (default=0.1)
@@ -871,7 +904,8 @@ class ExtraTreesRegressor(ForestRegressor):
     def __init__(self, n_estimators=10,
                        criterion="mse",
                        max_depth=None,
-                       min_split=1,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
                        min_density=0.1,
                        max_features="auto",
                        bootstrap=False,
@@ -882,8 +916,9 @@ class ExtraTreesRegressor(ForestRegressor):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_split",
-                              "min_density", "max_features", "random_state"),
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -892,6 +927,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
         self.criterion = criterion
         self.max_depth = max_depth
-        self.min_split = min_split
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
