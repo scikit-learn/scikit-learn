@@ -15,7 +15,7 @@ Tutorials: From the bottom up with scikit-learn
 .. toctree::
    :maxdepth: 2
 
-   tutorial.rst
+   basic/tutorial.rst
 
 .. topic:: Harder tutorial
 
@@ -24,4 +24,4 @@ Tutorials: From the bottom up with scikit-learn
 .. toctree::
    :maxdepth: 2
 
-   tutorial_statInfer/index.rst
+   statistical_inference/index.rst
