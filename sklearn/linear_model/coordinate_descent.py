@@ -527,9 +527,17 @@ class LinearModelCV(LinearModel):
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
+        if 'rho' in path_params:
+            rhos = np.atleast_1d(path_params['rho'])
+            # For the first path, we need to set rho
+            path_params['rho'] = rhos[0]
+        else:
+            rhos = [0, ]
         del path_params['cv']
 
         # Start to compute path on full data
+        # XXX: is this really useful: we are fitting models that we won't
+        # use later
         models = self.path(X, y, **path_params)
 
         # Update the alphas list
@@ -543,28 +551,47 @@ class LinearModelCV(LinearModel):
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
         n_folds = len(folds)
-        mse_alphas = np.zeros((n_folds, n_alphas))
-        for i, (train, test) in enumerate(folds):
-            if self.verbose:
-                print '%s: fold % 2i out of % 2i' % (
-                        self.__class__.__name__, i, n_folds),
+        # XXX: need to store the whole path later
+        best_mse = np.inf
+        for rho_i, rho in enumerate(rhos):
+            if self.verbose and len(rhos) > 0:
+                print '%s: rho %s, % 2i out of % 2i' % (
+                        self.__class__.__name__, rho, rho_i, len(rhos))
                 sys.stdout.flush()
-            models_train = self.path(X[train], y[train], **path_params)
-            for i_alpha, model in enumerate(models_train):
-                y_ = model.predict(X[test])
-                mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
-            if self.verbose == 1:
-                print ''
+            if 'rho' in path_params:
+                path_params['rho'] = rho
+            mse_alphas = np.zeros((n_folds, n_alphas))
+            for i, (train, test) in enumerate(folds):
+                if self.verbose:
+                    print '%s: fold % 2i out of % 2i' % (
+                            self.__class__.__name__, i, n_folds)
+                    sys.stdout.flush()
+                models_train = self.path(X[train], y[train], **path_params)
+                for i_alpha, model in enumerate(models_train):
+                    y_ = model.predict(X[test])
+                    mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
+                if self.verbose == 1:
+                    print ''
 
-        i_best_alpha = np.argmin(np.mean(mse_alphas, axis=0))
-        model = models[i_best_alpha]
+            mse = np.mean(mse_alphas, axis=0)
+            i_best_alpha = np.argmin(mse)
+            if mse[i_best_alpha] < best_mse:
+                model = models[i_best_alpha]
+                mse_path = mse_alphas.T
+                best_rho = rho
 
+        if hasattr(model, 'rho'):
+            if model.rho != best_rho:
+                # Need to refit the model
+                model.rho = best_rho
+                model.fit(X, y)
+            self.rho_ = model.rho
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.alpha = model.alpha
         self.alphas = np.asarray(alphas)
         self.coef_path_ = np.asarray([model.coef_ for model in models])
-        self.mse_path_ = mse_alphas.T
+        self.mse_path_ = mse_path
         return self
 
 
