@@ -176,7 +176,7 @@ def test_oneclass():
     pred = clf.predict(T)
 
     assert_array_almost_equal(pred, [-1, -1, -1])
-    assert_array_almost_equal(clf.intercept_, [1.008], decimal=3)
+    assert_array_almost_equal(clf.intercept_, [-1.008], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
@@ -281,6 +281,9 @@ def test_decision_function():
     assert_array_almost_equal(dec, clf.decision_function(X))
     assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X) >
         0).astype(np.int).ravel()])
+    expected = np.array([[-1.        ], [-0.66666667], [-1.        ],
+        [ 0.66666667], [ 1.        ], [ 1.        ]])
+    assert_array_almost_equal(clf.decision_function(X), expected)
 
 
 def test_weight():
