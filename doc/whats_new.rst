@@ -47,6 +47,11 @@ Changelog
      and introduced the new :func:`cross_validation.train_test_split`
      helper function by `Olivier Grisel`_
 
+   - :class:`svm.SVC` members `coef_` and `intercept_` changed sign for consistency
+     with `decision_function`; for ``kernel==linear``, `coef_` was fixed
+     in the the one-vs-one case, by `Andreas Müller`_.
+
+
 
 API changes summary
 -------------------
