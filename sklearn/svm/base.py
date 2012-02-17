@@ -1,12 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator
 from ..utils import array2d, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
-import warnings
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -75,7 +75,7 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C, sparse):
+                 scale_C, sparse, class_weight):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -103,6 +103,7 @@ class BaseLibSVM(BaseEstimator):
         self.cache_size = cache_size
         self.scale_C = scale_C
         self.sparse = sparse
+        self.class_weight = class_weight
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -116,13 +117,6 @@ class BaseLibSVM(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-
-        class_weight : {dict, 'auto'}, optional
-            Set the parameter C of class i to class_weight[i]*C for
-            SVC. If not given, all classes are supposed to have
-            weight one. The 'auto' mode uses the values of y to
-            automatically adjust weights inversely proportional to
-            class frequencies.
 
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
@@ -141,11 +135,16 @@ class BaseLibSVM(BaseEstimator):
         matrices as input.
         """
         self._sparse = sp.isspmatrix(X) if self.sparse == "auto" else self.sparse
+        if class_weight != None:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                    "Using it in the 'fit' method is deprecated.",
+                    DeprecationWarning)
+            self.class_weight = class_weight
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        fit(X, y, class_weight, sample_weight)
+        fit(X, y, sample_weight)
         return self
 
-    def _dense_fit(self, X, y, class_weight=None, sample_weight=None):
+    def _dense_fit(self, X, y, sample_weight=None):
         X = np.asarray(X, dtype=np.float64, order='C')
         y = np.asarray(y, dtype=np.float64, order='C')
         sample_weight = np.asarray([] if sample_weight is None
@@ -157,8 +156,8 @@ class BaseLibSVM(BaseEstimator):
             self.__Xfit = X
             X = self._compute_kernel(X)
 
-        class_weight, class_weight_label = \
-                     _get_class_weight(class_weight, y)
+        self.class_weight_, self.class_weight_label_ = \
+                     _get_class_weight(self.class_weight, y)
 
         # check dimensions
         solver_type = LIBSVM_IMPL.index(self.impl)
@@ -189,8 +188,8 @@ class BaseLibSVM(BaseEstimator):
         self.dual_coef_, self.intercept_, self.label_, self.probA_, \
         self.probB_ = libsvm.fit(X, y,
             svm_type=solver_type, sample_weight=sample_weight,
-            class_weight=class_weight,
-            class_weight_label=class_weight_label,
+            class_weight=self.class_weight_,
+            class_weight_label=self.class_weight_label_,
             kernel=self.kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
@@ -202,7 +201,7 @@ class BaseLibSVM(BaseEstimator):
         if len(self.label_) == 2 and self.impl != 'one_class':
             self.intercept_ *= -1
 
-    def _sparse_fit(self, X, y, class_weight=None, sample_weight=None):
+    def _sparse_fit(self, X, y, sample_weight=None):
         """
         Fit the SVM model according to the given training data and parameters.
 
@@ -260,8 +259,8 @@ class BaseLibSVM(BaseEstimator):
         solver_type = LIBSVM_IMPL.index(self.impl)
         kernel_type = self._sparse_kernels.index(self.kernel)
 
-        self.class_weight, self.class_weight_label = \
-                     _get_class_weight(class_weight, y)
+        self.class_weight_, self.class_weight_label_ = \
+                     _get_class_weight(self.class_weight, y)
 
         if (kernel_type in [1, 2]) and (self.gamma == 0):
             # if custom gamma is not provided ...
@@ -276,7 +275,7 @@ class BaseLibSVM(BaseEstimator):
             libsvm_sparse.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                  kernel_type, self.degree, self.gamma, self.coef0, self.tol,
-                 C, self.class_weight_label, self.class_weight,
+                 C, self.class_weight_label_, self.class_weight_,
                  sample_weight, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
@@ -362,7 +361,7 @@ class BaseLibSVM(BaseEstimator):
                       self.dual_coef_.data, self._intercept_,
                       LIBSVM_IMPL.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
-                      self.C, self.class_weight_label, self.class_weight,
+                      self.C, self.class_weight_label_, self.class_weight_,
                       self.nu, self.epsilon, self.shrinking,
                       self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
@@ -444,7 +443,7 @@ class BaseLibSVM(BaseEstimator):
             self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
-            self.C, self.class_weight_label, self.class_weight,
+            self.C, self.class_weight_label_, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self.label_,
             self.probA_, self.probB_)
@@ -568,7 +567,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=True):
+                 scale_C=True, class_weight=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -578,6 +577,7 @@ class BaseLibLinear(BaseEstimator):
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.scale_C = scale_C
+        self.class_weight = class_weight
 
         if not scale_C:
             warnings.warn('SVM: scale_C will disappear and be assumed to be '
@@ -639,12 +639,18 @@ class BaseLibLinear(BaseEstimator):
             Returns self.
         """
 
+        if class_weight != None:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                    "Using it in the 'fit' method is deprecated.",
+                    DeprecationWarning)
+            self.class_weight = class_weight
+
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.int32).ravel()
         self._sparse = sp.isspmatrix(X)
 
-        self.class_weight, self.class_weight_label = \
-                     _get_class_weight(class_weight, y)
+        self.class_weight_, self.class_weight_label_ = \
+                     _get_class_weight(self.class_weight, y)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
@@ -659,8 +665,8 @@ class BaseLibLinear(BaseEstimator):
                                          else liblinear.train_wrap
         self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
                                             self.tol, self._get_bias(), C,
-                                            self.class_weight_label,
-                                            self.class_weight)
+                                            self.class_weight_label_,
+                                            self.class_weight_)
 
         return self
 
@@ -681,7 +687,7 @@ class BaseLibLinear(BaseEstimator):
         predict = liblinear.csr_predict_wrap if self._sparse \
                                              else liblinear.predict_wrap
         return predict(X, self.raw_coef_, self._get_solver_type(), self.tol,
-                       self.C, self.class_weight_label, self.class_weight,
+                       self.C, self.class_weight_label_, self.class_weight_,
                        self.label_, self._get_bias())
 
     def decision_function(self, X):
@@ -705,8 +711,8 @@ class BaseLibLinear(BaseEstimator):
                        else liblinear.decision_function_wrap
 
         dec_func = dfunc_wrap(X, self.raw_coef_, self._get_solver_type(),
-                              self.tol, self.C, self.class_weight_label,
-                              self.class_weight, self.label_, self._get_bias())
+                self.tol, self.C, self.class_weight_label_, self.class_weight_,
+                self.label_, self._get_bias())
 
         return dec_func
 

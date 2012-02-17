@@ -290,9 +290,9 @@ def test_weight():
     """
     Test class weights
     """
-    clf = svm.SVC(C=len(X))
+    clf = svm.SVC(class_weight={1: 0.1}, C=len(X))
     # we give a small weights to class 1
-    clf.fit(X, Y, {1: 0.1})
+    clf.fit(X, Y)
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
@@ -301,7 +301,8 @@ def test_weight():
 
     for clf in (linear_model.LogisticRegression(C=180),
             svm.LinearSVC(C=len(X)), svm.SVC(C=len(X))):
-        clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
+        clf.set_params(class_weight={0: 5})
+        clf.fit(X_[: 180], y_[: 180])
         y_pred = clf.predict(X_[180:])
         assert_true(np.sum(y_pred == y_[180:]) >= 11)
 
@@ -336,12 +337,11 @@ def test_auto_weight():
     for clf in (svm.SVC(kernel='linear', C=C),
             svm.LinearSVC(C=C), LogisticRegression(C=C)):
         # check that score is better when class='auto' is set.
-        y_pred = clf.fit(X[unbalanced], y[unbalanced],
-                         class_weight={}).predict(X)
-        y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],
-                                  class_weight='auto').predict(X)
+        y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
+        clf.set_params(class_weight='auto')
+        y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
         assert_true(metrics.f1_score(y, y_pred) <=
-                    metrics.f1_score(y, y_pred_balanced))
+                metrics.f1_score(y, y_pred_balanced))
 
 
 def test_bad_input():

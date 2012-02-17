@@ -22,20 +22,21 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm.sparse import SVC
     >>> clf = SVC()
-    >>> clf.fit(X, y)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=True, shrinking=True, tol=0.001)
+    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+            gamma=0.5, kernel='rbf', probability=False, scale_C=True,
+            shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
     """
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=True):
+                 tol=1e-3, cache_size=200, scale_C=True, class_weight=None):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                                   C, 0., 0., shrinking, probability,
-                                  cache_size, scale_C)
+                                  cache_size, scale_C, class_weight)
 
 
 class NuSVC(SparseBaseLibSVM, ClassifierMixin):
@@ -56,20 +57,21 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm.sparse import NuSVC
     >>> clf = NuSVC()
-    >>> clf.fit(X, y)
-    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5,
-       probability=False, scale_C=True, shrinking=True, tol=0.001)
+    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.5,
+            kernel='rbf', nu=0.5, probability=False, scale_C=True,
+            shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=True):
+                 tol=1e-3, cache_size=200, scale_C=True, class_weight=None):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                                     tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C)
+                                    cache_size, scale_C, class_weight)
 
 
 class SVR(SparseBaseLibSVM, RegressorMixin):
@@ -103,7 +105,7 @@ class SVR(SparseBaseLibSVM, RegressorMixin):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C)
+                                  cache_size, scale_C, class_weight=None)
 
 
 class NuSVR(SparseBaseLibSVM, RegressorMixin):
@@ -137,8 +139,8 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
                  probability=False, tol=1e-3, cache_size=200, scale_C=True):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
-                                    tol, C, nu, epsilon, shrinking,
-                                    probability, cache_size, scale_C)
+                tol, C, nu, epsilon, shrinking, probability, cache_size,
+                scale_C, class_weight=None)
 
 
 class OneClassSVM(SparseBaseLibSVM):
@@ -161,9 +163,9 @@ class OneClassSVM(SparseBaseLibSVM):
                                           coef0, tol, 0.0, nu, 0.0, shrinking,
                                           probability, cache_size, scale_C)
 
-    def fit(self, X, class_weight=None, sample_weight=None):
+    def fit(self, X, sample_weight=None):
         super(OneClassSVM, self).fit(
-            X, [], class_weight=class_weight, sample_weight=sample_weight)
+            X, [], sample_weight=sample_weight)
 
 
 @deprecated("""to be removed in v0.12;
