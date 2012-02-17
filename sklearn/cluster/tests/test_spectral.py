@@ -55,7 +55,7 @@ def test_spectral_clustering_sparse():
 
     S = sparse.coo_matrix(S)
 
-    labels = SpectralClustering(random_state=0).fit(S, k=2).labels_
+    labels = SpectralClustering(random_state=0, k=2).fit(S).labels_
     if labels[0] == 0:
         labels = 1 - labels
 
