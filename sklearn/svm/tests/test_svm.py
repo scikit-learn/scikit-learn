@@ -282,7 +282,7 @@ def test_decision_function():
     assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X)
         > 0).astype(np.int).ravel()])
     expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
-    assert_array_almost_equal(clf.decision_function(X), expected)
+    assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
 
 def test_weight():
