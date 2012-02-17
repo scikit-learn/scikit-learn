@@ -10,6 +10,9 @@ like the one shown below, is of a hand-written digit.
 In order to ultilise an 8x8 figure like this, we'd have to
 first transform it into a feature vector with lengh 64.
 
+See 
+`here <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_ 
+for more information about this dataset.
 """
 print __doc__
 
@@ -18,10 +21,7 @@ print __doc__
 # Modified for Documentation merge by Jaques Grobler
 # License: BSD
 
-try:
-    from sklearn import datasets
-except ImportError:
-    from scikits.learn import datasets
+from sklearn import datasets
 
 import pylab as pl
 

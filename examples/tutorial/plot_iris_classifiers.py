@@ -1,6 +1,6 @@
 import numpy as np
 import pylab as pl
-from scikits.learn import neighbors, datasets, linear_model, svm
+from sklearn import neighbors, datasets, linear_model, svm
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -10,7 +10,7 @@ Y = iris.target
 h = .02 # step size in the mesh
 
 classifiers = dict(
-    knn=neighbors.NeighborsClassifier(),
+    knn=neighbors.KNeighborsClassifier(),
     logistic=linear_model.LogisticRegression(C=1e5),
     svm=svm.LinearSVC(C=1e5, loss='l1'),
     )
@@ -43,3 +43,4 @@ for name, clf in classifiers.iteritems():
     pl.xticks(())
     pl.yticks(())
 
+    pl.show()

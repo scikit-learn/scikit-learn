@@ -1,5 +1,5 @@
 import pylab as pl
-from scikits.learn import datasets 
+from sklearn import datasets 
 
 # import some data to play with
 iris = datasets.load_iris()

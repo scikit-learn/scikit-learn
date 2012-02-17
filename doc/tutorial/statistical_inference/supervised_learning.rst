@@ -36,6 +36,11 @@ Nearest neighbor and the curse of dimensionality
 =================================================
 
 .. topic:: Classifying irises:
+   
+    .. image:: ../../auto_examples/tutorial/images/plot_iris_dataset_3class_1.png
+        :target: ../../auto_examples/tutorial/plot_iris_dataset_3class.html
+        :align: right
+	:scale: 65
 
     The iris dataset is a classification task consisting in identifying 3
     different types of irises (Setosa, Versicolour, and Virginica) from
