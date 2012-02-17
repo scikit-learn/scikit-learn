@@ -15,6 +15,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
+from  sklearn import svm
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -92,6 +93,13 @@ def test_ovr_multilabel():
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
+
+
+def test_ovr_fit_predict_svc():
+    ovr = OneVsRestClassifier(svm.SVC())
+    ovr.fit(iris.data, iris.target)
+    assert_equal(len(ovr.estimators_), 3)
+    assert_true(ovr.score(iris.data, iris.target) > .9)
 
 
 def test_ovr_multilabel_dataset():

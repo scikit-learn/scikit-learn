@@ -196,6 +196,12 @@ class BaseLibSVM(BaseEstimator):
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
 
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function. Use self._intercept_ internally.
+        self._intercept_ = self.intercept_.copy()
+        if len(self.label_) == 2 and self.impl != 'one_class':
+            self.intercept_ *= -1
+
     def _sparse_fit(self, X, y, class_weight=None, sample_weight=None):
         """
         Fit the SVM model according to the given training data and parameters.
@@ -274,6 +280,12 @@ class BaseLibSVM(BaseEstimator):
                  sample_weight, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function. Use self._intercept_ internally.
+        self._intercept_ = self.intercept_.copy()
+        if len(self.label_) == 2 and self.impl != 'one_class':
+            self.intercept_ *= -1
+
         n_class = len(self.label_) - 1
         n_SV = self.support_vectors_.shape[0]
 
@@ -330,7 +342,7 @@ class BaseLibSVM(BaseEstimator):
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self.intercept_,
+            self.dual_coef_, self._intercept_,
             self.label_, self.probA_, self.probB_,
             svm_type=svm_type,
             kernel=self.kernel, C=self.C, nu=self.nu,
@@ -347,7 +359,7 @@ class BaseLibSVM(BaseEstimator):
                       self.support_vectors_.data,
                       self.support_vectors_.indices,
                       self.support_vectors_.indptr,
-                      self.dual_coef_.data, self.intercept_,
+                      self.dual_coef_.data, self._intercept_,
                       LIBSVM_IMPL.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
                       self.C, self.class_weight_label, self.class_weight,
@@ -402,7 +414,7 @@ class BaseLibSVM(BaseEstimator):
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self.intercept_, self.label_,
+            self.dual_coef_, self._intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=self.kernel, C=self.C, nu=self.nu,
             probability=self.probability, degree=self.degree,
@@ -429,7 +441,7 @@ class BaseLibSVM(BaseEstimator):
             self.support_vectors_.data,
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
-            self.dual_coef_.data, self.intercept_,
+            self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
             self.C, self.class_weight_label, self.class_weight,
@@ -486,13 +498,18 @@ class BaseLibSVM(BaseEstimator):
             epsilon = 0.1
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self.intercept_, self.label_,
+            self.dual_coef_, self._intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
             kernel=self.kernel, C=self.C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
+
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function.
+        if len(self.label_) == 2 and self.impl != 'one_class':
+            return -dec_func
 
         return dec_func
 
@@ -514,7 +531,7 @@ class BaseLibSVM(BaseEstimator):
 
         if self.dual_coef_.shape[0] == 1:
             # binary classifier
-            coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+            coef = -safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         else:
             # 1vs1 classifier
             coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
