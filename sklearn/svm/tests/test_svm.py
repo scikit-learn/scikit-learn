@@ -279,10 +279,9 @@ def test_decision_function():
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
     prediction = clf.predict(X)
     assert_array_almost_equal(dec, clf.decision_function(X))
-    assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X) >
-        0).astype(np.int).ravel()])
-    expected = np.array([[-1.        ], [-0.66666667], [-1.        ],
-        [ 0.66666667], [ 1.        ], [ 1.        ]])
+    assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X)
+        > 0).astype(np.int).ravel()])
+    expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
     assert_array_almost_equal(clf.decision_function(X), expected)
 
 
