@@ -2,6 +2,7 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Robert Layton <robertlayton@gmail.com>
 #
 # License: BSD Style.
 """
@@ -136,18 +137,48 @@ class WordNGramAnalyzer(BaseEstimator):
     The stop words argument may be "english" for a built-in list of English
     stop words or a collection of strings. Note that stop word filtering is
     performed after preprocessing, which may include accent stripping.
+
+    Parameters
+    ----------
+    charset: string
+        If bytes are given to analyze, this charset is used to decode.
+    min_n: integer
+        The lower boundary of the range of n-values for different n-grams to be
+        extracted.
+    max_n: integer
+        The upper boundary of the range of n-values for different n-grams to be
+        extracted. All values of n such that min_n <= n <= max_n will be used.
+    preprocessor: callable
+        A callable that preprocesses the text document before tokens are
+        extracted.
+    stop_words: string, list, or None
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned. The default is "english" and is currently the only
+        supported string value.
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+        If None, no stop words will be used.
+    token_pattern: string
+        Regular expression denoting what constitutes a "token".
+    charset_error: {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
     """
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
                  stop_words="english",
-                 token_pattern=DEFAULT_TOKEN_PATTERN):
+                 token_pattern=DEFAULT_TOKEN_PATTERN,
+                 charset_error='strict'):
         self.charset = charset
         self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
         self.token_pattern = token_pattern
+        self.charset_error = charset_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -156,7 +187,8 @@ class WordNGramAnalyzer(BaseEstimator):
             text_document = text_document.read()
 
         if isinstance(text_document, bytes):
-            text_document = text_document.decode(self.charset, 'ignore')
+            text_document = text_document.decode(self.charset,
+                                                 self.charset_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
@@ -190,16 +222,37 @@ class CharNGramAnalyzer(BaseEstimator):
     such as Chinese and German for instance.
 
     Because of this, it can be considered a basic morphological analyzer.
+
+
+    Parameters
+    ----------
+    charset: string
+        If bytes are given to analyze, this charset is used to decode.
+    min_n: integer
+        The lower boundary of the range of n-values for different n-grams to be
+        extracted.
+    max_n: integer
+        The upper boundary of the range of n-values for different n-grams to be
+        extracted. All values of n such that min_n <= n <= max_n will be used.
+    preprocessor: callable
+        A callable that preprocesses the text document before tokens are
+        extracted.
+    charset_error: {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
     """
 
     white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
-                 min_n=3, max_n=6):
+                 min_n=3, max_n=6, charset_error='strict'):
         self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
+        self.charset_error = charset_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -208,7 +261,8 @@ class CharNGramAnalyzer(BaseEstimator):
             text_document = text_document.read()
 
         if isinstance(text_document, bytes):
-            text_document = text_document.decode(self.charset, 'ignore')
+            text_document = text_document.decode(self.charset,
+                                                 self.charset_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 

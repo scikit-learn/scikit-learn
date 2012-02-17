@@ -1,5 +1,5 @@
 
-.. _dpgmm:
+.. _dpgmm_derivation:
 
 .. currentmodule:: sklearn.mixture
 
