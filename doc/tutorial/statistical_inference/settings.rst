@@ -34,7 +34,7 @@ needs to be preprocessed to be used by the scikit.
     .. image:: ../../auto_examples/tutorial/images/plot_digits_first_image_1.png
         :target: ../../auto_examples/tutorial/plot_digits_first_image.html
         :align: right
-        :scale: 45
+        :scale: 60
 
     The digits dataset is made of 1797 8x8 images of hand-written
     digits ::

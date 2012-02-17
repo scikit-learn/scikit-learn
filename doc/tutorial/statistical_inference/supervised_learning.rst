@@ -56,6 +56,8 @@ The simplest possible classifier is the
 `nearest neighbor <http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
 given a new observation `x_test`, find in the training set (i.e. the data 
 used to train the estimator) the observation with the closest feature vector.
+(Please see the :ref:`Nearest Neighbors section<neighbors>` of the online
+Scikit-learn documentation for more information about this type of classifier.)
 
 .. topic:: Training set and testing set
 
@@ -81,11 +83,11 @@ used to train the estimator) the observation with the closest feature vector.
     >>> iris_X_test  = iris_X[indices[-10:]]
     >>> iris_y_test  = iris_y[indices[-10:]]
     >>> # Create and fit a nearest-neighbor classifier
-    >>> from scikits.learn.neighbors import NeighborsClassifier
-    >>> knn = NeighborsClassifier()
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train)
-    NeighborsClassifier(algorithm='auto', classification_type='knn_vote',
-              leaf_size=30, n_neighbors=5, radius=1.0)
+    KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=5,
+           warn_on_equidistant=True, weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test

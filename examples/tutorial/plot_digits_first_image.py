@@ -29,6 +29,7 @@ import pylab as pl
 digits = datasets.load_digits()
 
 #Display the first digit
+pl.figure(1, figsize=(3, 3))
 pl.imshow(digits.images[0], cmap=pl.cm.gray_r)
 pl.show()
 
