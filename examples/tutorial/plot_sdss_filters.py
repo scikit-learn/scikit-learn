@@ -6,6 +6,7 @@ import urllib2
 
 import numpy as np
 import pylab as pl
+from matplotlib.patches import Arrow
 
 from sklearn.datasets import get_data_home
 
@@ -43,6 +44,8 @@ def fetch_vega_spectrum(data_home=None):
 
 Xref = fetch_vega_spectrum()
 Xref[:, 1] /= 2.1 * Xref[:, 1].max()
+
+pl.figure()
 pl.plot(Xref[:, 0], Xref[:, 1], '-k', label='Vega spectrum', lw=2)
 
 for f,c in zip('ugriz', 'bgrmk'):
@@ -55,4 +58,38 @@ pl.legend()
 pl.title('SDSS Filters and Reference Spectrum')
 pl.xlabel('Wavelength (Angstroms)')
 pl.ylabel('flux (normalized)')
+
+pl.figure()
+
+redshifts = [0.0, 0.4, 0.8]
+colors = 'bgr'
+
+for z, c in zip(redshifts, colors):
+    pl.plot((1. + z) * Xref[:, 0], Xref[:, 1], color=c)
+
+pl.gca().add_patch(Arrow(4200, 0.47, 1300, 0, lw=0, width=0.05, color='r'))
+pl.gca().add_patch(Arrow(5800, 0.47, 1250, 0, lw=0, width=0.05, color='r'))
+
+pl.text(3800, 0.49, 'z = 0.0', fontsize=14, color=colors[0])
+pl.text(5500, 0.49, 'z = 0.4', fontsize=14, color=colors[1])
+pl.text(7300, 0.49, 'z = 0.8', fontsize=14, color=colors[2])
+
+for f in 'ugriz':
+    X = fetch_filter(f)
+    pl.fill(X[:, 0], X[:, 1], ec='k', fc='k', alpha=0.2)
+
+kwargs = dict(fontsize=20, color='gray', ha='center', va='center')
+pl.text(3500, 0.02, 'u', **kwargs)
+pl.text(4600, 0.02, 'g', **kwargs)
+pl.text(6100, 0.02, 'r', **kwargs)
+pl.text(7500, 0.02, 'i', **kwargs)
+pl.text(8800, 0.02, 'z', **kwargs)
+
+pl.xlim(3000, 11000)
+pl.ylim(0, 0.55)
+
+pl.title('Redshifting of a Spectrum')
+pl.xlabel('Observed Wavelength (Angstroms)')
+pl.ylabel('flux (normalized)')
+
 pl.show()

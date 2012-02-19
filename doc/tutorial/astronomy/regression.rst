@@ -1,0 +1,151 @@
+Regression: Photometric Redshifts of Galaxies
+=============================================
+
+Another important learning task in astronomy is the problem of determining
+`photometric redshifts`.  In the current standard cosmological model, the
+universe began nearly 14 billion years ago, in an explosive event commonly
+known as the Big Bang.  Since then, the very fabric of space has been
+expanding, so that distant galaxies appear to be moving away from us at
+very fast speeds.  The uniformity of this expansion means that there is
+a relationship between the distance to a galaxy, and the speed that it
+appears to be receeding from us.  This recession speed leads to a shift
+in the frequency of photons, very similar to the audio doppler shift that
+can be heard when a car blaring its horn passes by.  If a galaxy were
+moving toward us, its light would be shifted to higher frequencies, or
+`blue-shifted`.  Because the universe is expanding away from us, distant
+galaxies appear to be `red-shifted`: their photons are shifted to lower
+frequencies.
+
+In cosmology, the redshift is measured with the parameter :math:`z`, defined
+in terms of the observed wavelength :math:`\lambda_{obs}` and the emitted
+wavelength :math:`\lambda_{em}`:
+
+.. math::
+   \lambda_{obs} = (1 + z)\lambda_{em}
+
+When a spectrum can be obtained, determining the redshift is rather
+straight-forward: if you can localize the spectral fingerprint of a common
+element, such as hydrogen, then the redshift can be computed using simple
+arithmetic.  But similarly to the case of Star/Quasar classification, the
+task becomes much more difficult when only photometric observations are
+available.
+
+Because of the spectrum shift, an identical source at different redshifts
+will have a different color through each pair of filters.  See the following
+figure:
+
+.. figure:: ../../auto_examples/tutorial/images/plot_sdss_filters_2.png
+   :target: ../../auto_examples/tutorial/plot_sdss_filters.html
+   :align: center
+   :scale: 80%
+
+   The spectrum of the star Vega (:math:`\alpha`-Lyr) at three different
+   redshifts.  The SDSS ugriz filters are shown in gray for reference.
+
+At redshift :math:`z=0.0`, the spectrum is bright in the `u` and `g` filters,
+but dim in the `i` and `z` filters.  At redshift :math:`z=0.8`, the opposite
+is the case.  This suggests the possibility of determining redshift from
+photometry alone.  The situation is complicated by the fact that each
+individual source has unique spectral characteristics, but nevertheless,
+these `photometric redshifts` are often used in astronomical applications.
+
+Motivation: Dark Energy, Dark Matter, and the Fate of the Universe
+------------------------------------------------------------------
+The photometric redshift problem is very important.  Future astronomical
+surveys hope to image trillions of very faint galaxies, and use this data
+to inform our view of the universe as a whole: its history, its geometry,
+and its fate.  Obtaining an accurate estimate of the redshift to each of these
+galaxies is a pivotal part of this task.  Because these surveys will image
+so many extremely faint galaxies, there is no possibility of obtaining a
+spectrum for each one.  Thus sophisticated photometric redshift codes will
+be required to advance our understanding of the Universe, including more
+precisely understanding the nature of the dark energy that is currently
+accelerating the cosmic expansion.
+
+A Simple Method: Nearest-Neighbors Regression
+---------------------------------------------
+Here we'll take an extremely simple approach to the photometric redshift
+problem, using a nearest-neighbor regression.
+In the folder ``$TUTORIAL_HOME/data/sdss_photoz``, there is a script
+``fetch_data.py`` which will download the colors of 50,000 galaxies from
+the Sloan Digital Sky Survey.  This script actually performs an SQL query
+of the official SDSS database.  Because of this, the download may take a
+few minutes to run if the server is busy.  It also means that you can
+modify the script to fetch more detailed information about each object
+if you so desire.  Before executing the example below, run ``fetch_data.py``
+to download the colors and redshifts.
+
+First we will load this data, shuffle it in preparation for later, and arrange
+the colors in an array of shape ``(n_samples, n_features)``::
+
+   >>> import numpy as np
+   >>> data = np.load('data/sdss_photoz/sdss_galaxy_colors.npy')
+   >>> np.random.seed(0)
+   >>> np.random.shuffle(data)
+   >>> N = len(data)
+   >>> X = np.zeros((N, 4))
+   >>> X[:, 0] = data['u'] - data['g']
+   >>> X[:, 1] = data['g'] - data['r']
+   >>> X[:, 2] = data['r'] - data['i']
+   >>> X[:, 3] = data['i'] - data['z']
+   >>> z = data['redshift']
+
+Next we'll split the data into two samples: a training sample and a test
+sample which we'll use to evaluate our training::
+
+   >>> Ntrain = N/2
+   >>> Xtrain = X[:Ntrain]
+   >>> ztrain = z[:Ntrain]
+   >>> Xtest = X[Ntrain:]
+   >>> ztest = z[Ntrain:]
+
+Now we'll use the scikit-learn nearest neighbors regression routine to
+train a model and predict redshifts for the test set based on the nearest
+neighbor of each point in the training set::
+
+   >>> from sklearn.neighbors import KNeighborsRegressor
+   >>> knn = KNeighborsRegressor(1, weights='uniform')
+   >>> zpred = knn.fit(Xtrain, ztrain).predict(Xtest)
+   
+To judge the efficacy of prediction, we can compute the root-mean-square
+difference between the true and predicted values::
+
+   >>> rms = np.sqrt(np.mean((ztest - zpred) ** 2))
+   >>> print rms
+   0.232965997831
+
+Our RMS error is about 0.23.  This is pretty good for such an unsophisticated
+learning algorithm, but better algorithms can improve on this.  The biggest
+issue here are the `catastrophic errors`, where the predicted redshift is
+extremely far from the prediction::
+
+   >>> print len(ztest)
+   25000
+   >>> print np.sum(abs(ztest - zpred) > 1)
+   466
+
+Almost 2% of objects have redshift estimates which are off by greater than
+1.  This sort of error in redshift determination is very problematic for
+high-precision cosmological studies.  This can be seen in a scatter plot of
+the predicted redshift versus the true redshift for the test data:
+
+.. figure:: ../../auto_examples/tutorial/images/plot_neighbors_photoz_1.png
+   :target: ../../auto_examples/tutorial/plot_neighbors_photoz.html
+   :align: center
+   :scale: 80%
+
+   The true and predicted redshifts of 25,000 SDSS galaxies, using a simple
+   nearest neighbors regressor.  Notice the presece of catastrophic outliers:
+   those galaxies whose predicted redshifts are extremely far from the true
+   value.
+
+In a later section, we will attempt
+to improve on this by using a more sophisticated learning algorithm.  In
+practice, the solutions to the photometric redshift problem can benefit from
+approaches that use physical intuition as well as machine learning tools.
+For example, some solutions involve the use of libraries of galaxy spectra
+which are known to be representative of the true galaxy distribution.  This
+extra information can be used either directly in a physically motivated
+solution, or can be used to generate a larger suite of training instances
+for a pure machine learning approach.
+
