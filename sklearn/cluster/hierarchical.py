@@ -143,16 +143,18 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         used_node[i] = used_node[j] = False
 
         # update the moments
-        for p in xrange(2):
-            moments[p][k] = moments[p][i] + moments[p][j]
+        moments[0][k] = moments[0][i] + moments[0][j]
+        moments[1][k] = moments[1][i] + moments[1][j]
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
         visited[:] = False
         visited[k] = True
         for l in set(A[i]).union(A[j]):
-            while parent[l] != l:
-                l = parent[l]
+            parent_l = parent[l]
+            while parent_l != l:
+                l = parent_l
+                parent_l = parent[l]
             if not visited[l]:
                 visited[l] = True
                 coord_col.append(l)
