@@ -5,7 +5,7 @@
 .. include:: ../includes/big_toc_css.rst
 
 Tutorials: From the bottom up with scikit-learn
-=======================================================================
+===============================================
 
 .. topic:: Beginner tutorial
 
@@ -25,3 +25,12 @@ Tutorials: From the bottom up with scikit-learn
    :maxdepth: 2
 
    statistical_inference/index.rst
+
+.. topic:: Scikit-learn for Astronomical Data Analysis
+
+    something about machince learning and astronomy.
+
+.. toctree::
+   :maxdepth: 2
+   
+   astronomy/index.rst
