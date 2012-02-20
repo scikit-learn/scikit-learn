@@ -115,7 +115,7 @@ Mathematical formulation
 
 
 The initial assumption
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 Suppose one wants to model the output of a computer experiment, say a
 mathematical function:
@@ -159,7 +159,7 @@ and zero otherwise : a *dirac* correlation model -- sometimes referred to as a
 
 
 The best linear unbiased prediction (BLUP)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------
 
 We now derive the *best linear unbiased prediction* of the sample path
 :math:`g` conditioned on the observations:
@@ -264,7 +264,7 @@ decomposition algorithm.
 
 
 The empirical best linear unbiased predictor (EBLUP)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------
 
 Until now, both the autocorrelation and regression models were assumed given.
 In practice however they are never known in advance so that one has to make
