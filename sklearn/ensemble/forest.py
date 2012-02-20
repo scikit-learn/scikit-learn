@@ -55,12 +55,14 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_build_trees(n_trees, forest, X, y,
-                          sample_mask, X_argsorted, seed):
+                          sample_mask, X_argsorted, seed, verbose):
     """Private function used to build a batch of trees within a job."""
     random_state = check_random_state(seed)
     trees = []
 
     for i in xrange(n_trees):
+        if verbose > 1:
+            print("building tree %d of %d" % (i, n_trees))
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
@@ -141,7 +143,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -154,6 +157,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.random_state = check_random_state(random_state)
 
         self.feature_importances_ = None
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -198,7 +202,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         n_jobs, n_trees, _ = _partition_trees(self)
 
         # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs)(
+        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_build_trees)(
                 n_trees[i],
                 self,
@@ -206,7 +210,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 y,
                 sample_mask,
                 X_argsorted,
-                self.random_state.randint(MAX_INT))
+                self.random_state.randint(MAX_INT),
+                verbose=self.verbose)
             for i in xrange(n_jobs))
 
         # Reduce
@@ -261,7 +266,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -270,7 +276,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
-            random_state=random_state)
+            random_state=random_state,
+            verbose=verbose)
 
     def predict(self, X):
         """Predict class for X.
@@ -359,7 +366,8 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -368,7 +376,8 @@ class ForestRegressor(BaseForest, RegressorMixin):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
-            random_state=random_state)
+            random_state=random_state,
+            verbose=verbose)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -480,6 +489,9 @@ class RandomForestClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    verbose : int, optional (default=0)
+        Controlls the verbosity of the tree building process.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -514,7 +526,8 @@ class RandomForestClassifier(ForestClassifier):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -525,7 +538,8 @@ class RandomForestClassifier(ForestClassifier):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
-            random_state=random_state)
+            random_state=random_state,
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -611,6 +625,9 @@ class RandomForestRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    verbose : int, optional (default=0)
+        Controlls the verbosity of the tree building process.
+
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -645,7 +662,8 @@ class RandomForestRegressor(ForestRegressor):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -656,7 +674,8 @@ class RandomForestRegressor(ForestRegressor):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
-            random_state=random_state)
+            random_state=random_state,
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -743,6 +762,9 @@ class ExtraTreesClassifier(ForestClassifier):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    verbose : int, optional (default=0)
+        Controlls the verbosity of the tree building process.
+
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -779,7 +801,8 @@ class ExtraTreesClassifier(ForestClassifier):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -790,7 +813,8 @@ class ExtraTreesClassifier(ForestClassifier):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
-            random_state=random_state)
+            random_state=random_state,
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -878,6 +902,9 @@ class ExtraTreesRegressor(ForestRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    verbose : int, optional (default=0)
+        Controlls the verbosity of the tree building process.
+
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -912,7 +939,8 @@ class ExtraTreesRegressor(ForestRegressor):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
-                       random_state=None):
+                       random_state=None,
+                       verbose=0):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -923,7 +951,8 @@ class ExtraTreesRegressor(ForestRegressor):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
-            random_state=random_state)
+            random_state=random_state,
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
