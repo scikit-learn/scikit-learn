@@ -74,7 +74,9 @@ Scikit-learn documentation for more information about this type of classifier.)
 
 **KNN (k nearest neighbors) classification example**:
 
-.. image:: ../examples/iris_knn.png
+.. image:: ../../auto_examples/tutorial/images/plot_knn_iris_1.png
+   :target: ../../auto_examples/tutorial/plot_knn_iris.html
+   :align: center
    :scale: 90
 
 ::
