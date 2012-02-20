@@ -632,7 +632,7 @@ class Bootstrap(object):
         self.random_state = random_state
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         for i in range(self.n_bootstraps):
             # random partition
             permutation = rng.permutation(self.n)
@@ -743,7 +743,7 @@ class ShuffleSplit(object):
                 (train_fraction, test_fraction))
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
         if self.train_fraction is None:
             n_train = self.n - n_test
