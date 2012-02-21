@@ -104,7 +104,7 @@ The curse of dimensionality
 -------------------------------
 
 If the data is only described by one feature, with values ranging from 0
-to 1, with `n` train observations, new data will no further away than
+to 1, with `n` train observations, new data will be no further away than
 `1/n` and the nearest neighbor decision rule will be efficient as soon as
 `1/n` is small compared to the scale of between-class feature variations.
 
@@ -113,8 +113,9 @@ the `[0, 1]` space with a between-point distance of `d`, is `1/d**p`.
 This number scales exponentialy `p`, the dimensionality of the problem.
 
 In other words, the prediction problem becomes much harder for
-high-dimensional data. This is called the **curse of dimensionality** and
-is the core problem that machine learning addresses.
+high-dimensional data. This is called the 
+`curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_ 
+and is the core problem that machine learning addresses.
 
 Linear model: from regression to sparsity
 ==========================================
@@ -137,6 +138,11 @@ Linear model: from regression to sparsity
 Linear regression
 ------------------
 
+`Linear regression<http://en.wikipedia.org/wiki/Linear_regression>`_,
+in it's simplest form, fits a linear model to the data set by adjusting 
+a set of parameters, in order to make the sum of the squared residuals 
+of the model as small as possilbe.
+
 .. image:: plot_ols_1.png
    :scale: 40
    :align: right
@@ -150,7 +156,7 @@ Linear models: :math:`y = X\beta + \epsilon`
 
 :: 
 
-    >>> from scikits.learn import linear_model
+    >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     LinearRegression(copy_X=True, fit_intercept=True, normalize=False)

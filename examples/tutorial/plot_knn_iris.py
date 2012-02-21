@@ -61,11 +61,11 @@ Z = knn.predict(np.c_[xx.ravel(), yy.ravel()])
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
 pl.figure(1, figsize=(4, 3))
-pl.set_cmap(pl.cm.YlOrRd)
+pl.set_cmap(pl.cm.Paired)
 pl.pcolormesh(xx, yy, Z)
 
 # Plot also the training points
-pl.scatter(X[:,0], X[:,1],facecolors='k', c=Y )
+pl.scatter(X_train[:,0], X_train[:,1],facecolors='none', edgecolors='k' )
 pl.xlabel('Sepal length')
 pl.ylabel('Sepal width')
 
