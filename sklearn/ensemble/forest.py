@@ -62,7 +62,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
 
     for i in xrange(n_trees):
         if verbose > 1:
-            print("building tree %d of %d" % (i, n_trees))
+            print("building tree %d of %d" % (i + 1, n_trees))
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
