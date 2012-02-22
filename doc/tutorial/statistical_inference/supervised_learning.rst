@@ -143,7 +143,8 @@ in it's simplest form, fits a linear model to the data set by adjusting
 a set of parameters, in order to make the sum of the squared residuals 
 of the model as small as possilbe.
 
-.. image:: plot_ols_1.png
+.. image:: ../../auto_examples/tutorial/images/plot_ols_1.png
+   :target: ../../auto_examples/tutorial/plot_ols.html
    :scale: 40
    :align: right
 
@@ -170,6 +171,8 @@ Linear models: :math:`y = X\beta + \epsilon`
     2004.5676026898223
 
     >>> # Explained variance score: 1 is perfect prediction
+    >>> # and 0 means that there is no linear relationship
+    >>> # between X and Y.
     >>> regr.score(diabetes_X_test, diabetes_y_test)
     0.58507530226905713
 
