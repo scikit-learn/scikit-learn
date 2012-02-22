@@ -6,6 +6,7 @@ Ridge regression
 # License: Simplified BSD
 
 import numpy as np
+import warnings
 
 from .base import LinearModel
 from ..utils.extmath import safe_sparse_dot
@@ -486,19 +487,26 @@ class RidgeCV(LinearModel):
         If None, Generalized Cross-Validationn (efficient Leave-One-Out)
         will be used.
 
+    class_weight : dict, optional
+        Weights associated with classes in the form
+        {class_label : weight}. If not given, all classes are
+        supposed to have weight one.
+
     See also
     --------
     Ridge, RidgeClassifierCV
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                   normalize=False, score_func=None, loss_func=None, cv=None):
+            normalize=False, score_func=None, loss_func=None, cv=None,
+            class_weight=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
         self.cv = cv
+        self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -558,19 +566,21 @@ class RidgeClassifierCV(RidgeCV):
         sample_weight : float or numpy array of shape [n_samples]
             Sample weight
 
-        class_weight : dict, optional
-            Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
         Returns
         -------
         self : object
             Returns self.
         """
-        if class_weight is None:
-            class_weight = {}
-        sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
+        if class_weight != None:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                    "Using it in the 'fit' method is deprecated.",
+                    DeprecationWarning)
+            self.class_weight = class_weight
+
+        if self.class_weight is None:
+            self.class_weight = {}
+
+        sample_weight2 = np.array([self.class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
         RidgeCV.fit(self, X, Y,
