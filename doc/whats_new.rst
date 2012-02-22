@@ -47,6 +47,11 @@ Changelog
      and introduced the new :func:`cross_validation.train_test_split`
      helper function by `Olivier Grisel`_
 
+   - :class:`svm.SVC` members `coef_` and `intercept_` changed sign for consistency
+     with `decision_function`; for ``kernel==linear``, `coef_` was fixed
+     in the the one-vs-one case, by `Andreas Müller`_.
+
+
 
 API changes summary
 -------------------
@@ -64,6 +69,11 @@ API changes summary
    - attribute `_scores` and `_pvalues` in univariate feature selection
      objects are now deprecated.
      `scores_` or `pvalues_` should be used instead.
+
+   - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
+     :class:`NuSVC`, the `class_weight` parameter is now an initialization
+     parameter, not a parameter to fit. This makes grid searches
+     over this parameter possible.
 
    - LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
      consistent with the Olivetti faces dataset. Use ``images`` and

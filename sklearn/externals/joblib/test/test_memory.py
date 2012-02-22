@@ -412,6 +412,8 @@ def test_persistence():
 
     output_dir, _ = g.get_output_dir(1)
     yield nose.tools.assert_equal, output, h.load_output(output_dir)
+    memory2 = pickle.loads(pickle.dumps(memory))
+    yield nose.tools.assert_equal, memory.cachedir, memory2.cachedir
 
     # Smoke test that pickling a memory with cachedir=None works
     memory = Memory(cachedir=None, verbose=0)

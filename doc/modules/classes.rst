@@ -604,7 +604,7 @@ Regression metrics
    :template: function.rst
 
    metrics.r2_score
-   metrics.mean_square_error
+   metrics.mean_squared_error
 
 Clustering metrics
 ------------------

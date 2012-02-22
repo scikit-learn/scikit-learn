@@ -5,13 +5,14 @@ from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true
 from nose.tools import assert_raises
+from nose.tools import assert_equal
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
 from ..datasets import load_iris
 from ..metrics import zero_one_score
 from ..metrics import f1_score
-from ..metrics import mean_square_error
+from ..metrics import mean_squared_error
 from ..metrics import r2_score
 from ..metrics import explained_variance_score
 from ..cross_validation import StratifiedKFold
@@ -129,8 +130,8 @@ def test_cross_val_score_with_score_func_regression():
 
     # Mean squared error
     mse_scores = cross_validation.cross_val_score(reg, X, y, cv=5,
-                                           score_func=mean_square_error)
-    expected_mse = [4578.47, 3319.02, 1646.29, 1639.58, 10092.00]
+                                           score_func=mean_squared_error)
+    expected_mse = np.array([763.07, 553.16, 274.38, 273.26, 1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
@@ -228,6 +229,13 @@ def test_shufflesplit_errors():
                   test_fraction=1.0)
     assert_raises(ValueError, cross_validation.ShuffleSplit, 10,
                   test_fraction=0.1, train_fraction=0.95)
+
+
+def test_shufflesplit_reproducible():
+    # Check that iterating twice on the ShuffleSplit gives the same
+    # sequence of train-test when the random_state is given
+    ss = cross_validation.ShuffleSplit(10, random_state=21)
+    assert_array_equal(list(a for a, b in ss), list(a for a, b in ss))
 
 
 def test_cross_indices_exception():

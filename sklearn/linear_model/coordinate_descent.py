@@ -629,7 +629,6 @@ class LassoCV(LinearModelCV):
     LassoLarsCV
     """
     path = staticmethod(lasso_path)
-    estimator = Lasso
 
 
 class ElasticNetCV(LinearModelCV):
@@ -709,7 +708,6 @@ class ElasticNetCV(LinearModelCV):
 
     """
     path = staticmethod(enet_path)
-    estimator = ElasticNet
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',

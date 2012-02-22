@@ -12,6 +12,7 @@ from nose.tools import assert_raises, assert_true
 
 from sklearn import svm, linear_model, datasets, metrics
 from sklearn.datasets.samples_generator import make_classification
+from sklearn.utils import check_random_state
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -182,6 +183,38 @@ def test_oneclass():
     assert_raises(ValueError, lambda: clf.coef_)
 
 
+def test_oneclass_decision_function():
+    """
+    Test OneClassSVM decision function
+    """
+    clf = svm.OneClassSVM()
+    rnd = check_random_state(0)
+
+    # Generate train data
+    X = 0.3 * rnd.randn(100, 2)
+    X_train = np.r_[X + 2, X - 2]
+
+    # Generate some regular novel observations
+    X = 0.3 * rnd.randn(20, 2)
+    X_test = np.r_[X + 2, X - 2]
+    # Generate some abnormal novel observations
+    X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
+
+    # fit the model
+    clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
+    clf.fit(X_train)
+
+    # predict things
+    y_pred_test = clf.predict(X_test)
+    assert_true(np.mean(y_pred_test == 1) > .9)
+    y_pred_outliers = clf.predict(X_outliers)
+    assert_true(np.mean(y_pred_outliers == -1) > .9)
+    dec_func_test = clf.decision_function(X_test)
+    assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
+    dec_func_outliers = clf.decision_function(X_outliers)
+    assert_array_equal((dec_func_outliers > 0).ravel(),  y_pred_outliers == 1)
+
+
 def test_tweak_params():
     """
     Make sure some tweaking of parameters works.
@@ -240,24 +273,25 @@ def test_decision_function():
     dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
     assert_array_almost_equal(dec, clf.decision_function(iris.data))
+
     # binary:
-    X = [[2, 1],
-         [3, 1],
-         [1, 3],
-         [2, 3]]
-    y = [0, 0, 1, 1]
-    clf.fit(X, y)
+    clf.fit(X, Y)
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    prediction = clf.predict(X)
     assert_array_almost_equal(dec, clf.decision_function(X))
+    assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X)
+        > 0).astype(np.int).ravel()])
+    expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
+    assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
 
 def test_weight():
     """
     Test class weights
     """
-    clf = svm.SVC(C=len(X))
+    clf = svm.SVC(class_weight={1: 0.1}, C=len(X))
     # we give a small weights to class 1
-    clf.fit(X, Y, {1: 0.1})
+    clf.fit(X, Y)
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
@@ -266,7 +300,8 @@ def test_weight():
 
     for clf in (linear_model.LogisticRegression(C=180),
             svm.LinearSVC(C=len(X)), svm.SVC(C=len(X))):
-        clf.fit(X_[: 180], y_[: 180], class_weight={0: 5})
+        clf.set_params(class_weight={0: 5})
+        clf.fit(X_[: 180], y_[: 180])
         y_pred = clf.predict(X_[180:])
         assert_true(np.sum(y_pred == y_[180:]) >= 11)
 
@@ -301,12 +336,11 @@ def test_auto_weight():
     for clf in (svm.SVC(kernel='linear', C=C),
             svm.LinearSVC(C=C), LogisticRegression(C=C)):
         # check that score is better when class='auto' is set.
-        y_pred = clf.fit(X[unbalanced], y[unbalanced],
-                         class_weight={}).predict(X)
-        y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],
-                                  class_weight='auto').predict(X)
+        y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
+        clf.set_params(class_weight='auto')
+        y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
         assert_true(metrics.f1_score(y, y_pred) <=
-                    metrics.f1_score(y, y_pred_balanced))
+                metrics.f1_score(y, y_pred_balanced))
 
 
 def test_bad_input():
@@ -575,6 +609,7 @@ def test_inheritance():
     clf.fit(iris.data, iris.target)
     clf.predict(iris.data[-1])
     clf.decision_function(iris.data[-1])
+
 
 if __name__ == '__main__':
     import nose

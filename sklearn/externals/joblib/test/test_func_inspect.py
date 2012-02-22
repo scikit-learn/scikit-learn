@@ -62,54 +62,64 @@ class Klass(object):
 # Tests
 
 def test_filter_args():
-    yield nose.tools.assert_equal, filter_args(f, [], 1), {'x': 1, 'y': 0}
-    yield nose.tools.assert_equal, filter_args(f, ['x'], 1), {'y': 0}
-    yield nose.tools.assert_equal, filter_args(f, ['y'], 0), {'x': 0}
-    yield nose.tools.assert_equal, filter_args(f, ['y'], 0, y=1), {'x': 0}
-    yield nose.tools.assert_equal, filter_args(f, ['x', 'y'], 0), {}
-    yield nose.tools.assert_equal, filter_args(f, [], 0, y=1), {'x': 0, 'y': 1}
-    yield nose.tools.assert_equal, filter_args(f, ['y'], x=2, y=1), {'x': 2}
+    yield nose.tools.assert_equal, filter_args(f, [], (1, )),\
+                                              {'x': 1, 'y': 0}
+    yield nose.tools.assert_equal, filter_args(f, ['x'], (1, )),\
+                                              {'y': 0}
+    yield nose.tools.assert_equal, filter_args(f, ['y'], (0, )),\
+                                               {'x': 0}
+    yield nose.tools.assert_equal, filter_args(f, ['y'], (0, ),
+                                               dict(y=1)), {'x': 0}
+    yield nose.tools.assert_equal, filter_args(f, ['x', 'y'],
+                                               (0, )), {}
+    yield nose.tools.assert_equal, filter_args(f, [], (0,),
+                                               dict(y=1)), {'x': 0, 'y': 1}
+    yield nose.tools.assert_equal, filter_args(f, ['y'], (),
+                                               dict(x=2, y=1)), {'x': 2}
 
-    yield nose.tools.assert_equal, filter_args(i, [], 2), {'x': 2}
-    yield nose.tools.assert_equal, filter_args(f2, [], x=1), {'x': 1}
+    yield nose.tools.assert_equal, filter_args(i, [], (2, )), {'x': 2}
+    yield nose.tools.assert_equal, filter_args(f2, [], (),
+                                               dict(x=1)), {'x': 1}
 
 
 def test_filter_args_method():
     obj = Klass()
-    nose.tools.assert_equal(filter_args(obj.f, [], 1),
+    nose.tools.assert_equal(filter_args(obj.f, [], (1, )),
         {'x': 1, 'self': obj})
 
 
 def test_filter_varargs():
-    yield nose.tools.assert_equal, filter_args(h, [], 1), \
+    yield nose.tools.assert_equal, filter_args(h, [], (1, )), \
                             {'x': 1, 'y': 0, '*': [], '**': {}}
-    yield nose.tools.assert_equal, filter_args(h, [], 1, 2, 3, 4), \
+    yield nose.tools.assert_equal, filter_args(h, [], (1, 2, 3, 4)), \
                             {'x': 1, 'y': 2, '*': [3, 4], '**': {}}
-    yield nose.tools.assert_equal, filter_args(h, [], 1, 25, ee=2), \
+    yield nose.tools.assert_equal, filter_args(h, [], (1, 25),
+                                               dict(ee=2)), \
                             {'x': 1, 'y': 25, '*': [], '**': {'ee': 2}}
-    yield nose.tools.assert_equal, filter_args(h, ['*'], 1, 2, 25, ee=2), \
+    yield nose.tools.assert_equal, filter_args(h, ['*'], (1, 2, 25),
+                                               dict(ee=2)), \
                             {'x': 1, 'y': 2, '**': {'ee': 2}}
 
 
 def test_filter_kwargs():
-    nose.tools.assert_equal(filter_args(k, [], 1, 2, ee=2),
+    nose.tools.assert_equal(filter_args(k, [], (1, 2), dict(ee=2)),
                             {'*': [1, 2], '**': {'ee': 2}})
-    nose.tools.assert_equal(filter_args(k, [], 3, 4),
+    nose.tools.assert_equal(filter_args(k, [], (3, 4)),
                             {'*': [3, 4], '**': {}})
 
 
 def test_filter_args_2():
-    nose.tools.assert_equal(filter_args(j, [], 1, 2, ee=2),
+    nose.tools.assert_equal(filter_args(j, [], (1, 2), dict(ee=2)),
                             {'x': 1, 'y': 2, '**': {'ee': 2}})
 
-    nose.tools.assert_raises(ValueError, filter_args, f, 'a', None)
+    nose.tools.assert_raises(ValueError, filter_args, f, 'a', (None, ))
     # Check that we capture an undefined argument
-    nose.tools.assert_raises(ValueError, filter_args, f, ['a'], None)
+    nose.tools.assert_raises(ValueError, filter_args, f, ['a'], (None, ))
     ff = functools.partial(f, 1)
     # filter_args has to special-case partial
-    nose.tools.assert_equal(filter_args(ff, [], 1),
+    nose.tools.assert_equal(filter_args(ff, [], (1, )),
                             {'*': [1], '**': {}})
-    nose.tools.assert_equal(filter_args(ff, ['y'], 1),
+    nose.tools.assert_equal(filter_args(ff, ['y'], (1, )),
                             {'*': [1], '**': {}})
 
 
@@ -143,8 +153,8 @@ def test_bound_methods():
     """
     a = Klass()
     b = Klass()
-    nose.tools.assert_not_equal(filter_args(a.f, [], 1),
-                                filter_args(b.f, [], 1))
+    nose.tools.assert_not_equal(filter_args(a.f, [], (1, )),
+                                filter_args(b.f, [], (1, )))
 
 
 def test_filter_args_error_msg():
