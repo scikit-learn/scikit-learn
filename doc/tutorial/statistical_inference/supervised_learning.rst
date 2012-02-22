@@ -138,7 +138,7 @@ Linear model: from regression to sparsity
 Linear regression
 ------------------
 
-`Linear regression<http://en.wikipedia.org/wiki/Linear_regression>`_,
+`Linear regression <http://en.wikipedia.org/wiki/Linear_regression>`_,
 in it's simplest form, fits a linear model to the data set by adjusting 
 a set of parameters, in order to make the sum of the squared residuals 
 of the model as small as possilbe.
