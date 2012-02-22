@@ -339,13 +339,16 @@ Tips on Practical Use
     the SGDClassifier class instead. The objective function can be
     configured to be almost the same as the LinearSVC model.
 
-
   * **Kernel cache size**: For SVC, SVR, nuSVC and NuSVR, the size of
     the kernel cache has a strong impact on run times for larger
     problems.  If you have enough RAM available, it is recommended to
     set `cache_size` to a higher value than the default of 200(MB),
     such as 500(MB) or 1000(MB).
 
+  * **Setting C**: In constrast to the scaling in LibSVM and LibLinear,
+    the ``C`` parameter in `sklearn.svm` is a per sample penalty.
+    Commonly good values for ``C`` often are very large (i.e. ``10**4``)
+    and seldom below ``1``.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
