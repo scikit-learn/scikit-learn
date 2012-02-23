@@ -123,9 +123,9 @@ def _test_ridge_loo(filter_):
     ridge = Ridge(fit_intercept=False)
 
     # generalized cross-validation (efficient leave-one-out)
-    K, v, Q = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
-    errors, c = ridge_gcv._errors(v, Q, y_diabetes, 1.0)
-    values, c = ridge_gcv._values(K, v, Q, y_diabetes, 1.0)
+    K, v, Q, QT_y = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    errors, c = ridge_gcv._errors(v, Q, QT_y, y_diabetes, 1.0)
+    values, c = ridge_gcv._values(K, v, Q, QT_y, y_diabetes, 1.0)
 
     # brute-force leave-one-out: remove one example at a time
     errors2 = []

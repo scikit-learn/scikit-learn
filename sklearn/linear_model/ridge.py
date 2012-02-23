@@ -362,24 +362,34 @@ class _RidgeGCV(LinearModel):
         K = safe_sparse_dot(X, X.T, dense_output=True)
         from scipy import linalg
         v, Q = linalg.eigh(K)
-        return K, v, Q
+        QT_y = np.dot(Q.T, y)
+        return K, v, Q, QT_y
 
-    def _errors(self, v, Q, y, alpha):
-        G = np.dot(np.dot(Q, np.diag(1.0 / (v + alpha))), Q.T)
-        c = np.dot(G, y)
-        G_diag = np.diag(G)
-        # handle case when y is 2-d
+    def _decomp_diag(self, v_prime, Q):
+        # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
+        diag = np.zeros(Q.shape[0])
+        for i in xrange(Q.shape[0]):
+            diag[i] = np.dot(Q[i, :], v_prime * Q[i, :])
+        return diag
+
+    def _errors(self, v, Q, QT_y, y, alpha):
+        # don't construct matrix G, instead compute action on y & diagonal
+        w = 1.0 / (v + alpha)
+        c = np.dot(Q, w * QT_y)
+        G_diag = self._decomp_diag(w, Q)
+        # handle case where y is 2-d
         G_diag = G_diag if len(y.shape) == 1 else G_diag[:, np.newaxis]
         return (c / G_diag) ** 2, c
 
-    def _values(self, K, v, Q, y, alpha):
+    def _values(self, K, v, Q, QT_y, y, alpha):
         n_samples = y.shape[0]
 
-        G = np.dot(np.dot(Q, np.diag(1.0 / (v + alpha))), Q.T)
-        c = np.dot(G, y)
-        KG = np.dot(K, G)
-        #KG = np.dot(np.dot(Q, np.diag(v / (v + alpha))), Q.T)
-        KG_diag = np.diag(KG)
+        # don't construct matrix KG, instead compute action on y & diagonal
+        w = 1.0 / (v + alpha)
+        c = np.dot(Q, w * QT_y)
+        vw = v * w
+        KG_y = np.dot(Q, vw * QT_y)
+        KG_diag = self._decomp_diag(vw, Q)
 
         denom = np.ones(n_samples) - KG_diag
         if len(y.shape) == 2:
@@ -387,7 +397,7 @@ class _RidgeGCV(LinearModel):
             KG_diag = KG_diag[:, np.newaxis]
             denom = denom[:, np.newaxis]
 
-        num = np.dot(KG, y) - KG_diag * y
+        num = KG_y - KG_diag * y
 
         return num / denom, c
 
@@ -417,7 +427,7 @@ class _RidgeGCV(LinearModel):
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
 
-        K, v, Q = self._pre_compute(X, y)
+        K, v, Q, QT_y = self._pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         M = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -426,9 +436,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = self._errors(v, Q, y, sample_weight * alpha)
+                out, c = self._errors(v, Q, QT_y, y, sample_weight * alpha)
             else:
-                out, c = self._values(K, v, Q, y, sample_weight * alpha)
+                out, c = self._values(K, v, Q, QT_y, y, sample_weight * alpha)
             M[:, i] = out.ravel()
             C.append(c)
 
