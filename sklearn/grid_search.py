@@ -95,9 +95,15 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             ind = np.arange(X.shape[0])
             train = ind[train]
             test = ind[test]
-        if getattr(base_clf, 'kernel', '') == 'precomputed' and not hasattr(base_clf, 'kernel_function'):
+        if hasattr(base_clf, 'kernel_function'):
+            # cannot compute the kernel values with custom function
+            err_msg = 'Cannot use a custom kernel function.'
+            err_msg += 'Precompute the kernel matrix instead.'
+            raise ValueError(err_msg)
+        if getattr(base_clf, 'kernel', '') == 'precomputed':
             # X is a precomputed square kernel matrix
-            assert X.shape[0] == X.shape[1], "X should be a square kernel matrix"
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
             X_train = X[np.ix_(train, train)]
             X_test = X[np.ix_(test, train)]
         else:
