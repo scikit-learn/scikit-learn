@@ -183,7 +183,8 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. image:: auto_examples/images/plot_ols_variance_1.png
+.. image:: ../../auto_examples/tutorial/images/plot_ols_variance_1.png
+   :target: ../../auto_examples/tutorial/plot_ols_variance.html
    :scale: 70
    :align: right
 
@@ -206,12 +207,13 @@ induces high variance:
 
 
 
-A solution, in high-dimensional statistical learning, is to *srhink* the
+A solution, in high-dimensional statistical learning, is to *shrink* the
 regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called *ridge*
 regression:
 
-.. image:: auto_examples/images/plot_ridge_variance_1.png 
+.. image:: ../../auto_examples/tutorial/images/plot_ridge_variance_1.png
+   :target: ../../auto_examples/tutorial/plot_ridge_variance.html
    :scale: 70
    :align: right
 
