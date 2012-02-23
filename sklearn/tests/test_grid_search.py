@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
 
 
@@ -104,6 +104,19 @@ def test_grid_search_sparse_score_func():
     # Smoke test the score
     #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
     #                        cv.score(X_[:180], y[:180]))
+
+
+def test_grid_search_precomputed_kernel():
+    """Test that grid search works when the input features are given in the
+    form of a precomputed kernel matrix """
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+
+    # compute the kernel matrix corresponding to the linear kernel
+    K = np.dot(X_, X_.T)
+
+    clf = SVC(kernel='precomputed')
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    cv.fit(K, y_)
 
 
 class BrokenClassifier(BaseEstimator):
