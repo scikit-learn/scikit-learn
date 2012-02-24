@@ -100,6 +100,8 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> iris_y_test
     array([1, 1, 1, 0, 0, 0, 2, 1, 2, 0])
 
+.. _curse_of_dimensionality:
+
 The curse of dimensionality
 -------------------------------
 
@@ -246,28 +248,35 @@ diabetes dataset, rather than our synthetic data::
 .. note::
 
     Capturing in the fitted parameters noise that prevents the model to
-    generalize to new data is called **overfitting**. The bias introduced
-    by the ridge regression is called a **regularization**.
+    generalize to new data is called 
+    `overfitting <http://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
+    by the ridge regression is called a 
+    `regularization <http://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
 
 Sparsity
 ----------
 
 
-.. |diabetes_ols_diag| image:: ../examples/diabetes_ols_diag.png
+.. |diabetes_ols_1| image:: ../../auto_examples/tutorial/images/plot_ols_3d_1.png
+   :target: ../../auto_examples/tutorial/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_x1| image:: ../examples/diabetes_ols_x1.png
+.. |diabetes_ols_3| image:: ../../auto_examples/tutorial/images/plot_ols_3d_3.png
+   :target: ../../auto_examples/tutorial/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_x2| image:: ../examples/diabetes_ols_x2.png
+.. |diabetes_ols_2| image:: ../../auto_examples/tutorial/images/plot_ols_3d_2.png
+   :target: ../../auto_examples/tutorial/plot_ols_3d.html
    :scale: 65
+
+
 
 
 .. rst-class:: centered
 
-    **Fitting only features 5 and 6**
+    **Fitting only features 1 and 2**
 
-    |diabetes_ols_diag| |diabetes_ols_x2| |diabetes_ols_x1| 
+.. centered:: |diabetes_ols_1| |diabetes_ols_3| |diabetes_ols_2| 
 
 .. note::
 
@@ -282,13 +291,14 @@ We can see that although feature 2 has a strong coefficient on the full
 model, it conveys little information on `y` when considered with feature
 1.
 
-To improve the conditioning of the problem (mitigate the curse of
-dimensionality), it would be interesting to select only the informative
-features and set non-informative ones, like feature 2 to 0. Ridge regression
-will decrease their contribution, but not set them to zero. Another
-penalization approach, called **Lasso**, can set some coefficients to zero.
-Such methods are called **sparse method**, and sparsity can be seen as an
-application of Occam's razor: prefer simpler models.
+To improve the conditioning of the problem (mitigate the 
+:ref:`curse_of_dimensionality`), it would be interesting to select only the 
+informative features and set non-informative ones, like feature 2 to 0. Ridge 
+regression will decrease their contribution, but not set them to zero. Another
+penalization approach, called :ref:`lasso` (least absolute shrinkage and 
+selection operator), can set some coefficients to zero. Such methods are 
+called **sparse method**, and sparsity can be seen as an
+application of Occam's razor: `prefer simpler models`.
 
 :: 
 
@@ -312,23 +322,26 @@ application of Occam's razor: prefer simpler models.
 
     Different algorithms can be used to solve the same mathematical
     problem. For instance the `Lasso` object in the `scikit-learn`
-    solves the lasso regression using a *coordinate descent* method, that
-    is efficient on large datasets. However, the `scikit-learn` also
-    provides the `LassoLARS` object, using the *LARS* which is very
+    solves the lasso regression using a 
+    `coordinate decent <http://en.wikipedia.org/wiki/Coordinate_descent>`_ method, 
+    that is efficient on large datasets. However, the `scikit-learn` also
+    provides the :class:`linear_model.LassoLars` object, using the *LARS* which is very
     efficient for problems in which the weight vector estimated is very
     sparse, that is problems with very few observations.
 
 Classification
 ---------------
 
-.. image:: ../examples/logistic_regression.png
+.. image:: ../../auto_examples/tutorial/images/plot_logistic_1.png
+   :target: ../../auto_examples/tutorial/plot_logistic.html
    :scale: 65
    :align: right
 
-For classification, as in the labeling iris task, linear regression is
-not the right approach, as it will give too much weight to data far from
-the decision frontier. A linear approach is to fit a sigmoid function, or
-**logistic** function:
+For classification, as in the labeling 
+`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear 
+regression is not the right approach, as it will give too much weight to 
+data far from the decision frontier. A linear approach is to fit a sigmoid 
+function, or **logistic** function:
 
 .. math::
 

@@ -1,3 +1,22 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+"""
+=========================================================
+Logit function
+=========================================================
+Show in the plot is how the logistic regression would, in this
+synthetic dataset, classify values as either 0 or 1, 
+i.e. class one or two, using the logit-curve.
+
+"""
+print __doc__
+
+
+# Code source: Gael Varoqueux
+# License: BSD
+
 import numpy as np
 import pylab as pl
 
@@ -40,4 +59,4 @@ pl.yticks(())
 pl.ylim(-.25, 1.25)
 pl.xlim(-4, 10)
 
-
+pl.show()

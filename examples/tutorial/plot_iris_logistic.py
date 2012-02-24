@@ -3,7 +3,7 @@
 
 """
 =========================================================
-KNN (k-nearest neighbors) classification example
+
 =========================================================
 The K-Nearest-Neighbors algorithm is used below as a
 classification tool. The data set 
@@ -25,7 +25,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn import neighbors, datasets
+from sklearn import linear_model, datasets
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -43,17 +43,17 @@ Y_test = Y[indices[-10:]]
 
 h = .02 # step size in the mesh
 
-knn=neighbors.KNeighborsClassifier()
+logreg=linear_model.LogisticRegression(C=1e5)
 
 # we create an instance of Neighbours Classifier and fit the data.
-knn.fit(X_train, Y_train)
+logreg.fit(X_train, Y_train)
 
 # Plot the decision boundary. For that, we will asign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
 x_min, x_max = X_test[:,0].min() - .5, X_test[:,0].max() + .5
 y_min, y_max = X_test[:,1].min() - .5, X_test[:,1].max() + .5
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-Z = knn.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
