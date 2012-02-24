@@ -63,6 +63,15 @@ def test_dijkstra():
         assert_array_almost_equal(graph_D, graph_py)
 
 
+def test_dijkstra_bug_fix():
+    X = np.array([[0., 0., 4.],
+                  [1., 0., 2.],
+                  [0., 5., 0.]])
+    dist_FW = graph_shortest_path(X, directed=False, method='FW')
+    dist_D = graph_shortest_path(X, directed=False, method='D')
+    assert_array_almost_equal(dist_D, dist_FW)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
