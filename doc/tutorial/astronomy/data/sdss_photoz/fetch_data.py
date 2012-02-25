@@ -1,7 +1,13 @@
+"""
+This file fetches photometric observations associated with SDSS galaxy
+spectra which have spectroscopically confirmed redshifts.  This directly
+queries the SDSS database for the information, and thus can take a few
+minutes to run.
+"""
+
 import os
 import urllib
 import numpy as np
-
 
 URL = 'http://cas.sdss.org/public/en/tools/search/x_sql.asp'
 archive_file = 'sdss_galaxy_colors.npy'

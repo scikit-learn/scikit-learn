@@ -1,5 +1,6 @@
-Classification of Astronomical Sources
-======================================
+=======================================================
+Classification: Learning Labels of Astronomical Sources
+=======================================================
 
 Modern astronomy is concerned with the study and characterization of distant
 objects such as stars, galazies, or quasars.  Objects can often be very

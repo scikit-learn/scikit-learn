@@ -1,5 +1,9 @@
-Tutorial setup
-==============
+========================
+Astronomy Tutorial setup
+========================
+
+Setup
+=====
 
 The following assumes you have extracted the source distribution
 of this tutorial somewhere on your local disk. Alternatively you

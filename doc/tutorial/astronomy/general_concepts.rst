@@ -1,5 +1,9 @@
-Machine Learning 101
-====================
+======================================
+Machine Learning 101: General Concepts
+======================================
+
+General Concepts
+================
 
 Machine Learning is about building **programs with tunable parameters**
 (typically an array of floating point values) that are adjusted

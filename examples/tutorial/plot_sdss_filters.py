@@ -45,20 +45,30 @@ def fetch_vega_spectrum(data_home=None):
 Xref = fetch_vega_spectrum()
 Xref[:, 1] /= 2.1 * Xref[:, 1].max()
 
+#----------------------------------------------------------------------
+# Plot filters in color with a single spectrum
 pl.figure()
-pl.plot(Xref[:, 0], Xref[:, 1], '-k', label='Vega spectrum', lw=2)
+pl.plot(Xref[:, 0], Xref[:, 1], '-k', lw=2)
 
 for f,c in zip('ugriz', 'bgrmk'):
     X = fetch_filter(f)
-    pl.fill(X[:, 0], X[:, 1], ec=c, fc=c, alpha=0.4, label='%s-band' % f)
+    pl.fill(X[:, 0], X[:, 1], ec=c, fc=c, alpha=0.4)
+
+kwargs = dict(fontsize=20, ha='center', va='center', alpha=0.5)
+pl.text(3500, 0.02, 'u', color='b', **kwargs)
+pl.text(4600, 0.02, 'g', color='g', **kwargs)
+pl.text(6100, 0.02, 'r', color='r', **kwargs)
+pl.text(7500, 0.02, 'i', color='m', **kwargs)
+pl.text(8800, 0.02, 'z', color='k', **kwargs)
 
 pl.xlim(3000, 11000)
-pl.legend()
 
 pl.title('SDSS Filters and Reference Spectrum')
 pl.xlabel('Wavelength (Angstroms)')
-pl.ylabel('flux (normalized)')
+pl.ylabel('normalized flux / filter transmission')
 
+#----------------------------------------------------------------------
+# Plot filters in gray with several redshifted spectra
 pl.figure()
 
 redshifts = [0.0, 0.4, 0.8]
@@ -90,6 +100,6 @@ pl.ylim(0, 0.55)
 
 pl.title('Redshifting of a Spectrum')
 pl.xlabel('Observed Wavelength (Angstroms)')
-pl.ylabel('flux (normalized)')
+pl.ylabel('normalized flux / filter transmission')
 
 pl.show()
