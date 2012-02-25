@@ -532,8 +532,11 @@ class LinearModelCV(LinearModel):
             # For the first path, we need to set rho
             path_params['rho'] = rhos[0]
         else:
-            rhos = [0, ]
-        del path_params['cv']
+            rhos = [1, ]
+        if 'cv' in path_params:
+            path_params.pop('cv')
+        if 'n_jobs' in path_params:
+            path_params.pop('n_jobs')
 
         # Start to compute path on full data
         # XXX: is this really useful: we are fitting models that we won't
@@ -550,30 +553,24 @@ class LinearModelCV(LinearModel):
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
-        n_folds = len(folds)
-        # XXX: need to store the whole path later
         best_mse = np.inf
         mse_rho_path = list()
-        for rho_i, rho in enumerate(rhos):
+        for rho in rhos:
             if self.verbose and len(rhos) > 0:
-                print '%s: rho %s, % 2i out of % 2i' % (
-                        self.__class__.__name__, rho, rho_i, len(rhos))
+                print '%s: rho %s' % (self.__class__.__name__, rho)
                 sys.stdout.flush()
-            if 'rho' in path_params:
-                path_params['rho'] = rho
-            mse_alphas = np.zeros((n_folds, n_alphas))
-            for i, (train, test) in enumerate(folds):
-                if self.verbose:
-                    print '%s: fold % 2i out of % 2i' % (
-                            self.__class__.__name__, i, n_folds)
-                    sys.stdout.flush()
+            mse_alphas = list()
+            for train, test in folds:
+                this_mse_alphas = np.empty(n_alphas)
+                if 'rho' in path_params:
+                    path_params['rho'] = rho
                 models_train = self.path(X[train], y[train], **path_params)
                 for i_alpha, model in enumerate(models_train):
                     y_ = model.predict(X[test])
-                    mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
-                if self.verbose == 1:
-                    print ''
+                    this_mse_alphas[i_alpha] = ((y_ - y[test]) ** 2).mean()
+                mse_alphas.append(this_mse_alphas)
 
+            mse_alphas = np.array(mse_alphas)
             mse = np.mean(mse_alphas, axis=0)
             i_best_alpha = np.argmin(mse)
             this_best_mse = mse[i_best_alpha]
@@ -660,6 +657,7 @@ class LassoCV(LinearModelCV):
     LassoLarsCV
     """
     path = staticmethod(lasso_path)
+    n_jobs = 1
 
 
 class ElasticNetCV(LinearModelCV):
@@ -674,6 +672,12 @@ class ElasticNetCV(LinearModelCV):
         l1 and l2 penalties). For rho = 0
         the penalty is an L1 penalty. For rho = 1 it is an L2 penalty.
         For 0 < rho < 1, the penalty is a combination of L1 and L2
+        This parameter can be a list, in which case the different
+        values are tested by cross-validation and the one giving the best
+        prediction score is used. Note that a good choice of list of
+        values for rho is often to put more values close to 1
+        (i.e. Lasso) and less close to 0 (i.e. Ridge), as in [.1, .5, .7,
+        .9, .95, .99, 1]
 
     eps : float, optional
         Length of the path. eps=1e-3 means that
@@ -707,6 +711,11 @@ class ElasticNetCV(LinearModelCV):
 
     verbose : bool or integer
         amount of verbosity
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If '-1', use
+        all the CPUs. Note that this is used only if multiple values for
+        rho are given.
 
     Notes
     -----
@@ -743,7 +752,7 @@ class ElasticNetCV(LinearModelCV):
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0):
+                 verbose=0, n_jobs=1):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
@@ -756,3 +765,4 @@ class ElasticNetCV(LinearModelCV):
         self.cv = cv
         self.copy_X = copy_X
         self.verbose = verbose
+        self.n_jobs = n_jobs
