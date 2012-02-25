@@ -45,7 +45,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     >>> single_source_shortest_path_length(graph, 0)
     {0: 0, 1: 1, 2: 2, 3: 3}
     >>> single_source_shortest_path_length(np.ones((6, 6)), 2)
-    {2: 0, 3: 1, 4: 1, 5: 1}
+    {0: 1, 1: 1, 2: 0, 3: 1, 4: 1, 5: 1}
     """
     if sparse.isspmatrix(graph):
         graph = graph.tolil()
@@ -60,8 +60,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
         for v in this_level:
             if v not in seen:
                 seen[v] = level     # set the level of vertex v
-                neighbors = np.array(graph.rows[v])
-                next_level.update(neighbors)
+                next_level.update(graph.rows[v])
         if cutoff is not None and cutoff <= level:
             break
         level += 1
