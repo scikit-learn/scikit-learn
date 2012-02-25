@@ -8,6 +8,7 @@ cimport numpy as np
 import numpy as np
 import numpy.linalg as linalg
 cimport cython
+from ..utils.extmath import norm
 
 cdef extern from "math.h":
     double fabs(double f)
@@ -82,6 +83,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * linalg.norm(y) ** 2
 
+    X_T_R = np.zeros(n_features)
     for n_iter in range(max_iter):
 
         w_max = 0.0
@@ -125,7 +127,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # criterion
 
             # sparse X.T / dense R dot product
-            X_T_R = np.zeros(n_features)
+            X_T_R[:] = 0
             for ii in xrange(n_features):
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     X_T_R[ii] += X_data[jj] * R[X_indices[jj]]

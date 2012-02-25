@@ -10,6 +10,8 @@ import numpy.linalg as linalg
 cimport cython
 import warnings
 
+from ..utils.extmath import norm
+
 cdef extern from "math.h":
     double fabs(double f)
     double sqrt(double f)
@@ -79,7 +81,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     R = y - np.dot(X, w)
 
-    tol = tol * linalg.norm(y) ** 2
+    tol = tol * norm(y) ** 2
 
     for n_iter in range(max_iter):
         w_max = 0.0
@@ -125,8 +127,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             dual_norm_XtA = linalg.norm(np.dot(X.T, R) - beta * w, np.inf)
             # TODO: use squared L2 norm directly
-            R_norm = linalg.norm(R)
-            w_norm = linalg.norm(w, 2)
+            R_norm = norm(R)
+            w_norm = norm(w)
             if (dual_norm_XtA > alpha):
                 const =  alpha / dual_norm_XtA
                 A_norm = R_norm * const
@@ -184,7 +186,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int ii
     cdef unsigned int n_iter
 
-    cdef double y_norm2 = linalg.norm(y) ** 2
+    cdef double y_norm2 = norm(y) ** 2
     tol = tol * y_norm2
 
     if alpha == 0:
@@ -233,7 +235,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
             q_dot_w = np.dot(w, q)
             dual_norm_XtA = linalg.norm(q - H - beta * w, np.inf)
             R_norm2 = y_norm2 + np.sum(w * H) - 2.0 * q_dot_w
-            w_norm = linalg.norm(w, 2)
+            w_norm = norm(w)
             if (dual_norm_XtA > alpha):
                 const =  alpha / dual_norm_XtA
                 A_norm2 = R_norm2 * (const**2)
