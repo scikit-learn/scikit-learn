@@ -6,11 +6,15 @@
 
 import sys
 import warnings
+import itertools
+import operator
+
 import numpy as np
 
 from .base import LinearModel
 from ..utils import as_float_array
 from ..cross_validation import check_cv
+from ..externals.joblib import Parallel, delayed
 from . import cd_fast
 
 
@@ -486,6 +490,17 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 
+def _path_residuals(X, y, train, test, path, path_params, rho=1):
+    this_mses = list()
+    if 'rho' in path_params:
+        path_params['rho'] = rho
+    models_train = path(X[train], y[train], **path_params)
+    for i_alpha, model in enumerate(models_train):
+        y_ = model.predict(X[test])
+        this_mses.append(((y_ - y[test]) ** 2).mean())
+    return this_mses, rho
+
+
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
@@ -533,10 +548,8 @@ class LinearModelCV(LinearModel):
             path_params['rho'] = rhos[0]
         else:
             rhos = [1, ]
-        if 'cv' in path_params:
-            path_params.pop('cv')
-        if 'n_jobs' in path_params:
-            path_params.pop('n_jobs')
+        path_params.pop('cv', None)
+        path_params.pop('n_jobs', None)
 
         # Start to compute path on full data
         # XXX: is this really useful: we are fitting models that we won't
@@ -555,21 +568,17 @@ class LinearModelCV(LinearModel):
         folds = list(cv)
         best_mse = np.inf
         mse_rho_path = list()
-        for rho in rhos:
-            if self.verbose and len(rhos) > 0:
-                print '%s: rho %s' % (self.__class__.__name__, rho)
-                sys.stdout.flush()
-            mse_alphas = list()
-            for train, test in folds:
-                this_mse_alphas = np.empty(n_alphas)
-                if 'rho' in path_params:
-                    path_params['rho'] = rho
-                models_train = self.path(X[train], y[train], **path_params)
-                for i_alpha, model in enumerate(models_train):
-                    y_ = model.predict(X[test])
-                    this_mse_alphas[i_alpha] = ((y_ - y[test]) ** 2).mean()
-                mse_alphas.append(this_mse_alphas)
 
+        # We do a double for loop folded in one, in order to be able to
+        # iterate in parallel on rho and folds
+        for rho, mse_alphas in itertools.groupby(
+                    Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                        delayed(_path_residuals)(X, y, train, test,
+                                    self.path, path_params, rho=rho)
+                            for rho in rhos for train, test in folds
+                    ), operator.itemgetter(1)):
+
+            mse_alphas = [m[0] for m in mse_alphas]
             mse_alphas = np.array(mse_alphas)
             mse = np.mean(mse_alphas, axis=0)
             i_best_alpha = np.argmin(mse)
