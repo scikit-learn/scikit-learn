@@ -496,9 +496,10 @@ def _path_residuals(X, y, train, test, path, path_params, rho=1):
     if 'rho' in path_params:
         path_params['rho'] = rho
     models_train = path(X[train], y[train], **path_params)
-    for i_alpha, model in enumerate(models_train):
+    this_mses = np.empty(len(models_train))
+    for i_model, model in enumerate(models_train):
         y_ = model.predict(X[test])
-        this_mses.append(((y_ - y[test]) ** 2).mean())
+        this_mses[i_model] = ((y_ - y[test]) ** 2).mean()
     return this_mses, rho
 
 
