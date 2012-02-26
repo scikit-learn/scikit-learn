@@ -742,7 +742,8 @@ class LarsCV(LARS):
                             eps=self.eps)
                     for train, test in cv)
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
-        all_alphas.sort()
+        # Unique also sorts
+        all_alphas = np.unique(all_alphas)
         # Take at most max_n_alphas values
         stride = int(max(1, int(len(all_alphas) / float(self.max_n_alphas))))
         all_alphas = all_alphas[::stride]

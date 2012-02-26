@@ -6,6 +6,7 @@ import warnings
 from sys import version_info
 
 import numpy as np
+from scipy import interpolate
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
                           assert_equal
 from nose import SkipTest
@@ -13,6 +14,7 @@ from nose.tools import assert_true
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
+from sklearn.linear_model import LassoLarsCV
 
 
 def check_warnings():
@@ -148,6 +150,24 @@ def test_lasso_path():
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
     clf.fit(X, y)
     assert_almost_equal(clf.alpha, 0.026, 2)
+
+    # Check that the lars and the coordinate descent implementation
+    # select a similar alpha
+    lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
+    # for this we check that they don't fall in the grid of
+    # clf.alphas further than 1
+    assert_true(np.abs(
+            np.searchsorted(clf.alphas[::-1], lars.alpha)
+            - np.searchsorted(clf.alphas[::-1], clf.alpha)
+                ) <= 1)
+    # check that they also give a similar MSE
+    mse_lars = interpolate.interp1d(lars.cv_alphas, lars.cv_mse_path_.T)
+    np.testing.assert_approx_equal(
+                            mse_lars(clf.alphas[5]).mean(),
+                            clf.mse_path_[5].mean(),
+                            significant=2)
+
+
 
     # test set
     assert_true(clf.score(X_test, y_test) > 0.99)
