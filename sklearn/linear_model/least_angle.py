@@ -16,7 +16,6 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..utils import array2d, arrayfuncs, deprecated
-from ..utils.extmath import norm
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -732,9 +731,6 @@ class LarsCV(LARS):
 
         Gram = 'auto' if self.precompute else None
 
-        # Scaling factor for the residues, to avoid overflows
-        X_norm = norm(X)
-
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_lars_path_residues)(X[train], y[train],
                             X[test], y[test], Gram=Gram,
@@ -764,7 +760,6 @@ class LarsCV(LARS):
             this_residues = interpolate.interp1d(alphas,
                                                  residues,
                                                  axis=0)(all_alphas)
-            this_residues /= X_norm
             this_residues **= 2
             mse_path[:, index] = np.mean(this_residues, axis=-1)
 
