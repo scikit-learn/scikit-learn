@@ -177,15 +177,21 @@ def test_enet_path():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
 
-    clf = ElasticNetCV(n_alphas=10, eps=1e-3, rho=0.95, cv=5,
-            max_iter=max_iter)
-    clf.fit(X, y)
-    assert_almost_equal(clf.alpha, 0.002, 2)
+    with warnings.catch_warnings():
+        # Here we have a small number of iterations, and thus the
+        # ElasticNet might not converge. This is to speed up tests
+        warnings.simplefilter("ignore", UserWarning)
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95,], cv=3,
+                           max_iter=max_iter)
+        clf.fit(X, y)
+        assert_almost_equal(clf.alpha, 0.002, 2)
+        assert_equal(clf.rho_, 0.95)
 
-    clf = ElasticNetCV(n_alphas=10, eps=1e-3, rho=0.95, cv=5,
-                       max_iter=max_iter, precompute=True)
-    clf.fit(X, y)
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95,], cv=3,
+                           max_iter=max_iter, precompute=True)
+        clf.fit(X, y)
     assert_almost_equal(clf.alpha, 0.002, 2)
+    assert_equal(clf.rho_, 0.95)
 
     # test set
     assert_true(clf.score(X_test, y_test) > 0.99)
