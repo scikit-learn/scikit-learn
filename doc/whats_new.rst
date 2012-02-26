@@ -51,6 +51,10 @@ Changelog
      with `decision_function`; for ``kernel==linear``, `coef_` was fixed
      in the the one-vs-one case, by `Andreas Müller`_.
 
+   - Performance improvements to efficient leave-one-out cross-validated
+     Ridge regression, esp. for the ``n_samples > n_features`` case, in
+     :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
+
 
 
 API changes summary

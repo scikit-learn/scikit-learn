@@ -2,8 +2,10 @@
 Ridge regression
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
+# Author:   Mathieu Blondel <mathieu@mblondel.org>
+#           Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
 # License: Simplified BSD
+
 
 import numpy as np
 
@@ -501,8 +503,7 @@ class RidgeCV(LinearModel):
     """Ridge regression with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation. Currently, only the n_features >
-    n_samples case is handled efficiently.
+    efficient Leave-One-Out cross-validation.
 
     Parameters
     ----------
