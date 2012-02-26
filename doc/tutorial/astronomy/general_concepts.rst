@@ -1,3 +1,5 @@
+.. _astronomy_general_concepts:
+
 ======================================
 Machine Learning 101: General Concepts
 ======================================

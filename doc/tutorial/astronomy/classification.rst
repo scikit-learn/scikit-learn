@@ -1,3 +1,5 @@
+.. _astronomy_classification:
+
 =======================================================
 Classification: Learning Labels of Astronomical Sources
 =======================================================

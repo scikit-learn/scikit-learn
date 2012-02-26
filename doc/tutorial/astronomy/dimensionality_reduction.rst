@@ -254,7 +254,7 @@ color of the spectrum.  Component 2 tells us a lot about the emission and
 absorption characteristics in the various lines, and also in the so-called
 "4000 angstrom break" due to Hydrogen absorption.  Detailed analysis of these
 components and eigenspectra can lead to much physical insight about the
-galaxies in the fit (See, for example [1]).
+galaxies in the fit (See, for example [1]_).
 
 Nevertheless, there are some weaknesses here.  First of all, PCA does not
 do a good job of separating out galaxies with different emission

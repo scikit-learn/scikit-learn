@@ -33,4 +33,4 @@ Using scikit-learn with Astronomical Data
    classification
    regression
    dimensionality_reduction
-
+   exercises

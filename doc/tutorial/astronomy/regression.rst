@@ -1,3 +1,5 @@
+.. _astronomy_regression:
+
 =============================================
 Regression: Photometric Redshifts of Galaxies
 =============================================
@@ -63,26 +65,23 @@ be required to advance our understanding of the Universe, including more
 precisely understanding the nature of the dark energy that is currently
 accelerating the cosmic expansion.
 
-A Simple Method: Nearest-Neighbors Regression
----------------------------------------------
+A Simple Method: Decision Tree Regression
+-----------------------------------------
 Here we'll take an extremely simple approach to the photometric redshift
 problem, using a nearest-neighbor regression.
 In the folder ``$TUTORIAL_HOME/data/sdss_photoz``, there is a script
-``fetch_data.py`` which will download the colors of 50,000 galaxies from
-the Sloan Digital Sky Survey.  This script actually performs an SQL query
-of the official SDSS database.  Because of this, the download may take a
-few minutes to run if the server is busy.  It also means that you can
-modify the script to fetch more detailed information about each object
-if you so desire.  Before executing the example below, run ``fetch_data.py``
+``fetch_data.py`` which will download the colors of 400,000+ galaxies from
+the Sloan Digital Sky Survey.  This script also includes a python
+implementation of the SQL query used to construct this data.  This template
+can be modified to download more features if desired.
+Before executing the example below, run ``fetch_data.py``
 to download the colors and redshifts.
 
 First we will load this data, shuffle it in preparation for later, and arrange
 the colors in an array of shape ``(n_samples, n_features)``::
 
    >>> import numpy as np
-   >>> data = np.load('data/sdss_photoz/sdss_galaxy_colors.npy')
-   >>> np.random.seed(0)
-   >>> np.random.shuffle(data)
+   >>> data = np.load('data/sdss_photoz/sdss_photoz.npy')
    >>> N = len(data)
    >>> X = np.zeros((N, 4))
    >>> X[:, 0] = data['u'] - data['g']
@@ -94,54 +93,54 @@ the colors in an array of shape ``(n_samples, n_features)``::
 Next we'll split the data into two samples: a training sample and a test
 sample which we'll use to evaluate our training::
 
-   >>> Ntrain = N/2
+   >>> Ntrain = 3 * N / 4
    >>> Xtrain = X[:Ntrain]
    >>> ztrain = z[:Ntrain]
    >>> Xtest = X[Ntrain:]
    >>> ztest = z[Ntrain:]
 
-Now we'll use the scikit-learn nearest neighbors regression routine to
-train a model and predict redshifts for the test set based on the nearest
-neighbor of each point in the training set::
+Now we'll use the scikit-learn Decision Tree Regression routine to
+train a model and predict redshifts for the test set based on a
+20-level decision tree::
 
-   >>> from sklearn.neighbors import KNeighborsRegressor
-   >>> knn = KNeighborsRegressor(1, weights='uniform')
-   >>> zpred = knn.fit(Xtrain, ztrain).predict(Xtest)
+   >>> from sklearn.tree import DecisionTreeRegressor
+   >>> clf.fit(Xtrain, ztrain)
+   >>> zpred = clf.predict(Xtest)
    
 To judge the efficacy of prediction, we can compute the root-mean-square
 difference between the true and predicted values::
 
    >>> rms = np.sqrt(np.mean((ztest - zpred) ** 2))
    >>> print rms
-   0.232965997831
+   0.221409442926
 
-Our RMS error is about 0.23.  This is pretty good for such an unsophisticated
+Our RMS error is about 0.22.  This is pretty good for such an unsophisticated
 learning algorithm, but better algorithms can improve on this.  The biggest
 issue here are the `catastrophic errors`, where the predicted redshift is
 extremely far from the prediction::
 
    >>> print len(ztest)
-   25000
+   102798
    >>> print np.sum(abs(ztest - zpred) > 1)
-   466
+   1538
 
-Almost 2% of objects have redshift estimates which are off by greater than
+About 1.5% of objects have redshift estimates which are off by greater than
 1.  This sort of error in redshift determination is very problematic for
 high-precision cosmological studies.  This can be seen in a scatter plot of
 the predicted redshift versus the true redshift for the test data:
 
-.. figure:: ../../auto_examples/tutorial/images/plot_neighbors_photoz_1.png
-   :target: ../../auto_examples/tutorial/plot_neighbors_photoz.html
+.. figure:: ../../auto_examples/tutorial/images/plot_sdss_photoz_1.png
+   :target: ../../auto_examples/tutorial/plot_sdss_photoz.html
    :align: center
    :scale: 80%
 
-   The true and predicted redshifts of 25,000 SDSS galaxies, using a simple
-   nearest neighbors regressor.  Notice the presece of catastrophic outliers:
+   The true and predicted redshifts of 102,798 SDSS galaxies, using a simple
+   decision tree regressor.  Notice the presece of catastrophic outliers:
    those galaxies whose predicted redshifts are extremely far from the true
    value.
 
 In a later section, we will attempt
-to improve on this by using a more sophisticated learning algorithm.  In
+to improve on this by adjusting the parameters of the decision tree.  In
 practice, the solutions to the photometric redshift problem can benefit from
 approaches that use physical intuition as well as machine learning tools.
 For example, some solutions involve the use of libraries of galaxy spectra
