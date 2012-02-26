@@ -276,6 +276,9 @@ The objective function to minimize is in this case
    :align: center
    :scale: 50%
 
+The class :class:`ElasticNetCV` can be used to set the parameters `alpha`
+and `rho` by cross-validation.
+
 .. topic:: Examples:
 
   * :ref:`example_linear_model_lasso_and_elasticnet.py`

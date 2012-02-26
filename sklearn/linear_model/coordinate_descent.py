@@ -1,6 +1,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Gael Varoquaux <gael.varoquaux@inria.fr>
 #
 # License: BSD Style.
 
@@ -533,9 +534,6 @@ class LinearModelCV(LinearModel):
         y : numpy array of shape [n_samples]
             Target values
 
-        fit_params : kwargs
-            keyword arguments passed to the Lasso fit method
-
         """
         X = np.asfortranarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
@@ -567,7 +565,7 @@ class LinearModelCV(LinearModel):
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
         best_mse = np.inf
-        mse_rho_path = list()
+        all_mse_paths = list()
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on rho and folds
@@ -583,10 +581,9 @@ class LinearModelCV(LinearModel):
             mse = np.mean(mse_alphas, axis=0)
             i_best_alpha = np.argmin(mse)
             this_best_mse = mse[i_best_alpha]
-            mse_rho_path.append(this_best_mse)
+            all_mse_paths.append(mse_alphas.T)
             if this_best_mse < best_mse:
                 model = models[i_best_alpha]
-                mse_path = mse_alphas.T
                 best_rho = rho
 
         if hasattr(model, 'rho'):
@@ -595,13 +592,12 @@ class LinearModelCV(LinearModel):
                 model.rho = best_rho
                 model.fit(X, y)
             self.rho_ = model.rho
-            self.mse_rho_path_ = mse_rho_path
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.alpha = model.alpha
         self.alphas = np.asarray(alphas)
         self.coef_path_ = np.asarray([model.coef_ for model in models])
-        self.mse_path_ = mse_path
+        self.mse_path_ = np.squeeze(all_mse_paths)
         return self
 
 
@@ -648,6 +644,20 @@ class LassoCV(LinearModelCV):
 
     verbose : bool or integer
         amount of verbosity
+
+    Attributes
+    ----------
+    `alpha_`: float
+        The amount of penalization choosen by cross validation
+
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `mse_path_`: array, shape = [n_alphas, n_folds]
+        mean square error for the test set on each fold, varying alpha
 
     Notes
     -----
@@ -725,6 +735,25 @@ class ElasticNetCV(LinearModelCV):
         Number of CPUs to use during the cross validation. If '-1', use
         all the CPUs. Note that this is used only if multiple values for
         rho are given.
+
+    Attributes
+    ----------
+    `alpha_`: float
+        The amount of penalization choosen by cross validation
+
+    `rho_`: float
+        The compromise between l1 and l2 penalization choosen by
+        cross validation
+
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `mse_path_`: array, shape = [n_rho, n_alpha, n_folds]
+        mean square error for the test set on each fold, varying rho and
+        alpha
 
     Notes
     -----
