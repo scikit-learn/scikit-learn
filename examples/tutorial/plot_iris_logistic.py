@@ -62,7 +62,7 @@ pl.set_cmap(pl.cm.Paired)
 pl.pcolormesh(xx, yy, Z)
 
 # Plot also the training points
-pl.scatter(X_train[:,0], X_train[:,1],facecolors='none', edgecolors='k' )
+pl.scatter(X_train[:,0], X_train[:,1],c = Y_train, edgecolors='k' )
 pl.xlabel('Sepal length')
 pl.ylabel('Sepal width')
 
