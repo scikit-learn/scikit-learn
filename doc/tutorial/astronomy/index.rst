@@ -30,6 +30,7 @@ Using scikit-learn with Astronomical Data
 
    setup
    general_concepts
+   practical
    classification
    regression
    dimensionality_reduction

@@ -101,7 +101,7 @@ Thus it will help if we normalize the spectra.  For this we'll use the
 scikit-learn preprocessing module.  We'll then plot both the mean and standard
 deviation to give us an idea of the data we're working with::
 
-    >>> from sklearn.preprocessing import normalize
+    >>> from sklearn import preprocessing
     >>> X = preprocessing.normalize(X)
     >>> mu = X.mean(0)
     >>> std = X.std(0)

@@ -3,7 +3,7 @@ Astronomy Tutorial: exercise 1
 
 Classification of photometric sources
 
-usage: python exercise01.py datadir
+usage: python exercise_01.py datadir
 
   - datadir is $TUTORIAL_DIR/data/sdss_colors
     This directory should contain the files:
