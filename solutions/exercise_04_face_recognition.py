@@ -56,35 +56,36 @@ print "Dataset size:"
 print "n_samples: %d" % n_samples
 print "n_features: %d" % n_features
 
-# Split the dataset into a training and test set
-
+# TASK: Split the dataset into a training and test set: 75% / 25%
 split = n_samples * 3 / 4
-
 X_train, X_test = X[:split], X[split:]
 y_train, y_test = y[:split], y[split:]
 
-# Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
-# dataset): unsupervised feature extraction / dimensionality reduction
+
+# Part 1: unsupervised feature extraction
 
 n_components = 150
 
+# TASK: Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
+# dataset)
 print "Extracting the top %d eigenfaces" % n_components
 pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X_train)
-
 eigenfaces = pca.components_.T.reshape((n_components, 64, 64))
-
-# project the input data on the eigenfaces orthonormal basis
+# and project the input data on the eigenfaces orthonormal basis
+# to do unsupervised feature extraction / dimensionality reduction
 X_train_pca = pca.transform(X_train)
 X_test_pca = pca.transform(X_test)
 
 
-# Train a SVM classification model
+# Part 2: train a SVM classification model
 
-print "Fitting the classifier to the training set"
 param_grid = {
  'C': [1000, 10000, 100000],
  'gamma': [0.0001, 0.001, 0.01, 0.1],
 }
+
+# TASK: build a grid search for a RBF kernel SVM model named 'clf'
+print "Fitting the classifier to the training set"
 clf = GridSearchCV(SVC(kernel='rbf'), param_grid,
                    fit_params={'class_weight': 'auto'},
                    n_jobs=-1)

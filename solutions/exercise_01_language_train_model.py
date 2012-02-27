@@ -1,4 +1,11 @@
-"""Build a language detector model"""
+"""Build a language detector model
+
+The goal of this exercice is to train a linear classifier on text features
+that represent sequences of up to 3 consecutive characters so as to be
+recognize natural languages by using the frequencies of short character
+sequences as 'fingerprints'.
+
+"""
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
@@ -32,34 +39,35 @@ class LowerCasePreprocessor(object):
 #
 
 
-# the training data folder must be passed as first argument
+# The training data folder must be passed as first argument
 languages_data_folder = sys.argv[1]
 dataset = load_files(languages_data_folder)
 
-# split the dataset in training and test set:
+# Split the dataset in training and test set:
 docs_train, docs_test, y_train, y_test = train_test_split(
     dataset.data, dataset.target, test_fraction=0.5)
 
 
-# Build a an analyzer that split strings into sequence of 1 to 3 characters
-# after using the previous preprocessor
+# TASK: Build a an analyzer that split strings into sequence of 1 to 3
+# characters after using the previous preprocessor
 analyzer = CharNGramAnalyzer(
     min_n=1,
     max_n=3,
     preprocessor=LowerCasePreprocessor(),
 )
 
-# Build a vectorizer / classifier pipeline using the previous analyzer
+# TASK: Build a vectorizer / classifier pipeline using the previous analyzer
+# the pipeline instance should stored in a variable named clf
 clf = Pipeline([
     ('vec', CountVectorizer(analyzer=analyzer)),
     ('tfidf', TfidfTransformer(use_idf=False)),
     ('clf', Perceptron()),
 ])
 
-# Fit the pipeline on the training set
+# TASK: Fit the pipeline on the training set
 clf.fit(docs_train, y_train)
 
-# Predict the outcome on the testing set
+# TASK: Predict the outcome on the testing set in a variable named y_predicted
 y_predicted = clf.predict(docs_test)
 
 # Print the classification report

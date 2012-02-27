@@ -1,4 +1,13 @@
-"""Build a sentiment analysis / polarity model"""
+"""Build a sentiment analysis / polarity model
+
+Sentiment analysis can be casted as a binary text classification problem,
+that is fitting a linear classifier on features extracted from the text
+of the user messages so as to guess wether the opinion of the author is
+positive or negative.
+
+In this examples we will use a movie review dataset.
+
+"""
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
@@ -32,7 +41,8 @@ if __name__ == "__main__":
     docs_train, docs_test, y_train, y_test = train_test_split(
         dataset.data, dataset.target, test_fraction=0.25, random_state=None)
 
-    # Build a vectorizer / classifier pipeline using the previous analyzer
+    # TASK: Build a vectorizer / classifier pipeline using the previous
+    # analyzer
     pipeline = Pipeline([
         ('vect', CountVectorizer(max_features=100000)),
         ('tfidf', TfidfTransformer()),
@@ -44,10 +54,11 @@ if __name__ == "__main__":
         'vect__max_df': (.95,),
     }
 
+    # TASK: Build a grid search to find out whether unigrams or bigrams are
+    # more useful.
     # Fit the pipeline on the training set using grid search for the parameters
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
     grid_search.fit(docs_train[:200], y_train[:200])
-
     # Refit the best parameter set on the complete training set
     clf = grid_search.best_estimator.fit(docs_train, y_train)
 

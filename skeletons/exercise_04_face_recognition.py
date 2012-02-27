@@ -1,12 +1,4 @@
-"""Face recognition using PCA (eigenfaces) and SVM
-
-
-This exercises has a lot of boilerplate code to extrat the most represented
-faces:
-
-TODO: once the LFW dataset loader is stable enough in scikit-learn 0.8, use it
-here instead.
-"""
+"""Face recognition using PCA (eigenfaces) and SVM"""
 # License: Simplified BSD
 
 import os
@@ -32,6 +24,7 @@ face_filenames = [l.strip() for l in file(filenames_filename).readlines()]
 
 # normalize each picture by centering brightness
 faces -= faces.mean(axis=1)[:, np.newaxis]
+
 
 # Index category names into integers suitable for scikit-learn
 #
@@ -63,65 +56,59 @@ print "Dataset size:"
 print "n_samples: %d" % n_samples
 print "n_features: %d" % n_features
 
-
-# Split the dataset into a training and test set
-
-# TODO: define variables X_train, X_test, y_train, y_test by splitting the data
-# using a 75% / 25% ratio between training set and test set
+# TASK: Split the dataset into a training and test set: 75% / 25%
 
 
-# Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
-# dataset): unsupervised feature extraction / dimensionality reduction
+# Part 1: unsupervised feature extraction
 
 n_components = 150
 
-# TODO: project the training and test set on the top n_components extracted
-# a truncated PCA performed on the training set
+# TASK: Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
+# dataset)
+# and project the input data on the eigenfaces orthonormal basis
+# to do unsupervised feature extraction / dimensionality reduction
 
 
-# Train a SVM classification model
-
-# TODO: implement a grid search for the best SVM with gaussian kernel
-# by searching through the following parameters
+# Part 2: train a SVM classification model
 
 param_grid = {
- 'C': [1, 5, 10, 100],
+ 'C': [1000, 10000, 100000],
  'gamma': [0.0001, 0.001, 0.01, 0.1],
 }
 
-# TODO store the best model in a variable named 'clf'
+# TASK: build a grid search for a RBF kernel SVM model named 'clf'
 
-# Uncomment the following once the above is implemented
-#
-## Quantitative evaluation of the model quality on the test set
-#
-#y_pred = clf.predict(X_test_pca)
-#print classification_report(y_test, y_pred, labels=selected_target,
-#                            target_names=target_names[selected_target])
-#
-#print confusion_matrix(y_test, y_pred, labels=selected_target)
-#
-#
-## Qualitative evaluation of the predictions using matplotlib
-#
-#n_row = 3
-#n_col = 4
-#
-#def title(y_pred, y_test, target_names, i):
-#    pred_name = target_names[y_pred[i]].rsplit('_', 1)[-1]
-#    true_name = target_names[y_test[i]].rsplit('_', 1)[-1]
-#    return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
-#
-#
-#pl.figure(figsize=(2 * n_col, 2.3 * n_row))
-#pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.95, hspace=.15)
-#for i in range(n_row * n_col):
-#    pl.subplot(n_row, n_col, i + 1)
-#    pl.imshow(X_test[i].reshape((64, 64)), cmap=pl.cm.gray)
-#    pl.title(title(y_pred, y_test, target_names, i), size=12)
-#    pl.xticks(())
-#    pl.yticks(())
-#
-#pl.show()
+
+# Quantitative evaluation of the model quality on the test set
+
+y_pred = clf.predict(X_test_pca)
+print classification_report(y_test, y_pred, labels=selected_target,
+                            target_names=target_names[selected_target])
+
+print confusion_matrix(y_test, y_pred, labels=selected_target)
+
+
+# Qualitative evaluation of the predictions using matplotlib
+
+n_row = 3
+n_col = 4
+
+
+def title(y_pred, y_test, target_names, i):
+    pred_name = target_names[y_pred[i]].rsplit('_', 1)[-1]
+    true_name = target_names[y_test[i]].rsplit('_', 1)[-1]
+    return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
+
+
+pl.figure(figsize=(2 * n_col, 2.3 * n_row))
+pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.95, hspace=.15)
+for i in range(n_row * n_col):
+    pl.subplot(n_row, n_col, i + 1)
+    pl.imshow(X_test[i].reshape((64, 64)), cmap=pl.cm.gray)
+    pl.title(title(y_pred, y_test, target_names, i), size=12)
+    pl.xticks(())
+    pl.yticks(())
+
+pl.show()
 
 
