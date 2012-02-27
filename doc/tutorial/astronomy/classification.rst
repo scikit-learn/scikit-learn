@@ -146,13 +146,53 @@ We can calculate this for our results as follows::
    >>> TP = np.sum((y_pred == 1) & (y_test == 1))
    >>> FP = np.sum((y_pred == 1) & (y_test == 0))
    >>> FN = np.sum((y_pred == 0) & (y_test == 1))
-   >>> print TP / float(TP + FN)  # precision
-   0.948113562768
-   >>> print TP / float(TP + FP)  # recall
+   >>> print TP / float(TP + FP)  # precision
    0.142337086782
-	
-We see that our precision is fairly good: we are correctly identifying 95%
-of all quasars.  The recall, on the other hand, is much worse.  Of
+   >>> print TP / float(TP + FN)  # recall
+   0.948113562768
+
+For convenience, these can be computed using the tools in the ``metrics``
+sub-package of scikit-learn::
+
+   >>> from sklearn import metrics
+   >>> metrics.precision_score(y_test, y_pred)
+   0.14233708678153123
+   >>> metrics.recall_score(y_test, y_pred)
+   0.94811356276828074
+
+Another useful metric is the F1 score, which gives a single score based on
+the precision and recall for the class:
+
+.. math::
+    F1 = 2\frac{precision * recall}{precision + recall}
+
+The closer the F1-score is to 1.0, the better the classification is.
+
+   >>> metrics.f1_score(y_test, y_pred)
+   0.24751550658108151
+
+For convenience, ``sklearn.metrics`` provides a function that computes all
+of these scores, and returns a nicely formatted string.  For example::
+
+   >>> print metrics.classification_report(y_test, y_pred, target_names=['Stars', 'QSOs'])
+                 precision    recall  f1-score   support
+
+          Stars       0.99      0.59      0.74    186721
+           QSOs       0.14      0.95      0.25     13279
+
+    avg / total       0.94      0.62      0.71    200000
+
+
+We see that for Gaussian Naive Bayes, our QSO recall is fairly good:
+we are correctly identifying 95%  of all quasars.
+The precision, on the other hand, is much worse.  Of
 the points we label quasars, only 14% of them are correctly labeled.
-Apparently Naive Bayes is a bit too naive for this problem.
-In later sections, we will apply more sophisticated tools to this data.
+This low recall leads to an F1-score of only 0.25.  This is not an
+optimal classification of our data.  Apparently Naive Bayes is a bit too
+naive for this problem. 
+
+Later, in `Exercise #1 <exercises.html>`_, we will apply a more sophisticated
+learning method to this task, which will potentially improve on these
+results.
+
+Next Section: `Regression <regression.html>`_

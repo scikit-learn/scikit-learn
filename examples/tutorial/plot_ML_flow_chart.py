@@ -115,7 +115,7 @@ def plot_supervised(annotate=False):
         pl.text(3.7, 3.2, 'clf.fit(X, y)',
                 fontdict=fontdict,
                 rotation=20, ha='left', va='bottom')
-        pl.text(1.7, 1.5, 'X_new = vec.fit_transform(input)',
+        pl.text(1.7, 1.5, 'X_new = vec.transform(input)',
                 fontdict=fontdict,
                 rotation=20, ha='left', va='bottom')
         pl.text(6.1, 1.5, 'y_new = clf.predict(X_new)',

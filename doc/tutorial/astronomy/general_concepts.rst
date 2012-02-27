@@ -4,9 +4,6 @@
 Machine Learning 101: General Concepts
 ======================================
 
-General Concepts
-================
-
 Machine Learning is about building **programs with tunable parameters**
 (typically an array of floating point values) that are adjusted
 automatically so as to improve their behavior by **adapting to
@@ -550,7 +547,7 @@ display the following:
 
 
 .. figure:: ../../auto_examples/tutorial/images/plot_iris_projections_1.png
-   :target: ../../auto_examples/decomposition/plot_iris_projections.html
+   :target: ../../auto_examples/tutorial/plot_iris_projections.html
    :scale: 65 %
    :align: center
    :alt: 2D PCA projection of the iris dataset
@@ -622,7 +619,7 @@ with::
 
 
 .. figure:: ../../auto_examples/tutorial/images/plot_iris_projections_2.png
-   :target: ../../auto_examples/decomposition/plot_iris_projections.html
+   :target: ../../auto_examples/tutorial/plot_iris_projections.html
    :scale: 65 %
    :align: center
    :alt: KMeans cluster assignements on 2D PCA iris data
@@ -720,7 +717,7 @@ separable (a model with a gaussian kernel is required in that case).
 
 
 .. figure:: ../../auto_examples/tutorial/images/plot_gui_example_1.png
-   :target: ../../auto_examples/decomposition/plot_gui_example.html
+   :target: ../../auto_examples/tutorial/plot_gui_example.html
    :scale: 65 %
    :align: center
    :alt: Example of a linear SVM fit
@@ -730,7 +727,7 @@ separable (a model with a gaussian kernel is required in that case).
 
 
 .. figure:: ../../auto_examples/tutorial/images/plot_gui_example_2.png
-   :target: ../../auto_examples/decomposition/plot_gui_example.html
+   :target: ../../auto_examples/tutorial/plot_gui_example.html
    :scale: 65 %
    :align: center
    :alt: Example of a gaussian SVM fit
@@ -918,3 +915,4 @@ Key takeaway points
 
   - tune the regularization parameter on a validation set
 
+Next section: `Practical Advice for Machine Learning <practical.html>`_

@@ -28,72 +28,13 @@ import os, sys
 import numpy as np
 import pylab as pl
 from sklearn.mixture import gmm
+from sklearn import metrics
 
 try:
     datadir = sys.argv[1]
 except:
     print __doc__
     sys.exit()
-
-def print_results(y_pred, y_true):
-    """
-    Given predicted labels y_pred, and true labels y_true, print
-    the precision and recall for the results.
-    """
-    # This function will be used throughout the exercise.
-    #
-    # Here you calculate the following variables, based on the predicted
-    #  label y_pred and the true label y_test.  True positives are done
-    #  for you.  Compute the following quantities:
-    #    TP : True Positives
-    #    FP : False Positives
-    #    TN : True Negatives
-    #    FN : False Negatives
-    #
-    #    precision : the fraction of quasars correctly identified
-    #    recall : the fraction of identified quasars which are correct
-    TP = np.sum((y_pred == 1) & (y_true == 1))
-    
-    #{{{ compute FP, TN, FN, precision, recall
-    FP = np.sum((y_pred == 1) & (y_true == 0))
-    TN = np.sum((y_pred == 0) & (y_true == 0))
-    FN = np.sum((y_pred == 0) & (y_true == 1))
-
-    precision = TP / float(TP + FN)  # precision
-    recall = TP / float(TP + FP)  # recall
-    #}}}
-
-    F1_score = (2 * precision * recall / (precision + recall))
-
-    print "---------------------------"
-    print "| True Positives:  %i" % TP
-    print "| False Positives: %i" % FP
-    print "| True Negatives:  %i" % TN
-    print "| False Negatives: %i" % FN
-    print "|"
-    print "| precision = %.1f%%" % (100 * precision)
-    print "| recall = %.1f%%" % (100 * recall)
-    print "|"
-    print "| F1 score = %.2f (perfect = 1.0)" % F1_score
-    print "---------------------------"
-    print
-
-#----------------------------------------------------------------------
-# Test the print_results function
-#  If your function is correct, this should print the following:
-#
-# True Positives: 25
-# False Positives: 31
-# True Negatives: 24
-# False Negatives: 20
-
-# precision = 55.6%
-# recall = 44.6%
-np.random.seed(0)
-y_true = np.random.randint(2, size=100)
-y_pred = np.random.randint(2, size=100)
-print "Testing print_results function:"
-print_results(y_true, y_pred)
 
 #----------------------------------------------------------------------
 # Load data files
@@ -114,9 +55,9 @@ train_data = train_data[:Ntrain]
 
 #----------------------------------------------------------------------
 # Split training data into training and cross-validation sets
-N_crossval = Ntrain / 3
-crossval_data = train_data[-N_crossval:]
+N_crossval = Ntrain / 5
 train_data = train_data[:-N_crossval]
+crossval_data = train_data[-N_crossval:]
 
 #----------------------------------------------------------------------
 # Set up data
@@ -137,7 +78,7 @@ X_crossval[:, 3] = crossval_data['i-z']
 y_crossval = (crossval_data['redshift'] > 0).astype(int)
 Ncrossval = len(y_crossval)
 
-#----------------------------------------------------------------------
+#======================================================================
 # Recreating Gaussian Naive Bayes
 #
 #   Here we will use Gaussian Mixture Models to duplicate our Gaussian
@@ -199,8 +140,16 @@ logL[1] = clf_1.score(X_crossval) + np.log(prior1)
 # log-likelihood.
 y_pred = np.argmax(logL, 0)
 
+# now we print the results.  We'll use the built-in classification
+# report function in sklearn.metrics.  This computes the precision,
+# recall, and f1-score for each class.
+
+print "------------------------------------------------------------"
 print "One-component Gaussian Mixture:"
-print_results(y_pred, y_crossval)
+print "  results for cross-validation set:"
+print metrics.classification_report(y_crossval, y_pred,
+                                    target_names=['stars', 'QSOs'])
+
 
 
 #----------------------------------------------------------------------
@@ -212,10 +161,14 @@ gnb = GaussianNB()
 gnb.fit(X_train, y_train)
 y_pred = gnb.predict(X_crossval)
 
-print "Gaussian Naive Bayes Result (should be within ~1% of above results)"
-print_results(y_pred, y_crossval)
+print "------------------------------------------------------------"
+print "Gaussian Naive Bayes"
+print "  results for cross-validation set:"
+print "  (results should be within ~0.01 of above results)"
+print metrics.classification_report(y_crossval, y_pred,
+                                    target_names=['stars', 'QSOs'])
 
-#----------------------------------------------------------------------
+#======================================================================
 #  Parameter optimization:
 #
 #   Now take some time to experiment with the covariance type and the
@@ -231,7 +184,7 @@ print_results(y_pred, y_crossval)
 #   but here we are doing it by hand for learning purposes.
 y_pred = None
 
-#{{{ compute y_pred
+#{{{ compute y_pred for cross-validation data
 clf_0 = gmm.GMM(5, 'full', random_state=0)
 i0 = (y_train == 0)
 clf_0.fit(X_train[i0])
@@ -247,8 +200,11 @@ logL[1] = clf_1.score(X_crossval) + np.log(prior1)
 y_pred = np.argmax(logL, 0)
 #}}}
 
+print "------------------------------------------------------------"
 print "GMM with tweaked parameters:"
-print_results(y_pred, y_crossval)
+print "  results for cross-validation set"
+print metrics.classification_report(y_crossval, y_pred,
+                                    target_names=['stars', 'QSOs'])
 
 #----------------------------------------------------------------------
 # Test Data
@@ -261,21 +217,24 @@ X_test[:, 0] = test_data['u-g']
 X_test[:, 1] = test_data['g-r']
 X_test[:, 2] = test_data['r-i']
 X_test[:, 3] = test_data['i-z']
-y_pred_0 = (test_data['label'] == 0).astype(int)
-Ntest = len(y_pred_0)
+y_pred_literature = (test_data['label'] == 0).astype(int)
+Ntest = len(y_pred_literature)
 
 # here you should compute y_pred for the test data, using the classifiers
 # clf_0 and clf_1 which you already trained above.
 
 y_pred = None
 
-#{{{ compute y_pred
+#{{{ compute y_pred for test data
 logL = np.zeros((2, Ntest))
 logL[0] = clf_0.score(X_test) + np.log(prior0)
 logL[1] = clf_1.score(X_test) + np.log(prior1)
 y_pred = np.argmax(logL, 0)
 #}}}
 
+print "------------------------------------------------------------"
 print "Comparison of current results with published results"
-print " (treating published results as the 'true' result)"
-print_results(y_pred, y_pred_0)
+print "  results for test set"
+print "    (treating published results as the 'true' result)"
+print metrics.classification_report(y_pred_literature, y_pred,
+                                    target_names=['stars', 'QSOs'])

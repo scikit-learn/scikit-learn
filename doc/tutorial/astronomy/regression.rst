@@ -68,7 +68,7 @@ accelerating the cosmic expansion.
 A Simple Method: Decision Tree Regression
 -----------------------------------------
 Here we'll take an extremely simple approach to the photometric redshift
-problem, using a nearest-neighbor regression.
+problem, using a decision tree.
 In the folder ``$TUTORIAL_HOME/data/sdss_photoz``, there is a script
 ``fetch_data.py`` which will download the colors of 400,000+ galaxies from
 the Sloan Digital Sky Survey.  This script also includes a python
@@ -139,13 +139,16 @@ the predicted redshift versus the true redshift for the test data:
    those galaxies whose predicted redshifts are extremely far from the true
    value.
 
-In a later section, we will attempt
-to improve on this by adjusting the parameters of the decision tree.  In
-practice, the solutions to the photometric redshift problem can benefit from
-approaches that use physical intuition as well as machine learning tools.
-For example, some solutions involve the use of libraries of galaxy spectra
-which are known to be representative of the true galaxy distribution.  This
-extra information can be used either directly in a physically motivated
-solution, or can be used to generate a larger suite of training instances
-for a pure machine learning approach.
+Later, in `Exercise #2 <exercises.html>`_, we will attempt
+to improve on this by optimizig the parameters of the decision tree.
 
+In practice, the solutions to the photometric redshift problem can benefit from
+approaches that use physical intuition as well as machine learning tools.
+For example, some solutions involve the use of libraries of synthetic
+galaxy spectra
+which are known to be representative of the true galaxy distribution.  This
+extra information can be used either directly, in a physically motivated
+analysis, or can be used to generate a larger suite of artificial training
+instances for a pure machine learning approach.
+
+Next Section: `Dimensionality Reduction <dimensionality_reduction.html>`_

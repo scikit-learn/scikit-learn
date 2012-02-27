@@ -124,3 +124,4 @@ For instance::
     % less fetch_data.py
     % python fetch_data.py
 
+Next section: `general concepts <general_concepts.html>`_
