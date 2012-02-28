@@ -372,14 +372,14 @@ class _RidgeGCV(LinearModel):
 
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        diag = np.zeros(Q.shape[0])
-        for i in xrange(Q.shape[0]):
-            diag[i] = np.dot(Q[i, :], v_prime * Q[i, :])
-        return diag
+        return (v_prime * Q**2).sum(axis=-1)
 
     def _diag_dot(self, D, B):
-        # compute dot(diag(D), B) handling case if B is > 1d properly
-        return D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)] * B
+        # compute dot(diag(D), B)
+        if len(B.shape) > 1:
+            # handle case where B is > 1-d
+            D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
+        return D * B
 
     def _errors(self, alpha, y, v, Q, QT_y):
         # don't construct matrix G, instead compute action on y & diagonal
@@ -477,7 +477,7 @@ class _RidgeGCV(LinearModel):
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
-        decomposition = _pre_compute(X, y)
+        v, Q, QT_y = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         M = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -486,9 +486,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c =_errors(sample_weight * alpha, y, *decomposition)
+                out, c =_errors(sample_weight * alpha, y, v, Q, QT_y)
             else:
-                out, c = _values(sample_weight * alpha, y, *decomposition)
+                out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
             M[:, i] = out.ravel()
             C.append(c)
 
@@ -545,9 +545,9 @@ class RidgeCV(LinearModel):
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-    gcv_mode : Generalised Cross-Validation mode, optional
+    gcv_mode: {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing Generalized
-        Cross-Validation. Options are:
+        Cross-Validation. Options are.
             'auto' : use svd if n_samples > n_features, otherwise use eigen
             'svd' : force computation via svd of X
             'eigen' : force computation via eigendecomposition of X^T X
