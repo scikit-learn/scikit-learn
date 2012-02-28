@@ -402,7 +402,9 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
-        n_samples, n_features = X.shape
+        from scipy import sparse
+        if sparse.issparse(X) and hasattr(X, 'toarray'):
+            X = X.toarray()
         U, s, _ = np.linalg.svd(X, full_matrices = 0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
