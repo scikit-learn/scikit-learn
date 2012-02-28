@@ -376,10 +376,14 @@ class _RidgeGCV(LinearModel):
             diag[i] = np.dot(Q[i, :], v_prime * Q[i, :])
         return diag
 
+    def _diag_dot(self, D, B):
+        # compute dot(diag(D), B) handling case if B is > 1d properly
+        return D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)] * B
+
     def _errors(self, alpha, y, v, Q, QT_y):
         # don't construct matrix G, instead compute action on y & diagonal
         w = 1.0 / (v + alpha)
-        c = np.dot(Q, w * QT_y)
+        c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
         if len(y.shape) != 1:
@@ -389,7 +393,7 @@ class _RidgeGCV(LinearModel):
     def _values(self, alpha, y, v, Q, QT_y):
         # don't construct matrix G, instead compute action on y & diagonal
         w = 1.0 / (v + alpha)
-        c = np.dot(Q, w * QT_y)
+        c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
         if len(y.shape) != 1:
@@ -405,7 +409,7 @@ class _RidgeGCV(LinearModel):
 
     def _errors_svd(self, alpha, y, v, U, UT_y):
         w = ((v + alpha) ** -1) - (alpha ** -1)
-        c = np.dot(U, w * UT_y) + (alpha ** -1) * y
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
@@ -414,7 +418,7 @@ class _RidgeGCV(LinearModel):
 
     def _values_svd(self, alpha, y, v, U, UT_y):
         w = ((v + alpha) ** -1) - (alpha ** -1)
-        c = np.dot(U, w * UT_y) + (alpha ** -1) * y
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
             # handle case when y is 2-d
