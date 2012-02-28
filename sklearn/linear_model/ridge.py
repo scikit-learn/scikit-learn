@@ -7,6 +7,7 @@ Ridge regression
 # License: Simplified BSD
 
 
+import warnings
 import numpy as np
 
 from .base import LinearModel
@@ -450,27 +451,29 @@ class _RidgeGCV(LinearModel):
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
-
+        
+        gcv_mode = self.gcv_mode
         if self.gcv_mode is None or self.gcv_mode == 'auto':
             if n_samples > n_features:
-                _pre_compute = self._pre_compute_svd
-                _errors = self._errors_svd
-                _values = self._values_svd
+                gcv_mode = 'svd'
             else:
-                _pre_compute = self._pre_compute
-                _errors = self._errors
-                _values = self._values
-        elif self.gcv_mode == 'eigen':
+                gcv_mode = 'eigen'
+        if len(np.shape(sample_weight)):
+            # FIXME non-uniform sample weights not yet supported
+            warnings.warn("non-uniform sample weights unsupported for svd, "
+                "forcing usage of eigen")
+            gcv_mode = 'eigen'
+        if gcv_mode == 'eigen':
             _pre_compute = self._pre_compute
             _errors = self._errors
             _values = self._values
-        elif self.gcv_mode == 'svd':
+        elif gcv_mode == 'svd':
             # assert n_samples >= n_features
             _pre_compute = self._pre_compute_svd
             _errors = self._errors_svd
             _values = self._values_svd
         else:
-            raise ValueError('bad mode "%s"' % self.gcv_mode)
+            raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
         decomposition = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
