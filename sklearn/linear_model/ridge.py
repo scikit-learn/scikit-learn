@@ -405,7 +405,7 @@ class _RidgeGCV(LinearModel):
         from scipy import sparse
         if sparse.issparse(X) and hasattr(X, 'toarray'):
             X = X.toarray()
-        U, s, _ = np.linalg.svd(X, full_matrices = 0)
+        U, s, _ = np.linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
@@ -453,7 +453,7 @@ class _RidgeGCV(LinearModel):
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
-        
+
         gcv_mode = self.gcv_mode
         if self.gcv_mode is None or self.gcv_mode == 'auto':
             if n_samples > n_features:
@@ -591,7 +591,7 @@ class RidgeCV(LinearModel):
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
                                   self.score_func, self.loss_func,
-                                  gcv_mode = self.gcv_mode)
+                                  gcv_mode=self.gcv_mode)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.best_alpha = estimator.best_alpha
         else:
