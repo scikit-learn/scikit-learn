@@ -394,7 +394,7 @@ class _RidgeGCV(LinearModel):
         # handle case where y is 2-d
         if len(y.shape) != 1:
             G_diag = G_diag[:, np.newaxis]
-        return (c / G_diag) + y, c
+        return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
         n_samples, n_features = X.shape
@@ -419,7 +419,7 @@ class _RidgeGCV(LinearModel):
         if len(y.shape) != 1:
             # handle case when y is 2-d
             G_diag = G_diag[:, np.newaxis]
-        return (c / G_diag) + y, c
+        return y - (c / G_diag), c
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
