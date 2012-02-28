@@ -43,7 +43,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Default: 1.0
 
     fit_inverse_transform: bool
-        Learn the inverse transform.
+        Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
         Default: False
 
@@ -83,6 +83,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=None, kernel="linear", gamma=0, degree=3,
                  coef0=1, alpha=1.0, fit_inverse_transform=False,
                  eigen_solver='auto', tol=0, max_iter=None):
+        if fit_inverse_transform and kernel == 'precomputed':
+            raise ValueError(
+                "Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
         self.kernel = kernel.lower()
         self.gamma = gamma

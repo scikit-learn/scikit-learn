@@ -3,7 +3,7 @@ import scipy.sparse as sp
 
 from numpy.testing import assert_array_equal
 import nose
-from nose.tools import assert_raises, raises
+from nose.tools import assert_raises, raises, assert_true
 
 from sklearn.linear_model import logistic
 from sklearn import datasets
@@ -63,13 +63,14 @@ def test_predict_3_classes():
 def test_predict_iris():
     """Test logisic regression with the iris dataset"""
 
-    clf = logistic.LogisticRegression().fit(iris.data, iris.target)
+    clf = logistic.LogisticRegression(C=len(iris.data)).fit(iris.data,
+                                                            iris.target)
 
     pred = clf.predict(iris.data)
-    assert np.mean(pred == iris.target) > .95
+    assert_true(np.mean(pred == iris.target) > .95)
 
     pred = clf.predict_proba(iris.data).argmax(axis=1)
-    assert np.mean(pred == iris.target) > .95
+    assert_true(np.mean(pred == iris.target) > .95)
 
 
 def test_inconsistent_input():

@@ -90,7 +90,9 @@ def check_pairwise_arrays(X, Y):
     if len(Y.shape) < 2:
         raise ValueError("Y is required to be at least two dimensional.")
     if X.shape[1] != Y.shape[1]:
-        raise ValueError("Incompatible dimension for X and Y matrices")
+        raise ValueError("Incompatible dimension for X and Y matrices: "
+                         "X.shape[1] == %d while Y.shape[1] == %d" % (
+                             X.shape[1], Y.shape[1]))
     return X, Y
 
 

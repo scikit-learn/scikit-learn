@@ -119,6 +119,19 @@ def test_word_analyzer_unigrams_and_bigrams():
     assert_equal(wa.analyze(text), expected)
 
 
+def test_unicode_decode_error():
+    # decode_error default to strict, so this should fail
+    # First, encode (as bytes) a unicode string.
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text_bytes = text.encode('utf-8')
+    # Then let the Analyzer try to decode it as ascii. It should fail,
+    # because we have given it an incorrect charset.
+    wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None, charset='ascii')
+    assert_raises(UnicodeDecodeError, wa.analyze, text_bytes)
+    ca = CharNGramAnalyzer(min_n=1, max_n=2, charset='ascii')
+    assert_raises(UnicodeDecodeError, ca.analyze, text_bytes)
+
+
 def test_char_ngram_analyzer():
     cnga = CharNGramAnalyzer(min_n=3, max_n=6)
 
@@ -144,6 +157,14 @@ def test_countvectorizer_custom_vocabulary():
     vect = CountVectorizer(vocabulary=what_we_like)
     vect.fit(JUNK_FOOD_DOCS)
     assert_equal(set(vect.vocabulary), set(what_we_like))
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
+
+    # try again with a dict vocabulary
+    vocab = {"pizza": 0, "beer": 1}
+    vect = CountVectorizer(vocabulary=vocab)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_equal(vect.vocabulary, vocab)
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
@@ -271,11 +292,11 @@ def test_vectorizer_max_df():
     test_data = [u'abc', u'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
     vect.fit(test_data)
-    assert u'a' in vect.vocabulary.keys()
+    assert_true(u'a' in vect.vocabulary.keys())
     assert_equals(len(vect.vocabulary.keys()), 5)
     vect.max_df = 0.5
     vect.fit(test_data)
-    assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
+    assert_true(u'a' not in vect.vocabulary.keys())  # 'a' is ignored
     assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
 
 

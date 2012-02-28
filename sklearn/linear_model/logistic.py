@@ -47,11 +47,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         (and therefore on the intercept) intercept_scaling has to be increased
 
     tol: float, optional
-         tolerance for stopping criteria
+        tolerance for stopping criteria
 
-    scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
-        of the number of samples.
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match liblinear commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -89,12 +90,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1,
-                 scale_C=False):
+                 scale_C=True, class_weight=None):
 
         super(LogisticRegression, self).__init__(penalty=penalty,
             dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            scale_C=scale_C)
+            scale_C=scale_C, class_weight=class_weight)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -117,8 +118,8 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         prob_wrap = (csr_predict_prob_wrap if self._sparse else
                 predict_prob_wrap)
         probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
-                           self.tol, self.C, self.class_weight_label,
-                           self.class_weight, self.label_, self._get_bias())
+                           self.tol, self.C, self.class_weight_label_,
+                           self.class_weight_, self.label_, self._get_bias())
         return probas[:, np.argsort(self.label_)]
 
     def predict_log_proba(self, X):

@@ -104,9 +104,9 @@ def test_memory_integration():
         memory = Memory(cachedir=env['dir'], verbose=0, compress=compress)
         # First clear the cache directory, to check that our code can
         # handle that
-        # NOTE: this line would raise an exception, as the database file is still
-        # open; we ignore the error since we want to test what happens if the
-        # directory disappears
+        # NOTE: this line would raise an exception, as the database file is
+        # still open; we ignore the error since we want to test what happens if
+        # the directory disappears
         shutil.rmtree(env['dir'], ignore_errors=True)
         g = memory.cache(f)
         g(1)
@@ -119,6 +119,12 @@ def test_memory_integration():
         yield nose.tools.assert_equal, memory.eval(f, 1), out
         yield nose.tools.assert_equal, len(accumulator), \
                     current_accumulator + 1
+
+    # Now do a smoke test with a function defined in __main__, as the name
+    # mangling rules are more complex
+    f.__module__ = '__main__'
+    memory = Memory(cachedir=env['dir'], verbose=0)
+    memory.cache(f)(1)
 
 
 def test_no_memory():
@@ -406,6 +412,12 @@ def test_persistence():
 
     output_dir, _ = g.get_output_dir(1)
     yield nose.tools.assert_equal, output, h.load_output(output_dir)
+    memory2 = pickle.loads(pickle.dumps(memory))
+    yield nose.tools.assert_equal, memory.cachedir, memory2.cachedir
+
+    # Smoke test that pickling a memory with cachedir=None works
+    memory = Memory(cachedir=None, verbose=0)
+    pickle.loads(pickle.dumps(memory))
 
 
 def test_format_signature():

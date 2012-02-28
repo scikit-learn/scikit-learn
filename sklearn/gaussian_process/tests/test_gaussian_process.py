@@ -6,11 +6,13 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 # License: BSD style
 
 from nose.tools import raises
+from nose.tools import assert_true
+
 import numpy as np
 
-from .. import GaussianProcess
-from .. import regression_models as regression
-from .. import correlation_models as correlation
+from sklearn.gaussian_process import GaussianProcess
+from sklearn.gaussian_process import regression_models as regression
+from sklearn.gaussian_process import correlation_models as correlation
 
 
 def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -29,7 +31,7 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
                          random_start=random_start, verbose=False).fit(X, y)
     y_pred, MSE = gp.predict(X, eval_MSE=True)
 
-    assert np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -58,7 +60,7 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
     gp.fit(X, y)
     y_pred, MSE = gp.predict(X, eval_MSE=True)
 
-    assert np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
 
 @raises(ValueError)

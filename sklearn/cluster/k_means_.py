@@ -1012,7 +1012,7 @@ class MiniBatchKMeans(KMeans):
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
-        self.init_size = batch_size if init_size is None else 3 * init_size
+        self.init_size = 3 * batch_size if init_size is None else init_size
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.

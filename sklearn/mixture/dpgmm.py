@@ -165,6 +165,7 @@ class DPGMM(GMM):
     `precisions_` : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
+
             (`n_components`, 'n_features')                if 'spherical',
             (`n_features`, `n_features`)                  if 'tied',
             (`n_components`, `n_features`)                if 'diag',
@@ -617,7 +618,8 @@ class VBGMM(DPGMM):
 
     `precisions_` : array
         Precision (inverse covariance) parameters for each mixture
-        component.  The shape depends on `covariance_type`:
+        component.  The shape depends on `covariance_type`::
+
             (`n_components`, 'n_features')                if 'spherical',
             (`n_features`, `n_features`)                  if 'tied',
             (`n_components`, `n_features`)                if 'diag',

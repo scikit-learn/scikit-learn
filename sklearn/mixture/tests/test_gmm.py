@@ -201,7 +201,7 @@ class GMMTester():
         for iter in xrange(5):
             g.fit(X, n_iter=1, params=params, init_params='')
             trainll.append(self.score(g, X))
-        g.fit(X, n_iter=10, params=params, init_params='') # finish fitting
+        g.fit(X, n_iter=10, params=params, init_params='')  # finish fitting
 
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
@@ -293,7 +293,7 @@ def test_aic():
     """ Test the aic and bic criteria"""
     n_samples, n_dim, n_components = 50, 3, 2
     X = rng.randn(n_samples, n_dim)
-    SGH = 0.5 * (X.var() + np.log(2 * np.pi)) # standard gaussian entropy
+    SGH = 0.5 * (X.var() + np.log(2 * np.pi))  # standard gaussian entropy
 
     for cv_type in ['full', 'tied', 'diag', 'spherical']:
         g = mixture.GMM(n_components=n_components, covariance_type=cv_type,

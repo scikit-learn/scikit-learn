@@ -136,23 +136,27 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    covariance_type : string (read-only)
-        String describing the type of covariance parameters used by
-        the GMM.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+    covariance_type : string
+        String describing the type of covariance parameters used by the GMM. \
+        Must be one of 'spherical', 'tied', 'diag', 'full'.
+
     `weights_` : array, shape (`n_components`,)
         Mixing weights for each mixture component.
+
     `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
+
     `covars_` : array
         Covariance parameters for each mixture component.  The shape
-        depends on `covariance_type`:
+        depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
+
     `converged_` : bool
-        True when convergence was reached in fit(), False
-        otherwise.
+        True when convergence was reached in fit(), False otherwise.
 
 
 
@@ -178,9 +182,9 @@ class GMM(BaseEstimator):
     >>> # and 10 to use for training.
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
-    >>> g.fit(obs)
-    GMM(covariance_type=None, min_covar=0.001, n_components=2, random_state=None,
-      thresh=0.01)
+    >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
+    GMM(covariance_type=None, min_covar=0.001, n_components=2,
+            random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -195,9 +199,9 @@ class GMM(BaseEstimator):
     array([-2.19, -4.58, -1.75, -1.21])
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
-    >>> g.fit(20 * [[0]] +  20 * [[10]])
-    GMM(covariance_type=None, min_covar=0.001, n_components=2, random_state=None,
-      thresh=0.01)
+    >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
+    GMM(covariance_type=None, min_covar=0.001, n_components=2,
+            random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
@@ -298,6 +302,7 @@ class GMM(BaseEstimator):
         -------
         logprobs : array_like, shape (n_samples,)
             Log probability of each point in `obs` under the model.
+
         components : array_like, shape (n_samples,)
             Index of the most likelihod mixture components for each observation
         """

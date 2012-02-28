@@ -53,11 +53,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
-# reshape the data using the traditional (n_samples, n_features) shape
-faces = lfw_people.data
-n_samples, h, w = faces.shape
+# introspect the images arrays to find the shapes (for plotting)
+n_samples, h, w = lfw_people.images.shape
 
-X = faces.reshape((n_samples, h * w))
+# fot machine learning we use the 2 data directly (as relative pixel
+# positions info is ignored by this model)
+X = lfw_people.data
 n_features = X.shape[1]
 
 # the label to predict is the id of the person
@@ -109,8 +110,7 @@ param_grid = {
  'C': [1, 5, 10, 50, 100],
  'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
 }
-clf = GridSearchCV(SVC(kernel='rbf'), param_grid,
-                   fit_params={'class_weight': 'auto'})
+clf = GridSearchCV(SVC(kernel='rbf', class_weight='auto'), param_grid)
 clf = clf.fit(X_train_pca, y_train)
 print "done in %0.3fs" % (time() - t0)
 print "Best estimator found by grid search:"

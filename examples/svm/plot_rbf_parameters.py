@@ -37,11 +37,10 @@ xx, yy = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-5, 5, 200))
 
 np.random.seed(0)
 
-gamma_range = [10. ** -1, 1, 10. ** 1]
-C_range = [10. ** -2, 1, 10. ** 2]
+gamma_range = [1e-1, 1, 1e1]
+C_range = [1, 1e2, 1e4]
 
 pl.figure()
-pl.set_cmap(pl.cm.jet)
 k = 1
 
 for C in C_range:
@@ -57,8 +56,8 @@ for C in C_range:
         pl.subplot(3, 3, k)
         pl.title("gamma %.1f, C %.2f" % (gamma, C))
         k += 1
-        pl.pcolormesh(xx, yy, Z)
-        pl.scatter(X[:, 0], X[:, 1], c=y)
+        pl.pcolormesh(xx, yy, -Z, cmap=pl.cm.jet)
+        pl.scatter(X[:, 0], X[:, 1], c=y, cmap=pl.cm.jet)
         pl.xticks(())
         pl.yticks(())
         pl.axis('tight')

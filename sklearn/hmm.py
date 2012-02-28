@@ -603,6 +603,7 @@ class GaussianHMM(_BaseHMM):
     covars : array
         Covariance parameters for each state.  The shape depends on
         `_covariance_type`::
+
             (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
             (`n_components`, `n_features`)           if 'diag',
@@ -902,9 +903,10 @@ class GMMHMM(_BaseHMM):
     >>> GMMHMM(n_components=2, n_mix=10, covariance_type='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     GMMHMM(covariance_type=None,
-        gmms=[GMM(covariance_type=None, min_covar=0.001, n_components=10, random_state=None,
-      thresh=0.01), GMM(covariance_type=None, min_covar=0.001, n_components=10, random_state=None,
-      thresh=0.01)],
+        gmms=[GMM(covariance_type=None, min_covar=0.001, n_components=10,
+            random_state=None, thresh=0.01), GMM(covariance_type=None,
+                min_covar=0.001, n_components=10, random_state=None,
+                thresh=0.01)],
         n_components=2, n_mix=10, startprob=None, startprob_prior=1.0,
         transmat=None, transmat_prior=1.0)
 
