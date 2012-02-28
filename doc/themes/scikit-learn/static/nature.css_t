@@ -372,6 +372,11 @@ div.warning {
     border: 1px solid #f66;
 }
 
+div.green {
+    background-color: #e4ffe4;
+    border: 1px solid #6f6;
+}
+
 p.admonition-title {
     display: inline;
 }
