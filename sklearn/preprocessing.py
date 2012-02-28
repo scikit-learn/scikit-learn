@@ -559,6 +559,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, neg_label=0, pos_label=1):
+        if neg_label > pos_label:
+            raise ValueError("neg_label must be less than pos_label.")
+
         self.neg_label = neg_label
         self.pos_label = pos_label
 
@@ -652,7 +655,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             # Only one class, returns a matrix with all negative labels.
             return Y
 
-    def inverse_transform(self, Y, threshold=0):
+    def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels
 
         Parameters
@@ -660,9 +663,16 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array of shape [n_samples, n_classes]
             Target values.
 
-        threshold : float
+        threshold : float or None
             Threshold used in the binary and multi-label cases.
-            Use 0.5 when Y contains probabilities.
+
+            Use 0 when:
+                - Y contains the output of decision_function (classifier)
+            Use 0.5 when:
+                - Y contains the output of predict_proba
+
+            If None, the threshold is assumed to be half way between
+            neg_label and pos_label.
 
         Returns
         -------
@@ -679,6 +689,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         of inverse_transform.
         """
         self._check_fitted()
+
+        if threshold is None:
+            half = (self.pos_label - self.neg_label) / 2.0
+            threshold = self.neg_label + half
 
         if self.multilabel:
             Y = np.array(Y > threshold, dtype=int)
