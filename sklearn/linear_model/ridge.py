@@ -455,16 +455,19 @@ class _RidgeGCV(LinearModel):
                 self.fit_intercept, self.normalize, self.copy_X)
 
         gcv_mode = self.gcv_mode
-        if self.gcv_mode is None or self.gcv_mode == 'auto':
-            if n_samples > n_features:
-                gcv_mode = 'svd'
-            else:
+        with_sw = len(np.shape(sample_weight))
+
+        if gcv_mode is None or gcv_mode == 'auto':
+            if n_features > n_samples or with_sw:
                 gcv_mode = 'eigen'
-        if len(np.shape(sample_weight)):
+            else:
+                gcv_mode = 'svd'
+        elif gcv_mode == "svd" and with_sw:
             # FIXME non-uniform sample weights not yet supported
             warnings.warn("non-uniform sample weights unsupported for svd, "
                 "forcing usage of eigen")
             gcv_mode = 'eigen'
+
         if gcv_mode == 'eigen':
             _pre_compute = self._pre_compute
             _errors = self._errors
