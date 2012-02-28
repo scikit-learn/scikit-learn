@@ -11,7 +11,7 @@ better**.
 
 ::
 
-    >>> from scikits.learn import datasets, svm
+    >>> from sklearn import datasets, svm
     >>> digits = datasets.load_digits()
     >>> X_digits = digits.data
     >>> y_digits = digits.target
@@ -40,17 +40,18 @@ data in *folds* that we use for training and testing::
     [0.41068447412353926, 0.41569282136894825, 0.42737896494156929]
 
 
-This is called a **K-Fold cross-validation**.
+This is called a `K-Fold cross-validation 
+<http://en.wikipedia.org/wiki/Cross-validation_(statistics)#K-fold_cross-validation>`_.
 
 Cross-validation generators
 =============================
 
 The code above to split data in train and test sets is tedious to write.
-The `scikits.learn` exposes cross-validation generators to generate list
+The `sklearn` exposes cross-validation generators to generate list
 of indices for this purpose::
 
-    >>> from scikits.learn import cross_val
-    >>> k_fold = cross_val.KFold(n=6, k=3, indices=True)
+    >>> from sklearn import cross_validation
+    >>> k_fold = cross_validation.KFold(n=6, k=3, indices=True)
     >>> for train_indices, test_indices in k_fold:
     ...      print 'Train: %s | test: %s' % (train_indices, test_indices)
     Train: [2 3 4 5] | test: [0 1]
@@ -67,7 +68,7 @@ The cross-validation can then be implemented easily::
 To compute the `score` method of an estimator, the scikits.learn exposes
 a helper function::
 
-    >>> cross_val.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
+    >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
     array([ 0.41068447,  0.41569282,  0.42737896])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
@@ -122,7 +123,7 @@ during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
 
-    >>> from scikits.learn.grid_search import GridSearchCV
+    >>> from sklearn.grid_search import GridSearchCV
     >>> gammas = np.logspace(-6, -1, 10)
     >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas), 
     ...                    n_jobs=-1)
@@ -168,7 +169,7 @@ algorithm-by-algorithm basis. This is why, for certain estimators, the
 scikits.learn exposes "CV" estimators, that set their parameter
 automatically by cross-validation::
 
-    >>> from scikits.learn import linear_model, datasets
+    >>> from sklearn import linear_model, datasets
     >>> lasso = linear_model.LassoCV()
     >>> diabetes = datasets.load_diabetes()
     >>> X_diabetes = diabetes.data
