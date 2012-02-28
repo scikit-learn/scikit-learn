@@ -518,8 +518,9 @@ creating an decision energy by positioning *kernels* on observations:
 
 .. topic:: **Interactive example**
 
-   Download: :download:`../examples/svm_gui.py`, add data points of both classes with
-   right and left button, fit the model and change parameters and data.
+   See the :ref:`SVM GUI <example_applications_svm_gui.py>` to download 
+   `svm_gui.py`; add data points of both classes with right and left button, 
+   fit the model and change parameters and data.
 
 .. image:: ../../auto_examples/tutorial/images/plot_iris_dataset_3class_1.png
     :target: ../../auto_examples/tutorial/plot_iris_dataset_3class.html
@@ -531,6 +532,8 @@ creating an decision energy by positioning *kernels* on observations:
    Try classifying classes 1 and 2 from the iris dataset with SVMs, with
    the 2 first features. Leave out 10% of each class and test prediction
    performance on these observations.
+
+   The solution is available below:
 
    .. toctree::
 

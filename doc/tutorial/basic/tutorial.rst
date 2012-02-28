@@ -179,7 +179,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../images/last_digit.png
+.. image:: ../../auto_examples/tutorial/images/plot_digits_last_image_1.png
     :align: center
     :scale: 50
 
