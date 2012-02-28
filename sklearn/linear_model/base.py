@@ -181,6 +181,8 @@ class LinearRegression(LinearModel):
                     linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
+        if y.ndim == 1:
+            self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
