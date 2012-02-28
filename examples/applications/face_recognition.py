@@ -36,7 +36,7 @@ from time import time
 import logging
 import pylab as pl
 
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.cross_validation import train_test_split
 from sklearn.datasets import fetch_lfw_people
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
@@ -76,9 +76,8 @@ print "n_classes: %d" % n_classes
 # Split into a training set and a test set using a stratified k fold
 
 # split into a training and testing set
-train, test = iter(StratifiedKFold(y, k=4)).next()
-X_train, X_test = X[train], X[test]
-y_train, y_test = y[train], y[test]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_fraction=0.25)
 
 
 ###############################################################################
