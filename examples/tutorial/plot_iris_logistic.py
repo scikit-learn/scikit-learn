@@ -3,17 +3,13 @@
 
 """
 =========================================================
-
+Logistic Regression 3-class Classifier
 =========================================================
-The K-Nearest-Neighbors algorithm is used below as a
-classification tool. The data set 
-(`Iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_)
-is first cut into a training set, as done in the interactive
-python code.
-
-The decision boundaries, whom are obtained by using the training
-set, are shown with all the points in the training-set.
-
+Show below is a logistic-regression classifiers decision
+boundaries on the 
+`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_
+dataset. The datapoints are colored according to their
+labels.
 
 """
 print __doc__
@@ -32,26 +28,17 @@ iris = datasets.load_iris()
 X = iris.data[:, :2] # we only take the first two features. 
 Y = iris.target
 
-# Split iris data in train and test data
-# A random permutation, to split the data randomly
-np.random.seed(0)
-indices = np.random.permutation(len(X))
-X_train = X[indices[:-10]]
-Y_train = Y[indices[:-10]]
-X_test = X[indices[-10:]]
-Y_test = Y[indices[-10:]]
-
 h = .02 # step size in the mesh
 
 logreg=linear_model.LogisticRegression(C=1e5)
 
 # we create an instance of Neighbours Classifier and fit the data.
-logreg.fit(X_train, Y_train)
+logreg.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
-x_min, x_max = X_test[:,0].min() - .5, X_test[:,0].max() + .5
-y_min, y_max = X_test[:,1].min() - .5, X_test[:,1].max() + .5
+x_min, x_max = X[:,0].min() - .5, X[:,0].max() + .5
+y_min, y_max = X[:,1].min() - .5, X[:,1].max() + .5
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()])
 
@@ -62,7 +49,7 @@ pl.set_cmap(pl.cm.Paired)
 pl.pcolormesh(xx, yy, Z)
 
 # Plot also the training points
-pl.scatter(X_train[:,0], X_train[:,1],c = Y_train, edgecolors='k' )
+pl.scatter(X[:,0], X[:,1],c = Y, edgecolors='k' )
 pl.xlabel('Sepal length')
 pl.ylabel('Sepal width')
 

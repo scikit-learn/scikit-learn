@@ -179,6 +179,8 @@ Linear models: :math:`y = X\beta + \epsilon`
     0.58507530226905713
 
 
+.. _shrinkage:
+
 Shrinkage 
 ----------
 
@@ -252,6 +254,8 @@ diabetes dataset, rather than our synthetic data::
     `overfitting <http://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
     by the ridge regression is called a 
     `regularization <http://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
+
+.. _sparsity:
 
 Sparsity
 ----------
@@ -355,7 +359,8 @@ function, or **logistic** function:
     LogisticRegression(C=100000.0, dual=False, fit_intercept=True,
               intercept_scaling=1, penalty='l2', tol=0.0001)
 
-.. image:: ../examples/iris_logistic.png
+.. image:: ../../auto_examples/tutorial/images/plot_iris_logistic_1.png
+   :target: ../../auto_examples/tutorial/plot_iris_logistic.html
    :scale: 83
 
 .. topic:: Multiclass classification
@@ -368,8 +373,8 @@ function, or **logistic** function:
 
    The `C` parameter controls the amount of regularization in the
    `LogisticRegression` object, the bigger `C`, the less regularization.
-   `penalty="l2"` gives shrinkage (i.e. non-sparse coefficients), while 
-   `penalty="l1"` gives sparsity.
+   `penalty="l2"` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while 
+   `penalty="l1"` gives :ref:`sparsity`.
 
 .. topic:: **Excercise**
    :class: green
@@ -388,17 +393,20 @@ Support vector machines (SVMs)
 Linear SVMs
 -------------
 
-SVMs are a discrimant model: they try to find a combination of samples to
+The SVM is a discrimant model: they try to find a combination of samples to
 build a plane maximizing the margin between the two classes.
-Regularization is set by the `C` parameter: with small `C` give
-(regularized problem) the margin is computed only on the observation
-close to the separating plane; with large `C` all the observations are
-used.
+Regularization is set by the `C` parameter: the small the choice of `C`,
+means a stronger regularization, which means the margin will be caluculated using many,
+to all the observations around the separation line; a larger choice of `C` 
+will thus have the margins computed on the observations that are close to 
+the separating line.
 
-.. |svm_margin| image:: ../examples/svm_margin.png
+.. |svm_margin_unreg| image:: ../../auto_examples/tutorial/images/plot_svm_margin_1.png
+   :target: ../../auto_examples/tutorial/plot_svm_margin.html
    :scale: 70
 
-.. |svm_margin_no_penalty| image:: ../examples/svm_margin_no_penalty.png
+.. |svm_margin_reg| image:: ../../auto_examples/tutorial/images/plot_svm_margin_2.png
+   :target: ../../auto_examples/tutorial/plot_svm_margin.html
    :scale: 70
 
 .. rst-class:: centered
@@ -406,10 +414,11 @@ used.
     ============================= ==============================
      **Unregularized SVM**         **Regularized SVM (default)**
     ============================= ==============================
-    |svm_margin_no_penalty|       |svm_margin|
+    |svm_margin_unreg|  	  |svm_margin_reg|
     ============================= ==============================
 
-.. image:: ../examples/iris_svm.png
+.. image:: ../../auto_examples/tutorial/images/plot_svm_iris_1.png
+   :target: ../../auto_examples/tutorial/plot_svm_iris.html
    :scale: 83
 
 SVMs can be used in regression --SVR (Support Vector Regression)--, or in
@@ -438,13 +447,12 @@ build a decision function that is not linear but that may be for instance
 polynomial. This is done using the *kernel trick* that can be seen as
 creating an decision energy by positioning *kernels* on observations:
 
-.. |svm_kernel_linear| image:: ../examples/svm_kernel_linear.png
-   :scale: 65
+.. |svm_kernel_linear| image:: ../../auto_examples/tutorial/images/plot_svm_kernels_1.png
+   :target: ../../auto_examples/tutorial/plot_svm_kernels.html
+   :scale: 65	       	   
 
-.. |svm_kernel_poly| image:: ../examples/svm_kernel_poly.png
-   :scale: 65
-
-.. |svm_kernel_rbf| image:: ../examples/svm_kernel_rbf.png
+.. |svm_kernel_poly| image:: ../../auto_examples/tutorial/images/plot_svm_kernels_2.png
+   :target: ../../auto_examples/tutorial/plot_svm_kernels.html
    :scale: 65
 
 .. rst-class:: centered
@@ -457,7 +465,7 @@ creating an decision energy by positioning *kernels* on observations:
      
        - **Polynomial kernel**
        
-       - **RBF kernel (Radial Basis Function)**
+       
 
      * 
      
@@ -465,7 +473,7 @@ creating an decision energy by positioning *kernels* on observations:
 
        - |svm_kernel_poly|
 
-       - |svm_kernel_rbf|
+       
 
      * 
      
@@ -479,18 +487,42 @@ creating an decision energy by positioning *kernels* on observations:
             ...               degree=3)
             >>> # degree: polynomial degree
 
+
+
+.. |svm_kernel_rbf| image:: ../../auto_examples/tutorial/images/plot_svm_kernels_3.png
+   :target: ../../auto_examples/tutorial/plot_svm_kernels.html
+   :scale: 65
+
+.. rst-class:: centered
+
+  .. list-table::
+    
+     * 
+     
+       - **RBF kernel (Radial Basis Function)**
+     
+       
+     * 
+     
+       - |svm_kernel_rbf|
+
+     * 
+     
        - ::
 
-            >>> svc = svm.SVC(kernel='rbf')
+            >>> svc = svm.SVC(kernel='rbf') 
             >>> # gamma: inverse of size of 
             >>> # radial kernel
+
+
 
 .. topic:: **Interactive example**
 
    Download: :download:`../examples/svm_gui.py`, add data points of both classes with
    right and left button, fit the model and change parameters and data.
 
-.. image:: auto_examples/images/plot_iris_dataset_1.png
+.. image:: ../../auto_examples/tutorial/images/plot_iris_dataset_3class_1.png
+    :target: ../../auto_examples/tutorial/plot_iris_dataset_3class.html
     :scale: 70
 
 .. topic:: **Excercise**
