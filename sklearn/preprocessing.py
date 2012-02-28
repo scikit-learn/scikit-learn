@@ -525,6 +525,15 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     model gave the greatest confidence. LabelBinarizer makes this easy
     with the inverse_transform method.
 
+    Parameters
+    ----------
+
+    neg_label: int (default: 0)
+        Value with which negative labels must be encoded.
+
+    pos_label: int (default: 1)
+        Value with which positive labels must be encoded.
+
     Attributes
     ----------
     `classes_`: array of shape [n_class]
@@ -535,7 +544,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> clf = preprocessing.LabelBinarizer()
     >>> clf.fit([1, 2, 6, 4, 2])
-    LabelBinarizer()
+    LabelBinarizer(neg_label=0, pos_label=1)
     >>> clf.classes_
     array([1, 2, 4, 6])
     >>> clf.transform([1, 6])
@@ -548,6 +557,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> clf.classes_
     array([1, 2, 3])
     """
+
+    def __init__(self, neg_label=0, pos_label=1):
+        self.neg_label = neg_label
+        self.pos_label = pos_label
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
@@ -604,6 +617,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         else:
             Y = np.zeros((len(y), 1))
 
+        Y += self.neg_label
+
         y_is_multilabel = _is_multilabel(y)
 
         if y_is_multilabel and not self.multilabel:
@@ -620,21 +635,21 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
             for i, label_tuple in enumerate(y):
                 for label in label_tuple:
-                    Y[i, imap[label]] = 1
+                    Y[i, imap[label]] = self.pos_label
 
             return Y
 
         elif len(self.classes_) == 2:
-            Y[y == self.classes_[1], 0] = 1
+            Y[y == self.classes_[1], 0] = self.pos_label
             return Y
 
         elif len(self.classes_) >= 2:
             for i, k in enumerate(self.classes_):
-                Y[y == k, i] = 1
+                Y[y == k, i] = self.pos_label
             return Y
 
         else:
-            # Only one class, returns a matrix with all 0s.
+            # Only one class, returns a matrix with all negative labels.
             return Y
 
     def inverse_transform(self, Y, threshold=0):
