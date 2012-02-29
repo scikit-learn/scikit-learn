@@ -103,7 +103,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 # arpack
                 laplacian = laplacian.tocsr()
         lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
-                                        which='LA')
+                                       sigma=1.0, which='LM')
         embedding = diffusion_map.T[::-1] * dd
     elif mode == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
