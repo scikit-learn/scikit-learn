@@ -523,7 +523,7 @@ class RidgeCV(LinearModel):
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -550,10 +550,12 @@ class RidgeCV(LinearModel):
 
     gcv_mode: {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing Generalized
-        Cross-Validation. Options are.
+        Cross-Validation. Options are::
+
             'auto' : use svd if n_samples > n_features, otherwise use eigen
             'svd' : force computation via svd of X
             'eigen' : force computation via eigendecomposition of X^T X
+
         The 'auto' mode is the default and is intended to pick the cheaper
         option of the two depending upon the shape of the training data.
 
