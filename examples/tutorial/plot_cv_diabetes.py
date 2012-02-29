@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as pl
 
-from scikits.learn import cross_val, datasets, linear_model
+from sklearn import cross_validation, datasets, linear_model
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data
@@ -16,7 +16,7 @@ scores_std = list()
 
 for alpha in alphas:
     lasso.alpha = alpha
-    this_scores = cross_val.cross_val_score(lasso, X, y, n_jobs=-1)
+    this_scores = cross_validation.cross_val_score(lasso, X, y, n_jobs=-1)
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
@@ -35,6 +35,6 @@ pl.text(2e-4, np.max(scores)+1e-4, '.489')
 ################################################################################
 # Bonus: how much can you trust the selection of alpha?
 from scikits.learn import cross_val
-k_fold = cross_val.KFold(len(X), 3)
+k_fold = cross_validation.KFold(len(X), 3)
 print [lasso.fit(X[train], y[train]).alpha for train, _ in k_fold]
 

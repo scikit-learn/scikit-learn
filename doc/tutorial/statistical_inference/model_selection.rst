@@ -15,9 +15,9 @@ better**.
     >>> digits = datasets.load_digits()
     >>> X_digits = digits.data
     >>> y_digits = digits.target
-    >>> svc = svm.SVC()
+    >>> svc = svm.SVC(C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
-    0.41999999999999998
+    0.95999999999999996
 
 To get a better measure of prediction accuracy (which we can use as a
 proxy for goodness of fit of the model), we can successively split the
@@ -37,7 +37,7 @@ data in *folds* that we use for training and testing::
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
     >>> print scores
-    [0.41068447412353926, 0.41569282136894825, 0.42737896494156929]
+    [0.94156928213689484, 0.96661101836393992, 0.93322203672787984]
 
 
 This is called a `K-Fold cross-validation 
@@ -60,16 +60,16 @@ of indices for this purpose::
 
 The cross-validation can then be implemented easily:: 
 
-    >>> kfold = cross_val.KFold(len(X_digits), k=3)
+    >>> kfold = cross_validation.KFold(len(X_digits), k=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in kfold]
-    [0.41068447412353926, 0.41569282136894825, 0.42737896494156929]
+    [0.94156928213689484, 0.96661101836393992, 0.93322203672787984]
 
 To compute the `score` method of an estimator, the scikits.learn exposes
 a helper function::
 
     >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
-    array([ 0.41068447,  0.41569282,  0.42737896])
+    array([ 0.94156928,  0.96661102,  0.93322204])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
@@ -98,19 +98,21 @@ of the computer.
 
     - Takes a label array to group observations
 
-.. image:: cv_digits.png
-   :scale: 54
+.. image:: ../../auto_examples/tutorial/images/plot_cv_digits_1.png
+   :target: ../../tutorial/statistical_inference/digits_cv_excercice.html
+   :align: center
+   :scale: 100
 
 .. topic:: **Exercise**
    :class: green
 
    On the digits dataset, plot the cross-validation score of a SVC
-   estimator with an RBF kernel as a function of gamma (use a logarithmic
-   grid of points, from `1e-6` to `1e-1`).
+   estimator with an RBF kernel as a function of parameter `C` (use a 
+   logarithmic grid of points, from `1` to `10`).
 
    .. toctree::
 
-      digits_cv_excercice.rst
+      digits_cv_exercise.rst
 
 Grid-search and cross-validated estimators
 ============================================
@@ -130,13 +132,13 @@ estimator during the construction and exposes an estimator API::
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
     >>> clf.best_score
-    0.98899798001594419
+    0.99299599000197802
     >>> clf.best_estimator.gamma
-    0.00059948425031894088
+    4.6415888336127818e-05
 
     >>> # Prediction performance on test set is not as good as on train set
     >>> clf.score(X_digits[1000:], y_digits[1000:])
-    0.96110414052697613
+    0.94604767879548302
 
 
 By default the `GridSearchCV` uses a 3-fold cross-validation. However, if
@@ -148,8 +150,8 @@ a stratified 3-fold.
     ::
 
         >>> cross_val.cross_val_score(clf, X_digits, y_digits)
-        array([ 0.9933222 ,  0.98330551,  0.98831386])
-
+	array([ 0.99499165,  0.98497496,  0.98831386])
+        
     Two cross-validation loops are performed in parallel: one by the
     GridSearchCV estimator to set `gamma`, the other one by
     `cross_val_score` to measure the prediction performance of the
@@ -196,4 +198,4 @@ appended to their name.
 
    .. toctree::
 
-      diabetes_cv_excercice
+      diabetes_cv_exercise
