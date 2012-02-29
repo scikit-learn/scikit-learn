@@ -1,9 +1,6 @@
-========================
-Astronomy Tutorial setup
-========================
-
-Setup
-=====
+==============================
+Tutorial Setup and Inspiration
+==============================
 
 The following assumes you have extracted the source distribution
 of this tutorial somewhere on your local disk. Alternatively you
@@ -11,8 +8,14 @@ can use git to clone this repo directly from github onto your
 local disk::
 
     % git clone https://github.com/jakevdp/scikit-learn/
+    % cd scikit-learn
+
+In the rest of the tutorial, the path to the ``scikit-learn`` source
+folder will be named ``$SKL_HOME``.  Within this directory can be
+found the tutorial source, in the ``sklearn-tutorial`` branch::
+
     % git checkout sklearn-tutorial
-    % cd doc/tutorial/astronomy
+    % cd scikit-learn/doc/tutorial/astronomy
 
 In the following we will name this folder ``$TUTORIAL_HOME``. It
 should contain the following folders:
@@ -67,14 +70,9 @@ Build scikit-learn from source
 ------------------------------
 
 Here are the instructions to install the current master from source
-on a POSIX system (e.g. Linux and MacOSX). **In the folder next to
-$TUTORIAL_HOME** do::
-
-    % git clone https://github.com/scikit-learn/scikit-learn.git
-    % cd scikit-learn
-
-You can then build it locally and add it to your PYTHONPATH environment
-variable::
+on a POSIX system (e.g. Linux and MacOSX). Change directories to the
+scikit-learn top-directory, $SKL_HOME.  You can then build scikit-learn
+locally and add it to your PYTHONPATH environment variable::
 
     % python setup.py build_ext -i
     % export PYTHONPATH=`pwd`
@@ -102,9 +100,6 @@ mentioned dependencies and your operating system.
 
 .. _`scikit-learn mailing list`: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
 
-In the rest of the tutorial, the path to the ``scikit-learn`` source
-folder will be named ``$SKL_HOME``.
-
 As usual building from source under Windows is slightly more complicated.
 Checkout the `build instructions`_ on the scikit-learn website.
 
@@ -114,7 +109,7 @@ Checkout the `build instructions`_ on the scikit-learn website.
 Download the datasets
 ---------------------
 
-Machine Learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
+Machine Learning algorithms need data. Go to each ``$TUTORIAL_HOME/data/``
 sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
 

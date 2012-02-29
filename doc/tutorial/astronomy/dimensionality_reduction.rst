@@ -7,8 +7,9 @@ spectroscopic survey which has operated since the year 2000, and has resulted
 in an unprecedented astronomical database.  The database contains
 photometric observations like those we explored in the previous sections,
 but also includes a large number of spectra of various objects.  These spectra
-are essentially 4000-dimensional data vectors for each observed object, where
-each observation gives the flux of a particular wavelength of light.
+are :math:`n`-dimensional data vectors (generally, :math:`n \approx 4000`)
+for each observed object, where each observation in the vector
+measures the flux of a particular wavelength of light.
 
 Because of the large dimensionality of this data, visualization of the dataset
 becomes very challenging.  This is where unsupervised dimensionality
@@ -37,12 +38,14 @@ in a meaningful way.
 SDSS Spectral Data
 ==================
 
-In the directory $TUTORIAL_HOME/data/sdss_spectra/, you'll find the script
+In the directory ``$TUTORIAL_HOME/data/sdss_spectra/``, you'll find the script
 which fetches a set of spectra from the Sloan Digital Sky Survey.  Each
 individual spectrum is at a particular redshift, and can have data missing
 in certain spectral regions.  So that this doesn't affect our analysis, the
 spectra have been de-redshifted and the gaps have been filled using the
-PCA-based algorithm described in [1]_.
+PCA-based algorithm described in [1]_.  In the process of shifting and
+gap-filling, the spectra have been down-sampled
+so that the number of attributes is :math:`n = 1000`.
 
 Once the dataset is downloaded, it can be read-in as follows::
 
@@ -55,7 +58,6 @@ Once the dataset is downloaded, it can be read-in as follows::
     >>> print data['labels']
     ['unknown' 'star' 'absorption galaxy' 'galaxy' 'emission galaxy'
      'narrow-line QSO' 'broad-line QSO' 'sky' 'Hi-z QSO' 'Late-type star']
-
 
 The variable ``X`` contains 4000 spectra, each with 1000 attributes.  In
 addition, the file includes a classification code ``y``, and redshift ``z``

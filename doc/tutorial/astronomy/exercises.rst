@@ -168,7 +168,7 @@ questions:
    1. How sensitive is PCA to the set of data used?  To the number of 
       training points?  You can test this out as follows::
 
-          % python workspace/exercise_03.py data/sdss_spectra -m pca -n 1000 -s
+          In [1]: %run workspace/exercise_03.py data/sdss_spectra -m pca -n 1000 -s
 
       This will perform PCA on a subset of 1000 points.  ``-s`` indicates that
       the data should be shuffled, so that the set of points is different every
@@ -182,7 +182,7 @@ questions:
    3. Now we can vary the number of neighbors used with LLE, MLLE, and Isomap.
       This is accomplished as follows::
 
-          % python workspace/exercise_03.py data/sdss_spectra -m lle -k 20
+          In [1]: %run workspace/exercise_03.py data/sdss_spectra -m lle -k 20
 
       This call will execute LLE with 20 neighbors.  Try this for several
       values of `k`.  How does the number of
@@ -192,7 +192,7 @@ questions:
    4. Finally, we'll test the effects of normalization.  This can be done
       as follows::
 
-          % python workspace/exercise_03.py data/sdss_spectra -N l2
+          In [1]: %run workspace/exercise_03.py data/sdss_spectra -N l2
 
       this will perform PCA with L2-normalization.  The other options are
       ``-N l1`` for L1-normalization, and ``-N none`` for no normalization.
@@ -204,9 +204,9 @@ questions:
 
    5. By now, you should have an idea of which method and which combination of
       parameters give the best qualitative separation between the points.
-      Re-run this method using the full dataset now::
+      Re-run this method using the full `n`=4000 dataset now::
 
-          % python workspace/exercise_03.py data/sdss_spectra -n 4000 -m [method] [other options]
+          In [1]: %run python workspace/exercise_03.py data/sdss_spectra -n 4000 -m [method] [other options]
 
       This should give you a projection of the data that gives a good
       visualization of the relationship between points.  An astronomer may

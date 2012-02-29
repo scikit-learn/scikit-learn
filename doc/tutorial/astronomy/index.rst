@@ -1,6 +1,6 @@
-=========================================
-Using scikit-learn with Astronomical Data
-=========================================
+==================================
+scikit-learn and Astronomical Data
+==================================
 
 .. author:: Jake Vanderplas <vanderplas@astro.washington.edu>
 
@@ -22,7 +22,7 @@ Using scikit-learn with Astronomical Data
 
 .. note:: This document is meant to be used with **scikit-learn version
    0.11+** (i.e. the current state of the master branch at the time of
-   writing: 2012-02-13).
+   writing: 2012-03-01).
 
 .. toctree::
    :numbered:

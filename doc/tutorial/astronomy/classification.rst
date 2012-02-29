@@ -29,32 +29,36 @@ in a distant astronomical  source.
 
 Unfortunately, spectra like these are very time-consuming and expensive to
 obtain, especially for very faint objects.  For this reason, astronomers have
-long observed objects through broad-band filters, recording the observations
-using the `magnitude system`.  For the u-band filter shown above, the magnitude
-is defined as
+long observed objects through broad-band filters.
+For the u-band filter shown above, the flux is given by
 
 .. math::
+    f_u = \int_0^\infty f_u(\lambda) S_\nu(\lambda) \frac{d\lambda}{\lambda}
 
-    u = m_{ref} - 2.5 \log_{10}\left[
-    \int_0^\infty F(\lambda) S(\lambda) d\lambda\right]
+where :math:`f_u(\lambda)` is the filter transmission, and
+:math:`S_\nu(\lambda)` is the flux density of the spectrum at
+wavelength :math:`\lambda`.
+For historical reasons, astronomers report the flux using the magnitude
+system, where the magnitude is defined by
 
-Here :math:`F(\lambda)` is the filter transmission, and :math:`S(\lambda)` is
-the flux at wavelength :math:`\lambda`.  The constant :math:`m_{ref}` 
-encodes the calibration of the telescope.  The reason for the logarithmic
-form of the magnitude is historical.
+.. math::
+    u = -2.5 \log_{10}\left[\frac{f_u}{3631 Jy}\right]
 
-Astronomers generally work in terms of the `color`, defined as the difference
-of magnitudes between two different filter bands.  This is because the constant
-:math:`m_{ref}` can be difficult to calibrate from telescope to telescope or
-from night to night.  Subtracting two magnitudes reduces this uncertainty.
+The denominator is a normalization constant, measured in Janskys.  To reduce
+the uncertainty associated with absolute calibration from telescope
+to telescope or from night to night,
+astronomers generally work in terms of the `color`, defined as the difference
+of magnitudes between two different filter bands.  
+Subtracting two magnitudes reduces this uncertainty.
 For example, an observation of the star Vega above will consist of a vector
 four numbers: ``[u-g, g-r, r-i, i-z]``.
 
-Because of this, machine-learning tasks in Astronomy are often based on a small
-spectroscopic training set, with a larger set of photometric observations
-with unknown labels or classification.  We'll examine a few of those
-situations here.
-
+With the difficulty of obtaining informative spectra, and the relative ease
+of obtaining color information,
+machine-learning tasks in Astronomy are often based on a small
+spectroscopic training set, which is applied to a larger
+set of photometric observations with unknown classification.
+We'll examine a few of these situations here.
 
 Motivation: Why is this Important?
 ----------------------------------
@@ -64,11 +68,28 @@ has led to many advances in our understanding of fundamental physics.
 Quasars, also commonly referred to as QSOs (Quasi-Stellar Objects) or
 AGNs (Active Galactic Nuclei) are galaxies which contain supermassive black
 holes at their core.  These black holes can weigh-in at over 10 billion
-times the mass of our sun!  Astronomical surveys using filters like those
-above can find thousands of these, but their appearance on the sky is very
-similar to that of a normal star in our galaxy.  Thus the task of choosing
-quasars for time-consuming spectral followup is very difficult, and
-well-suited for approaching with machine learning.
+times the mass of our sun, and can be luminous enough to out-shine their
+entire galaxy.
+Here we show three different objects, chosen from among the millions of
+sources catalogued by the `Sloan Digital Sky Survey <http://www.sdss.org>`_:
+
+.. figure:: ../../auto_examples/tutorial/images/plot_sdss_images_1.png
+   :target: ../../auto_examples/tutorial/plot_sdss_images.html
+   :align: center
+   :scale: 80%
+
+The featured object is at the center of each image.  On the left is
+a star, in the center is a galaxy, and on the right is a distant quasar.
+From these images alone, it would be impossible to distinguish
+between the star and the quasar: both are unresolved point-sources
+of similar apparrent brightness.
+If a spectrum were available, distinguishing between them
+could be accomplished rather straightforwardly, but spectra
+are not always available.
+Using multi-color photometric information, rather than just a single image,
+however, this task becomes feasible.  The goal here is to design a
+machine-learning algorithm which can accurately distinguish stars from
+quasars based on multi-color photometric measurements.
 
 
 Star-Quasar Classification: Naive Bayes
@@ -77,7 +98,7 @@ In the folder ``$TUTORIAL_HOME/data/sdss_colors``, there is a script
 ``fetch_data.py`` which will download the colors of over 700,000 stars
 and quasars from the Sloan Digital Sky Survey.  500,000 of them are
 training data, spectroscopically identified as stars or quasars.
-The remaining 200,000 have been classified using a machine learning scheme.
+The remaining 200,000 have been classified based on their photometric colors.
 
 Here we will use a Naive Bayes estimator to classify the objects.  First,
 we will construct our training data and test data arrays::
@@ -134,12 +155,12 @@ The precision asks what fraction of positively labeled points are correctly
 labeled:
 
 .. math::
-   precision = \frac{True Positives}{True Positives + False Positives}
+   \mathrm{precision = \frac{True\ Positives}{True\ Positives + False\ Positives}}
 
 The recall asks what fraction of positive samples are correctly identified:
 
 .. math::
-   recall = \frac{True Positives}{True Positives + False Negatives}
+   \mathrm{recall = \frac{True\ Positives}{True\ Positives + False\ Negatives}}
 
 We can calculate this for our results as follows::
 
@@ -164,9 +185,10 @@ Another useful metric is the F1 score, which gives a single score based on
 the precision and recall for the class:
 
 .. math::
-    F1 = 2\frac{precision * recall}{precision + recall}
+    \mathrm{F1 = 2\frac{precision * recall}{precision + recall}}
 
-The closer the F1-score is to 1.0, the better the classification is.
+In a perfect classification, the precision, recall, and F1 score are
+all equal to 1.
 
    >>> metrics.f1_score(y_test, y_pred)
    0.24751550658108151
@@ -187,7 +209,7 @@ We see that for Gaussian Naive Bayes, our QSO recall is fairly good:
 we are correctly identifying 95%  of all quasars.
 The precision, on the other hand, is much worse.  Of
 the points we label quasars, only 14% of them are correctly labeled.
-This low recall leads to an F1-score of only 0.25.  This is not an
+This low precision leads to an F1-score of only 0.25.  This is not an
 optimal classification of our data.  Apparently Naive Bayes is a bit too
 naive for this problem. 
 

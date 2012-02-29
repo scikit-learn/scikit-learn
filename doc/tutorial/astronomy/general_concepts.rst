@@ -336,9 +336,6 @@ of the outcome.  This is the case of logistic regression models::
   >>> clf2
   LogisticRegression(C=1.0, dual=False, fit_intercept=True, intercept_scaling=1,
             penalty='l2', scale_C=False, tol=0.0001)
-
-
-
   >>> clf2.predict_proba(X_new)
   array([[  9.07512928e-01,   9.24770379e-02,   1.00343962e-05]])
 
@@ -382,6 +379,12 @@ Notable implementations of classifiers
   k-Nearest Neighbors classifier based on the ball tree datastructure for low
   dimensional data and brute force search for high dimensional data
 
+:``sklearn.naive_bayes.GaussianNB``
+
+  Gaussian Naive Bayes model.  This is an unsophisticated model which can
+  be trained very quickly.  It is often used to obtain baseline results
+  before moving to a more sophisticated classifier.
+
 
 Sample application of classifiers
 +++++++++++++++++++++++++++++++++
@@ -403,6 +406,8 @@ Sentiment analysis in customer feedback      Negative, neutral, positive
 Face verification in pictures                Same / different person
 -------------------------------------------- ---------------------------------
 Speaker verification in voice recordings     Same / different person
+-------------------------------------------- ---------------------------------
+Astronomical Sources                         Object type or class
 ============================================ =================================
 
 
@@ -442,6 +447,11 @@ some input variables (a.k.a. the features, "predictors" or
 
   Non-linear regression using Support Vector Machines (wrapper for
   ``libsvm``)
+
+:``sklearn.ensemble.RandomForestRegressor``
+
+  An ensemble method which constructs multiple decision trees from subsets
+  of the data.
 
 
 Unsupervised Learning: ``model.fit(X)``
@@ -579,8 +589,8 @@ instance or that do not work well with linearly correlated features.
 .. note::
 
   ``scikit-learn`` also features an implementation of Independant
-  Component Analysis (ICA) and work is under way to implement common
-  manifold extraction strategies.
+  Component Analysis (ICA) and several manifold learning methods
+  (See `Exercise 3 <exercises.html>`)
 
 
 Clustering
@@ -590,7 +600,7 @@ Clustering is the task of gathering samples into groups of similar
 samples according to some predefined similarity or dissimilarity
 measure (such as the Euclidean distance).
 
-For instance let us reuse the output of the 2D PCA of the iris
+For example, let us reuse the output of the 2D PCA of the iris
 dataset and try to find 3 groups of samples using the simplest
 clustering algorithm (KMeans)::
 
@@ -650,6 +660,18 @@ to be clustered to have the shape ``(n_samples, n_features)``:
   in the input space are likely to become inter-cluster boundaries. Can also
   detect outliers (samples that are not part of a cluster).
 
+:``sklearn.manifold.LocallyLinearEmbedding``:
+
+  Locally Linear Embedding is a nonlinear neighbors-based
+  manifold learning technique.
+  The scikit-learn implementation makes available several variants to
+  the basic algorithm.
+
+:``sklearn.manifold.Isomap``:
+
+  Isomap is another neighbors-based manifold learning method that can find
+  nonlinear projections of data.
+
 Other clustering algorithms do not work with a data array of shape
 ``(n_samples, n_features)`` but directly with a precomputed affinity matrix
 of shape ``(n_samples, n_samples)``:
@@ -663,6 +685,7 @@ of shape ``(n_samples, n_samples)``:
   KMeans applied to a projection of the normalized graph Laplacian:
   finds normalized graph cuts if the affinity matrix is interpreted
   as an adjacency matrix of a graph.
+
 
 ``DBSCAN`` can work with either an array of samples or an affinity matrix.
 
@@ -810,10 +833,11 @@ they seem good enough, and finally test on the holdout set (perhaps after
 adding the test set to the training set).
 
 When the amount of labeled data available is small, it may not be feasible
-to construct training and test sets. In that case, use **cross validation**:
-divide the dataset into ten parts of (roughly) equal size, then for each of
-these ten parts, train the classifier on the other nine and test on the
-held-out part.
+to construct training and test sets. In that case, you can choose to
+use **k-fold cross validation**:
+divide the dataset into `k` = 10 parts of (roughly) equal size, then for
+each of these ten parts, train the classifier on the other nine and test
+on the held-out part.
 
 
 Measuring classification performance on a test set

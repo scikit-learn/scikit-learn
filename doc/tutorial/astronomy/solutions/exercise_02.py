@@ -23,6 +23,7 @@ import os, sys
 import numpy as np
 import pylab as pl
 
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import metrics
 
@@ -105,7 +106,8 @@ for i, max_depth in enumerate(max_depth_array):
     sys.stdout.write('  %i / %i\r' % (max_depth, max_depth_array[-1]))
     sys.stdout.flush()
 
-    clf = DecisionTreeRegressor(max_depth=max_depth)
+    clf = RandomForestRegressor(10, max_depth=max_depth)
+    #clf = DecisionTreeRegressor(max_depth=max_depth)
     clf.fit(X_train, y_train)
 
     y_train_pred = clf.predict(X_train)
@@ -155,7 +157,8 @@ for i, n_samples in enumerate(n_samples_array):
     sys.stdout.write('  %i / %i\r' % (n_samples, Ntrain))
     sys.stdout.flush()
 
-    clf = DecisionTreeRegressor(max_depth=max_depth)
+    clf = RandomForestRegressor(10, max_depth=max_depth)
+    #clf = DecisionTreeRegressor(max_depth=max_depth)
     clf.fit(X_train[:n_samples], y_train[:n_samples])
 
     y_train_pred = clf.predict(X_train[:n_samples])
@@ -212,7 +215,8 @@ for i, max_depth in enumerate(max_depth_array):
     sys.stdout.write('  %i / %i\r' % (max_depth, max_depth_array[-1]))
     sys.stdout.flush()
 
-    clf = DecisionTreeRegressor(max_depth=max_depth)
+    clf = RandomForestRegressor(10, max_depth=max_depth)
+    #clf = DecisionTreeRegressor(max_depth=max_depth)
     clf.fit(X_train, y_train)
 
     y_train_pred = clf.predict(X_train)
@@ -245,7 +249,8 @@ for i, n_samples in enumerate(n_samples_array):
     sys.stdout.write('  %i / %i\r' % (n_samples, Ntrain))
     sys.stdout.flush()
 
-    clf = DecisionTreeRegressor(max_depth=max_depth)
+    clf = RandomForestRegressor(10, max_depth=max_depth)
+    #clf = DecisionTreeRegressor(max_depth=max_depth)
     clf.fit(X_train[:n_samples], y_train[:n_samples])
 
     y_train_pred = clf.predict(X_train[:n_samples])
@@ -275,5 +280,13 @@ pl.ylabel('error')
 #  it be better to measure more features of the objects we already have?
 #  Does this recommendation change if the astronomer is interested in
 #  minimizing the number of catastrophic outliers rather than the rms error?
+
+#----------------------------------------------------------------------
+# Bonus
+#  Random Forest Regression uses an ensemble of decision trees to reduce
+#  the effects of over-fitting.
+#  Use sklearn.ensemble.RandomForestRegressor and compare the results to
+#  your decision tree.  Does this change the error?  Does it change your
+#  recommendations?
 
 pl.show()
