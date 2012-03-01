@@ -12,17 +12,18 @@ Pipelining
 We have seen that some estimators can transform data, and some estimators
 can predict variables. We can create combined estimators:
 
-.. image:: pca_digits_spectrum.png
+.. image:: ../../auto_examples/tutorial/images/plot_digits_pipe_1.png
+   :target: ../../auto_examples/tutorial/plot_digits_pipe.html
    :scale: 65
    :align: right
 
 ::
 
-    >>> from scikits.learn import linear_model, decomposition, datasets
+    >>> from sklearn import linear_model, decomposition, datasets
 
     >>> logistic = linear_model.LogisticRegression()
     >>> pca = decomposition.PCA()
-    >>> from scikits.learn.pipeline import Pipeline
+    >>> from sklearn.pipeline import Pipeline
     >>> pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
 
     >>> digits = datasets.load_digits()
@@ -41,7 +42,7 @@ Parameters of pipelines can be set using '__' separated parameter names::
     >>> pca.n_components
     30
 
-    >>> from scikits.learn.grid_search import GridSearchCV
+    >>> from sklearn.grid_search import GridSearchCV
     >>> n_components = [10, 15, 20, 30, 40, 50, 64]
     >>> Cs = np.logspace(-4, 4, 16)
     >>> estimator = GridSearchCV(pipe,
@@ -62,12 +63,14 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-.. literalinclude:: ../examples/plot_face_recognition.py
+.. literalinclude:: ../../auto_examples/tutorial/plot_face_recognition.py
 
-.. |prediction| image:: plot_face_recognition_1.png
+.. |prediction| image:: ../../auto_examples/tutorial/images/plot_face_recognition_1.png
+   :target: ../../auto_examples/tutorial/plot_face_recognition.html
    :scale: 50
 
-.. |eigenfaces| image:: plot_face_recognition_2.png
+.. |eigenfaces| image:: ../../auto_examples/tutorial/images/plot_face_recognition_2.png
+   :target: ../../auto_examples/tutorial/plot_face_recognition.html
    :scale: 50
 
 .. list-table::
@@ -103,7 +106,7 @@ Open problem: stock market structure
 
 Can we predict the variation in stock prices for Google?
 
-.. literalinclude:: ../examples/plot_stock_market.py
+.. literalinclude:: ../../auto_examples/tutorial/plot_stock_market.py
     :lines: 1-167
 
 
