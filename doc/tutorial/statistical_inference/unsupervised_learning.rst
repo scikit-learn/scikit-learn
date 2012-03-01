@@ -23,17 +23,19 @@ Clustering: grouping observations together
 K-means clustering
 -------------------
 
-Note that their exists many different clustering criteria and associated
-algorithm. The simplest clustering algorithm is the k-means.
+Note that their exists a lot of different clustering criteria and associated
+algorithms. The simplest clustering algorithm is the 
+:ref:`k_means`.
 
-.. image:: k_means_iris_3.png
+.. image:: ../../auto_examples/tutorial/images/plot_cluster_iris_2.png
+    :target: ../../auto_examples/tutorial/plot_cluster_iris.html
     :scale: 70
     :align: right
 
 
 :: 
 
-    >>> from scikits.learn import cluster, datasets
+    >>> from sklearn import cluster, datasets
     >>> iris = datasets.load_iris()
     >>> X_iris = iris.data
     >>> y_iris = iris.target
@@ -46,21 +48,24 @@ algorithm. The simplest clustering algorithm is the k-means.
     >>> print y_iris[::10]
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: k_means_iris_bad_init.png
+.. |k_means_iris_bad_init| image:: ../../auto_examples/tutorial/images/plot_cluster_iris_3.png
+   :target: ../../auto_examples/tutorial/plot_cluster_iris.html
    :scale: 63
 
-.. |k_means_iris_8| image:: k_means_iris_8.png
+.. |k_means_iris_8| image:: ../../auto_examples/tutorial/images/plot_cluster_iris_1.png
+   :target: ../../auto_examples/tutorial/plot_cluster_iris.html
    :scale: 63
 
-.. |cluster_iris_truth| image:: cluster_iris_truth.png
+.. |cluster_iris_truth| image:: ../../auto_examples/tutorial/images/plot_cluster_iris_4.png
+   :target: ../../auto_examples/tutorial/plot_cluster_iris.html
    :scale: 63
 
 .. warning:: 
    
-    There is absolutely no garanty of recovering a ground truth. First
+    There is absolutely no guarantee of recovering a ground truth. First
     choosing the right number of clusters is hard. Second, the algorithm
     is sensitive to initialization, and can fall in local minima,
-    although in the `scikits.learn` we play many tricks to mitigate this
+    although in the `sklearn` package we play many tricks to mitigate this
     issue.
 
     .. list-table::
@@ -84,35 +89,41 @@ algorithm. The simplest clustering algorithm is the k-means.
 
     **Don't over-interpret clustering results**
 
-.. |lena| image:: lena.png
-   :scale: 30
+.. |lena| image:: ../../auto_examples/tutorial/images/plot_lena_compress_1.png
+   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+   :scale: 60
 
-.. |lena_regular| image:: lena_regular.png
-   :scale: 30
+.. |lena_regular| image:: ../../auto_examples/tutorial/images/plot_lena_compress_2.png
+   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+   :scale: 60
 
-.. |lena_compressed| image:: lena_compressed.png
-   :scale: 30
+.. |lena_compressed| image:: ../../auto_examples/tutorial/images/plot_lena_compress_3.png
+   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+   :scale: 60
 
-.. |lena_histogram| image:: lena_histogram.png
-   :scale: 40
+.. |lena_histogram| image:: ../../auto_examples/tutorial/images/plot_lena_compress_4.png
+   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+   :scale: 60
 
 .. topic:: **Application example: vector quantization**
 
     Clustering in general and KMeans in particular, can be seen as a way
     of choosing a small number of examplars to compress the information,
-    a problem sometimes known as vector quantization. For instance, this
-    can be used to posterize an image::
+    a problem sometimes known as 
+    `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
+    For instance, this can be used to posterize an image::
 
-    >>> import scipy as sp
-    >>> lena = sp.lena()
-    >>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
-    >>> k_means = cluster.KMeans(k=5, n_init=1)
-    >>> k_means.fit(X) # doctest: +ELLIPSIS
-    KMeans(copy_x=True, init='k-means++', k=5, ...
-    >>> values = k_means.cluster_centers_.squeeze()
-    >>> labels = k_means.labels_
-    >>> lena_compressed = np.choose(labels, values)
-    >>> lena_compressed.shape = lena.shape
+    
+	>>> import scipy as sp
+    	>>> lena = sp.lena()
+    	>>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
+    	>>> k_means = cluster.KMeans(k=5, n_init=1)
+    	>>> k_means.fit(X) # doctest: +ELLIPSIS
+    	KMeans(copy_x=True, init='k-means++', k=5, ...
+    	>>> values = k_means.cluster_centers_.squeeze()
+    	>>> labels = k_means.labels_
+    	>>> lena_compressed = np.choose(labels, values)
+    	>>> lena_compressed.shape = lena.shape
 
     .. list-table::
       :class: centered 
@@ -141,8 +152,8 @@ Hierarchical clustering: Ward
 ------------------------------
 
 For estimating a large number of clusters, top-down approaches are both
-statisticaly ill-posed, and slow. Hierarchical clustering is a bottom-up
-approach that merges successively observations together and is
+statisticaly ill-posed, and slow. :ref:`hierarchical_clustering` is a bottom-up
+approach that successively merges observations together and is
 particularly useful when the clusters of interest are made of only a few
 observations. *Ward* clustering minimizes a criterion similar to k-means
 in a bottom-up approach. When the number of clusters is large, it is much
@@ -157,8 +168,9 @@ are represented by their adjacency matrix. Often a sparse matrix is used.
 This can be useful for instance to retrieve connect regions when
 clustering an image:
 
-.. image:: lena_ward.png
-    :scale: 70
+.. image:: ../../auto_examples/tutorial/images/plot_lena_ward_1.png
+    :target: ../../auto_examples/tutorial/plot_lena_ward.html
+    :scale: 40
     :align: right
 
 ::
@@ -168,7 +180,7 @@ clustering an image:
     >>> X = np.reshape(lena, (-1, 1))
 
     >>> # the structure of the data: pixels connected to their neighbors
-    >>> from scikits.learn.feature_extraction.image import grid_to_graph
+    >>> from sklearn.feature_extraction.image import grid_to_graph
     >>> connectivity = grid_to_graph(*lena.shape)
 
     >>> ward = cluster.Ward(n_clusters=30, connectivity=connectivity)
@@ -190,7 +202,8 @@ features: **feature agglomeration**. This approach can be implementing by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
-.. image:: digits_agglo.png
+.. image:: ../../auto_examples/tutorial/images/plot_digits_agglomeration_1.png
+    :target: ../../auto_examples/tutorial/plot_digits_agglomeration.html
     :align: right
     :scale: 57
 
@@ -228,13 +241,15 @@ Decompositions: from a signal to components and loadings
 Principal component analysis: PCA
 -----------------------------------
 
-Principal component analysis select the successive components that
+:ref:`PCA` selects the successive components that
 explain the maximum variance in the signal.
 
-.. |pca_3d_axis| image:: pca_3d_axis.jpg
+.. |pca_3d_axis| image:: ../../auto_examples/tutorial/images/plot_pca_3d_1.png
+   :target: ../../auto_examples/tutorial/plot_pca_3d.html
    :scale: 70
 
-.. |pca_3d_aligned| image:: pca_3d_aligned.jpg
+.. |pca_3d_aligned| image:: ../../auto_examples/tutorial/images/plot_pca_3d_2.png
+   :target: ../../auto_examples/tutorial/plot_pca_3d.html
    :scale: 70
 
 .. rst-class:: centered
@@ -259,12 +274,12 @@ data by projecting on a principal subspace.
     >>> x3 = x1 + x2
     >>> X = np.c_[x1, x2, x3]
 
-    >>> from scikits.learn import decomposition
+    >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
     PCA(copy=True, n_components=None, whiten=False)
     >>> print pca.explained_variance_  # doctest: +ELLIPSIS
-    [  2.46782...e+00   8.054...e-01   9.7...e-33]
+    [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
 
     >>> # As we can see, only the 2 first components are useful
     >>> pca.n_components = 2
@@ -277,11 +292,12 @@ data by projecting on a principal subspace.
 Indenpendant Component Analysis: ICA
 -------------------------------------
 
-ICA selects components so that the distribution of their loadings carries
+:ref:`ICA` selects components so that the distribution of their loadings carries
 a maximum amount of independant information. It is able to recover
 **non-Gaussian** independant signals:
 
-.. image:: plot_ica_blind_source_separation_1.png
+.. image:: ../../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
+   :target: ../../auto_examples/decomposition/plot_ica_blind_source_separation.html
    :scale: 70
    :align: center
 

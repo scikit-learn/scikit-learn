@@ -49,9 +49,11 @@ v1 /= v1[-1]
 
 #ax.plot_surface(x_surf, y_surf,
 
-ax.set_xticks(())
-ax.set_yticks(())
-ax.set_zticks(())
 
+
+
+ax.w_xaxis.set_ticklabels([])
+ax.w_yaxis.set_ticklabels([])
+ax.w_zaxis.set_ticklabels([])
 
 

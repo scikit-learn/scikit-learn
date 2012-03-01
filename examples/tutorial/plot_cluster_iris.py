@@ -3,13 +3,17 @@
 
 """
 =========================================================
-Sparsity Example: Fitting only features 1  and 2
+K-means Clustering
 =========================================================
 
-Features 1 and 2 of the diabetes-dataset are fitted and
-plotted below. It illustrates that although feature 2
-has a strong coefficient on the full model, it does not
-give us much regarding `y` when compared to just feautre 1
+The plots display firstly what a K-means algorithm would yield
+using three clusters. It is then shown what the effect of a bad
+initialization is on the classification process:
+By setting n_init to only 1 (default is 10), the amount of
+times that the algorithm will be run with different centroid
+seeds is reduced.
+The next plot displays what using eight clusters would deliver
+and finally the ground truth.
 
 """
 print __doc__
