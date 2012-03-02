@@ -189,3 +189,9 @@ Development
    developers/utilities
    developers/debugging
    about
+
+.. toctree::
+   :hidden:
+
+   support
+   whats_new

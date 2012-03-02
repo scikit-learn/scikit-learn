@@ -23,10 +23,11 @@ h = .02  # step size in the mesh
 
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-svc = svm.SVC(kernel='linear').fit(X, Y)
-rbf_svc = svm.SVC(kernel='rbf', gamma=0.7).fit(X, Y)
-poly_svc = svm.SVC(kernel='poly', degree=3).fit(X, Y)
-lin_svc = svm.LinearSVC().fit(X, Y)
+C = 100  # SVM regularization parameter
+svc = svm.SVC(kernel='linear', C=C).fit(X, Y)
+rbf_svc = svm.SVC(kernel='rbf', gamma=0.7, C=C).fit(X, Y)
+poly_svc = svm.SVC(kernel='poly', degree=3, C=C).fit(X, Y)
+lin_svc = svm.LinearSVC(C=C).fit(X, Y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1

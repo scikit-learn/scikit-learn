@@ -346,6 +346,28 @@ def test_label_binarizer():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+def test_label_binarizer_set_label_encoding():
+    lb = LabelBinarizer(neg_label=-2, pos_label=2)
+
+    # two-class case
+    inp = np.array([0, 1, 1, 0])
+    expected = np.array([[-2, 2, 2, -2]]).T
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_array_equal(lb.inverse_transform(got), inp)
+
+    # multi-class case
+    inp = np.array([3, 2, 1, 2, 0])
+    expected = np.array([[-2, -2, -2, +2],
+                         [-2, -2, +2, -2],
+                         [-2, +2, -2, -2],
+                         [-2, -2, +2, -2],
+                         [+2, -2, -2, -2]])
+    got = lb.fit_transform(inp)
+    assert_array_equal(expected, got)
+    assert_array_equal(lb.inverse_transform(got), inp)
+
+
 def test_label_binarizer_multilabel():
     lb = LabelBinarizer()
 
@@ -388,6 +410,9 @@ def test_label_binarizer_errors():
     lb = LabelBinarizer()
     assert_raises(ValueError, lb.transform, [])
     assert_raises(ValueError, lb.inverse_transform, [])
+
+    assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
+    assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
 
 
 def test_label_binarizer_iris():

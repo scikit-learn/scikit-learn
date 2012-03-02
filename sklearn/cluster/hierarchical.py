@@ -114,11 +114,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     coord_col = np.array(coord_col, dtype=np.int)
 
     # build moments as a list
-    moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
-    moments[0][:n_samples] = 1
-    moments[1][:n_samples] = X
+    moments_1 = np.zeros(n_nodes)
+    moments_1[:n_samples] = 1
+    moments_2 = np.zeros((n_nodes, n_features))
+    moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _hierarchical.compute_ward_dist(moments[0], moments[1],
+    _hierarchical.compute_ward_dist(moments_1, moments_2,
                              coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapify(inertia)
@@ -143,16 +144,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         used_node[i] = used_node[j] = False
 
         # update the moments
-        for p in xrange(2):
-            moments[p][k] = moments[p][i] + moments[p][j]
+        moments_1[k] = moments_1[i] + moments_1[j]
+        moments_2[k] = moments_2[i] + moments_2[j]
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
         visited[:] = False
         visited[k] = True
         for l in set(A[i]).union(A[j]):
-            while parent[l] != l:
-                l = parent[l]
+            l = _hierarchical._get_parent(l, parent)
             if not visited[l]:
                 visited[l] = True
                 coord_col.append(l)
@@ -163,7 +163,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
 
-        _hierarchical.compute_ward_dist(moments[0], moments[1],
+        _hierarchical.compute_ward_dist(moments_1, moments_2,
                                    coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heappush(inertia, tupl)

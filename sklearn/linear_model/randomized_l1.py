@@ -93,7 +93,9 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
-        scores_ = memory.cache(_resample_model)(estimator_func, X, y,
+        scores_ = memory.cache(_resample_model,
+                ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
+                                    estimator_func, X, y,
                                     scaling=self.scaling,
                                     n_resampling=self.n_resampling,
                                     n_jobs=self.n_jobs,

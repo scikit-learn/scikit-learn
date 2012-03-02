@@ -31,6 +31,13 @@ class deprecated(object):
     # but with many changes.
 
     def __init__(self, extra=''):
+        """
+        Parameters
+        ----------
+        extra: string
+          to be added to the deprecation messages
+
+        """
         self.extra = extra
 
     def __call__(self, obj):

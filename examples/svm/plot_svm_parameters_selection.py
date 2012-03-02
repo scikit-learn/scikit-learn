@@ -42,8 +42,8 @@ X = scaler.fit_transform(X)
 # 10 is often helpful. Using a basis of 2, a finer
 # tuning can be achieved but at a much higher cost.
 
-C_range = 10. ** np.arange(-5, 5)
-gamma_range = 10. ** np.arange(-5, 5)
+C_range = 10. ** np.arange(-3, 8)
+gamma_range = 10. ** np.arange(-5, 4)
 
 param_grid = dict(gamma=gamma_range, C=C_range)
 
@@ -64,7 +64,7 @@ scores = np.array(scores).reshape(len(C_range), len(gamma_range))
 # Make a nice figure
 pl.figure(figsize=(8, 6))
 pl.subplots_adjust(left=0.15, right=0.95, bottom=0.15, top=0.95)
-pl.imshow(scores, interpolation='nearest', cmap=pl.cm.autumn)
+pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
 pl.xlabel('gamma')
 pl.ylabel('C')
 pl.colorbar()
