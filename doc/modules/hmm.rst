@@ -101,8 +101,8 @@ This time, the input is a single sequence of observed values.::
     >>> model2.fit([X])
     GaussianHMM(algorithm='viterbi', covariance_type='full', covars_prior=0.01,
           covars_weight=1, means_prior=None, means_weight=0, n_components=3,
-          startprob=None, startprob_prior=1.0, transmat=None,
-          transmat_prior=1.0)
+          random_state=None, startprob=None, startprob_prior=1.0,
+          transmat=None, transmat_prior=1.0)
     >>> Z2 = model.predict(X)
 
 
