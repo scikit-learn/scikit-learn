@@ -15,7 +15,7 @@ the first order Markov Chain. It can be specified by the start probability
 vector :math:`\boldsymbol{\Pi}` and the transition probability matrix 
 :math:`\mathbf{A}`.
 The emission probability of observable can be any distribution with the 
-parameters :math:`\boldsymbol{\Theta}_i}` conditioned on the current hidden 
+parameters :math:`\boldsymbol{{\Theta}_i}` conditioned on the current hidden 
 state index. (e.g. Multinomial, Gaussian).
 Thus the HMM can be completely determined by 
 :math:`\boldsymbol{\Pi, \mathbf{A}}` and :math:`\boldsymbol{{\Theta}_i}`.
@@ -42,8 +42,7 @@ See the ref listed below for further detailed information.
 
 .. topic:: References:
 
-  .. [Rabiner89] `"A tutorial on hidden Markov models and selected applications in speech recognition"
-  <http://www.cs.ubc.ca/~murphyk/Bayes/rabiner.pdf>`_
+  [Rabiner89] `A tutorial on hidden Markov models and selected applications in speech recognition <http://www.cs.ubc.ca/~murphyk/Bayes/rabiner.pdf>`_
   Lawrence, R. Rabiner, 1989
 
 
@@ -100,9 +99,10 @@ This time, the input is a single sequence of observed values.::
 
     >>> model2 = hmm.GaussianHMM(3, "full")
     >>> model2.fit([X])
-    GaussianHMM(covariance_type='full', covars_prior=0.01, covars_weight=1,
-          means_prior=None, means_weight=0, n_components=3, startprob=None,
-          startprob_prior=1.0, transmat=None, transmat_prior=1.0)
+    GaussianHMM(algorithm='viterbi', covariance_type='full', covars_prior=0.01,
+          covars_weight=1, means_prior=None, means_weight=0, n_components=3,
+          startprob=None, startprob_prior=1.0, transmat=None,
+          transmat_prior=1.0)
     >>> Z2 = model.predict(X)
 
 
