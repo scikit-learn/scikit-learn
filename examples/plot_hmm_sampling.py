@@ -49,7 +49,7 @@ model.covars_ = covars
 X, Z = model.sample(500)
 
 # Plot the sampled data
-plt.plot(X[:, 0], X[:, 1], "-o", label="observations", ms=10,
+plt.plot(X[:, 0], X[:, 1], "-o", label="observations", ms=6,
          mfc="orange", alpha=0.7)
 
 # Indicate the component numbers
