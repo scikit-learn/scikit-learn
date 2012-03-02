@@ -94,7 +94,7 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train)
     KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=5,
-           warn_on_equidistant=True, weights='uniform')
+               warn_on_equidistant=True, weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -164,19 +164,18 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
     >>> print regr.coef_
-    [  3.03499549e-01  -2.37639315e+02   5.10530605e+02   3.27736980e+02
-      -8.14131709e+02   4.92814588e+02   1.02848452e+02   1.84606489e+02
-       7.43519617e+02   7.60951722e+01]
+    [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
+      492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
     
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
-    2004.5676026898223
+    2004.5676026898218
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and Y.
     >>> regr.score(diabetes_X_test, diabetes_y_test)
-    0.58507530226905713
+    0.58507530226905724
 
 
 .. _shrinkage:
@@ -244,7 +243,7 @@ diabetes dataset, rather than our synthetic data::
     >>> print [regr._set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train,
     ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]
-    [0.58511106838835292, 0.58520730154446743, 0.58546775406984897, 0.58555120365039137, 0.58307170855541623, 0.570589994372801]
+    [0.58511106838835314, 0.58520730154446765, 0.58546775406984908, 0.58555120365039159, 0.58307170855541623, 0.570589994372801]
 
 
 .. note::
@@ -311,13 +310,14 @@ application of Occam's razor: `prefer simpler models`.
     ...             ).fit(diabetes_X_train, diabetes_y_train
     ...             ).score(diabetes_X_test, diabetes_y_test) 
     ...        for alpha in alphas]
-    [0.5851191069162196, 0.58524713649060311, 0.58571895391793782, 0.58730094854527282, 0.5887622418309254, 0.58284500296816755]
+    [0.58511910691622471, 0.58524713649060478, 0.58571895391793494, 0.58730094854527437, 0.58876224183092607, 0.5828450029681681]
     
     >>> best_alpha = alphas[4]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, precompute='auto', tol=0.0001)
+       max_iter=1000, normalize=False, precompute='auto', tol=0.0001,
+       warm_start=False)
     >>> print regr.coef_   
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
@@ -356,8 +356,9 @@ function, or **logistic** function:
 
     >>> logistic = linear_model.LogisticRegression(C=1e5)
     >>> logistic.fit(iris_X_train, iris_y_train)
-    LogisticRegression(C=100000.0, dual=False, fit_intercept=True,
-              intercept_scaling=1, penalty='l2', tol=0.0001)
+    LogisticRegression(C=100000.0, class_weight=None, dual=False,
+              fit_intercept=True, intercept_scaling=1, penalty='l2',
+              scale_C=True, tol=0.0001)
 
 .. image:: ../../auto_examples/tutorial/images/plot_iris_logistic_1.png
    :target: ../../auto_examples/tutorial/plot_iris_logistic.html
@@ -426,11 +427,12 @@ classification --SVC (Support Vector Classification).
 
 ::
 
-    >>> from scikits.learn import svm
+    >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='linear',
-      probability=False, shrinking=True, tol=0.001)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+      kernel='linear', probability=False, scale_C=True, shrinking=True,
+      tol=0.001)
 
 
 .. warning:: **Normalizing data**

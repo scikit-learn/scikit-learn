@@ -37,8 +37,8 @@ can predict variables. We can create combined estimators:
 Parameters of pipelines can be set using '__' separated parameter names::
 
     >>> pipe._set_params(pca__n_components=30)
-    Pipeline(steps=[('pca', PCA(copy=True, n_components=30, whiten=False)), ('logistic', LogisticRegression(C=1.0, dual=False, fit_intercept=True, intercept_scaling=1,
-              penalty='l2', tol=0.0001))])
+    Pipeline(steps=[('pca', PCA(copy=True, n_components=30, whiten=False)), ('logistic', LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+              intercept_scaling=1, penalty='l2', scale_C=True, tol=0.0001))])
     >>> pca.n_components
     30
 
