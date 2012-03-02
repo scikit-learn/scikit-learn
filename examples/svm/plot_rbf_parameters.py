@@ -37,8 +37,8 @@ xx, yy = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-5, 5, 200))
 
 np.random.seed(0)
 
-gamma_range = [10. ** -1, 1, 10. ** 1]
-C_range = [10. ** -2, 1, 10. ** 2]
+gamma_range = [1e-1, 1, 1e1]
+C_range = [1, 1e2, 1e4]
 
 pl.figure()
 k = 1

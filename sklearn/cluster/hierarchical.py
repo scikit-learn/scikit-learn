@@ -152,10 +152,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         visited[:] = False
         visited[k] = True
         for l in set(A[i]).union(A[j]):
-            parent_l = parent[l]
-            while parent_l != l:
-                l = parent_l
-                parent_l = parent[l]
+            l = _hierarchical._get_parent(l, parent)
             if not visited[l]:
                 visited[l] = True
                 coord_col.append(l)

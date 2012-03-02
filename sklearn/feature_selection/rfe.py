@@ -213,7 +213,7 @@ class RFECV(RFE):
         If int, it is the number of folds.
         If None, 3-fold cross-validation is performed by default.
         Specific cross-validation objects can also be passed, see
-        `scikits.learn.cross_validation module` for details.
+        `sklearn.cross_validation module` for details.
 
     loss_function : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the

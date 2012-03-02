@@ -35,7 +35,7 @@ def my_kernel(x, y):
 h = .02  # step size in the mesh
 
 # we create an instance of SVM and fit out data.
-clf = svm.SVC(kernel=my_kernel)
+clf = svm.SVC(kernel=my_kernel, C=100)
 clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will asign a color to each

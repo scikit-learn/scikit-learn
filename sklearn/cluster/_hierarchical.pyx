@@ -8,7 +8,6 @@ ctypedef np.int_t INT
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-
 def compute_ward_dist(np.ndarray[DOUBLE, ndim=1] m_1,\
                     np.ndarray[DOUBLE, ndim=2] m_2,\
                     np.ndarray[INT, ndim=1] coord_row,
@@ -27,6 +26,7 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1] m_1,\
             pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col])**2
         res[i] = pa * n
     return res
+
 
 def _hc_get_descendent(int node, children, int n_leaves):
     """
@@ -68,3 +68,12 @@ def _hc_get_descendent(int node, children, int n_leaves):
     return descendent
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _get_parent(int node, np.ndarray[INT, ndim=1] parents):
+    cdef int parent
+    parent = parents[node]
+    while parent != node:
+        node = parent
+        parent = parents[node]
+    return node
