@@ -119,7 +119,7 @@ def test_grid_search_precomputed_kernel():
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(K_train, y_train)
 
-    assert_true(cv.best_score >= 0)
+    assert_true(cv.best_score_ >= 0)
 
     # compute the test kernel matrix
     K_test = np.dot(X_[180:], X_[:180].T)
