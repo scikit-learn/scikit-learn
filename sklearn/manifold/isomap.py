@@ -68,9 +68,8 @@ class Isomap(BaseEstimator):
     `dist_matrix_` : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
         framework for nonlinear dimensionality reduction. Science 290 (5500)
