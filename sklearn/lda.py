@@ -24,11 +24,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     The model fits a Gaussian density to each class, assuming that
     all classes share the same covariance matrix.
 
+    The fitted model can also be used to reduce the dimensionality
+    of the input, by projecting it to the most discriminative
+    directions.
+
     Parameters
     ----------
 
     n_components: int
-        Number of components (< n_classes - 1)
+        Number of components (< n_classes - 1) for dimensionality reduction
 
     priors : array, optional, shape = [n_classes]
         Priors on classes

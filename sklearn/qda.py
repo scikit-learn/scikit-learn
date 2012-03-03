@@ -31,12 +31,6 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-    y : array, shape = [n_samples]
-        Target vector relative to X
-
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
@@ -82,7 +76,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             Target values (integers)
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
-            self.covariances_ attribute.
+            `self.covariances_` attribute.
         """
         X = np.asarray(X)
         y = np.asarray(y)

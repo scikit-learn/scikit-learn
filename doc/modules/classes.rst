@@ -835,6 +835,21 @@ Pairwise metrics
    preprocessing.binarize
 
 
+:mod:`sklearn.qda`: Quadratic Discriminant Analysis
+===================================================
+
+.. automodule:: sklearn.qda
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated
+   :template: class.rst
+
+   qda.QDA
+
 .. _svm_ref:
 
 :mod:`sklearn.svm`: Support Vector Machines
