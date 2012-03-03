@@ -32,6 +32,7 @@ Also there are no parameters to tune for these algorithms.
 
 Dimensionality Reduction using LDA
 ==================================
+
 :class:`lda.LDA` can be used to perform supervised dimensionality reduction by
 projecting the input data to a subspace consisting of the most
 discriminant directions.
