@@ -159,6 +159,11 @@ class CountVectorizer(BaseEstimator):
 
         This parameter is ignored if vocabulary is not None.
 
+    binary: boolean, False by default.
+        If True, all non zero counts are set to 1. This is useful for discrete
+        probabilistic models that model binary events rather than integer
+        counts.
+
     dtype: type, optional
         Type of the matrix returned by fit_transform() or transform().
     """
@@ -170,7 +175,7 @@ class CountVectorizer(BaseEstimator):
                  strip_tags=False, lowercase=True, tokenize='word',
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 fixed_vocabulary=None, dtype=long):
+                 fixed_vocabulary=None, binary=False, dtype=long):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -189,6 +194,7 @@ class CountVectorizer(BaseEstimator):
             fixed_vocabulary = dict(
                 (t, i) for i, t in enumerate(fixed_vocabulary))
         self.fixed_vocabulary = fixed_vocabulary
+        self.binary = binary
         self.dtype = dtype
 
     def _decode(self, doc):
@@ -303,8 +309,11 @@ class CountVectorizer(BaseEstimator):
             term_count_dict.clear()
 
         shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
-        return sp.coo_matrix((values, (i_indices, j_indices)),
-                             shape=shape, dtype=self.dtype)
+        spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
+                                 shape=shape, dtype=self.dtype)
+        if self.binary:
+            spmatrix.data[:] = 1
+        return spmatrix
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents
@@ -390,8 +399,12 @@ class CountVectorizer(BaseEstimator):
         # max_df
         self.max_df_stop_words_ = stop_words
 
-        # store map from term name to feature integer index
-        self.vocabulary_ = dict(((t, i) for i, t in enumerate(terms)))
+        # store map from term name to feature integer index: we sort the term
+        # to have reproducible outcome for the vocabulary structure: otherwise
+        # the mapping from feature name to indices might depend on the memory
+        # layout of the machine. Furthermore sorted terms might make it
+        # possible to perform binary search in the feature names array.
+        self.vocabulary_ = dict(((t, i) for i, t in enumerate(sorted(terms))))
 
         # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but

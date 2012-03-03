@@ -288,8 +288,8 @@ def test_feature_names():
 
     feature_names = cv.get_feature_names()
     assert_equal(feature_names.shape, (n_features,))
-    assert_array_equal(['celeri', 'tomato', 'salad', 'coke', 'sparkling',
-                        'water', 'burger', 'beer', 'pizza'],
+    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                        'salad', 'sparkling', 'tomato', 'water'],
                        feature_names)
 
     for idx, name in enumerate(feature_names):
@@ -322,6 +322,25 @@ def test_vectorizer_max_df():
     vect.fit(test_data)
     assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equals(len(vect.vocabulary_.keys()), 4)  # the others remain
+
+
+def test_binary_occurrences():
+    # by default multiple occurrences are counted as longs
+    test_data = [u'aaabc', u'abbde']
+    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0)
+    X = vect.fit_transform(test_data).toarray()
+    assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
+    assert_array_equal([[3, 1, 1, 0, 0],
+                        [1, 2, 0, 1, 1]], X)
+
+    # using boolean features, we can fetch the binary occurrence info
+    # instead.
+    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0,
+                           binary=True)
+    X = vect.fit_transform(test_data).toarray()
+    assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
+    assert_array_equal([[1, 1, 1, 0, 0],
+                        [1, 1, 0, 1, 1]], X)
 
 
 def test_vectorizer_inverse_transform():
