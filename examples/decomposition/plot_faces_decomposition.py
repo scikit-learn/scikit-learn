@@ -82,13 +82,13 @@ estimators = [
 
     ('Sparse comp. - MiniBatchSparsePCA',
      decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=0.8,
-                                      n_iter=100, batch_size=3,
+                                      n_iter=100, chunk_size=3,
                                       random_state=rng),
      True, False),
 
     ('MiniBatchDictionaryLearning',
     decomposition.MiniBatchDictionaryLearning(n_atoms=15, alpha=0.1,
-                                              n_iter=50, batch_size=3,
+                                              n_iter=50, chunk_size=3,
                                               random_state=rng),
      True, False),
 
