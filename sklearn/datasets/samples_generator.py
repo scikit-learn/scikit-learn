@@ -434,7 +434,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         return X, y
 
 
-def make_circles(n_samples=100, shuffle=True, random_state=None):
+def make_circles(n_samples=100, shuffle=True, random_state=None, factor=.8):
     """Make a large circle containing a smaller circle in 2di
 
     A simple toy dataset to visualize clustering and classification
@@ -460,8 +460,8 @@ def make_circles(n_samples=100, shuffle=True, random_state=None):
     n_samples_out, n_samples_in = n_samples_out + 1, n_samples_in + 1
     outer_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
     outer_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    inner_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * 0.8
-    inner_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * 0.8
+    inner_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
+    inner_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
            np.append(outer_circ_y, inner_circ_y))).T
