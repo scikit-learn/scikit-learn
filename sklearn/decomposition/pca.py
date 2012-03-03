@@ -236,6 +236,9 @@ class PCA(BaseEstimator, TransformerMixin):
             self.components_ = V
 
         if self.n_components == 'mle':
+            if self.n_samples < self.n_features:
+                raise ValueError("n_components='mle' is only supported "
+                "if n_samples >= n_features")
             self.n_components = _infer_dimension_(self.explained_variance_,
                                             n_samples, n_features)
 
