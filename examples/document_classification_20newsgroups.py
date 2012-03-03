@@ -227,4 +227,4 @@ class L1LinearSVC(LinearSVC):
 
 print 80 * '='
 print "LinearSVC with L1-based feature selection"
-l1linearsvc_results = benchmark(L1LinearSVC())
+l1linearsvc_results = benchmark(L1LinearSVC(C=1000))
