@@ -35,9 +35,11 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     tol: float, optional (default=1e-4)
         Tolerance for stopping criteria
 
-    multi_class: boolean, optional (default=False)
-        Perform multi-class SVM as per Cramer and Singer. If active,
-        the options loss, penalty and dual will be ignored.
+    crammer_singer: boolean, optional (default=False)
+        Perform multi-class SVM as per Cramer and Singer.  Please note that
+        this parameter is not necessary for multi-class classification and is
+        rarely used in practice.
+        If active, the options loss, penalty and dual will be ignored.
 
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set

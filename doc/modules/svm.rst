@@ -144,6 +144,9 @@ two classes, only one model is trained::
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+Note that the :class:`LinearSVC` also implements an alternative multi-class
+strategy, the so-called multi-class SVM formulated by Crammer and Singer,
+by using the option "crammer_singer". This method is rarely used in practice.
 
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
