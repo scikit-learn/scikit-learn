@@ -338,9 +338,14 @@ def test_binary_occurrences():
     vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0,
                            binary=True)
     X = vect.fit_transform(test_data).toarray()
-    assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
     assert_array_equal([[1, 1, 1, 0, 0],
                         [1, 1, 0, 1, 1]], X)
+
+    # check the ability to change the dtype
+    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0,
+                           binary=True, dtype=np.float32)
+    X_sparse = vect.fit_transform(test_data)
+    assert_equal(X_sparse.dtype, np.float32)
 
 
 def test_vectorizer_inverse_transform():
