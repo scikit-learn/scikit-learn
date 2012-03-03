@@ -95,8 +95,14 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             ind = np.arange(X.shape[0])
             train = ind[train]
             test = ind[test]
-        X_train = X[train]
-        X_test = X[test]
+        if getattr(base_clf, 'kernel', '') == 'precomputed' and not hasattr(base_clf, 'kernel_function'):
+            # X is a precomputed square kernel matrix
+            assert X.shape[0] == X.shape[1], "X should be a square kernel matrix"
+            X_train = X[np.ix_(train, train)]
+            X_test = X[np.ix_(test, train)]
+        else:
+            X_train = X[train]
+            X_test = X[test]
     if y is not None:
         y_test = y[test]
         y_train = y[train]
