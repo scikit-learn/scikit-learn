@@ -248,6 +248,12 @@ class RidgeClassifier(Ridge):
     tol: float
         Precision of the solution.
 
+    class_weight : dict, optional
+        Weights associated with classes in the form
+        {class_label : weight}. If not given, all classes are
+        supposed to have weight one.
+
+
     Attributes
     ----------
 
@@ -264,6 +270,11 @@ class RidgeClassifier(Ridge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+            copy_X=True, tol=1e-3, class_weight=None):
+        super(RidgeClassifier, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
+                normalize=normalize, copy_X=copy_X, tol=tol)
+        self.class_weight = class_weight
 
     def fit(self, X, y, solver='auto'):
         """Fit Ridge regression model.
@@ -487,26 +498,19 @@ class RidgeCV(LinearModel):
         If None, Generalized Cross-Validationn (efficient Leave-One-Out)
         will be used.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
-        supposed to have weight one.
-
     See also
     --------
     Ridge, RidgeClassifierCV
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, cv=None,
-            class_weight=None):
+            normalize=False, score_func=None, loss_func=None, cv=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
         self.cv = cv
-        self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -550,6 +554,12 @@ class RidgeCV(LinearModel):
 
 
 class RidgeClassifierCV(RidgeCV):
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+            normalize=False, score_func=None, loss_func=None, cv=None, class_weight=None):
+        super(RidgeClassifierCV, self).__init__(alphas=alphas,
+                fit_intercept=fit_intercept, normalize=normalize, score_func=score_func,
+                loss_func=loss_func, cv=cv)
+        self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
         """Fit the ridge classifier.
@@ -583,8 +593,7 @@ class RidgeClassifierCV(RidgeCV):
         sample_weight2 = np.array([self.class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
-        RidgeCV.fit(self, X, Y,
-                    sample_weight=sample_weight * sample_weight2)
+        RidgeCV.fit(self, X, Y, sample_weight=sample_weight * sample_weight2)
         return self
 
     def decision_function(self, X):
