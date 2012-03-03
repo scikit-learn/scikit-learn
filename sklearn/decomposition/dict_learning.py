@@ -523,9 +523,9 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
 
 
 def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
-                         dict_init=None, callback=None, chunk_size=3,
-                         verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None):
+        dict_init=None, callback=None, batch_size=3, chunk_size=None,
+        verbose=False, shuffle=True, n_jobs=1, method='lars', iter_offset=0,
+        random_state=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -562,7 +562,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     callback:
         callable that gets invoked every five iterations
 
-    chunk_size: int,
+    batch_size: int,
         the number of samples to take in each batch
 
     verbose:
@@ -609,6 +609,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
         raise ValueError('Coding method not supported as a fit algorithm.')
     method = 'lasso_' + method
 
+    if chunk_size is not None:
+        warnings.warn(
+            "chunk_size is deprecated in 0.10, use batch_size instead")
+        batch_size = chunk_size
+
     t0 = time.time()
     n_samples, n_features = X.shape
     # Avoid integer division problems
@@ -635,7 +640,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     if verbose == 1:
         print '[dict_learning]',
 
-    n_batches = floor(float(len(X)) / chunk_size)
+    n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
@@ -664,11 +669,11 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                                   alpha=alpha).T
 
         # Update the auxiliary variables
-        if ii < chunk_size - 1:
-            theta = float((ii + 1) * chunk_size)
+        if ii < batch_size - 1:
+            theta = float((ii + 1) * batch_size)
         else:
-            theta = float(chunk_size ** 2 + ii + 1 - chunk_size)
-        beta = (theta + 1 - chunk_size) / (theta + 1)
+            theta = float(batch_size ** 2 + ii + 1 - batch_size)
+        beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta
         A += np.dot(this_code, this_code.T)
@@ -1052,7 +1057,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     verbose :
         degree of verbosity of the printed output
 
-    chunk_size : int,
+    batch_size : int,
         number of samples in each mini-batch
 
     shuffle : bool,
@@ -1081,11 +1086,11 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_atoms, alpha=1, n_iter=1000,
-                 fit_algorithm='lars', n_jobs=1, chunk_size=3,
-                 shuffle=True, dict_init=None, transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None):
+    def __init__(self, n_atoms, alpha=1, n_iter=1000, fit_algorithm='lars',
+            n_jobs=1, batch_size=3, chunk_size=None, shuffle=True,
+            dict_init=None, transform_algorithm='omp',
+            transform_n_nonzero_coefs=None, transform_alpha=None,
+            verbose=False, split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_atoms, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1096,7 +1101,11 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.dict_init = dict_init
         self.verbose = verbose
         self.shuffle = shuffle
-        self.chunk_size = chunk_size
+        if chunk_size is not None:
+            warnings.warn(
+                "chunk_size is deprecated in 0.10, use batch_size instead")
+            batch_size = chunk_size
+        self.batch_size = batch_size
         self.split_sign = split_sign
         self.random_state = random_state
 
@@ -1121,7 +1130,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs,
                                  dict_init=self.dict_init,
-                                 chunk_size=self.chunk_size,
+                                 batch_size=self.batch_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
                                  random_state=self.random_state)
         self.components_ = U
@@ -1151,7 +1160,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  n_iter=self.n_iter,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs, dict_init=dict_init,
-                                 chunk_size=len(X), shuffle=False,
+                                 batch_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
                                  iter_offset=iter_offset,
                                  random_state=self.random_state)
