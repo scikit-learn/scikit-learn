@@ -28,6 +28,7 @@ from operator import itemgetter
 from optparse import OptionParser
 import sys
 from time import time
+import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import Vectorizer
@@ -178,37 +179,40 @@ def benchmark(clf):
         print metrics.confusion_matrix(y_test, pred)
 
     print
-    return score, train_time, test_time
+    clf_descr = str(clf).split('(')[0]
+    return clf_descr, score, train_time, test_time
 
+
+results = []
 for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
                   (Perceptron(n_iter=50), "Perceptron"),
                   (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
-    results = benchmark(clf)
+    results.append(benchmark(clf))
 
 for penalty in ["l2", "l1"]:
     print 80 * '='
     print "%s penalty" % penalty.upper()
     # Train Liblinear model
-    liblinear_results = benchmark(LinearSVC(loss='l2', penalty=penalty, C=1000,
-                                            dual=False, tol=1e-3))
+    results.append(benchmark(LinearSVC(loss='l2', penalty=penalty, C=1000,
+                                            dual=False, tol=1e-3)))
 
     # Train SGD model
-    sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                          penalty=penalty))
+    results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
+                                          penalty=penalty)))
 
 # Train SGD with Elastic Net penalty
 print 80 * '='
 print "Elastic-Net penalty"
-sgd_results = benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                      penalty="elasticnet"))
+results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
+                                      penalty="elasticnet")))
 
 # Train sparse Naive Bayes classifiers
 print 80 * '='
 print "Naive Bayes"
-mnnb_results = benchmark(MultinomialNB(alpha=.01))
-bnb_result = benchmark(BernoulliNB(alpha=.01))
+results.append(benchmark(MultinomialNB(alpha=.01)))
+results.append(benchmark(BernoulliNB(alpha=.01)))
 
 
 class L1LinearSVC(LinearSVC):
@@ -227,4 +231,26 @@ class L1LinearSVC(LinearSVC):
 
 print 80 * '='
 print "LinearSVC with L1-based feature selection"
-l1linearsvc_results = benchmark(L1LinearSVC(C=1000))
+results.append(benchmark(L1LinearSVC(C=1000)))
+
+
+# make some plots
+
+indices = np.arange(len(results))
+
+results = [[x[i] for x in results] for i in xrange(4)]
+
+clf_names, score, training_time, test_time = results
+
+pl.title("Score")
+pl.barh(indices, score, .2, label="score", color='r')
+pl.barh(indices + .3, training_time, .2, label="training time", color='g')
+pl.barh(indices + .6, test_time, .2, label="test time", color='b')
+pl.yticks(())
+pl.legend(loc='best')
+pl.subplots_adjust(left=.25)
+
+for i, c in  zip(indices, clf_names):
+    pl.text(-.3, i, c)
+
+pl.show()
