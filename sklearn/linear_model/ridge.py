@@ -498,9 +498,17 @@ class RidgeCV(LinearModel):
         If None, Generalized Cross-Validationn (efficient Leave-One-Out)
         will be used.
 
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features] or [n_classes, n_features]
+        Weight vector(s).
+
     See also
     --------
-    Ridge, RidgeClassifierCV
+    Ridge: Ridge regression
+    RidgeClassifier: Ridge classifiert
+    RidgeCV: Ridge regression with built-in cross validation
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
@@ -554,6 +562,60 @@ class RidgeCV(LinearModel):
 
 
 class RidgeClassifierCV(RidgeCV):
+    """Ridge classifier with built-in cross-validation.
+
+    By default, it performs Generalized Cross-Validation, which is a form of
+    efficient Leave-One-Out cross-validation. Currently, only the n_features >
+    n_samples case is handled efficiently.
+
+    Parameters
+    ----------
+    alphas: numpy array of shape [n_alpha]
+        Array of alpha values to try.
+        Small positive values of alpha improve the conditioning of the
+        problem and reduce the variance of the estimates.
+        Alpha corresponds to (2*C)^-1 in other linear models such as
+        LogisticRegression or LinearSVC.
+
+    fit_intercept : boolean
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    score_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (big is good)
+        if None is passed, the score of the estimator is maximized
+
+    loss_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (small is good)
+        if None is passed, the score of the estimator is maximized
+
+    cv : cross-validation generator, optional
+        If None, Generalized Cross-Validationn (efficient Leave-One-Out)
+        will be used.
+
+    class_weight : dict, optional
+        Weights associated with classes in the form
+        {class_label : weight}. If not given, all classes are
+        supposed to have weight one.
+
+    See also
+    --------
+    Ridge: Ridge regression
+    RidgeClassifier: Ridge classifiert
+    RidgeCV: Ridge regression with built-in cross validation
+
+    Notes
+    -----
+    For multi-class classification, n_class classifiers are trained in
+    a one-versus-all approach. Concretely, this is implemented by taking
+    advantage of the multi-variate response support in Ridge.
+    """
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
             normalize=False, score_func=None, loss_func=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(alphas=alphas,
