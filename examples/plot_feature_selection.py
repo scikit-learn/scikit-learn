@@ -50,7 +50,7 @@ x_indices = np.arange(x.shape[-1])
 # We use the default selection function: the 10% most significant features
 selector = SelectPercentile(f_classif, percentile=10)
 selector.fit(x, y)
-scores = -np.log10(selector._pvalues)
+scores = -np.log10(selector.scores_)
 scores /= scores.max()
 pl.bar(x_indices - .45, scores, width=.3,
         label=r'Univariate score ($-Log(p_{value})$)',

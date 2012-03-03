@@ -56,7 +56,7 @@ cs = pl.contourf(xx, yy, Z)
 pl.axis('tight')
 
 # Plot also the training points
-for i, color in zip(clf.classes, colors):
+for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
     pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
 pl.title("Decision surface of multi-class SGD")
@@ -76,7 +76,7 @@ def plot_hyperplane(c, color):
     pl.plot([xmin, xmax], [line(xmin), line(xmax)],
             ls="--", color=color)
 
-for i, color in zip(clf.classes, colors):
+for i, color in zip(clf.classes_, colors):
     plot_hyperplane(i, color)
 pl.legend()
 pl.show()
