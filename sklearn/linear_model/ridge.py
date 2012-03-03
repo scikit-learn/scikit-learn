@@ -300,9 +300,13 @@ class RidgeClassifier(Ridge):
         -------
         self : returns an instance of self.
         """
+        if self.class_weight is None:
+            self.class_weight = {}
+
+        sample_weight_classes = np.array([self.class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
-        Ridge.fit(self, X, Y, solver=solver)
+        Ridge.fit(self, X, Y, solver=solver, sample_weight=sample_weight_classes)
         return self
 
     def decision_function(self, X):
@@ -541,7 +545,7 @@ class RidgeCV(LinearModel):
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                                  self.score_func, self.loss_func)
+                    self.score_func, self.loss_func)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.best_alpha = estimator.best_alpha
         else:
