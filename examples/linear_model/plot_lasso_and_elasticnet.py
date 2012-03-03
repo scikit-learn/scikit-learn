@@ -1,12 +1,15 @@
 """
-========================
-Lasso regression example
-========================
+========================================
+Lasso and Elastic Net for Sparse Signals
+========================================
 
 """
 print __doc__
 
 import numpy as np
+import pylab as pl
+
+from sklearn.metrics import r2_score
 
 ###############################################################################
 # generate some sparse data to play with
@@ -33,9 +36,9 @@ alpha = 0.1
 lasso = Lasso(alpha=alpha)
 
 y_pred_lasso = lasso.fit(X_train, y_train).predict(X_test)
+r2_score_lasso = r2_score(y_test, y_pred_lasso)
 print lasso
-print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_pred_lasso) ** 2
-                                      / np.linalg.norm(y_test) ** 2)
+print "r^2 on test data : %f" % r2_score_lasso
 
 ###############################################################################
 # ElasticNet
@@ -44,6 +47,14 @@ from sklearn.linear_model import ElasticNet
 enet = ElasticNet(alpha=alpha, rho=0.7)
 
 y_pred_enet = enet.fit(X_train, y_train).predict(X_test)
+r2_score_enet = r2_score(y_test, y_pred_enet)
 print enet
-print "r^2 on test data : %f" % (1 - np.linalg.norm(y_test - y_pred_enet) ** 2
-                                      / np.linalg.norm(y_test) ** 2)
+print "r^2 on test data : %f" % r2_score_enet
+
+pl.plot(enet.coef_, 'o', label='Elastic net coefficients')
+pl.plot(lasso.coef_, 'o', label='Lasso coefficients')
+pl.plot(coef, 'o', label='original coefficients')
+pl.legend(loc='best')
+pl.title("Lasso R^2: %f, Elastic Net R^2: %f" % (r2_score_lasso,
+    r2_score_enet))
+pl.show()
