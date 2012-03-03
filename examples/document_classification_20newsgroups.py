@@ -24,7 +24,6 @@ loader or setting them to None to get the 20 of them.
 
 import logging
 import numpy as np
-from operator import itemgetter
 from optparse import OptionParser
 import sys
 from time import time
@@ -130,13 +129,14 @@ if opts.select_chi2:
     print "done in %fs" % (time() - t0)
     print
 
-vocabulary = np.array([t for t, i in sorted(vectorizer.vocabulary_.iteritems(),
-                                            key=itemgetter(1))])
-
 
 def trim(s):
     """Trim string to fit on terminal (assuming 80-column display)"""
     return s if len(s) <= 80 else s[:77] + "..."
+
+
+# mapping from integer feature name to original token string
+feature_names = vectorizer.get_feature_names()
 
 
 ###############################################################################
@@ -166,7 +166,8 @@ def benchmark(clf):
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i])[-10:]
-                print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
+                print trim("%s: %s" % (
+                    category, " ".join(feature_names[top10])))
         print
 
     if opts.print_report:

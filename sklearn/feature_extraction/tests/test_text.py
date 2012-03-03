@@ -224,10 +224,7 @@ def test_vectorizer():
         if hasattr(counts_test, 'tocsr'):
             counts_test = counts_test.tocsr()
 
-        vocabulary = v.fixed_vocabulary
-        if vocabulary is None:
-            vocabulary = v.vocabulary_
-
+        vocabulary = v.get_vocabulary()
         assert_equal(counts_test[0, vocabulary[u"salad"]], 1)
         assert_equal(counts_test[0, vocabulary[u"tomato"]], 1)
         assert_equal(counts_test[0, vocabulary[u"water"]], 1)
@@ -277,9 +274,26 @@ def test_vectorizer():
     tfidf_test2 = toarray(tv.transform(test_data))
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
-    # test empty vocabulary
+    # test transform on unfitted vectorizer with empty vocabulary
     v3 = CountVectorizer(fixed_vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
+
+
+def test_feature_names():
+    cv = CountVectorizer(max_df=0.5)
+    X = cv.fit_transform(ALL_FOOD_DOCS)
+
+    n_samples, n_features = X.shape
+    assert_equal(len(cv.vocabulary_), n_features)
+
+    feature_names = cv.get_feature_names()
+    assert_equal(feature_names.shape, (n_features,))
+    assert_array_equal(['celeri', 'tomato', 'salad', 'coke', 'sparkling',
+                        'water', 'burger', 'beer', 'pizza'],
+                       feature_names)
+
+    for idx, name in enumerate(feature_names):
+        assert_equal(idx, cv.vocabulary_.get(name))
 
 
 def test_vectorizer_max_features():

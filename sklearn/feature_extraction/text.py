@@ -12,7 +12,7 @@ build feature vectors from text documents.
 
 import re
 import unicodedata
-from collections import Mapping
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
@@ -450,6 +450,24 @@ class CountVectorizer(BaseEstimator):
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in xrange(n_samples)]
 
+    def get_vocabulary(self):
+        """Dict mapping from string feature name to feature integer index
+
+        If fixed_vocabulary was passed to the constructor, it is returned,
+        otherwise, the `vocabulary_` attribute built during fit is returned
+        instead.
+        """
+        if self.fixed_vocabulary is not None:
+            return self.fixed_vocabulary
+        else:
+            return getattr(self, 'vocabulary_', {})
+
+    def get_feature_names(self):
+        """Array mapping from feature integer indicex to feature name"""
+        vocabulary = self.get_vocabulary()
+        return np.array([t for t, i in sorted(vocabulary.iteritems(),
+                                              key=itemgetter(1))])
+
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a normalized tf or tf–idf representation
@@ -629,5 +647,11 @@ class Vectorizer(BaseEstimator):
 
     def build_analyzer(self):
         return self.tc.build_analyzer()
+
+    def get_vocabulary(self):
+        return self.tc.get_vocabulary()
+
+    def get_feature_names(self):
+        return self.tc.get_feature_names()
 
     vocabulary_ = property(lambda self: self.tc.vocabulary_)
