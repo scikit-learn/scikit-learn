@@ -505,9 +505,8 @@ class RandomForestClassifier(ForestClassifier):
         set.
 
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
@@ -641,9 +640,8 @@ class RandomForestRegressor(ForestRegressor):
 
 
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
@@ -777,9 +775,8 @@ class ExtraTreesClassifier(ForestClassifier):
         Decision function computed with out-of-bag estimate on the training
         set.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
@@ -916,9 +913,8 @@ class ExtraTreesRegressor(ForestRegressor):
     `oob_prediction_` : array, shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.

@@ -239,7 +239,8 @@ class LedoitWolf(EmpiricalCovariance):
     where mu = trace(cov) / n_features
     and shinkage is given by the Ledoit and Wolf formula (see References)
 
-    **References**:
+    References
+    ----------
     "A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices",
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
@@ -380,7 +381,8 @@ class OAS(EmpiricalCovariance):
     where mu = trace(cov) / n_features
     and shinkage is given by the OAS formula (see References)
 
-    **References**:
+    References
+    ----------
     "Shrinkage Algorithms for MMSE Covariance Estimation"
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 

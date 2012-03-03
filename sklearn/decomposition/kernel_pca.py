@@ -72,7 +72,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     `X_transformed_fit_`:
         Projection of the fitted data on the kernel principal components
 
-    **References**:
+    References
+    ----------
     Kernel PCA was intoduced in:
         Bernhard Schoelkopf, Alexander J. Smola,
         and Klaus-Robert Mueller. 1999. Kernel principal
@@ -231,7 +232,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_features)
 
-        **References**:
+        References
+        ----------
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:

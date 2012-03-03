@@ -414,9 +414,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     PCA
     ProbabilisticPCA
 
-    Notes
-    -------
-    **References**:
+    References
+    ----------
 
     .. [Halko2009] `Finding structure with randomness: Stochastic algorithms
       for constructing approximate matrix decompositions Halko, et al., 2009

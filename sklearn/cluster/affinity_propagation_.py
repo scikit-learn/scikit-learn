@@ -45,10 +45,10 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    **References**:
+    References
+    ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-
     """
     S = as_float_array(S, copy=copy)
 
@@ -188,13 +188,14 @@ class AffinityPropagation(BaseEstimator):
     -----
     See examples/plot_affinity_propagation.py for an example.
 
-    **References**:
+    The algorithmic complexity of affinity propagation is quadratic
+    in the number of points.
+
+    References
+    ----------
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-
-    The algorithmic complexity of affinity propagation is quadratic
-    in the number of points.
     """
 
     def __init__(self, damping=.5, max_iter=200, convit=30, copy=True):
