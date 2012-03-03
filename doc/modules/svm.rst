@@ -135,9 +135,9 @@ two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-    intercept_scaling=1, loss='l2', multi_class=False, penalty='l2',
-    scale_C=True, tol=0.0001)
+    LinearSVC(C=1.0, class_weight=None, crammer_singer=False, dual=True,
+    fit_intercept=True, intercept_scaling=1, loss='l2', multi_class=None,
+    penalty='l2', scale_C=True, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
