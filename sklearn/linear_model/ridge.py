@@ -272,8 +272,9 @@ class RidgeClassifier(Ridge):
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
             copy_X=True, tol=1e-3, class_weight=None):
-        super(RidgeClassifier, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
-                normalize=normalize, copy_X=copy_X, tol=tol)
+        super(RidgeClassifier, self).__init__(alpha=alpha,
+                fit_intercept=fit_intercept, normalize=normalize,
+                copy_X=copy_X, tol=tol)
         self.class_weight = class_weight
 
     def fit(self, X, y, solver='auto'):
@@ -617,10 +618,11 @@ class RidgeClassifierCV(RidgeCV):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, cv=None, class_weight=None):
+            normalize=False, score_func=None, loss_func=None, cv=None,
+            class_weight=None):
         super(RidgeClassifierCV, self).__init__(alphas=alphas,
-                fit_intercept=fit_intercept, normalize=normalize, score_func=score_func,
-                loss_func=loss_func, cv=cv)
+                fit_intercept=fit_intercept, normalize=normalize,
+                score_func=score_func, loss_func=loss_func, cv=cv)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
