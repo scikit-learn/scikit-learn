@@ -171,11 +171,11 @@ features::
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 
-.. include:: olivetti_faces.rst 
+.. include:: olivetti_faces.inc 
 
-.. include:: twenty_newsgroups.rst
+.. include:: twenty_newsgroups.inc
 
-.. include:: mldata.rst
+.. include:: mldata.inc
 
-.. include:: labeled_faces.rst
+.. include:: labeled_faces.inc
 

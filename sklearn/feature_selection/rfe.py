@@ -67,7 +67,7 @@ class RFE(BaseEstimator):
     >>> from sklearn.feature_selection import RFE
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    >>> estimator = SVR(kernel="linear")
+    >>> estimator = SVR(kernel="linear", C=100)
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
@@ -213,7 +213,7 @@ class RFECV(RFE):
         If int, it is the number of folds.
         If None, 3-fold cross-validation is performed by default.
         Specific cross-validation objects can also be passed, see
-        `scikits.learn.cross_validation module` for details.
+        `sklearn.cross_validation module` for details.
 
     loss_function : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the
@@ -247,7 +247,7 @@ class RFECV(RFE):
     >>> from sklearn.feature_selection import RFECV
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    >>> estimator = SVR(kernel="linear")
+    >>> estimator = SVR(kernel="linear", C=100)
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE

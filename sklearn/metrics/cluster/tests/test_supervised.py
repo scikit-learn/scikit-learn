@@ -30,12 +30,7 @@ def assert_raise_message(exception, message, callable, *args, **kwargs):
         callable(*args, **kwargs)
         raise AssertionError("Should have raised %r" % exception(message))
     except exception as e:
-        if hasattr(e, 'message'):
-            # python 2.x
-            assert e.message == message
-        else:
-            # python 3.x
-            assert e.args[0] == message
+        assert str(e) == message
 
 
 def test_error_messages_on_wrong_input():

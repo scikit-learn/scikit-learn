@@ -67,9 +67,7 @@ TEST_FOLDER = "20news-bydate-test"
 
 
 def download_20newsgroups(target_dir, cache_path):
-    """ Download the 20Newsgroups data and convert is in a zipped pickle
-        storage.
-    """
+    """Download the 20 newsgroups data and stored it as a zipped pickle."""
     archive_path = os.path.join(target_dir, ARCHIVE_NAME)
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
@@ -88,8 +86,8 @@ def download_20newsgroups(target_dir, cache_path):
 
     # Store a zipped pickle
     cache = dict(
-            train=load_files(train_path),
-            test=load_files(test_path)
+            train=load_files(train_path, charset='latin1'),
+            test=load_files(test_path, charset='latin1')
         )
     open(cache_path, 'wb').write(pickle.dumps(cache).encode('zip'))
     shutil.rmtree(target_dir)

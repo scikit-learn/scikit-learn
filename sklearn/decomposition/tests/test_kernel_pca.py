@@ -33,6 +33,11 @@ def test_kernel_pca():
             assert_equal(X_pred2.shape, X_pred.shape)
 
 
+def test_invalid_parameters():
+    assert_raises(ValueError, KernelPCA, 10, fit_inverse_transform=True,
+                  kernel='precomputed')
+
+
 def test_kernel_pca_sparse():
     rng = np.random.RandomState(0)
     X_fit = sp.csr_matrix(rng.random_sample((5, 4)))

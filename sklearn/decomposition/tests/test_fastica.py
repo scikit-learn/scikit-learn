@@ -4,6 +4,7 @@ Test the fastica algorithm.
 
 import numpy as np
 from numpy.testing import assert_almost_equal
+from nose.tools import assert_true
 
 from scipy import stats
 import itertools
@@ -37,11 +38,11 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert (w ** 2).sum() < 1.e-10
+    assert_true((w ** 2).sum() < 1.e-10)
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
-    assert((tmp[:5] ** 2).sum() < 1.e-10)
+    assert_true((tmp[:5] ** 2).sum() < 1.e-10)
 
 
 def test_fastica(add_noise=False):

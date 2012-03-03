@@ -31,6 +31,14 @@
 {%- endif %}
 
 {% block header %}
+   {%- if theme_oldversion == true %}
+     <div class="warning-wrapper">
+       <p>Warning: This documentation is
+         for {{project}} <strong>version {{ release|e }}</strong>.
+         &mdash; <a href="http://scikit-learn.org/stable/">
+           Latest stable version</a></p></p>
+     </div>
+   {%- endif %}
     <div class="header-wrapper">
       <div class="header">
         {%- if logo %}

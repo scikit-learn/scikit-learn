@@ -2,9 +2,12 @@
 Ridge regression
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
+# Author:   Mathieu Blondel <mathieu@mblondel.org>
+#           Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
 # License: Simplified BSD
 
+
+import warnings
 import numpy as np
 
 from .base import LinearModel
@@ -230,7 +233,7 @@ class RidgeClassifier(Ridge):
     alpha : float
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
+        Alpha corresponds to (2*C)^-1 in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -240,6 +243,12 @@ class RidgeClassifier(Ridge):
 
     normalize : boolean, optional
         If True, the regressors X are normalized
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    tol: float
+        Precision of the solution.
 
     Attributes
     ----------
@@ -343,47 +352,81 @@ class _RidgeGCV(LinearModel):
     """
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, copy_X=True):
+            normalize=False, score_func=None, loss_func=None, copy_X=True,
+            gcv_mode=None):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
         self.copy_X = copy_X
+        self.gcv_mode = gcv_mode
 
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
         from scipy import linalg
         v, Q = linalg.eigh(K)
-        return K, v, Q
+        QT_y = np.dot(Q.T, y)
+        return v, Q, QT_y
 
-    def _errors(self, v, Q, y, alpha):
-        G = np.dot(np.dot(Q, np.diag(1.0 / (v + alpha))), Q.T)
-        c = np.dot(G, y)
-        G_diag = np.diag(G)
-        # handle case when y is 2-d
-        G_diag = G_diag if len(y.shape) == 1 else G_diag[:, np.newaxis]
+    def _decomp_diag(self, v_prime, Q):
+        # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
+        return (v_prime * Q ** 2).sum(axis=-1)
+
+    def _diag_dot(self, D, B):
+        # compute dot(diag(D), B)
+        if len(B.shape) > 1:
+            # handle case where B is > 1-d
+            D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
+        return D * B
+
+    def _errors(self, alpha, y, v, Q, QT_y):
+        # don't construct matrix G, instead compute action on y & diagonal
+        w = 1.0 / (v + alpha)
+        c = np.dot(Q, self._diag_dot(w, QT_y))
+        G_diag = self._decomp_diag(w, Q)
+        # handle case where y is 2-d
+        if len(y.shape) != 1:
+            G_diag = G_diag[:, np.newaxis]
         return (c / G_diag) ** 2, c
 
-    def _values(self, K, v, Q, y, alpha):
-        n_samples = y.shape[0]
+    def _values(self, alpha, y, v, Q, QT_y):
+        # don't construct matrix G, instead compute action on y & diagonal
+        w = 1.0 / (v + alpha)
+        c = np.dot(Q, self._diag_dot(w, QT_y))
+        G_diag = self._decomp_diag(w, Q)
+        # handle case where y is 2-d
+        if len(y.shape) != 1:
+            G_diag = G_diag[:, np.newaxis]
+        return y - (c / G_diag), c
 
-        G = np.dot(np.dot(Q, np.diag(1.0 / (v + alpha))), Q.T)
-        c = np.dot(G, y)
-        KG = np.dot(K, G)
-        #KG = np.dot(np.dot(Q, np.diag(v / (v + alpha))), Q.T)
-        KG_diag = np.diag(KG)
+    def _pre_compute_svd(self, X, y):
+        from scipy import sparse
+        if sparse.issparse(X) and hasattr(X, 'toarray'):
+            X = X.toarray()
+        U, s, _ = np.linalg.svd(X, full_matrices=0)
+        v = s ** 2
+        UT_y = np.dot(U.T, y)
+        return v, U, UT_y
 
-        denom = np.ones(n_samples) - KG_diag
-        if len(y.shape) == 2:
+    def _errors_svd(self, alpha, y, v, U, UT_y):
+        w = ((v + alpha) ** -1) - (alpha ** -1)
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
+        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
+        if len(y.shape) != 1:
+            # handle case where y is 2-d
+            G_diag = G_diag[:, np.newaxis]
+        return (c / G_diag) ** 2, c
+
+    def _values_svd(self, alpha, y, v, U, UT_y):
+        w = ((v + alpha) ** -1) - (alpha ** -1)
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
+        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
+        if len(y.shape) != 1:
             # handle case when y is 2-d
-            KG_diag = KG_diag[:, np.newaxis]
-            denom = denom[:, np.newaxis]
-
-        num = np.dot(KG, y) - KG_diag * y
-
-        return num / denom, c
+            G_diag = G_diag[:, np.newaxis]
+        return y - (c / G_diag), c
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -406,12 +449,38 @@ class _RidgeGCV(LinearModel):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
-        n_samples = X.shape[0]
+        n_samples, n_features = X.shape
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
 
-        K, v, Q = self._pre_compute(X, y)
+        gcv_mode = self.gcv_mode
+        with_sw = len(np.shape(sample_weight))
+
+        if gcv_mode is None or gcv_mode == 'auto':
+            if n_features > n_samples or with_sw:
+                gcv_mode = 'eigen'
+            else:
+                gcv_mode = 'svd'
+        elif gcv_mode == "svd" and with_sw:
+            # FIXME non-uniform sample weights not yet supported
+            warnings.warn("non-uniform sample weights unsupported for svd, "
+                "forcing usage of eigen")
+            gcv_mode = 'eigen'
+
+        if gcv_mode == 'eigen':
+            _pre_compute = self._pre_compute
+            _errors = self._errors
+            _values = self._values
+        elif gcv_mode == 'svd':
+            # assert n_samples >= n_features
+            _pre_compute = self._pre_compute_svd
+            _errors = self._errors_svd
+            _values = self._values_svd
+        else:
+            raise ValueError('bad gcv_mode "%s"' % gcv_mode)
+
+        v, Q, QT_y = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         M = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -420,9 +489,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = self._errors(v, Q, y, sample_weight * alpha)
+                out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
             else:
-                out, c = self._values(K, v, Q, y, sample_weight * alpha)
+                out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
             M[:, i] = out.ravel()
             C.append(c)
 
@@ -446,8 +515,7 @@ class RidgeCV(LinearModel):
     """Ridge regression with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation. Currently, only the n_features >
-    n_samples case is handled efficiently.
+    efficient Leave-One-Out cross-validation.
 
     Parameters
     ----------
@@ -455,7 +523,7 @@ class RidgeCV(LinearModel):
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -466,15 +534,30 @@ class RidgeCV(LinearModel):
     normalize : boolean, optional
         If True, the regressors X are normalized
 
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (small is good)
-        if None is passed, the score of the estimator is maximized
-
     score_func: callable, optional
         function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (big is good)
+        order to evaluate the performance of prediction (big is good)
         if None is passed, the score of the estimator is maximized
+
+    loss_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediction (small is good)
+        if None is passed, the score of the estimator is maximized
+
+    cv : cross-validation generator, optional
+        If None, Generalized Cross-Validation (efficient Leave-One-Out)
+        will be used.
+
+    gcv_mode: {None, 'auto', 'svd', eigen'}, optional
+        Flag indicating which strategy to use when performing Generalized
+        Cross-Validation. Options are::
+
+            'auto' : use svd if n_samples > n_features, otherwise use eigen
+            'svd' : force computation via svd of X
+            'eigen' : force computation via eigendecomposition of X^T X
+
+        The 'auto' mode is the default and is intended to pick the cheaper
+        option of the two depending upon the shape of the training data.
 
     See also
     --------
@@ -482,13 +565,15 @@ class RidgeCV(LinearModel):
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                   normalize=False, score_func=None, loss_func=None, cv=None):
+                   normalize=False, score_func=None, loss_func=None, cv=None,
+                   gcv_mode=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.score_func = score_func
         self.loss_func = loss_func
         self.cv = cv
+        self.gcv_mode = gcv_mode
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -504,17 +589,14 @@ class RidgeCV(LinearModel):
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
 
-        cv : cross-validation generator, optional
-            If None, Generalized Cross-Validationn (efficient Leave-One-Out)
-            will be used.
-
         Returns
         -------
         self : Returns self.
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                                  self.score_func, self.loss_func)
+                                  self.score_func, self.loss_func,
+                                  gcv_mode=self.gcv_mode)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.best_alpha = estimator.best_alpha
         else:
@@ -549,13 +631,13 @@ class RidgeClassifierCV(RidgeCV):
         y : array-like, shape = [n_samples]
             Target values.
 
+        sample_weight : float or numpy array of shape [n_samples]
+            Sample weight
+
         class_weight : dict, optional
             Weights associated with classes in the form
             {class_label : weight}. If not given, all classes are
             supposed to have weight one.
-
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
 
         Returns
         -------

@@ -37,13 +37,13 @@ from sklearn.mixture import GMM
 
 def make_ellipses(gmm, ax):
     for n, color in enumerate('rgb'):
-        v, w = np.linalg.eigh(gmm.covars[n][:2, :2])
+        v, w = np.linalg.eigh(gmm._get_covars()[n][:2, :2])
         u = w[0] / np.linalg.norm(w[0])
-        angle = np.arctan(u[1] / u[0])
+        angle = np.arctan2(u[1], u[0])
         angle = 180 * angle / np.pi  # convert to degrees
         v *= 9
-        ell = mpl.patches.Ellipse(gmm.means[n, :2], v[0], v[1], 180 + angle,
-                                  color=color)
+        ell = mpl.patches.Ellipse(gmm.means_[n, :2], v[0], v[1],
+                                  180 + angle, color=color)
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
         ax.add_artist(ell)
@@ -65,7 +65,7 @@ y_test = iris.target[test_index]
 n_classes = len(np.unique(y_train))
 
 # Try GMMs using different types of covariances.
-classifiers = dict((x, GMM(n_components=n_classes, cvtype=x))
+classifiers = dict((x, GMM(n_components=n_classes, covariance_type=x))
                     for x in ['spherical', 'diag', 'tied', 'full'])
 
 n_classifiers = len(classifiers)
@@ -78,8 +78,8 @@ pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
 for index, (name, classifier) in enumerate(classifiers.iteritems()):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
-    classifier.means = [X_train[y_train == i, :].mean(axis=0)
-                        for i in xrange(n_classes)]
+    classifier.means_ = np.array([X_train[y_train == i].mean(axis=0)
+                                  for i in xrange(n_classes)])
 
     # Train the other parameters using the EM algorithm.
     classifier.fit(X_train, init_params='wc', n_iter=20)

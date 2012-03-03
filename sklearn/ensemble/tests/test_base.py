@@ -6,7 +6,7 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3
 
 from numpy.testing import assert_equal
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 
 from sklearn.ensemble import BaseEnsemble
 from sklearn.tree import DecisionTreeClassifier
@@ -25,7 +25,7 @@ def test_base():
     assert_equal(3, len(ensemble))
     assert_equal(3, len(ensemble.estimators_))
 
-    assert isinstance(ensemble[0], DecisionTreeClassifier)
+    assert_true(isinstance(ensemble[0], DecisionTreeClassifier))
 
 
 def test_error():

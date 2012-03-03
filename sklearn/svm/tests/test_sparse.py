@@ -42,14 +42,14 @@ def test_SVC():
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
-    assert sparse.issparse(sp_clf.support_vectors_)
+    assert_true(sparse.issparse(sp_clf.support_vectors_))
     assert_array_almost_equal(clf.support_vectors_,
             sp_clf.support_vectors_.todense())
 
-    assert sparse.issparse(sp_clf.dual_coef_)
+    assert_true(sparse.issparse(sp_clf.dual_coef_))
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
 
-    assert sparse.issparse(sp_clf.coef_)
+    assert_true(sparse.issparse(sp_clf.coef_))
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T), sp_clf.predict(T))
 
@@ -104,7 +104,7 @@ def test_LinearSVC():
     clf = svm.LinearSVC().fit(X, Y)
     sp_clf = svm.LinearSVC().fit(X_sp, Y)
 
-    assert sp_clf.fit_intercept
+    assert_true(sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
 
@@ -138,17 +138,17 @@ def test_weight():
     """
     Test class weights
     """
-
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
     X_ = sparse.csr_matrix(X_)
-    for clf in (linear_model.LogisticRegression(),
-                svm.LinearSVC(),
-                svm.SVC()):
-        clf.fit(X_[:180], y_[:180], class_weight={0: 5})
+    for clf in (linear_model.LogisticRegression(C=180),
+                svm.LinearSVC(C=len(X)),
+                svm.SVC(C=len(X))):
+        clf.set_params(class_weight={0: 5})
+        clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
-        assert np.sum(y_pred == y_[180:]) >= 11
+        assert_true(np.sum(y_pred == y_[180:]) >= 11)
 
 
 def test_sample_weights():

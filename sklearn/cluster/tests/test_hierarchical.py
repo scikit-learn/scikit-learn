@@ -6,6 +6,7 @@ Author : Vincent Michel, 2010
 
 import numpy as np
 from scipy.cluster import hierarchy
+from nose.tools import assert_true
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
@@ -22,7 +23,7 @@ def test_structured_ward_tree():
     connectivity = grid_to_graph(*mask.shape)
     children, n_components, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
-    assert(len(children) + n_leaves == n_nodes)
+    assert_true(len(children) + n_leaves == n_nodes)
 
 
 def test_unstructured_ward_tree():
@@ -33,7 +34,7 @@ def test_unstructured_ward_tree():
     X = np.random.randn(50, 100)
     children, n_nodes, n_leaves = ward_tree(X.T)
     n_nodes = 2 * X.shape[1] - 1
-    assert(len(children) + n_leaves == n_nodes)
+    assert_true(len(children) + n_leaves == n_nodes)
 
 
 def test_height_ward_tree():
@@ -46,7 +47,7 @@ def test_height_ward_tree():
     connectivity = grid_to_graph(*mask.shape)
     children, n_nodes, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
-    assert(len(children) + n_leaves == n_nodes)
+    assert_true(len(children) + n_leaves == n_nodes)
 
 
 def test_ward_clustering():
@@ -59,7 +60,7 @@ def test_ward_clustering():
     connectivity = grid_to_graph(*mask.shape)
     clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
-    assert(np.size(np.unique(clustering.labels_)) == 10)
+    assert_true(np.size(np.unique(clustering.labels_)) == 10)
 
 
 def test_ward_agglomeration():
@@ -72,12 +73,12 @@ def test_ward_agglomeration():
     connectivity = grid_to_graph(*mask.shape)
     ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
-    assert(np.size(np.unique(ward.labels_)) == 5)
+    assert_true(np.size(np.unique(ward.labels_)) == 5)
 
     Xred = ward.transform(X)
-    assert(Xred.shape[1] == 5)
+    assert_true(Xred.shape[1] == 5)
     Xfull = ward.inverse_transform(Xred)
-    assert(np.unique(Xfull[0]).size == 5)
+    assert_true(np.unique(Xfull[0]).size == 5)
 
 
 def assess_same_labelling(cut1, cut2):
@@ -89,7 +90,7 @@ def assess_same_labelling(cut1, cut2):
         ecut = np.zeros((n, k))
         ecut[np.arange(n), cut] = 1
         co_clust.append(np.dot(ecut, ecut.T))
-    assert((co_clust[0] == co_clust[1]).all())
+    assert_true((co_clust[0] == co_clust[1]).all())
 
 
 def test_scikit_vs_scipy():
@@ -119,7 +120,7 @@ def test_connectivity_popagation():
     Check that connectivity in the ward tree is propagated correctly during
     merging.
     """
-    from sklearn.neighbors import kneighbors_graph
+    from sklearn.neighbors import NearestNeighbors
 
     X = np.array([(.014, .120), (.014, .099), (.014, .097),
                   (.017, .153), (.017, .153), (.018, .153),
@@ -127,8 +128,8 @@ def test_connectivity_popagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
                  ])
-
-    connectivity = kneighbors_graph(X, n_neighbors=10)
+    nn = NearestNeighbors(n_neighbors=10, warn_on_equidistant=False).fit(X)
+    connectivity = nn.kneighbors_graph(X)
     ward = Ward(n_clusters=4, connectivity=connectivity)
     # If changes are not propagated correctly, fit crashes with an
     # IndexError

@@ -2,7 +2,7 @@
 Testing for grid search module (sklearn.grid_search)
 
 """
-from nose.tools import assert_equal, assert_raises
+from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal
 
 import numpy as np
@@ -47,7 +47,7 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert grid_search.grid_scores_[i][0] == {'foo_param': foo_i}
+        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)
 
@@ -79,7 +79,7 @@ def test_grid_search_sparse():
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
-    assert np.mean(y_pred == y_pred2) >= .9
+    assert_true(np.mean(y_pred == y_pred2) >= .9)
     assert_equal(C, C2)
 
 
@@ -113,7 +113,7 @@ class BrokenClassifier(BaseEstimator):
         self.parameter = parameter
 
     def fit(self, X, y):
-        assert not hasattr(self, 'has_been_fit_')
+        assert_true(not hasattr(self, 'has_been_fit_'))
         self.has_been_fit_ = True
 
     def predict(self, X):

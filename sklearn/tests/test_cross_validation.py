@@ -5,13 +5,14 @@ from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true
 from nose.tools import assert_raises
+from nose.tools import assert_equal
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
 from ..datasets import load_iris
 from ..metrics import zero_one_score
 from ..metrics import f1_score
-from ..metrics import mean_square_error
+from ..metrics import mean_squared_error
 from ..metrics import r2_score
 from ..metrics import explained_variance_score
 from ..cross_validation import StratifiedKFold
@@ -20,6 +21,7 @@ from ..linear_model import Ridge
 from ..svm.sparse import SVC as SparseSVC
 from .. import cross_validation
 from ..cross_validation import permutation_test_score
+from ..cross_validation import train_test_split
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -68,9 +70,30 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, y))
 
 
+def test_train_test_split_errors():
+    assert_raises(ValueError, train_test_split)
+    assert_raises(ValueError, train_test_split, range(3), train_fraction=1.1)
+    assert_raises(ValueError, train_test_split, range(3), test_fraction=0.6,
+                  train_fraction=0.6)
+    assert_raises(TypeError, train_test_split, range(3), some_argument=1.1)
+    assert_raises(ValueError, train_test_split, range(3), range(42))
+
+
+def test_train_test_split():
+    X = np.arange(100).reshape((10, 10))
+    X_s = coo_matrix(X)
+    y = range(10)
+    X_train, X_test, X_s_train, X_s_test, y_train, y_test = train_test_split(
+        X, X_s, y)
+    assert_array_equal(X_train, X_s_train.toarray())
+    assert_array_equal(X_test, X_s_test.toarray())
+    assert_array_equal(X_train[:, 0], y_train * 10)
+    assert_array_equal(X_test[:, 0], y_test * 10)
+
+
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear')
+    clf = SVC(kernel='linear', C=len(iris.data) * 4 // 5)
 
     # Default score (should be the accuracy score)
     scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
@@ -107,8 +130,8 @@ def test_cross_val_score_with_score_func_regression():
 
     # Mean squared error
     mse_scores = cross_validation.cross_val_score(reg, X, y, cv=5,
-                                           score_func=mean_square_error)
-    expected_mse = [4578.47, 3319.02, 1646.29, 1639.58, 10092.00]
+                                           score_func=mean_squared_error)
+    expected_mse = np.array([763.07, 553.16, 274.38, 273.26, 1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
@@ -122,7 +145,7 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear')
+    svm = SVC(kernel='linear', C=len(X))
     cv = StratifiedKFold(y, 2)
 
     score, scores, pvalue = permutation_test_score(
@@ -138,7 +161,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SparseSVC(kernel='linear')
+    svm_sparse = SparseSVC(kernel='linear', C=len(X))
     cv_sparse = StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = permutation_test_score(
         svm_sparse, X_sparse, y, zero_one_score, cv_sparse,
@@ -206,6 +229,13 @@ def test_shufflesplit_errors():
                   test_fraction=1.0)
     assert_raises(ValueError, cross_validation.ShuffleSplit, 10,
                   test_fraction=0.1, train_fraction=0.95)
+
+
+def test_shufflesplit_reproducible():
+    # Check that iterating twice on the ShuffleSplit gives the same
+    # sequence of train-test when the random_state is given
+    ss = cross_validation.ShuffleSplit(10, random_state=21)
+    assert_array_equal(list(a for a, b in ss), list(a for a, b in ss))
 
 
 def test_cross_indices_exception():

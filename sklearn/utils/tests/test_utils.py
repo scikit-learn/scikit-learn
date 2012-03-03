@@ -12,24 +12,24 @@ from sklearn.utils import safe_mask
 
 def test_make_rng():
     """Check the check_random_state utility function behavior"""
-    assert check_random_state(None) is np.random.mtrand._rand
-    assert check_random_state(np.random) is np.random.mtrand._rand
+    assert_true(check_random_state(None) is np.random.mtrand._rand)
+    assert_true(check_random_state(np.random) is np.random.mtrand._rand)
 
     rng_42 = np.random.RandomState(42)
-    assert check_random_state(42).randint(100) == rng_42.randint(100)
+    assert_true(check_random_state(42).randint(100) == rng_42.randint(100))
 
     rng_42 = np.random.RandomState(42)
-    assert check_random_state(rng_42) is rng_42
+    assert_true(check_random_state(rng_42) is rng_42)
 
     rng_42 = np.random.RandomState(42)
-    assert check_random_state(43).randint(100) != rng_42.randint(100)
+    assert_true(check_random_state(43).randint(100) != rng_42.randint(100))
 
     assert_raises(ValueError, check_random_state, "some invalid seed")
 
 
 def test_resample_noarg():
     """Border case not worth mentioning in doctests"""
-    assert resample() is None
+    assert_true(resample() is None)
 
 
 def test_deprecated():

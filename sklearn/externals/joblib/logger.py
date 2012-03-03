@@ -8,6 +8,7 @@ This module needs much love to become useful.
 # Copyright (c) 2008 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
+from __future__ import with_statement
 
 import time
 import sys

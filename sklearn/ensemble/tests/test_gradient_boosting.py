@@ -52,8 +52,10 @@ def test_parameter_checks():
 
     assert_raises(ValueError, GradientBoostingRegressor, loss='foobar')
 
-    assert_raises(ValueError, GradientBoostingClassifier, min_split=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier, min_split=-1.0)
+    assert_raises(ValueError, GradientBoostingClassifier,
+                  min_samples_split=0.0)
+    assert_raises(ValueError, GradientBoostingClassifier,
+                  min_samples_split=-1.0)
 
     assert_raises(ValueError, GradientBoostingClassifier, subsample=0.0)
     assert_raises(ValueError, GradientBoostingClassifier, subsample=1.1)
@@ -66,7 +68,7 @@ def test_parameter_checks():
 
     # test fit before feature importance
     assert_raises(ValueError,
-                  lambda :GradientBoostingClassifier().feature_importances_)
+                  lambda: GradientBoostingClassifier().feature_importances_)
 
     # test value error on multi-class
     assert_raises(ValueError,
@@ -86,14 +88,16 @@ def test_classification_synthetic():
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(n_estimators=100, min_split=1, max_depth=1,
+    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
+                                      max_depth=1,
                                       learn_rate=1.0, random_state=0)
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     assert error_rate < 0.085, \
            "GB failed with error %.4f" % error_rate
 
-    gbrt = GradientBoostingClassifier(n_estimators=200, min_split=1, max_depth=1,
+    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
+                                      max_depth=1,
                                       learn_rate=1.0, subsample=0.5,
                                       random_state=0)
     gbrt.fit(X_train, y_train)
@@ -106,8 +110,9 @@ def test_boston():
     """Check consistency on dataset boston house prices with least squares
     and least absolute deviation. """
     for loss in ("ls", "lad"):
-        clf = GradientBoostingRegressor(n_estimators=100, loss=loss, max_depth=4,
-                                        min_split=1, random_state=1)
+        clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
+                                        max_depth=4,
+                                        min_samples_split=1, random_state=1)
         assert_raises(ValueError, clf.predict, boston.data)
         clf.fit(boston.data, boston.target)
         y_pred = clf.predict(boston.data)
@@ -120,7 +125,7 @@ def test_regression_synthetic():
     `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996). """
     random_state = check_random_state(1)
     regression_params = {'n_estimators': 100, 'max_depth': 4,
-                         'min_split': 1, 'learn_rate': 0.1,
+                         'min_samples_split': 1, 'learn_rate': 0.1,
                          'loss': 'ls'}
 
     # Friedman1
@@ -154,7 +159,7 @@ def test_regression_synthetic():
 
 def test_feature_importances():
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=4,
-                                    min_split=1, random_state=1)
+                                    min_samples_split=1, random_state=1)
     clf.fit(boston.data, boston.target)
     feature_importances = clf.feature_importances_
 

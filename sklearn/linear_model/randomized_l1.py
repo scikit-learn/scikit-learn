@@ -6,6 +6,7 @@ sparse Logistic Regression
 # Author: Gael Varoquaux, Alexandre Gramfort
 #
 # License: BSD Style.
+import itertools
 
 import numpy as np
 from scipy.sparse import issparse
@@ -92,7 +93,9 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
-        scores_ = memory.cache(_resample_model)(estimator_func, X, y,
+        scores_ = memory.cache(_resample_model,
+                ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
+                                    estimator_func, X, y,
                                     scaling=self.scaling,
                                     n_resampling=self.n_resampling,
                                     n_jobs=self.n_jobs,
@@ -263,7 +266,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
 
     **References**:
 
@@ -470,11 +473,36 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
 ###############################################################################
 # Stability paths
+def _lasso_stability_path(X, y, mask, weights, eps):
+    "Inner loop of lasso_stability_path"
+    X = X * weights[np.newaxis, :]
+    X = X[mask, :]
+    y = y[mask]
+
+    alpha_max = np.max(np.abs(np.dot(X.T, y))) / X.shape[0]
+    alpha_min = eps * alpha_max  # set for early stopping in path
+    alphas, _, coefs = lars_path(X, y, method='lasso', verbose=False,
+                                    alpha_min=alpha_min)
+    # Scale alpha by alpha_max
+    alphas /= alphas[0]
+    # Sort alphas in assending order
+    alphas = alphas[::-1]
+    coefs = coefs[:, ::-1]
+    # Get rid of the alphas that are too small
+    mask = alphas >= eps
+    # We also want to keep the first one: it should be close to the OLS
+    # solution
+    mask[0] = True
+    alphas = alphas[mask]
+    coefs = coefs[:, mask]
+    return alphas, coefs
+
 
 def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          n_resampling=200, n_grid=100,
                          sample_fraction=0.75,
-                         eps=4 * np.finfo(np.float).eps):
+                         eps=4 * np.finfo(np.float).eps, n_jobs=1,
+                         verbose=False):
     """Stabiliy path based on randomized Lasso estimates
 
     Parameters
@@ -506,6 +534,13 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     eps : float
         Smallest value of alpha / alpha_max considered
 
+    n_jobs : integer, optional
+        Number of CPUs to use during the resampling. If '-1', use
+        all the CPUs
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
     Returns
     -------
     alphas_grid : array, shape ~ [n_grid]
@@ -517,8 +552,6 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     Notes
     -----
     See examples/linear_model/plot_randomized_lasso.py for an example.
-
-    XXX : todo make it run in parallel
     """
     rng = check_random_state(random_state)
 
@@ -528,39 +561,15 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     n_samples, n_features = X.shape
 
-    paths = list()
-    all_alphas = set()
-    for k in xrange(n_resampling):
-        weights = 1. - scaling * rng.random_integers(0, 1, size=(n_features,))
-        X_r = X * weights[np.newaxis, :]
+    paths = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            delayed(_lasso_stability_path)(X, y,
+                    mask=rng.rand(n_samples) < sample_fraction,
+                    weights=1. - scaling * rng.random_integers(0,
+                                    1, size=(n_features,)),
+                    eps=eps)
+            for k in xrange(n_resampling))
 
-        if sample_fraction < 1.:
-            mask = rng.rand(n_samples) < sample_fraction
-            X_r = X_r[mask, :]
-            y_r = y[mask]
-        else:
-            y_r = y
-
-        alpha_max = np.max(np.abs(np.dot(X_r.T, y_r))) / X.shape[0]
-        alpha_min = eps * alpha_max  # set for early stopping in path
-        alphas, _, coefs = lars_path(X_r, y_r, method='lasso', verbose=False,
-                                     alpha_min=alpha_min)
-        # Scale alpha by alpha_max
-        alphas /= alphas[0]
-        # Sort alphas in assending order
-        alphas = alphas[::-1]
-        coefs = coefs[:, ::-1]
-        # Get rid of the alphas that are too small
-        mask = alphas >= eps
-        # We also want to keep the first one: it should be close to the OLS
-        # solution
-        mask[0] = True
-        alphas = alphas[mask]
-        coefs = coefs[:, mask]
-        paths.append((alphas, coefs))
-        all_alphas = all_alphas.union(list(alphas))
-
-    all_alphas = sorted(list(all_alphas))
+    all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values
     stride = int(max(1, int(len(all_alphas) / float(n_grid))))
     all_alphas = all_alphas[::stride]

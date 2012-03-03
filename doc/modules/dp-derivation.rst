@@ -1,5 +1,5 @@
 
-.. _dpgmm:
+.. _dpgmm_derivation:
 
 .. currentmodule:: sklearn.mixture
 
@@ -43,7 +43,16 @@ Update rules for VB inference
 ==============================
 
 Here the full mathematical derivation of the Variational Bayes update
-rules for Gaussian Mixture Models is given.
+rules for Gaussian Mixture Models is given. The main parameters of the
+model, defined for any class :math:`k \in [1..K]` are the class
+proportion :math:`\phi_k`, the mean parameters :math:`\mu_k`, the
+covariance parameters :math:`\Sigma_k`, which is characterized by
+variational Wishart density, :math:`Wishart(a_k, \mathbf{B_k})`, where
+:math:`a` is the degrees of freedom, and :math:`B` is the
+scale matrix. Depending on the covariance parameterization,
+:math:`B_k` can be a positive scalar, a positive vector or a Symmetric
+Positive Definite matrix.
+
 
 The spherical model
 ---------------------

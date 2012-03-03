@@ -182,8 +182,8 @@ def test_bound_methods_hash():
     """
     a = Klass()
     b = Klass()
-    nose.tools.assert_equal(hash(filter_args(a.f, [], 1)),
-                            hash(filter_args(b.f, [], 1)))
+    nose.tools.assert_equal(hash(filter_args(a.f, [], (1, ))),
+                            hash(filter_args(b.f, [], (1, ))))
 
 
 @nose.tools.with_setup(test_memory_setup_func, test_memory_teardown_func)
@@ -193,5 +193,5 @@ def test_bound_cached_methods_hash():
     """
     a = KlassWithCachedMethod()
     b = KlassWithCachedMethod()
-    nose.tools.assert_equal(hash(filter_args(a.f.func, [], 1)),
-                            hash(filter_args(b.f.func, [], 1)))
+    nose.tools.assert_equal(hash(filter_args(a.f.func, [], (1, ))),
+                            hash(filter_args(b.f.func, [], (1, ))))

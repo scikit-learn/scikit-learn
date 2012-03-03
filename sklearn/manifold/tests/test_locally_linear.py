@@ -1,5 +1,6 @@
 from itertools import product
 import numpy as np
+from nose.tools import assert_true
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
@@ -31,7 +32,7 @@ def test_barycenter_kneighbors_graph():
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
     pred = np.dot(A.todense(), X)
-    assert np.linalg.norm(pred - X) / X.shape[0] < 1
+    assert_true(np.linalg.norm(pred - X) / X.shape[0] < 1)
 
 
 #----------------------------------------------------------------------
@@ -52,7 +53,7 @@ def test_lle_simple_grid():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert clf.embedding_.shape[1] == out_dim
+        assert_true(clf.embedding_.shape[1] == out_dim)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         # FIXME: ARPACK fails this test ...
@@ -83,7 +84,7 @@ def test_lle_manifold():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert clf.embedding_.shape[1] == out_dim
+        assert_true(clf.embedding_.shape[1] == out_dim)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         details = "solver: " + solver

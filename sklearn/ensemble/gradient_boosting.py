@@ -183,8 +183,8 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
 
-    def __init__(self, loss, learn_rate, n_estimators, min_split, max_depth, init,
-                 subsample, random_state):
+    def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
+                 min_samples_leaf, max_depth, init, subsample, random_state):
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
@@ -197,9 +197,13 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("loss '%s' not supported" % loss)
         self.loss = loss
 
-        if min_split <= 0:
-            raise ValueError("min_split must be larger than 0.")
-        self.min_split = min_split
+        if min_samples_split <= 0:
+            raise ValueError("min_samples_split must be larger than 0.")
+        self.min_samples_split = min_samples_split
+
+        if min_samples_leaf <= 0:
+            raise ValueError("min_samples_leaf must be larger than 0.")
+        self.min_samples_leaf = min_samples_leaf
 
         if subsample <= 0.0 or subsample > 1:
             raise ValueError("subsample must be in (0,1]")
@@ -285,9 +289,10 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # induce regression tree on residuals
             tree = _build_tree(X, residual, MSE(), self.max_depth,
-                               self.min_split, 0.0, n_features,
-                               self.random_state, 1, _find_best_split,
-                               sample_mask, X_argsorted, True)
+                               self.min_samples_split, self.min_samples_leaf,
+                               0.0, n_features, self.random_state,
+                               1, _find_best_split, sample_mask,
+                               X_argsorted, True)
 
             # update tree leafs
             loss.update_terminal_regions(tree, X, y, residual, y_pred,
@@ -364,9 +369,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_split : integer, optional (default=1)
-        minimum number of samples required at any leaf node. Use larger
-        value if number of samples is large.
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples required to be at a leaf node.
 
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
@@ -408,12 +415,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """
 
     def __init__(self, loss='deviance', learn_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_split=1, max_depth=3,
-                 init=None, random_state=None):
+                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+                 max_depth=3, init=None, random_state=None):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learn_rate, n_estimators, min_split, max_depth, init, subsample,
-            random_state)
+            loss, learn_rate, n_estimators, min_samples_split, min_samples_leaf,
+            max_depth, init, subsample, random_state)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -494,9 +501,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_split : integer, optional (default=1)
-        minimum number of samples required at any leaf node. Use larger
-        value if number of samples is large.
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples required to be at a leaf node.
 
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
@@ -529,11 +538,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     """
 
     def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100, subsample=1.0,
-                 min_split=1, max_depth=3, init=None, random_state=None):
+                 min_samples_split=1, min_samples_leaf=1, max_depth=3,
+                 init=None, random_state=None):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learn_rate, n_estimators, min_split, max_depth, init, subsample,
-            random_state)
+            loss, learn_rate, n_estimators, min_samples_split, min_samples_leaf,
+            max_depth, init, subsample, random_state)
 
     def predict(self, X):
         X = np.atleast_2d(X)

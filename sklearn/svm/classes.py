@@ -8,11 +8,11 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
     liblinear rather than libsvm, so it has more flexibility in the choice of
-    penalties and loss functions and should scale better.
+    penalties and loss functions and should scale better (to large numbers of
+    samples).
 
-    This class supports both dense and sparse input. Use C-ordered arrays or
-    CSR matrices containing 64-bit floats for optimal performance; any other
-    input format will be converted (and copied).
+    This class supports both dense and sparse input and the multiclass support
+    is handled according to a one-vs-the-rest scheme.
 
     Parameters
     ----------
@@ -55,9 +55,17 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
-    scale_C : bool
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
+    scale_C : bool, default: True
         Scale C with number of samples. It makes the setting of C independent
-        of the number of samples.
+        of the number of samples. To match liblinear commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -79,6 +87,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
+    The underlying implementation (liblinear) uses a sparse internal
+    representation for the data that will incur a memory copy.
+
     **References:**
     `LIBLINEAR: A Library for Large Linear Classification
     <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
@@ -86,6 +97,27 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     See also
     --------
     SVC
+        Implementation of Support Vector Machine classifier using libsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+        Furthermore SVC multi-class mode is implemented using one
+        vs one scheme while LinearSVC uses one vs the rest. It is
+        possible to implement one vs the rest with SVC by using the
+        :class:`sklearn.multiclass.OneVsRestClassifier` wrapper.
+
+        Finally SVC can fit dense data without memory copy if the input
+        is C-contiguous. Sparse data will still incur memory copy though.
+
+    sklearn.linear_model.SGDClassifier
+        SGDClassifier can optimize the same cost function as LinearSVC
+        by adjusting the penalty and loss parameters. Furthermore
+        SGDClassifier is scalable to large number of samples as it uses
+        a Stochastic Gradient Descent optimizer.
+
+        Finally SGDClassifier can fit both dense and sparse data without
+        memory copy if the input is C-contiguous or CSR.
+
     """
 
     # all the implementation is provided by the mixins
@@ -94,6 +126,12 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
 class SVC(BaseLibSVM, ClassifierMixin):
     """C-Support Vector Classification.
+
+    The implementations is a based on libsvm. The fit time complexity
+    is more than quadratic with the number of samples which makes it hard
+    to scale to dataset with more than a couple of 10000 samples.
+
+    The multiclass support is handled according to a one-vs-one scheme.
 
     Parameters
     ----------
@@ -130,9 +168,17 @@ class SVC(BaseLibSVM, ClassifierMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
-        of the number of samples.
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -169,28 +215,41 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
-    >>> clf.fit(X, y)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=None, shrinking=True, tol=0.001)
+    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+            gamma=0.5, kernel='rbf', probability=False, scale_C=True,
+            shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
     See also
     --------
-    SVR, LinearSVC
+    SVR
+        Support Vector Machine for Regression implemented using libsvm.
+
+    LinearSVC
+        Scalable Linear Support Vector Machine for classififcation
+        implemented using liblinear. Check the See also section of
+        LinearSVC for more comparison element.
+
     """
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=None):
+                 tol=1e-3, cache_size=200, scale_C=True, class_weight=None):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
-                                  C, 0., 0., shrinking, probability,
-                                  cache_size, scale_C, sparse="auto")
+                C, 0., 0., shrinking, probability, cache_size, scale_C,
+                sparse="auto", class_weight=class_weight)
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
     """Nu-Support Vector Classification.
+
+    Similar to SVC but uses a parameter to control the number of support
+    vectors.
+
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -228,6 +287,14 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
+
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
 
     Attributes
     ----------
@@ -272,7 +339,12 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
     See also
     --------
-    SVC, LinearSVC, SVR
+    SVC
+        Support Vector Machine for classification using libsvm.
+
+    LinearSVC
+        Scalable linear Support Vector Machine for classification using
+        liblinear.
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
@@ -280,14 +352,16 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
                  tol=1e-3, cache_size=200):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
-                                    tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C=False, sparse="auto")
+                tol, 0., nu, 0., shrinking, probability, cache_size,
+                scale_C=True, sparse="auto", class_weight=None)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
+
+    The implementations is a based on libsvm.
 
     Parameters
     ----------
@@ -330,9 +404,10 @@ class SVR(BaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
-        of the number of samples.
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -366,42 +441,22 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, scale_C=None, shrinking=True, tol=0.001)
+      kernel='rbf', probability=False, scale_C=True, shrinking=True, tol=0.001)
 
     See also
     --------
     NuSVR
+        Support Vector Machine for regression implemented using libsvm
+        using a parameter to control the number of support vectors.
+
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200, scale_C=None):
+                 probability=False, cache_size=200, scale_C=True):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
-                                  tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C, sparse="auto")
-
-    def fit(self, X, y, sample_weight=None, **params):
-        """
-        Fit the SVM model according to the given training data and parameters.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
-        y : array, shape = [n_samples]
-            Target values. Array of floating-point numbers.
-        cache_size: float, optional
-            Specify the size of the cache (in MB)
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # we copy this method because SVR does not accept class_weight
-        return super(SVR, self).fit(X, y, sample_weight=sample_weight,
-                                    **params)
+                tol, C, 0., epsilon, shrinking, probability, cache_size,
+                scale_C, sparse="auto", class_weight=None)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -410,6 +465,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     Similar to NuSVC, for regression, uses a parameter nu to control
     the number of support vectors. However, unlike NuSVC, where nu
     replaces C, here nu replaces with the parameter epsilon of SVR.
+
+    The implementations is a based on libsvm.
 
     Parameters
     ----------
@@ -451,9 +508,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
-        of the number of samples.
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -487,47 +545,34 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, scale_C=None, shrinking=True, tol=0.001)
+       nu=0.1, probability=False, scale_C=True, shrinking=True, tol=0.001)
 
     See also
     --------
-    NuSVC, SVR
+    NuSVC
+        Support Vector Machine for classification implemented with libsvm
+        with a parameter to control the number of support vectors.
+
+    SVR
+        epsilon Support Vector Machine for regression implemented with libsvm.
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
-                 scale_C=None):
+                 scale_C=True):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
-                                    tol, C, nu, 0., shrinking, probability,
-                                    cache_size, scale_C, sparse="auto")
-
-    def fit(self, X, y, sample_weight=None, **params):
-        """
-        Fit the SVM model according to the given training data and parameters.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
-        y : array, shape = [n_samples]
-            Target values. Array of floating-point numbers.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # we copy this method because SVR does not accept class_weight
-        return super(NuSVR, self).fit(X, y, sample_weight=[], **params)
+                tol, C, nu, 0., shrinking, probability, cache_size, scale_C,
+                sparse="auto", class_weight=None)
 
 
 class OneClassSVM(BaseLibSVM):
     """Unsupervised Outliers Detection.
 
     Estimate the support of a high-dimensional distribution.
+
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -562,9 +607,10 @@ class OneClassSVM(BaseLibSVM):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool
-        Scale C with number of samples. It makes the setting of C independant
-        of the number of samples.
+    scale_C : bool, default: True
+        Scale C with number of samples. It makes the setting of C independent
+        of the number of samples. To match libsvm commandline one should use
+        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -592,11 +638,10 @@ class OneClassSVM(BaseLibSVM):
                  nu=0.5, shrinking=True, cache_size=200):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
-                                          coef0, tol, 0., nu, 0., shrinking,
-                                          False, cache_size, scale_C=None,
-                                          sparse="auto")
+                coef0, tol, 0., nu, 0., shrinking, False, cache_size,
+                scale_C=True, sparse="auto", class_weight=None)
 
-    def fit(self, X, class_weight={}, sample_weight=None, **params):
+    def fit(self, X, sample_weight=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 
@@ -613,11 +658,9 @@ class OneClassSVM(BaseLibSVM):
 
         Notes
         -----
-        If X is not a C-ordered contiguous array or a scipy.sparse.csr_matrix,
-        it is copied.
+        If X is not a C-ordered contiguous array it is copied.
 
         """
-        super(OneClassSVM, self).fit(
-            X, [], class_weight=class_weight, sample_weight=sample_weight,
-            **params)
+        super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
+                **params)
         return self

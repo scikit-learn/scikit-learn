@@ -2,16 +2,16 @@
 Test the pipeline module.
 """
 
-from nose.tools import assert_raises, assert_equal, assert_false
+from nose.tools import assert_raises, assert_equal, assert_false, assert_true
 
-from ..base import BaseEstimator, clone
-from ..pipeline import Pipeline
-from ..svm import SVC
-from ..linear_model import LogisticRegression
-from ..feature_selection import SelectKBest, f_classif
-from ..decomposition.pca import PCA, RandomizedPCA
-from ..datasets import load_iris
-from ..preprocessing import Scaler
+from sklearn.base import BaseEstimator, clone
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.decomposition.pca import PCA, RandomizedPCA
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import Scaler
 
 
 class IncorrectT(BaseEstimator):
@@ -122,10 +122,10 @@ def test_pipeline_fit_params():
     pipe = Pipeline([('transf', TransfT()), ('clf', FitParamT())])
     pipe.fit(X=None, y=None, clf__should_succeed=True)
     # classifier should return True
-    assert pipe.predict(None)
+    assert_true(pipe.predict(None))
     # and transformer params should not be changed
-    assert pipe.named_steps['transf'].a is None
-    assert pipe.named_steps['transf'].b is None
+    assert_true(pipe.named_steps['transf'].a is None)
+    assert_true(pipe.named_steps['transf'].b is None)
 
 
 def test_pipeline_methods_pca_svm():

@@ -60,6 +60,9 @@ most of the background::
   dtype('float32')
 
   >>> lfw_people.data.shape
+  (1288, 1850)
+
+  >>> lfw_people.images.shape
   (1288, 50, 37)
 
 Each of the ``1140`` faces is assigned to a single person id in the ``target``
@@ -80,8 +83,11 @@ is a pair of two picture belonging or not to the same person::
   >>> list(lfw_pairs_train.target_names)
   ['Different persons', 'Same person']
 
-  >>> lfw_pairs_train.data.shape
+  >>> lfw_pairs_train.pairs.shape
   (2200, 2, 62, 47)
+
+  >>> lfw_pairs_train.data.shape
+  (2200, 5828)
 
   >>> lfw_pairs_train.target.shape
   (2200,)
