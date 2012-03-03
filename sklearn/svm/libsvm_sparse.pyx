@@ -87,7 +87,7 @@ def libsvm_sparse_train ( int n_features,
 
     Notes
     -------------------
-    See scikits.learn.svm.predict for a complete list of parameters.
+    See sklearn.svm.predict for a complete list of parameters.
 
     """
 
@@ -220,7 +220,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
 
-    See scikits.learn.svm.predict for a complete list of parameters.
+    See sklearn.svm.predict for a complete list of parameters.
 
     Parameters
     ----------

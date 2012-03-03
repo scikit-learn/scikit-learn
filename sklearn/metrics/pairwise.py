@@ -423,7 +423,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     Valid values for metric are:
 
-    - from scikits.learn: ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock']
+    - from scikit-learn: ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock']
 
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -433,9 +433,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
       metrics.
 
     Note in the case of 'euclidean' and 'cityblock' (which are valid
-    scipy.spatial.distance metrics), the values will use the scikits.learn
+    scipy.spatial.distance metrics), the values will use the scikit-learn
     implementation, which is faster and has support for sparse matrices.
-    For a verbose description of the metrics from scikits.learn, see the
+    For a verbose description of the metrics from scikit-learn, see the
     __doc__ of the sklearn.pairwise.distance_metrics function.
 
     Parameters
