@@ -17,6 +17,13 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     """
     Linear Discriminant Analysis (LDA)
 
+    A classifier with a linear decision boundary, generated
+    by fitting class conditional densities to the data
+    and using Bayes' rule.
+
+    The model fits a Gaussian density to each class, assuming that
+    all classes share the same covariance matrix.
+
     Parameters
     ----------
 
@@ -51,7 +58,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     See also
     --------
-    QDA
+    sklearn.qda.QDA: Quadratic discriminant analysis
 
     """
 
