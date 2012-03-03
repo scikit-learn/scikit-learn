@@ -102,8 +102,23 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 # csr has the fastest matvec and is thus best suited to
                 # arpack
                 laplacian = laplacian.tocsr()
+
+        # Here we'll use shift-invert mode for fast eigenvalues
+        # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
+        #  for a short explanation of what this means)
+        # Because the normalized Laplacian has eigenvalues between 0 and 2,
+        # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
+        # when finding eigenvalues of largest magnitude (keyword which='LM')
+        # and when these eigenvalues are very large compared to the rest.
+        # For very large, very sparse graphs, I - L can have many, many
+        # eigenvalues very near 1.0.  This leads to slow convergence.  So
+        # instead, we'll use ARPACK's shift-invert mode, asking for the
+        # eigenvalues near 1.0.  This effectively spreads-out the spectrum
+        # near 1.0 and leads to much faster convergence: potentially an
+        # orders-of-magnitude speedup over simply using keyword which='LA'
+        # in standard mode.
         lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
-                                        which='LA')
+                                       sigma=1.0, which='LM')
         embedding = diffusion_map.T[::-1] * dd
     elif mode == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue

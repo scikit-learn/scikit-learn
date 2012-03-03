@@ -847,8 +847,8 @@ Pairwise metrics
 
 **User guide:** See the :ref:`svm` section for further details.
 
-For dense data
---------------
+Estimators
+----------
 
 .. currentmodule:: sklearn
 

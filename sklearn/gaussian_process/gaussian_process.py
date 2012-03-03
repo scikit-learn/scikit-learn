@@ -289,7 +289,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         D, ij = l1_cross_distances(X)
         if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
-            raise Exception("Multiple input features cannot have the same value")
+            raise Exception("Multiple input features cannot have the same"
+                    " value")
 
         # Regression matrix and parameters
         F = self.regr(X)

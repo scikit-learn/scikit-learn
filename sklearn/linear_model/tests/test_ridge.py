@@ -123,9 +123,9 @@ def _test_ridge_loo(filter_):
     ridge = Ridge(fit_intercept=False)
 
     # generalized cross-validation (efficient leave-one-out)
-    K, v, Q = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
-    errors, c = ridge_gcv._errors(v, Q, y_diabetes, 1.0)
-    values, c = ridge_gcv._values(K, v, Q, y_diabetes, 1.0)
+    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
+    values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
     # brute-force leave-one-out: remove one example at a time
     errors2 = []
@@ -143,6 +143,16 @@ def _test_ridge_loo(filter_):
     # check that efficient and brute-force LOO give same results
     assert_almost_equal(errors, errors2)
     assert_almost_equal(values, values2)
+
+    # generalized cross-validation (efficient leave-one-out,
+    # SVD variation)
+    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
+    errors3, c = ridge_gcv._errors_svd(1.0, y_diabetes, *decomp)
+    values3, c = ridge_gcv._values_svd(1.0, y_diabetes, *decomp)
+
+    # check that efficient and SVD efficient LOO give same results
+    assert_almost_equal(errors, errors3)
+    assert_almost_equal(values, values3)
 
     # check best alpha
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)

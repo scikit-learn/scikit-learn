@@ -90,6 +90,13 @@ numpy and setuptools.
 
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
+.. topic:: **Installing on Windows 64bit**
+
+   To install a 64bit version of the scikit, you can download the
+   binaries from http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn
+   Note that this will require a compatible version of numpy, scipy and
+   matplotlib. The easiest option is to also download them from the same
+   URL.
 
 Building on windows
 -------------------
