@@ -822,6 +822,9 @@ def r2_score(y_true, y_pred):
     Notes
     -----
     This is not a symmetric function.
+
+    **References**:
+    http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()

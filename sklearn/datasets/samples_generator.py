@@ -533,7 +533,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     [0, 1]. The output `y` is created according to the formula::
 
         y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-               + 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
++ 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
 
     Out of the `n_features` features, only 5 are actually used to compute
     `y`. The remaining features are independent of `y`.
@@ -602,10 +602,8 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
     The output `y` is created according to the formula::
 
-        y(X) = (X[:, 0] ** 2 \
-                   + (X[:, 1] * X[:, 2] \
-                         - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
-               + noise * N(0, 1).
+        y(X) = (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] \
+ - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 + noise * N(0, 1).
 
     Parameters
     ----------
@@ -670,10 +668,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     The output `y` is created according to the formula::
 
-        y(X) = arctan((X[:, 1] * X[:, 2] \
-                          - 1 / (X[:, 1] * X[:, 3])) \
-                      / X[:, 0]) \
-               + noise * N(0, 1).
+        y(X) = arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) \
+/ X[:, 0]) + noise * N(0, 1).
 
     Parameters
     ----------
