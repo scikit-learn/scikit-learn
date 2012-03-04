@@ -289,7 +289,8 @@ class Ward(BaseEstimator):
             memory = Memory(cachedir=memory)
 
         if not sparse.issparse(self.connectivity):
-            raise TypeError("`connectivity` is not a sparse matrix.")
+            raise TypeError("`connectivity` should be a sparse matrix, got: %r"
+                    % type(self.connectivity))
 
         if (self.connectivity.shape[0] != X.shape[0] or
                 self.connectivity.shape[1] != X.shape[0]):
