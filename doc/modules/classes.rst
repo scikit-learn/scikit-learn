@@ -157,10 +157,12 @@ Samples generator
 
    datasets.make_blobs
    datasets.make_classification
+   datasets.make_circles
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
    datasets.make_low_rank_matrix
+   datasets.make_moons
    datasets.make_multilabel_classification
    datasets.make_regression
    datasets.make_s_curve
