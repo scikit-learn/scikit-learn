@@ -211,6 +211,21 @@ on the image to browse the source code), and we can see that adding more
 data will allow the estimator to very closely match the best possible
 cross-validation error.
 
+.. note::
+   With a degree-20 polynomial, we'd expect the training error to be
+   identically zero for training set size :math`N<=20`.  Why is this?
+   It is because when the degrees of freedom are greater than the number of
+   constraints, the problem should be perfectly solvable: a curve can be
+   found which passes through every point (for example, imagine fitting a line
+   to a single point.  You'd be very surprised if you got anything but a
+   perfect fit!)  In the right-hand plot we see that this
+   (correct) intuition fails in practice.  The reason is due to floating-point
+   precision: to perfectly fit these data points with a polynomial requires a
+   fit that oscillates to extreme values in the space
+   between the points (compare to the degree-6 polynomial above).  The nature
+   of our dataset means that this oscillation is outside machine precision,
+   so that the resulting fit has a small residual.
+
 Summary
 =======
 We've seen above that an under-performing algorithm can be due to two possible
