@@ -720,7 +720,8 @@ Others simply don't.
 
 To grasp the difference between the two cases, run the interactive
 example from the ``examples`` folder of the ``scikit-learn`` source
-distribution::
+distribution.  (if you don't have the scikit-learn source code locally
+installed, you can find the script `here <../../auto_examples/applications/svm_gui.html>`_)::
 
     % python $SKL_HOME/examples/applications/svm_gui.py
 

@@ -1,6 +1,6 @@
-==============================
-Tutorial Setup and Inspiration
-==============================
+===============================
+Tutorial Setup and Installation
+===============================
 
 The following assumes you have extracted the source distribution
 of this tutorial somewhere on your local disk. Alternatively you
