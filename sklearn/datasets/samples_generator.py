@@ -434,7 +434,8 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         return X, y
 
 
-def make_circles(n_samples=100, shuffle=True, random_state=None, factor=.8):
+def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
+        factor=.8):
     """Make a large circle containing a smaller circle in 2di
 
     A simple toy dataset to visualize clustering and classification
@@ -448,9 +449,17 @@ def make_circles(n_samples=100, shuffle=True, random_state=None, factor=.8):
     shuffle: bool, optional (default=True)
         Whether to shuffle the samples.
 
+    noise : double or None (default=None)
+        Standard deviation of Gaussian noise added to the data.
+
+    factor : double < 1 (default=.8)
+        Scale factor between inner and outer circle.
     """
 
-    n_samples_out = n_samples / 2
+    if factor > 1 or factor < 0:
+        raise ValueError("'factor' has to be between 0 and 1.")
+
+    n_samples_out = n_samples / (1 + factor)
     n_samples_in = n_samples - n_samples_out
 
     generator = check_random_state(random_state)
@@ -468,6 +477,9 @@ def make_circles(n_samples=100, shuffle=True, random_state=None, factor=.8):
     y = np.hstack([np.zeros(n_samples_in - 1), np.ones(n_samples_out - 1)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
+
+    if not noise is None:
+        X += generator.normal(scale=noise, size=X.shape)
 
     return X, y.astype(np.int)
 
