@@ -1,7 +1,7 @@
 """
-===================
-Logistic Regression
-===================
+==============================================
+L1 Penalty and Sparsity in Logistic Regression
+==============================================
 
 Comparison of the sparsity (percentage of zero coefficients) of solutions when
 L1 and L2 penalty are used for different values of C. We can see that large
