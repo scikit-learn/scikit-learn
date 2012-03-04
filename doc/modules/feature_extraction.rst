@@ -88,12 +88,11 @@ reasonable (please refer to the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer()
   >>> vectorizer
-  CountVectorizer(binary=False, charset='utf-8', charset_error='strict',
-          dtype=<type 'long'>, input='content', lowercase=True, max_df=1.0,
-          max_features=None, max_n=1, min_n=1, stop_words=None,
-          strip_accents='ascii', strip_tags=False,
-          token_pattern=u'\\b\\w\\w+\\b', tokenize='word', vocabulary=None)
-
+  CountVectorizer(analyzer='word', binary=False, charset='utf-8',
+          charset_error='strict', dtype=<type 'long'>, input='content',
+          lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
+          preprocessor=None, stop_words=None, strip_accents='ascii',
+          token_pattern=u'\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::

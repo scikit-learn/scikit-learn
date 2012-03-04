@@ -1,3 +1,4 @@
+from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
 
@@ -39,10 +40,20 @@ NOTJUNK_FOOD_DOCS = (
 ALL_FOOD_DOCS = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
 
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
+def uppercase(s):
+    return strip_accents_unicode(s).upper()
+
+
+def strip_eacute(s):
+    return s.replace(u'\xe9', u'e')
+
+
+def split_tokenize(s):
+    return s.split()
+
+
+def lazy_analyze(s):
+    return ['the_ultimate_feature']
 
 
 def test_strip_accents():
@@ -105,9 +116,23 @@ def test_word_analyzer_unigrams():
                 u'object']
     assert_equal(wa(text), expected)
 
+    # with custom preprocessor
+    wa = CountVectorizer(preprocessor=uppercase).build_analyzer()
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = [u'AI', u'MANGE', u'DU', u'KANGOUROU', u'CE', u'MIDI',
+                u'ETAIT', u'PAS', u'TRES', u'BON']
+    assert_equal(wa(text), expected)
+
+    # with custom tokenizer
+    wa = CountVectorizer(tokenizer=split_tokenize).build_analyzer()
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = [u"j'ai", u'mange', u'du', u'kangourou', u'ce', u'midi,',
+               u"c'etait", u'pas', u'tres', u'bon.']
+    assert_equal(wa(text), expected)
+
 
 def test_word_analyzer_unigrams_and_bigrams():
-    wa = CountVectorizer(tokenize="word", min_n=1, max_n=2).build_analyzer()
+    wa = CountVectorizer(analyzer="word", min_n=1, max_n=2).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
@@ -128,13 +153,13 @@ def test_unicode_decode_error():
     wa = CountVectorizer(min_n=1, max_n=2, charset='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, wa, text_bytes)
 
-    ca = CountVectorizer(tokenize='char', min_n=3, max_n=6,
+    ca = CountVectorizer(analyzer='char', min_n=3, max_n=6,
                          charset='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
 def test_char_ngram_analyzer():
-    cnga = CountVectorizer(tokenize='char', min_n=3, max_n=6).build_analyzer()
+    cnga = CountVectorizer(analyzer='char', min_n=3, max_n=6).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
     expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']
@@ -149,7 +174,7 @@ def test_char_ngram_analyzer():
     expected = [u' yeste', u'yester', u'esterd', u'sterda', u'terday']
     assert_equal(cnga(text)[-5:], expected)
 
-    cnga = CountVectorizer(input='file', tokenize='char',
+    cnga = CountVectorizer(input='file', analyzer='char',
                            min_n=3, max_n=6).build_analyzer()
     text = StringIO("This is a test with a file-like object!")
     expected = [u'thi', u'his', u'is ', u's i', u' is']
@@ -194,7 +219,7 @@ def test_fit_countvectorizer_twice():
 def test_sublinear_tf():
     X = [[1], [2], [3]]
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
-    tfidf = toarray(tr.fit_transform(X))
+    tfidf = tr.fit_transform(X).toarray()
     assert_equal(tfidf[0], 1)
     assert_true(tfidf[1] > tfidf[0])
     assert_true(tfidf[2] > tfidf[1])
@@ -246,17 +271,17 @@ def test_vectorizer():
 
     # test tf-idf
     t1 = TfidfTransformer(norm='l1')
-    tfidf = toarray(t1.fit(counts_train).transform(counts_train))
+    tfidf = t1.fit(counts_train).transform(counts_train).toarray()
     assert_equal(len(t1.idf_), len(v1.vocabulary_))
     assert_equal(tfidf.shape, (n_train, len(v1.vocabulary_)))
 
     # test tf-idf with new data
-    tfidf_test = toarray(t1.transform(counts_test))
+    tfidf_test = t1.transform(counts_test).toarray()
     assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary_)))
 
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
-    tf = toarray(t2.fit(counts_train).transform(counts_train))
+    tf = t2.fit(counts_train).transform(counts_train).toarray()
     assert_equal(t2.idf_, None)
 
     # L1-normalized term frequencies sum to one
@@ -267,11 +292,11 @@ def test_vectorizer():
     train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = Vectorizer(norm='l1')
     tv.max_df = v1.max_df
-    tfidf2 = toarray(tv.fit_transform(train_data))
+    tfidf2 = tv.fit_transform(train_data).toarray()
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
-    tfidf_test2 = toarray(tv.transform(test_data))
+    tfidf_test2 = tv.transform(test_data).toarray()
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
     # test transform on unfitted vectorizer with empty vocabulary
@@ -313,7 +338,7 @@ def test_vectorizer_max_features():
 
 def test_vectorizer_max_df():
     test_data = [u'abc', u'dea']  # the letter a occurs in both strings
-    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0)
+    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0)
     vect.fit(test_data)
     assert_true(u'a' in vect.vocabulary_.keys())
     assert_equals(len(vect.vocabulary_.keys()), 5)
@@ -327,7 +352,7 @@ def test_vectorizer_max_df():
 def test_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = [u'aaabc', u'abbde']
-    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0)
+    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
     assert_array_equal([[3, 1, 1, 0, 0],
@@ -335,14 +360,14 @@ def test_binary_occurrences():
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
-    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0,
+    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0,
                            binary=True)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal([[1, 1, 1, 0, 0],
                         [1, 1, 0, 1, 1]], X)
 
     # check the ability to change the dtype
-    vect = CountVectorizer(tokenize='char', min_n=1, max_n=1, max_df=1.0,
+    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0,
                            binary=True, dtype=np.float32)
     X_sparse = vect.fit_transform(test_data)
     assert_equal(X_sparse.dtype, np.float32)
@@ -405,7 +430,35 @@ def test_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.max_n, 1)
 
 
-def test_pickle():
-    for obj in (CountVectorizer(), TfidfTransformer(), Vectorizer()):
-        s = pickle.dumps(obj)
-        assert_equal(type(pickle.loads(s)), obj.__class__)
+def test_pickling_vectorizer():
+    instances = [
+        CountVectorizer(),
+        CountVectorizer(preprocessor=strip_tags),
+        CountVectorizer(analyzer=lazy_analyze),
+        CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
+        CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS),
+        Vectorizer(),
+        Vectorizer(analyzer=lazy_analyze),
+        Vectorizer().fit(JUNK_FOOD_DOCS),
+    ]
+
+    for orig in instances:
+        s = pickle.dumps(orig)
+        copy = pickle.loads(s)
+        assert_equal(type(copy), orig.__class__)
+        assert_array_equal(
+            copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
+            orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+
+
+def test_pickling_transformer():
+    X = CountVectorizer().fit_transform(JUNK_FOOD_DOCS)
+    orig = TfidfTransformer().fit(X)
+    s = pickle.dumps(orig)
+    copy = pickle.loads(s)
+    assert_equal(type(copy), orig.__class__)
+    assert_array_equal(
+        copy.fit_transform(X).toarray(),
+        orig.fit_transform(X).toarray())
+
+

@@ -172,19 +172,21 @@ class CountVectorizer(BaseEstimator):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents='ascii',
-                 strip_tags=False, lowercase=True, tokenize='word',
+                 lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary = None, binary=False, dtype=long):
+                 min_n=1, max_n=1, analyzer='word',
+                 max_df=1.0, max_features=None,
+                 vocabulary=None, binary=False, dtype=long):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
         self.strip_accents = strip_accents
-        self.strip_tags = strip_tags
+        self.preprocessor = preprocessor
+        self.tokenizer = tokenizer
+        self.analyzer = analyzer
         self.lowercase = lowercase
         self.min_n = min_n
         self.max_n = max_n
-        self.tokenize = tokenize
         self.token_pattern = token_pattern
         self.stop_words = stop_words
         self.max_df = max_df
@@ -199,7 +201,11 @@ class CountVectorizer(BaseEstimator):
         self.binary = binary
         self.dtype = dtype
 
-    def _decode(self, doc):
+    def decode(self, doc):
+        """Decode the input into a string of unicode symbols
+
+        The decoding strategy depends on the vectorizer parameters.
+        """
         if self.input == 'filename':
             doc = open(doc, 'rb').read()
 
@@ -210,10 +216,8 @@ class CountVectorizer(BaseEstimator):
             doc = doc.decode(self.charset, self.charset_error)
         return doc
 
-    def _word_tokenize(self, text_document, token_pattern, stop_words=None):
-        """Tokenize text_document into a sequence of word n-grams"""
-        tokens = token_pattern.findall(text_document)
-
+    def _word_ngrams(self, tokens, stop_words=None):
+        """Turn tokens into a sequence of n-grams and filter stop words"""
         # handle token n-grams
         if self.min_n != 1 or self.max_n != 1:
             original_tokens = tokens
@@ -230,7 +234,7 @@ class CountVectorizer(BaseEstimator):
 
         return tokens
 
-    def _char_tokenize(self, text_document):
+    def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
         text_document = self._white_spaces.sub(u" ", text_document)
@@ -244,6 +248,14 @@ class CountVectorizer(BaseEstimator):
 
     def build_preprocessor(self):
         """Return a function to preprocess the text before tokenization"""
+        if self.preprocessor is not None:
+            return self.preprocessor
+
+        # unfortunately python functools package does not have an efficient
+        # `compose` function that would have allowed us to chain a dynamic
+        # number of functions. However the however of a lambda call is a few
+        # hundreds of nanoseconds which is negligible when compared to the
+        # cost of tokenizing a string of 1000 chars for instance.
         noop = lambda x: x
 
         # accent stripping
@@ -259,33 +271,38 @@ class CountVectorizer(BaseEstimator):
             raise ValueError('Invalid value for "strip_accents": %s' %
                              self.strip_accents)
 
-        # tags removal
-        if hasattr(self.strip_tags, '__call__'):
-            tags = self.strip_tags
-        elif self.strip_tags:
-            tags = strip_tags
-        else:
-            tags = noop
-
         if self.lowercase:
-            return lambda x: strip_accents(tags(x.lower()))
+            return lambda x: strip_accents(x.lower())
         else:
-            return lambda x: strip_accents(tags(x))
+            return lambda x: strip_accents(x)
+
+    def build_tokenizer(self):
+        """Return a function that split a string in sequence of tokens"""
+        if self.tokenizer is not None:
+            return self.tokenizer
+        token_pattern = re.compile(self.token_pattern)
+        return lambda doc: token_pattern.findall(doc)
+
+    def get_stop_words(self):
+        """Build or fetch the effective stop words list"""
+        return _check_stop_list(self.stop_words)
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
+        if hasattr(self.analyzer, '__call__'):
+            return self.analyzer
+
         preprocess = self.build_preprocessor()
 
-        if self.tokenize == 'char':
-            return lambda doc: self._char_tokenize(
-                preprocess(self._decode(doc)))
+        if self.analyzer == 'char':
+            return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
 
-        elif self.tokenize == 'word':
-            token_pattern = re.compile(self.token_pattern)
-            stop_words = _check_stop_list(self.stop_words)
+        elif self.analyzer == 'word':
+            stop_words = self.get_stop_words()
+            tokenize = self.build_tokenizer()
 
-            return lambda doc: self._word_tokenize(
-                preprocess(self._decode(doc)), token_pattern, stop_words)
+            return lambda doc: self._word_ngrams(
+                tokenize(preprocess(self.decode(doc))), stop_words)
 
         else:
             raise ValueError('%s is not a valid tokenization scheme' %
@@ -597,18 +614,19 @@ class Vectorizer(CountVectorizer, TfidfTransformer):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents='ascii',
-                 strip_tags=False, lowercase=True, tokenize='word',
-                 stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long,
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 min_n=1, max_n=1, max_df=1.0,
+                 max_features=None, vocabulary=None, binary=False, dtype=long,
                  norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
 
         CountVectorizer.__init__(self, input=input, charset=charset,
                                  charset_error=charset_error,
                                  strip_accents=strip_accents,
-                                 strip_tags=strip_tags,
-                                 lowercase=lowercase, tokenize=tokenize,
+                                 lowercase=lowercase,
+                                 preprocessor=preprocessor,
+                                 tokenizer=tokenizer, analyzer=analyzer,
                                  stop_words=stop_words,
                                  token_pattern=token_pattern, min_n=min_n,
                                  max_n=max_n, max_df=max_df,
