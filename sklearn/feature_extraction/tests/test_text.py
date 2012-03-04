@@ -266,7 +266,7 @@ def test_vectorizer():
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = Vectorizer(norm='l1')
-    tv.tc.max_df = v1.max_df
+    tv.max_df = v1.max_df
     tfidf2 = toarray(tv.fit_transform(train_data))
     assert_array_almost_equal(tfidf, tfidf2)
 

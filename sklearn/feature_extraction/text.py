@@ -590,7 +590,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-class Vectorizer(BaseEstimator):
+class Vectorizer(CountVectorizer, TfidfTransformer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
@@ -607,20 +607,35 @@ class Vectorizer(BaseEstimator):
 
     """
 
-    def __init__(self, max_df=1.0,
-                 max_features=None, norm='l2', use_idf=True, smooth_idf=True,
+    def __init__(self, input='content', charset='utf-8',
+                 charset_error='strict', strip_accents='ascii',
+                 strip_tags=False, lowercase=True, tokenize='word',
+                 stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 min_n=1, max_n=1, max_df=1.0, max_features=None,
+                 fixed_vocabulary=None, binary=False, dtype=long,
+                 norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
-        self.tc = CountVectorizer(max_df=max_df,
-                                  max_features=max_features,
-                                  dtype=np.float64)
-        self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
-                                      smooth_idf=smooth_idf,
-                                      sublinear_tf=sublinear_tf)
+
+        CountVectorizer.__init__(self, input=input, charset=charset,
+                                 charset_error=charset_error,
+                                 strip_accents=strip_accents,
+                                 strip_tags=strip_tags,
+                                 lowercase=lowercase, tokenize=tokenize,
+                                 stop_words=stop_words,
+                                 token_pattern=token_pattern, min_n=min_n,
+                                 max_n=max_n, max_df=max_df,
+                                 max_features=max_features,
+                                 fixed_vocabulary=fixed_vocabulary,
+                                 binary=False, dtype=dtype)
+
+        TfidfTransformer.__init__(self, norm=norm, use_idf=use_idf,
+                                  smooth_idf=smooth_idf,
+                                  sublinear_tf=sublinear_tf)
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""
-        X = self.tc.fit_transform(raw_documents)
-        self.tfidf.fit(X)
+        X = CountVectorizer.fit_transform(self, raw_documents)
+        TfidfTransformer.fit(self, X)
         return self
 
     def fit_transform(self, raw_documents, y=None):
@@ -635,10 +650,11 @@ class Vectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        X = self.tc.fit_transform(raw_documents)
+        X = CountVectorizer.fit_transform(self, raw_documents)
         # X is already a transformed view of raw_documents so
         # we set copy to False
-        return self.tfidf.fit(X).transform(X, copy=False)
+        TfidfTransformer.fit(self, X)
+        return TfidfTransformer.transform(self, X, copy=False)
 
     def transform(self, raw_documents, copy=True):
         """Transform raw text documents to tf–idf vectors
@@ -652,30 +668,5 @@ class Vectorizer(BaseEstimator):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        X = self.tc.transform(raw_documents)
-        return self.tfidf.transform(X, copy)
-
-    def inverse_transform(self, X):
-        """Return terms per document with nonzero entries in X.
-
-        Parameters
-        ----------
-        X : {array, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        X_inv : list of arrays, len = n_samples
-            List of arrays of terms.
-        """
-        return self.tc.inverse_transform(X)
-
-    def build_analyzer(self):
-        return self.tc.build_analyzer()
-
-    def get_vocabulary(self):
-        return self.tc.get_vocabulary()
-
-    def get_feature_names(self):
-        return self.tc.get_feature_names()
-
-    vocabulary_ = property(lambda self: self.tc.vocabulary_)
+        X = CountVectorizer.transform(self, raw_documents)
+        return TfidfTransformer.transform(self, X, copy)
