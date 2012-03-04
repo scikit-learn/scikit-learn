@@ -33,20 +33,24 @@ blobs = make_blobs(n_samples=n_samples)
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 5)
 
-pl.figure(figsize=(16,10))
-pl.subplots_adjust(left=.001, right=.999, bottom=.01, top=.95, wspace=.05, hspace=.01)
+pl.figure(figsize=(16, 10))
+pl.subplots_adjust(left=.001, right=.999, bottom=.01, top=.95, wspace=.05,
+        hspace=.01)
+
 plot_num = 1
-for i_dataset, dataset in enumerate([noisy_circles,noisy_moons, blobs]):
+for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs]):
     X, y = dataset
     # normalize dataset for easier parameter selection
     X = Scaler().fit_transform(X)
 
     # estimate bandwidth for mean shift
-    bandwidth = estimate_bandwidth(X, quantile=0.2, n_samples=n_samples)
+    bandwidth = estimate_bandwidth(X, quantile=0.3)
+    print(bandwidth)
 
     # connectivity matrix for structured Ward
     connectivity = kneighbors_graph(X, n_neighbors=20)
-    connectivity = 0.5 * (connectivity + connectivity.T) # make connectivity symmetric
+    # make connectivity symmetric
+    connectivity = 0.5 * (connectivity + connectivity.T)
 
     # create clustering estimators
     ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
@@ -62,6 +66,8 @@ for i_dataset, dataset in enumerate([noisy_circles,noisy_moons, blobs]):
         else:
             algorithm.fit(X)
         y_pred = algorithm.labels_.astype(np.int)
+
+        # plot
         pl.subplot(3, 5, plot_num)
         if i_dataset == 0:
             pl.title(str(algorithm).split('(')[0])
@@ -71,4 +77,3 @@ for i_dataset, dataset in enumerate([noisy_circles,noisy_moons, blobs]):
         plot_num += 1
 
 pl.show()
-
