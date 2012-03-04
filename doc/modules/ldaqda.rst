@@ -20,6 +20,10 @@ Also there are no parameters to tune for these algorithms.
 
 .. centered:: |ldaqda|
 
+The plot shows decision boundaries for LDA and QDA. The bottom row
+demonstrates that LDA can only learn linear boundaries, while QDA can learn
+quadratic boundaries and is therefore more flexible.
+
 .. topic:: Examples:
 
     :ref:`example_plot_lda_qda.py`: Comparison of LDA and QDA on synthetic data.
