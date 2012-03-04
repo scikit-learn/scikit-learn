@@ -9,7 +9,8 @@ values of C give more freedom to the model.  Conversely, smaller values of C
 constrain the model more. In the L1 penalty case, this leads to sparser
 solutions.
 
-We classify digits 0-4 against 5-9 to have a binary classification problem.
+We classify 8x8 images of digits into two classes: 0-4 against 5-9.
+The visualization shows coefficients of the models for varying C.
 """
 
 print __doc__
@@ -64,11 +65,11 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
         l1_plot.set_title("L1 penalty")
         l2_plot.set_title("L2 penalty")
 
-    l1_plot.imshow(coef_l1_LR.reshape(8, 8), interpolation='nearest',
-            cmap='gray', vmax=1, vmin=-1)
-    l2_plot.imshow(coef_l2_LR.reshape(8, 8), interpolation='nearest',
-            cmap='gray', vmax=1, vmin=-1)
-    pl.text(-8, 3,"C = %d" % C)
+    l1_plot.imshow(np.abs(coef_l1_LR.reshape(8, 8)), interpolation='nearest',
+            cmap='binary', vmax=1, vmin=0)
+    l2_plot.imshow(np.abs(coef_l2_LR.reshape(8, 8)), interpolation='nearest',
+            cmap='binary', vmax=1, vmin=0)
+    pl.text(-8, 3, "C = %d" % C)
 
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
