@@ -28,7 +28,7 @@ from sklearn.preprocessing import Scaler
 n_samples = 300
 noisy_circles = make_circles(n_samples=n_samples, factor=.5, noise=.05)
 noisy_moons = make_moons(n_samples=n_samples, noise=.05)
-blobs = make_blobs(n_samples=n_samples, random_state=1)
+blobs = make_blobs(n_samples=n_samples, random_state=8)
 
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 5)
