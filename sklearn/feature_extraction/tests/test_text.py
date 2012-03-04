@@ -158,17 +158,17 @@ def test_char_ngram_analyzer():
 
 def test_countvectorizer_custom_vocabulary():
     what_we_like = ["pizza", "beer"]
-    vect = CountVectorizer(fixed_vocabulary=what_we_like)
+    vect = CountVectorizer(vocabulary=what_we_like)
     vect.fit(JUNK_FOOD_DOCS)
-    assert_equal(set(vect.fixed_vocabulary), set(what_we_like))
+    assert_equal(set(vect.vocabulary_), set(what_we_like))
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
     # try again with a dict vocabulary
     vocab = {"pizza": 0, "beer": 1}
-    vect = CountVectorizer(fixed_vocabulary=vocab)
+    vect = CountVectorizer(vocabulary=vocab)
     vect.fit(JUNK_FOOD_DOCS)
-    assert_equal(vect.fixed_vocabulary, vocab)
+    assert_equal(vect.vocabulary_, vocab)
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
@@ -176,10 +176,10 @@ def test_countvectorizer_custom_vocabulary():
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline([
-        ('count', CountVectorizer(fixed_vocabulary=what_we_like)),
+        ('count', CountVectorizer(vocabulary=what_we_like)),
         ('tfidf', TfidfTransformer())])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
-    assert_equal(set(pipe.named_steps['count'].fixed_vocabulary),
+    assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
 
@@ -216,7 +216,7 @@ def test_vectorizer():
     assert_equal(counts_train[0, v1.vocabulary_[u"pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = CountVectorizer(fixed_vocabulary=v1.vocabulary_)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary_)
 
     # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
@@ -224,7 +224,7 @@ def test_vectorizer():
         if hasattr(counts_test, 'tocsr'):
             counts_test = counts_test.tocsr()
 
-        vocabulary = v.get_vocabulary()
+        vocabulary = v.vocabulary_
         assert_equal(counts_test[0, vocabulary[u"salad"]], 1)
         assert_equal(counts_test[0, vocabulary[u"tomato"]], 1)
         assert_equal(counts_test[0, vocabulary[u"water"]], 1)
@@ -275,7 +275,7 @@ def test_vectorizer():
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
     # test transform on unfitted vectorizer with empty vocabulary
-    v3 = CountVectorizer(fixed_vocabulary=None)
+    v3 = CountVectorizer(vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
 
 

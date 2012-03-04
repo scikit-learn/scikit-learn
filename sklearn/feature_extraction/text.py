@@ -175,7 +175,7 @@ class CountVectorizer(BaseEstimator):
                  strip_tags=False, lowercase=True, tokenize='word',
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 fixed_vocabulary=None, binary=False, dtype=long):
+                 vocabulary = None, binary=False, dtype=long):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -189,11 +189,13 @@ class CountVectorizer(BaseEstimator):
         self.stop_words = stop_words
         self.max_df = max_df
         self.max_features = max_features
-        if (fixed_vocabulary is not None
-            and not hasattr(fixed_vocabulary, 'get')):
-            fixed_vocabulary = dict(
-                (t, i) for i, t in enumerate(fixed_vocabulary))
-        self.fixed_vocabulary = fixed_vocabulary
+        if vocabulary is not None:
+            self.fixed_vocabulary = True
+            if not hasattr(vocabulary, 'get'):
+                vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+            self.vocabulary_ = vocabulary
+        else:
+            self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
 
@@ -293,10 +295,7 @@ class CountVectorizer(BaseEstimator):
         i_indices = []
         j_indices = []
         values = []
-        if self.fixed_vocabulary is not None:
-            vocabulary = self.fixed_vocabulary
-        else:
-            vocabulary = self.vocabulary_
+        vocabulary = self.vocabulary_
 
         for i, term_count_dict in enumerate(term_count_dicts):
             for term, count in term_count_dict.iteritems():
@@ -344,7 +343,7 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: array, [n_samples, n_features]
         """
-        if self.fixed_vocabulary is not None:
+        if self.fixed_vocabulary:
             # not need to fit anything, directly perform the transformation
             return self.transform(raw_documents)
 
@@ -424,7 +423,7 @@ class CountVectorizer(BaseEstimator):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        if self.fixed_vocabulary is None and not hasattr(self, 'vocabulary_'):
+        if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
         # raw_documents can be an iterable so we don't know its size in
@@ -463,22 +462,12 @@ class CountVectorizer(BaseEstimator):
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in xrange(n_samples)]
 
-    def get_vocabulary(self):
-        """Dict mapping from string feature name to feature integer index
-
-        If fixed_vocabulary was passed to the constructor, it is returned,
-        otherwise, the `vocabulary_` attribute built during fit is returned
-        instead.
-        """
-        if self.fixed_vocabulary is not None:
-            return self.fixed_vocabulary
-        else:
-            return getattr(self, 'vocabulary_', {})
-
     def get_feature_names(self):
         """Array mapping from feature integer indicex to feature name"""
-        vocabulary = self.get_vocabulary()
-        return np.array([t for t, i in sorted(vocabulary.iteritems(),
+        if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
+            raise ValueError("Vocabulary wasn't fitted or is empty!")
+
+        return np.array([t for t, i in sorted(self.vocabulary_.iteritems(),
                                               key=itemgetter(1))])
 
 
@@ -611,7 +600,7 @@ class Vectorizer(CountVectorizer, TfidfTransformer):
                  strip_tags=False, lowercase=True, tokenize='word',
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 fixed_vocabulary=None, binary=False, dtype=long,
+                 vocabulary=None, binary=False, dtype=long,
                  norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
 
@@ -624,7 +613,7 @@ class Vectorizer(CountVectorizer, TfidfTransformer):
                                  token_pattern=token_pattern, min_n=min_n,
                                  max_n=max_n, max_df=max_df,
                                  max_features=max_features,
-                                 fixed_vocabulary=fixed_vocabulary,
+                                 vocabulary=vocabulary,
                                  binary=False, dtype=dtype)
 
         TfidfTransformer.__init__(self, norm=norm, use_idf=use_idf,
