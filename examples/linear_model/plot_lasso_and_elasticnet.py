@@ -13,6 +13,7 @@ from sklearn.metrics import r2_score
 
 ###############################################################################
 # generate some sparse data to play with
+np.random.seed(42)
 
 n_samples, n_features = 50, 200
 X = np.random.randn(n_samples, n_features)
