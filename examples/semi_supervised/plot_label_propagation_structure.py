@@ -21,11 +21,12 @@ from sklearn.semi_supervised import label_propagation
 from sklearn.datasets import make_circles
 
 # generate ring with inner box
-n_samples_per_circle = 100
-X, y = make_circles(n_samples = 2 * n_samples_per_circle, shuffle=False)
+n_samples = 200
+X, y = make_circles(n_samples = n_samples, shuffle=False)
 outer, inner = 0, 1
-labels = np.hstack([outer, -np.ones(n_samples_per_circle - 1), inner,
-    -np.ones(n_samples_per_circle - 1)])
+labels = -np.ones(n_samples)
+labels[0] = outer
+labels[-1] = inner
 
 ###############################################################################
 # Learn with LabelSpreading
