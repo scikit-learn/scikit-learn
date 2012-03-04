@@ -28,7 +28,7 @@ from sklearn.preprocessing import Scaler
 n_samples = 300
 noisy_circles = make_circles(n_samples=n_samples, factor=.5, noise=.05)
 noisy_moons = make_moons(n_samples=n_samples, noise=.05)
-blobs = make_blobs(n_samples=n_samples)
+blobs = make_blobs(n_samples=n_samples, random_state=1)
 
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 5)
@@ -71,6 +71,11 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs]):
         if i_dataset == 0:
             pl.title(str(algorithm).split('(')[0])
         pl.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist())
+
+        if hasattr(algorithm, 'cluster_centers_'):
+            centers = algorithm.cluster_centers_
+            center_colors = colors[:len(centers)]
+            pl.scatter(centers[:, 0], centers[:, 1], s=100, c=center_colors)
         pl.xlim(-2, 2)
         pl.ylim(-2, 2)
         pl.xticks(())
