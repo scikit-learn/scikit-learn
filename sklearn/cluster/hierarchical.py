@@ -288,6 +288,9 @@ class Ward(BaseEstimator):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
+        if not sparse.issparse(self.connectivity):
+            raise TypeError("`connectivity` is not a sparse matrix.")
+
         # Construct the tree
         self.children_, self.n_components, self.n_leaves_ = \
                 memory.cache(ward_tree)(X, self.connectivity,
