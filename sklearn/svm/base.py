@@ -566,8 +566,8 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-            multi_class=None, crammer_singer=False, fit_intercept=True,
-            intercept_scaling=1, scale_C=True, class_weight=None):
+            multi_class='ovr', fit_intercept=True, intercept_scaling=1,
+            scale_C=True, class_weight=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -575,15 +575,7 @@ class BaseLibLinear(BaseEstimator):
         self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
-        if not multi_class is None:
-            warnings.warn("The `multi_class` parameter was renamed "
-                    "to `crammer_singer` to avoid confusion. "
-                    "Please note that this parameter is not neccessary "
-                    "for multi-class classification.\n"
-                    "`multi_class` is deprecated and will be removed "
-                    " in version 0.12.")
-
-        self.crammer_singer = crammer_singer
+        self.multi_class = multi_class
         self.scale_C = scale_C
         self.class_weight = class_weight
 
@@ -599,14 +591,17 @@ class BaseLibLinear(BaseEstimator):
         """Find the liblinear magic number for the solver.
 
         This number depends on the values of the following attributes:
-          - crammer_singer
+          - multi_class
           - penalty
           - loss
           - dual
         """
-        if self.crammer_singer:
+        if self.multi_class == 'crammer_singer':
             solver_type = 'MC_SVC'
         else:
+            if self.multi_class != 'ovr':
+                raise ValueError("`multi_class` must be one of `ovr`, "
+                        "`crammer_singer`")
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:

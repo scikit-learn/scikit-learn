@@ -437,7 +437,7 @@ def test_LinearSVC():
 def test_LinearSVC_crammer_singer():
     """Test LinearSVC with crammer_singer multi-class svm"""
     ovr_clf = svm.LinearSVC(C=len(iris.data)).fit(iris.data, iris.target)
-    cs_clf = svm.LinearSVC(C=len(iris.data), crammer_singer=True)
+    cs_clf = svm.LinearSVC(C=len(iris.data), multi_class='crammer_singer')
     cs_clf.fit(iris.data, iris.target)
 
     # similar prediction for ovr and crammer-singer:
