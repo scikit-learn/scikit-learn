@@ -312,7 +312,7 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
                 min_samples_leaf, min_density, max_features, random_state,
                 n_classes, find_split, sample_mask=None, X_argsorted=None,
                 store_terminal_region=False):
-    """Build a tree by recursively partitioning the data."""
+    """Build a tree by recursively partitioning the data. """
 
     if max_depth <= 10:
         init_capacity = (2 ** (max_depth + 1)) - 1
@@ -350,6 +350,7 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
                                     n_node_samples)
 
             if store_terminal_region:
+                # remember which samples ended up in this leaf
                 tree.terminal_region[sample_indices[sample_mask]] = node_id
 
         # Current node is internal node (= split node)
@@ -379,6 +380,10 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
             recursive_partition(X, X_argsorted, y,
                                 ~split & sample_mask,
                                 depth + 1, node_id, False, sample_indices)
+
+
+    # setup auxiliary data structures and check input before
+    # recursive partitioning
 
     if store_terminal_region:
         tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
