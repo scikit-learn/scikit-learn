@@ -76,9 +76,8 @@ class RFE(BaseEstimator):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
@@ -256,9 +255,8 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",

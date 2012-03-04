@@ -268,8 +268,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     -----
     See examples/linear_model/plot_sparse_recovery.py for an example.
 
-    **References**:
-
+    References
+    ----------
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
     Journal of the Royal Statistical Society: Series B
@@ -425,8 +425,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     -----
     See examples/linear_model/plot_randomized_lasso.py for an example.
 
-    **References**:
-
+    References
+    ----------
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
     Journal of the Royal Statistical Society: Series B

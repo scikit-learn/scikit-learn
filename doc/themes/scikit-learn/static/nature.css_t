@@ -513,3 +513,11 @@ div.warning-wrapper {
 div.warning-wrapper p {
     margin: 0;
 }
+
+/* ------- Fix maximum size of thumbnails in example gallery -------------- */
+div#examples.section .figure img {
+    max-width: 160px;
+    max-height: 160px;
+    display: block;
+    margin: auto;
+}
