@@ -521,3 +521,8 @@ div#examples.section .figure img {
     display: block;
     margin: auto;
 }
+
+/* ------- Zoom plots to make them fit in layout -------------------------- */
+div.body img {
+    max-width:805px;
+}
