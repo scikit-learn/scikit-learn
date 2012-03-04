@@ -45,7 +45,6 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs]):
 
     # estimate bandwidth for mean shift
     bandwidth = estimate_bandwidth(X, quantile=0.3)
-    print(bandwidth)
 
     # connectivity matrix for structured Ward
     connectivity = kneighbors_graph(X, n_neighbors=20)
