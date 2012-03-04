@@ -87,6 +87,10 @@ API changes summary
      models. This allows to have a regularization parameter independent
      of the number of samples. The scale_C parameter will disappear in v0.12.
 
+   - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
+     Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
+     This does not change the default behavior but hopefully is less confusing.
+
 .. _changes_0_10:
 
 0.10

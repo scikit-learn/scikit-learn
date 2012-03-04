@@ -136,7 +136,7 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-    intercept_scaling=1, loss='l2', multi_class=False, penalty='l2',
+    intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
     scale_C=True, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
@@ -144,6 +144,13 @@ two classes, only one model is trained::
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+Note that the :class:`LinearSVC` also implements an alternative multi-class
+strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
+using the option "multi_class='crammer_singer'". This method is consistent,
+which is not true for one-vs-rest classification.
+In practice, on-vs-rest classification is usually preferred, since the results
+are mostly similar, but the runtime is significantly less.
 
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
