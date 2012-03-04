@@ -591,9 +591,20 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
 
 class Vectorizer(BaseEstimator):
-    """Convert a collection of raw documents to a matrix
+    """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
+
+    See also
+    --------
+    CountVectorizer
+        Tokenize the documents and count the occurrences of token and return
+        them as a sparse matrix
+
+    TfidfTransformer
+        Apply Term Frequency Inverse Document Frequency normalization to a
+        sparse matrix of occurrence counts.
+
     """
 
     def __init__(self, max_df=1.0,
