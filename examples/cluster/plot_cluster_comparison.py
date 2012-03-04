@@ -71,6 +71,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs]):
         if i_dataset == 0:
             pl.title(str(algorithm).split('(')[0])
         pl.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist())
+        pl.xlim(-2, 2)
+        pl.ylim(-2, 2)
         pl.xticks(())
         pl.yticks(())
         plot_num += 1
