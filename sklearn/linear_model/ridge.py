@@ -732,12 +732,14 @@ class RidgeClassifierCV(RidgeCV):
             warnings.warn("'class_weight' is now an initialization parameter."
                     "Using it in the 'fit' method is deprecated.",
                     DeprecationWarning)
-            self.class_weight = class_weight
+            self.class_weight_ = class_weight
+        else:
+            self.class_weight_ = self.class_weight
 
-        if self.class_weight is None:
-            self.class_weight = {}
+        if self.class_weight_ is None:
+            self.class_weight_ = {}
 
-        sample_weight2 = np.array([self.class_weight.get(k, 1.0) for k in y])
+        sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
         RidgeCV.fit(self, X, Y, sample_weight=sample_weight * sample_weight2)
