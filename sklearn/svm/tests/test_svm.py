@@ -441,13 +441,15 @@ def test_LinearSVC_crammer_singer():
     cs_clf.fit(iris.data, iris.target)
 
     # similar prediction for ovr and crammer-singer:
-    assert_true((ovr_clf.predict(iris.data) == cs_clf.predict(iris.data)).mean() > .9)
+    assert_true((ovr_clf.predict(iris.data) ==
+        cs_clf.predict(iris.data)).mean() > .9)
 
     # classifiers shouldn't be the same
     assert_true((ovr_clf.coef_ != cs_clf.coef_).all())
 
     # test decision function
-    assert_array_equal(cs_clf.predict(iris.data), np.argmax(cs_clf.decision_function(iris.data), axis=1))
+    assert_array_equal(cs_clf.predict(iris.data),
+            np.argmax(cs_clf.decision_function(iris.data), axis=1))
     dec_func = np.dot(iris.data, cs_clf.coef_.T) + cs_clf.intercept_
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
