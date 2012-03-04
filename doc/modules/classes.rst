@@ -27,7 +27,7 @@ uses.
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-
+    
    cluster.AffinityPropagation
    cluster.DBSCAN
    cluster.KMeans
@@ -36,6 +36,11 @@ uses.
    cluster.SpectralClustering
    cluster.Ward
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   cluster.estimate_bandwidth
 
 .. _covariance_ref:
 

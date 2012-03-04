@@ -136,7 +136,8 @@ Mean Shift
 :class:`MeanShift` clusters data by estimating *blobs* in a smooth
 density of points matrix. This algorithm automatically sets its numbers
 of cluster. It will have difficulties scaling to thousands of samples.
-
+The utility function :func:`estimate_bandwidth` can be used to guess
+the optimal bandwidth for :class:`MeanShift` from the data.
 
 .. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
