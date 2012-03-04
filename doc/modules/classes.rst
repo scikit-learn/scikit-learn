@@ -455,6 +455,8 @@ From text
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`lda_qda` section for further details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -843,6 +845,8 @@ Pairwise metrics
 .. automodule:: sklearn.qda
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`lda_qda` section for further details.
 
 .. currentmodule:: sklearn
 
