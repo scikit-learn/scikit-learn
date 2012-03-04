@@ -17,7 +17,9 @@ from sklearn.metrics import r2_score
 n_samples, n_features = 50, 200
 X = np.random.randn(n_samples, n_features)
 coef = 3 * np.random.randn(n_features)
-coef[10:] = 0  # sparsify coef
+inds = np.arange(n_features)
+np.random.shuffle(inds)
+coef[inds[10:]] = 0  # sparsify coef
 y = np.dot(X, coef)
 
 # add noise
@@ -51,9 +53,9 @@ r2_score_enet = r2_score(y_test, y_pred_enet)
 print enet
 print "r^2 on test data : %f" % r2_score_enet
 
-pl.plot(enet.coef_, 'o', label='Elastic net coefficients')
-pl.plot(lasso.coef_, 'o', label='Lasso coefficients')
-pl.plot(coef, 'o', label='original coefficients')
+pl.plot(enet.coef_, label='Elastic net coefficients')
+pl.plot(lasso.coef_, label='Lasso coefficients')
+pl.plot(coef, '--', label='original coefficients')
 pl.legend(loc='best')
 pl.title("Lasso R^2: %f, Elastic Net R^2: %f" % (r2_score_lasso,
     r2_score_enet))
