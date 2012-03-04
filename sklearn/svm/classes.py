@@ -40,8 +40,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         two classes.
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
-        While `crammer_singer` is interesting from an theoretical perspective,
-        it is seldom used in practice and rarely leads to better performance.
+        While `crammer_singer` is interesting from an theoretical perspective 
+        as it is consistent it is seldom used in practice and rarely leads to
+        better accuracy and is more expensive to compute.
         If `crammer_singer` is choosen, the options loss, penalty and dual will
         be ignored.
 
