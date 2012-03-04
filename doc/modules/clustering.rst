@@ -30,15 +30,14 @@ data can be found in the `labels_` attribute.
     and :class:`SpectralClustering` can work with arbitrary objects, as
     long as a similarity measure exists for such objects.
 
-
-.. _k_means:
-
 Here a visual comparison of some of the clustering algorithms in scikit-learn:
 
 .. figure:: ../auto_examples/cluster/images/plot_cluster_comparison_1.png
    :target: ../auto_examples/cluster/plot_cluster_comparison.html
    :align: center
    :scale: 50
+
+.. _k_means:
 
 K-means
 =======
