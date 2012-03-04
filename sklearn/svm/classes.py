@@ -36,7 +36,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Tolerance for stopping criteria
 
     multi_class: string, 'ovr' or 'crammer_singer' (default='ovr')
-        Determines the multi-class strategy if `y` contains more then
+        Determines the multi-class strategy if `y` contains more than
         two classes.
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
