@@ -49,7 +49,8 @@ for label, color, setting in [('No shrinkage', 'orange',
     test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
     for i, tree in enumerate(clf.estimators_):
         y_pred += clf.learn_rate * tree.predict(X_test).ravel()
-        test_deviance[i] = np.sum(np.logaddexp(0.0, -2.0 * y_test * y_pred)) / y_test.shape[0]
+        test_deviance[i] = np.sum(np.logaddexp(0.0, -2.0 * y_test * y_pred)) \
+                           / y_test.shape[0]
 
     pl.plot(np.arange(test_deviance.shape[0]) + 1, test_deviance, '-',
             color=color, label=label)
