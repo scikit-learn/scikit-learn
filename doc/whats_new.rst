@@ -741,7 +741,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`example_applications_face_recognition.py`,
+    :ref:`example_applications_plot_face_recognition.py`,
     :ref:`example_applications_plot_species_distribution_modeling.py`,
     :ref:`example_applications_svm_gui.py`,
     :ref:`example_applications_wikipedia_principal_eigenvector.py` and

@@ -168,28 +168,16 @@ are represented by their adjacency matrix. Often a sparse matrix is used.
 This can be useful for instance to retrieve connect regions when
 clustering an image:
 
-.. image:: ../../auto_examples/tutorial/images/plot_lena_ward_1.png
-    :target: ../../auto_examples/tutorial/plot_lena_ward.html
+.. image:: ../../auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
+    :target: ../../auto_examples/cluster/plot_lena_ward_segmentation.html
     :scale: 40
     :align: right
 
-::
-
-    >>> # Downsample the image by a factor of 4
-    >>> lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
-    >>> X = np.reshape(lena, (-1, 1))
-
-    >>> # the structure of the data: pixels connected to their neighbors
+.. literalinclude:: ../../auto_examples/cluster/plot_lena_ward_segmentation.py
+    :lines: 24-44
+..
     >>> from sklearn.feature_extraction.image import grid_to_graph
     >>> connectivity = grid_to_graph(*lena.shape)
-
-    >>> ward = cluster.Ward(n_clusters=30, connectivity=connectivity)
-    >>> ward.fit(X) # doctest: +ELLIPSIS
-    Ward(connectivity=...
-    >>> labels = np.reshape(ward.labels_, lena.shape)
-
-..  To generate the image
-    >>> pl.imsave('lena_ward.png', labels)
 
 
 Feature agglomeration

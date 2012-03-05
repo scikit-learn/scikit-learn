@@ -145,8 +145,8 @@ in it's simplest form, fits a linear model to the data set by adjusting
 a set of parameters, in order to make the sum of the squared residuals 
 of the model as small as possilbe.
 
-.. image:: ../../auto_examples/tutorial/images/plot_ols_1.png
-   :target: ../../auto_examples/tutorial/plot_ols.html
+.. image:: ../../auto_examples/linear_model/images/plot_ols_1.png
+   :target: ../../auto_examples/linear_model/plot_ols.html
    :scale: 40
    :align: right
 

@@ -16,7 +16,7 @@ these arrays is the **samples** axis, while the second is the
 
     ::
 
-        >>> from scikits.learn import datasets
+        >>> from sklearn import datasets
         >>> iris = datasets.load_iris()
         >>> data = iris.data
         >>> data.shape
@@ -57,7 +57,7 @@ Estimators objects
 
 .. Some code to make the doctests run
 
-   >>> from scikits.learn.base import BaseEstimator
+   >>> from sklearn.base import BaseEstimator
    >>> class Estimator(BaseEstimator):
    ...      def __init__(self, param1=0, param2=0):
    ...          self.param1 = param1

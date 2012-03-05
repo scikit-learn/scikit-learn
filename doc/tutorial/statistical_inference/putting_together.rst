@@ -19,12 +19,12 @@ can predict variables. We can create combined estimators:
 
 ::
 
-    >>> from sklearn import linear_model, decomposition, datasets
+    >>> from sklearn import svm, decomposition, datasets
 
-    >>> logistic = linear_model.LogisticRegression()
+    >>> svc = svm.SVC(kernel='linear')
     >>> pca = decomposition.PCA()
     >>> from sklearn.pipeline import Pipeline
-    >>> pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
+    >>> pipe = Pipeline(steps=[('pca', pca), ('svc', svc)])
 
     >>> digits = datasets.load_digits()
     >>> X_digits = digits.data
@@ -37,8 +37,10 @@ can predict variables. We can create combined estimators:
 Parameters of pipelines can be set using '__' separated parameter names::
 
     >>> pipe._set_params(pca__n_components=30)
-    Pipeline(steps=[('pca', PCA(copy=True, n_components=30, whiten=False)), ('logistic', LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-              intercept_scaling=1, penalty='l2', scale_C=True, tol=0.0001))])
+    Pipeline(steps=[('pca', PCA(copy=True, n_components=30, whiten=False)), ('svc', SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+      kernel='linear', probability=False, scale_C=True, shrinking=True,
+      tol=0.001))])
+
     >>> pca.n_components
     30
 
@@ -47,7 +49,7 @@ Parameters of pipelines can be set using '__' separated parameter names::
     >>> Cs = np.logspace(-4, 4, 16)
     >>> estimator = GridSearchCV(pipe,
     ...                          dict(pca__n_components=n_components,
-    ...                               logistic__C=Cs),
+    ...                               svc__C=Cs),
     ...                          n_jobs=-1)
     >>> estimator.fit(X_digits, y_digits) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
@@ -66,7 +68,7 @@ The dataset used in this example is a preprocessed excerpt of the
 .. literalinclude:: ../../auto_examples/tutorial/plot_face_recognition.py
 
 .. |prediction| image:: ../../auto_examples/tutorial/images/plot_face_recognition_1.png
-   :target: ../../auto_examples/tutorial/plot_face_recognition.html
+   :target: ../../auto_examples/applications/plot_face_recognition.html
    :scale: 50
 
 .. |eigenfaces| image:: ../../auto_examples/tutorial/images/plot_face_recognition_2.png
