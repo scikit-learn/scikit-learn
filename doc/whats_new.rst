@@ -55,6 +55,8 @@ Changelog
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
+   - Simplication of the :ref:`text_feature_extraction` API and fixed the
+     an issue with possible negative IDF, by `Olivier Grisel`_.
 
 
 API changes summary
@@ -90,6 +92,16 @@ API changes summary
    - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.
+
+   - The preprocessor / analyzer nested structure for text feature
+     extraction has been removed. All those features are
+     now directly passed as flat constructor arguments
+     to :class:`feature_selection.text.Vectorizer` and
+     :class:`feature_selection.text.CountVectorizer`.
+
+   - Class :class:`feature_selection.text.Vectorizer` now derives directly
+     from :class:`feature_selection.text.CountVectorizer` to make grid
+     search trivial.
 
 .. _changes_0_10:
 

@@ -12,6 +12,8 @@ features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
 
+.. _text_feature_extraction:
+
 Text feature extraction
 =======================
 
