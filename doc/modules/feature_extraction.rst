@@ -21,11 +21,11 @@ Text feature extraction
 The Bags of Words representation
 --------------------------------
 
-Natural Language Processing is a major application field for machine
-learning algorithms. However the raw data, a sequence of symbols cannot
-be fed directly to the algorithms themselves as most of them expect
-numerical feature vectors with a fixed size rather than the raw text
-documents with variable length.
+Text Analysis is a major application field for machine learning
+algorithms. However the raw data, a sequence of symbols cannot be fed
+directly to the algorithms themselves as most of them expect numerical
+feature vectors with a fixed size rather than the raw text documents
+with variable length.
 
 In order to address this, scikit-learn provides utilities for the most
 common ways to extract numerical features from text content, namely:
@@ -83,7 +83,7 @@ counting in a single class::
   >>> from sklearn.feature_extraction.text import CountVectorizer
 
 This model has many parameters, however the default values are quite
-reasonable (please refer to the :ref:`reference documentation
+reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
   >>> vectorizer = CountVectorizer()
@@ -174,11 +174,88 @@ last document::
 TF-IDF normalization
 --------------------
 
-TODO: Explain
+In a large text corpus, some words will be very present (e.g. "the", "a",
+"is" in English) hence carrying very few meaningul information about the
+actual contents of the document. If we were to feed the direct count
+data directly to a classifier those very frequent terms would shadow
+the frequencies of rarer yet more interesting terms.
 
-TODO: Limitations of TF-IDF: short text, binary occurrences better
+In order to re-weight the count features into floating point values
+suitable for usage by a classifier it is very common to use the tf–idf
+transform.
 
-TODO: Point to grid search example.
+Tf means **term-frequency** while tf–idf means term-frequency times
+**inverse document-frequency**. This is a orginally a term weighting
+scheme developed for information retrieval (as a ranking function
+for search engines results), that has also found good use in document
+classification and clustering.
+
+This normalization is implement by the :class:`TfidfTransformer` class::
+
+  >>> from sklearn.feature_extraction.text import TfidfTransformer
+  >>> transformer = TfidfTransformer()
+  >>> transformer
+  TfidfTransformer(norm='l2', smooth_idf=True, sublinear_tf=False, use_idf=True)
+
+Again please see the :ref:`reference documentation
+<text_feature_extraction_ref>` for the details on all the parameters.
+
+Let's take an example with the following counts. The first term is present
+100% of the time hence not very interesting. The two other features
+only in less than 50% of the time hence a probably more representative
+of the content of the documents::
+
+  >>> counts = [[3, 0, 1],
+  ...           [2, 0, 0],
+  ...           [3, 0, 0],
+  ...           [4, 0, 0],
+  ...           [3, 2, 0],
+  ...           [3, 0, 2]]
+  ...
+  >>> tfidf = transformer.fit_transform(counts)
+  >>> tfidf                                  # doctest: +NORMALIZE_WHITESPACE
+  <6x3 sparse matrix of type '<type 'numpy.float64'>'
+      with 9 stored elements in Compressed Sparse Row format>
+
+  >>> tfidf.toarray()                        # doctest: +ELLIPSIS
+  array([[ 0.85...,  0.  ...,  0.52...],
+         [ 1.  ...,  0.  ...,  0.  ...],
+         [ 1.  ...,  0.  ...,  0.  ...],
+         [ 1.  ...,  0.  ...,  0.  ...],
+         [ 0.55...,  0.83...,  0.  ...],
+         [ 0.63...,  0.  ...,  0.77...]])
+
+Each row is normalized to have unit euclidean norm. The weights of each
+feature computed during the ``fit`` are stored in a model attribute::
+
+  >>> transformer.idf_                       # doctest: +ELLIPSIS
+  array([ 1. ...,  2.25...,  1.84...])
+
+
+As tf–idf is a very often used for text features, there is also another
+class called :class:`Vectorizer` that combines all the option of
+:class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
+
+  >>> from sklearn.feature_extraction.text import Vectorizer
+  >>> vectorizer = Vectorizer()
+  >>> vectorizer.fit_transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x9 sparse matrix of type '<type 'numpy.float64'>'
+      with 19 stored elements in Compressed Sparse Row format>
+
+While the tf–idf normalization is often very useful, there might
+be cases where the binary occurrence markers might offer better
+features. This can be achieved by using the ``binary`` parameter
+of :class:`CountVectorizer`. In particular, some estimators such as
+:ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
+variables. Also very short text are likely to have noisy tf–idf values
+while the binary occurrence info is more stable.
+
+As usual the only way how to best adjust the feature extraction parameters
+is to use a cross-validated grid search, for instance by pipelining the
+feature extractor with a classifier:
+
+ * :ref:`example_grid_search_text_feature_extraction.py`
 
 
 Applications and examples
@@ -217,6 +294,42 @@ In order to address the wider task of Natural Language Understanding,
 the local structure of sentences and paragraphs should thus be taken
 into account. Many such models will thus be casted as "Structured Ouput"
 problems which are currently outside of the scope of scikit-learn.
+
+
+Customizing the vectorizer classes
+-----------------------------------
+
+It is possible to customize the behavior by passing some callable as
+parameters of the vectorizer::
+
+  >>> def my_tokenizer(s):
+  ...     return s.split()
+  ...
+  >>> vectorizer = CountVectorizer(tokenizer=my_tokenizer)
+  >>> vectorizer.build_analyzer()("Some... punctuation!")
+  ['some...', 'punctuation!']
+
+In particular we name:
+
+  * ``preprocessor`` a callable that takes a string as input and return
+    another string (removing HTML tags or converting to lower case for
+    instance)
+
+  * ``tokenizer`` a callable that takes a string as input and output a
+    sequence of feature occurrences (a.k.a. the tokens).
+
+  * ``analyzer`` a callable that wraps calls to the preprocessor and
+    tokenizer and further perform some filtering or n-grams extractions
+    on the tokens.
+
+To make the preprocessor, tokenizer and analyzers aware of the model
+parameters it is possible to derive from the class and override the
+``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
+factory method instead.
+
+Customizing the vectorizer can be very useful to handle Asian languages
+that do not use an explicit word separator such as the whitespace for
+instance.
 
 
 Image feature extraction
