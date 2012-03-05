@@ -120,7 +120,7 @@ Each term found by the analyzer during the fit is assigned a unique
 integer index to assign it a column in the resulting matrix.  This
 interpretation of the columns can be retrieved as follows::
 
-  >>> list(vectorizer.get_feature_names())
+  >>> vectorizer.get_feature_names()
   ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
 
   >>> X.toarray()

@@ -484,8 +484,8 @@ class CountVectorizer(BaseEstimator):
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
-        return np.array([t for t, i in sorted(self.vocabulary_.iteritems(),
-                                              key=itemgetter(1))])
+        return [t for t, i in sorted(self.vocabulary_.iteritems(),
+                                     key=itemgetter(1))]
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -549,6 +549,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             a matrix of term/token counts
         """
         if self.use_idf:
+            if not hasattr(X, 'nonzero'):
+                X = sp.csr_matrix(X)
+
             n_samples, n_features = X.shape
             df = np.bincount(X.nonzero()[1])
             if df.shape[0] < n_features:
@@ -571,7 +574,13 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
+        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.float):
+            # preserve float family dtype
+            X = sp.csr_matrix(X, copy=copy)
+        else:
+            # convert counts or binary occurrences to floats
+            X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
+
         n_samples, n_features = X.shape
 
         if self.sublinear_tf:

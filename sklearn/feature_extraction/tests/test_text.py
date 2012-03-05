@@ -11,6 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
+from nose import SkipTest
 from nose.tools import assert_equal, assert_equals, \
             assert_false, assert_not_equal, assert_true
 from numpy.testing import assert_array_almost_equal
@@ -216,6 +217,39 @@ def test_fit_countvectorizer_twice():
     assert_not_equal(X1.shape[1], X2.shape[1])
 
 
+def test_tf_idf_smoothing():
+    X = [[1, 1, 1],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = TfidfTransformer(smooth_idf=True, norm='l2')
+    tfidf = tr.fit_transform(X).toarray()
+
+    # XXX: broken
+    raise SkipTest
+    assert_true((tfidf >= 0).all())
+
+    # check rows normalization
+    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
+
+
+def test_tfidf_no_smoothing():
+    X = [[1, 1, 1],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = TfidfTransformer(smooth_idf=False, norm='l2')
+    tfidf = tr.fit_transform(X).toarray()
+    assert_true((tfidf >= 0).all())
+
+    # the first feature is zeroed out by the lack of smoothing
+    assert_array_almost_equal(tfidf[:, 0], [0., 0., 0.])
+
+    # the first 2 rows are normalized as expected (with the l2 norm)
+    assert_array_almost_equal((tfidf[:2, :] ** 2).sum(axis=1), [1., 1.])
+
+    # the last row has only zero components (hence cannot be normalized)
+    assert_array_equal(tfidf[2], [0., 0., 0.])
+
+
 def test_sublinear_tf():
     X = [[1], [2], [3]]
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
@@ -312,7 +346,7 @@ def test_feature_names():
     assert_equal(len(cv.vocabulary_), n_features)
 
     feature_names = cv.get_feature_names()
-    assert_equal(feature_names.shape, (n_features,))
+    assert_equal(len(feature_names), n_features)
     assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza',
                         'salad', 'sparkling', 'tomato', 'water'],
                        feature_names)
