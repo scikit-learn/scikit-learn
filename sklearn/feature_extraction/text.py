@@ -604,7 +604,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-class Vectorizer(CountVectorizer, TfidfTransformer):
+class Vectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
@@ -630,27 +630,57 @@ class Vectorizer(CountVectorizer, TfidfTransformer):
                  norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
 
-        CountVectorizer.__init__(self, input=input, charset=charset,
-                                 charset_error=charset_error,
-                                 strip_accents=strip_accents,
-                                 lowercase=lowercase,
-                                 preprocessor=preprocessor,
-                                 tokenizer=tokenizer, analyzer=analyzer,
-                                 stop_words=stop_words,
-                                 token_pattern=token_pattern, min_n=min_n,
-                                 max_n=max_n, max_df=max_df,
-                                 max_features=max_features,
-                                 vocabulary=vocabulary,
-                                 binary=False, dtype=dtype)
+        super(Vectorizer, self).__init__(
+            input=input, charset=charset, charset_error=charset_error,
+            strip_accents=strip_accents, lowercase=lowercase,
+            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
+            stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
+            max_n=max_n, max_df=max_df, max_features=max_features,
+            vocabulary=vocabulary, binary=False, dtype=dtype)
 
-        TfidfTransformer.__init__(self, norm=norm, use_idf=use_idf,
-                                  smooth_idf=smooth_idf,
-                                  sublinear_tf=sublinear_tf)
+        self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
+                                       smooth_idf=smooth_idf,
+                                       sublinear_tf=sublinear_tf)
+
+    # Broadcast the TF-IDF parameters to the underlying transformer instance
+    # for easy grid search and repr
+
+    @property
+    def norm(self):
+        return self._tfidf.norm
+
+    @norm.setter
+    def norm(self, value):
+        self._tfidf.norm = value
+
+    @property
+    def use_idf(self):
+        return self._tfidf.use_idf
+
+    @use_idf.setter
+    def use_idf(self, value):
+        self._tfidf.use_idf = value
+
+    @property
+    def smooth_idf(self):
+        return self._tfidf.smooth_idf
+
+    @smooth_idf.setter
+    def smooth_idf(self, value):
+        self._tfidf.smooth_idf = value
+
+    @property
+    def sublinear_tf(self):
+        return self._tfidf.sublinear_tf
+
+    @sublinear_tf.setter
+    def sublinear_tf(self, value):
+        self._tfidf.sublinear_tf = value
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""
-        X = CountVectorizer.fit_transform(self, raw_documents)
-        TfidfTransformer.fit(self, X)
+        X = super(Vectorizer, self).fit_transform(raw_documents)
+        self._tfidf.fit(X)
         return self
 
     def fit_transform(self, raw_documents, y=None):
@@ -665,11 +695,11 @@ class Vectorizer(CountVectorizer, TfidfTransformer):
         -------
         vectors: array, [n_samples, n_features]
         """
-        X = CountVectorizer.fit_transform(self, raw_documents)
+        X = super(Vectorizer, self).fit_transform(raw_documents)
         # X is already a transformed view of raw_documents so
         # we set copy to False
-        TfidfTransformer.fit(self, X)
-        return TfidfTransformer.transform(self, X, copy=False)
+        self._tfidf.fit(X)
+        return self._tfidf.transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
         """Transform raw text documents to tf–idf vectors
@@ -683,5 +713,5 @@ class Vectorizer(CountVectorizer, TfidfTransformer):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        X = CountVectorizer.transform(self, raw_documents)
-        return TfidfTransformer.transform(self, X, copy)
+        X = super(Vectorizer, self).transform(raw_documents)
+        return self._tfidf.transform(X, copy)

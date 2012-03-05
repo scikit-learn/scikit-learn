@@ -426,7 +426,7 @@ def test_vectorizer_inverse_transform():
         assert_array_equal(terms, terms2)
 
 
-def test_vectorizer_pipeline_grid_selection():
+def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
     # simulate iterables
@@ -462,6 +462,46 @@ def test_vectorizer_pipeline_grid_selection():
     assert_equal(grid_search.best_score_, 1.0)
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.max_n, 1)
+
+
+def test_vectorizer_pipeline_grid_selection():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+    # simulate iterables
+    train_data = iter(data[1:-1])
+    test_data = iter([data[0], data[-1]])
+
+    # label junk food as -1, the others as +1
+    y = np.ones(len(data))
+    y[:6] = -1
+    y_train = y[1:-1]
+    y_test = np.array([y[0], y[-1]])
+
+    pipeline = Pipeline([('vect', Vectorizer()),
+                         ('svc', LinearSVC())])
+
+    parameters = {
+        'vect__max_n': (1, 2),
+        'vect__norm': ('l1', 'l2'),
+        'svc__loss': ('l1', 'l2'),
+    }
+
+    # find the best parameters for both the feature extraction and the
+    # classifier
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+
+    # cross-validation doesn't work if the length of the data is not known,
+    # hence use lists instead of iterators
+    pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
+    assert_array_equal(pred, y_test)
+
+    # on this toy dataset bigram representation which is used in the last of
+    # the grid_search is considered the best estimator since they all converge
+    # to 100% accuracy models
+    assert_equal(grid_search.best_score_, 1.0)
+    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
+    assert_equal(best_vectorizer.max_n, 1)
+    assert_equal(best_vectorizer.norm, 'l2')
 
 
 def test_pickling_vectorizer():
