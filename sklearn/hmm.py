@@ -90,6 +90,9 @@ class _BaseHMM(BaseEstimator):
     algorithm : string, one of the decoder_algorithms
         decoder algorithm
 
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
     See Also
     --------
     GMM : Gaussian mixture model
@@ -107,7 +110,8 @@ class _BaseHMM(BaseEstimator):
     # the emission distribution parameters to expose them publically.
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
-            startprob_prior=None, transmat_prior=None, algorithm="viterbi"):
+            startprob_prior=None, transmat_prior=None,
+            algorithm="viterbi", random_state=None):
         self.n_components = n_components
 
         if startprob is None:
@@ -131,6 +135,7 @@ class _BaseHMM(BaseEstimator):
             self._algorithm = algorithm
         else:
             self._algorithm = "viterbi"
+        self.random_state = random_state
 
     def eval(self, obs):
         """Compute the log probability under the model and compute posteriors
@@ -327,12 +332,18 @@ class _BaseHMM(BaseEstimator):
         n : int
             Number of samples to generate.
 
+        random_state: RandomState or an int seed (0 by default)
+            A random number generator instance. If None is given, the
+            object's random_state is used
+
         Returns
         -------
         (obs, hidden_states)
         obs : array_like, length `n` List of samples
         hidden_states : array_like, length `n` List of hidden states
         """
+        if random_state is None:
+            random_state = self.random_state
         random_state = check_random_state(random_state)
 
         startprob_pdf = self.startprob_
@@ -345,14 +356,14 @@ class _BaseHMM(BaseEstimator):
         currstate = (startprob_cdf > rand).argmax()
         hidden_states = [currstate]
         obs = [self._generate_sample_from_state(
-            currstate, random_state=random_state)]
+                                currstate, random_state=random_state)]
 
         for _ in xrange(n - 1):
             rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
             hidden_states.append(currstate)
             obs.append(self._generate_sample_from_state(
-                currstate, random_state=random_state))
+                                currstate, random_state=random_state))
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
@@ -601,6 +612,9 @@ class GaussianHMM(_BaseHMM):
             (`n_components`, `n_features`)           if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
     Examples
     --------
     >>> from sklearn.hmm import GaussianHMM
@@ -608,7 +622,8 @@ class GaussianHMM(_BaseHMM):
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     GaussianHMM(algorithm='viterbi', covariance_type='diag', covars_prior=0.01,
         covars_weight=1, means_prior=None, means_weight=0, n_components=2,
-        startprob=None, startprob_prior=1.0, transmat=None, transmat_prior=1.0)
+        random_state=None, startprob=None, startprob_prior=1.0, transmat=None,
+        transmat_prior=1.0)
 
     See Also
     --------
@@ -618,11 +633,13 @@ class GaussianHMM(_BaseHMM):
     def __init__(self, n_components=1, covariance_type='diag', startprob=None,
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  algorithm="viterbi", means_prior=None, means_weight=0,
-                 covars_prior=1e-2, covars_weight=1):
+                 covars_prior=1e-2, covars_weight=1,
+                 random_state=None):
         _BaseHMM.__init__(self, n_components, startprob, transmat,
                                         startprob_prior=startprob_prior,
                                         transmat_prior=transmat_prior,
-                                        algorithm=algorithm)
+                                        algorithm=algorithm,
+                                        random_state=random_state)
 
         self._covariance_type = covariance_type
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
@@ -817,13 +834,17 @@ class MultinomialHMM(_BaseHMM):
     emissionprob : array, shape ('n_components`, 'n_symbols`)
         Probability of emitting a given symbol when in each state.
 
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
     Examples
     --------
     >>> from sklearn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(algorithm='viterbi', n_components=2, startprob=None,
-                   startprob_prior=1.0, transmat=None, transmat_prior=1.0)
+    MultinomialHMM(algorithm='viterbi', n_components=2, random_state=None,
+                   startprob=None, startprob_prior=1.0, transmat=None,
+                   transmat_prior=1.0)
 
     See Also
     --------
@@ -831,7 +852,8 @@ class MultinomialHMM(_BaseHMM):
     """
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
-            startprob_prior=None, transmat_prior=None, algorithm="viterbi"):
+            startprob_prior=None, transmat_prior=None,
+            algorithm="viterbi", random_state=None):
         """Create a hidden Markov model with multinomial emissions.
 
         Parameters
@@ -842,7 +864,8 @@ class MultinomialHMM(_BaseHMM):
         _BaseHMM.__init__(self, n_components, startprob, transmat,
                                              startprob_prior=startprob_prior,
                                              transmat_prior=transmat_prior,
-                                             algorithm=algorithm)
+                                             algorithm=algorithm,
+                                             random_state=random_state)
 
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
@@ -919,6 +942,9 @@ class GMMHMM(_BaseHMM):
     gmms : array of GMM objects, length `n_components`
         GMM emission distributions for each state.
 
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
     Examples
     --------
     >>> from sklearn.hmm import GMMHMM
@@ -928,8 +954,8 @@ class GMMHMM(_BaseHMM):
         gmms=[GMM(covariance_type=None, min_covar=0.001, n_components=10,
         random_state=None, thresh=0.01), GMM(covariance_type=None,
         min_covar=0.001, n_components=10, random_state=None, thresh=0.01)],
-        n_components=2, n_mix=10, startprob=None, startprob_prior=1.0,
-        transmat=None, transmat_prior=1.0)
+        n_components=2, n_mix=10, random_state=None, startprob=None,
+        startprob_prior=1.0, transmat=None, transmat_prior=1.0)
 
     See Also
     --------
@@ -938,7 +964,8 @@ class GMMHMM(_BaseHMM):
 
     def __init__(self, n_components=1, n_mix=1, startprob=None, transmat=None,
             startprob_prior=None, transmat_prior=None, algorithm="viterbi",
-            gmms=None, covariance_type='diag', covars_prior=1e-2):
+            gmms=None, covariance_type='diag', covars_prior=1e-2,
+            random_state=None):
         """Create a hidden Markov model with GMM emissions.
 
         Parameters
@@ -949,7 +976,8 @@ class GMMHMM(_BaseHMM):
         _BaseHMM.__init__(self, n_components, startprob, transmat,
                                      startprob_prior=startprob_prior,
                                      transmat_prior=transmat_prior,
-                                     algorithm=algorithm)
+                                     algorithm=algorithm,
+                                     random_state=random_state)
 
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
