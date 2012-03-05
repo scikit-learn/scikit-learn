@@ -27,7 +27,7 @@ uses.
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-
+    
    cluster.AffinityPropagation
    cluster.DBSCAN
    cluster.KMeans
@@ -36,6 +36,11 @@ uses.
    cluster.SpectralClustering
    cluster.Ward
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   cluster.estimate_bandwidth
 
 .. _covariance_ref:
 
@@ -454,6 +459,8 @@ From text
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`lda_qda` section for further details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -842,6 +849,8 @@ Pairwise metrics
 .. automodule:: sklearn.qda
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`lda_qda` section for further details.
 
 .. currentmodule:: sklearn
 
