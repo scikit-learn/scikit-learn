@@ -217,7 +217,11 @@ class CountVectorizer(BaseEstimator):
         return doc
 
     def _word_ngrams(self, tokens, stop_words=None):
-        """Turn tokens into a sequence of n-grams and filter stop words"""
+        """Turn tokens into a sequence of n-grams after stop words filtering"""
+        # handle stop words
+        if stop_words is not None:
+            tokens = [w for w in tokens if w not in stop_words]
+
         # handle token n-grams
         if self.min_n != 1 or self.max_n != 1:
             original_tokens = tokens
@@ -227,10 +231,6 @@ class CountVectorizer(BaseEstimator):
                             min(self.max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
                     tokens.append(u" ".join(original_tokens[i: i + n]))
-
-        # handle stop words
-        if stop_words is not None:
-            tokens = [w for w in tokens if w not in stop_words]
 
         return tokens
 
