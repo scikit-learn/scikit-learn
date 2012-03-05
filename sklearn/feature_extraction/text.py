@@ -98,7 +98,7 @@ class CountVectorizer(BaseEstimator):
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
 
-    charset: string
+    charset: string, 'utf-8' by default.
         If bytes or files are given to analyze, this charset is used to
         decode.
 
@@ -108,8 +108,19 @@ class CountVectorizer(BaseEstimator):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    tokenize: string, {'word', 'char'}
+    analyzer: string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
+
+    preprocessor: callable or None (default)
+        Override the preprocessing (string transformation) stage while
+        preserving the tokenizing and n-grams generation steps.
+
+    tokenizer: callable or None (default)
+        Override the string tokenization step while preserving the
+        preprocessing and n-grams generation steps.
 
     min_n: integer
         The lower boundary of the range of n-values for different n-grams to be
@@ -118,16 +129,6 @@ class CountVectorizer(BaseEstimator):
     max_n: integer
         The upper boundary of the range of n-values for different n-grams to be
         extracted. All values of n such that min_n <= n <= max_n will be used.
-
-    strip_accents: string {'ascii', 'unicode'} or False
-        If False, accentuated chars are kept as this.
-
-        If 'ascii', accentuated chars are converted to there ascii non
-        accentuated equivalent: fast processing but only suitable for roman
-        languages.
-
-        If 'unicode', accentuated chars are converted to there non accentuated
-        equivalent: slower that 'ascii' but works for any language.
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
