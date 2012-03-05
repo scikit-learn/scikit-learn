@@ -1,3 +1,4 @@
+import warnings
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -11,7 +12,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
-from nose import SkipTest
 from nose.tools import assert_equal, assert_equals, \
             assert_false, assert_not_equal, assert_true
 from numpy.testing import assert_array_almost_equal
@@ -223,13 +223,18 @@ def test_tf_idf_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
     tfidf = tr.fit_transform(X).toarray()
-
-    # XXX: broken
-    raise SkipTest
     assert_true((tfidf >= 0).all())
 
-    # check rows normalization
+    # check normalization
     assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
+
+    # this is robust to features with only zeros
+    X = [[1, 1, 0],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = TfidfTransformer(smooth_idf=True, norm='l2')
+    tfidf = tr.fit_transform(X).toarray()
+    assert_true((tfidf >= 0).all())
 
 
 def test_tfidf_no_smoothing():
@@ -240,14 +245,20 @@ def test_tfidf_no_smoothing():
     tfidf = tr.fit_transform(X).toarray()
     assert_true((tfidf >= 0).all())
 
-    # the first feature is zeroed out by the lack of smoothing
-    assert_array_almost_equal(tfidf[:, 0], [0., 0., 0.])
+    # check normalization
+    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1., 1., 1.])
 
-    # the first 2 rows are normalized as expected (with the l2 norm)
-    assert_array_almost_equal((tfidf[:2, :] ** 2).sum(axis=1), [1., 1.])
+    # the lack of smoothing make IDF fragile in the presence of feature with
+    # only zeros
+    X = [[1, 1, 0],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
-    # the last row has only zero components (hence cannot be normalized)
-    assert_array_equal(tfidf[2], [0., 0., 0.])
+    with warnings.catch_warnings(record=True) as w:
+        tfidf = tr.fit_transform(X).toarray()
+        assert_equal(len(w), 1)
+        assert_true("divide by zero encountered in divide" in w[0].message)
 
 
 def test_sublinear_tf():
@@ -414,16 +425,16 @@ def test_vectorizer_inverse_transform():
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
-        for i, doc in enumerate(data):
+        for doc, inversed_terms in zip(data, inversed_data):
             terms = np.sort(np.unique(analyze(doc)))
-            inversed_terms = np.sort(np.unique(inversed_data[i]))
+            inversed_terms = np.sort(np.unique(inversed_terms))
             assert_array_equal(terms, inversed_terms)
 
-    # Test that inverse_transform also works with numpy arrays
-    transformed_data = transformed_data.toarray()
-    inversed_data2 = vectorizer.inverse_transform(transformed_data)
-    for terms, terms2 in zip(inversed_data, inversed_data2):
-        assert_array_equal(terms, terms2)
+        # Test that inverse_transform also works with numpy arrays
+        transformed_data = transformed_data.toarray()
+        inversed_data2 = vectorizer.inverse_transform(transformed_data)
+        for terms, terms2 in zip(inversed_data, inversed_data2):
+            assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
 def test_count_vectorizer_pipeline_grid_selection():
