@@ -3,7 +3,7 @@ Benchmark script to bench scikit-learn GradientBoosting vs. R's gbm package .
 
 NOTE::
 
-make sure you run 
+make sure you run
 $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64/R/lib
 
 """
@@ -17,6 +17,7 @@ from functools import wraps
 from sklearn import datasets
 from sklearn.utils import shuffle
 from sklearn.utils import check_random_state
+from sklearn.externals import joblib
 
 from rpy2.robjects.numpy2ri import numpy2ri
 from rpy2.robjects.packages import importr
@@ -101,8 +102,8 @@ def bench_spam(random_state=None):
                            **{"n.tree":classification_params["n.tree"]})
     test_time = time() - t0
     pred = (np.array(pred) >= 0.0).astype(np.float64)
-    error_rate = np.mean(pred != y_test)    
-    
+    error_rate = np.mean(pred != y_test)
+
     return error_rate, train_time, test_time
 
 
@@ -128,8 +129,8 @@ def bench_madelon(random_state=None):
                            **{"n.tree":classification_params["n.tree"]})
     test_time = time() - t0
     pred = (np.array(pred) >= 0.0).astype(np.float64)
-    error_rate = np.mean(pred != y_test)    
-    
+    error_rate = np.mean(pred != y_test)
+
     return error_rate, train_time, test_time
 
 
@@ -155,8 +156,8 @@ def bench_arcene(random_state=None):
                            **{"n.tree":classification_params["n.tree"]})
     test_time = time() - t0
     pred = (np.array(pred) >= 0.0).astype(np.float64)
-    error_rate = np.mean(pred != y_test)    
-    
+    error_rate = np.mean(pred != y_test)
+
     return error_rate, train_time, test_time
 
 
@@ -267,59 +268,100 @@ def bench_friedman3(random_state=None):
     return mse, train_time, test_time
 
 
+@repeat(1)
+def bench_yahoo_ltrc(random_state=None):
+    data = joblib.load('/home/pprett/corpora/yahoo-ltrc-2010/data/set1.pkl')
+
+    X_train = data['X_train']
+    y_train = data['y_train']
+
+    X_test = data['X_test']
+    y_test = data['y_test']
+
+    X_train = numpy2ri(X_train)
+    X_test = numpy2ri(X_test)
+    y_train = numpy2ri(y_train)
+
+    t0 = time()
+    model = gbm.gbm_fit(X_train, y_train, **regression_params)
+    train_time = time() - t0
+    t0 = time()
+    pred = gbm.predict_gbm(model, X_test,
+                           **{"n.tree":regression_params["n.tree"]})
+    test_time = time() - t0
+    pred = np.array(pred, dtype=np.float64)
+    mse = np.mean((pred - y_test) ** 2.0)
+    return mse, train_time, test_time
+
+
 gbm_results = {
     "Example 10.2": bench_random_gaussian(),
     "Spam": bench_spam(),
     "Madelon": bench_madelon(),
     "Arcene": bench_arcene(),
-   "Boston": bench_boston(), 
-   "Friedman#1": bench_friedman1(),
-   "Friedman#2": bench_friedman2(),
-   "Friedman#3": bench_friedman3(),
+    "Boston": bench_boston(),
+    "Friedman#1": bench_friedman1(),
+    "Friedman#2": bench_friedman2(),
+    "Friedman#3": bench_friedman3(),
+    "YahooLTRC": bench_yahoo_ltrc(),
     }
 
 from pprint import pprint
 pprint(gbm_results)
 
 
-datasets = [
-    ## "Example 10.2",
-    ## "Spam",
-    ## "Madelon",
-    ## "Arcene",
-   "Boston",
-   "Friedman#1",
-   "Friedman#2",
-   "Friedman#3",
-    ]
- 
+def plot_against(gbrt_results, gbm_results, clf=True):
 
-width = 0.35
-ind = np.arange(len(datasets))
+    if clf:
+        datasets = [
+            "Example 10.2",
+            "Spam",
+            "Madelon",
+            "Arcene",
+            ]
+    else:
+        datasets = [
+            "Boston",
+            "Friedman#1",
+            "Friedman#2",
+            "Friedman#3",
+        ]
 
-fig = pl.figure()
+    width = 0.35
+    ind = np.arange(len(datasets))
 
-for i, measure in enumerate(['error rate', 'train time', 'test time']):
-    ax = fig.add_subplot(1, 3, i + 1)
+    fig = pl.figure()
 
-    gbrt_means = np.array([gbrt_results[ds][0][i] for ds in datasets])
-    gbrt_std = np.array([gbrt_results[ds][1][i] for ds in datasets])
-    
-    gbm_means = np.array([gbm_results[ds][0][i] for ds in datasets])
-    gbm_std = np.array([gbm_results[ds][1][i] for ds in datasets])
+    for i, measure in enumerate(['error rate', 'train time', 'test time']):
+        ax = fig.add_subplot(1, 3, i + 1)
 
-    gbrt_means /= gbm_means
-    gbrt_std *= gbm_means
-    
-    gbm_std *= gbm_means
-    gbm_means /= gbm_means
+        gbrt_means = np.array([gbrt_results[ds][0][i] for ds in datasets])
+        gbrt_std = np.array([gbrt_results[ds][1][i] for ds in datasets])
 
-    rects1 = ax.bar(ind, gbrt_means, width, color='r') #, yerr=gbrt_std)
-    rects2 = ax.bar(ind + width, gbm_means, width, color='y') #, yerr=gbm_std)
+        gbm_means = np.array([gbm_results[ds][0][i] for ds in datasets])
+        gbm_std = np.array([gbm_results[ds][1][i] for ds in datasets])
 
-    ax.set_ylabel(measure)
-    ax.set_title("%s: Sklearn vs. R" % measure.title())
-    ax.set_xticks(ind+width)
-    ax.set_xticklabels(datasets, rotation=45, ha='right')
+        if not clf:
+            gbrt_means *= (1.0 / gbm_means)
+            gbrt_var = gbrt_std ** 2.0
+            gbrt_var *= (1.0 / gbm_means) ** 2.0
+            gbrt_std = np.sqrt(gbrt_var)
 
-    ax.legend((rects1[0], rects2[0]), ('Sklearn', 'R (gbm)'), loc='upper left')
+            gbm_var = gbm_std ** 2.0
+            gbm_var *= (1.0 / gbm_means) ** 2.0
+            gbm_std = np.sqrt(gbm_var)
+            gbm_means *= (1.0 / gbm_means)
+
+            rects1 = ax.bar(ind, gbrt_means, width, color='r', yerr=gbrt_std)
+            rects2 = ax.bar(ind + width, gbm_means, width, color='y', yerr=gbm_std)
+
+        else:
+            rects1 = ax.bar(ind, gbrt_means, width, color='r', yerr=gbrt_std)
+            rects2 = ax.bar(ind + width, gbm_means, width, color='y', yerr=gbm_std)
+
+        ax.set_ylabel(measure)
+        ax.set_title("%s: Sklearn vs. R" % measure.title())
+        ax.set_xticks(ind+width)
+        ax.set_xticklabels(datasets, rotation=45, ha='right')
+
+        ax.legend((rects1[0], rects2[0]), ('Sklearn', 'R (gbm)'), loc='upper left')

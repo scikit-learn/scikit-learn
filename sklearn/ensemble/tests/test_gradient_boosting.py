@@ -79,11 +79,7 @@ def test_parameter_checks():
 def test_classification_synthetic():
     """Test GradientBoostingClassifier on synthetic dataset used by
     Hastie et al. in ESLII Example 12.7. """
-    rs = check_random_state(1)
-    shape = (12000, 10)
-    X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
-    y[y == 0.0] = -1.0
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]

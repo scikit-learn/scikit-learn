@@ -331,6 +331,7 @@ class BaseGradientBoosting(BaseEnsemble):
             return y
 
     def _make_estimator(self, append=True):
+        # we don't need _make_estimator
         raise NotImplementedError()
 
     @property
@@ -354,14 +355,20 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     Parameters
     ----------
+    loss : {'deviance', 'ls'}, optional (default='deviance')
+        loss function to be optimized. 'deviance' refers to binomial
+        deviance (= logistic regression) for binary classification
+        with probabilistic outputs. 'ls' refers to least squares
+        regression.
+
+    learn_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learn_rate`.
+        There is a trade-off between learn_rate and n_estimators.
+
     n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
         results in better performance.
-
-    learn_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_estimators (see Discussion).
 
     max_depth : integer, optional (default=3)
         maximum depth of the individual regression estimators. The maximum
@@ -378,8 +385,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`
-        (see Discussion).
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
 
     Examples
     --------
@@ -393,15 +399,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     See also
     --------
     DecisionTreeClassifier, RandomForestClassifier
-
-    Discussion
-    ----------
-    The optimal algorithm for a given dataset is a complicated choice, and
-    depends on a number of factors:
-    * n_estimators vs. learn_rate
-        TODO
-    * n_estimators vs. subsample
-        TODO
 
     References
     ----------
@@ -480,20 +477,20 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Parameters
     ----------
-    n_estimators : int (default=100)
-        The number of boosting stages to perform. Gradient boosting
-        is fairly robust to over-fitting so a large number usually
-        results in better performance.
+    loss : {'ls', 'lad'}, optional (default='ls')
+        loss function to be optimized. 'ls' refers to least squares
+        regression. 'lad' (least absolute deviation) is a highly robust
+        loss function soley based on order information of the input
+        variables.
 
     learn_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learn_rate`.
         There is a trade-off between learn_rate and n_estimators.
 
-    loss : {'ls', 'lad'}, optional
-        loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
-        loss function soley based on order information of the input
-        variables.
+    n_estimators : int (default=100)
+        The number of boosting stages to perform. Gradient boosting
+        is fairly robust to over-fitting so a large number usually
+        results in better performance.
 
     max_depth : integer, optional (default=3)
         maximum depth of the individual regression estimators. The maximum
@@ -510,8 +507,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`
-        (see Discussion).
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
 
     Examples
     --------
