@@ -634,13 +634,12 @@ class Vectorizer(CountVectorizer):
     """
 
     def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents='ascii',
+                 charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0,
-                 max_features=None, vocabulary=None, binary=False, dtype=long,
-                 norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 min_n=1, max_n=1, max_df=1.0, max_features=None,
+                 vocabulary=None, binary=False, dtype=long, norm='l2',
+                 use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(Vectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
