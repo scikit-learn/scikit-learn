@@ -15,8 +15,8 @@ from time import time
 cimport numpy as np
 cimport cython
 
-from sklearn.utils.largescale cimport WeightVector
-from sklearn.utils.largescale cimport Dataset
+from sklearn.utils.large_scale cimport WeightVector
+from sklearn.utils.large_scale cimport Dataset
 
 
 cdef extern from "math.h":

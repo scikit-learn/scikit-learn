@@ -50,7 +50,6 @@ cdef class ArrayDataset(Dataset):
     cdef int stride
     cdef DOUBLE *X_data_ptr
     cdef DOUBLE *Y_data_ptr
-
     cdef np.ndarray feature_indices
     cdef INTEGER *feature_indices_ptr
     cdef np.ndarray index
@@ -60,6 +59,7 @@ cdef class ArrayDataset(Dataset):
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
     cdef void shuffle(self, seed)
+
 
 cdef class CSRDataset(Dataset):
     cdef int current_index

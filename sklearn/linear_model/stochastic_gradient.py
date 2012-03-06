@@ -20,7 +20,7 @@ from ..utils import safe_asarray
 from ..utils import deprecated
 
 from .sgd_fast import plain_sgd as plain_sgd
-from ..utils.largescale import ArrayDataset, CSRDataset
+from ..utils.large_scale import ArrayDataset, CSRDataset
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 
