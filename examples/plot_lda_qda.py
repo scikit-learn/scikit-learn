@@ -55,11 +55,11 @@ def plot_data(lda, X, y, y_pred, fig_index):
     splot = pl.subplot(2, 2, fig_index)
     if fig_index == 1:
         pl.title('Linear Discriminant Analysis')
-        pl.ylabel('Fixed covariance')
+        pl.ylabel('Data with fixed covariance')
     elif fig_index == 2:
         pl.title('Quadratic Discriminant Analysis')
     elif fig_index == 3:
-        pl.ylabel('Different covariances')
+        pl.ylabel('Data with varying covariances')
 
     tp = (y == y_pred)  # True Positive
     tp0, tp1 = tp[y == 0], tp[y == 1]
@@ -109,6 +109,8 @@ def plot_ellipse(splot, mean, cov, color):
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
     splot.add_artist(ell)
+    splot.set_xticks(())
+    splot.set_yticks(())
 
 
 def plot_lda_cov(lda, splot):

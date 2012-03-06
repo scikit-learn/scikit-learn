@@ -566,8 +566,8 @@ class BaseLibLinear(BaseEstimator):
         }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=True, class_weight=None):
+            multi_class='ovr', fit_intercept=True, intercept_scaling=1,
+            scale_C=True, class_weight=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -596,9 +596,12 @@ class BaseLibLinear(BaseEstimator):
           - loss
           - dual
         """
-        if self.multi_class:
+        if self.multi_class == 'crammer_singer':
             solver_type = 'MC_SVC'
         else:
+            if self.multi_class != 'ovr':
+                raise ValueError("`multi_class` must be one of `ovr`, "
+                        "`crammer_singer`")
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:

@@ -245,7 +245,8 @@ class MeanShift(BaseEstimator):
     Note that the estimate_bandwidth function is much less scalable than
     the mean shift algorithm and will be the bottleneck if it is used.
 
-    **References**:
+    References
+    ----------
 
     Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
     feature space analysis". IEEE Transactions on Pattern Analysis and
