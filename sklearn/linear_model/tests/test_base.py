@@ -9,6 +9,8 @@ from scipy import sparse
 
 from ..base import LinearRegression
 from ...utils import check_random_state
+from ...datasets.samples_generator import make_sparse_uncorrelated
+from ...datasets.samples_generator import make_regression
 
 
 
@@ -51,10 +53,9 @@ def test_linear_regression_sparse(random_state=0):
     assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
     assert_array_almost_equal(ols.residues_, 0)
     
-def test_linear_regression_multible_outcome(random_state=0):
+def test_linear_regression_multiple_outcome(random_state=0):
     "Test multiple-outcome linear regressions"
-    X = np.array([[1, 4, 2], [2, 6, 2], [3, 5, 2]])
-    y = np.array([1, 2, 3])
+    X,y = make_regression()    
     
     Y = np.vstack((y,y)).T
     n_features = X.shape[1]
@@ -70,11 +71,7 @@ def test_linear_regression_multible_outcome(random_state=0):
 def test_linear_regression_sparse_multible_outcome(random_state=0):
     "Test multiple-outcome linear regressions with sparse data"
     random_state = check_random_state(random_state)
-    n = 100
-    X = sparse.eye(n, n)
-    beta = random_state.rand(n)
-    y = X * beta[:, np.newaxis]
-    y = np.array(y.ravel())
+    X,y = make_sparse_uncorrelated(random_state = random_state)
     
     Y = np.vstack((y,y)).T
     n_features = X.shape[1]
