@@ -342,9 +342,7 @@ class BaseLibSVM(BaseEstimator):
         if epsilon == None:
             epsilon = 0.1
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
@@ -361,9 +359,7 @@ class BaseLibSVM(BaseEstimator):
         X = sp.csr_matrix(X, dtype=np.float64)
         kernel_type = self._sparse_kernels.index(self.kernel)
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         return libsvm_sparse.libsvm_sparse_predict(
                       X.data, X.indices, X.indptr,
@@ -422,9 +418,7 @@ class BaseLibSVM(BaseEstimator):
         if epsilon == None:
             epsilon = 0.1
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
@@ -508,9 +502,7 @@ class BaseLibSVM(BaseEstimator):
 
         X = array2d(X, dtype=np.float64, order="C")
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         epsilon = self.epsilon
         if epsilon == None:
@@ -709,9 +701,7 @@ class BaseLibLinear(BaseEstimator):
         X = self._validate_for_predict(X)
         self._check_n_features(X)
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         predict = liblinear.csr_predict_wrap if self._sparse \
                                              else liblinear.predict_wrap
@@ -735,9 +725,7 @@ class BaseLibLinear(BaseEstimator):
         X = self._validate_for_predict(X)
         self._check_n_features(X)
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         dfunc_wrap = liblinear.csr_decision_function_wrap \
                        if self._sparse \

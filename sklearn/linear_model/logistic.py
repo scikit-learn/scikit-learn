@@ -116,9 +116,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         """
         X = self._validate_for_predict(X)
 
-        C = self.C
-        if C is None:
-            C = X.shape[0]  # just to avoid None
+        C = 0.0  # C is not useful here
 
         prob_wrap = (csr_predict_prob_wrap if self._sparse else
                 predict_prob_wrap)
