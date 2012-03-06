@@ -34,6 +34,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('neighbors')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
+    config.add_subpackage('semi_supervised')
     config.add_subpackage("tree")
     config.add_subpackage("tree/tests")
     config.add_subpackage('metrics/tests')

@@ -191,7 +191,7 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
 
 
@@ -276,9 +276,12 @@ The objective function to minimize is in this case
    :align: center
    :scale: 50%
 
+The class :class:`ElasticNetCV` can be used to set the parameters `alpha`
+and `rho` by cross-validation.
+
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 

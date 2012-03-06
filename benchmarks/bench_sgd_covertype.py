@@ -178,21 +178,21 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
 ######################################################################
 ## Train CART model
 cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_split=5,
+    DecisionTreeClassifier(min_sample_split=5,
                            max_depth=None))
 
 ######################################################################
 ## Train RandomForest model
 rf_err, rf_train_time, rf_test_time = benchmark(
     RandomForestClassifier(n_estimators=20,
-                           min_split=5,
+                           min_sample_split=5,
                            max_depth=None))
 
 ######################################################################
 ## Train Extra-Trees model
 et_err, et_train_time, et_test_time = benchmark(
     ExtraTreesClassifier(n_estimators=20,
-                         min_split=5,
+                         min_sample_split=5,
                          max_depth=None))
 
 ######################################################################

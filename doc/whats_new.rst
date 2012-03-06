@@ -47,6 +47,15 @@ Changelog
      and introduced the new :func:`cross_validation.train_test_split`
      helper function by `Olivier Grisel`_
 
+   - :class:`svm.SVC` members `coef_` and `intercept_` changed sign for consistency
+     with `decision_function`; for ``kernel==linear``, `coef_` was fixed
+     in the the one-vs-one case, by `Andreas Müller`_.
+
+   - Performance improvements to efficient leave-one-out cross-validated
+     Ridge regression, esp. for the ``n_samples > n_features`` case, in
+     :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
+
+
 
 API changes summary
 -------------------
@@ -65,6 +74,11 @@ API changes summary
      objects are now deprecated.
      `scores_` or `pvalues_` should be used instead.
 
+   - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
+     :class:`NuSVC`, the `class_weight` parameter is now an initialization
+     parameter, not a parameter to fit. This makes grid searches
+     over this parameter possible.
+
    - LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
      consistent with the Olivetti faces dataset. Use ``images`` and
      ``pairs`` attribute to access the natural images shapes instead.
@@ -72,6 +86,10 @@ API changes summary
    - Setting scale_C=True by default in SVM and LogisticRegression
      models. This allows to have a regularization parameter independent
      of the number of samples. The scale_C parameter will disappear in v0.12.
+
+   - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
+     Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
+     This does not change the default behavior but hopefully is less confusing.
 
 .. _changes_0_10:
 

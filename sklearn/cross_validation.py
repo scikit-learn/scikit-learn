@@ -325,10 +325,10 @@ class StratifiedKFold(object):
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
         if k > min_labels:
-            raise ValueError("Cannot have number of folds k=%d"
-                             " smaller than %d, the minimum"
-                             " number of labels for any class."
-                             % (k, min_labels))
+            raise ValueError("The least populated class in y has only %d"
+                             " members, which is too few. The minimum"
+                             " number of labels for any class cannot"
+                             " be less than k=%d." % (min_labels, k))
         self.y = y
         self.k = k
         self.indices = indices
@@ -632,7 +632,7 @@ class Bootstrap(object):
         self.random_state = random_state
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         for i in range(self.n_bootstraps):
             # random partition
             permutation = rng.permutation(self.n)
@@ -743,7 +743,7 @@ class ShuffleSplit(object):
                 (train_fraction, test_fraction))
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
         if self.train_fraction is None:
             n_train = self.n - n_test
@@ -965,7 +965,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The returned value equals p-value if `score_func` returns bigger
         numbers for better scores (e.g., zero_one). If `score_func` is rather a
         loss function (i.e. when lower is better such as with
-        `mean_square_error`) then this is actually the complement of the
+        `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 
     Notes

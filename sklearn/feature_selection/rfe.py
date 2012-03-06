@@ -76,9 +76,8 @@ class RFE(BaseEstimator):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
@@ -213,7 +212,7 @@ class RFECV(RFE):
         If int, it is the number of folds.
         If None, 3-fold cross-validation is performed by default.
         Specific cross-validation objects can also be passed, see
-        `scikits.learn.cross_validation module` for details.
+        `sklearn.cross_validation module` for details.
 
     loss_function : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the
@@ -256,9 +255,8 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",

@@ -39,8 +39,8 @@ yy = a * xx - clf.intercept_ / w[1]
 
 
 # get the separating hyperplane using weighted classes
-wclf = SGDClassifier(n_iter=100, alpha=0.01)
-wclf.fit(X, y, class_weight={1: 10})
+wclf = SGDClassifier(n_iter=100, alpha=0.01, class_weight={1: 10})
+wclf.fit(X, y)
 
 ww = wclf.coef_.ravel()
 wa = -ww[0] / ww[1]
@@ -48,10 +48,10 @@ wyy = wa * xx - wclf.intercept_ / ww[1]
 
 # plot separating hyperplanes and samples
 pl.set_cmap(pl.cm.Paired)
-h0 = pl.plot(xx, yy, 'k-')
-h1 = pl.plot(xx, wyy, 'k--')
+h0 = pl.plot(xx, yy, 'k-', label='no weights')
+h1 = pl.plot(xx, wyy, 'k--', label='with weights')
 pl.scatter(X[:, 0], X[:, 1], c=y)
-pl.legend((h0, h1), ('no weights', 'with weights'))
+pl.legend()
 
 pl.axis('tight')
 pl.show()
