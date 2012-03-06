@@ -149,7 +149,7 @@ class LinearRegression(LinearModel):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples, n_responses]
             Target values
         Returns
         -------
@@ -169,14 +169,14 @@ class LinearRegression(LinearModel):
                     self.residues_ = out[3]
                 else:
                     # sparse_lstsq cannot handle y with shape (M, K)
-                    coef = []
-                    residues = []
+                    coef = np.zeros(y.T.shape)
+                    residues = np.zeros(y.T.shape)
                     for j in range(y.shape[1]):
                         out = sp_linalg.lsqr(X, y[:, j].ravel())
-                        coef.append(out[0])
-                        residues.append(out[3])
-                    self.coef_ = np.array(coef)
-                    self.residues_ = np.array(residues)
+                        coef[j,:] = out[0]
+                        residues[j,:] = out[3]
+                    self.coef_ = coef
+                    self.residues_ = residues
             else:
                 # DEPENDENCY: scipy 0.7
                 self.coef_ = sp_linalg.spsolve(X, y)
