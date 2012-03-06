@@ -3,9 +3,9 @@
 Exercise: model selection on digits
 =====================================
 
-.. literalinclude:: ../../auto_examples/tutorial/plot_cv_digits.py
+.. literalinclude:: ../../auto_examples/plot_cv_digits.py
     :lines: 1-9 
 
-Solution: :download:`../../auto_examples/tutorial/plot_cv_digits.py`
+Solution: :download:`../../auto_examples/plot_cv_digits.py`
 
 

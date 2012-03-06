@@ -98,8 +98,8 @@ of the computer.
 
     - Takes a label array to group observations
 
-.. image:: ../../auto_examples/tutorial/images/plot_cv_digits_1.png
-   :target: ../../tutorial/statistical_inference/digits_cv_excercice.html
+.. image:: ../../auto_examples/images/plot_cv_digits_1.png
+   :target: ../../tutorial/statistical_inference/digits_cv_exercise.html
    :align: center
    :scale: 100
 

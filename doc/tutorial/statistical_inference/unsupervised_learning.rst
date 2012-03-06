@@ -27,8 +27,8 @@ Note that their exists a lot of different clustering criteria and associated
 algorithms. The simplest clustering algorithm is the 
 :ref:`k_means`.
 
-.. image:: ../../auto_examples/tutorial/images/plot_cluster_iris_2.png
-    :target: ../../auto_examples/tutorial/plot_cluster_iris.html
+.. image:: ../../auto_examples/cluster/images/plot_cluster_iris_2.png
+    :target: ../../auto_examples/cluster/plot_cluster_iris.html
     :scale: 70
     :align: right
 
@@ -48,16 +48,16 @@ algorithms. The simplest clustering algorithm is the
     >>> print y_iris[::10]
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: ../../auto_examples/tutorial/images/plot_cluster_iris_3.png
-   :target: ../../auto_examples/tutorial/plot_cluster_iris.html
+.. |k_means_iris_bad_init| image:: ../../auto_examples/cluster/images/plot_cluster_iris_3.png
+   :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |k_means_iris_8| image:: ../../auto_examples/tutorial/images/plot_cluster_iris_1.png
-   :target: ../../auto_examples/tutorial/plot_cluster_iris.html
+.. |k_means_iris_8| image:: ../../auto_examples/cluster/images/plot_cluster_iris_1.png
+   :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |cluster_iris_truth| image:: ../../auto_examples/tutorial/images/plot_cluster_iris_4.png
-   :target: ../../auto_examples/tutorial/plot_cluster_iris.html
+.. |cluster_iris_truth| image:: ../../auto_examples/cluster/images/plot_cluster_iris_4.png
+   :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
 .. warning:: 
@@ -89,20 +89,20 @@ algorithms. The simplest clustering algorithm is the
 
     **Don't over-interpret clustering results**
 
-.. |lena| image:: ../../auto_examples/tutorial/images/plot_lena_compress_1.png
-   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+.. |lena| image:: ../../auto_examples/cluster/images/plot_lena_compress_1.png
+   :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
-.. |lena_regular| image:: ../../auto_examples/tutorial/images/plot_lena_compress_2.png
-   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+.. |lena_regular| image:: ../../auto_examples/cluster/images/plot_lena_compress_2.png
+   :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
-.. |lena_compressed| image:: ../../auto_examples/tutorial/images/plot_lena_compress_3.png
-   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+.. |lena_compressed| image:: ../../auto_examples/cluster/images/plot_lena_compress_3.png
+   :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
-.. |lena_histogram| image:: ../../auto_examples/tutorial/images/plot_lena_compress_4.png
-   :target: ../../auto_examples/tutorial/plot_lena_compress.html
+.. |lena_histogram| image:: ../../auto_examples/cluster/images/plot_lena_compress_4.png
+   :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
 .. topic:: **Application example: vector quantization**

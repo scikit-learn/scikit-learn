@@ -2,9 +2,9 @@
 Exercise: setting sparsity on diabetes 
 ========================================
 
-.. literalinclude:: ../../auto_examples/tutorial/plot_cv_diabetes.py
+.. literalinclude:: ../../auto_examples/plot_cv_diabetes.py
     :lines: 1-13
 
-Solution: :download:`../../auto_examples/tutorial/plot_cv_diabetes.py`
+Solution: :download:`../../auto_examples/plot_cv_diabetes.py`
 
 

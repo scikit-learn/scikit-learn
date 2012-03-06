@@ -21,7 +21,7 @@ import numpy as np
 import scipy as sp
 import pylab as pl
 
-from scikits.learn import cluster
+from sklearn import cluster
 
 n_clusters = 5
 np.random.seed(0)

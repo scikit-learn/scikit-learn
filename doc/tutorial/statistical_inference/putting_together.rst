@@ -12,8 +12,8 @@ Pipelining
 We have seen that some estimators can transform data, and some estimators
 can predict variables. We can create combined estimators:
 
-.. image:: ../../auto_examples/tutorial/images/plot_digits_pipe_1.png
-   :target: ../../auto_examples/tutorial/plot_digits_pipe.html
+.. image:: ../../auto_examples/images/plot_digits_pipe_1.png
+   :target: ../../auto_examples/plot_digits_pipe.html
    :scale: 65
    :align: right
 
@@ -65,14 +65,14 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-.. literalinclude:: ../../auto_examples/tutorial/plot_face_recognition.py
+.. literalinclude:: ../../auto_examples/applications/plot_face_recognition.py
 
-.. |prediction| image:: ../../auto_examples/tutorial/images/plot_face_recognition_1.png
+.. |prediction| image:: ../../auto_examples/applications/images/plot_face_recognition_1.png
    :target: ../../auto_examples/applications/plot_face_recognition.html
    :scale: 50
 
-.. |eigenfaces| image:: ../../auto_examples/tutorial/images/plot_face_recognition_2.png
-   :target: ../../auto_examples/tutorial/plot_face_recognition.html
+.. |eigenfaces| image:: ../../auto_examples/applications/images/plot_face_recognition_2.png
+   :target: ../../auto_examples/applications/plot_face_recognition.html
    :scale: 50
 
 .. list-table::
@@ -108,7 +108,7 @@ Open problem: stock market structure
 
 Can we predict the variation in stock prices for Google?
 
-.. literalinclude:: ../../auto_examples/tutorial/plot_stock_market.py
+.. literalinclude:: ../../auto_examples/applications/plot_stock_market.py
     :lines: 1-167
 
 

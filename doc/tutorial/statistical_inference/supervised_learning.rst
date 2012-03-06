@@ -386,7 +386,7 @@ function, or **logistic** function:
 
    .. toctree::
 
-        digits_classification_excercice
+        digits_classification_exercise
 
 Support vector machines (SVMs)
 ================================
@@ -418,8 +418,8 @@ the separating line.
     |svm_margin_unreg|  	  |svm_margin_reg|
     ============================= ==============================
 
-.. image:: ../../auto_examples/tutorial/images/plot_svm_iris_1.png
-   :target: ../../auto_examples/tutorial/plot_svm_iris.html
+.. image:: ../../auto_examples/svm/images/plot_svm_iris_1.png
+   :target: ../../auto_examples/svm/plot_svm_iris.html
    :scale: 83
 
 SVMs can be used in regression --SVR (Support Vector Regression)--, or in
@@ -539,7 +539,7 @@ creating an decision energy by positioning *kernels* on observations:
 
    .. toctree::
 
-        iris_classification_excercice.rst
+        iris_classification_exercise.rst
 
    **Warning**: the classes are ordered, do not leave out the last 10%,
    you would be testing on only one class.
