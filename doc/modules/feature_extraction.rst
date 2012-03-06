@@ -162,8 +162,8 @@ of words in addition to the 1-grams (the word themselvs)::
 The vocabulary extracted by this vectorizer is hence much bigger and
 can now resolve ambiguities encoded in local positioning patterns::
 
-  >>> X_2 = bigram_vectorizer.fit_transform(corpus)
-  >>> X_2.toarray()
+  >>> X_2 = bigram_vectorizer.fit_transform(corpus).toarray()
+  >>> X_2
   array([[0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
          [0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0],
          [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0],
@@ -173,8 +173,10 @@ can now resolve ambiguities encoded in local positioning patterns::
 In particular the interogative form "Is this" is only present in the
 last document::
 
-  >>> bigram_vectorizer.vocabulary_.get(u'is this')
-  7
+  >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
+  >>> X_2[:, feature_index]
+  array([0, 0, 0, 1])
+
 
 .. _tfidf:
 
