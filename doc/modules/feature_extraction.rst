@@ -20,8 +20,8 @@ Text feature extraction
 .. currentmodule:: sklearn.feature_extraction.text
 
 
-The Bags of Words representation
---------------------------------
+The Bag of Words representation
+-------------------------------
 
 Text Analysis is a major application field for machine learning
 algorithms. However the raw data, a sequence of symbols cannot be fed
@@ -53,10 +53,14 @@ per document and one column per token (e.g. word) occurring in the corpus.
 
 We call **vectorization** the general process of turning a collection of
 text documents into numerical feature vectors. This specific stragegy
-(tokenization, counting and normalization) is called the **Bags of
+(tokenization, counting and normalization) is called the **Bag of
 Words** representation as documents are descriped by word occurrences
 while completely ignoring the relative position information of the words
 in the document.
+
+When combined with :ref:`tfidf`, the bag of words encoding is also known
+as the `Vector Space Model
+<https://en.wikipedia.org/wiki/Vector_space_model>`_.
 
 
 Sparsity
@@ -172,6 +176,7 @@ last document::
   >>> bigram_vectorizer.vocabulary_.get(u'is this')
   7
 
+.. _tfidf:
 
 TF-IDF normalization
 --------------------
