@@ -37,8 +37,8 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
    
-    .. image:: ../../auto_examples/tutorial/images/plot_iris_dataset_3class_1.png
-        :target: ../../auto_examples/tutorial/plot_iris_dataset_3class.html
+    .. image:: ../../auto_examples/images/plot_iris_dataset_1.png
+        :target: ../../auto_examples/plot_iris_dataset.html
         :align: right
 	:scale: 65
 
@@ -74,10 +74,10 @@ Scikit-learn documentation for more information about this type of classifier.)
 
 **KNN (k nearest neighbors) classification example**:
 
-.. image:: ../../auto_examples/tutorial/images/plot_knn_iris_1.png
-   :target: ../../auto_examples/tutorial/plot_knn_iris.html
+.. image:: ../../auto_examples/neighbors/images/plot_classification_1.png
+   :target: ../../auto_examples/neighbors/plot_classification.html
    :align: center
-   :scale: 90
+   :scale: 70
 
 ::
 
@@ -524,8 +524,8 @@ creating an decision energy by positioning *kernels* on observations:
    `svm_gui.py`; add data points of both classes with right and left button, 
    fit the model and change parameters and data.
 
-.. image:: ../../auto_examples/tutorial/images/plot_iris_dataset_3class_1.png
-    :target: ../../auto_examples/tutorial/plot_iris_dataset_3class.html
+.. image:: ../../auto_examples/images/plot_iris_dataset_1.png
+    :target: ../../auto_examples/plot_iris_dataset.html
     :scale: 70
 
 .. topic:: **Excercise**
