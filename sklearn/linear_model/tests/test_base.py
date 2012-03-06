@@ -68,7 +68,7 @@ def test_linear_regression_multiple_outcome(random_state=0):
     y_pred = clf.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
 
-def test_linear_regression_sparse_multible_outcome(random_state=0):
+def test_linear_regression_sparse_multiple_outcome(random_state=0):
     "Test multiple-outcome linear regressions with sparse data"
     random_state = check_random_state(random_state)
     X,y = make_sparse_uncorrelated(random_state = random_state)
