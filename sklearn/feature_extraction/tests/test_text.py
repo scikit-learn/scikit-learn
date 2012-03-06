@@ -100,7 +100,7 @@ def test_to_ascii():
 
 
 def test_word_analyzer_unigrams():
-    wa = CountVectorizer().build_analyzer()
+    wa = CountVectorizer(strip_accents='ascii').build_analyzer()
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
                 u'etait', u'pas', u'tres', u'bon']
@@ -125,15 +125,17 @@ def test_word_analyzer_unigrams():
     assert_equal(wa(text), expected)
 
     # with custom tokenizer
-    wa = CountVectorizer(tokenizer=split_tokenize).build_analyzer()
+    wa = CountVectorizer(tokenizer=split_tokenize,
+                         strip_accents='ascii').build_analyzer()
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u"j'ai", u'mange', u'du', u'kangourou', u'ce', u'midi,',
-               u"c'etait", u'pas', u'tres', u'bon.']
+                u"c'etait", u'pas', u'tres', u'bon.']
     assert_equal(wa(text), expected)
 
 
 def test_word_analyzer_unigrams_and_bigrams():
-    wa = CountVectorizer(analyzer="word", min_n=1, max_n=2).build_analyzer()
+    wa = CountVectorizer(analyzer="word", strip_accents='unicode',
+                         min_n=1, max_n=2).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
@@ -160,7 +162,8 @@ def test_unicode_decode_error():
 
 
 def test_char_ngram_analyzer():
-    cnga = CountVectorizer(analyzer='char', min_n=3, max_n=6).build_analyzer()
+    cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
+                           min_n=3, max_n=6).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
     expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']

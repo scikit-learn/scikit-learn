@@ -52,8 +52,7 @@ def strip_accents_ascii(s):
         Remove accentuated char for any unicode symbol.
     """
     nkfd_form = unicodedata.normalize('NFKD', s)
-    only_ascii = nkfd_form.encode('ASCII', 'ignore')
-    return only_ascii
+    return nkfd_form.encode('ASCII', 'ignore').decode('ASCII')
 
 
 def strip_tags(s):
@@ -107,6 +106,13 @@ class CountVectorizer(BaseEstimator):
         contains characters not of the given `charset`. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
+
+    strip_accents: {'ascii', 'unicode', None}
+        Remove accents during the preprocessing step.
+        'ascii' is a fast method that only works on characters that have
+        an direct ASCII mapping.
+        'unicode' is a slightly slower method that works on any characters.
+        None (default) does nothing.
 
     analyzer: string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -172,7 +178,7 @@ class CountVectorizer(BaseEstimator):
     _white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents='ascii',
+                 charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
                  min_n=1, max_n=1, analyzer='word',

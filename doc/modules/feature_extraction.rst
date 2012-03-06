@@ -51,12 +51,12 @@ In this scheme, features and samples are defined as follows:
 A corpus of documents can thus be represented by a matrix with one row
 per document and one column per token (e.g. word) occurring in the corpus.
 
-We call **vectorization** the general process of turning a collection of
-text documents into numerical feature vectors. This specific stragegy
-(tokenization, counting and normalization) is called the **Bag of
-Words** representation as documents are descriped by word occurrences
-while completely ignoring the relative position information of the words
-in the document.
+We call **vectorization** the general process of turning a collection
+of text documents into numerical feature vectors. This specific stragegy
+(tokenization, counting and normalization) is called the **Bag of Words**
+or "Bag of n-grams" representation. Documents are described by word
+occurrences while completely ignoring the relative position information
+of the words in the document.
 
 When combined with :ref:`tfidf`, the bag of words encoding is also known
 as the `Vector Space Model
@@ -97,7 +97,7 @@ reasonable (please see  the :ref:`reference documentation
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
           lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
-          preprocessor=None, stop_words=None, strip_accents='ascii',
+          preprocessor=None, stop_words=None, strip_accents=None,
           token_pattern=u'\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
@@ -120,14 +120,14 @@ requested explicitly::
 
   >>> analyze = vectorizer.build_analyzer()
   >>> analyze("This is a text document to analyze.")
-  ['this', 'is', 'text', 'document', 'to', 'analyze']
+  [u'this', u'is', u'text', u'document', u'to', u'analyze']
 
 Each term found by the analyzer during the fit is assigned a unique
 integer index to assign it a column in the resulting matrix.  This
 interpretation of the columns can be retrieved as follows::
 
   >>> vectorizer.get_feature_names()
-  ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+  [u'and', u'document', u'first', u'is', u'one', u'second', u'the', u'third', u'this']
 
   >>> X.toarray()
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -301,7 +301,7 @@ the meaning carried by that internal structure.
 
 In order to address the wider task of Natural Language Understanding,
 the local structure of sentences and paragraphs should thus be taken
-into account. Many such models will thus be casted as "Structured Ouput"
+into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
 
@@ -315,8 +315,8 @@ parameters of the vectorizer::
   ...     return s.split()
   ...
   >>> vectorizer = CountVectorizer(tokenizer=my_tokenizer)
-  >>> vectorizer.build_analyzer()("Some... punctuation!")
-  ['some...', 'punctuation!']
+  >>> vectorizer.build_analyzer()(u"Some... punctuation!")
+  [u'some...', u'punctuation!']
 
 In particular we name:
 
