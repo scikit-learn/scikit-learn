@@ -186,8 +186,8 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. image:: ../../auto_examples/tutorial/images/plot_ols_variance_1.png
-   :target: ../../auto_examples/tutorial/plot_ols_variance.html
+.. image:: ../../auto_examples/linear_model/images/plot_ols_variance_1.png
+   :target: ../../auto_examples/linear_model/plot_ols_variance.html
    :scale: 70
    :align: right
 
@@ -215,8 +215,8 @@ regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called *ridge*
 regression:
 
-.. image:: ../../auto_examples/tutorial/images/plot_ridge_variance_1.png
-   :target: ../../auto_examples/tutorial/plot_ridge_variance.html
+.. image:: ../../auto_examples/linear_model/images/plot_ridge_variance_1.png
+   :target: ../../auto_examples/linear_model/plot_ridge_variance.html
    :scale: 70
    :align: right
 
@@ -260,16 +260,16 @@ Sparsity
 ----------
 
 
-.. |diabetes_ols_1| image:: ../../auto_examples/tutorial/images/plot_ols_3d_1.png
-   :target: ../../auto_examples/tutorial/plot_ols_3d.html
+.. |diabetes_ols_1| image:: ../../auto_examples/linear_model/images/plot_ols_3d_1.png
+   :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_3| image:: ../../auto_examples/tutorial/images/plot_ols_3d_3.png
-   :target: ../../auto_examples/tutorial/plot_ols_3d.html
+.. |diabetes_ols_3| image:: ../../auto_examples/linear_model/images/plot_ols_3d_3.png
+   :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_2| image:: ../../auto_examples/tutorial/images/plot_ols_3d_2.png
-   :target: ../../auto_examples/tutorial/plot_ols_3d.html
+.. |diabetes_ols_2| image:: ../../auto_examples/linear_model/images/plot_ols_3d_2.png
+   :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
 
