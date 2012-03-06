@@ -3,12 +3,13 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_equal
 import numpy as np
 from scipy import sparse
 
 from ..base import LinearRegression
 from ...utils import check_random_state
+
 
 
 def test_linear_regression():
@@ -49,3 +50,39 @@ def test_linear_regression_sparse(random_state=0):
     ols.fit(X, y.ravel())
     assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
     assert_array_almost_equal(ols.residues_, 0)
+    
+def test_linear_regression_multible_outcome(random_state=0):
+    "Test multiple-outcome linear regressions"
+    X = np.array([[1, 4, 2], [2, 6, 2], [3, 5, 2]])
+    y = np.array([1, 2, 3])
+    
+    Y = np.vstack((y,y)).T
+    n_features = X.shape[1]
+
+    clf = LinearRegression(fit_intercept=True)
+    clf.fit((X), Y)
+    assert_equal(clf.coef_.shape, (2, n_features))
+    Y_pred = clf.predict(X)
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+def test_linear_regression_sparse_multible_outcome(random_state=0):
+    "Test multiple-outcome linear regressions with sparse data"
+    random_state = check_random_state(random_state)
+    n = 100
+    X = sparse.eye(n, n)
+    beta = random_state.rand(n)
+    y = X * beta[:, np.newaxis]
+    y = np.array(y.ravel())
+    
+    Y = np.vstack((y,y)).T
+    n_features = X.shape[1]
+
+    ols = LinearRegression()
+    ols.fit(X, Y)
+    assert_equal(ols.coef_.shape, (2, n_features))
+    Y_pred = ols.predict(X)
+    ols.fit(X, y.ravel())
+    y_pred = ols.predict(X)
+    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
