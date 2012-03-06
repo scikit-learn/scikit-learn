@@ -163,9 +163,20 @@ class LinearRegression(LinearModel):
 
         if sp.issparse(X):
             if hasattr(sp_linalg, 'lsqr'):
-                out = sp_linalg.lsqr(X, y)
-                self.coef_ = out[0]
-                self.residues_ = out[3]
+                if y.ndim < 2:
+                    out = sp_linalg.lsqr(X, y)
+                    self.coef_ = out[0]
+                    self.residues_ = out[3]
+                else:
+                    # sparse_lstsq cannot handle y with shape (M, K)
+                    coef = []
+                    residues = []
+                    for j in range(y.shape[1]):
+                        out = sp_linalg.lsqr(X, y[:, j].ravel())
+                        coef.append(out[0])
+                        residues.append(out[3])
+                    self.coef_ = np.array(coef)
+                    self.residues_ = np.array(residues)
             else:
                 # DEPENDENCY: scipy 0.7
                 self.coef_ = sp_linalg.spsolve(X, y)
@@ -173,6 +184,7 @@ class LinearRegression(LinearModel):
         else:
             self.coef_, self.residues_, self.rank_, self.singular_ = \
                     linalg.lstsq(X, y)
+            self.coef_ = self.coef_.T
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self
