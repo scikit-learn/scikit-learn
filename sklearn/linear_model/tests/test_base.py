@@ -55,7 +55,7 @@ def test_linear_regression_sparse(random_state=0):
     
 def test_linear_regression_multiple_outcome(random_state=0):
     "Test multiple-outcome linear regressions"
-    X,y = make_regression()    
+    X,y = make_regression(random_state = random_state)    
     
     Y = np.vstack((y,y)).T
     n_features = X.shape[1]
