@@ -74,10 +74,10 @@ For instance a collection of 10,000 short text documents (such as emails)
 will use a vocabulary with a size in the order of 100,000 unique words in
 total while each document will use 100 to 1000 unique words individually.
 
-In order to be able to store this such a matrix in memory but also to
-speed up algebraic operations matrix / vector, implementations will
-typically use a sparse representation such as the implementations
-available in the ``scipy.sparse`` package.
+In order to be able to store such a matrix in memory but also to speed
+up algebraic operations matrix / vector, implementations will typically
+use a sparse representation such as the implementations available in the
+``scipy.sparse`` package.
 
 
 Common Vectorizer usage
@@ -114,7 +114,7 @@ corpus of text documents::
   <4x9 sparse matrix of type '<type 'numpy.int64'>'
       with 19 stored elements in COOrdinate format>
 
-The default configuration tokenize the string by extracting words of
+The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
 requested explicitly::
 
@@ -123,7 +123,7 @@ requested explicitly::
   [u'this', u'is', u'text', u'document', u'to', u'analyze']
 
 Each term found by the analyzer during the fit is assigned a unique
-integer index to assign it a column in the resulting matrix.  This
+integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
   >>> vectorizer.get_feature_names()
@@ -149,7 +149,7 @@ ignored in future calls to the transform method::
 
 Note that in the previous corpus, the first and the last documents have
 exaclty the same words hence are encoded in equal vectors. In particular
-we lose the info that the last document is an interogative form. To
+we lose the information that the last document is an interogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
@@ -184,8 +184,8 @@ TF-IDF normalization
 --------------------
 
 In a large text corpus, some words will be very present (e.g. "the", "a",
-"is" in English) hence carrying very few meaningul information about the
-actual contents of the document. If we were to feed the direct count
+"is" in English) hence carrying very little meaningul information about
+the actual contents of the document. If we were to feed the direct count
 data directly to a classifier those very frequent terms would shadow
 the frequencies of rarer yet more interesting terms.
 
@@ -199,7 +199,7 @@ scheme developed for information retrieval (as a ranking function
 for search engines results), that has also found good use in document
 classification and clustering.
 
-This normalization is implement by the :class:`TfidfTransformer` class::
+This normalization is implemented by the :class:`TfidfTransformer` class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
@@ -210,9 +210,9 @@ Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
 
 Let's take an example with the following counts. The first term is present
-100% of the time hence not very interesting. The two other features
-only in less than 50% of the time hence a probably more representative
-of the content of the documents::
+100% of the time hence not very interesting. The two other features only
+in less than 50% of the time hence probably more representative of the
+content of the documents::
 
   >>> counts = [[3, 0, 1],
   ...           [2, 0, 0],
@@ -235,7 +235,8 @@ of the content of the documents::
          [ 0.63...,  0.  ...,  0.77...]])
 
 Each row is normalized to have unit euclidean norm. The weights of each
-feature computed during the ``fit`` are stored in a model attribute::
+feature computed by the ``fit`` method call are stored in a model
+attribute::
 
   >>> transformer.idf_                       # doctest: +ELLIPSIS
   array([ 1. ...,  2.25...,  1.84...])
