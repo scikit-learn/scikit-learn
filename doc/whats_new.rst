@@ -55,7 +55,7 @@ Changelog
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
-   - Simplication of the :ref:`text_feature_extraction` API and fixed the
+   - Simplication of the :ref:`text_feature_extraction` API and fixed
      an issue with possible negative IDF, by `Olivier Grisel`_.
 
 
