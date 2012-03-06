@@ -12,11 +12,14 @@ even with a small amount of labeled data.
 """
 print __doc__
 
+# Authors: Clay Woolam <clay@woolam.org>
+# Licence: BSD
+
 import numpy as np
 import pylab as pl
 from sklearn import datasets
 from sklearn import svm
-from sklearn import label_propagation
+from sklearn.semi_supervised import label_propagation
 
 rng = np.random.RandomState(0)
 
@@ -29,14 +32,14 @@ y = iris.target
 h = .02
 
 y_30 = np.copy(y)
-y_30[rng.rand(len(y)) < 0.3] = 3
+y_30[rng.rand(len(y)) < 0.3] = -1
 y_50 = np.copy(y)
-y_50[rng.rand(len(y)) < 0.5] = 3
+y_50[rng.rand(len(y)) < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-ls30 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, y_30),
+ls30 = (label_propagation.LabelSpreading().fit(X, y_30),
         y_30)
-ls50 = (label_propagation.LabelSpreading(unlabeled_identifier=3).fit(X, y_50),
+ls50 = (label_propagation.LabelSpreading().fit(X, y_50),
         y_50)
 ls100 = (label_propagation.LabelSpreading().fit(X, y), y)
 rbf_svc = (svm.SVC(kernel='rbf').fit(X, y), y)
@@ -53,6 +56,8 @@ titles = ['Label Spreading 30% data',
           'Label Spreading 100% data',
           'SVC with rbf kernel']
 
+color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
+
 pl.set_cmap(pl.cm.Paired)
 
 for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
@@ -68,8 +73,10 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=(y_train))
+    colors = [color_map[y] for y in y_train]
+    pl.scatter(X[:, 0], X[:, 1], c=colors)
 
     pl.title(titles[i])
 
+pl.text(.90, 0, "Unlabeled points are colored white")
 pl.show()

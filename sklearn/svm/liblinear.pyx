@@ -108,7 +108,8 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     return w, label
 
-def csr_train_wrap ( int n_features,
+
+cdef _csr_train_wrap(np.int32_t n_features,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] X_values,
                  np.ndarray[np.int32_t,   ndim=1, mode='c'] X_indices,
                  np.ndarray[np.int32_t,   ndim=1, mode='c'] X_indptr,
@@ -116,11 +117,6 @@ def csr_train_wrap ( int n_features,
                  solver_type, double eps, double bias, double C,
                  np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
-    """
-    Wrapper for train.
-
-    X matrix is given in CSR sparse format.
-    """
     cdef parameter *param
     cdef problem *problem
     cdef model *model
@@ -128,9 +124,11 @@ def csr_train_wrap ( int n_features,
     cdef int len_w
 
     problem = csr_set_problem(X_values.data, X_indices.shape,
-              X_indices.data, X_indptr.shape, X_indptr.data, Y.data, n_features, bias)
+                              X_indices.data, X_indptr.shape,
+                              X_indptr.data, Y.data, n_features, bias)
 
-    param = set_parameter(solver_type, eps, C, weight.shape[0], weight_label.data, weight.data)
+    param = set_parameter(solver_type, eps, C, weight.shape[0],
+                          weight_label.data, weight.data)
 
     error_msg = check_parameter(problem, param)
     if error_msg:
@@ -167,6 +165,16 @@ def csr_train_wrap ( int n_features,
     return w, label
 
 
+def csr_train_wrap(X, Y, solver_type, eps, bias, C, weight_label, weight):
+    """
+    Wrapper for train.
+
+    X matrix is given in CSR sparse format.
+    """
+    return _csr_train_wrap(X.shape[1], X.data, X.indices, X.indptr, Y,
+                           solver_type, eps, bias, C, weight_label, weight)
+
+
 def decision_function_wrap(
     np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,   
@@ -198,8 +206,7 @@ def decision_function_wrap(
     return dec_values
 
 
-
-def csr_decision_function_wrap(
+cdef _csr_decision_function_wrap(
     int n_features,
     np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
     np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
@@ -210,11 +217,6 @@ def csr_decision_function_wrap(
     np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
     np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     double bias):
-    """
-    Predict from model
-
-    Test data given in CSR format
-    """
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef parameter *param
@@ -240,7 +242,19 @@ def csr_decision_function_wrap(
     free_parameter(param)
     free_and_destroy_model(&model)
     return dec_values
-                          
+
+
+def csr_decision_function_wrap(X, coef, solver_type, tol, C, weight_label,
+                                weight, label, bias):
+    """
+    Predict from model
+
+    Test data given in CSR format
+    """
+    return _csr_decision_function_wrap(X.shape[1], X.data, X.indices, X.indptr,
+                                       coef, solver_type, tol, C, weight_label,
+                                       weight, label, bias)
+
 
 def predict_wrap(
     np.ndarray[np.float64_t, ndim=2, mode='c'] T,
@@ -269,7 +283,7 @@ def predict_wrap(
     return dec_values
 
 
-def csr_predict_wrap(
+cdef _csr_predict_wrap(
         int n_features,
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
@@ -280,11 +294,6 @@ def csr_predict_wrap(
         np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
         np.ndarray[np.int32_t, ndim=1, mode='c'] label,
         double bias):
-    """
-    Predict from model
-
-    Test data given in CSR format
-    """
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] dec_values
     cdef parameter *param
@@ -306,9 +315,19 @@ def csr_predict_wrap(
     free_and_destroy_model(&model)
     return dec_values
 
+
+def csr_predict_wrap(X, coef, solver_type, eps, C, weight_label, weight,
+                     label, bias):
+    """
+    Predict from model
+
+    Test data X given in CSR format
+    """
+    return _csr_predict_wrap(X.shape[1], X.data, X.indices, X.indptr, coef,
+                             solver_type, eps, C, weight_label, weight,
+                             label, bias)
+
     
-
-
 def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
                  np.ndarray[np.float64_t, ndim=2, mode='fortran'] coef_,
                  int solver_type, double eps, double C,
@@ -327,7 +346,7 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object. predict_wrap skips this step.
 
-    See scikits.learn.svm.predict for a complete list of parameters.
+    See sklearn.svm.predict for a complete list of parameters.
 
     Parameters
     ----------
@@ -361,7 +380,7 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
 
 
 
-def csr_predict_prob(
+cdef _csr_predict_prob_wrap(
         int n_features,
         np.ndarray[np.float64_t, ndim=1, mode='c'] T_values,
         np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
@@ -372,12 +391,6 @@ def csr_predict_prob(
         np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
         np.ndarray[np.int32_t, ndim=1, mode='c'] label,
         double bias):
-    """
-    Predict probability from model
-
-    Test data given in CSR format
-    """
-
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef parameter *param
     cdef model *model
@@ -399,3 +412,15 @@ def csr_predict_prob(
     free_parameter(param)
     free_and_destroy_model(&model)
     return dec_values
+
+
+def csr_predict_prob_wrap(X, coef, solver_type, tol, C, weight_label,
+                          weight, label, bias):
+    """
+    Predict probability from model
+
+    Test data given in CSR format
+    """
+    return _csr_predict_prob_wrap(X.shape[1], X.data, X.indices, X.indptr,
+                                  coef, solver_type, tol, C, weight_label,
+                                  weight, label, bias)

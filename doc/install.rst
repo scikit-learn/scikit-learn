@@ -19,7 +19,10 @@ There are different ways to get scikit-learn installed:
     latest-and-greatest features and aren't afraid of running
     brand-new code.
 
+.. note::
 
+    If you wish to contribute to the project, it's recommended you
+    :ref:`install the latest development version<install_bleeding_edge>`.
 
 .. _install_official_release:
 
@@ -30,10 +33,10 @@ Installing an official release
 Installing from source
 ----------------------
 
-Installing from source requires you to have installed numpy,
-scipy, setuptools, python development headers and a working C++
-compiler. Under Debian-based systems you can get all this by executing
-with root privileges::
+Installing from source requires you to have installed python (>= 2.6), numpy
+(>= 1.3), scipy (>= 0.7), setuptools, python development headers and a working
+C++ compiler. Under Debian-based systems you can get all this by executing with
+root privileges::
 
     sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
 
@@ -68,7 +71,7 @@ these commands.
 From source package
 ~~~~~~~~~~~~~~~~~~~
 
-Download the package from http://sourceforge.net/projects/scikit-learn/files
+Download the package from http://pypi.python.org/pypi/scikit-learn/
 , unpack the sources and cd into archive.
 
 This packages uses distutils, which is the default way of installing
@@ -87,6 +90,13 @@ numpy and setuptools.
 
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
+.. topic:: **Installing on Windows 64bit**
+
+   To install a 64bit version of the scikit, you can download the
+   binaries from http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn
+   Note that this will require a compatible version of numpy, scipy and
+   matplotlib. The easiest option is to also download them from the same
+   URL.
 
 Building on windows
 -------------------

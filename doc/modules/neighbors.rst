@@ -268,13 +268,13 @@ depends on a number of factors:
     the overhead due to the tree
     structure can lead to queries which are slower than brute force.
   
-  For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` 
-  can is comparable to :math:`N`, and brute force algorithms will
-  can be more efficient than a tree-based approach.  Both :class:`cKDTree`
-  and :class:`BallTree` address this through providing a *leaf size*
-  parameter: this controls the number of samples at which a query switches
-  to brute-force.  This allows both algorithms to approach the efficiency
-  of a brute-force computation for small :math:`N`.
+  For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
+  comparable to :math:`N`, and brute force algorithms can be more efficient
+  than a tree-based approach.  Both :class:`cKDTree` and :class:`BallTree`
+  address this through providing a *leaf size* parameter: this controls the
+  number of samples at which a query switches to brute-force.  This allows both
+  algorithms to approach the efficiency of a brute-force computation for small
+  :math:`N`.
 
 * data structure: *intrinsic dimensionality* of the data and/or *sparsity*
   of the data. Intrinsic dimensionality refers to the dimension

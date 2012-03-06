@@ -30,6 +30,12 @@ data can be found in the `labels_` attribute.
     and :class:`SpectralClustering` can work with arbitrary objects, as
     long as a similarity measure exists for such objects.
 
+Here a visual comparison of some of the clustering algorithms in scikit-learn:
+
+.. figure:: ../auto_examples/cluster/images/plot_cluster_comparison_1.png
+   :target: ../auto_examples/cluster/plot_cluster_comparison.html
+   :align: center
+   :scale: 50
 
 .. _k_means:
 
@@ -51,6 +57,12 @@ to the mean of each segment. The algorithm then repeats this until a stopping
 criteria is fulfilled. Usually, as in this implementation, the algorithm
 stops when the relative increment in the results between iterations is less than
 the given tolerance value.
+
+A parameter can be given to allow K-means to be run in parallel, called
+`n_jobs`. Giving this parameter a positive value uses that many processors 
+(default=1). A value of -1 uses all processors, with -2 using one less, and so 
+on. Parallelization generally speeds up computation at the cost of memory (in
+this case, multiple copies of centroids need to be stored, one for each job).
 
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
@@ -124,7 +136,8 @@ Mean Shift
 :class:`MeanShift` clusters data by estimating *blobs* in a smooth
 density of points matrix. This algorithm automatically sets its numbers
 of cluster. It will have difficulties scaling to thousands of samples.
-
+The utility function :func:`estimate_bandwidth` can be used to guess
+the optimal bandwidth for :class:`MeanShift` from the data.
 
 .. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
@@ -242,11 +255,11 @@ roll.
 
 .. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. centered:: |unstructured| |structured|
 
@@ -354,8 +367,8 @@ Drawbacks
   is known).
 
 
-Ajusted Rand index
-------------------
+Adjusted Rand index
+-------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -475,8 +488,8 @@ by defining the adjusted Rand index as follows:
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
-Ajusted Mutual Information
---------------------------
+Adjusted Mutual Information
+---------------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -814,7 +827,7 @@ cluster analysis.
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
-  0.5525...
+  0.55...
 
 .. topic:: References
 

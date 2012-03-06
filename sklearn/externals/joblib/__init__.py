@@ -101,7 +101,7 @@ Main features
 
 """
 
-__version__ = '0.6.0b2'
+__version__ = '0.6.3'
 
 
 from .memory import Memory

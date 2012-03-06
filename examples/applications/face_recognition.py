@@ -36,7 +36,7 @@ from time import time
 import logging
 import pylab as pl
 
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.cross_validation import train_test_split
 from sklearn.datasets import fetch_lfw_people
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
@@ -53,11 +53,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
-# reshape the data using the traditional (n_samples, n_features) shape
-faces = lfw_people.data
-n_samples, h, w = faces.shape
+# introspect the images arrays to find the shapes (for plotting)
+n_samples, h, w = lfw_people.images.shape
 
-X = faces.reshape((n_samples, h * w))
+# fot machine learning we use the 2 data directly (as relative pixel
+# positions info is ignored by this model)
+X = lfw_people.data
 n_features = X.shape[1]
 
 # the label to predict is the id of the person
@@ -75,9 +76,8 @@ print "n_classes: %d" % n_classes
 # Split into a training set and a test set using a stratified k fold
 
 # split into a training and testing set
-train, test = iter(StratifiedKFold(y, k=4)).next()
-X_train, X_test = X[train], X[test]
-y_train, y_test = y[train], y[test]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_fraction=0.25)
 
 
 ###############################################################################
@@ -106,11 +106,10 @@ print "done in %0.3fs" % (time() - t0)
 print "Fitting the classifier to the training set"
 t0 = time()
 param_grid = {
- 'C': [1, 5, 10, 50, 100],
+ 'C': [1e3, 5e3, 1e4, 5e4, 1e5],
  'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
 }
-clf = GridSearchCV(SVC(kernel='rbf'), param_grid,
-                   fit_params={'class_weight': 'auto'})
+clf = GridSearchCV(SVC(kernel='rbf', class_weight='auto'), param_grid)
 clf = clf.fit(X_train_pca, y_train)
 print "done in %0.3fs" % (time() - t0)
 print "Best estimator found by grid search:"

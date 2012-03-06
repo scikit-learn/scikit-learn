@@ -11,7 +11,7 @@ methods used for :ref:`classification <svm_classification>`,
 :ref:`regression <svm_regression>` and :ref:`outliers detection
 <svm_outlier_detection>`.
 
-The advantages of Support Vector Machines are:
+The advantages of support vector machines are:
 
     - Effective in high dimensional spaces.
 
@@ -25,7 +25,7 @@ The advantages of Support Vector Machines are:
       specified for the decision function. Common kernels are
       provided, but it is also possible to specify custom kernels.
 
-The disadvantages of Support Vector Machines include:
+The disadvantages of support vector machines include:
 
     - If the number of features is much greater than the number of
       samples, the method is likely to give poor performances.
@@ -33,6 +33,18 @@ The disadvantages of Support Vector Machines include:
     - SVMs do not directly provide probability estimates, these are
       calculated using five-fold cross-validation, and thus
       performance can suffer.
+
+The support vector machines in scikit-learn support both dens
+(``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
+sparse (any ``scipy.sparse``) sample vectors as input. However, to use
+an SVM to make predictions for sparse data, it must have been fit on such
+data. For optimal performance, use C-ordered ``numpy.ndarray`` (dense) or
+``scipy.sparse.csr_matrix`` (sparse) with ``dtype=float64``.
+
+In previous versions of scikit-learn, sparse input support existed only
+in the ``sklearn.svm.sparse`` module which duplicated the ``sklearn.svm``
+interface. This module still exists for backward compatibility, but is
+deprecated and will be removed in scikit-learn 0.12.
 
 .. TODO: add reference to probability estimates
 
@@ -70,9 +82,10 @@ training samples::
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = svm.SVC()
-    >>> clf.fit(X, Y)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf',
-      probability=False, scale_C=False, shrinking=True, tol=0.001)
+    >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma=0.5, kernel='rbf', probability=False, scale_C=True, shrinking=True,
+    tol=0.001)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -95,6 +108,7 @@ can be found in members `support_vectors_`, `support_` and
     >>> clf.n_support_ # doctest: +ELLIPSIS
     array([1, 1]...)
 
+.. _svm_multi_class:
 
 Multi-class classification
 --------------------------
@@ -107,9 +121,10 @@ classifiers are constructed and each one trains data from two classes::
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC()
-    >>> clf.fit(X, Y)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=1.0, kernel='rbf',
-      probability=False, scale_C=False, shrinking=True, tol=0.001)
+    >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma=1.0, kernel='rbf', probability=False, scale_C=True, shrinking=True,
+    tol=0.001)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -119,15 +134,72 @@ multi-class strategy, thus training n_class models. If there are only
 two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
-    >>> lin_clf.fit(X, Y)
-    LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
-         loss='l2', multi_class=False, penalty='l2', scale_C=False, tol=0.0001)
+    >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+    intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
+    scale_C=True, tol=0.0001)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+Note that the :class:`LinearSVC` also implements an alternative multi-class
+strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
+using the option "multi_class='crammer_singer'". This method is consistent,
+which is not true for one-vs-rest classification.
+In practice, on-vs-rest classification is usually preferred, since the results
+are mostly similar, but the runtime is significantly less.
+
+For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
+have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
+Each row of the coefficients corresponds to one of the ``n_class`` many
+"one-vs-rest" classifiers and simliar for the interecepts, in the
+order of the "one" class.
+
+In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
+is a little more involved. In the case of having a linear kernel,
+The layout of ``coef_`` and ``intercept_`` is similar to the one
+described for :class:`LinearSVC` described above, except that
+the shape of ``coef_`` is ``[n_class * (n_class - 1) / 2``,
+corresponding to as many binary classifiers. The order for classes
+0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
+. "n-1 vs n".
+
+The shape of ``dual_coef_`` is ``[n_class-1, n_SV]`` with
+a somewhat hard to grasp layout.
+The columns correspond to the support vectors involved in any
+of the ``n_class * (n_class - 1) / 2`` "one-vs-one" classifiers.
+Each of the support vectors is used in ``n_class - 1`` classifiers.
+The ``n_class - 1`` entries in each row correspond to the dual coefficients
+for these classifiers.
+
+This might be made more clear by an example:
+
+    Consider a three class problem with with class 0 having 3 support vectors
+    :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
+    vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
+    For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
+    Let's call the coefficient of support vector :math:`v^{j}_i` in the
+    classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
+    Then ``dual_coef_`` looks like this:
+
+    +------------------------+------------------------+------------------+
+    |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|for SVs           |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|of class 0        |
+    +------------------------+------------------------+------------------+
+    |:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
+    +------------------------+------------------------+------------------+
+    |:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
+    +------------------------+------------------------+                  |
+    |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|for SVs of class 2|
+    +------------------------+------------------------+------------------+
 
 
 Unbalanced problems
@@ -196,10 +268,10 @@ floating point values instead of integer values::
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
-    >>> clf.fit(X, y)
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.5,
-      kernel='rbf', probability=False, scale_C=False, shrinking=True,
-      tol=0.001)
+    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
+    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, scale_C=True,
+    shrinking=True, tol=0.001)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -216,7 +288,7 @@ Density estimation, novelty detection
 One-class SVM is used for novelty detection, that is, given a set of
 samples, it will detect the soft boundary of that set so as to
 classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`. 
+implements this is called :class:`OneClassSVM`.
 
 In this case, as it is a type of unsupervised learning, the fit method
 will only take as input an array X, as there are no class labels.
@@ -233,26 +305,6 @@ See, section :ref:`outlier_detection` for more details on this usage.
 
  * :ref:`example_svm_plot_oneclass.py`
  * :ref:`example_applications_plot_species_distribution_modeling.py`
-
-.. currentmodule:: sklearn.svm.sparse
-
-
-Support Vector machines for sparse data
-=======================================
-
-There is support for sparse data given in any matrix in a format
-supported by scipy.sparse. Classes have the same name, just prefixed
-by the `sparse` namespace, and take the same arguments, with the
-exception of training and test data, which is expected to be in a
-matrix format defined in scipy.sparse.
-
-For maximum efficiency, use the CSR matrix format as defined in
-`scipy.sparse.csr_matrix
-<http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
-
-Implemented classes are :class:`SVC`, :class:`NuSVC`,
-:class:`SVR`, :class:`NuSVR`, :class:`OneClassSVM`,
-:class:`LinearSVC`.
 
 
 Complexity
@@ -294,13 +346,16 @@ Tips on Practical Use
     the SGDClassifier class instead. The objective function can be
     configured to be almost the same as the LinearSVC model.
 
-
   * **Kernel cache size**: For SVC, SVR, nuSVC and NuSVR, the size of
     the kernel cache has a strong impact on run times for larger
     problems.  If you have enough RAM available, it is recommended to
     set `cache_size` to a higher value than the default of 200(MB),
     such as 500(MB) or 1000(MB).
 
+  * **Setting C**: In constrast to the scaling in LibSVM and LibLinear,
+    the ``C`` parameter in `sklearn.svm` is a per sample penalty.
+    Commonly good values for ``C`` often are very large (i.e. ``10**4``)
+    and seldom below ``1``.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
@@ -338,13 +393,14 @@ The *kernel function* can be any of the following:
 
   * linear: :math:`<x_i, x_j'>`.
 
-  * polynomial: :math:`(\gamma <x, x'> + r)^d`. d is specified by
-    keyword `degree`.
+  * polynomial: :math:`(\gamma <x, x'> + r)^d`. `d` is specified by
+    keyword ``degree``, `r` by ``coef0``.
 
   * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
-    specified by keyword gamma.
+    specified by keyword ``gamma``.
 
-  * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
+  * sigmoid (:math:`tanh(<x_i,x_j> + r)`), where `r` is specified by
+    ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
 
@@ -410,10 +466,10 @@ vectors and the test vectors must be provided.
     >>> clf = svm.SVC(kernel='precomputed')
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
-    >>> clf.fit(gram, y)
-    SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0,
-      kernel='precomputed', probability=False, scale_C=False, shrinking=True,
-      tol=0.001)
+    >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma=0.0, kernel='precomputed', probability=False, scale_C=True,
+    shrinking=True, tol=0.001)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([ 0.,  1.])
@@ -439,19 +495,19 @@ generalization error of the classifier.
 SVC
 ---
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l, in two
-classes, and a vector :math:`y \in R^l` such that :math:`y_i \in {1,
+Given training vectors :math:`x_i \in R^p`, i=1,..., n, in two
+classes, and a vector :math:`y \in R^n` such that :math:`y_i \in {1,
 -1}`, SVC solves the following primal problem:
 
 
 .. math::
 
-    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, l} \zeta_i
+    \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1, n} \zeta_i
 
 
 
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
-    & \zeta_i \geq 0, i=1, ..., l
+    & \zeta_i \geq 0, i=1, ..., n
 
 Its dual is
 
@@ -464,16 +520,28 @@ Its dual is
    & 0 \leq \alpha_i \leq C, i=1, ..., l
 
 where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
-is an l by l positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
+is an n by n positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
 x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
 vectors are mapped into a higher (maybe infinite) dimensional space by
-the function :math:`\phi`
+the function :math:`\phi`.
 
 
 The decision function is:
 
-.. math:: sgn(\sum_{i=1}^l y_i \alpha_i K(x_i, x) + \rho)
+.. math:: sgn(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
 
+.. note::
+
+    In practice to have :math:`C` independent of the number of samples :math:`n`,
+    :math:`C` is scaled by :math:`n` (Replace :math:`C` by :math:`\frac{C}{n}` in the
+    equations above). It corresponds to the scale_C parameter which is True
+    by default in all estimators since version 0.11.
+
+.. note::
+
+    While SVM models derived from libsvm and liblinear use *C* as regularization
+    parameter, most other estimators use *alpha*. The relation between both is
+    :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 

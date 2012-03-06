@@ -6,6 +6,7 @@ import numpy as np
 import warnings
 
 from .validation import *
+from .murmurhash import murmurhash3_32
 
 
 class deprecated(object):
@@ -30,6 +31,13 @@ class deprecated(object):
     # but with many changes.
 
     def __init__(self, extra=''):
+        """
+        Parameters
+        ----------
+        extra: string
+          to be added to the deprecation messages
+
+        """
         self.extra = extra
 
     def __call__(self, obj):
@@ -81,6 +89,28 @@ class deprecated(object):
         if olddoc:
             newdoc = "%s\n\n%s" % (newdoc, olddoc)
         return newdoc
+
+
+def safe_mask(X, mask):
+    """Return a mask which is safe to use on X.
+
+    Parameters
+    ----------
+        X : {array-like, sparse matrix}
+            Data on which to apply mask.
+
+        mask: array
+            Mask to be used on X.
+
+    Returns
+    -------
+        mask
+    """
+    mask = np.asanyarray(mask)
+    if hasattr(X, "toarray"):
+        ind = np.arange(mask.shape[0])
+        mask = ind[mask]
+    return mask
 
 
 def resample(*arrays, **options):

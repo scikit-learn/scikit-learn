@@ -61,7 +61,7 @@ HLIST_IMAGE_TEMPLATE = """
     *
 
       .. image:: images/%s
-            :scale: 50
+            :scale: 47
 """
 
 SINGLE_IMAGE = """

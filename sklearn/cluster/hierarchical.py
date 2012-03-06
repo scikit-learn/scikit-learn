@@ -7,7 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
-from heapq import heapify, heappop, heappush
+from heapq import heapify, heappop, heappush, heappushpop
 import itertools
 import warnings
 
@@ -19,7 +19,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from . import _inertia
+from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 
 
@@ -114,12 +114,13 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     coord_col = np.array(coord_col, dtype=np.int)
 
     # build moments as a list
-    moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
-    moments[0][:n_samples] = 1
-    moments[1][:n_samples] = X
+    moments_1 = np.zeros(n_nodes)
+    moments_1[:n_samples] = 1
+    moments_2 = np.zeros((n_nodes, n_features))
+    moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_ward_dist(moments[0], moments[1],
-                               coord_row, coord_col, inertia)
+    _hierarchical.compute_ward_dist(moments_1, moments_2,
+                             coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
     heapify(inertia)
 
@@ -133,7 +134,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
     # recursive merge loop
     for k in xrange(n_samples, n_nodes):
-
         # identify the merge
         while True:
             inert, i, j = heappop(inertia)
@@ -144,16 +144,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         used_node[i] = used_node[j] = False
 
         # update the moments
-        for p in xrange(2):
-            moments[p][k] = moments[p][i] + moments[p][j]
+        moments_1[k] = moments_1[i] + moments_1[j]
+        moments_2[k] = moments_2[i] + moments_2[j]
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
         visited[:] = False
         visited[k] = True
         for l in set(A[i]).union(A[j]):
-            while parent[l] != l:
-                l = parent[l]
+            l = _hierarchical._get_parent(l, parent)
             if not visited[l]:
                 visited[l] = True
                 coord_col.append(l)
@@ -164,7 +163,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
 
-        _inertia.compute_ward_dist(moments[0], moments[1],
+        _hierarchical.compute_ward_dist(moments_1, moments_2,
                                    coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
             heappush(inertia, tupl)
@@ -178,36 +177,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
-
-def _hc_get_descendent(ind, children, n_leaves):
-    """Function returning all the descendent leaves of a set of nodes.
-
-    Parameters
-    ----------
-    ind : list of int
-        A list that indicates the nodes for which we want the descendents.
-
-    children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        This is not defined for leaves.
-
-    n_leaves : int
-        Number of leaves.
-
-    Returns
-    -------
-    descendent : list of int
-    """
-    descendent = []
-    while len(ind) != 0:
-        i = ind.pop()
-        if i < n_leaves:
-            descendent.append(i)
-        else:
-            ci = children[i - n_leaves]
-            ind.extend((ci[0], ci[1]))
-    return descendent
-
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
@@ -230,14 +199,27 @@ def _hc_cut(n_clusters, children, n_leaves):
         cluster labels for each point
 
     """
-    nodes = [np.max(children[-1]) + 1]
+    if n_clusters > n_leaves:
+        raise ValueError('Cannot extract more clusters than samples: '
+            '%s clusters where given for a tree with %s leaves.'
+            % (n_clusters, n_leaves))
+    # In this function, we store nodes as a heap to avoid recomputing
+    # the max of the nodes: the first element is always the smallest
+    # We use negated indices as heaps work on smallest elements, and we
+    # are interested in largest elements
+    # children[-1] is the root of the tree
+    nodes = [-(max(children[-1]) + 1)]
     for i in range(n_clusters - 1):
-        nodes.extend(children[np.max(nodes) - n_leaves])
-        nodes.remove(np.max(nodes))
-    labels = np.zeros(n_leaves, dtype=np.int)
+        # As we have a heap, nodes[0] is the smallest element
+        these_children = children[-nodes[0] - n_leaves]
+        # Insert the 2 children and remove the largest node
+        heappush(nodes, -these_children[0])
+        heappushpop(nodes, -these_children[1])
+    label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        labels[_hc_get_descendent([node], children, n_leaves)] = i
-    return labels
+        label[_hierarchical._hc_get_descendent(-node,
+                                children, n_leaves)] = i
+    return label
 
 
 ###############################################################################
@@ -305,6 +287,15 @@ class Ward(BaseEstimator):
         memory = self.memory
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
+
+        if not sparse.issparse(self.connectivity):
+            raise TypeError("`connectivity` should be a sparse matrix, got: %r"
+                    % type(self.connectivity))
+
+        if (self.connectivity.shape[0] != X.shape[0] or
+                self.connectivity.shape[1] != X.shape[0]):
+            raise ValueError("`connectivity` does not have shape "
+                    "(n_samples, n_samples)")
 
         # Construct the tree
         self.children_, self.n_components, self.n_leaves_ = \

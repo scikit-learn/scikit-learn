@@ -27,9 +27,9 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 15px;
-    -moz-border-radius: 15px;
-    margin-top: 10px;
+    border-radius: 0 0 15px 15px;
+    -moz-border-radius: 0 15px 0 15px;
+    margin-top: 0px;
 }
 
 ul.horizontal, ul.horizontal li {
@@ -500,4 +500,29 @@ div.rellink:hover span.hiddenrellink {
 
 th.field-name {
     white-space: nowrap;
+}
+
+
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
+}
+
+/* ------- Fix maximum size of thumbnails in example gallery -------------- */
+div#examples.section .figure img {
+    max-width: 160px;
+    max-height: 160px;
+    display: block;
+    margin: auto;
+}
+
+/* ------- Zoom plots to make them fit in layout -------------------------- */
+div.body img {
+    max-width:805px;
 }

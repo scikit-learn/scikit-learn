@@ -64,7 +64,7 @@ class Pipeline(BaseEstimator):
     >>> # You can set the parameters using the names issued
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svn
-    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
+    >>> anova_svm.set_params(anova__k=10, svc__C=10.).fit(X, y)
     ...                                              # doctest: +ELLIPSIS
     Pipeline(steps=[...])
 
@@ -79,29 +79,28 @@ class Pipeline(BaseEstimator):
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         self.steps = steps
-        assert len(self.named_steps) == len(steps), ("Names provided are "
-            "not unique: %s" % names)
+        if len(self.named_steps) != len(steps):
+            raise ValueError("Names provided are not unique: %s" % names)
         transforms = estimators[:-1]
         estimator = estimators[-1]
         for t in  transforms:
-            assert (hasattr(t, "fit") or hasattr(t, "fit_transform")) and \
-                    hasattr(t, "transform"), ValueError(
-                "All intermediate steps a the chain should be transforms "
-                "and implement fit and transform",
-                "'%s' (type %s) doesn't)" % (t, type(t))
-            )
-        assert hasattr(estimator, "fit"), \
-            ("Last step of chain should implement fit",
-                "'%s' (type %s) doesn't)" % (estimator, type(estimator))
-            )
+            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not \
+                    hasattr(t, "transform"):
+                raise TypeError("All intermediate steps a the chain should "
+                        "be transforms and implement fit and transform"
+                        "'%s' (type %s) doesn't)" % (t, type(t)))
 
-    def _get_params(self, deep=True):
+        if not hasattr(estimator, "fit"):
+            raise TypeError("Last step of chain should implement fit "
+                "'%s' (type %s) doesn't)" % (estimator, type(estimator)))
+
+    def get_params(self, deep=True):
         if not deep:
-            return super(Pipeline, self)._get_params(deep=False)
+            return super(Pipeline, self).get_params(deep=False)
         else:
             out = self.named_steps.copy()
             for name, step in self.named_steps.iteritems():
-                for key, value in step._get_params(deep=True).iteritems():
+                for key, value in step.get_params(deep=True).iteritems():
                     out['%s__%s' % (name, key)] = value
             return out
 

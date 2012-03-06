@@ -42,8 +42,8 @@ X = scaler.fit_transform(X)
 # 10 is often helpful. Using a basis of 2, a finer
 # tuning can be achieved but at a much higher cost.
 
-C_range = 10. ** np.arange(-5, 5)
-gamma_range = 10. ** np.arange(-5, 5)
+C_range = 10. ** np.arange(-3, 8)
+gamma_range = 10. ** np.arange(-5, 4)
 
 param_grid = dict(gamma=gamma_range, C=C_range)
 

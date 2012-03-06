@@ -20,29 +20,55 @@ import scipy.sparse.linalg as sp_linalg
 
 from ..base import BaseEstimator
 from ..base import RegressorMixin
-from ..base import ClassifierMixin
-from ..base import TransformerMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
 from ..utils import atleast2d_or_csr, check_arrays
 
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
-
 ###
 ### TODO: intercept for all models
 ### We should define a common function to center data instead of
 ### repeating the same code inside each fit method.
-###
-### Also, bayesian_ridge_regression and bayesian_regression_ard
+
+### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
-###
+
+
+def center_data(X, y, fit_intercept, normalize=False, copy=True):
+    """
+    Centers data to have mean zero along axis 0. This is here because
+    nearly all linear models will want their data to be centered.
+    """
+    X = as_float_array(X, copy)
+
+    if fit_intercept:
+        if sp.issparse(X):
+            X_mean = np.zeros(X.shape[1])
+            X_std = np.ones(X.shape[1])
+        else:
+            X_mean = X.mean(axis=0)
+            X -= X_mean
+            if normalize:
+                X_std = np.sqrt(np.sum(X ** 2, axis=0))
+                X_std[X_std == 0] = 1
+                X /= X_std
+            else:
+                X_std = np.ones(X.shape[1])
+        y_mean = y.mean()
+        y = y - y_mean
+    else:
+        X_mean = np.zeros(X.shape[1])
+        X_std = np.ones(X.shape[1])
+        y_mean = 0.
+    return X, y, X_mean, y_mean, X_std
+
 
 class LinearModel(BaseEstimator, RegressorMixin):
     """Base class for Linear Models"""
 
-    def predict(self, X):
-        """Predict using the linear model
+    def decision_function(self, X):
+        """Decision function of the linear model
 
         Parameters
         ----------
@@ -56,36 +82,21 @@ class LinearModel(BaseEstimator, RegressorMixin):
         X = safe_asarray(X)
         return safe_sparse_dot(X, self.coef_.T) + self.intercept_
 
-    @staticmethod
-    def _center_data(X, y, fit_intercept, normalize=False, copy=True):
-        """
-        Centers data to have mean zero along axis 0. This is here because
-        nearly all linear models will want their data to be centered.
+    def predict(self, X):
+        """Predict using the linear model
 
-        If copy is False, modifies X in-place.
-        """
-        X = as_float_array(X, copy)
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
 
-        if fit_intercept:
-            if sp.issparse(X):
-                X_mean = np.zeros(X.shape[1])
-                X_std = np.ones(X.shape[1])
-            else:
-                X_mean = X.mean(axis=0)
-                X -= X_mean
-                if normalize:
-                    X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                    X_std[X_std == 0] = 1
-                    X /= X_std
-                else:
-                    X_std = np.ones(X.shape[1])
-            y_mean = y.mean()
-            y = y - y_mean
-        else:
-            X_mean = np.zeros(X.shape[1])
-            X_std = np.ones(X.shape[1])
-            y_mean = 0.
-        return X, y, X_mean, y_mean, X_std
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Returns predicted values.
+        """
+        return self.decision_function(X)
+
+    _center_data = staticmethod(center_data)
 
     def _set_intercept(self, X_mean, y_mean, X_std):
         """Set the intercept_
@@ -167,7 +178,7 @@ class LinearRegression(LinearModel):
         return self
 
 ##
-## Stochastic Gradient Descent (SGD) abstract base classes
+## Stochastic Gradient Descent (SGD) abstract base class
 ##
 
 
@@ -179,9 +190,9 @@ class BaseSGD(BaseEstimator):
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, seed=0, learning_rate="optimal", eta0=0.0,
-                 power_t=0.5, class_weight=None):
+                 power_t=0.5, warm_start=False):
         self.loss = str(loss)
-        self.penalty = str(penalty)
+        self.penalty = str(penalty).lower()
         self._set_loss_function(self.loss)
         self._set_penalty_type(self.penalty)
 
@@ -208,7 +219,10 @@ class BaseSGD(BaseEstimator):
         if self.learning_rate != "optimal":
             if eta0 <= 0.0:
                 raise ValueError("eta0 must be greater than 0.0")
-        self.class_weight = class_weight
+        self.coef_ = None
+        self.warm_start = warm_start
+
+        self._init_t()
 
     @abstractmethod
     def fit(self, X, y):
@@ -217,6 +231,15 @@ class BaseSGD(BaseEstimator):
     @abstractmethod
     def predict(self, X):
         """Predict using model."""
+
+    def _init_t(self):
+        self.t_ = 1.0
+        if self.learning_rate == "optimal":
+            typw = np.sqrt(1.0 / np.sqrt(self.alpha))
+            # computing eta0, the initial learning rate
+            eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
+            # initialize t such that eta at first example equals eta0
+            self.t_ = 1.0 / (eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
         learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
@@ -231,7 +254,7 @@ class BaseSGD(BaseEstimator):
         raise NotImplementedError("BaseSGD is an abstract class.")
 
     def _set_penalty_type(self, penalty):
-        penalty_types = {"l2": 2, "l1": 1, "elasticnet": 3}
+        penalty_types = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
         try:
             self.penalty_type = penalty_types[penalty]
         except KeyError:
@@ -240,8 +263,10 @@ class BaseSGD(BaseEstimator):
     def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
         if sample_weight == None:
+            # uniform sample weights
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
+            # user-provided array
             sample_weight = np.asarray(sample_weight, dtype=np.float64,
                                        order="C")
         if sample_weight.shape[0] != n_samples:
@@ -250,7 +275,7 @@ class BaseSGD(BaseEstimator):
 
     def _set_coef(self, coef_):
         """Make sure that coef_ is fortran-style and 2d.
-        
+
         Fortran-style memory layout is needed to ensure that computing
         the dot product between input ``X`` and ``coef_`` does not trigger
         a memory copy.
@@ -263,7 +288,7 @@ class BaseSGD(BaseEstimator):
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asarray(coef_init)
+                coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
                 self.coef_ = coef_init
@@ -273,7 +298,7 @@ class BaseSGD(BaseEstimator):
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init)
+                intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init " \
                                      "does not match dataset.")
@@ -304,293 +329,7 @@ class BaseSGD(BaseEstimator):
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
-
-class BaseSGDClassifier(BaseSGD, ClassifierMixin):
-    """Base class for dense and sparse classification using SGD."""
-
-    __metaclass__ = ABCMeta
-
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
-                 eta0=0.0, power_t=0.5, class_weight=None):
-        super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
-                                                alpha=alpha, rho=rho,
-                                                fit_intercept=fit_intercept,
-                                                n_iter=n_iter, shuffle=shuffle,
-                                                verbose=verbose, seed=seed,
-                                                learning_rate=learning_rate,
-                                                eta0=eta0, power_t=power_t,
-                                                class_weight=class_weight)
-        self.n_jobs = int(n_jobs)
-
-    def _set_loss_function(self, loss):
-        """Set concrete LossFunction."""
-        loss_functions = {
-            "hinge": Hinge(),
-            "log": Log(),
-            "modified_huber": ModifiedHuber(),
-        }
-        try:
-            self.loss_function = loss_functions[loss]
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % loss)
-
-    def _set_class_weight(self, class_weight, classes, y):
-        """Estimate class weights for unbalanced datasets."""
-        if class_weight is None:
-            class_weight = self.class_weight
-        if class_weight is None or len(class_weight) == 0:
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-        elif class_weight == 'auto':
-            weight = np.array([1.0 / np.sum(y == i) for i in classes],
-                              dtype=np.float64, order='C')
-            weight *= classes.shape[0] / np.sum(weight)
-        else:
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-            if not isinstance(class_weight, dict):
-                raise ValueError("class_weight must be dict, 'auto', or None,"
-                                 " got: %r" % class_weight)
-            for c in class_weight:
-                i = np.searchsorted(classes, c)
-                if classes[i] != c:
-                    raise ValueError("Class label %d not present." % c)
-                else:
-                    weight[i] = class_weight[c]
-
-        self._expanded_class_weight = weight
-
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-
-        y : numpy array of shape [n_samples]
-            Target values
-
-        coef_init : array, shape = [n_classes,n_features]
-            The initial coeffients to warm-start the optimization.
-
-        intercept_init : array, shape = [n_classes]
-            The initial intercept to warm-start the optimization.
-
-        class_weight : dict, {class_label : weight} or "auto"
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
-
-            The "auto" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        X = safe_asarray(X)
-        y = np.asarray(y)
-
-        n_samples, n_features = X.shape
+    def _check_fit_data(self, X, y):
+        n_samples, _ = X.shape
         if n_samples != y.shape[0]:
             raise ValueError("Shapes of X and y do not match.")
-
-        # sort in asc order; largest class id is positive class
-        self.classes = np.unique(y)
-        n_classes = self.classes.shape[0]
-
-        # Allocate datastructures from input arguments
-        self._set_class_weight(class_weight, self.classes, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
-        self._allocate_parameter_mem(n_classes, n_features,
-                                     coef_init, intercept_init)
-
-        # delegate to concrete training procedure
-        if n_classes > 2:
-            self._fit_multiclass(X, y, sample_weight)
-        elif n_classes == 2:
-            self._fit_binary(X, y, sample_weight)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-        # return self for chaining fit and predict calls
-        return self
-
-    @abstractmethod
-    def _fit_binary(self, X, y, sample_weight):
-        """Fit binary classifier."""
-
-    @abstractmethod
-    def _fit_multiclass(self, X, y, sample_weight):
-        """Fit multiclass classifier."""
-
-    def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score)
-
-        Parameters
-        ----------
-        X : array, shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
-          The signed 'distances' to the hyperplane(s).
-        """
-        X = atleast2d_or_csr(X)
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
-        if self.classes.shape[0] == 2:
-            return np.ravel(scores)
-        else:
-            return scores
-
-    def predict(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted depends
-           on the actual implementation
-
-        Returns
-        -------
-        array, shape = [n_samples]
-           Array containing the predicted class labels.
-        """
-        scores = self.decision_function(X)
-        if self.classes.shape[0] == 2:
-            indices = np.array(scores > 0, dtype=np.int)
-        else:
-            indices = scores.argmax(axis=1)
-        return self.classes[np.ravel(indices)]
-
-    def predict_proba(self, X):
-        """Predict class membership probability
-
-        Parameters
-        ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,
-        n_classes]
-            Contains the membership probabilities of the positive class.
-
-        """
-        if len(self.classes) != 2:
-            raise NotImplementedError("predict_(log_)proba only supported"
-                                      " for binary classification")
-        elif not isinstance(self.loss_function, Log):
-            raise NotImplementedError("predict_(log_)proba only supported when"
-                                      " loss='log' (%s given)" % self.loss)
-
-        return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
-
-
-class BaseSGDRegressor(BaseSGD, RegressorMixin):
-    """Base class for dense and sparse regression using SGD."""
-
-    __metaclass__ = ABCMeta
-
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, p=0.1, seed=0, learning_rate="invscaling",
-                 eta0=0.01, power_t=0.25):
-        self.p = float(p)
-        super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                               alpha=alpha, rho=rho,
-                                               fit_intercept=fit_intercept,
-                                               n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose, seed=seed,
-                                               learning_rate=learning_rate,
-                                               eta0=eta0, power_t=power_t)
-
-    def _set_loss_function(self, loss):
-        """Get concrete LossFunction"""
-        loss_functions = {
-            "squared_loss": SquaredLoss(),
-            "huber": Huber(self.p),
-        }
-        try:
-            self.loss_function = loss_functions[loss]
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % loss)
-
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples,n_features]
-            Training data
-
-        y : numpy array of shape [n_samples]
-            Target values
-
-        coef_init : array, shape = [n_features]
-            The initial coeffients to warm-start the optimization.
-
-        intercept_init : array, shape = [1]
-            The initial intercept to warm-start the optimization.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False)
-        y = np.asarray(y, dtype=np.float64, order="C")
-
-        n_samples, n_features = X.shape
-
-        # Allocate datastructures from input arguments
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
-        self._allocate_parameter_mem(1, n_features,
-                                     coef_init, intercept_init)
-
-        self._fit_regressor(X, y, sample_weight)
-        return self
-
-    @abstractmethod
-    def _fit_regressor(self, X, y, sample_weight):
-        """Fit regression model."""
-
-    def predict(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : array or scipy.sparse matrix of shape [n_samples, n_features]
-           Whether the numpy.array or scipy.sparse matrix is accepted depends
-           on the actual implementation.
-
-        Returns
-        -------
-        array, shape = [n_samples]
-           Array containing the predicted class labels.
-        """
-        X = atleast2d_or_csr(X)
-        scores = safe_sparse_dot(X, self.coef_) + self.intercept_
-        return scores.ravel()
-
-
-class CoefSelectTransformerMixin(TransformerMixin):
-    """Mixin for linear models that can find sparse solutions."""
-
-    def transform(self, X, threshold=1e-10):
-        if len(self.coef_.shape) == 1 or self.coef_.shape[1] == 1:
-            # 2-class case
-            coef = np.ravel(self.coef_)
-        else:
-            # multi-class case
-            coef = np.mean(self.coef_, axis=0)
-
-        return X[:, coef > threshold]

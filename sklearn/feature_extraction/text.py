@@ -2,6 +2,7 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Robert Layton <robertlayton@gmail.com>
 #
 # License: BSD Style.
 """
@@ -9,10 +10,13 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
+from collections import Mapping
 import re
 import unicodedata
+
 import numpy as np
 import scipy.sparse as sp
+
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
@@ -133,18 +137,48 @@ class WordNGramAnalyzer(BaseEstimator):
     The stop words argument may be "english" for a built-in list of English
     stop words or a collection of strings. Note that stop word filtering is
     performed after preprocessing, which may include accent stripping.
+
+    Parameters
+    ----------
+    charset: string
+        If bytes are given to analyze, this charset is used to decode.
+    min_n: integer
+        The lower boundary of the range of n-values for different n-grams to be
+        extracted.
+    max_n: integer
+        The upper boundary of the range of n-values for different n-grams to be
+        extracted. All values of n such that min_n <= n <= max_n will be used.
+    preprocessor: callable
+        A callable that preprocesses the text document before tokens are
+        extracted.
+    stop_words: string, list, or None
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned. The default is "english" and is currently the only
+        supported string value.
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+        If None, no stop words will be used.
+    token_pattern: string
+        Regular expression denoting what constitutes a "token".
+    charset_error: {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
     """
 
     def __init__(self, charset='utf-8', min_n=1, max_n=1,
                  preprocessor=DEFAULT_PREPROCESSOR,
                  stop_words="english",
-                 token_pattern=DEFAULT_TOKEN_PATTERN):
+                 token_pattern=DEFAULT_TOKEN_PATTERN,
+                 charset_error='strict'):
         self.charset = charset
-        self.stop_words = stop_words
+        self.stop_words = _check_stop_list(stop_words)
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
         self.token_pattern = token_pattern
+        self.charset_error = charset_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -153,7 +187,8 @@ class WordNGramAnalyzer(BaseEstimator):
             text_document = text_document.read()
 
         if isinstance(text_document, bytes):
-            text_document = text_document.decode(self.charset, 'ignore')
+            text_document = text_document.decode(self.charset,
+                                                 self.charset_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
@@ -187,16 +222,37 @@ class CharNGramAnalyzer(BaseEstimator):
     such as Chinese and German for instance.
 
     Because of this, it can be considered a basic morphological analyzer.
+
+
+    Parameters
+    ----------
+    charset: string
+        If bytes are given to analyze, this charset is used to decode.
+    min_n: integer
+        The lower boundary of the range of n-values for different n-grams to be
+        extracted.
+    max_n: integer
+        The upper boundary of the range of n-values for different n-grams to be
+        extracted. All values of n such that min_n <= n <= max_n will be used.
+    preprocessor: callable
+        A callable that preprocesses the text document before tokens are
+        extracted.
+    charset_error: {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
     """
 
     white_spaces = re.compile(ur"\s\s+")
 
     def __init__(self, charset='utf-8', preprocessor=DEFAULT_PREPROCESSOR,
-                 min_n=3, max_n=6):
+                 min_n=3, max_n=6, charset_error='strict'):
         self.charset = charset
         self.min_n = min_n
         self.max_n = max_n
         self.preprocessor = preprocessor
+        self.charset_error = charset_error
 
     def analyze(self, text_document):
         """From documents to token"""
@@ -205,7 +261,8 @@ class CharNGramAnalyzer(BaseEstimator):
             text_document = text_document.read()
 
         if isinstance(text_document, bytes):
-            text_document = text_document.decode(self.charset, 'ignore')
+            text_document = text_document.decode(self.charset,
+                                                 self.charset_error)
 
         text_document = self.preprocessor.preprocess(text_document)
 
@@ -261,11 +318,14 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, vocabulary=None, max_df=1.0,
+    def __init__(self, analyzer=None, vocabulary=None, max_df=1.0,
                  max_features=None, dtype=long):
-        self.analyzer = analyzer
+        if analyzer:
+            self.analyzer = analyzer
+        else:
+            self.analyzer = DEFAULT_ANALYZER
         self.fit_vocabulary = vocabulary is None
-        if vocabulary is not None and not isinstance(vocabulary, dict):
+        if vocabulary is not None and not isinstance(vocabulary, Mapping):
             vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
         self.vocabulary = vocabulary
         self.dtype = dtype
@@ -459,9 +519,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    Notes
-    -----
-    **References**:
+    sublinear_tf : boolean, optional
+        Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
+    References
+    ----------
 
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68–74.`
@@ -471,10 +533,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
                  pp. 121–125.`
     """
 
-    def __init__(self, norm='l2', use_idf=True, smooth_idf=True):
+    def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
+                 sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
+        self.sublinear_tf = sublinear_tf
         self.idf_ = None
 
     def fit(self, X, y=None):
@@ -511,6 +575,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
         n_samples, n_features = X.shape
 
+        if self.sublinear_tf:
+            np.log(X.data, X.data)
+            X.data += 1
+
         if self.use_idf:
             expected_n_features = self.idf_.shape[0]
             if n_features != expected_n_features:
@@ -534,13 +602,17 @@ class Vectorizer(BaseEstimator):
     Equivalent to CountVectorizer followed by TfidfTransformer.
     """
 
-    def __init__(self, analyzer=DEFAULT_ANALYZER, max_df=1.0,
-                 max_features=None, norm='l2', use_idf=True, smooth_idf=True):
+    def __init__(self, analyzer=None, max_df=1.0,
+                 max_features=None, norm='l2', use_idf=True, smooth_idf=True,
+                 sublinear_tf=False):
+        if analyzer is None:
+            analyzer = DEFAULT_ANALYZER
         self.tc = CountVectorizer(analyzer, max_df=max_df,
                                   max_features=max_features,
                                   dtype=np.float64)
         self.tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
-                                      smooth_idf=smooth_idf)
+                                      smooth_idf=smooth_idf,
+                                      sublinear_tf=sublinear_tf)
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""

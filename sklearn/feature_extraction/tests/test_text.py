@@ -9,11 +9,11 @@ from sklearn.feature_extraction.text import Vectorizer
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.svm.sparse import LinearSVC as LinearSVC
+from sklearn.svm import LinearSVC
 
 import numpy as np
 from nose.tools import assert_equal, assert_equals, \
-            assert_false, assert_not_equal
+            assert_false, assert_not_equal, assert_true
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
@@ -119,6 +119,19 @@ def test_word_analyzer_unigrams_and_bigrams():
     assert_equal(wa.analyze(text), expected)
 
 
+def test_unicode_decode_error():
+    # decode_error default to strict, so this should fail
+    # First, encode (as bytes) a unicode string.
+    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text_bytes = text.encode('utf-8')
+    # Then let the Analyzer try to decode it as ascii. It should fail,
+    # because we have given it an incorrect charset.
+    wa = WordNGramAnalyzer(min_n=1, max_n=2, stop_words=None, charset='ascii')
+    assert_raises(UnicodeDecodeError, wa.analyze, text_bytes)
+    ca = CharNGramAnalyzer(min_n=1, max_n=2, charset='ascii')
+    assert_raises(UnicodeDecodeError, ca.analyze, text_bytes)
+
+
 def test_char_ngram_analyzer():
     cnga = CharNGramAnalyzer(min_n=3, max_n=6)
 
@@ -147,6 +160,14 @@ def test_countvectorizer_custom_vocabulary():
     X = vect.transform(JUNK_FOOD_DOCS)
     assert_equal(X.shape[1], len(what_we_like))
 
+    # try again with a dict vocabulary
+    vocab = {"pizza": 0, "beer": 1}
+    vect = CountVectorizer(vocabulary=vocab)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_equal(vect.vocabulary, vocab)
+    X = vect.transform(JUNK_FOOD_DOCS)
+    assert_equal(X.shape[1], len(what_we_like))
+
 
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
@@ -163,6 +184,17 @@ def test_fit_countvectorizer_twice():
     X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
     X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
     assert_not_equal(X1.shape[1], X2.shape[1])
+
+
+def test_sublinear_tf():
+    X = [[1], [2], [3]]
+    tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
+    tfidf = toarray(tr.fit_transform(X))
+    assert_equal(tfidf[0], 1)
+    assert_true(tfidf[1] > tfidf[0])
+    assert_true(tfidf[2] > tfidf[1])
+    assert_true(tfidf[1] < 2)
+    assert_true(tfidf[2] < 3)
 
 
 def test_vectorizer():
@@ -260,11 +292,11 @@ def test_vectorizer_max_df():
     test_data = [u'abc', u'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(CharNGramAnalyzer(min_n=1, max_n=1), max_df=1.0)
     vect.fit(test_data)
-    assert u'a' in vect.vocabulary.keys()
+    assert_true(u'a' in vect.vocabulary.keys())
     assert_equals(len(vect.vocabulary.keys()), 5)
     vect.max_df = 0.5
     vect.fit(test_data)
-    assert u'a' not in vect.vocabulary.keys()  # 'a' is ignored
+    assert_true(u'a' not in vect.vocabulary.keys())  # 'a' is ignored
     assert_equals(len(vect.vocabulary.keys()), 4)  # the others remain
 
 

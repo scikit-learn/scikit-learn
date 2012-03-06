@@ -68,12 +68,19 @@ def array2d(X, dtype=None, order=None):
     return np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
 
 
-def atleast2d_or_csr(X):
+def atleast2d_or_csr(X, dtype=None, order=None):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
 
     Also, converts np.matrix to np.ndarray.
     """
-    X = X.tocsr() if sp.issparse(X) else array2d(X)
+    if sp.issparse(X):
+        # Note: order is ignored because CSR matrices hold data in 1-d arrays
+        if dtype is None or X.dtype == dtype:
+            X = X.tocsr()
+        else:
+            X = sp.csr_matrix(X, dtype=dtype)
+    else:
+        X = array2d(X, dtype=dtype, order=order)
     assert_all_finite(X)
     return X
 
@@ -115,7 +122,7 @@ def check_arrays(*arrays, **options):
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
     if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+        raise TypeError("Unexpected keyword arguments: %r" % options.keys())
 
     if len(arrays) == 0:
         return None

@@ -16,20 +16,28 @@ At the end, the top 10 most uncertain predictions will be shown.
 """
 print __doc__
 
+# Authors: Clay Woolam <clay@woolam.org>
+# Licence: BSD
+
 import numpy as np
 import pylab as pl
 
 from scipy import stats
 
 from sklearn import datasets
-from sklearn import label_propagation
+from sklearn.semi_supervised import label_propagation
 
 from sklearn.metrics import metrics
 from sklearn.metrics.metrics import confusion_matrix
 
 digits = datasets.load_digits()
-X = digits.data[:330]
-y = digits.target[:330]
+rng = np.random.RandomState(0)
+indices = np.arange(len(digits.data))
+rng.shuffle(indices)
+
+X = digits.data[indices[:330]]
+y = digits.target[indices[:330]]
+images = digits.images[indices[:330]]
 
 n_total_samples = len(y)
 n_labeled_points = 30
@@ -44,13 +52,13 @@ y_train[unlabeled_set] = -1
 
 ###############################################################################
 # Learn with LabelSpreading
-lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
+lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iters=5)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
 true_labels = y[unlabeled_set]
 
 cm = confusion_matrix(true_labels, predicted_labels,
-        labels=lp_model.unique_labels_)
+        labels=lp_model.classes_)
 
 print "Label Spreading model: %d labeled & %d unlabeled points (%d total)" % \
         (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
@@ -70,7 +78,7 @@ uncertainty_index = np.argsort(pred_entropies)[-10:]
 # plot
 f = pl.figure(figsize=(7, 5))
 for index, image_index in enumerate(uncertainty_index):
-    image = digits.images[image_index]
+    image = images[image_index]
 
     sub = f.add_subplot(2, 5, index + 1)
     sub.imshow(image, cmap=pl.cm.gray_r)

@@ -169,21 +169,3 @@ except (TypeError, ValueError):
             return out
         else:
             return np.dot(a, b)
-
-try:
-    # check whether np.dot supports the out argument
-    np.divide(np.ones(1), np.ones(1), out=np.empty(1))
-
-    # this is ok, just use the existing implementation
-    divide_out = np.divide
-
-except (TypeError, ValueError):
-    # old version of np.divide that does not accept the third argument, define a
-    # pure python workaround:
-    def divide_out(a, b, out=None):
-        if out is not None:
-            out[:] = np.divide(a, b)
-            return out
-        else:
-            return np.divide(a, b)
-

@@ -25,6 +25,9 @@ You are also welcome to post there feature requests or links to pull-requests.
 Retrieving the latest code
 ==========================
 
+We use `Git <http://git-scm.com/>`_ for version control and
+`GitHub <http://github.com/>`_ for hosting our main repository.
+
 You can check the latest sources with the command::
 
     git clone git://github.com/scikit-learn/scikit-learn.git
@@ -60,18 +63,17 @@ How to contribute
 
 The prefered way to contribute to Scikit-Learn is to fork the main
 repository on
-`github <http://github.com/scikit-learn/scikit-learn/>`__:
+`GitHub <http://github.com/scikit-learn/scikit-learn/>`__:
 
  1. `Create an account <https://github.com/signup/free>`_ on
-    github if you don't have one already.
+    GitHub if you don't have one already.
 
  2. Fork the `project repository
     <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button, at the top, center of the page. This creates a copy of
     the code on the GitHub server where you can work.
 
- 3. Clone this copy to your local disk (you need the `git` program to do
-    this)::
+ 3. Clone this copy to your local disk::
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
@@ -100,6 +102,20 @@ When you are ready, and you have pushed your changes on your github repo, go
 the web page of the repo, and click on 'Pull request' to send us a pull
 request. This will send an email to the commiters, but might also send an
 email to the mailing list in order to get more visibility.
+
+.. note::
+
+  In the above setup, your ``origin`` remote-repository points to 
+  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main 
+  repository instead of your `forked` one, you'll need 
+  to add another remote to use instead of ``origin``. If we choose the name
+  ``upstream`` for it, the command will be::
+  
+	$ git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+
+
+(If any of the above seems like magic to you, then look up the
+`Git documentation <http://git-scm.com/documentation>`_ on the web.)
 
 It is recommented to check that your contribution complies with the following
 rules before submitting a pull request:

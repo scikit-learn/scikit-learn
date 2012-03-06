@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.sparse import csr_matrix
-from scipy.spatial.distance import cdist
 
-from ..kernel_approximation import RBFSampler
-from ..kernel_approximation import AdditiveChi2Sampler
-from ..kernel_approximation import SkewedChi2Sampler
+from sklearn.kernel_approximation import RBFSampler
+from sklearn.kernel_approximation import AdditiveChi2Sampler
+from sklearn.kernel_approximation import SkewedChi2Sampler
+from sklearn.metrics.pairwise import rbf_kernel
 
 # generate data
 X = np.random.uniform(size=(300, 50))
@@ -64,8 +64,7 @@ def test_rbf_sampler():
     """test that RBFSampler approximates kernel on random data"""
     # compute exact kernel
     gamma = 10.
-    dists = cdist(X, Y)
-    kernel = np.exp(-gamma * dists ** 2)
+    kernel = rbf_kernel(X, Y, gamma=gamma)
 
     # appoximate kernel mapping
     rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)

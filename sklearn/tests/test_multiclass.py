@@ -12,7 +12,10 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
+from  sklearn import svm
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -76,7 +79,9 @@ def test_ovr_multilabel():
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    for base_clf in (MultinomialNB(), LinearSVC()):
+    for base_clf in (MultinomialNB(), LinearSVC(),
+                     LinearRegression(), Ridge(),
+                     ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
@@ -88,6 +93,13 @@ def test_ovr_multilabel():
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
+
+
+def test_ovr_fit_predict_svc():
+    ovr = OneVsRestClassifier(svm.SVC())
+    ovr.fit(iris.data, iris.target)
+    assert_equal(len(ovr.estimators_), 3)
+    assert_true(ovr.score(iris.data, iris.target) > .9)
 
 
 def test_ovr_multilabel_dataset():
@@ -118,6 +130,26 @@ def test_ovr_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ovr_coef_():
+    ovr = OneVsRestClassifier(LinearSVC())
+    ovr.fit(iris.data, iris.target)
+    shape = ovr.coef_.shape
+    assert_equal(shape[0], n_classes)
+    assert_equal(shape[1], iris.data.shape[1])
+
+
+def test_ovr_coef_exceptions():
+    # Not fitted exception!
+    ovr = OneVsRestClassifier(LinearSVC())
+    # lambda is needed because we don't want coef_ to be evaluated right away
+    assert_raises(ValueError, lambda x: ovr.coef_, None)
+
+    # Doesn't have coef_ exception!
+    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr.fit(iris.data, iris.target)
+    assert_raises(AttributeError, lambda x: ovr.coef_, None)
 
 
 def test_ovo_exceptions():

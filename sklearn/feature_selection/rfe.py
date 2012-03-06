@@ -54,9 +54,9 @@ class RFE(BaseEstimator):
         The mask of selected features.
 
     `ranking_` : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the ranking \
-        position of the i-th feature. Selected (i.e., estimated best) features \
-        are assigned rank 1.
+        The feature ranking, such that `ranking_[i]` corresponds to the \
+        ranking position of the i-th feature. Selected (i.e., estimated \
+        best) features are assigned rank 1.
 
     Examples
     --------
@@ -67,7 +67,7 @@ class RFE(BaseEstimator):
     >>> from sklearn.feature_selection import RFE
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    >>> estimator = SVR(kernel="linear")
+    >>> estimator = SVR(kernel="linear", C=100)
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
@@ -76,9 +76,8 @@ class RFE(BaseEstimator):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",
@@ -108,7 +107,8 @@ class RFE(BaseEstimator):
             step = int(self.step * n_features)
         else:
             step = int(self.step)
-        assert step > 0
+        if step <= 0:
+            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -212,7 +212,7 @@ class RFECV(RFE):
         If int, it is the number of folds.
         If None, 3-fold cross-validation is performed by default.
         Specific cross-validation objects can also be passed, see
-        `scikits.learn.cross_validation module` for details.
+        `sklearn.cross_validation module` for details.
 
     loss_function : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the
@@ -246,7 +246,7 @@ class RFECV(RFE):
     >>> from sklearn.feature_selection import RFECV
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    >>> estimator = SVR(kernel="linear")
+    >>> estimator = SVR(kernel="linear", C=100)
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
@@ -255,9 +255,8 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
            for cancer classification using support vector machines",

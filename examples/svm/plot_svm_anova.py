@@ -31,7 +31,7 @@ X = np.hstack((X, 2 * np.random.random((n_samples, 200))))
 
 transform = feature_selection.SelectPercentile(feature_selection.f_classif)
 
-clf = Pipeline([('anova', transform), ('svc', svm.SVC())])
+clf = Pipeline([('anova', transform), ('svc', svm.SVC(C=200))])
 
 ###############################################################################
 # Plot the cross-validation score as a function of percentile of features

@@ -7,19 +7,51 @@ Cross-Validation
 .. currentmodule:: sklearn.cross_validation
 
 Learning the parameters of a prediction function and testing it on the
-same data yields a methodological bias. To **avoid over-fitting**, we
-have to define two different sets : a *learning set* :math:`X^l, y^l`
-which is used for learning the prediction function (also called *training
-set*), and a *test set* :math:`X^t, y^t` which is used for testing the
-prediction function.  However, by defining these two sets, we drastically
-reduce the number of samples which can be used for learning the model,
-and the results can depend on a particular couple of *learning set*
-and *test set*.
+same data is a methodological mistake: a model that would just repeat
+the labels of the samples that it has just seen would have a perfect
+score but would fail to predict anything useful on yet-unseen data.
+
+To **avoid over-fitting**, we have to define two different sets :
+a **training set** ``X_train, y_train`` which is used for learning
+the parameters of a predictive model, and a **testing set** ``X_test,
+y_test`` which is used for evaluating the fitted predictive model.
+
+In scikit-learn such a random split can be quickly computed with the
+:func:`train_test_split` helper function. Let load the iris data set to
+fit a linear Support Vector Machine model on it::
+
+  >>> import numpy as np
+  >>> from sklearn import cross_validation
+  >>> from sklearn import datasets
+  >>> from sklearn import svm
+
+  >>> iris = datasets.load_iris()
+  >>> iris.data.shape, iris.target.shape
+  ((150, 4), (150,))
+
+We can now quickly sample a training set while holding out 40% of the
+data for testing (evaluating) our classifier::
+
+  >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
+  ...     iris.data, iris.target, test_fraction=0.4, random_state=0)
+
+  >>> X_train.shape, y_train.shape
+  ((90, 4), (90,))
+  >>> X_test.shape, y_test.shape
+  ((60, 4), (60,))
+
+  >>> clf = svm.SVC(kernel='linear', C=100).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
+  0.96...
+
+However, by defining these two sets, we drastically reduce the number
+of samples which can be used for learning the model, and the results can
+depend on a particular random choice for the pair of (train, test) sets.
 
 A solution is to **split the whole data several consecutive times in
-different learning set and test set**, and to return the averaged value of
+different train set and test set**, and to return the averaged value of
 the prediction scores obtained with the different sets. Such a procedure
-is called *cross-validation*. This approach can be **computationally
+is called **cross-validation**. This approach can be **computationally
 expensive, but does not waste too much data** (as it is the case when
 fixing an arbitrary test set), which is a major advantage in problem
 such as inverse inference where the number of samples is very small.
@@ -36,13 +68,7 @@ linear kernel Support Vector Machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
-  >>> from sklearn import datasets
-  >>> from sklearn import svm
-  >>> from sklearn import cross_validation
-
-  >>> iris = datasets.load_iris()
-  >>> clf = svm.SVC(kernel='linear')
-
+  >>> clf = svm.SVC(kernel='linear', C=100)
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
@@ -81,7 +107,7 @@ validation iterator instead, for instance::
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.97...,  1.        ])
+  array([ 0.97...,  1.        ,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 

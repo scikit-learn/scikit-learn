@@ -56,6 +56,14 @@ def get_func_code(func):
             return repr(func), source_file, -1
 
 
+def _clean_win_chars(string):
+    "Windows cannot encode some characters in filenames"
+    import urllib
+    for char in ('<', '>', '!', ':', '\\'):
+        string = string.replace(char, urllib.quote(char))
+    return string
+
+
 def get_func_name(func, resolv_alias=True, win_characters=True):
     """ Return the function import path (as a list of module names), and
         a name for the function.
@@ -85,7 +93,7 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
         module = ''
     if module == '__main__':
         try:
-            filename = inspect.getsourcefile(func)
+            filename = os.path.abspath(inspect.getsourcefile(func))
         except:
             filename = None
         if filename is not None:
@@ -115,13 +123,12 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
             module.append(klass.__name__)
     if os.name == 'nt' and win_characters:
         # Stupid windows can't encode certain characters in filenames
-        import urllib
-        for char in ('<', '>', '!', ':'):
-            name = name.replace(char, urllib.quote(char))
+        name = _clean_win_chars(name)
+        module = [_clean_win_chars(s) for s in module]
     return module, name
 
 
-def filter_args(func, ignore_lst, *args, **kwargs):
+def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     """ Filters the given args and kwargs using a list of arguments to
         ignore, and a function specification.
 

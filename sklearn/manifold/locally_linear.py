@@ -8,7 +8,7 @@ import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator
-from ..utils import array2d
+from ..utils import array2d, check_random_state
 from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors
 
@@ -102,7 +102,8 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3):
                       shape=(n_samples, n_samples))
 
 
-def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
+def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
+               random_state=None):
     """
     Find the null space of a matrix M.
 
@@ -133,6 +134,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
 
     max_iter : maximum number of iterations for 'arpack' method
         not used if eigen_solver=='dense'
+
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+        Used to determine the starting vector for arpack iterations
     """
     if eigen_solver == 'auto':
         if M.shape[0] > 200 and k + k_skip < 10:
@@ -141,9 +146,12 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
             eigen_solver = 'dense'
 
     if eigen_solver == 'arpack':
+        random_state = check_random_state(random_state)
+        v0 = random_state.rand(M.shape[0])
         try:
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
-                                                tol=tol, maxiter=max_iter)
+                                                tol=tol, maxiter=max_iter,
+                                                v0=v0)
         except RuntimeError as msg:
             raise ValueError("Error in determining null-space with ARPACK. "
                              "Error message: '%s'. "
@@ -171,7 +179,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100):
 def locally_linear_embedding(
     X, n_neighbors, out_dim, reg=1e-3, eigen_solver='auto',
     tol=1e-6, max_iter=100, method='standard',
-    hessian_tol=1E-4, modified_tol=1E-12):
+    hessian_tol=1E-4, modified_tol=1E-12,
+    random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Parameters
@@ -212,14 +221,14 @@ def locally_linear_embedding(
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}
         standard : use the standard locally linear embedding algorithm.
-                   see reference [Roweis2000]_
+                   see reference [1]_
         hessian  : use the Hessian eigenmap method.  This method requires
                    n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
-                   see reference [Donoho2003]_
+                   see reference [2]_
         modified : use the modified locally linear embedding algorithm.
-                   see reference [Zhang2007]_
+                   see reference [3]_
         ltsa     : use local tangent space alignment algorithm
-                   see reference [Zhang2004]_
+                   see reference [4]_
 
     hessian_tol : float, optional
         Tolerance for Hessian eigenmapping method.
@@ -228,6 +237,9 @@ def locally_linear_embedding(
     modified_tol : float, optional
         Tolerance for modified LLE method.
         Only used if method == 'modified'
+
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
 
     Returns
     -------
@@ -238,21 +250,20 @@ def locally_linear_embedding(
         Reconstruction error for the embedding vectors. Equivalent to
         ``norm(Y - W Y, 'fro')**2``, where W are the reconstruction weights.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
-      .. [Roweis2000] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction by
-          locally linear embedding.  Science 290:2323 (2000).`
-      .. [Donoho2003] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally linear embedding
-          techniques for high-dimensional data. Proc Natl Acad Sci U S A.
-          100:5591 (2003).`
-      .. [Zhang2007] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear Embedding
-          Using Multiple Weights.`
-          http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-      .. [Zhang2004] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear dimensionality
-          reduction via tangent space alignment. Journal of Shanghai Univ.
-          8:406 (2004)`
+    .. [1] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).`
+    .. [2] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+        linear embedding techniques for high-dimensional data.
+        Proc Natl Acad Sci U S A.  100:5591 (2003).`
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.`
+        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+    .. [4] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+        dimensionality reduction via tangent space alignment.
+        Journal of Shanghai Univ.  8:406 (2004)`
     """
     if eigen_solver not in ('auto', 'arpack', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
@@ -477,7 +488,7 @@ def locally_linear_embedding(
             M[neighbors[i], neighbors[i]] += 1
 
     return null_space(M, out_dim, k_skip=1, eigen_solver=eigen_solver,
-                      tol=tol, max_iter=max_iter)
+                      tol=tol, max_iter=max_iter, random_state=random_state)
 
 
 class LocallyLinearEmbedding(BaseEstimator):
@@ -538,6 +549,10 @@ class LocallyLinearEmbedding(BaseEstimator):
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
+    random_state: numpy.RandomState, optional
+        The generator used to initialize the centers. Defaults to numpy.random.
+        Used to determine the starting vector for arpack iterations
+
     Attributes
     ----------
     `embedding_vectors_` : array-like, shape [out_dim, n_samples]
@@ -554,7 +569,7 @@ class LocallyLinearEmbedding(BaseEstimator):
     def __init__(self, n_neighbors=5, out_dim=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto'):
+                 neighbors_algorithm='auto', random_state=None):
         self.n_neighbors = n_neighbors
         self.out_dim = out_dim
         self.reg = reg
@@ -564,17 +579,20 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.method = method
         self.hessian_tol = hessian_tol
         self.modified_tol = modified_tol
+        self.random_state = random_state
         self.nbrs_ = NearestNeighbors(n_neighbors,
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
+        self.random_state = check_random_state(self.random_state)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
                 self.nbrs_, self.n_neighbors, self.out_dim,
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
-                hessian_tol=self.hessian_tol, modified_tol=self.modified_tol)
+                hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
+                random_state=self.random_state)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X

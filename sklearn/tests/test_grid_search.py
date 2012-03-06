@@ -2,7 +2,7 @@
 Testing for grid search module (sklearn.grid_search)
 
 """
-from nose.tools import assert_equal, assert_raises
+from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal
 
 import numpy as np
@@ -11,8 +11,7 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
-from sklearn.svm import LinearSVC
-from sklearn.svm.sparse import LinearSVC as SparseLinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
 
 
@@ -42,12 +41,15 @@ y = np.array([1, 1, 2, 2])
 def test_grid_search():
     """Test that the best estimator contains the right value for foo_param"""
     clf = MockClassifier()
-    cross_validation = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
     # make sure it selects the smallest parameter in case of ties
-    assert_equal(cross_validation.fit(X, y).best_estimator_.foo_param, 2)
+    grid_search.fit(X, y)
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert cross_validation.grid_scores_[i][0] == {'foo_param': foo_i}
+        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
+    # Smoke test the score:
+    grid_search.score(X, y)
 
 
 def test_grid_search_error():
@@ -71,13 +73,13 @@ def test_grid_search_sparse():
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
-    clf = SparseLinearSVC()
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
-    assert np.mean(y_pred == y_pred2) >= .9
+    assert_true(np.mean(y_pred == y_pred2) >= .9)
     assert_equal(C, C2)
 
 
@@ -86,21 +88,65 @@ def test_grid_search_sparse_score_func():
 
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    # XXX: set refit to False due to a random bug when True (default)
-    cv.set_params(refit=False).fit(X_[:180], y_[:180])
+    cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
-    clf = SparseLinearSVC()
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    # XXX: set refit to False due to a random bug when True (default)
-    cv.set_params(refit=False).fit(X_[:180], y_[:180])
+    cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
+    # Smoke test the score
+    #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
+    #                        cv.score(X_[:180], y[:180]))
+
+
+def test_grid_search_precomputed_kernel():
+    """Test that grid search works when the input features are given in the
+    form of a precomputed kernel matrix """
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+
+    # compute the training kernel matrix corresponding to the linear kernel
+    K_train = np.dot(X_[:180], X_[:180].T)
+    y_train = y_[:180]
+
+    clf = SVC(kernel='precomputed')
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    cv.fit(K_train, y_train)
+
+    assert_true(cv.best_score_ >= 0)
+
+    # compute the test kernel matrix
+    K_test = np.dot(X_[180:], X_[:180].T)
+    y_test = y_[180:]
+
+    y_pred = cv.predict(K_test)
+
+    assert_true(np.mean(y_pred == y_test) >= 0)
+
+
+def test_grid_search_precomputed_kernel_error_nonsquare():
+    """Test that grid search returns an error with a non-square precomputed
+    training kernel matrix"""
+    K_train = np.zeros((10, 20))
+    y_train = np.ones((10, ))
+    clf = SVC(kernel='precomputed')
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    assert_raises(ValueError, cv.fit, K_train, y_train)
+
+
+def test_grid_search_precomputed_kernel_error_kernel_function():
+    """Test that grid search returns an error when using a kernel_function"""
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+    kernel_function = lambda x1, x2: np.dot(x1, x2.T)
+    clf = SVC(kernel=kernel_function)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    assert_raises(ValueError, cv.fit, X_, y_)
 
 
 class BrokenClassifier(BaseEstimator):
@@ -110,7 +156,7 @@ class BrokenClassifier(BaseEstimator):
         self.parameter = parameter
 
     def fit(self, X, y):
-        assert not hasattr(self, 'has_been_fit_')
+        assert_true(not hasattr(self, 'has_been_fit_'))
         self.has_been_fit_ = True
 
     def predict(self, X):

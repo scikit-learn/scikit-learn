@@ -60,8 +60,8 @@ Loading an example dataset
 
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
-<http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_ 
-datasets for classification and the `boston house prices dataset 
+<http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
+datasets for classification and the `boston house prices dataset
 <http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.::
 
   >>> from sklearn import datasets
@@ -78,11 +78,11 @@ section <datasets>`.
 For instance, in the case of the digits dataset, ``digits.data`` gives
 access to the features that can be used to classify the digits samples::
 
-  >>> print digits.data
+  >>> print digits.data  # doctest: +NORMALIZE_WHITESPACE
   [[  0.   0.   5. ...,   0.   0.   0.]
    [  0.   0.   0. ...,  10.   0.   0.]
    [  0.   0.   0. ...,  16.   9.   0.]
-   ..., 
+   ...,
    [  0.   0.   1. ...,   6.   0.   0.]
    [  0.   0.   2. ...,  12.   0.   0.]
    [  0.   0.  10. ...,  12.   1.   0.]]
@@ -136,7 +136,7 @@ model, but for the time being, we will consider the estimator as a black
 box::
 
   >>> from sklearn import svm
-  >>> clf = svm.SVC(gamma=0.001)
+  >>> clf = svm.SVC(gamma=0.001, C=100.)
 
 .. topic:: Choosing the parameters of the model
 
@@ -152,8 +152,9 @@ set, let us use all the images of our dataset apart from the last
 one::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])
-  SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.001, kernel='rbf',
-    probability=False, scale_C=False, shrinking=True, tol=0.001)
+  SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma=0.001, kernel='rbf', probability=False, scale_C=True,
+    shrinking=True, tol=0.001)
 
 Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the `digits` dataset,
@@ -188,8 +189,8 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)
-  SVC(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.25, kernel='rbf',
-    probability=False, scale_C=False, shrinking=True, tol=0.001)
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.25,
+    kernel='rbf', probability=False, scale_C=True, shrinking=True, tol=0.001)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)

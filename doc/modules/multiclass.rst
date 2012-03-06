@@ -32,10 +32,13 @@ improves.
     multiclass classification out-of-the-box. Below is a summary of the
     classifiers supported in scikit-learn grouped by the strategy used.
 
-    - Inherently multiclass: Naive Bayes, :class:`LDA`.
-    - One-Vs-One: :class:`SVC`.
-    - One-Vs-All: :class:`LinearSVC`, :class:`LogisticRegression`,
-      :class:`SGDClassifier`, :class:`RidgeClassifier`.
+    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
+      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`
+    - One-Vs-One: :class:`sklearn.svm.SVC`.
+    - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
+      :class:`sklearn.linear_model.LogisticRegression`,
+      :class:`sklearn.linear_model.SGDClassifier`,
+      :class:`sklearn.linear_model.RidgeClassifier`.
 
 .. note::
 
@@ -46,21 +49,22 @@ improves.
 One-Vs-The-Rest
 ===============
 
-Also known as **one-vs-all**, this strategy consists in fitting one classifier
+This strategy, also known as **one-vs-all**, is implemented in
+:class:`OneVsRestClassifier`.  The strategy consists in fitting one classifier
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
 interpretability. Since each class is represented by one and one classifier
 only, it is possible to gain knowledge about the class by inspecting its
-corresponding classifier. This is the most commonly used strategy and is a
-fair default choice. Below is an example::
+corresponding classifier. This is the most commonly used strategy and is a fair
+default choice. Below is an example::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OneVsRestClassifier
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsRestClassifier(LinearSVC()).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(C=100.)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -72,7 +76,7 @@ fair default choice. Below is an example::
 Multilabel learning with OvR
 ----------------------------
 
-``OneVsRestClassifier`` also supports multilabel classification.
+:class:`OneVsRestClassifier` also supports multilabel classification.
 To use this feature, feed the classifier a list of tuples containing
 target labels, like in the example below.
 
@@ -91,7 +95,7 @@ target labels, like in the example below.
 One-Vs-One
 ==========
 
-This strategy consists in fitting one classifier per class pair.
+:class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
 Since it requires to fit `n_classes * (n_classes - 1) / 2` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
@@ -106,7 +110,7 @@ dataset is used `n_classes` times. Below is an example::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsOneClassifier(LinearSVC()).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(C=100.)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -128,21 +132,21 @@ code book. The code size is the dimensionality of the aforementioned space.
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
 accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [2] although more elaborate methods may be added in the
+book as advocated in [2]_ although more elaborate methods may be added in the
 future.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In this implementation, the `code_size` attribute allows the user to control
+In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to control
 the number of classifiers which will be used. It is a percentage of the
 total number of classes.
 
 A number between 0 and 1 will require fewer classifiers than
-one-vs-the-rest. In theory, log2(n_classes) / n_classes is sufficient to
+one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
-good accuracy since log2(n_classes) is much smaller than n_classes.
+good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
 
 A number greater than than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
@@ -158,7 +162,7 @@ Example::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OutputCodeClassifier(LinearSVC(), code_size=2, random_state=0).fit(X, y).predict(X)
+  >>> OutputCodeClassifier(LinearSVC(C=100.), code_size=2, random_state=0).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
@@ -170,16 +174,16 @@ Example::
 
 .. topic:: References:
 
- * [1] "Solving multiclass learning problems via error-correcting ouput codes",
-    Dietterich T., Bakiri G., 
-    Journal of Artificial Intelligence Research 2, 
-    1995.
+    .. [1] "Solving multiclass learning problems via error-correcting ouput codes",
+        Dietterich T., Bakiri G., 
+        Journal of Artificial Intelligence Research 2, 
+        1995.
 
- * [2] "The error coding method and PICTs", 
-    James G., Hastie T.,
-    Journal of Computational and Graphical statistics 7,
-    1998.
+    .. [2] "The error coding method and PICTs", 
+        James G., Hastie T.,
+        Journal of Computational and Graphical statistics 7,
+        1998.
 
- * [3] "The Elements of Statistical Learning",
-    Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-    2008.
+    .. [3] "The Elements of Statistical Learning",
+        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
+        2008.

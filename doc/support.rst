@@ -46,6 +46,7 @@ This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
     * `Development version <http://scikit-learn.org/dev/>`_
+    * `0.10 <http://scikit-learn.org/0.10/>`_
     * `0.9 <http://scikit-learn.org/0.9/>`_
     * `0.8 <http://scikit-learn.org/0.8/>`_
     * `0.7 <http://scikit-learn.org/0.7/>`_

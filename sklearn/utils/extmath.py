@@ -4,7 +4,6 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
-import warnings
 import numpy as np
 from scipy import linalg
 
@@ -165,8 +164,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     computations. It is particularly fast on large matrices on which
     you wish to extract only a small number of components.
 
-    **References**:
-
+    References
+    ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
       Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061

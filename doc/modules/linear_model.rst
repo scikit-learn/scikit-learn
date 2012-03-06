@@ -161,6 +161,9 @@ It is useful in some contexts due to its tendency to prefer solutions
 with fewer parameter values, effectively reducing the number of variables
 upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
+Under certain conditions, it can recover the exact set of non-zero
+weights (see
+:ref:`example_applications_plot_tomography_l1_reconstruction.py`).
 
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
@@ -179,7 +182,7 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001)
+       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -188,7 +191,16 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
+
+
+.. note:: **Feature selection with Lasso**
+
+      As the Lasso regression yields sparse models, it can
+      thus be used to perform feature selection, as detailed in
+      :ref:`l1_feature_selection`.
+
 
 Setting regularization parameter
 --------------------------------
@@ -264,9 +276,12 @@ The objective function to minimize is in this case
    :align: center
    :scale: 50%
 
+The class :class:`ElasticNetCV` can be used to set the parameters `alpha`
+and `rho` by cross-validation.
+
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
@@ -381,7 +396,7 @@ fixed number of non-zero elements:
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \ 
+.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \
     \leq \text{tol}
 
 
@@ -443,7 +458,7 @@ The disadvantages of Bayesian regression include:
 .. topic:: References
 
  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-   Recognition and Machine learning 
+   Recognition and Machine learning
 
  * Original Algorithm is detailed in the  book `Bayesian learning for neural
    networks` by Radford M. Neal
@@ -581,6 +596,12 @@ zero) model.
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
+.. note:: **Feature selection with sparse logistic regression**
+
+   A logistic regression with L1 penalty yields sparse models, and can
+   thus be used to perform feature selection, as detailed in
+   :ref:`l1_feature_selection`.
+
 Stochastic Gradient Descent - SGD
 =================================
 
@@ -596,3 +617,20 @@ using different (convex) loss functions and different penalties.
 .. topic:: References
 
  * :ref:`sgd`
+
+Perceptron
+==========
+
+The :class:`Perceptron` is another simple algorithm suitable for large scale
+learning. By default:
+
+    - It does not require a learning rate.
+
+    - It is not regularized (penalized).
+
+    - It updates its model only on mistakes.
+
+The last characteristic implies that the Perceptron is slightly faster to
+train than SGD with the hinge loss and that the resulting models are
+sparser.
+

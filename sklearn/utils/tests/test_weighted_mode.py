@@ -1,4 +1,5 @@
 import numpy as np
+from nose.tools import assert_true
 from sklearn.utils.extmath import weighted_mode
 
 from scipy import stats
@@ -13,8 +14,8 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis)
 
-        assert np.all(mode == mode2)
-        assert np.all(score == score2)
+        assert_true(np.all(mode == mode2))
+        assert_true(np.all(score == score2))
 
 
 def test_random_weights():
@@ -30,8 +31,8 @@ def test_random_weights():
 
     mode, score = weighted_mode(x, w, axis=1)
 
-    assert np.all(mode == mode_result)
-    assert np.all(score.ravel() == w[:, :5].sum(1))
+    assert_true(np.all(mode == mode_result))
+    assert_true(np.all(score.ravel() == w[:, :5].sum(1)))
 
 
 if __name__ == '__main__':

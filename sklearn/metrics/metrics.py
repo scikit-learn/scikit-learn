@@ -15,6 +15,7 @@ better
 import numpy as np
 
 from ..utils import check_arrays
+from ..utils import deprecated
 
 
 def unique_labels(*lists_of_labels):
@@ -47,11 +48,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
     CM : array, shape = [n_classes, n_classes]
         confusion matrix
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/Confusion_matrix
-
     """
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -105,9 +104,8 @@ def roc_curve(y_true, y_score):
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
@@ -193,8 +191,14 @@ def auc(x, y):
 
     """
     x, y = check_arrays(x, y)
-    assert x.shape[0] == y.shape[0]
-    assert x.shape[0] >= 3
+    if x.shape[0] != y.shape[0]:
+        raise ValueError('x and y should have the same shape'
+                         ' to compute area under curve,'
+                         ' but x.shape = %s and y.shape = %s.'
+                         % (x.shape, y.shape))
+    if x.shape[0] < 2:
+        raise ValueError('At least 2 points are needed to compute'
+                         ' area under curve, but x.shape = %s' % x.shape)
 
     # reorder the data points according to the x axis
     order = np.argsort(x)
@@ -206,7 +210,8 @@ def auc(x, y):
     return area
 
 
-def precision_score(y_true, y_pred, pos_label=1):
+def precision_score(y_true, y_pred, labels=None, pos_label=1,
+                    average='weighted'):
     """Compute the precision
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the
@@ -219,33 +224,49 @@ def precision_score(y_true, y_pred, pos_label=1):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        True targets
 
     y_pred : array, shape = [n_samples]
-        predicted targets
+        Predicted targets
+
+    labels : array
+        Integer array of labels
 
     pos_label : int
-        in the binary classification case, give the label of the
-        positive class (default is 1). Everything else but 'pos_label'
+        In the binary classification case, give the label of the positive
+        class (default is 1). Everything else but 'pos_label'
         is considered to belong to the negative class.
-        Not used in the case of multiclass classification.
+        Set to None in the case of multiclass classification.
+
+    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+        In the multiclass classification case, this determines the
+        type of averaging performed on the data.
+
+        macro:
+            Average over classes (does not take imbalance into account).
+        micro:
+            Average over instances (takes imbalance into account).
+            This implies that ``precision == recall == f1``
+        weighted:
+            Average weighted by support (takes imbalance into account).
+            Can result in f1 score that is not between precision and recall.
 
     Returns
     -------
     precision : float
-        precision of the positive class in binary classification or
-        weighted avergage of the precision of each class for the
+        Precision of the positive class in binary classification or
+        weighted average of the precision of each class for the
         multiclass task
 
     """
-    p, _, _, s = precision_recall_fscore_support(y_true, y_pred)
-    if p.shape[0] == 2:
-        return p[pos_label]
-    else:
-        return np.average(p, weights=s)
+    p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
+                                                 labels=labels,
+                                                 pos_label=pos_label,
+                                                 average=average)
+    return p
 
 
-def recall_score(y_true, y_pred, pos_label=1):
+def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the recall
 
     The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
@@ -257,85 +278,121 @@ def recall_score(y_true, y_pred, pos_label=1):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        True targets
 
     y_pred : array, shape = [n_samples]
-        predicted targets
+        Predicted targets
+
+    labels : array
+        Integer array of labels
 
     pos_label : int
-        in the binary classification case, give the label of the positive
+        In the binary classification case, give the label of the positive
         class (default is 1). Everything else but 'pos_label'
         is considered to belong to the negative class.
-        Not used in the case of multiclass classification.
+        Set to None in the case of multiclass classification.
+
+    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+        In the multiclass classification case, this determines the
+        type of averaging performed on the data.
+
+        macro:
+            Average over classes (does not take imbalance into account).
+        micro:
+            Average over instances (takes imbalance into account).
+            This implies that ``precision == recall == f1``
+        weighted:
+            Average weighted by support (takes imbalance into account).
+            Can result in f1 score that is not between precision and recall.
 
     Returns
     -------
     recall : float
-        recall of the positive class in binary classification or weighted
-        avergage of the recall of each class for the multiclass task.
+        Recall of the positive class in binary classification or weighted
+        average of the recall of each class for the multiclass task.
 
     """
-    _, r, _, s = precision_recall_fscore_support(y_true, y_pred)
-    if r.shape[0] == 2:
-        return r[pos_label]
-    else:
-        return np.average(r, weights=s)
+    _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
+                                                 labels=labels,
+                                                 pos_label=pos_label,
+                                                 average=average)
+    return r
 
 
-def fbeta_score(y_true, y_pred, beta, pos_label=1):
+def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+                average='weighted'):
     """Compute fbeta score
 
     The F_beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
 
     The beta parameter determines the weight of precision in the combined
-    score. beta < 1 lends more weight to precision, while beta > 1 favors
-    precision (beta == 0 considers only precision, beta == inf only recall).
+    score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
+    favors precision (``beta == 0`` considers only precision, ``beta == inf``
+    only recall).
 
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        True targets
 
     y_pred : array, shape = [n_samples]
-        predicted targets
+        Predicted targets
 
     beta: float
+        Weight of precision in harmonic mean.
+
+    labels : array
+        Integer array of labels
 
     pos_label : int
-        in the binary classification case, give the label of the positive
+        In the binary classification case, give the label of the positive
         class (default is 1). Everything else but 'pos_label'
         is considered to belong to the negative class.
-        Not used in the case of multiclass classification.
+        Set to None in the case of multiclass classification.
+
+    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+        In the multiclass classification case, this determines the
+        type of averaging performed on the data.
+
+        macro:
+            Average over classes (does not take imbalance into account).
+        micro:
+            Average over instances (takes imbalance into account).
+            This implies that ``precision == recall == f1``
+        weighted:
+            Average weighted by support (takes imbalance into account).
+            Can result in f1 score that is not between precision and recall.
 
     Returns
     -------
     fbeta_score : float
         fbeta_score of the positive class in binary classification or weighted
-        avergage of the fbeta_score of each class for the multiclass task.
+        average of the fbeta_score of each class for the multiclass task.
 
-    See also
-    --------
+    References
+    ----------
     R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
     Addison Wesley, pp. 327-328.
 
     http://en.wikipedia.org/wiki/F1_score
 
     """
-    _, _, f, s = precision_recall_fscore_support(y_true, y_pred, beta=beta)
-    if f.shape[0] == 2:
-        return f[pos_label]
-    else:
-        return np.average(f, weights=s)
+    _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
+                                                 beta=beta,
+                                                 labels=labels,
+                                                 pos_label=pos_label,
+                                                 average=average)
+    return f
 
 
-def f1_score(y_true, y_pred, pos_label=1):
+def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute f1 score
 
     The F1 score can be interpreted as a weighted average of the precision
     and recall, where an F1 score reaches its best value at 1 and worst
     score at 0. The relative contribution of precision and recall to the f1
-    score are equal.
+    score are equal. The formular for the F_1 score is::
 
         F_1 = 2 * (precision * recall) / (precision + recall)
 
@@ -347,33 +404,50 @@ def f1_score(y_true, y_pred, pos_label=1):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        True targets
 
     y_pred : array, shape = [n_samples]
-        predicted targets
+        Predicted targets
+
+    labels : array
+        Integer array of labels
 
     pos_label : int
-        in the binary classification case, give the label of the positive class
-        (default is 1). Everything else but 'pos_label'
+        In the binary classification case, give the label of the positive
+        class (default is 1). Everything else but 'pos_label'
         is considered to belong to the negative class.
-        Not used in the case of multiclass classification.
+        Set to None in the case of multiclass classification.
+
+    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+        In the multiclass classification case, this determines the
+        type of averaging performed on the data.
+
+        macro:
+            Average over classes (does not take imbalance into account).
+        micro:
+            Average over instances (takes imbalance into account).
+            This implies that ``precision == recall == f1``
+        weighted:
+            Average weighted by support (takes imbalance into account).
+            Can result in f1 score that is not between precision and recall.
 
     Returns
     -------
     f1_score : float
         f1_score of the positive class in binary classification or weighted
-        avergage of the f1_scores of each class for the multiclass task
+        average of the f1_scores of each class for the multiclass task
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/F1_score
 
     """
-    return fbeta_score(y_true, y_pred, 1, pos_label=pos_label)
+    return fbeta_score(y_true, y_pred, 1, labels=labels,
+                       pos_label=pos_label, average=average)
 
 
-def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
+def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
+                                    pos_label=1, average=None):
     """Compute precisions, recalls, f-measures and support for each class
 
     The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
@@ -390,20 +464,45 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     value at 1 and worst score at 0.
 
     The F_beta score weights recall beta as much as precision. beta = 1.0 means
-    recall and precsion are as important.
+    recall and precsion are equally important.
 
     The support is the number of occurrences of each class in y_true.
+
+    If pos_label is None, this function returns the average precision, recall
+    and f-measure if `average` is one of 'micro', 'macro', 'weighted'.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        True targets
 
     y_pred : array, shape = [n_samples]
-        predicted targets
+        Predicted targets
 
     beta : float, 1.0 by default
-        the strength of recall versus precision in the f-score
+        The strength of recall versus precision in the f-score.
+
+    labels : array
+        Integer array of labels
+
+    pos_label : int
+        In the binary classification case, give the label of the positive
+        class (default is 1). Everything else but 'pos_label'
+        is considered to belong to the negative class.
+        Set to None in the case of multiclass classification.
+
+    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+        In the multiclass classification case, this determines the
+        type of averaging performed on the data.
+
+        macro:
+            Average over classes (does not take imbalance into account).
+        micro:
+            Average over instances (takes imbalance into account).
+            This implies that ``precision == recall == f1``
+        weighted:
+            Average weighted by support (takes imbalance into account).
+            Can result in f1 score that is not between precision and recall.
 
     Returns
     -------
@@ -412,14 +511,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     f1_score: array, shape = [n_unique_labels], dtype = np.double
     support: array, shape = [n_unique_labels], dtype = np.long
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
 
     """
+    if beta <= 0:
+        raise ValueError("beta should be >0 in the F-beta score")
+
     y_true, y_pred = check_arrays(y_true, y_pred)
-    assert(beta > 0)
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -459,11 +559,53 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None):
     finally:
         np.seterr(**old_err_settings)
 
-    return precision, recall, fscore, support
+    if not average:
+        return precision, recall, fscore, support
+
+    elif n_labels == 2:
+        if pos_label not in labels:
+            raise ValueError("pos_label=%d is not a valid label: %r" %
+                             (pos_label, labels))
+        pos_label_idx = list(labels).index(pos_label)
+        return (precision[pos_label_idx], recall[pos_label_idx],
+                fscore[pos_label_idx], support[pos_label_idx])
+    else:
+        average_options = (None, 'micro', 'macro', 'weighted')
+        if average == 'micro':
+            avg_precision = true_pos.sum() / (true_pos.sum() +
+                                              false_pos.sum())
+            avg_recall = true_pos.sum() / (true_pos.sum() + false_neg.sum())
+            avg_fscore = (1 + beta2) * (avg_precision * avg_recall) / \
+                         (beta2 * avg_precision + avg_recall)
+        elif average == 'macro':
+            avg_precision = np.mean(precision)
+            avg_recall = np.mean(recall)
+            avg_fscore = np.mean(fscore)
+        elif average == 'weighted':
+            avg_precision = np.average(precision, weights=support)
+            avg_recall = np.average(recall, weights=support)
+            avg_fscore = np.average(fscore, weights=support)
+        else:
+            raise ValueError('average has to be one of ' +
+                             str(average_options))
+
+        return avg_precision, avg_recall, avg_fscore, None
 
 
-def classification_report(y_true, y_pred, labels=None, target_names=None):
-    """Build a text report showing the main classification metrics
+def matthews_corrcoef(y_true, y_pred):
+    """Returns matthew's correlation coefficient for binary classes
+
+    The Matthews correlation coefficient is used in machine learning as a
+    measure of the quality of binary (two-class) classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are
+    of very different sizes. The MCC is in essence a correlation coefficient
+    value between -1 and +1. A coefficient of +1 represents a perfect
+    prediction, 0 an average random prediction and -1 an inverse prediction.
+    The statistic is also known as the phi coefficient. [source: Wikipedia]
+
+    Only in the binary case does this relate to information about true and
+    false positives and negatives. See references below.
 
     Parameters
     ----------
@@ -473,11 +615,41 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     y_pred : array, shape = [n_samples]
         estimated targets
 
+    Returns
+    -------
+    mcc : float
+        matthew's correlation coefficient (+1 represents a perfect prediction,
+        0 an average random prediction and -1 and inverse prediction).
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
+    http://dx.doi.org/10.1093/bioinformatics/16.5.412
+
+    """
+    mcc = np.corrcoef(y_true, y_pred)[0, 1]
+    if np.isnan(mcc):
+        return 0.
+    else:
+        return mcc
+
+
+def classification_report(y_true, y_pred, labels=None, target_names=None):
+    """Build a text report showing the main classification metrics
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets
+
     labels : array, shape = [n_labels]
-        optional list of label indices to include in the report
+        Optional list of label indices to include in the report
 
     target_names : list of strings
-        optional display names matching the labels (same order)
+        Optional display names matching the labels (same order)
 
     Returns
     -------
@@ -511,7 +683,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     report += '\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
-                                                  labels=labels)
+                                                  labels=labels,
+                                                  average=None)
+
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
@@ -546,20 +720,24 @@ def precision_recall_curve(y_true, probas_pred):
     true positives and fn the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
+    The last precision and recall values are 1. and 0. respectively and do not
+    have a corresponding threshold.  This ensures that the graph starts on the
+    x axis.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets of binary classification in range {-1, 1} or {0, 1}
+        True targets of binary classification in range {-1, 1} or {0, 1}
 
     probas_pred : array, shape = [n_samples]
-        estimated probabilities
+        Estimated probabilities
 
     Returns
     -------
-    precision : array, shape = [n]
+    precision : array, shape = [n + 1]
         Precision values
 
-    recall : array, shape = [n]
+    recall : array, shape = [n + 1]
         Recall values
 
     thresholds : array, shape = [n]
@@ -624,16 +802,24 @@ def r2_score(y_true, y_pred):
 
     Best possible score is 1.0, lower values are worse.
 
-    Note: not a symmetric function.
-
-    return the R^2 score
-
     Parameters
     ----------
     y_true : array-like
 
     y_pred : array-like
 
+    Returns
+    -------
+    z : float
+        The R^2 score
+
+    Notes
+    -----
+    This is not a symmetric function.
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()
@@ -697,8 +883,29 @@ def zero_one(y_true, y_pred):
     return np.sum(y_pred != y_true)
 
 
+def mean_squared_error(y_true, y_pred):
+    """Mean squared error regression loss
+
+    Return a a positive floating point value (the best value is 0.0).
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    loss : float
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    return np.mean((y_pred - y_true) ** 2)
+
+
+@deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
+            instead; to be removed in v0.12""")
 def mean_square_error(y_true, y_pred):
-    """Mean square error regression loss
+    """Cumulated square error regression loss
 
     Positive floating point value: the best value is 0.0.
 

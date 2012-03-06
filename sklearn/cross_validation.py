@@ -174,6 +174,14 @@ class LeavePOut(object):
                 / factorial(self.p))
 
 
+def _validate_kfold(k, n_samples):
+    if k <= 0:
+        raise ValueError("Cannot have number of folds k below 1.")
+    if k > n_samples:
+        raise ValueError("Cannot have number of folds k=%d greater than"
+                         " the number of samples: %d." % (k, n_samples))
+
+
 class KFold(object):
     """K-Folds cross validation iterator
 
@@ -226,25 +234,26 @@ class KFold(object):
     """
 
     def __init__(self, n, k, indices=True):
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
-        self.n = n
-        self.k = k
+        _validate_kfold(k, n)
+        if abs(n - int(n)) >= np.finfo('f').eps:
+            raise ValueError("n must be an integer")
+        self.n = int(n)
+        if abs(k - int(k)) >= np.finfo('f').eps:
+            raise ValueError("k must be an integer")
+        self.k = int(k)
         self.indices = indices
 
     def __iter__(self):
         n = self.n
         k = self.k
-        j = ceil(n / k)
+        fold_size = n // k
 
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
             if i < k - 1:
-                test_index[i * j:(i + 1) * j] = True
+                test_index[i * fold_size:(i + 1) * fold_size] = True
             else:
-                test_index[i * j:] = True
+                test_index[i * fold_size:] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)
@@ -312,15 +321,14 @@ class StratifiedKFold(object):
     def __init__(self, y, k, indices=True):
         y = np.asarray(y)
         n = y.shape[0]
-        assert k > 0, ValueError('Cannot have number of folds k below 1.')
-        assert k <= n, ValueError('Cannot have number of folds k=%d, '
-                                  'greater than the number '
-                                  'of samples: %d.' % (k, n))
+        _validate_kfold(k, n)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        assert k <= min_labels, ValueError(
-            'Cannot have number of folds k=%d, smaller than %d, the minimum '
-            'number of labels for any class.' % (k, min_labels))
+        if k > min_labels:
+            raise ValueError("The least populated class in y has only %d"
+                             " members, which is too few. The minimum"
+                             " number of labels for any class cannot"
+                             " be less than k=%d." % (min_labels, k))
         self.y = y
         self.k = k
         self.indices = indices
@@ -375,7 +383,7 @@ class LeaveOneLabelOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
@@ -460,7 +468,7 @@ class LeavePLabelOut(object):
         matrices, since those cannot be indexed by boolean masks.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
@@ -624,7 +632,7 @@ class Bootstrap(object):
         self.random_state = random_state
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         for i in range(self.n_bootstraps):
             # random partition
             permutation = rng.permutation(self.n)
@@ -735,7 +743,7 @@ class ShuffleSplit(object):
                 (train_fraction, test_fraction))
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         n_test = ceil(self.test_fraction * self.n)
         if self.train_fraction is None:
             n_train = self.n - n_test
@@ -826,7 +834,8 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
-        assert hasattr(estimator, 'score'), ValueError(
+        if not hasattr(estimator, 'score'):
+            raise TypeError(
                 "If no score_func is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)
@@ -956,7 +965,7 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The returned value equals p-value if `score_func` returns bigger
         numbers for better scores (e.g., zero_one). If `score_func` is rather a
         loss function (i.e. when lower is better such as with
-        `mean_square_error`) then this is actually the complement of the
+        `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 
     Notes
@@ -987,3 +996,85 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
 
 permutation_test_score.__test__ = False  # to avoid a pb with nosetests
+
+
+def train_test_split(*arrays, **options):
+    """Split arrays or matrices into random train and test subsets
+
+    Quick utility that wraps calls to ``check_arrays`` and
+    ``iter(ShuffleSplit(n_samples)).next()`` and application to input
+    data into a single call for splitting (and optionally subsampling)
+    data in a oneliner.
+
+    Parameters
+    ----------
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+        Python lists or tuples occurring in arrays are converted to 1D numpy
+        arrays.
+
+    test_fraction : float (default 0.25)
+        Should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the test split.
+
+    train_fraction : float or None (default is None)
+        Should be between 0.0 and 1.0 and represent the proportion of
+        the dataset to include in the train split. If None, the value is
+        automatically set to the complement of the test fraction.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+
+    dtype : a numpy dtype instance, None by default
+        Enforce a specific dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cross_validation import train_test_split
+    >>> a, b = np.arange(10).reshape((5, 2)), range(5)
+    >>> a
+    array([[0, 1],
+           [2, 3],
+           [4, 5],
+           [6, 7],
+           [8, 9]])
+    >>> b
+    [0, 1, 2, 3, 4]
+
+    >>> a_train, a_test, b_train, b_test = train_test_split(
+    ...     a, b, test_fraction=0.33, random_state=42)
+    ...
+    >>> a_train
+    array([[4, 5],
+           [0, 1],
+           [6, 7]])
+    >>> b_train
+    array([2, 0, 3])
+    >>> a_test
+    array([[2, 3],
+           [8, 9]])
+    >>> b_test
+    array([1, 4])
+
+    """
+    n_arrays = len(arrays)
+    if n_arrays == 0:
+        raise ValueError("At least one array required as input")
+
+    test_fraction = options.pop('test_fraction', 0.25)
+    train_fraction = options.pop('train_fraction', None)
+    random_state = options.pop('random_state', None)
+    options['sparse_format'] = 'csr'
+
+    arrays = check_arrays(*arrays, **options)
+    n_samples = arrays[0].shape[0]
+    cv = ShuffleSplit(n_samples, test_fraction=test_fraction,
+                      train_fraction=train_fraction,
+                      random_state=random_state,
+                      indices=True)
+    train, test = iter(cv).next()
+    splitted = []
+    for a in arrays:
+        splitted.append(a[train])
+        splitted.append(a[test])
+    return splitted

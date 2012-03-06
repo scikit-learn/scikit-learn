@@ -134,9 +134,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Default is normalize = True so that data is normalized to ease
         maximum likelihood estimation.
 
-    nugget : double, optional
+    nugget : double or ndarray, optional
         Introduce a nugget effect to allow smooth predictions from noisy
-        data.
+        data.  If nugget is an ndarray, it must be the same length as the
+        number of data points used for the fit.
+        The nugget is added to the diagonal of the assumed training covariance;
+        in this way it acts as a Tikhonov regularization in the problem.  In
+        the special case of the squared exponential correlation function, the
+        nugget mathematically represents the variance of the input values.
         Default assumes a nugget close to machine precision for the sake of
         robustness (nugget = 10. * MACHINE_EPSILON).
 
@@ -176,15 +181,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     The presentation implementation is based on a translation of the DACE
     Matlab toolbox, see reference [NLNS2002]_.
 
-    **References**:
+    References
+    ----------
 
-    .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J. Sondergaard (2002).
-        DACE - A MATLAB Kriging Toolbox.`
+    .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J.
+        Sondergaard.  DACE - A MATLAB Kriging Toolbox.` (2002)
         http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
 
     .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
-        and M.D.  Morris (1992). Screening, predicting, and computer experiments.
-        Technometrics, 34(1) 15--25.`
+        and M.D.  Morris (1992). Screening, predicting, and computer
+        experiments.  Technometrics, 34(1) 15--25.`
         http://www.jstor.org/pss/1269548
     """
 
@@ -247,9 +253,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             predictions.
         """
 
-        # Run input checks
-        self._check_params()
-
         # Force data to 2D numpy.array
         X = array2d(np.asarray(X))
         y = np.asarray(y).ravel()[:, np.newaxis]
@@ -262,6 +265,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             raise ValueError("X and y must have the same number of rows.")
         else:
             n_samples = n_samples_X
+
+        # Run input checks
+        self._check_params(n_samples)
 
         # Normalize data or don't
         if self.normalize:
@@ -284,7 +290,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         D, ij = l1_cross_distances(X)
         if np.min(np.sum(D, axis=1)) == 0. \
                                     and self.corr != correlation.pure_nugget:
-            raise Exception("Multiple X are not allowed")
+            raise Exception("Multiple input features cannot have the same"
+                    " value")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -391,13 +398,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array with shape (n_eval, ) with the Mean Squared Error at x.
         """
 
-        # Run input checks
-        self._check_params()
-
         # Check input shapes
         X = array2d(X)
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
+
+        # Run input checks
+        self._check_params(n_samples)
 
         if n_features_X != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
@@ -774,7 +781,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return optimal_theta, optimal_rlf_value, optimal_par
 
-    def _check_params(self):
+    def _check_params(self, n_samples=None):
 
         # Check regression model
         if not callable(self.regr):
@@ -835,8 +842,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.normalize = bool(self.normalize)
 
         # Check nugget value
-        if self.nugget < 0.:
+        self.nugget = np.asarray(self.nugget)
+        if np.any(self.nugget) < 0.:
             raise ValueError("nugget must be positive or zero.")
+        if (n_samples is not None
+            and self.nugget.shape not in [(), (n_samples,)]):
+            raise ValueError("nugget must be either a scalar "
+                             "or array of length n_samples.")
 
         # Check optimizer
         if not self.optimizer in self._optimizer_types:

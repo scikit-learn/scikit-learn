@@ -58,9 +58,9 @@ def _verbosity_filter(index, verbose):
         return False
     if index == 0:
         return False
-    verbose = .5*(11 - verbose)**2
-    scale = sqrt(index/verbose)
-    next_scale = sqrt((index + 1)/verbose)
+    verbose = .5 * (11 - verbose) ** 2
+    scale = sqrt(index / verbose)
+    next_scale = sqrt((index + 1) / verbose)
     return (int(next_scale) == int(scale))
 
 
