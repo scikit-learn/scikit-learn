@@ -281,7 +281,7 @@ class CountVectorizer(BaseEstimator):
         if self.lowercase:
             return lambda x: strip_accents(x.lower())
         else:
-            return lambda x: strip_accents(x)
+            return strip_accents
 
     def build_tokenizer(self):
         """Return a function that split a string in sequence of tokens"""
@@ -707,9 +707,9 @@ class Vectorizer(CountVectorizer):
         vectors: array, [n_samples, n_features]
         """
         X = super(Vectorizer, self).fit_transform(raw_documents)
+        self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so
         # we set copy to False
-        self._tfidf.fit(X)
         return self._tfidf.transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
