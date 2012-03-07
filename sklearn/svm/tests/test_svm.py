@@ -572,12 +572,14 @@ def test_c_samples_scaling():
     for clf in clfs:
         clf.set_params(scale_C=False)
         coef_ = clf.fit(X, y).coef_
+        assert_true(clf.C == clf.scaled_C_)
         coef2_ = clf.fit(X2, y2).coef_
         error_no_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_no_scale > 1e-3)
 
         clf.set_params(scale_C=True)
         coef_ = clf.fit(X, y).coef_
+        assert_true(clf.C == clf.scaled_C_ * X.shape[0])
         coef2_ = clf.fit(X2, y2).coef_
         error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_with_scale < 1e-5)

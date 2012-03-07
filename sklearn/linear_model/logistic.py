@@ -66,6 +66,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
+    `scaled_C_` : float
+        The C value passed to liblinear.
+
     See also
     --------
     LinearSVC
