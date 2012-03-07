@@ -23,7 +23,7 @@ Two families of ensemble methods are usually distinguished:
   tries to reduce the bias of the combined model. The motivation is to combine
   several weak models to produce a powerful ensemble.
 
-  **Examples:** AdaBoost, Least Squares Boosting, Gradient Tree Boosting...
+  **Examples:** AdaBoost, Least Squares Boosting, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
 
 .. _forest:
@@ -168,3 +168,204 @@ amount of time (e.g., on large datasets).
 
  .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
+
+
+.. _gradient_boosting:
+
+Gradient Tree Boosting
+======================
+
+`Gradient Tree Boosting <http://en.wikipedia.org/wiki/Gradient_boosting>`_
+or Gradient Boosted Regression Trees (GBRT) is a generalization
+of boosting to arbitrary
+differentiable loss functions. GBRT is an accurate and effective
+off-the-shelf procedure that can be used for both regression and
+classification problems.  Gradient Tree Boosting models are used in a
+variety of areas including Web search ranking and ecology.
+
+The advantages of GBRT are:
+
+  + Natural handling of data of mixed type (= heterogeneous features)
+
+  + Predictive power
+
+  + Robustness to outliers in input space (via robust loss functions)
+
+The disadvantages of GBRT are:
+
+  + Scalability, due to the sequential nature of boosting it can
+    hardly be parallelized.
+
+Classification
+==============
+
+:class:`GradientBoostingClassifier` supports binary classification via
+the binomial deviance loss function.  The following example shows how
+to fit a gradient boosting classifier with 100 decision stumps as weak
+learners::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> X_train, X_test = X[:2000], X[2000:]
+    >>> y_train, y_test = y[:2000], y[2000:]
+
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learn_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
+    0.913...
+
+The number of weak learners (i.e. regression trees) is controlled by the
+parameter ``n_estimators``; The maximum depth of each tree is controlled via
+``max_depth``. ``Learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
+that controls overfitting via shrinkage.
+
+Regression
+==========
+
+:class:`GradientBoostingRegressor` supports a number of different loss
+functions for regression which can be specified via the argument
+``loss``. Currently, supported are least squares (``ls``) and
+least absolute deviation (``lad``), which is more robust w.r.t.
+outliers. See [F2001]_ for detailed information.
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import mean_squared_error
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+
+    >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+    >>> X_train, X_test = X[:200], X[200:]
+    >>> y_train, y_test = y[:200], y[200:]
+    >>> clf = GradientBoostingRegressor(n_estimators=100, learn_rate=1.0,
+    ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
+    >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
+    6.90...
+
+Mathematical formulation
+========================
+
+GBRT considers additive models of the following form:
+
+  .. math::
+
+    F(x) = \sum_{m=1}^{M} \gamma_m h_m(x)
+
+where :math:`h_m(x)` are the basis functions which are usually called
+*weak learners* in the context of boosting. Gradient Tree Boosting
+uses :ref:`decision trees <tree>` of fixed size as weak
+learners. Decision trees have a number of abilities that make them
+valuable for boosting, namely the ability to handle data of mixed type
+and the ability to model complex functions.
+
+Similar to other boosting algorithms GBRT builds the additive model in
+a forward stagewise fashion:
+
+  .. math::
+
+    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
+
+At each stage the decision tree :math:`h_m(x)` is choosen that
+minimizes the loss function :math:`L` given the current model
+:math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+
+  .. math::
+
+    F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
+    F_{m-1}(x_i) - h(x))
+
+The initial model :math:`F_{0}` is problem specific, for least-squares
+regression one usually chooses the mean of the target values.
+
+.. note:: The initial model can also be specified via the ``init``
+          argument. The passed object has to implement ``fit`` and ``predict``.
+
+Gradient Boosting attempts to solve this minimization problem
+numerically via steepest descent: The steepest descent direction is
+the negative gradient of the loss function evaluated at the current
+model :math:`F_{m-1}` which can be calculated for any differentialble
+loss function:
+
+  .. math::
+
+    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
+    F_{m-1}(x_i))
+
+Where the step length :math:`\gamma_m` is choosen using line search:
+
+  .. math::
+
+    \gamma_m = \arg\min_{\gamma} \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i)
+    - \gamma \frac{\partial L(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)})
+
+The module :mod:`gradient_boosting` provides classes for regression
+(:class:`GradientBoostingRegressor`) and classification
+(:class:`GradientBoostingClassifier`).
+The algorithms for regression and classification
+only differ in the concrete loss function used.
+
+
+Loss Functions
+--------------
+
+The following loss functions are supported and can be specified using
+the parameter ``loss``:
+
+  * Regression
+
+    * Least squares (``'ls'``): The natural choice for regression due
+      to its superior computational properties. The initial model is
+      given by the mean of the target values.
+    * Least absolute deviation (``'lad'``): A robust loss function for
+      regression. The initial model is given by the median of the
+      target values.
+
+  * Classification
+
+    * Binomial deviance (``'deviance'``): The negative binomial
+      log-likelihood loss function for binary classification (provides
+      probability estimates).  The initial model is given by the
+      probability of the positive class.
+
+
+Regularization via Shrinkage
+============================
+
+[F2001]_ proposed a simple regularization strategy that scales
+the contribution of each weak learner by a factor :math:`\nu`:
+
+.. math::
+
+    F_m(x) = F_{m-1}(x) + \nu \gamma_m h_m(x)
+
+The parameter :math:`\nu` is also called the **learning rate** because
+it scales the step length the the gradient descent procedure; it can
+be set via the ``learn_rate`` parameter.
+
+The parameter ``learn_rate`` strongly interacts with the parameter
+``n_estimators``, the number of weak learners to fit. Smaller values
+of ``learn_rate`` require larger numbers of weak learners to maintain
+a constant training error. Empirical evidence suggests that small
+values of ``learn_rate`` favor better test error. [HTF2009]_
+recommend to set the learning rate to a small constant
+(e.g. ``learn_rate <= 0.1``) and choose ``n_estimators`` by early
+stopping. For a more detailed discussion of the interaction between
+``learn_rate`` and ``n_estimators`` see [R2007]_.
+
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+
+.. topic:: References
+
+ .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
+   The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+ .. [F1999] J. Friedman, "Stochastic Gradient Boosting", 1999
+
+ .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
+
+ .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
+

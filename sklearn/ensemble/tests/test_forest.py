@@ -177,6 +177,10 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_true(0 < X_new.shape[1] < X.shape[1])
 
+    clf = RandomForestClassifier(n_estimators=10)
+    clf.fit(X, y)
+    assert_true(clf.feature_importances_ is None)
+
 
 def test_oob_score_classification():
     """Check that oob prediction is as acurate as
@@ -191,11 +195,11 @@ def test_oob_score_classification():
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
-    clf = RandomForestRegressor(n_estimators=30, oob_score=True)
+    clf = RandomForestRegressor(n_estimators=50, oob_score=True)
     n_samples = boston.data.shape[0]
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
-            boston.target[n_samples / 2:])
+                           boston.target[n_samples / 2:])
     assert_true(test_score > clf.oob_score_)
     assert_true(clf.oob_score_ > .8)
 

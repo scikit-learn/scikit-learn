@@ -1,7 +1,7 @@
 """
-================================
-Covertype dataset with dense SGD
-================================
+===========================
+Covertype dataset benchmark
+===========================
 
 Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes, CART
 (decision tree), RandomForest and Extra-Trees on the forest covertype dataset
@@ -42,7 +42,7 @@ The same task has been used in a number of papers including:
 
 To run this example use your favorite python shell::
 
-  % ipython benchmark/bench_sgd_covertype.py
+  % ipython benchmark/bench_covertype.py
 
 """
 from __future__ import division
@@ -185,14 +185,14 @@ cart_err, cart_train_time, cart_test_time = benchmark(
 ## Train RandomForest model
 rf_err, rf_train_time, rf_test_time = benchmark(
     RandomForestClassifier(n_estimators=20,
-                           min_sample_split=5,
+                           min_samples_split=5,
                            max_depth=None))
 
-######################################################################
-## Train Extra-Trees model
+## ######################################################################
+## ## Train Extra-Trees model
 et_err, et_train_time, et_test_time = benchmark(
     ExtraTreesClassifier(n_estimators=20,
-                         min_sample_split=5,
+                         min_samples_split=5,
                          max_depth=None))
 
 ######################################################################
