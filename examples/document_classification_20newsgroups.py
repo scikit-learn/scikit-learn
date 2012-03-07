@@ -24,14 +24,13 @@ loader or setting them to None to get the 20 of them.
 
 import logging
 import numpy as np
-from operator import itemgetter
 from optparse import OptionParser
 import sys
 from time import time
 import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import Vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
@@ -107,7 +106,7 @@ y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer(sublinear_tf=True)
+vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
 X_train = vectorizer.fit_transform(data_train.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
@@ -130,13 +129,14 @@ if opts.select_chi2:
     print "done in %fs" % (time() - t0)
     print
 
-vocabulary = np.array([t for t, i in sorted(vectorizer.vocabulary.iteritems(),
-                                            key=itemgetter(1))])
-
 
 def trim(s):
     """Trim string to fit on terminal (assuming 80-column display)"""
     return s if len(s) <= 80 else s[:77] + "..."
+
+
+# mapping from integer feature name to original token string
+feature_names = vectorizer.get_feature_names()
 
 
 ###############################################################################
@@ -166,7 +166,8 @@ def benchmark(clf):
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i])[-10:]
-                print trim("%s: %s" % (category, " ".join(vocabulary[top10])))
+                print trim("%s: %s" % (
+                    category, " ".join(feature_names[top10])))
         print
 
     if opts.print_report:
