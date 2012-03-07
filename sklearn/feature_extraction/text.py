@@ -22,6 +22,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .stop_words import ENGLISH_STOP_WORDS
+from ..utils import deprecated
 
 
 def strip_accents_unicode(s):
@@ -208,6 +209,13 @@ class CountVectorizer(BaseEstimator):
             self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
+
+    @property
+    @deprecated('CountVectorizer.vocabulary is deprecated'
+                ' and will be removed in version 0.13.'
+                ' Please use ``CountVectorizer.vocabulary_`` instead.')
+    def vocabulary(self):
+        return self.vocabulary_
 
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
