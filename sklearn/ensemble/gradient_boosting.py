@@ -7,6 +7,7 @@
 #      * Partial-dependency plots
 #      * Routine to find optimal n_estimators
 #      * Allow sparse matrices as input
+#      * add model serialization
 #
 
 from __future__ import division
