@@ -53,6 +53,9 @@ from sklearn.grid_search import GridSearchCV
 
 n_components = [10, 15, 20, 30, 40, 50, 64]
 Cs = np.logspace(-4, 4, 16)
+
+#Parameters of pipelines can be set using ‘__’ separated parameter names:
+
 estimator = GridSearchCV(pipe,
                          dict(pca__n_components=n_components,
                               logistic__C=Cs),

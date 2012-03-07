@@ -17,42 +17,10 @@ can predict variables. We can create combined estimators:
    :scale: 65
    :align: right
 
-::
+.. literalinclude:: ../../auto_examples/plot_digits_pipe.py
+    :lines: 24-67
 
-    >>> from sklearn import svm, decomposition, datasets
 
-    >>> svc = svm.SVC(kernel='linear')
-    >>> pca = decomposition.PCA()
-    >>> from sklearn.pipeline import Pipeline
-    >>> pipe = Pipeline(steps=[('pca', pca), ('svc', svc)])
-
-    >>> digits = datasets.load_digits()
-    >>> X_digits = digits.data
-    >>> y_digits = digits.target
-    >>> pca.fit(X_digits, y_digits)
-    PCA(copy=True, n_components=None, whiten=False)
-    >>> pl.plot(pca.explained_variance_) # doctest: +ELLIPSIS
-    [<matplotlib.lines.Line2D object at ...>]
-
-Parameters of pipelines can be set using '__' separated parameter names::
-
-    >>> pipe._set_params(pca__n_components=30)
-    Pipeline(steps=[('pca', PCA(copy=True, n_components=30, whiten=False)), ('svc', SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='linear', probability=False, scale_C=True, shrinking=True,
-      tol=0.001))])
-
-    >>> pca.n_components
-    30
-
-    >>> from sklearn.grid_search import GridSearchCV
-    >>> n_components = [10, 15, 20, 30, 40, 50, 64]
-    >>> Cs = np.logspace(-4, 4, 16)
-    >>> estimator = GridSearchCV(pipe,
-    ...                          dict(pca__n_components=n_components,
-    ...                               svc__C=Cs),
-    ...                          n_jobs=-1)
-    >>> estimator.fit(X_digits, y_digits) # doctest: +ELLIPSIS
-    GridSearchCV(cv=None,...
 
 
 Face recognition with eigenfaces
