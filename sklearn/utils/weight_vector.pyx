@@ -15,7 +15,7 @@ cimport numpy as np
 cimport cython
 
 
-cdef class WeightVector:
+cdef class WeightVector(object):
     """Dense vector represented by a scalar and a numpy array.
 
     The class provides methods to ``add`` a sparse vector
@@ -33,8 +33,6 @@ cdef class WeightVector:
         The scale of the vector.
     n_features : int
         The number of features (= dimensionality of ``w``).
-    sq_norm : double
-        The squared norm of ``w``.
     """
 
     def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
@@ -42,6 +40,100 @@ cdef class WeightVector:
         self.w_data_ptr = <DOUBLE *>w.data
         self.wscale = 1.0
         self.n_features = w.shape[0]
+
+    cdef void add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                  int xnnz, double c):
+        """Scales example x by constant c and adds it to the weight vector.
+
+        This operation updates ``sq_norm``.
+
+        Parameters
+        ----------
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.int32*
+            The array which holds the feature indices of ``x``.
+        xnnz : int
+            The number of non-zero features of ``x``.
+        c : double
+            The scaling constant for the example.
+        """
+        cdef int j
+        cdef int idx
+        cdef double val
+        cdef double innerprod = 0.0
+        cdef double xsqnorm = 0.0
+
+        # the next two lines save a factor of 2!
+        cdef double wscale = self.wscale
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
+
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
+            innerprod += (w_data_ptr[idx] * val)
+            xsqnorm += (val * val)
+            w_data_ptr[idx] += val * (c / wscale)
+
+    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
+        """Computes the dot product of a sample x and the weight vector.
+
+        Parameters
+        ----------
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.int32*
+            The array which holds the feature indices of ``x``.
+        xnnz : int
+            The number of non-zero features of ``x``.
+
+        Returns
+        -------
+        innerprod : double
+            The inner product of ``x`` and ``w``.
+        """
+        cdef int j
+        cdef int idx
+        cdef double innerprod = 0.0
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            innerprod += w_data_ptr[idx] * x_data_ptr[j]
+        innerprod *= self.wscale
+        return innerprod
+
+    cdef void scale(self, double c):
+        """Scales the weight vector by a constant ``c``.
+
+        It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
+        small we call ``reset_swcale``."""
+        self.wscale *= c
+        if self.wscale < 1e-9:
+            self.reset_wscale()
+
+    cdef void reset_wscale(self):
+        """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
+        self.w *= self.wscale
+        self.wscale = 1.0
+
+    cdef double norm(self):
+        """The L2 norm of the weight vector. """
+        return sqrt(np.dot(self.w, self.w))
+
+
+cdef class NormedWeightVector(WeightVector):
+    """A weight vector that updates its norm attribute.
+
+    A specialization of ``WeightVector`` that stores
+    its L2 norm explicitly and updates it whenever
+    the vector is modified.
+
+    Attributes
+    ----------
+    sq_norm : double
+        The squared norm of ``w``.
+    """
+    def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
         self.sq_norm = np.dot(w, w)
 
     cdef void add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
@@ -80,33 +172,6 @@ cdef class WeightVector:
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
-    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
-        """Computes the dot product of a sample x and the weight vector.
-
-        Parameters
-        ----------
-        x_data_ptr : double*
-            The array which holds the feature values of ``x``.
-        x_ind_ptr : np.int32*
-            The array which holds the feature indices of ``x``.
-        xnnz : int
-            The number of non-zero features of ``x``.
-
-        Returns
-        -------
-        innerprod : double
-            The inner product of ``x`` and ``w``.
-        """
-        cdef int j
-        cdef int idx
-        cdef double innerprod = 0.0
-        cdef DOUBLE* w_data_ptr = self.w_data_ptr
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            innerprod += w_data_ptr[idx] * x_data_ptr[j]
-        innerprod *= self.wscale
-        return innerprod
-
     cdef void scale(self, double c):
         """Scales the weight vector by a constant ``c``.
 
@@ -116,11 +181,6 @@ cdef class WeightVector:
         self.sq_norm *= (c * c)
         if self.wscale < 1e-9:
             self.reset_wscale()
-
-    cdef void reset_wscale(self):
-        """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
-        self.w *= self.wscale
-        self.wscale = 1.0
 
     cdef double norm(self):
         """The L2 norm of the weight vector. """

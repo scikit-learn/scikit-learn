@@ -1,4 +1,4 @@
-"""Utils and computational tricks for large-scale algorithms. """
+"""Efficient (dense) parameter vector implementation for linear models. """
 
 cimport numpy as np
 
@@ -11,16 +11,11 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
 
 
-################################################################################
-# Efficient (dense) parameter vector implementation for linear models.
-#
-
-cdef class WeightVector:
+cdef class WeightVector(object):
     cdef np.ndarray w
     cdef DOUBLE *w_data_ptr
     cdef double wscale
     cdef Py_ssize_t n_features
-    cdef double sq_norm
 
     cdef void add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                   int xnnz, double c)
@@ -29,3 +24,7 @@ cdef class WeightVector:
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
     cdef double norm(self)
+
+
+cdef class NormedWeightVector(WeightVector):
+    cdef double sq_norm
