@@ -148,7 +148,7 @@ ignored in future calls to the transform method::
   array([[0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
 Note that in the previous corpus, the first and the last documents have
-exaclty the same words hence are encoded in equal vectors. In particular
+exactly the same words hence are encoded in equal vectors. In particular
 we lose the information that the last document is an interogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
