@@ -24,7 +24,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
 from ..utils import atleast2d_or_csr, check_arrays
 
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 ###
 ### TODO: intercept for all models
@@ -173,8 +172,8 @@ class LinearRegression(LinearModel):
                     residues = np.zeros(y.T.shape)
                     for j in range(y.shape[1]):
                         out = sp_linalg.lsqr(X, y[:, j].ravel())
-                        coef[j,:] = out[0]
-                        residues[j,:] = out[3]
+                        coef[j, :] = out[0]
+                        residues[j, :] = out[3]
                     self.coef_ = coef
                     self.residues_ = residues
             else:
