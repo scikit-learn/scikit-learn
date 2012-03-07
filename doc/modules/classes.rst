@@ -297,7 +297,7 @@ From text
 
    feature_extraction.text.CountVectorizer
    feature_extraction.text.TfidfTransformer
-   feature_extraction.text.Vectorizer
+   feature_extraction.text.TfidfVectorizer
 
 
 .. _feature_selection_ref:

@@ -243,11 +243,11 @@ attribute::
 
 
 As tf–idf is a very often used for text features, there is also another
-class called :class:`Vectorizer` that combines all the option of
+class called :class:`TfidfVectorizer` that combines all the option of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
-  >>> from sklearn.feature_extraction.text import Vectorizer
-  >>> vectorizer = Vectorizer()
+  >>> from sklearn.feature_extraction.text import TfidfVectorizer
+  >>> vectorizer = TfidfVectorizer()
   >>> vectorizer.fit_transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
   <4x9 sparse matrix of type '<type 'numpy.float64'>'

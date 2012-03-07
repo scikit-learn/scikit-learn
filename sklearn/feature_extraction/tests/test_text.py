@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import strip_accents_ascii
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_extraction.text import Vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -338,7 +338,7 @@ def test_vectorizer():
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = Vectorizer(norm='l1')
+    tv = TfidfVectorizer(norm='l1')
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
     assert_array_almost_equal(tfidf, tfidf2)
@@ -372,7 +372,7 @@ def test_feature_names():
 def test_vectorizer_max_features():
     vec_factories = (
         CountVectorizer,
-        Vectorizer,
+        TfidfVectorizer,
     )
 
     expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
@@ -424,7 +424,7 @@ def test_binary_occurrences():
 def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (Vectorizer(), CountVectorizer()):
+    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
@@ -491,7 +491,7 @@ def test_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', Vectorizer()),
+    pipeline = Pipeline([('vect', TfidfVectorizer()),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -525,9 +525,9 @@ def test_pickling_vectorizer():
         CountVectorizer(analyzer=lazy_analyze),
         CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
         CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS),
-        Vectorizer(),
-        Vectorizer(analyzer=lazy_analyze),
-        Vectorizer().fit(JUNK_FOOD_DOCS),
+        TfidfVectorizer(),
+        TfidfVectorizer(analyzer=lazy_analyze),
+        TfidfVectorizer().fit(JUNK_FOOD_DOCS),
     ]
 
     for orig in instances:

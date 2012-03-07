@@ -30,7 +30,7 @@ from time import time
 import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import Vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
@@ -106,7 +106,7 @@ y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
+vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
 X_train = vectorizer.fit_transform(data_train.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape

@@ -13,6 +13,7 @@ build feature vectors from text documents.
 import re
 import unicodedata
 from operator import itemgetter
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -616,7 +617,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-class Vectorizer(CountVectorizer):
+class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
@@ -641,7 +642,7 @@ class Vectorizer(CountVectorizer):
                  vocabulary=None, binary=False, dtype=long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
 
-        super(Vectorizer, self).__init__(
+        super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
@@ -690,7 +691,7 @@ class Vectorizer(CountVectorizer):
 
     def fit(self, raw_documents):
         """Learn a conversion law from documents to array data"""
-        X = super(Vectorizer, self).fit_transform(raw_documents)
+        X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
 
@@ -706,7 +707,7 @@ class Vectorizer(CountVectorizer):
         -------
         vectors: array, [n_samples, n_features]
         """
-        X = super(Vectorizer, self).fit_transform(raw_documents)
+        X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so
         # we set copy to False
@@ -724,5 +725,28 @@ class Vectorizer(CountVectorizer):
         -------
         vectors: sparse matrix, [n_samples, n_features]
         """
-        X = super(Vectorizer, self).transform(raw_documents)
+        X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy)
+
+
+class Vectorizer(TfidfVectorizer):
+    """Vectorizer is eprecated in 0.11, use TfidfVectorizer instead"""
+
+    def __init__(self, input='content', charset='utf-8',
+                 charset_error='strict', strip_accents=None,
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 min_n=1, max_n=1, max_df=1.0, max_features=None,
+                 vocabulary=None, binary=False, dtype=long, norm='l2',
+                 use_idf=True, smooth_idf=True, sublinear_tf=False):
+        warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
+                     " in 0.13. Please use TfidfVectorizer instead.")
+        super(Vectorizer, self).__init__(
+            input=input, charset=charset, charset_error=charset_error,
+            strip_accents=strip_accents, lowercase=lowercase,
+            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
+            stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
+            max_n=max_n, max_df=max_df, max_features=max_features,
+            vocabulary=vocabulary, binary=False, dtype=dtype,
+            norm=norm, use_idf=use_idf, smooth_idf=smooth_idf,
+            sublinear_tf=sublinear_tf)
