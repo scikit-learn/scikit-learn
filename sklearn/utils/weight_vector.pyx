@@ -76,7 +76,7 @@ cdef class WeightVector:
             val = x_data_ptr[j]
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            self.w_data_ptr[idx] += val * (c / wscale)
+            w_data_ptr[idx] += val * (c / wscale)
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
