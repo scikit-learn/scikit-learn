@@ -180,6 +180,9 @@ class BaseLibSVM(BaseEstimator):
             C = X.shape[0]
         if getattr(self, 'scale_C', False):
             C = C / float(X.shape[0])
+
+        self.scaled_C_ = C
+
         epsilon = self.epsilon
         if epsilon is None:
             epsilon = 0.1
@@ -273,6 +276,8 @@ class BaseLibSVM(BaseEstimator):
             C = X.shape[0]
         if self.scale_C:
             C = C / float(X.shape[0])
+
+        self.scaled_C_ = C
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
             self.n_support_, self.probA_, self.probB_ = \
@@ -678,6 +683,7 @@ class BaseLibLinear(BaseEstimator):
         if self.scale_C:
             C = C / float(X.shape[0])
 
+        self.scaled_C_ = C
         train = liblinear.csr_train_wrap if self._sparse \
                                          else liblinear.train_wrap
         self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),

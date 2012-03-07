@@ -88,6 +88,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to liblinear.
+
     Notes
     -----
     The underlying C implementation uses a random number generator to
@@ -217,6 +220,9 @@ class SVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> import numpy as np
@@ -333,6 +339,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> import numpy as np
@@ -440,6 +449,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> from sklearn.svm import SVR
@@ -545,6 +557,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> from sklearn.svm import NuSVR
@@ -643,6 +658,9 @@ class OneClassSVM(BaseLibSVM):
 
     `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
+
+    `scaled_C_` : float
+        The C value passed to libsvm.
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
