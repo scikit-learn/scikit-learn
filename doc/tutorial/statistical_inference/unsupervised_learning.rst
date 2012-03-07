@@ -190,8 +190,8 @@ features: **feature agglomeration**. This approach can be implementing by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
-.. image:: ../../auto_examples/tutorial/images/plot_digits_agglomeration_1.png
-    :target: ../../auto_examples/tutorial/plot_digits_agglomeration.html
+.. image:: ../../auto_examples/cluster/images/plot_digits_agglomeration_1.png
+    :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
     :align: right
     :scale: 57
 
@@ -232,12 +232,12 @@ Principal component analysis: PCA
 :ref:`PCA` selects the successive components that
 explain the maximum variance in the signal.
 
-.. |pca_3d_axis| image:: ../../auto_examples/tutorial/images/plot_pca_3d_1.png
-   :target: ../../auto_examples/tutorial/plot_pca_3d.html
+.. |pca_3d_axis| image:: ../../auto_examples/decomposition/images/plot_pca_3d_1.png
+   :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
-.. |pca_3d_aligned| image:: ../../auto_examples/tutorial/images/plot_pca_3d_2.png
-   :target: ../../auto_examples/tutorial/plot_pca_3d.html
+.. |pca_3d_aligned| image:: ../../auto_examples/decomposition/images/plot_pca_3d_2.png
+   :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
 .. rst-class:: centered

@@ -1,3 +1,23 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+=========================================================
+Classifiers Comparison
+=========================================================
+A Comparison of a K-nearest-neighbours, Logistic Regression
+and a Linear SVC classifying the 
+`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_
+dataset.
+
+"""
+print __doc__
+
+
+# Code source: Gael Varoqueux
+# Modified for Documentation merge by Jaques Grobler
+# License: BSD
+
 import numpy as np
 import pylab as pl
 from sklearn import neighbors, datasets, linear_model, svm
@@ -16,6 +36,7 @@ classifiers = dict(
     )
 
 
+fignum = 1
 # we create an instance of Neighbours Classifier and fit the data.
 for name, clf in classifiers.iteritems():
     clf.fit(X, Y)
@@ -29,7 +50,7 @@ for name, clf in classifiers.iteritems():
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.figure(1, figsize=(4, 3))
+    pl.figure(fignum, figsize=(4, 3))
     pl.set_cmap(pl.cm.Paired)
     pl.pcolormesh(xx, yy, Z)
 
@@ -42,5 +63,6 @@ for name, clf in classifiers.iteritems():
     pl.ylim(yy.min(), yy.max())
     pl.xticks(())
     pl.yticks(())
+    fignum += 1
 
-    pl.show()
+pl.show()

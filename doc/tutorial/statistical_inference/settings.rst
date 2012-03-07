@@ -31,8 +31,8 @@ needs to be preprocessed to be used by the scikit.
 
 .. topic:: An example of reshaping data: the digits dataset 
 
-    .. image:: ../../auto_examples/tutorial/images/plot_digits_first_image_1.png
-        :target: ../../auto_examples/tutorial/plot_digits_first_image.html
+    .. image:: ../../auto_examples/images/plot_digits_last_image_1.png
+        :target: ../../auto_examples/plot_digits_last_image.html
         :align: right
         :scale: 60
 
@@ -43,7 +43,7 @@ needs to be preprocessed to be used by the scikit.
         >>> digits.images.shape
         (1797, 8, 8)
         >>> import pylab as pl
-        >>> pl.imshow(digits.images[0], cmap=pl.cm.gray_r) #doctest: +ELLIPSIS
+        >>> pl.imshow(digits.images[-1], cmap=pl.cm.gray_r) #doctest: +ELLIPSIS
         <matplotlib.image.AxesImage object at ...>
 
     To use this dataset with the scikit, we transform each 8x8 image in a

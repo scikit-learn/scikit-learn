@@ -20,8 +20,8 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn import datasets, cluster
-from scikits.learn.feature_extraction.image import grid_to_graph
+from sklearn import datasets, cluster
+from sklearn.feature_extraction.image import grid_to_graph
 
 digits = datasets.load_digits()
 images = digits.images

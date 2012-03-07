@@ -1,10 +1,25 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+=========================================================
+PCA example with Iris Data-set
+=========================================================
+
+"""
+print __doc__
+
+
+# Code source: Gael Varoqueux
+# License: BSD
+
 import numpy as np
 import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D
 
 
-from scikits.learn import decomposition
-from scikits.learn import datasets
+from sklearn import decomposition
+from sklearn import datasets
 
 np.random.seed(5)
 

@@ -336,8 +336,8 @@ application of Occam's razor: `prefer simpler models`.
 Classification
 ---------------
 
-.. image:: ../../auto_examples/tutorial/images/plot_logistic_1.png
-   :target: ../../auto_examples/tutorial/plot_logistic.html
+.. image:: ../../auto_examples/linear_model/images/plot_logistic_1.png
+   :target: ../../auto_examples/linear_model/plot_logistic.html
    :scale: 65
    :align: right
 
@@ -360,8 +360,8 @@ function, or **logistic** function:
               fit_intercept=True, intercept_scaling=1, penalty='l2',
               scale_C=True, tol=0.0001)
 
-.. image:: ../../auto_examples/tutorial/images/plot_iris_logistic_1.png
-   :target: ../../auto_examples/tutorial/plot_iris_logistic.html
+.. image:: ../../auto_examples/linear_model/images/plot_iris_logistic_1.png
+   :target: ../../auto_examples/linear_model/plot_iris_logistic.html
    :scale: 83
 
 .. topic:: Multiclass classification
@@ -402,12 +402,12 @@ to all the observations around the separation line; a larger choice of `C`
 will thus have the margins computed on the observations that are close to 
 the separating line.
 
-.. |svm_margin_unreg| image:: ../../auto_examples/tutorial/images/plot_svm_margin_1.png
-   :target: ../../auto_examples/tutorial/plot_svm_margin.html
+.. |svm_margin_unreg| image:: ../../auto_examples/svm/images/plot_svm_margin_1.png
+   :target: ../../auto_examples/svm/plot_svm_margin.html
    :scale: 70
 
-.. |svm_margin_reg| image:: ../../auto_examples/tutorial/images/plot_svm_margin_2.png
-   :target: ../../auto_examples/tutorial/plot_svm_margin.html
+.. |svm_margin_reg| image:: ../../auto_examples/svm/images/plot_svm_margin_2.png
+   :target: ../../auto_examples/svm/plot_svm_margin.html
    :scale: 70
 
 .. rst-class:: centered
@@ -449,12 +449,12 @@ build a decision function that is not linear but that may be for instance
 polynomial. This is done using the *kernel trick* that can be seen as
 creating an decision energy by positioning *kernels* on observations:
 
-.. |svm_kernel_linear| image:: ../../auto_examples/tutorial/images/plot_svm_kernels_1.png
-   :target: ../../auto_examples/tutorial/plot_svm_kernels.html
+.. |svm_kernel_linear| image:: ../../auto_examples/svm/images/plot_svm_kernels_1.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65	       	   
 
-.. |svm_kernel_poly| image:: ../../auto_examples/tutorial/images/plot_svm_kernels_2.png
-   :target: ../../auto_examples/tutorial/plot_svm_kernels.html
+.. |svm_kernel_poly| image:: ../../auto_examples/svm/images/plot_svm_kernels_2.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
 .. rst-class:: centered
@@ -491,8 +491,8 @@ creating an decision energy by positioning *kernels* on observations:
 
 
 
-.. |svm_kernel_rbf| image:: ../../auto_examples/tutorial/images/plot_svm_kernels_3.png
-   :target: ../../auto_examples/tutorial/plot_svm_kernels.html
+.. |svm_kernel_rbf| image:: ../../auto_examples/svm/images/plot_svm_kernels_3.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
 .. rst-class:: centered
