@@ -1,10 +1,6 @@
 ==========================================================================
-Scikit-learn tutorial: statistical-learning for sientific data processing
+Statistical-learning for sientific data processing tutorial
 ==========================================================================
-
-**Online version:** http://gaelvaroquaux.github.com/scikit-learn-tutorial/
-
-**Zip file for off-line browsing:** https://github.com/GaelVaroquaux/scikit-learn-tutorial/zipball/gh-pages
 
 .. topic:: Statistical learning 
 
@@ -26,7 +22,7 @@ Scikit-learn tutorial: statistical-learning for sientific data processing
     <http://www.scipy.org>`_, `matplotlib
     <http://matplotlib.sourceforge.net/>`_).
 
-.. include:: big_toc_css.rst
+.. include:: ../../includes/big_toc_css.rst
 
 .. note:: This document is meant to be used with **scikit-learn version 0.7+**.
 

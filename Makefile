@@ -31,7 +31,7 @@ inplace:
 test-code: in
 	$(NOSETESTS) -s sklearn
 test-doc:
-	$(NOSETESTS)  --with-doctest --doctest-tests --doctest-extension=rst \
+	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
 	--doctest-extension=inc --doctest-fixtures=_fixture doc/ doc/modules/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
 

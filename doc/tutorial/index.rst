@@ -7,9 +7,12 @@
 Tutorials: From the bottom up with scikit-learn
 =======================================================================
 
-.. topic:: Beginner tutorial
+.. topic:: Beginner Tutorial
 
-    something about tut 2.1
+    In this section, we introduce the `machine learning 
+    <http://en.wikipedia.org/wiki/Machine_learning>`_
+    vocabulary that we use through-out `scikit-learn` and give a 
+    simple learning example.
 
 
 .. toctree::
@@ -17,9 +20,11 @@ Tutorials: From the bottom up with scikit-learn
 
    basic/tutorial.rst
 
-.. topic:: Harder tutorial
+.. topic:: Statistical-learning Tutorial
 
-    something about tut 2.2
+    This tutorial covers some of the models and tools available
+    to do data-processing with Scikit Learn and how to learn from
+    your data.
 
 .. toctree::
    :maxdepth: 2
