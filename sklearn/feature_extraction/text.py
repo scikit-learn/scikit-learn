@@ -210,13 +210,6 @@ class CountVectorizer(BaseEstimator):
         self.binary = binary
         self.dtype = dtype
 
-    @property
-    @deprecated('CountVectorizer.vocabulary is deprecated'
-                ' and will be removed in version 0.13.'
-                ' Please use ``CountVectorizer.vocabulary_`` instead.')
-    def vocabulary(self):
-        return self.vocabulary_
-
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
 
@@ -377,8 +370,14 @@ class CountVectorizer(BaseEstimator):
         vectors: array, [n_samples, n_features]
         """
         if self.fixed_vocabulary:
-            # not need to fit anything, directly perform the transformation
-            return self.transform(raw_documents)
+            # No need to fit anything, directly perform the transformation.
+            # We intentionally don't call the transform method to make it
+            # fit_transform overridable without unwanted side effects in
+            # TfidfVectorizer
+            analyze = self.build_analyzer()
+            term_counts_per_doc = [Counter(analyze(doc))
+                                   for doc in raw_documents]
+            return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
         self.vocabulary_ = {}
         # result of document conversion to term count dicts
@@ -748,7 +747,8 @@ class Vectorizer(TfidfVectorizer):
                  vocabulary=None, binary=False, dtype=long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
         warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
-                     " in 0.13. Please use TfidfVectorizer instead.")
+                     " in 0.13. Please use TfidfVectorizer instead.",
+                      category=DeprecationWarning)
         super(Vectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
             strip_accents=strip_accents, lowercase=lowercase,

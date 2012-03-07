@@ -339,6 +339,8 @@ def test_vectorizer():
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = TfidfVectorizer(norm='l1')
+    assert_false(tv.fixed_vocabulary)
+
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
     assert_array_almost_equal(tfidf, tfidf2)
@@ -516,6 +518,18 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.max_n, 1)
     assert_equal(best_vectorizer.norm, 'l2')
+    assert_false(best_vectorizer.fixed_vocabulary)
+
+
+def test_tfidf_vectorizer_with_fixed_vocabulary():
+    # non regression smoke test for inheritance issues
+    vocabulary = ['pizza', 'celeri']
+    vect = TfidfVectorizer(vocabulary=vocabulary)
+    assert_true(vect.fixed_vocabulary)
+    X_1 = vect.fit_transform(ALL_FOOD_DOCS)
+    X_2 = vect.transform(ALL_FOOD_DOCS)
+    assert_array_almost_equal(X_1.toarray(), X_2.toarray())
+    assert_true(vect.fixed_vocabulary)
 
 
 def test_pickling_vectorizer():
@@ -548,5 +562,3 @@ def test_pickling_transformer():
     assert_array_equal(
         copy.fit_transform(X).toarray(),
         orig.fit_transform(X).toarray())
-
-
