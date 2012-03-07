@@ -15,8 +15,8 @@ from time import time
 cimport numpy as np
 cimport cython
 
-from sklearn.utils.large_scale cimport WeightVector
-from sklearn.utils.large_scale cimport Dataset
+from sklearn.utils.weight_vector cimport WeightVector
+from sklearn.utils.seq_dataset cimport SequentialDataset
 
 
 cdef extern from "math.h":
@@ -242,7 +242,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              Dataset dataset,
+              SequentialDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
@@ -266,8 +266,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         The regularization parameter.
     rho : float
         The elastic net hyperparameter.
-    dataset : Dataset
-        A concrete ``Dataset`` object.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
     n_iter : int
         The number of iterations (epochs).
     fit_intercept : int
