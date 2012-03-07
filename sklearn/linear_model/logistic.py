@@ -27,9 +27,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         implemented for l2 penalty. Prefer dual=False when
         n_samples > n_features.
 
-    C : float
+    C : float or None, optional (default=None)
         Specifies the strength of the regularization. The smaller it is
-        the bigger in the regularization.
+        the bigger in the regularization. If None then C is set to n_samples.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -66,6 +66,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
 
+    `scaled_C_` : float
+        The C value passed to liblinear.
+
     See also
     --------
     LinearSVC
@@ -88,7 +91,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=None,
                  fit_intercept=True, intercept_scaling=1,
                  scale_C=True, class_weight=None):
 
@@ -115,10 +118,13 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
             order.
         """
         X = self._validate_for_predict(X)
+
+        C = 0.0  # C is not useful here
+
         prob_wrap = (csr_predict_prob_wrap if self._sparse else
                 predict_prob_wrap)
         probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
-                           self.tol, self.C, self.class_weight_label_,
+                           self.tol, C, self.class_weight_label_,
                            self.class_weight_, self.label_, self._get_bias())
         return probas[:, np.argsort(self.label_)]
 

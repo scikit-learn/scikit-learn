@@ -61,9 +61,8 @@ def silhouette_score(X, labels, metric='euclidean',
     silhouette : float
         Mean Silhouette Coefficient for all samples.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
@@ -125,9 +124,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     silhouette : array, shape = [n_samples]
         Silhouette Coefficient for each samples.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational

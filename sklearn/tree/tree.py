@@ -101,8 +101,8 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
                       tree.value[node_id])
 
     def recurse(tree, node_id):
-        if node_id == 1:
-            raise ValueError("Invalid node_id -1")
+        if node_id == Tree.LEAF:
+            raise ValueError("Invalid node_id %s" % Tree.LEAF)
         left_child, right_child = tree.children[node_id, :]
         node_data = {
             "current": node_id,
@@ -639,7 +639,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The feature mportances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
-        the Gini importance [4].
+        the Gini importance [4]_.
 
         .. math::
 
@@ -649,9 +649,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     --------
     DecisionTreeRegressor
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
@@ -803,7 +802,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The feature mportances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
-        the Gini importance [4].
+        the Gini importance [4]_.
 
         .. math::
 
@@ -813,9 +812,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     --------
     DecisionTreeClassifier
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
 
@@ -879,9 +877,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
@@ -926,9 +923,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     sklearn.ensemble.ExtraTreesRegressor : An ensemble of extra-trees for
         regression
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.

@@ -192,9 +192,8 @@ def spectral_clustering(affinity, k=8, n_components=None, mode=None,
     centers: array of integers, shape: k
         The indices of the cluster centers
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
@@ -260,9 +259,8 @@ class SpectralClustering(BaseEstimator):
     `labels_` :
         Labels of each point
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik

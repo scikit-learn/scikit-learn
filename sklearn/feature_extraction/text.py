@@ -522,9 +522,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean, optional
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68–74.`
