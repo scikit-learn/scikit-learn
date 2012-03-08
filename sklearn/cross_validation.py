@@ -779,6 +779,49 @@ class ShuffleSplit(object):
         return self.n_iterations
 
 
+def _validate_sss(y, test_size, train_size):
+    if isinstance(test_size, float) and test_size >= 1.:
+        raise ValueError(
+            'test_size=%f should be smaller '
+            'than 1.0 or be an integer' % test_size)
+    elif isinstance(test_size, int) and test_size >= y.size:
+        raise ValueError(
+            'test_size=%d should be smaller '
+            'than the number of samples %d' % (test_size, y.size))
+
+    if train_size is not None:
+        if isinstance(train_size, float) and train_size >= 1.:
+            raise ValueError("train_size=%f should be smaller "
+                             "than 1.0 or be an integer" % train_size)
+        elif isinstance(train_size, int) and train_size >= y.size:
+            raise ValueError("train_size=%d should be smaller "
+                             "than the number of samples %d" % 
+                             (train_size, y.size))
+        
+    if isinstance(test_size, float):
+        n_test = ceil(test_size * y.size)
+    else:
+        n_test = float(test_size)
+
+    if train_size is None:
+        if isinstance(test_size, float):
+            n_train = y.size - n_test
+        else:
+            n_train = float(y.size - test_size)
+    else:
+        if isinstance(train_size, float):
+            n_train = floor(train_size * y.size)
+        else:
+            n_train = float(train_size)
+
+    if n_train + n_test > y.size:
+        raise ValueError('The sum of n_train and n_test = %d, should be smaller ' 
+                         'than the number of samples %d. Reduce test_size and/or '
+                         'train_size.' % (n_train + n_test, y.size))
+
+    return n_train, n_test
+
+
 class StratifiedShuffleSplit(object):
     """Stratified ShuffleSplit cross validation iterator
 
@@ -845,47 +888,7 @@ class StratifiedShuffleSplit(object):
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        self._check_args()
-
-    def _check_args(self):
-        if isinstance(self.test_size, float) and self.test_size >= 1.:
-            raise ValueError(
-                'test_size=%f should be smaller '
-                'than 1.0 or be an integer' % self.test_size)
-        elif isinstance(self.test_size, int) and self.test_size >= self.y.size:
-            raise ValueError(
-                'test_size=%d should be smaller '
-                'than the number of samples %d' % (self.test_size, self.y.size))
-
-        if self.train_size is not None:
-            if isinstance(self.train_size, float) and self.train_size >= 1.:
-                raise ValueError("train_size=%f should be smaller "
-                                 "than 1.0 or be an integer" % self.train_size)
-            elif isinstance(self.train_size, int) and self.train_size >= self.y.size:
-                raise ValueError("train_size=%d should be smaller "
-                                 "than the number of samples %d" % 
-                                 (self.train_size, self.y.size))
-        
-        if isinstance(self.test_size, float):
-            self.n_test = ceil(self.test_size * self.n)
-        else:
-            self.n_test = float(self.test_size)
-
-        if self.train_size is None:
-            if isinstance(self.test_size, float):
-                self.n_train = self.n - self.n_test
-            else:
-                self.n_train = float(self.y.size - self.test_size)
-        else:
-            if isinstance(self.train_size, float):
-                self.n_train = floor(self.train_size * self.n)
-            else:
-                self.n_train = float(self.train_size)
-
-        if self.n_train + self.n_test > self.n:
-            raise ValueError('The sum of n_train and n_test = %d, should be smaller ' 
-                             'than the number of samples %d. Reduce test_size and/or '
-                             'train_size.' % (self.n_train + self.n_test, self.n))
+        self.n_train, self.n_test = _validate_sss(y, test_size, train_size)
 
     def __iter__(self):
         rng = self.random_state = check_random_state(self.random_state)
