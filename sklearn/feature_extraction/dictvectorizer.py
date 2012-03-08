@@ -149,14 +149,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa = zeros((len(X), len(vocab)), dtype=dtype)
 
         for i, x in enumerate(X):
-            # The Mapping interface specifies items, but not iteritems;
-            # Python 3 will of course solve all our problems.
-            try:
-                items = x.iteritems()
-            except AttributeError:
-                items = x.items()
-
-            for f, v in items:
+            for f, v in x.iteritems():
                 try:
                     Xa[i, vocab[f]] = dtype(v)
                 except KeyError:
