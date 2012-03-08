@@ -178,7 +178,7 @@ sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
 ######################################################################
 ## Train CART model
 cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_sample_split=5,
+    DecisionTreeClassifier(min_samples_split=5,
                            max_depth=None))
 
 ######################################################################

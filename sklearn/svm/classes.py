@@ -16,8 +16,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+    C : float or None, optional (default=None)
+        Penalty parameter C of the error term. If None then C is set
+        to n_samples.
 
     loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
@@ -87,6 +88,9 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to liblinear.
+
     Notes
     -----
     The underlying C implementation uses a random number generator to
@@ -142,8 +146,9 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+    C : float or None, optional (default=None)
+        Penalty parameter C of the error term. If None then C is set
+        to n_samples.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
@@ -215,6 +220,9 @@ class SVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> import numpy as np
@@ -223,7 +231,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
             gamma=0.5, kernel='rbf', probability=False, scale_C=True,
             shrinking=True, tol=0.001)
     >>> print clf.predict([[-0.8, -1]])
@@ -241,7 +249,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     """
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
+    def __init__(self, C=None, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, scale_C=True, class_weight=None):
 
@@ -331,6 +339,9 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> import numpy as np
@@ -372,8 +383,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+    C : float or None, optional (default=None)
+        penalty parameter C of the error term. If None then C is set
+        to n_samples.
 
     epsilon : float, optional (default=0.1)
          epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -437,6 +449,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> from sklearn.svm import SVR
@@ -458,7 +473,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
+                 tol=1e-3, C=None, epsilon=0.1, shrinking=True,
                  probability=False, cache_size=200, scale_C=True):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
@@ -477,8 +492,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+    C : float or None, optional (default=None)
+        penalty parameter C of the error term. If None then C is set
+        to n_samples.
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
@@ -541,6 +557,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    `scaled_C_` : float
+        The C value passed to libsvm.
+
     Examples
     --------
     >>> from sklearn.svm import NuSVR
@@ -564,7 +583,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         epsilon Support Vector Machine for regression implemented with libsvm.
     """
 
-    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+    def __init__(self, nu=0.5, C=None, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
                  scale_C=True):
@@ -639,6 +658,9 @@ class OneClassSVM(BaseLibSVM):
 
     `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
+
+    `scaled_C_` : float
+        The C value passed to libsvm.
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,

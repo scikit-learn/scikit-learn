@@ -268,7 +268,7 @@ def test_decision_function():
 
     """
     # multi class:
-    clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
+    clf = svm.SVC(kernel='linear', C=1.).fit(iris.data, iris.target)
 
     dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
@@ -566,21 +566,37 @@ def test_c_samples_scaling():
             svm.SVR(tol=1e-6, kernel='linear', C=100),
             svm.LinearSVC(tol=1e-6, C=0.1),
             linear_model.LogisticRegression(penalty='l1', tol=1e-6, C=100),
-            linear_model.LogisticRegression(penalty='l2', tol=1e-6),
-            svm.NuSVR(tol=1e-6, kernel='linear')]
+            linear_model.LogisticRegression(penalty='l2', tol=1e-6, C=1.),
+            svm.NuSVR(tol=1e-6, kernel='linear', C=1.)]
 
     for clf in clfs:
         clf.set_params(scale_C=False)
         coef_ = clf.fit(X, y).coef_
+        assert_true(clf.C == clf.scaled_C_)
         coef2_ = clf.fit(X2, y2).coef_
         error_no_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_no_scale > 1e-3)
 
         clf.set_params(scale_C=True)
         coef_ = clf.fit(X, y).coef_
+        assert_true(clf.C == clf.scaled_C_ * X.shape[0])
         coef2_ = clf.fit(X2, y2).coef_
         error_with_scale = linalg.norm(coef2_ - coef_) / linalg.norm(coef_)
         assert_true(error_with_scale < 1e-5)
+
+
+def test_c_samples_scaling_default():
+    """Test C scaling : (C=1, scale_C=False) == (C=None, scale_C=True)
+    """
+    X = iris.data[iris.target != 2]
+    y = iris.target[iris.target != 2]
+
+    clf = svm.SVC(tol=1e-6, kernel='linear')
+    clf2 = svm.SVC(tol=1e-6, kernel='linear', C=1., scale_C=False)
+
+    coef_ = clf.fit(X, y).coef_
+    coef2_ = clf2.fit(X, y).coef_
+    assert_array_almost_equal(coef_, coef2_, 7)
 
 
 def test_nu_svc_samples_scaling():
