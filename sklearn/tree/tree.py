@@ -161,8 +161,10 @@ def compute_feature_importances(tree, n_features, method='gini'):
         'gini': gini,
         'squared': squared
         }[method]
+
     importances = np.zeros((n_features,), dtype=np.float64)
-    for node in xrange(tree.node_count):
+
+    for node in range(tree.node_count):
         if (tree.children[node, 0]
             == tree.children[node, 1]
             == Tree.LEAF):
