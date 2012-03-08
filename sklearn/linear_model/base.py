@@ -17,12 +17,12 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 import scipy.sparse.linalg as sp_linalg
+from joblib import Parallel, delayed
 
 from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
-from ..utils import atleast2d_or_csr, check_arrays
 
 
 ###
@@ -168,14 +168,10 @@ class LinearRegression(LinearModel):
                     self.residues_ = out[3]
                 else:
                     # sparse_lstsq cannot handle y with shape (M, K)
-                    coef = np.zeros(y.T.shape)
-                    residues = np.zeros(y.T.shape)
-                    for j in range(y.shape[1]):
-                        out = sp_linalg.lsqr(X, y[:, j].ravel())
-                        coef[j, :] = out[0]
-                        residues[j, :] = out[3]
-                    self.coef_ = coef
-                    self.residues_ = residues
+                    outs = Parallel(n_jobs=-1)(delayed(sp_linalg.lsqr)
+                            (X, y[:, j].ravel()) for j in range(y.shape[1]))
+                    self.coef_ = np.vstack(out[0] for out in outs)
+                    self.residues_ = np.vstack(out[3] for out in outs)
             else:
                 # DEPENDENCY: scipy 0.7
                 self.coef_ = sp_linalg.spsolve(X, y)
