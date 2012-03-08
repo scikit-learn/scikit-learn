@@ -61,6 +61,7 @@ class MeanPredictor(object):
         y.fill(self.mean)
         return y
 
+
 class ClassPriorPredictor(object):
     """A simple initial estimator that predicts the class prior
     of the training targets.
@@ -75,6 +76,7 @@ class ClassPriorPredictor(object):
         y.fill(self.prior)
         return y
 
+
 class MultiClassPriorPredictor(object):
     """A simple initial estimator that predicts the multi class priors
     of the training targets.
@@ -84,14 +86,16 @@ class MultiClassPriorPredictor(object):
 
     def fit(self, X, y):
         self.classes = np.unique(y)
-        self.priors = np.empty((len(self.classes),),dtype=np.float64)
-        for k in xrange(0,len(self.classes)):
-          self.priors[k] = y[y == self.classes[k]].shape[0] / float(y.shape[0])
+        self.priors = np.empty((len(self.classes),), dtype=np.float64)
+        for k in xrange(0, len(self.classes)):
+            self.priors[k] = y[y == self.classes[k]].shape[0] \
+                             / float(y.shape[0])
 
     def predict(self, X):
-        y = np.empty((X.shape[0],len(self.classes)), dtype=np.float64)
+        y = np.empty((X.shape[0], len(self.classes)), dtype=np.float64)
         y[:] = self.priors
         return y
+
 
 class LossFunction(object):
     """Abstract base class for various loss functions."""
@@ -102,7 +106,7 @@ class LossFunction(object):
     def __call__(self, y, pred):
         pass
 
-    def isMultiClass(self):
+    def is_multi_class(self):
         return False
 
     def negative_gradient(self, y, pred):
@@ -193,19 +197,20 @@ class BinomialDeviance(LossFunction):
         else:
             tree.value[leaf, 0] = numerator / denominator
 
+
 class MultinomialDeviance(LossFunction):
 
     def init_estimator(self):
         return MultiClassPriorPredictor()
 
     def __call__(self, y, pred):
-        assert False
+        raise NotImplementedError()
 
-    def isMultiClass(self):
-        return True 
+    def is_multi_class(self):
+        return True
 
-    def negative_gradient(self, y, pred,k):
-        return y - np.exp(pred[:,k])/np.sum(np.exp(pred),axis=1)
+    def negative_gradient(self, y, pred, k):
+        return y - np.exp(pred[:, k]) / np.sum(np.exp(pred), axis=1)
 
     def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
@@ -215,9 +220,9 @@ class MultinomialDeviance(LossFunction):
         y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
-        numerator *= (len(self.classes)-1)/len(self.classes)
+        numerator *= (len(self.classes) - 1) / len(self.classes)
 
-        denominator = np.sum((y - residual) * (1.0 - y + residual)) 
+        denominator = np.sum((y - residual) * (1.0 - y + residual))
         #denominator = np.sum(abs(residual) * (1 - abs(residual)))
 
         if denominator == 0.0:
@@ -230,6 +235,7 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
                   'deviance': BinomialDeviance,
                   'mdeviance': MultinomialDeviance}
+
 
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
@@ -273,7 +279,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.estimators_ = []
 
-    def fit_stage(self,X,X_argsorted,y,y_pred,residual,sample_mask,k):
+    def fit_stage(self, X, X_argsorted, y, y_pred, residual, sample_mask, k):
             # induce regression tree on residuals
             tree = _build_tree(X, residual, MSE(), self.max_depth,
                                self.min_samples_split, self.min_samples_leaf,
@@ -291,7 +297,7 @@ class BaseGradientBoosting(BaseEnsemble):
             # update out-of-bag predictions and deviance
             if self.subsample < 1.0:
                 y_pred[~sample_mask] = self._predict(
-                    X[~sample_mask], old_pred=y_pred[~sample_mask],k=k)
+                    X[~sample_mask], old_pred=y_pred[~sample_mask], k=k)
                 #self.oob_deviance[i] = loss(y[~sample_mask],
                 #                            y_pred[~sample_mask])
 
@@ -362,14 +368,17 @@ class BaseGradientBoosting(BaseEnsemble):
                               >= (1.0 - self.subsample)
 
             self.estimators_.append([])
-            if not loss.isMultiClass():
+            if not loss.is_multi_class():
                 residual = loss.negative_gradient(y, y_pred)
-                y_pred = self.fit_stage(X,X_argsorted,y,y_pred,residual,sample_mask,0)
+                y_pred = self.fit_stage(X, X_argsorted, y, y_pred, residual,
+                                        sample_mask, 0)
             else:
-                for k in xrange(0,y_pred.shape[1]):
-                    y_k = np.array(y==k,dtype=np.float64)
-                    residual = loss.negative_gradient(y_k, y_pred,k=k)
-                    y_pred[:,k] = self.fit_stage(X,X_argsorted,y_k,y_pred[:,k],residual,sample_mask,k)
+                for k in range(0, y_pred.shape[1]):
+                    y_k = np.array(y == k, dtype=np.float64)
+                    residual = loss.negative_gradient(y_k, y_pred, k=k)
+                    y_pred[:, k] = self.fit_stage(X, X_argsorted, y_k,
+                                                  y_pred[:, k], residual,
+                                                  sample_mask, k)
 
             if monitor:
                 stop = monitor(self, i)
@@ -378,7 +387,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return self
 
-    def _predict(self, X, old_pred=None,k=0):
+    def _predict(self, X, old_pred=None, k=0):
         """Predict targets with current model. Re-uses predictions
         from previous iteration if available.
         """
@@ -387,7 +396,7 @@ class BaseGradientBoosting(BaseEnsemble):
                    self.estimators_[-1][k].predict(X).ravel()
         else:
             y = self.init.predict(X)
-            y = y[:,k] if self.loss_.isMultiClass() else y
+            y = y[:, k] if self.loss_.is_multi_class() else y
             for tree in self.estimators_:
                 y += self.learn_rate * tree[k].predict(X).ravel()
             return y
@@ -406,6 +415,7 @@ class BaseGradientBoosting(BaseEnsemble):
                           for tree in self.estimators_) / len(self.estimators_)
         importances = 100.0 * (importances / importances.max())
         return importances
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification. GB builds an additive model in a
@@ -477,8 +487,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_depth=3, init=None, random_state=None):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learn_rate, n_estimators, min_samples_split, min_samples_leaf,
-            max_depth, init, subsample, random_state)
+            loss, learn_rate, n_estimators, min_samples_split,
+            min_samples_leaf, max_depth, init, subsample, random_state)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -504,7 +514,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self.classes = np.unique(y)
         y = np.searchsorted(self.classes, y)
         if len(self.classes) > 2 and self.loss == 'deviance':
-            raise ValueError('deviance loss does not support more than 2 classes')
+            raise ValueError('deviance loss does not support ' \
+                             'more than 2 classes')
         return super(GradientBoostingClassifier, self).fit(X, y,
                                                            monitor=monitor)
 
@@ -520,13 +531,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                              "call `fit` before `predict_proba`.")
         f = self._predict(X)
         P = np.ones((X.shape[0], len(self.classes)), dtype=np.float64)
-        if len(self.classes) == 2 and not self.loss_.isMultiClass():
+        if len(self.classes) == 2 and not self.loss_.is_multi_class():
             P[:, 1] = 1.0 / (1.0 + np.exp(-f))
             P[:, 0] -= P[:, 1]
         else:
-            for k in xrange(0,len(self.classes)):
-                P[:,k] = self._predict(X,k=k)
-            P = np.exp(P)/np.sum(np.exp(P),axis=1)[:, np.newaxis]
+            for k in range(0, len(self.classes)):
+                P[:, k] = self._predict(X, k=k)
+            P = np.exp(P) / np.sum(np.exp(P), axis=1)[:, np.newaxis]
         return P
 
 
@@ -594,13 +605,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100, subsample=1.0,
-                 min_samples_split=1, min_samples_leaf=1, max_depth=3,
-                 init=None, random_state=None):
+    def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100,
+                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+                 max_depth=3, init=None, random_state=None):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learn_rate, n_estimators, min_samples_split, min_samples_leaf,
-            max_depth, init, subsample, random_state)
+            loss, learn_rate, n_estimators, min_samples_split,
+            min_samples_leaf, max_depth, init, subsample, random_state)
 
     def predict(self, X):
         X = np.atleast_2d(X)
