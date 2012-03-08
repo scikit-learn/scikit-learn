@@ -58,6 +58,7 @@ def test_kfold():
     y = [0, 0, 1, 1, 2]
     assert_raises(ValueError, cross_validation.StratifiedKFold, y, 3)
 
+
 def test_stratified_shuffle_split():
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
@@ -75,8 +76,9 @@ def test_stratified_shuffle_split():
         test_std.append(np.std(np.bincount(y[test])))
 
     for i, [train, test] in enumerate(ss):
-        assert_less_equal(np.std(np.bincount(y[train])), train_std[i])
-        assert_less_equal(np.std(np.bincount(y[test])), test_std[i])
+        assert_less_equal(train_std[i], np.std(np.bincount(y[train])))
+        assert_less_equal(test_std[i], np.std(np.bincount(y[test])))
+
 
 def test_cross_val_score():
     clf = MockClassifier()
