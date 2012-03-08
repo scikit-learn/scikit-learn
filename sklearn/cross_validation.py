@@ -795,7 +795,7 @@ class StratifiedShuffleSplit(object):
     Parameters
     ----------
     y: array, [n_samples]
-        Samples to split in K folds
+        Labels of samples.
 
     n_iterations : int (default 10)
         Number of re-shuffling & splitting iterations.
@@ -845,40 +845,26 @@ class StratifiedShuffleSplit(object):
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        
-        if isinstance(test_size, float):
-            if test_size >= 1.:
-                raise ValueError(
-                    'test_size=%f should be smaller '
-                    'than 1.0 or be an integer' % test_size)
-        else:
-            if test_size >= self.y.size:
-                raise ValueError(
-                    'test_size=%d should be smaller '
-                    'than the number of samples %d' % (test_size, self.y.size))
+        self._check_args()
 
-        if train_size is not None and isinstance(train_size, float):
-            if train_size >= 1.:
+    def _check_args(self):
+        if isinstance(self.test_size, float) and self.test_size >= 1.:
+            raise ValueError(
+                'test_size=%f should be smaller '
+                'than 1.0 or be an integer' % self.test_size)
+        elif isinstance(self.test_size, int) and self.test_size >= self.y.size:
+            raise ValueError(
+                'test_size=%d should be smaller '
+                'than the number of samples %d' % (self.test_size, self.y.size))
+
+        if self.train_size is not None:
+            if isinstance(self.train_size, float) and self.train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
-                                 "than 1.0 or be an integer" % train_size)
-
-            if isinstance(test_size, float) and train_size + test_size > 1.0:
-                raise ValueError(
-                    'The sum of train_size=%f and test_size=%f '
-                    'should be smaller or equal than 1.0' %
-                    (train_size, test_size))
-
-        if train_size is not None and isinstance(train_size, int):
-            if train_size >= self.y.size:
+                                 "than 1.0 or be an integer" % self.train_size)
+            elif isinstance(self.train_size, int) and self.train_size >= self.y.size:
                 raise ValueError("train_size=%d should be smaller "
                                  "than the number of samples %d" % 
-                                 (train_size, self.y.size))
-
-            if isinstance(test_size, int) and train_size + test_size > self.y.size:
-                raise ValueError(
-                    'The sum of train_size=%d and test_size=%d '
-                    'should be smaller or equal than the number of samples %d' %
-                    (train_size, test_size, self.y.size))
+                                 (self.train_size, self.y.size))
         
         if isinstance(self.test_size, float):
             self.n_test = ceil(self.test_size * self.n)
