@@ -55,6 +55,9 @@ Changelog
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
+   - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
+     a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
+     by `Yannick Schwartz`_.
 
 
 API changes summary
