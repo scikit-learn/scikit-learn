@@ -6,6 +6,7 @@ from scipy.sparse import coo_matrix
 from nose.tools import assert_true
 from nose.tools import assert_raises
 from nose.tools import assert_equal
+from nose.tools import assert_less_equal
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
@@ -62,12 +63,20 @@ def test_stratified_shuffle_split():
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
 
-    # Check if returns balanced classes
-    sss = cross_validation.StratifiedShuffleSplit(y, 6, test_size=0.33)
+    # Check if returns better balanced classes than ShuffleSplit
+    sss = cross_validation.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
+    ss = cross_validation.ShuffleSplit(y.size, 6, 0.33, random_state=0)
+
+    train_std = []
+    test_std = []
 
     for train, test in sss:
-        assert_array_equal(y[train], np.unique(y))
-        assert_array_equal(np.unique(y[test]), np.unique(y))
+        train_std.append(np.std(np.bincount(y[train])))
+        test_std.append(np.std(np.bincount(y[test])))
+
+    for i, [train, test] in enumerate(ss):
+        assert_less_equal(np.std(np.bincount(y[train])), train_std[i])
+        assert_less_equal(np.std(np.bincount(y[test])), test_std[i])
 
 def test_cross_val_score():
     clf = MockClassifier()
