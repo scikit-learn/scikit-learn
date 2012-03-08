@@ -63,6 +63,10 @@ Changelog
      is difficult to cythonize. If you are interested in contributing a cython
      version, you can use the python version in the git history as a reference.
 
+   - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
+     a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
+     by `Yannick Schwartz`_.
+
 
 API changes summary
 -------------------

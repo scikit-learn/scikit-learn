@@ -103,6 +103,7 @@ uses.
    cross_validation.LeavePOut
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.StratifiedShuffleSplit
 
 .. autosummary::
    :toctree: generated/
