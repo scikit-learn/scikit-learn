@@ -168,13 +168,13 @@ Linear models: :math:`y = X\beta + \epsilon`
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
     
     >>> # The mean square error
-    >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
+    >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)# doctest: +ELLIPSIS
     2004.5676026898218
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and Y.
-    >>> regr.score(diabetes_X_test, diabetes_y_test)
+    >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
     0.58507530226905724
 
 
@@ -240,9 +240,9 @@ We can choose `alpha` to minimize left out error, this time using the
 diabetes dataset, rather than our synthetic data:: 
 
     >>> alphas = np.logspace(-4, -1, 6)
-    >>> print [regr._set_params(alpha=alpha
+    >>> print [regr._set_params(alpha=alpha 
     ...             ).fit(diabetes_X_train, diabetes_y_train,
-    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]
+    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas] # doctest: +ELLIPSIS
     [0.58511106838835314, 0.58520730154446765, 0.58546775406984908, 0.58555120365039159, 0.58307170855541623, 0.570589994372801]
 
 
@@ -309,7 +309,7 @@ application of Occam's razor: `prefer simpler models`.
     >>> print [regr._set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train
     ...             ).score(diabetes_X_test, diabetes_y_test) 
-    ...        for alpha in alphas]
+    ...        for alpha in alphas] # doctest: +ELLIPSIS
     [0.58511910691622471, 0.58524713649060478, 0.58571895391793494, 0.58730094854527437, 0.58876224183092607, 0.5828450029681681]
     
     >>> best_alpha = alphas[4]
@@ -526,6 +526,7 @@ creating an decision energy by positioning *kernels* on observations:
 
 .. image:: ../../auto_examples/images/plot_iris_dataset_1.png
     :target: ../../auto_examples/plot_iris_dataset.html
+    :align: right
     :scale: 70
 
 .. topic:: **Excercise**
