@@ -196,3 +196,23 @@ def test_check_inputs():
 
     clf = GradientBoostingClassifier().fit(X, y)
     assert_raises(ValueError, clf.predict, X_sparse)
+
+
+def test_serialization():
+    """Check model serialization."""
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
+
+    try:
+        import cPickle as pickle
+    except ImportError as e:
+        import pickle
+
+    serialized_clf = pickle.dumps(clf, protocol=pickle.HIGHEST_PROTOCOL)
+    clf = None
+    clf = pickle.loads(serialized_clf)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
