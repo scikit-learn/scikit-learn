@@ -780,6 +780,12 @@ class ShuffleSplit(object):
 
 
 def _validate_sss(y, test_size, train_size):
+    if np.min(np.bincount(y)) < 2:
+        raise ValueError("The least populated class in y has only 1"
+                         " member, which is too few. The minimum"
+                         " number of labels for any class cannot"
+                         " be less than 2.")
+
     if isinstance(test_size, float) and test_size >= 1.:
         raise ValueError(
             'test_size=%f should be smaller '

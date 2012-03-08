@@ -60,9 +60,15 @@ def test_kfold():
 
 
 def test_stratified_shuffle_split():
+    y = np.asarray([0, 1, 1, 1, 2, 2, 2])
+    # Check that error is raised if there is a class with only one sample
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.2)
+
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 8, 0.6)
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.6, 8)
 
     # Check if returns better balanced classes than ShuffleSplit
     sss = cross_validation.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
