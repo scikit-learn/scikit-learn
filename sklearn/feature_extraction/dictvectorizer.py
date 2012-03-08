@@ -24,8 +24,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
-    names to feature values them into Numpy arrays or scipy.sparse matrices
-    for use with scikit-learn estimators.
+    names to feature values into Numpy arrays or scipy.sparse matrices for use
+    with scikit-learn estimators.
 
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
