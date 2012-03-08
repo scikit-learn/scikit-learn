@@ -169,13 +169,13 @@ Linear models: :math:`y = X\beta + \epsilon`
     
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)# doctest: +ELLIPSIS
-    2004.5676026898218
+    2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and Y.
     >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
-    0.58507530226905724
+    0.5850753022690...
 
 
 .. _shrinkage:
@@ -243,7 +243,7 @@ diabetes dataset, rather than our synthetic data::
     >>> print [regr._set_params(alpha=alpha 
     ...             ).fit(diabetes_X_train, diabetes_y_train,
     ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas] # doctest: +ELLIPSIS
-    [0.58511106838835314, 0.58520730154446765, 0.58546775406984908, 0.58555120365039159, 0.58307170855541623, 0.570589994372801]
+    [0.5851110683883..., 0.5852073015444..., 0.5854677540698..., 0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
 
 .. note::
@@ -310,7 +310,7 @@ application of Occam's razor: `prefer simpler models`.
     ...             ).fit(diabetes_X_train, diabetes_y_train
     ...             ).score(diabetes_X_test, diabetes_y_test) 
     ...        for alpha in alphas] # doctest: +ELLIPSIS
-    [0.58511910691622471, 0.58524713649060478, 0.58571895391793494, 0.58730094854527437, 0.58876224183092607, 0.5828450029681681]
+    [0.5851191069162..., 0.5852471364906..., 0.5857189539179..., 0.5873009485452..., 0.5887622418309..., 0.582845002968...]
     
     >>> best_alpha = alphas[4]
     >>> regr.alpha = best_alpha
