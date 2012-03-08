@@ -1,4 +1,7 @@
 """
+
+.. _stock_market:
+
 =======================================
 Visualizing the stock market structure
 =======================================

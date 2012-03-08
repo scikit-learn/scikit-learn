@@ -39,12 +39,14 @@ data in *folds* that we use for training and testing::
     >>> print scores
     [0.94156928213689484, 0.96661101836393992, 0.93322203672787984]
 
+.. currentmodule:: sklearn.cross_validation
 
-This is called a `K-Fold cross-validation 
-<http://en.wikipedia.org/wiki/Cross-validation_(statistics)#K-fold_cross-validation>`_.
+This is called a :class:`KFold` cross validation 
 
 Cross-validation generators
 =============================
+
+
 
 The code above to split data in train and test sets is tedious to write.
 The `sklearn` exposes cross-validation generators to generate list
@@ -65,7 +67,7 @@ The cross-validation can then be implemented easily::
     ...          for train, test in kfold]
     [0.94156928213689484, 0.96661101836393992, 0.93322203672787984]
 
-To compute the `score` method of an estimator, the scikits.learn exposes
+To compute the `score` method of an estimator, the sklearn exposes
 a helper function::
 
     >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
@@ -76,17 +78,18 @@ of the computer.
 
    **Cross-validation generators**
 
+
 .. list-table::
 
    * 
 
-    - `KFold(n, k)`
+    - :class:`KFold` **(n, k)**
 
-    - `StratifiedKFold(y, k)`
+    - :class:`StratifiedKFold` **(y, k)**
 
-    - `LeaveOneOut(n)`
+    - :class:`LeaveOneOut` **(n)**
 
-    - `LeaveOneLabelOut(labels)`
+    - :class:`LeaveOneLabelOut` **(labels)**
 
    * 
 
@@ -100,13 +103,15 @@ of the computer.
 
 .. image:: ../../auto_examples/images/plot_cv_digits_1.png
    :target: ../../tutorial/statistical_inference/digits_cv_exercise.html
-   :align: center
-   :scale: 100
+   :align: right
+   :scale: 75
+
+.. currentmodule:: sklearn.svm
 
 .. topic:: **Exercise**
    :class: green
 
-   On the digits dataset, plot the cross-validation score of a SVC
+   On the digits dataset, plot the cross-validation score of a :class:`SVC`
    estimator with an RBF kernel as a function of parameter `C` (use a 
    logarithmic grid of points, from `1` to `10`).
 
@@ -120,7 +125,9 @@ Grid-search and cross-validated estimators
 Grid-search
 -------------
 
-The scikits.learn provides an object that, given data, computes the score
+.. currentmodule:: sklearn.grid_search
+
+The sklearn provides an object that, given data, computes the score
 during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
@@ -141,7 +148,7 @@ estimator during the construction and exposes an estimator API::
     0.94353826850690092
 
 
-By default the `GridSearchCV` uses a 3-fold cross-validation. However, if
+By default the :class:`GridSearchCV` uses a 3-fold cross-validation. However, if
 it detects that a classifier is passed, rather than a regressor, it uses
 a stratified 3-fold.
 
@@ -153,7 +160,7 @@ a stratified 3-fold.
 	array([ 0.98497496,  0.97829716,  0.97996661])
         
     Two cross-validation loops are performed in parallel: one by the
-    GridSearchCV estimator to set `gamma`, the other one by
+    :class:`GridSearchCV` estimator to set `gamma`, the other one by
     `cross_val_score` to measure the prediction performance of the
     estimator. The resulting scores are unbiased estimates of the
     prediction score on new data.
@@ -168,7 +175,7 @@ Cross-validated estimators
 
 Cross-validation to set a parameter can be done more efficiently on an
 algorithm-by-algorithm basis. This is why, for certain estimators, the
-scikits.learn exposes "CV" estimators, that set their parameter
+sklearn exposes :ref:`cross_validation` estimators, that set their parameter
 automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets

@@ -71,13 +71,13 @@ Expected results for the top 5 most represented people in the dataset::
         avg / total       0.86      0.84      0.85       282
 
 
-Open problem: stock market structure
+Open problem: Stock Market Structure
 =====================================
 
 Can we predict the variation in stock prices for Google?
 
-.. literalinclude:: ../../auto_examples/applications/plot_stock_market.py
-    :lines: 1-167
+:ref:`stock_market`
+
 
 
 

@@ -140,7 +140,9 @@ Linear model: from regression to sparsity
 Linear regression
 ------------------
 
-`Linear regression <http://en.wikipedia.org/wiki/Linear_regression>`_,
+.. currentmodule:: sklearn.linear_model
+
+:class:`LinearRegression`,
 in it's simplest form, fits a linear model to the data set by adjusting 
 a set of parameters, in order to make the sum of the squared residuals 
 of the model as small as possilbe.
@@ -186,8 +188,8 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. image:: ../../auto_examples/linear_model/images/plot_ols_variance_1.png
-   :target: ../../auto_examples/linear_model/plot_ols_variance.html
+.. image:: ../../auto_examples/linear_model/images/plot_ols_ridge_variance_1.png
+   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :scale: 70
    :align: right
 
@@ -212,11 +214,11 @@ induces high variance:
 
 A solution, in high-dimensional statistical learning, is to *shrink* the
 regression coefficients to zero: any two randomly chosen set of
-observations are likely to be uncorrelated. This is called *ridge*
+observations are likely to be uncorrelated. This is called :class:`Ridge`
 regression:
 
-.. image:: ../../auto_examples/linear_model/images/plot_ridge_variance_1.png
-   :target: ../../auto_examples/linear_model/plot_ridge_variance.html
+.. image:: ../../auto_examples/linear_model/images/plot_ols_ridge_variance_2.png
+   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :scale: 70
    :align: right
 
@@ -329,7 +331,7 @@ application of Occam's razor: `prefer simpler models`.
     solves the lasso regression using a 
     `coordinate decent <http://en.wikipedia.org/wiki/Coordinate_descent>`_ method, 
     that is efficient on large datasets. However, the `scikit-learn` also
-    provides the :class:`linear_model.LassoLars` object, using the *LARS* which is very
+    provides the :class:`LassoLars` object, using the *LARS* which is very
     efficient for problems in which the weight vector estimated is very
     sparse, that is problems with very few observations.
 
@@ -360,6 +362,8 @@ function, or **logistic** function:
               fit_intercept=True, intercept_scaling=1, penalty='l2',
               scale_C=True, tol=0.0001)
 
+This is known as :class:`LogisticRegression`.
+
 .. image:: ../../auto_examples/linear_model/images/plot_iris_logistic_1.png
    :target: ../../auto_examples/linear_model/plot_iris_logistic.html
    :scale: 83
@@ -373,11 +377,11 @@ function, or **logistic** function:
 .. topic:: Shrinkage and sparsity with logistic regression
 
    The `C` parameter controls the amount of regularization in the
-   `LogisticRegression` object, the bigger `C`, the less regularization.
+   :class:`LogisticRegression` object, the bigger `C`, the less regularization.
    `penalty="l2"` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while 
    `penalty="l1"` gives :ref:`sparsity`.
 
-.. topic:: **Excercise**
+.. topic:: **Exercise**
    :class: green
 
    Try classifying the digits dataset with nearest neihbors and a linear
@@ -394,13 +398,16 @@ Support vector machines (SVMs)
 Linear SVMs
 -------------
 
-The SVM is a discrimant model: they try to find a combination of samples to
-build a plane maximizing the margin between the two classes.
+
+:ref:`svm` belong to the discrimant model family: they try to find a combination of 
+samples to build a plane maximizing the margin between the two classes.
 Regularization is set by the `C` parameter: the small the choice of `C`,
 means a stronger regularization, which means the margin will be caluculated using many,
 to all the observations around the separation line; a larger choice of `C` 
 will thus have the margins computed on the observations that are close to 
 the separating line.
+
+.. currentmodule :: sklearn.svm
 
 .. |svm_margin_unreg| image:: ../../auto_examples/svm/images/plot_svm_margin_1.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
@@ -422,8 +429,8 @@ the separating line.
    :target: ../../auto_examples/svm/plot_svm_iris.html
    :scale: 83
 
-SVMs can be used in regression --SVR (Support Vector Regression)--, or in
-classification --SVC (Support Vector Classification). 
+SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
+classification --:class:`SVC` (Support Vector Classification). 
 
 ::
 
