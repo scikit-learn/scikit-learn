@@ -1,3 +1,5 @@
+.. _20newsgroups:
+
 The 20 newsgroups text dataset
 ==============================
 
