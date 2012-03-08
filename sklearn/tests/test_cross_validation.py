@@ -52,11 +52,22 @@ y = np.arange(10) / 2
 
 
 def test_kfold():
-    # Check that errors are raise if there is not enough samples
+    # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cross_validation.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
     assert_raises(ValueError, cross_validation.StratifiedKFold, y, 3)
 
+def test_stratified_shuffle_split():
+    y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
+    # Check that errors are raised if there is not enough samples
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
+
+    # Check if returns balanced classes
+    sss = cross_validation.StratifiedShuffleSplit(y, 6, test_size=0.33)
+
+    for train, test in sss:
+        assert_array_equal(y[train], np.unique(y))
+        assert_array_equal(np.unique(y[test]), np.unique(y))
 
 def test_cross_val_score():
     clf = MockClassifier()
