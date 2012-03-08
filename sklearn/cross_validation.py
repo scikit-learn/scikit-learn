@@ -801,9 +801,9 @@ def _validate_sss(y, test_size, train_size):
                              "than 1.0 or be an integer" % train_size)
         elif isinstance(train_size, int) and train_size >= y.size:
             raise ValueError("train_size=%d should be smaller "
-                             "than the number of samples %d" % 
+                             "than the number of samples %d" %
                              (train_size, y.size))
-        
+
     if isinstance(test_size, float):
         n_test = ceil(test_size * y.size)
     else:
@@ -821,9 +821,10 @@ def _validate_sss(y, test_size, train_size):
             n_train = float(train_size)
 
     if n_train + n_test > y.size:
-        raise ValueError('The sum of n_train and n_test = %d, should be smaller ' 
-                         'than the number of samples %d. Reduce test_size and/or '
-                         'train_size.' % (n_train + n_test, y.size))
+        raise ValueError('The sum of n_train and n_test = %d, should '
+                         'be smaller than the number of samples %d. '
+                         'Reduce test_size and/or train_size.' %
+                         (n_train + n_test, y.size))
 
     return n_train, n_test
 
@@ -833,8 +834,8 @@ class StratifiedShuffleSplit(object):
 
     Provides train/test indices to split data in train test sets.
 
-    This cross-validation object is a merge of StratifiedKFold and 
-    ShuffleSplit, which returns stratified randomized folds. The folds 
+    This cross-validation object is a merge of StratifiedKFold and
+    ShuffleSplit, which returns stratified randomized folds. The folds
     are made by preserving the percentage of samples for each class.
 
     Note: like the ShuffleSplit strategy, stratified random splits
@@ -850,14 +851,14 @@ class StratifiedShuffleSplit(object):
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.1) or int
-        If float, should be between 0.0 and 1.0 and represent the 
+        If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
         int, represents the absolute number of test samples.
 
     train_fraction : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the 
+        If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None, 
+        int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test fraction.
 
     indices: boolean, optional (default True)
@@ -874,7 +875,7 @@ class StratifiedShuffleSplit(object):
     >>> len(sss)
     2
     >>> print sss
-    StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, test_size=0.5, ...)
+    StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, ...)
     >>> for train_index, test_index in sss:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -884,7 +885,7 @@ class StratifiedShuffleSplit(object):
     TRAIN: [1 2] TEST: [0 3]
     """
 
-    def __init__(self, y, n_iterations=10, test_size=0.1, 
+    def __init__(self, y, n_iterations=10, test_size=0.1,
                  train_size=None, indices=True, random_state=None):
 
         self.y = np.asarray(y)
@@ -905,11 +906,12 @@ class StratifiedShuffleSplit(object):
         l = floor((n - self.n_test) / self.n_train)
 
         for i in xrange(self.n_iterations):
-            ik = i%k
+            ik = i % k
             permutation = rng.permutation(self.n)
             idx = np.argsort(y[permutation])
             ind_test = permutation[idx[ik::k]]
-            train_idx = idx[np.where(in1d(idx, np.setdiff1d(idx, idx[ik::k])))[0]]
+            inv_test = np.setdiff1d(idx, idx[ik::k])
+            train_idx = idx[np.where(in1d(idx, inv_test))[0]]
             ind_train = permutation[train_idx[::l]][:self.n_train]
             test_index = ind_test
             train_index = ind_train
