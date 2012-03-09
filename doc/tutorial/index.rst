@@ -11,7 +11,7 @@ Tutorials: From the bottom up with scikit-learn
 
     In this section, we introduce the `machine learning 
     <http://en.wikipedia.org/wiki/Machine_learning>`_
-    vocabulary that we use through-out `scikit-learn` and give a 
+    vocabulary that we use through-out `sklearn` and give a 
     simple learning example.
 
 

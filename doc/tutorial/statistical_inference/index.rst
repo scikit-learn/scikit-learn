@@ -16,7 +16,7 @@ Statistical-learning for sientific data processing tutorial
     <http://en.wikipedia.org/wiki/Statistical_inference>`_:
     drawing conclusions on the data at hand.
 
-    ``scikits.learn`` is a Python module integrating classic machine
+    ``sklearn`` is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
     packages (`numpy <http://www.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
