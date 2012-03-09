@@ -855,7 +855,7 @@ class StratifiedShuffleSplit(object):
         proportion of the dataset to include in the test split. If
         int, represents the absolute number of test samples.
 
-    train_fraction : float, int, or None (default is None)
+    train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
