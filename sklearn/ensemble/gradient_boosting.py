@@ -210,12 +210,14 @@ class MultinomialDeviance(LossFunction):
         return True
 
     def negative_gradient(self, y, pred, k):
+        """Compute negative gradient for the ``k``-th class. """
         return y - np.exp(pred[:, k]) / np.sum(np.exp(pred), axis=1)
 
     def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
         terminal_region = np.where(tree.terminal_region == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
+        ## FIXME store classes in ``tree``?
         self.classes = np.unique(y)
         y = y.take(terminal_region, axis=0)
 
@@ -233,7 +235,7 @@ class MultinomialDeviance(LossFunction):
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
-                  'deviance': BinomialDeviance,
+                  'bdeviance': BinomialDeviance,
                   'mdeviance': MultinomialDeviance}
 
 
@@ -339,6 +341,12 @@ class BaseGradientBoosting(BaseEnsemble):
         # store loss object for future use
         self.loss_ = loss
 
+        try:
+            K = len(self.classes)
+        except AttributeError:
+            # regression case
+            K = 1
+
         if self.init is None:
             self.init = loss.init_estimator()
 
@@ -360,7 +368,7 @@ class BaseGradientBoosting(BaseEnsemble):
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
         # perform boosting iterations
-        for i in xrange(self.n_estimators):
+        for i in range(self.n_estimators):
 
             # subsampling
             if self.subsample < 1.0:
@@ -373,7 +381,7 @@ class BaseGradientBoosting(BaseEnsemble):
                 y_pred = self.fit_stage(X, X_argsorted, y, y_pred, residual,
                                         sample_mask, 0)
             else:
-                for k in range(0, y_pred.shape[1]):
+                for k in range(K):
                     y_k = np.array(y == k, dtype=np.float64)
                     residual = loss.negative_gradient(y_k, y_pred, k=k)
                     y_pred[:, k] = self.fit_stage(X, X_argsorted, y_k,
@@ -427,8 +435,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     Parameters
     ----------
     loss : {'deviance', 'ls'}, optional (default='deviance')
-        loss function to be optimized. 'deviance' refers to binomial
-        deviance (= logistic regression) for binary classification
+        loss function to be optimized. 'deviance' refers to
+        deviance (= logistic regression) for classification
         with probabilistic outputs. 'ls' refers to least squares
         regression.
 
@@ -513,9 +521,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         """
         self.classes = np.unique(y)
         y = np.searchsorted(self.classes, y)
-        if len(self.classes) > 2 and self.loss == 'deviance':
-            raise ValueError('deviance loss does not support ' \
-                             'more than 2 classes')
+        if self.loss == 'deviance':
+            self.loss = 'mdeviance' if len(self.classes) > 2 else 'bdeviance'
+
         return super(GradientBoostingClassifier, self).fit(X, y,
                                                            monitor=monitor)
 
