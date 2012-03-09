@@ -59,6 +59,10 @@ Changelog
      API and fixed a bug that caused possible negative IDF,
      by `Olivier Grisel`_.
 
+   - Beam pruning option in :class:`_BaseHMM` module has been removed since it
+     is difficult to cythonize. If you are interested in contributing a cython
+     version, you can use the python version in the git history as a reference.
+
 
 API changes summary
 -------------------
@@ -123,6 +127,13 @@ API changes summary
    - Class :class:`feature_selection.text.TfidfVectorizer` now derives directly
      from :class:`feature_selection.text.CountVectorizer` to make grid
      search trivial.
+
+   - methods `rvs` in :class:`_BaseHMM` module are now deprecated.
+     `sample` should be used instead.
+
+   - Beam pruning option in :class:`_BaseHMM` module is removed since it is
+     difficult to be Cythonized. If you are interested, you can look in the
+     history codes by git.
 
 .. _changes_0_10:
 
