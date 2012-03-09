@@ -129,11 +129,11 @@ interpretation of the columns can be retrieved as follows::
   >>> vectorizer.get_feature_names()
   [u'and', u'document', u'first', u'is', u'one', u'second', u'the', u'third', u'this']
 
-  >>> X.toarray()
+  >>> X.toarray()           # doctest: +ELLIPSIS
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
          [0, 1, 0, 1, 0, 2, 1, 0, 1],
          [1, 0, 0, 0, 1, 0, 1, 1, 0],
-         [0, 1, 1, 1, 0, 0, 1, 0, 1]])
+         [0, 1, 1, 1, 0, 0, 1, 0, 1]]...)
 
 The converse mapping from feature name to column index is stored in the
 ``vocabulary_`` attribute of the vectorizer::
@@ -145,7 +145,8 @@ Hence words that were not seen in the training corpus will be completely
 ignored in future calls to the transform method::
 
   >>> vectorizer.transform(['Something completely new.']).toarray()
-  array([[0, 0, 0, 0, 0, 0, 0, 0, 0]])
+  ...                           # doctest: +ELLIPSIS
+  array([[0, 0, 0, 0, 0, 0, 0, 0, 0]]...)
 
 Note that in the previous corpus, the first and the last documents have
 exactly the same words hence are encoded in equal vectors. In particular
@@ -164,18 +165,19 @@ can now resolve ambiguities encoded in local positioning patterns::
 
   >>> X_2 = bigram_vectorizer.fit_transform(corpus).toarray()
   >>> X_2
+  ...                           # doctest: +ELLIPSIS
   array([[0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
          [0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0],
          [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0],
-         [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1]])
+         [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1]]...)
 
 
 In particular the interogative form "Is this" is only present in the
 last document::
 
   >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
-  >>> X_2[:, feature_index]
-  array([0, 0, 0, 1])
+  >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
+  array([0, 0, 0, 1]...)
 
 
 .. _tfidf:
