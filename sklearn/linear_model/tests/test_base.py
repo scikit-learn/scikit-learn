@@ -73,7 +73,7 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     "Test multiple-outcome linear regressions with sparse data"
     random_state = check_random_state(random_state)
     X, y = make_sparse_uncorrelated(random_state=random_state)
-
+    X = sparse.coo_matrix(X)
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
