@@ -140,7 +140,7 @@ class LinearRegression(LinearModel):
         self.normalize = normalize
         self.copy_X = copy_X
 
-    def fit(self, X, y):
+    def fit(self, X, y, n_jobs=1):
         """
         Fit linear model.
 
@@ -150,6 +150,10 @@ class LinearRegression(LinearModel):
             Training data
         y : numpy array of shape [n_samples, n_responses]
             Target values
+        n_jobs : The number of jobs to use for the computation.
+            If -1 all CPUs are used. This will only provide speedup for
+            n_response > 1 and sufficient large problems
+
         Returns
         -------
         self : returns an instance of self.
@@ -168,7 +172,7 @@ class LinearRegression(LinearModel):
                     self.residues_ = out[3]
                 else:
                     # sparse_lstsq cannot handle y with shape (M, K)
-                    outs = Parallel(n_jobs=-1)(delayed(sp_linalg.lsqr)
+                    outs = Parallel(n_jobs=n_jobs)(delayed(sp_linalg.lsqr)
                             (X, y[:, j].ravel()) for j in range(y.shape[1]))
                     self.coef_ = np.vstack(out[0] for out in outs)
                     self.residues_ = np.vstack(out[3] for out in outs)
