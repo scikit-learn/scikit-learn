@@ -47,8 +47,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     >>> X
     array([[ 1.,  2.,  0.],
            [ 3.,  0.,  1.]])
-    >>> v.inverse_transform(X)
-    [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
+    >>> v.inverse_transform(X) == \
+        [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
+    True
     >>> v.transform({'foo': 4, 'quux': 3})
     array([[ 4.,  0.,  0.]])
     """
@@ -103,12 +104,31 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         self.fit(X)
         return self.transform(X)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X, dict_type=dict):
+        """Transform array or sparse matrix X back to feature mappings.
+
+        X must have been produced by this DictVectorizer's transform or
+        fit_transform method; it may only have passed through transformers
+        that preserve the number of features and their order.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Sample matrix.
+        dict_type : callable, optional
+            Constructor for feature mappings. Must conform to the
+            collections.Mapping API.
+
+        Returns
+        -------
+        D : list of dict_type objects, length = n_samples
+            Feature mappings for the samples in X.
+        """
         if not sp.issparse(X):
             X = np.atleast_2d(X)
 
         names = self.get_feature_names()
-        Xd = [{} for _ in xrange(X.shape[0])]
+        Xd = [dict_type() for _ in xrange(X.shape[0])]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
@@ -130,7 +150,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : Mapping or iterable over Mappings
+        X : Mapping or iterable over Mappings, length = n_samples
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (must be convertible to dtype).
         y : (ignored)
