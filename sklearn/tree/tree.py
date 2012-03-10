@@ -337,12 +337,13 @@ def _build_tree(X, y, is_classification, criterion,
 
             # left child recursion
             recursive_partition(X, X_argsorted, y,
-                                split & sample_mask,
+                                np.logical_and(split, sample_mask),
                                 depth + 1, node_id, True)
 
             # right child recursion
             recursive_partition(X, X_argsorted, y,
-                                ~split & sample_mask,
+                                np.logical_and(np.logical_not(split),
+                                                sample_mask),
                                 depth + 1, node_id, False)
 
     # Launch the construction
