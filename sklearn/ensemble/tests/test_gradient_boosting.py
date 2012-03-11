@@ -26,6 +26,13 @@ perm = np.random.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+# also load the iris dataset
+# and randomly permute it
+iris = datasets.load_iris()
+perm = np.random.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
+
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
@@ -57,6 +64,9 @@ def test_parameter_checks():
     assert_raises(ValueError, GradientBoostingClassifier,
                   min_samples_split=-1.0)
 
+    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=0)
+    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=-1.0)
+
     assert_raises(ValueError, GradientBoostingClassifier, subsample=0.0)
     assert_raises(ValueError, GradientBoostingClassifier, subsample=1.1)
     assert_raises(ValueError, GradientBoostingClassifier, subsample=-0.1)
@@ -70,10 +80,23 @@ def test_parameter_checks():
     assert_raises(ValueError,
                   lambda: GradientBoostingClassifier().feature_importances_)
 
-    # test value error on multi-class
+    # binomial deviance requires ``n_classes == 2``.
     assert_raises(ValueError,
-                  lambda X, y: GradientBoostingClassifier().fit(X, y),
+                  lambda X, y: GradientBoostingClassifier(
+                      loss='bdeviance').fit(X, y),
                   X, [0, 0, 1, 1, 2, 2])
+
+    # multinomial deviance requires ``n_classes > 2``.
+    assert_raises(ValueError,
+                  lambda X, y: GradientBoostingClassifier(
+                      loss='mdeviance').fit(X, y),
+                  X, [0, 0, 1, 1, 1, 0])
+
+    # deviance requires ``n_classes >= 2``.
+    assert_raises(ValueError,
+                  lambda X, y: GradientBoostingClassifier(
+                      loss='deviance').fit(X, y),
+                  X, [0, 0, 0, 0])
 
 
 def test_classification_synthetic():
@@ -114,6 +137,17 @@ def test_boston():
         y_pred = clf.predict(boston.data)
         mse = np.mean((y_pred - boston.target) ** 2.0)
         assert mse < 6.0, "Failed with loss %s and mse = %.4f" % (loss, mse)
+
+
+def test_iris():
+    """Check consistency on dataset iris."""
+    for subsample in (1.0, 0.5):
+        clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                         random_state=1, subsample=subsample)
+        clf.fit(iris.data, iris.target)
+        score = clf.score(iris.data, iris.target)
+        assert score > 0.9, "Failed with subsample %.1f " \
+               "and score = %f" % (subsample, score)
 
 
 def test_regression_synthetic():
@@ -208,7 +242,7 @@ def test_serialization():
 
     try:
         import cPickle as pickle
-    except ImportError as e:
+    except ImportError:
         import pickle
 
     serialized_clf = pickle.dumps(clf, protocol=pickle.HIGHEST_PROTOCOL)
@@ -216,3 +250,15 @@ def test_serialization():
     clf = pickle.loads(serialized_clf)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
+
+
+def test_monitor():
+    """Check fit monitor."""
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    def monitor(model, i):
+        if i >= 9:
+            return True
+    clf.fit(X, y, monitor=monitor)
+    assert len(clf.estimators_) == 10, "Fitting must abort in 10-th iteration" \
+           " but %d stages fitted." % len(clf.estimators_)
