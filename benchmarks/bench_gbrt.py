@@ -364,7 +364,7 @@ gbrt_results = {
     "Friedman#1": bench_friedman1(),
     "Friedman#2": bench_friedman2(),
     "Friedman#3": bench_friedman3(),
-    "YahooLTRC": bench_yahoo_ltrc(),
+#    "YahooLTRC": bench_yahoo_ltrc(),
     }
 
 from pprint import pprint

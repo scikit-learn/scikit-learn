@@ -267,7 +267,7 @@ def bench_friedman3(random_state=None):
     mse = np.mean((pred - y_test) ** 2.0)
     return mse, train_time, test_time
 
-
+## FIXME this will kill my laptop due to memory consumption
 @repeat(1)
 def bench_yahoo_ltrc(random_state=None):
     data = joblib.load('/home/pprett/corpora/yahoo-ltrc-2010/data/set1.pkl')
@@ -303,7 +303,7 @@ gbm_results = {
     "Friedman#1": bench_friedman1(),
     "Friedman#2": bench_friedman2(),
     "Friedman#3": bench_friedman3(),
-    "YahooLTRC": bench_yahoo_ltrc(),
+
     }
 
 from pprint import pprint
