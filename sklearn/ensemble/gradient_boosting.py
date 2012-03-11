@@ -8,8 +8,9 @@
 #      * Routine to find optimal n_estimators
 #      * Allow sparse matrices as input
 #
-
 from __future__ import division
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from .base import BaseEnsemble
@@ -38,7 +39,7 @@ class MedianPredictor(object):
         self.median = np.median(y)
 
     def predict(self, X):
-        y = np.empty((X.shape[0],), dtype=np.float64)
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.median)
         return y
 
@@ -52,7 +53,7 @@ class MeanPredictor(object):
         self.mean = np.mean(y)
 
     def predict(self, X):
-        y = np.empty((X.shape[0],), dtype=np.float64)
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
         return y
 
@@ -66,7 +67,7 @@ class ClassPriorPredictor(object):
         self.prior = np.log(np.sum(y) / np.sum(1.0 - y))
 
     def predict(self, X):
-        y = np.empty((X.shape[0],), dtype=np.float64)
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
         return y
 
@@ -76,12 +77,9 @@ class MultiClassPriorPredictor(object):
     of the training targets.
     """
 
-    def __init__(self, classes):
-        self.classes = classes
-        self.n_classes = len(classes)
-
     def fit(self, X, y):
         self.classes = np.unique(y)
+        self.n_classes = len(self.classes)
         self.priors = np.empty((self.n_classes,), dtype=np.float64)
         for k in range(0, self.n_classes):
             self.priors[k] = y[y == self.classes[k]].shape[0] \
@@ -101,6 +99,7 @@ class LossFunction(object):
     K : int
         The number of classes; 1 for regression.
     """
+    __metaclass__ = ABCMeta
 
     def __init__(self, n_classes):
         self.K = n_classes
@@ -108,12 +107,14 @@ class LossFunction(object):
     def init_estimator(self, X, y):
         raise NotImplementedError()
 
+    @abstractmethod
     def __call__(self, y, pred):
-        raise NotImplementedError()
+        """Compute the loss of prediction ``pred`` and ``y``. """
 
     def is_multi_class(self):
         return False
 
+    @abstractmethod
     def negative_gradient(self, y, y_pred, **kargs):
         """Compute the negative gradient.
 
@@ -124,10 +125,9 @@ class LossFunction(object):
         y_pred : np.ndarray, shape=(n,):
             The predictions.
         """
-        raise NotImplementedError()
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                learn_rate=1.0):
+                                learn_rate=1.0, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -146,24 +146,27 @@ class LossFunction(object):
             The predictions.
         """
         for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:
-            self._update_terminal_region(tree, leaf, X, y, residual, y_pred)
+            self._update_terminal_region(tree, leaf, X, y, residual,
+                                         y_pred[:, k])
 
         # update predictions
         mask = tree.terminal_region != -1
-        y_pred[mask] += learn_rate * \
+        y_pred[mask, k] += learn_rate * \
                         tree.value[:, 0].take(tree.terminal_region[mask],
                                               axis=0)
 
         # save memory
         del tree.terminal_region
 
+    @abstractmethod
     def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """Template method for updating terminal regions (=leafs). """
-        pass
 
 
 class RegressionLossFunction(LossFunction):
     """Base class for regression loss functions. """
+    __metaclass__ = ABCMeta
+
     def __init__(self, n_classes):
         if n_classes != 1:
             raise ValueError("``n_classes`` must be 1 for regression")
@@ -178,10 +181,14 @@ class LeastSquaresError(RegressionLossFunction):
         return MeanPredictor()
 
     def __call__(self, y, pred):
-        return np.mean((y - pred) ** 2.0)
+        return np.mean((y - pred.ravel()) ** 2.0)
 
     def negative_gradient(self, y, pred, **kargs):
-        return y - pred
+        return y - pred.ravel()
+
+    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
+        """No need to update the terminal regions. """
+        pass
 
 
 class LeastAbsoluteError(RegressionLossFunction):
@@ -191,10 +198,10 @@ class LeastAbsoluteError(RegressionLossFunction):
         return MedianPredictor()
 
     def __call__(self, y, pred):
-        return np.abs(y - pred).mean()
+        return np.abs(y - pred.ravel()).mean()
 
     def negative_gradient(self, y, pred, **kargs):
-        return np.sign(y - pred)
+        return np.sign(y - pred.ravel())
 
     def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """LAD updates terminal regions to median estimates. """
@@ -223,11 +230,12 @@ class BinomialDeviance(LossFunction):
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
+        pred = pred.ravel()
         return -2.0 * np.sum(y * pred -
                              np.logaddexp(0.0, pred)) / y.shape[0]
 
     def negative_gradient(self, y, pred, **kargs):
-        return y - 1.0 / (1.0 + np.exp(-pred))
+        return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
 
     def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
         """Make a single Newton-Raphson step. """
@@ -247,16 +255,17 @@ class BinomialDeviance(LossFunction):
 class MultinomialDeviance(LossFunction):
 
     def __init__(self, n_classes):
-        if n_classes != 2:
+        if n_classes < 3:
             raise ValueError("%s requires more than 2 classes."
                              % self.__class__.__name__)
         super(MultinomialDeviance, self).__init__(n_classes)
 
     def init_estimator(self):
-        return MultiClassPriorPredictor(self.classes)
+        return MultiClassPriorPredictor()
 
     def __call__(self, y, pred):
-        raise NotImplementedError()
+        return 0.0
+        ##raise NotImplementedError()
 
     def is_multi_class(self):
         return True
@@ -352,14 +361,9 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # update tree leafs
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
-                                               self.learn_rate)
+                                               self.learn_rate, k=k)
             # add tree to ensemble
             self.estimators_[-1].append(tree)
-
-            # update out-of-bag predictions and deviance
-            if self.subsample < 1.0:
-                y_pred[~sample_mask] = self._predict(
-                    X[~sample_mask], old_pred=y_pred[~sample_mask], k=k)
 
         return y_pred
 
@@ -428,10 +432,17 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # fit next stage of trees
             y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
+            assert y_pred.shape == (y.shape[0], loss.K)
 
-            # track training and oob loss
+            # track training loss
             self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
-            self.oob_deviance[i] = loss(y[~sample_mask], y_pred[~sample_mask])
+
+            # update out-of-bag predictions and track oob loss
+            if self.subsample < 1.0:
+                y_pred[~sample_mask] = self._predict(
+                    X[~sample_mask], old_pred=y_pred[~sample_mask])
+                self.oob_deviance[i] = loss(y[~sample_mask],
+                                            y_pred[~sample_mask])
 
             if monitor:
                 stop = monitor(self, i)
@@ -440,19 +451,27 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return self
 
-    def _predict(self, X, old_pred=None, k=0):
+    def _predict(self, X, old_pred=None):
         """Predict targets with current model. Re-uses predictions
         from previous iteration if available.
+
+        Returns
+        -------
+        y_pred : np.ndarray, shape=(n, K)
+            The predictions of the current model, where ``n == X.shape[0]``
+            and ``K == self._loss.K``.
         """
         if old_pred is not None:
-            return old_pred + self.learn_rate * \
-                   self.estimators_[-1][k].predict(X).ravel()
+            y = old_pred
+            stage = self.estimators_[-1]
+            for k, tree in enumerate(stage):
+                y[:, k] += self.learn_rate * tree.predict(X).ravel()
         else:
             y = self.init.predict(X)
-            y = y[:, k] if self.loss_.is_multi_class() else y
-            for tree in self.estimators_:
-                y += self.learn_rate * tree[k].predict(X).ravel()
-            return y
+            for stage in self.estimators_:
+                for k, tree in enumerate(stage):
+                    y[:, k] += self.learn_rate * tree.predict(X).ravel()
+        return y
 
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
@@ -588,15 +607,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
+
+        P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
         f = self._predict(X)
-        P = np.ones((X.shape[0], len(self.classes)), dtype=np.float64)
-        if len(self.classes) == 2 and not self.loss_.is_multi_class():
-            P[:, 1] = 1.0 / (1.0 + np.exp(-f))
+        assert f.shape == (X.shape[0], self.loss_.K)
+        if not self.loss_.is_multi_class():
+            P[:, 1] = 1.0 / (1.0 + np.exp(-f.ravel()))
             P[:, 0] -= P[:, 1]
         else:
-            for k in range(0, len(self.classes)):
-                P[:, k] = self._predict(X, k=k)
-            P = np.exp(P) / np.sum(np.exp(P), axis=1)[:, np.newaxis]
+            P = np.exp(f) / np.sum(np.exp(f), axis=1)[:, np.newaxis]
         return P
 
 
@@ -703,5 +722,5 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         if len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
-        y = self._predict(X)
+        y = self._predict(X).ravel()
         return y
