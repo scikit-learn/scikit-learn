@@ -7,7 +7,6 @@
 #      * Partial-dependency plots
 #      * Routine to find optimal n_estimators
 #      * Allow sparse matrices as input
-#      * add model serialization
 #
 
 from __future__ import division
@@ -99,12 +98,12 @@ class LossFunction(object):
 
     Attributes
     ----------
-    n_classes : int
+    K : int
         The number of classes; 1 for regression.
     """
 
     def __init__(self, n_classes):
-        self.n_classes = n_classes
+        self.K = n_classes
 
     def init_estimator(self, X, y):
         raise NotImplementedError()
@@ -205,13 +204,18 @@ class LeastAbsoluteError(RegressionLossFunction):
 
 
 class BinomialDeviance(LossFunction):
-    """Binomial deviance loss function for binary classification. """
+    """Binomial deviance loss function for binary classification.
+
+    Binary classification is a special case; here, we only need to
+    fit one tree instead of ``n_classes`` trees.
+    """
 
     def __init__(self, n_classes):
         if n_classes != 2:
             raise ValueError("%s requires 2 classes." %
                              self.__class__.__name__)
-        super(BinomialDeviance, self).__init__(n_classes)
+        # we only need to fit one tree for binary clf.
+        super(BinomialDeviance, self).__init__(1)
 
     def init_estimator(self):
         return ClassPriorPredictor()
@@ -269,7 +273,7 @@ class MultinomialDeviance(LossFunction):
         y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
-        numerator *= (self.n_classes - 1) / self.n_classes
+        numerator *= (self.K - 1) / self.K
 
         denominator = np.sum((y - residual) * (1.0 - y + residual))
         #denominator = np.sum(abs(residual) * (1 - abs(residual)))
@@ -334,7 +338,7 @@ class BaseGradientBoosting(BaseEnsemble):
         loss = self.loss_
         self.estimators_.append([])
         original_y = y
-        for k in range(self.n_classes):
+        for k in range(loss.K):
             if loss.is_multi_class():
                 y = np.array(original_y == k, dtype=np.float64)
             residual = loss.negative_gradient(y, y_pred, k=k)
