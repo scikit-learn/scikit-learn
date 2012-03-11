@@ -150,10 +150,13 @@ class LossFunction(object):
                                          y_pred[:, k])
 
         # update predictions
-        mask = tree.terminal_region != -1
-        y_pred[mask, k] += learn_rate * \
-                        tree.value[:, 0].take(tree.terminal_region[mask],
-                                              axis=0)
+        ## mask = tree.terminal_region != -1
+        ## y_pred[mask, k] += learn_rate * \
+        ##                 tree.value[:, 0].take(tree.terminal_region[mask],
+        ##                                       axis=0)
+
+        # ``tree.predict`` is faster than taking `tree.terminal_region``
+        y_pred[:, k] += learn_rate * tree.predict(X).ravel()
 
         # save memory
         del tree.terminal_region
@@ -186,8 +189,19 @@ class LeastSquaresError(RegressionLossFunction):
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
 
+    def update_terminal_regions(self, tree, X, y, residual, y_pred,
+                                learn_rate=1.0, k=0):
+        """Least squares does not need to update terminal regions.
+
+        But it has to update the predictions.
+        """
+        # ``tree.predict`` is faster than taking `tree.terminal_region``
+        y_pred[:, k] += learn_rate * tree.predict(X).ravel()
+
+        # save memory
+        del tree.terminal_region
+
     def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
-        """No need to update the terminal regions. """
         pass
 
 
@@ -265,6 +279,7 @@ class MultinomialDeviance(LossFunction):
 
     def __call__(self, y, pred):
         return 0.0
+        ## FIXME
         ##raise NotImplementedError()
 
     def is_multi_class(self):
@@ -432,17 +447,16 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # fit next stage of trees
             y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
-            assert y_pred.shape == (y.shape[0], loss.K)
 
             # track training loss
-            self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
+            #self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
 
             # update out-of-bag predictions and track oob loss
             if self.subsample < 1.0:
                 y_pred[~sample_mask] = self._predict(
                     X[~sample_mask], old_pred=y_pred[~sample_mask])
-                self.oob_deviance[i] = loss(y[~sample_mask],
-                                            y_pred[~sample_mask])
+                #self.oob_deviance[i] = loss(y[~sample_mask],
+                #                            y_pred[~sample_mask])
 
             if monitor:
                 stop = monitor(self, i)
@@ -610,7 +624,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
         f = self._predict(X)
-        assert f.shape == (X.shape[0], self.loss_.K)
+
         if not self.loss_.is_multi_class():
             P[:, 1] = 1.0 / (1.0 + np.exp(-f.ravel()))
             P[:, 0] -= P[:, 1]
