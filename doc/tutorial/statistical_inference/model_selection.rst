@@ -1,3 +1,5 @@
+.. _model_selection_tut:
+
 ============================================================
 Model selection: choosing estimators and their parameters
 ============================================================
@@ -42,6 +44,8 @@ data in *folds* that we use for training and testing::
 .. currentmodule:: sklearn.cross_validation
 
 This is called a :class:`KFold` cross validation 
+
+.. _cv_generators_tut:
 
 Cross-validation generators
 =============================
@@ -169,6 +173,8 @@ a stratified 3-fold.
 
     You cannot nest objects with parallel computing (n_jobs different
     than 1).
+
+.. _cv_estimators_tut:
 
 Cross-validated estimators
 ----------------------------

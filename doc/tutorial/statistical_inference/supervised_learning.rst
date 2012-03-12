@@ -1,3 +1,5 @@
+.. _supervised_learning_tut:
+
 =======================================================================================
 Supervised learning: predicting an output variable from high-dimensional observations
 =======================================================================================
@@ -335,6 +337,8 @@ application of Occam's razor: `prefer simpler models`.
     efficient for problems in which the weight vector estimated is very
     sparse, that is problems with very few observations.
 
+.. _clf_tut:
+
 Classification
 ---------------
 
@@ -447,6 +451,8 @@ classification --:class:`SVC` (Support Vector Classification).
    For many estimators, including the SVMs, having datasets with unit
    standard deviation for each feature is important to get good
    prediction.
+
+.. _using_kernels_tut:
 
 Using kernels
 --------------

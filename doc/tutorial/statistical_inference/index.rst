@@ -1,5 +1,7 @@
+.. _stat_learn_tut_index:
+
 ==========================================================================
-Statistical-learning for sientific data processing tutorial
+Statistical-learning for scientific data processing tutorial
 ==========================================================================
 
 .. topic:: Statistical learning 
@@ -39,7 +41,6 @@ Statistical-learning for sientific data processing tutorial
 
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
    settings

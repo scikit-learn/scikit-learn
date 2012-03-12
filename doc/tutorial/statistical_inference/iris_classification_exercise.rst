@@ -1,4 +1,3 @@
-
 Exercise: classification of iris
 ====================================
 
