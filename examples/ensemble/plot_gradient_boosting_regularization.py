@@ -6,6 +6,11 @@ Gradient Boosting regularization
 Illustration of the effect of different regularization strategies
 for Gradient Boosting. The example is taken from Hastie et al 2009.
 
+The loss function used is binomial deviance. In combination with
+shrinkage, stochastic gradient boosting (Sample 0.5) can produce
+more accurate models.
+Subsampling without shrinkage usually does poorly.
+
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
 """
@@ -19,6 +24,7 @@ import numpy as np
 import pylab as pl
 from sklearn import ensemble
 from sklearn import datasets
+
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X = X.astype(np.float32)
@@ -47,16 +53,15 @@ for label, color, setting in [('No shrinkage', 'orange',
     # compute test set deviance
     y_pred = clf.init.predict(X_test)
     test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
-    for i, tree in enumerate(clf.estimators_):
-        y_pred += clf.learn_rate * tree.predict(X_test).ravel()
-        test_deviance[i] = np.sum(np.logaddexp(0.0, -2.0 * y_test * y_pred)) \
-                           / y_test.shape[0]
+    for i, stage in enumerate(clf.estimators_):
+        y_pred = clf._predict(X_test, old_pred=y_pred, stage_index=i)
+        test_deviance[i] = clf.loss_(y_test, y_pred)
 
     pl.plot(np.arange(test_deviance.shape[0]) + 1, test_deviance, '-',
             color=color, label=label)
 
 pl.title('Deviance')
-pl.legend(loc='lower right')
+pl.legend(loc='upper left')
 pl.xlabel('Boosting Iterations')
 pl.ylabel('Test Set Deviance')
 

@@ -6,7 +6,7 @@ Gradient Boosting regression
 Demonstrate Gradient Boosting on the boston housing dataset.
 
 This example fits a Gradient Boosting model with least squares loss and
-100 regression trees of depth 4.
+500 regression trees of depth 4.
 """
 print __doc__
 
@@ -46,11 +46,11 @@ print("MSE: %.4f" % mse)
 # compute test set deviance
 y_pred = clf.init.predict(X_test)
 test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
-for i, tree in enumerate(clf.estimators_):
-    y_pred += clf.learn_rate * tree.predict(X_test).ravel()
+for i, stage in enumerate(clf.estimators_):
+    y_pred = clf._predict(X_test, old_pred=y_pred, stage_index=i)
     test_deviance[i] = clf.loss_(y_test, y_pred)
 
-pl.figure()  #figsize=(12, 6))
+pl.figure(figsize=(12, 6))
 pl.subplot(1, 2, 1)
 pl.title('Deviance')
 pl.plot(np.arange(params['n_estimators']) + 1, clf.train_deviance, 'b-',

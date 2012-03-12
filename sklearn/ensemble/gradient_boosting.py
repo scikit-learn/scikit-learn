@@ -6,7 +6,6 @@
 #      * Huber loss for regression
 #      * Partial-dependency plots
 #      * Routine to find optimal n_estimators
-#      * Allow sparse matrices as input
 #
 from __future__ import division
 from abc import ABCMeta, abstractmethod
@@ -246,8 +245,7 @@ class BinomialDeviance(LossFunction):
         """Compute the deviance (= negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
-        return -2.0 * np.sum(y * pred -
-                             np.logaddexp(0.0, pred)) / y.shape[0]
+        return np.sum(np.logaddexp(0.0, -2.0 * y * pred)) / y.shape[0]
 
     def negative_gradient(self, y, pred, **kargs):
         return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
@@ -455,7 +453,8 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # update out-of-bag predictions and track loss
             if self.subsample < 1.0:
-                self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
+                self.train_deviance[i] = loss(y[sample_mask],
+                                              y_pred[sample_mask])
 
                 y_pred_oob = y_pred[~sample_mask]
                 y_pred[~sample_mask] = self._predict(
@@ -473,7 +472,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return self
 
-    def _predict(self, X, old_pred=None):
+    def _predict(self, X, old_pred=None, stage_index=-1):
         """Predict targets with current model. Re-uses predictions
         from previous iteration if available.
 
@@ -486,16 +485,18 @@ class BaseGradientBoosting(BaseEnsemble):
         learn_rate = self.learn_rate
         if old_pred is not None:
             y = old_pred
-            stage = self.estimators_[-1]
+            stage = self.estimators_[stage_index]
             for k, tree in enumerate(stage):
-                _tree_predict(X, tree.children, tree.feature, tree.threshold,
-                              tree.value, learn_rate, k, y)
+                _tree_predict(X, tree.children, tree.feature,
+                              tree.threshold, tree.value, learn_rate,
+                              k, y)
         else:
             y = self.init.predict(X)
             for stage in self.estimators_:
                 for k, tree in enumerate(stage):
-                    _tree_predict(X, tree.children, tree.feature, tree.threshold,
-                              tree.value, learn_rate, k, y)
+                    _tree_predict(X, tree.children, tree.feature,
+                                  tree.threshold, tree.value, learn_rate,
+                                  k, y)
 
         return y
 
