@@ -780,7 +780,7 @@ class ShuffleSplit(object):
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
-    y = np.unique(y, return_inverse=True)[1]
+    y = unique(y, return_inverse=True)[1]
     if np.min(np.bincount(y)) < 2:
         raise ValueError("The least populated class in y has only 1"
                          " member, which is too few. The minimum"
