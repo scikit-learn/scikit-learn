@@ -219,7 +219,7 @@ learners::
 The number of weak learners (i.e. regression trees) is controlled by the
 parameter ``n_estimators``; The maximum depth of each tree is controlled via
 ``max_depth``. ``Learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
-that controls overfitting via shrinkage.
+that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
 Regression
 ==========
@@ -242,6 +242,20 @@ outliers. See [F2001]_ for detailed information.
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
     >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
     6.90...
+
+The figure below shows the results of applying :class:`GradientBoostingRegressor`
+with least squares loss and 500 base learners to the boston house-price dataset
+(see :func:`sklearn.datasets.load_boston`).
+The plot on the left shows the train and test error at each iteration.
+Plots like these are often used for early stopping. The plot on the right
+shows the feature importances which can be optained via the ``feature_importance``
+property.
+
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
+   :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
+   :align: center
+   :scale: 75
+
 
 Mathematical formulation
 ========================
@@ -327,10 +341,19 @@ the parameter ``loss``:
       log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       probability of the positive class.
+    * Multinomial deviance (``'deviance'``): The negative multinomial
+      log-likelihood loss function for ``K``-class classification (provides
+      probability estimates).  The initial model is given by the
+      prior probability of each class. At each iteration ``K`` regression
+      trees have to be constructed.
 
+Regularization
+==============
 
-Regularization via Shrinkage
-============================
+.. _gradient_boosting_shrinkage:
+
+Shrinkage
+---------
 
 [F2001]_ proposed a simple regularization strategy that scales
 the contribution of each weak learner by a factor :math:`\nu`:
@@ -353,10 +376,32 @@ recommend to set the learning rate to a small constant
 stopping. For a more detailed discussion of the interaction between
 ``learn_rate`` and ``n_estimators`` see [R2007]_.
 
+Subsampling
+-----------
+
+[F1999]_ propsed stochastic gradient boosting, which combines gradient
+boosting with bootstrap averaging (bagging). At each iteration
+the base classifier is trained on a fraction ``subsample`` of
+the available training data.
+The subsample is drawn without replacement.
+A typical value of ``subsample`` is 0.5.
+
+The figure below illustrates the effect of shrinkage and subsampling
+on the goodness-of-fit of the model. We can clearly see that shrinkage
+outperforms no-shrinkage. Subsampling with shrinkage can further increase
+the accuracy of the model. Subsampling without shrinkage, on the other hand,
+does poorly.
+
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_1.png
+   :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
+   :align: center
+   :scale: 75
+
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
 
 .. topic:: References
 

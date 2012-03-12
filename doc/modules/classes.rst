@@ -27,7 +27,7 @@ uses.
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-    
+
    cluster.AffinityPropagation
    cluster.DBSCAN
    cluster.KMeans
@@ -239,6 +239,8 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
+   ensemble.GradientBoostingClassifier
+   ensemble.GradientBoostingRegressor
 
 .. autosummary::
    :toctree: generated/
