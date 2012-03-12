@@ -6,6 +6,7 @@ from scipy.sparse import coo_matrix
 from nose.tools import assert_true
 from nose.tools import assert_raises
 from nose.tools import assert_equal
+from nose.tools import assert_less_equal
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
@@ -52,10 +53,37 @@ y = np.arange(10) / 2
 
 
 def test_kfold():
-    # Check that errors are raise if there is not enough samples
+    # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cross_validation.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
     assert_raises(ValueError, cross_validation.StratifiedKFold, y, 3)
+
+
+def test_stratified_shuffle_split():
+    y = np.asarray([0, 1, 1, 1, 2, 2, 2])
+    # Check that error is raised if there is a class with only one sample
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.2)
+
+    y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
+    # Check that errors are raised if there is not enough samples
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 8, 0.6)
+    assert_raises(ValueError, cross_validation.StratifiedShuffleSplit, y, 3, 0.6, 8)
+
+    # Check if returns better balanced classes than ShuffleSplit
+    sss = cross_validation.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
+    ss = cross_validation.ShuffleSplit(y.size, 6, 0.33, random_state=0)
+
+    train_std = []
+    test_std = []
+
+    for train, test in sss:
+        train_std.append(np.std(np.bincount(y[train])))
+        test_std.append(np.std(np.bincount(y[test])))
+
+    for i, [train, test] in enumerate(ss):
+        assert_less_equal(train_std[i], np.std(np.bincount(y[train])))
+        assert_less_equal(test_std[i], np.std(np.bincount(y[test])))
 
 
 def test_cross_val_score():
