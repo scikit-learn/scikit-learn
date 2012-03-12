@@ -15,7 +15,7 @@ from nose.tools import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV
+    LassoCV, ElasticNet, ElasticNetCV, GroupLasso
 from sklearn.linear_model import LassoLarsCV
 
 
@@ -267,6 +267,44 @@ def test_enet_positive_constraint():
     enet = ElasticNet(alpha=0.1, max_iter=1000, precompute=True, positive=True)
     enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
+
+
+def group_lasso_check_kkt(A, b, x, penalty, groups):
+    """Auxiliary function.
+    Check KKT conditions for the group lasso
+
+    Returns True if conditions are satisfied, False otherwise
+    """
+    from scipy import linalg
+    group_labels = [groups == i for i in np.unique(groups)]
+    penalty = penalty * A.shape[0]
+    z = np.dot(A.T, np.dot(A, x) - b)
+    safety_net = .5 # sort of tolerance
+    for g in group_labels:
+        if linalg.norm(x[g]) == 0:
+            if not linalg.norm(z[g]) < penalty + safety_net:
+                return False
+        else:
+            w = - penalty * x[g] / linalg.norm(x[g], 2)
+            if not np.allclose(z[g], w, safety_net):
+                return False
+            return True
+
+
+def test_group_lasso():
+    from sklearn import datasets
+    diabetes = datasets.load_diabetes()
+    alpha = 1.
+    # sanity check vs Lsso
+    clf2 = Lasso(alpha=alpha).fit(diabetes.data, diabetes.target)
+    clf = GroupLasso(alpha=alpha, groups=np.arange(diabetes.data.shape[1]))
+    clf.fit(diabetes.data, diabetes.target)
+    assert_almost_equal(clf2.predict(diabetes.data), clf.predict(diabetes.data), decimal=2)
+    for i in [1, 2, 4]: # check for different group sizes
+        groups = np.arange(diabetes.data.shape[1]) // i
+        clf = GroupLasso(alpha=alpha, groups=groups)
+        coefs = clf.fit(diabetes.data, diabetes.target).coef_
+        assert group_lasso_check_kkt(diabetes.data, diabetes.target, coefs, alpha, groups)
 
 if __name__ == '__main__':
     import nose

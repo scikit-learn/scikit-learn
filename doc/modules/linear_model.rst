@@ -286,6 +286,28 @@ and `rho` by cross-validation.
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
+.. _group_lasso:
+
+Group Lasso
+===========
+:class:`GroupLasso` is a linear model trained with L1/L2 prior as
+regularizer.
+
+Our vector of coefficient is partitioned into mutually-exclusive groups
+:math:`w_1, w_2, ...`. These groups are specified in the constructor of
+the object by an array of length the number of features in the data.
+This array describes to which group does the i-th features belong to.
+For example, the array [1, 2, 1] describes a vector w with two groups:
+the first and third feature belong to the first group while the second
+feature belongs to the second group.
+
+The objective function to minimize is in this case
+
+.. math::
+
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \sum ||w_j||_2}
+
+
 .. _least_angle_regression:
 
 Least Angle Regression
