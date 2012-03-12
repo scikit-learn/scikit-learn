@@ -310,10 +310,6 @@ class Tree(object):
                             self.value, out)
         return out
 
-    def predict_gbrt(self, X, out, k, scale=1.0):
-        _tree._predict_tree_gbrt(X, self.children, self.feature, self.threshold,
-                                self.value, scale, k, out)
-
 
 def _build_tree(X, y, criterion, max_depth, min_samples_split,
                 min_samples_leaf, min_density, max_features, random_state,
@@ -387,7 +383,6 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
             recursive_partition(X, X_argsorted, y,
                                 ~split & sample_mask,
                                 depth + 1, node_id, False, sample_indices)
-
 
     # setup auxiliary data structures and check input before
     # recursive partitioning
