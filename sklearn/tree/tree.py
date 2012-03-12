@@ -305,9 +305,14 @@ class Tree(object):
         return node_id
 
     def predict(self, X):
-        out = np.empty((X.shape[0], ), dtype=np.int32)
-        _tree._apply_tree(X, self.children, self.feature, self.threshold, out)
-        return self.value.take(out, axis=0)
+        out = np.empty((X.shape[0], self.value.shape[1]), dtype=np.float64)
+        _tree._predict_tree(X, self.children, self.feature, self.threshold,
+                            self.value, out)
+        return out
+
+    def predict_gbrt(self, X, out, k, scale=1.0):
+        _tree._predict_tree_gbrt(X, self.children, self.feature, self.threshold,
+                                self.value, scale, k, out)
 
 
 def _build_tree(X, y, criterion, max_depth, min_samples_split,
