@@ -22,12 +22,16 @@ from ..tree.tree import _build_tree
 from ..tree.tree import compute_feature_importances
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
+from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
 
 # ignore overflows due to exp(-pred) in BinomailDeviance
 #np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
+
+
+
 
 
 class MedianPredictor(object):
@@ -482,16 +486,20 @@ class BaseGradientBoosting(BaseEnsemble):
             The predictions of the current model, where ``n == X.shape[0]``
             and ``K == self._loss.K``.
         """
+        learn_rate = self.learn_rate
         if old_pred is not None:
             y = old_pred
             stage = self.estimators_[-1]
             for k, tree in enumerate(stage):
-                y[:, k] += self.learn_rate * tree.predict(X).ravel()
+                _tree_predict(X, tree.children, tree.feature, tree.threshold,
+                              tree.value, learn_rate, k, y)
         else:
             y = self.init.predict(X)
             for stage in self.estimators_:
                 for k, tree in enumerate(stage):
-                    y[:, k] += self.learn_rate * tree.predict(X).ravel()
+                    _tree_predict(X, tree.children, tree.feature, tree.threshold,
+                              tree.value, learn_rate, k, y)
+
         return y
 
     def _make_estimator(self, append=True):
