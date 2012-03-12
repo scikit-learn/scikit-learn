@@ -779,7 +779,8 @@ class ShuffleSplit(object):
         return self.n_iterations
 
 
-def _validate_sss(y, test_size, train_size):
+def _validate_stratified_shuffle_split(y, test_size, train_size):
+    y = np.unique(y, return_inverse=True)[1]
     if np.min(np.bincount(y)) < 2:
         raise ValueError("The least populated class in y has only 1"
                          " member, which is too few. The minimum"
@@ -895,10 +896,11 @@ class StratifiedShuffleSplit(object):
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        self.n_train, self.n_test = _validate_sss(y, test_size, train_size)
+        self.n_train, self.n_test = \
+            _validate_stratified_shuffle_split(y, test_size, train_size)
 
     def __iter__(self):
-        rng = self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
 
         y = self.y.copy()
         n = y.size
