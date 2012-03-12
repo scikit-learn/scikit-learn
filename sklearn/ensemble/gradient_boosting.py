@@ -79,11 +79,11 @@ class MultiClassPriorPredictor(object):
     """
 
     def fit(self, X, y):
-        self.classes = np.unique(y)
-        self.n_classes = len(self.classes)
+        self.classes_ = np.unique(y)
+        self.n_classes = len(self.classes_)
         self.priors = np.empty((self.n_classes,), dtype=np.float64)
         for k in range(0, self.n_classes):
-            self.priors[k] = y[y == self.classes[k]].shape[0] \
+            self.priors[k] = y[y == self.classes_[k]].shape[0] \
                              / float(y.shape[0])
 
     def predict(self, X):
@@ -614,18 +614,18 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
-        self.classes = np.unique(y)
-        self.n_classes = len(self.classes)
-        y = np.searchsorted(self.classes, y)
+        self.classes_ = np.unique(y)
+        self.n_classes = len(self.classes_)
+        y = np.searchsorted(self.classes_, y)
         if self.loss == 'deviance':
-            self.loss = 'mdeviance' if len(self.classes) > 2 else 'bdeviance'
+            self.loss = 'mdeviance' if len(self.classes_) > 2 else 'bdeviance'
 
         return super(GradientBoostingClassifier, self).fit(X, y,
                                                            monitor=monitor)
 
     def predict(self, X):
         P = self.predict_proba(X)
-        return self.classes.take(np.argmax(P, axis=1), axis=0)
+        return self.classes_.take(np.argmax(P, axis=1), axis=0)
 
     def predict_proba(self, X):
         X = np.atleast_2d(X)
