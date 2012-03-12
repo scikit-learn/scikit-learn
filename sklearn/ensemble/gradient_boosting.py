@@ -31,9 +31,6 @@ from ..tree._tree import DTYPE
 #np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
 
 
-
-
-
 class MedianPredictor(object):
     """A simple initial estimator that predicts the median
     of the training targets.
