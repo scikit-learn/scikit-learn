@@ -6,7 +6,6 @@ from scipy.sparse import coo_matrix
 from nose.tools import assert_true
 from nose.tools import assert_raises
 from nose.tools import assert_equal
-from nose.tools import assert_less_equal
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
@@ -82,8 +81,8 @@ def test_stratified_shuffle_split():
         test_std.append(np.std(np.bincount(y[test])))
 
     for i, [train, test] in enumerate(ss):
-        assert_less_equal(train_std[i], np.std(np.bincount(y[train])))
-        assert_less_equal(test_std[i], np.std(np.bincount(y[test])))
+        assert_true(train_std[i] <= np.std(np.bincount(y[train])))
+        assert_true(test_std[i] <= np.std(np.bincount(y[test])))
 
 
 def test_cross_val_score():

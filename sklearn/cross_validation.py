@@ -874,8 +874,8 @@ class StratifiedShuffleSplit(object):
     >>> y = np.array([0, 0, 1, 1])
     >>> sss = StratifiedShuffleSplit(y, 3, test_size=0.5, random_state=0)
     >>> len(sss)
-    2
-    >>> print sss
+    3
+    >>> print sss       # doctest: +ELLIPSIS
     StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, ...)
     >>> for train_index, test_index in sss:
     ...    print "TRAIN:", train_index, "TEST:", test_index
