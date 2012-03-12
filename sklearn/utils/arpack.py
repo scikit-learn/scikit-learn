@@ -1172,8 +1172,8 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     ZNEUPD, functions which use the Implicitly Restarted Arnoldi Method to
     find the eigenvalues and eigenvectors [2]_.
 
-    **References**:
-
+    References
+    ----------
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted
@@ -1410,9 +1410,8 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vecs.shape
     (13, 6)
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted

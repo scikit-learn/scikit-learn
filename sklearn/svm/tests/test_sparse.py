@@ -143,9 +143,10 @@ def test_weight():
 
     X_ = sparse.csr_matrix(X_)
     for clf in (linear_model.LogisticRegression(C=180),
-                svm.LinearSVC(C=180),
-                svm.SVC(C=180)):
-        clf.fit(X_[:180], y_[:180], class_weight={0: 5})
+                svm.LinearSVC(C=len(X)),
+                svm.SVC(C=len(X))):
+        clf.set_params(class_weight={0: 5})
+        clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
         assert_true(np.sum(y_pred == y_[180:]) >= 11)
 

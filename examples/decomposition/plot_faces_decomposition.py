@@ -3,7 +3,7 @@
 Faces dataset decompositions
 ============================
 
-This example applies to :doc:`/datasets/olivetti_faces` different
+This example applies to :ref:`labeled_faces_in_the_wild` different
 unsupervised matrix decomposition (dimension reduction) methods  from the
 module :py:mod:`sklearn.decomposition` (see the documentation
 chapter :ref:`decompositions`) .
@@ -93,7 +93,7 @@ estimators = [
      True, False),
 
     ('Cluster centers - MiniBatchKMeans',
-     MiniBatchKMeans(k=n_components, tol=1e-3, chunk_size=20, max_iter=50,
+     MiniBatchKMeans(k=n_components, tol=1e-3, batch_size=20, max_iter=50,
                      random_state=rng),
      True, False)
 ]

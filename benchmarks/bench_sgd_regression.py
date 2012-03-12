@@ -18,7 +18,7 @@ import gc
 from time import time
 
 from sklearn.linear_model import Ridge, SGDRegressor, ElasticNet
-from sklearn.metrics import mean_square_error
+from sklearn.metrics import mean_squared_error
 from sklearn.datasets.samples_generator import make_regression
 
 if __name__ == "__main__":
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             clf = ElasticNet(alpha=alpha, rho=0.5, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
-            elnet_results[i, j, 0] = mean_square_error(clf.predict(X_test),
+            elnet_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
                                                        y_test)
             elnet_results[i, j, 1] = time() - tstart
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
             tstart = time()
             clf.fit(X_train, y_train)
-            sgd_results[i, j, 0] = mean_square_error(clf.predict(X_test),
+            sgd_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
                                                      y_test)
             sgd_results[i, j, 1] = time() - tstart
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
             clf = Ridge(alpha=alpha, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
-            ridge_results[i, j, 0] = mean_square_error(clf.predict(X_test),
+            ridge_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
                                                        y_test)
             ridge_results[i, j, 1] = time() - tstart
 

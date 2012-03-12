@@ -73,7 +73,7 @@
        :height: 140
        :target: auto_examples/decomposition/plot_faces_decomposition.html
 
-    .. |banner14| image:: auto_examples/images/plot_lda_vs_qda_1.png
+    .. |banner14| image:: auto_examples/images/plot_lda_qda_1.png
        :height: 140
        :target: auto_examples/plot_lda_vs_qda.html
 
@@ -189,3 +189,9 @@ Development
    developers/utilities
    developers/debugging
    about
+
+.. toctree::
+   :hidden:
+
+   support
+   whats_new

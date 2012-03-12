@@ -95,8 +95,20 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             ind = np.arange(X.shape[0])
             train = ind[train]
             test = ind[test]
-        X_train = X[train]
-        X_test = X[test]
+        if hasattr(base_clf, 'kernel_function'):
+            # cannot compute the kernel values with custom function
+            raise ValueError(
+                "Cannot use a custom kernel function. "
+                "Precompute the kernel matrix instead.")
+        if getattr(base_clf, 'kernel', '') == 'precomputed':
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            X_train = X[np.ix_(train, train)]
+            X_test = X[np.ix_(test, train)]
+        else:
+            X_train = X[train]
+            X_test = X[test]
     if y is not None:
         y_test = y[test]
         y_train = y[train]
@@ -212,7 +224,7 @@ class GridSearchCV(BaseEstimator):
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-        estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
+        estimator=SVC(C=None, cache_size=..., coef0=..., degree=...,
             gamma=..., kernel='rbf', probability=False,
             scale_C=True, shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,

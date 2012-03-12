@@ -23,14 +23,14 @@ class QDA(BaseEstimator, ClassifierMixin):
     """
     Quadratic Discriminant Analysis (QDA)
 
+    A classifier with a quadratic decision boundary, generated
+    by fitting class conditional densities to the data
+    and using Bayes' rule.
+
+    The model fits a Gaussian density to each class.
+
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-    y : array, shape = [n_samples]
-        Target vector relative to X
-
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
@@ -57,7 +57,7 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     See also
     --------
-    LDA
+    sklearn.lda.LDA: Linear discriminant analysis
     """
 
     def __init__(self, priors=None):
@@ -76,7 +76,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             Target values (integers)
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
-            self.covariances_ attribute.
+            `self.covariances_` attribute.
         """
         X = np.asarray(X)
         y = np.asarray(y)
