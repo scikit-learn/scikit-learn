@@ -214,7 +214,7 @@ def test_probability():
     assert np.all(y_proba <= 1.0)
 
     # derive predictions from probabilities
-    y_pred = clf.classes.take(y_proba.argmax(axis=1), axis=0)
+    y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
     assert_array_equal(y_pred, true_result)
 
 
