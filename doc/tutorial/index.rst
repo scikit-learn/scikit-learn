@@ -29,6 +29,6 @@ Tutorials: From the bottom up with scikit-learn
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
+   
 
    statistical_inference/index.rst
