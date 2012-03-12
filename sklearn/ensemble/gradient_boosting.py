@@ -150,13 +150,13 @@ class LossFunction(object):
                                          y_pred[:, k])
 
         # update predictions
-        ## mask = tree.terminal_region != -1
-        ## y_pred[mask, k] += learn_rate * \
-        ##                 tree.value[:, 0].take(tree.terminal_region[mask],
-        ##                                       axis=0)
+        mask = tree.terminal_region != -1
+        y_pred[mask, k] += learn_rate * \
+                        tree.value[:, 0].take(tree.terminal_region[mask],
+                                              axis=0)
 
-        # ``tree.predict`` is faster than taking `tree.terminal_region``
-        y_pred[:, k] += learn_rate * tree.predict(X).ravel()
+        # FIXME ``tree.predict`` is faster than taking `tree.terminal_region``
+        #y_pred[:, k] += learn_rate * tree.predict(X).ravel()
 
         # save memory
         del tree.terminal_region
@@ -278,9 +278,13 @@ class MultinomialDeviance(LossFunction):
         return MultiClassPriorPredictor()
 
     def __call__(self, y, pred):
-        return 0.0
-        ## FIXME
-        ##raise NotImplementedError()
+        # create one-hot label encoding
+        Y = np.zeros((y.shape[0], self.K), dtype=np.float64)
+        for k in range(self.K):
+            Y[:, k] = y == k
+
+        return np.sum(-1 * (Y * pred).sum(axis=1) +
+                      np.log(np.exp(pred).sum(axis=1)))
 
     def is_multi_class(self):
         return True
@@ -448,15 +452,18 @@ class BaseGradientBoosting(BaseEnsemble):
             # fit next stage of trees
             y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
 
-            # track training loss
-            #self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
-
-            # update out-of-bag predictions and track oob loss
+            # update out-of-bag predictions and track loss
             if self.subsample < 1.0:
+                self.train_deviance[i] = loss(y[sample_mask], y_pred[sample_mask])
+
+                y_pred_oob = y_pred[~sample_mask]
                 y_pred[~sample_mask] = self._predict(
-                    X[~sample_mask], old_pred=y_pred[~sample_mask])
-                #self.oob_deviance[i] = loss(y[~sample_mask],
-                #                            y_pred[~sample_mask])
+                    X[~sample_mask], old_pred=y_pred_oob)
+                self.oob_deviance[i] = loss(y[~sample_mask],
+                                            y_pred_oob)
+            else:
+                # no need to fancy index w/ no sub-sampling
+                self.train_deviance[i] = loss(y, y_pred)
 
             if monitor:
                 stop = monitor(self, i)
