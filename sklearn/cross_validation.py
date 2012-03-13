@@ -1252,7 +1252,7 @@ def train_test_split(*arrays, **options):
            [4, 5],
            [6, 7],
            [8, 9]])
-    >>> b
+    >>> list(b)
     [0, 1, 2, 3, 4]
 
     >>> a_train, a_test, b_train, b_test = train_test_split(
