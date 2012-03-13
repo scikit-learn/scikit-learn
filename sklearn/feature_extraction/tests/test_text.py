@@ -263,7 +263,13 @@ def test_tfidf_no_smoothing():
     with warnings.catch_warnings(record=True) as w:
         tfidf = tr.fit_transform(X).toarray()
         assert_equal(len(w), 1)
-        assert_true("divide by zero encountered in divide" in w[0].message)
+        # For Python 3 compatibility
+        if hasattr(w[0].message,'args') :
+            assert_true("divide by zero encountered in divide" in\
+                w[0].message.args[0])
+        else : 
+            assert_true("divide by zero encountered in divide" in\
+                w[0].message)
 
 
 def test_sublinear_tf():
