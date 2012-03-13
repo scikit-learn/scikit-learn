@@ -118,8 +118,14 @@ def generate_example_rst(app):
     fhindex.write("""\
 
 .. raw:: html
-
+    
+    
     <style type="text/css">
+    
+    div#sidebarbutton {
+        display: none;
+    }
+
     .figure {
         float: left;
         margin: 10px;

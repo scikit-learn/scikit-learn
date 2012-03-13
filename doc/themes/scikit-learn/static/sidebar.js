@@ -30,21 +30,21 @@ $(function() {
   var sidebarwrapper = $('.sphinxsidebarwrapper');
 
   // for some reason, the document has no sidebar; do not run into errors
-  //if (!sidebar.length) return;
+  if (!sidebar.length) return;
 
   // original margin-left of the bodywrapper and width of the sidebar
   // with the sidebar expanded
-  var bw_margin_expanded = bodywrapper.css('margin-left'); //0
-  var ssb_width_expanded = sidebar.width(); //200px
+  var bw_margin_expanded = bodywrapper.css('margin-left');
+  var ssb_width_expanded = sidebar.width();
 
   // margin-left of the bodywrapper and width of the sidebar
   // with the sidebar collapsed
-  var bw_margin_collapsed = '.8em';
+  var bw_margin_collapsed = '-190px';
   var ssb_width_collapsed = '.8em';
 
   // colors used by the current theme
   var dark_color = $('.related').css('background-color');
-  var light_color = $('.document').css('background-color');
+  var light_color = $('.footer').css('color');
 
   function sidebar_is_collapsed() {
     return sidebarwrapper.is(':not(:visible)');
@@ -87,7 +87,7 @@ $(function() {
     sidebarwrapper.css({
         'float': 'left' ,
         'margin-right': '0',
-        'width': ssb_width_expanded - 28
+        'width': ssb_width_expanded - 10
     });
     // create the button
     sidebar.append(
@@ -109,8 +109,8 @@ $(function() {
     sidebarbutton.click(toggle_sidebar);
     sidebarbutton.attr('title', _('Collapse sidebar'));
     sidebarbutton.css({
-        'color': '#4EACC5',
         'border-left': '1px solid ' + dark_color,
+	'border-top-left-radius' : '.8em',
         'font-size': '1.2em',
         'cursor': 'pointer',
         'height': bodywrapper.height(),
