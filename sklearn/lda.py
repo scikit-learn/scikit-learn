@@ -57,7 +57,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>> clf = LDA()
     >>> clf.fit(X, y)
     LDA(n_components=None, priors=None)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
     See also
