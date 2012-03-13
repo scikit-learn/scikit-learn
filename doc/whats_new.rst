@@ -55,6 +55,17 @@ Changelog
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
+   - Refactoring and simplication of the :ref:`text_feature_extraction`
+     API and fixed a bug that caused possible negative IDF,
+     by `Olivier Grisel`_.
+
+   - Beam pruning option in :class:`_BaseHMM` module has been removed since it
+     is difficult to cythonize. If you are interested in contributing a cython
+     version, you can use the python version in the git history as a reference.
+
+   - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
+     a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
+     by `Yannick Schwartz`_.
 
 
 API changes summary
@@ -90,6 +101,43 @@ API changes summary
    - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.
+
+   - Classs :class:`feature_selection.text.Vectorizer` is deprecated and
+     replaced by :class:`feature_selection.text.TfidfVectorizer`.
+
+   - The preprocessor / analyzer nested structure for text feature
+     extraction has been removed. All those features are
+     now directly passed as flat constructor arguments
+     to :class:`feature_selection.text.TfidfVectorizer` and
+     :class:`feature_selection.text.CountVectorizer`, in particular the
+     following parameters are now used:
+
+       - ``analyzer`` can be `'word'` or `'char'` to switch the default
+         analysis scheme, or use a specific python callable (as previously).
+
+       - ``tokenizer`` and ``preprocessor`` have been introduced to make it
+         still possible to customize those steps with the new API.
+
+       - ``input`` explicitly control how to interpret the sequence passed to
+         ``fit`` and ``predict``: filenames, file objects or direct (byte or
+         unicode) strings.
+
+       - charset decoding is explicit and strict by default.
+
+       - the ``vocabulary``, fitted or not is now stored in the
+         ``vocabulary_`` attribute to be consistent with the project
+         conventions.
+
+   - Class :class:`feature_selection.text.TfidfVectorizer` now derives directly
+     from :class:`feature_selection.text.CountVectorizer` to make grid
+     search trivial.
+
+   - methods `rvs` in :class:`_BaseHMM` module are now deprecated.
+     `sample` should be used instead.
+
+   - Beam pruning option in :class:`_BaseHMM` module is removed since it is
+     difficult to be Cythonized. If you are interested, you can look in the
+     history codes by git.
 
 .. _changes_0_10:
 

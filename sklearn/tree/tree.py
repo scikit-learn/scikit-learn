@@ -376,13 +376,15 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
 
             # left child recursion
             recursive_partition(X, X_argsorted, y,
-                                split & sample_mask,
+                                np.logical_and(split, sample_mask),
                                 depth + 1, node_id, True, sample_indices)
 
             # right child recursion
             recursive_partition(X, X_argsorted, y,
-                                ~split & sample_mask,
+                                np.logical_and(np.logical_not(split),
+                                               sample_mask),
                                 depth + 1, node_id, False, sample_indices)
+
 
     # setup auxiliary data structures and check input before
     # recursive partitioning

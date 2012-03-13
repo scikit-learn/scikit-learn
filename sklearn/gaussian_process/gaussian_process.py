@@ -62,8 +62,7 @@ def l1_cross_distances(X):
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
-    """
-    The Gaussian Process model class.
+    """The Gaussian Process model class.
 
     Parameters
     ----------
@@ -171,9 +170,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     >>> X = np.array([[1., 3., 5., 6., 7., 8.]]).T
     >>> y = (X * np.sin(X)).ravel()
     >>> gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1.)
-    >>> gp.fit(X, y) # doctest: +ELLIPSIS
-    GaussianProcess(beta0=None, corr=...,
-            normalize=..., nugget=...,
+    >>> gp.fit(X, y)                                      # doctest: +ELLIPSIS
+    GaussianProcess(beta0=None...
             ...
 
     Notes

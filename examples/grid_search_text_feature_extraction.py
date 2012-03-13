@@ -24,7 +24,7 @@ Here is a sample output of a run on a quad-core machine::
    'clf__n_iter': (10, 50, 80),
    'clf__penalty': ('l2', 'elasticnet'),
    'tfidf__use_idf': (True, False),
-   'vect__analyzer__max_n': (1, 2),
+   'vect__max_n': (1, 2),
    'vect__max_df': (0.5, 0.75, 1.0),
    'vect__max_features': (None, 5000, 10000, 50000)}
   done in 1737.030s
@@ -35,7 +35,7 @@ Here is a sample output of a run on a quad-core machine::
       clf__n_iter: 50
       clf__penalty: 'elasticnet'
       tfidf__use_idf: True
-      vect__analyzer__max_n: 2
+      vect__max_n: 2
       vect__max_df: 0.75
       vect__max_features: 50000
 
@@ -94,7 +94,7 @@ parameters = {
 # increase processing time in a combinatorial way
     'vect__max_df': (0.5, 0.75, 1.0),
 #    'vect__max_features': (None, 5000, 10000, 50000),
-    'vect__analyzer__max_n': (1, 2),  # words or bigrams
+    'vect__max_n': (1, 2),  # words or bigrams
 #    'tfidf__use_idf': (True, False),
 #    'tfidf__norm': ('l1', 'l2'),
     'clf__alpha': (0.00001, 0.000001),
@@ -102,21 +102,25 @@ parameters = {
 #    'clf__n_iter': (10, 50, 80),
 }
 
-# find the best parameters for both the feature extraction and the
-# classifier
-grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+if __name__ == "__main__":
+    # multiprocessing requires the fork to happen in a __main__ protected
+    # block
 
-print "Performing grid search..."
-print "pipeline:", [name for name, _ in pipeline.steps]
-print "parameters:"
-pprint(parameters)
-t0 = time()
-grid_search.fit(data.data, data.target)
-print "done in %0.3fs" % (time() - t0)
-print
+    # find the best parameters for both the feature extraction and the
+    # classifier
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
 
-print "Best score: %0.3f" % grid_search.best_score
-print "Best parameters set:"
-best_parameters = grid_search.best_estimator.get_params()
-for param_name in sorted(parameters.keys()):
-    print "\t%s: %r" % (param_name, best_parameters[param_name])
+    print "Performing grid search..."
+    print "pipeline:", [name for name, _ in pipeline.steps]
+    print "parameters:"
+    pprint(parameters)
+    t0 = time()
+    grid_search.fit(data.data, data.target)
+    print "done in %0.3fs" % (time() - t0)
+    print
+
+    print "Best score: %0.3f" % grid_search.best_score
+    print "Best parameters set:"
+    best_parameters = grid_search.best_estimator.get_params()
+    for param_name in sorted(parameters.keys()):
+        print "\t%s: %r" % (param_name, best_parameters[param_name])
