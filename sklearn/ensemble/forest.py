@@ -117,7 +117,7 @@ def _partition_trees(forest):
         n_jobs = min(forest.n_jobs, forest.n_estimators)
 
     # Partition trees between jobs
-    n_trees = [forest.n_estimators / n_jobs] * n_jobs
+    n_trees = [int(forest.n_estimators / n_jobs)] * n_jobs
 
     for i in xrange(forest.n_estimators % n_jobs):
         n_trees[i] += 1
