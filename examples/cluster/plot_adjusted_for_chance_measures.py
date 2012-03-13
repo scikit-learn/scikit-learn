@@ -80,8 +80,7 @@ for score_func in score_funcs:
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     print "done in %0.3fs" % (time() - t0)
     plots.append(pl.errorbar(
-    #    n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
-        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1)))
+        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0])
     names.append(score_func.__name__)
 
 pl.title("Clustering measures for 2 random uniform labelings\n"
@@ -112,7 +111,7 @@ for score_func in score_funcs:
                                       fixed_n_classes=n_classes)
     print "done in %0.3fs" % (time() - t0)
     plots.append(pl.errorbar(
-        n_clusters_range, scores.mean(axis=1), scores.std(axis=1)))
+        n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0])
     names.append(score_func.__name__)
 
 pl.title("Clustering measures for random uniform labeling\n"
