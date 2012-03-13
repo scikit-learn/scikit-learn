@@ -46,16 +46,23 @@ def test_iris():
     """Check consistency on dataset iris."""
     for metric in ('euclidean', 'cosine'):
         clf = NearestCentroid().fit(iris.data, iris.target)
-
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.9, "Failed with score = " + str(score)
 
+def test_iris_shrinkage():
+    """Check consistency on dataset iris, when using shrinkage."""
+    for metric in ('euclidean', 'cosine'):
+        for shrink_threshold in [0.1, 0.5]:
+            clf = NearestCentroid(shrink_threshold=shrink_threshold)
+            clf = clf.fit(iris.data, iris.target)
+            score = np.mean(clf.predict(iris.data) == iris.target)
+            assert score > 0.8, "Failed with score = " + str(score)
+            
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
     for metric in ('euclidean', 'cosine'):
         clf = NearestCentroid(metric=metric).fit(iris.data, iris.target)
-        score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.9, "Failed with score = " + str(score)
 

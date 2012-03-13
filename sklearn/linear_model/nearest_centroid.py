@@ -57,6 +57,12 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     See also
     --------
     sklearn.neighbourds.KNeighborsClassifier: Nearest Neighbours Classifier
+
+    Reference
+    ---------
+    Diagnosis of multiple cancer types by shrunken centroids of gene expression
+    TODO: better referencing!
+
     """
 
     def __init__(self, metric='euclidean', shrink_threshold=None):
@@ -86,11 +92,30 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         self.centroids_ = np.array([np.mean([X[i] for i in range(n_samples)
                                              if y[i] == cur_class], axis=0)
                                     for cur_class in classes])
-        assert self.centroids_.shape == (n_classes, n_features)
-        #TODO: Apply shrink here
+        self.dataset_centroid_ = np.mean(X, axis=0)
         if self.shrink_threshold:
-            warnings.warn("Shrinking centroids has not been implemented")
-            raise AttributeError("shrink_threshold not None")
+            # Number of clusters in each class.
+            nk = np.array([np.sum(classes == cur_class)
+                           for cur_class in classes])
+            # m parameter for determining deviation
+            m = np.sqrt((1. / nk) + (1. / n_samples))
+            # Calculate deviation using the standard deviation of centroids.
+            variance = np.sum(np.power(X - self.centroids_[y], 2), axis=0)
+            s = np.sqrt(variance / (n_samples - n_classes))
+            s0 = np.median(s)  # To deter outliers from affecting the results.
+            s = s + s0
+            assert s.shape == (n_features,), "{},{}".format(s.shape, n_features)
+            ms = np.array([[m[j] * s[i] for i in range(n_features)]
+                           for j in range(n_classes)])
+            deviation = ((self.centroids_ - self.dataset_centroid_) / ms)
+            # Soft thresholding: if the deviation crosses 0 during shrinking,
+            # it becomes zero.
+            signs = np.sign(deviation)
+            deviation = (np.abs(deviation) - self.shrink_threshold)
+            deviation[deviation < 0] = 0
+            deviation *= signs
+            # Now adjust the centroids using the deviation
+            self.centroids_ = self.dataset_centroid_ + (ms * deviation)
         return self
 
     def predict(self, X):
