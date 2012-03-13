@@ -171,7 +171,7 @@ class LeavePOut(object):
         )
 
     def __len__(self):
-        return (factorial(self.n) / factorial(self.n - self.p)
+        return int(factorial(self.n) / factorial(self.n - self.p)
                 / factorial(self.p))
 
 
@@ -539,7 +539,7 @@ class LeavePLabelOut(object):
         )
 
     def __len__(self):
-        return (factorial(self.n_unique_labels) /
+        return int(factorial(self.n_unique_labels) /
                 factorial(self.n_unique_labels - self.p) /
                 factorial(self.p))
 
