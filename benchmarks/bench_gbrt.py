@@ -92,18 +92,6 @@ def bench_random_gaussian(random_state=None):
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    ## stump = DecisionTreeClassifier(max_depth=1)
-##     stump.fit(X_train, y_train)
-##     error_rate = (1.0 - stump.score(X_test, y_test)) * 100.0
-
-##     print "Stump: %.2f" % error_rate
-
-##     tree = DecisionTreeClassifier(max_depth=20, min_samples_leaf=5)
-##     tree.fit(X_train, y_train)
-##     error_rate = (1.0 - tree.score(X_test, y_test)) * 100.0
-
-##     print "Tree: %.2f" % error_rate
-
     t0 = time()
     gbrt = GradientBoostingClassifier(**classification_params)
     gbrt.fit(X_train, y_train)
@@ -111,10 +99,6 @@ def bench_random_gaussian(random_state=None):
     t0 = time()
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     test_time = time() - t0
-    ## for i in range(10) + [99, 199]:
-    ##    print i+1, gbrt.train_deviance[i]
-    #avg_splits = np.mean([np.sum(t.children[:,0] != -1) for t in gbrt.estimators_])
-    #print "Avg. splits: %.4f" % avg_splits
     return error_rate, train_time, test_time
 
 
@@ -124,7 +108,6 @@ def random_gaussian_learning_curve(random_state=None):
     shape = (12000, 10)
     X = rs.normal(size=shape).reshape(shape).astype(np.float32)
     y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
-    #y[y == 0] = -1
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
@@ -146,7 +129,8 @@ def random_gaussian_learning_curve(random_state=None):
         error_rate[i] = np.mean(tmp != y_test)
 
     print "Train first model..."
-    gbrt = GradientBoostingClassifier(loss='deviance', n_estimators=n_estimators, min_samples_leaf=1,
+    gbrt = GradientBoostingClassifier(loss='deviance', n_estimators=n_estimators,
+                                      min_samples_leaf=1,
                                       max_depth=max_depth, learn_rate=1.0,
                                       subsample=1.0)
     gbrt.fit(X_train, y_train, monitor=monitor)
@@ -158,7 +142,8 @@ def random_gaussian_learning_curve(random_state=None):
     pl.plot(np.arange(n), deviance, "r-", label="No shrinkage")
 
     print "Train second model..."
-    gbrt = GradientBoostingClassifier(loss='deviance', n_estimators=n_estimators, min_samples_leaf=1,
+    gbrt = GradientBoostingClassifier(loss='deviance', n_estimators=n_estimators,
+                                      min_samples_leaf=1,
                                       max_depth=max_depth, learn_rate=0.2,
                                       subsample=1.0)
     gbrt.fit(X_train, y_train, monitor=monitor)
@@ -205,16 +190,6 @@ def bench_spam(random_state=None):
     t0 = time()
     error_rate = (1.0 - clf.score(X_test, y_test))
     test_time = time() - t0
-    ## for i in range(10) + [99, 199]:
-    ##     print i+1, clf.train_deviance[i]
-    ## variable_importance = clf.variable_importance
-    ## sorted_idx = np.argsort(variable_importance)[-20:]
-    ## pos = np.arange(sorted_idx.shape[0]) + .5
-
-    ## pl.barh(pos, variable_importance[sorted_idx], align='center')
-    ## pl.yticks(pos, feature_names[sorted_idx])
-    ## pl.ylabel('Relative influence')
-    ## pl.show()
     return error_rate, train_time, test_time
 
 
@@ -355,17 +330,17 @@ def bench_yahoo_ltrc(random_state=None):
     return mse, train_time, test_time
 
 
-gbrt_results = {
-    "Example 10.2": bench_random_gaussian(),
-    "Spam": bench_spam(),
-    "Madelon": bench_madelon(),
-    "Arcene": bench_arcene(),
-    "Boston": bench_boston(),
-    "Friedman#1": bench_friedman1(),
-    "Friedman#2": bench_friedman2(),
-    "Friedman#3": bench_friedman3(),
-#    "YahooLTRC": bench_yahoo_ltrc(),
-    }
+## gbrt_results = {
+##     "Example 10.2": bench_random_gaussian(),
+##     "Spam": bench_spam(),
+##     "Madelon": bench_madelon(),
+##     "Arcene": bench_arcene(),
+##     "Boston": bench_boston(),
+##     "Friedman#1": bench_friedman1(),
+##     "Friedman#2": bench_friedman2(),
+##     "Friedman#3": bench_friedman3(),
+##     "YahooLTRC": bench_yahoo_ltrc(),
+##     }
 
-from pprint import pprint
-pprint(gbrt_results)
+## from pprint import pprint
+## pprint(gbrt_results)
