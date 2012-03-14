@@ -128,18 +128,23 @@ def test_GMM_attributes():
 
 class GMMTester():
     do_test_eval = True
-    n_components = 10
-    n_features = 4
-    weights = rng.rand(n_components)
-    weights = weights / weights.sum()
-    means = rng.randint(-20, 20, (n_components, n_features))
-    threshold = -0.5
-    I = np.eye(n_features)
-    covars = {'spherical': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
-              'tied': make_spd_matrix(n_features, random_state=0) + 5 * I,
-              'diag': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
-              'full': np.array([make_spd_matrix(n_features, random_state=0)
-                  + 5 * I for x in xrange(n_components)])}
+    def _setUp(self):
+        self.n_components = 10
+        self.n_features = 4
+        self.weights = rng.rand(self.n_components)
+        self.weights = self.weights / self.weights.sum()
+        self.means = rng.randint(-20, 20, (self.n_components, self.n_features))
+        self.threshold = -0.5
+        self.I = np.eye(self.n_features)
+        self.covars = {'spherical': (0.1 + 2 * \
+                        rng.rand(self.n_components, self.n_features)) ** 2,
+                  'tied': make_spd_matrix(self.n_features, random_state=0) +\
+                        5 * self.I,
+                  'diag': (0.1 + 2 * rng.rand(self.n_components,\
+                        self.n_features)) ** 2,
+                  'full': np.array([make_spd_matrix(self.n_features,\
+                        random_state=0)
+                      + 5 * self.I for x in range(self.n_components)])}
 
     def test_eval(self):
         if not self.do_test_eval:
@@ -257,22 +262,22 @@ class GMMTester():
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
     covariance_type = 'spherical'
     model = mixture.GMM
-
+    setUp = GMMTester._setUp
 
 class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
     covariance_type = 'diag'
     model = mixture.GMM
-
+    setUp = GMMTester._setUp
 
 class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
     covariance_type = 'tied'
     model = mixture.GMM
-
+    setUp = GMMTester._setUp
 
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     covariance_type = 'full'
     model = mixture.GMM
-
+    setUp = GMMTester._setUp
 
 def test_multiple_init():
     """Test that multiple inits does not much worse than a single one"""
