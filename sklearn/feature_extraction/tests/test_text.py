@@ -265,10 +265,10 @@ def test_tfidf_no_smoothing():
         assert_equal(len(w), 1)
         # For Python 3 compatibility
         if hasattr(w[0].message,'args') :
-            assert_true("divide by zero encountered in divide" in\
+            assert_true("divide by zero" in\
                 w[0].message.args[0])
         else : 
-            assert_true("divide by zero encountered in divide" in\
+            assert_true("divide by zero" in\
                 w[0].message)
 
 
