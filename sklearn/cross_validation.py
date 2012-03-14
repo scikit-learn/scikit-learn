@@ -8,6 +8,8 @@ validation and performance evaluation.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
+from __future__ import print_function
+
 from itertools import combinations
 from math import ceil, floor, factorial
 import operator
