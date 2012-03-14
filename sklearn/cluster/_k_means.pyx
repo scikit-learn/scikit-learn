@@ -24,16 +24,6 @@ cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
 
 
-@cython.profile(False)
-@cython.wraparound(False)
-cdef inline DOUBLE array_ddot(int n,
-                np.ndarray[DOUBLE, ndim=2] a, int a_idx,
-                np.ndarray[DOUBLE, ndim=2] b, int b_idx):
-    """Fast dot product of rows of 2D arrays with blas"""
-    return ddot(n, <DOUBLE*>(a.data + a_idx * n * sizeof(DOUBLE)), 1,
-                <DOUBLE*>(b.data + b_idx * n * sizeof(DOUBLE)), 1)
-
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -63,8 +53,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         store_distances = 1
 
     for center_idx in range(n_clusters):
-        center_squared_norms[center_idx] = array_ddot(
-            n_features, centers, center_idx, centers, center_idx)
+        center_squared_norms[center_idx] = ddot(
+            n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
 
     for sample_idx in range(n_samples):
         min_dist = -1
@@ -72,7 +62,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             dist = 0.0
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            dist += array_ddot(n_features, X, sample_idx, centers, center_idx)
+            dist += ddot(n_features, &X[sample_idx, 0], 1,
+                         &centers[center_idx, 0], 1)
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
@@ -118,8 +109,8 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         store_distances = 1
 
     for center_idx in range(n_clusters):
-        center_squared_norms[center_idx] = array_ddot(
-            n_features, centers, center_idx, centers, center_idx)
+        center_squared_norms[center_idx] = ddot(
+            n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
 
     for sample_idx in range(n_samples):
         min_dist = -1
