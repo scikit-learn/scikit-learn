@@ -160,7 +160,7 @@ class PCA(BaseEstimator, TransformerMixin):
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
     PCA(copy=True, n_components=2, whiten=False)
-    >>> print pca.explained_variance_ratio_ # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
     See also
@@ -409,7 +409,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
            random_state=<mtrand.RandomState object at 0x...>, whiten=False)
-    >>> print pca.explained_variance_ratio_ # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
     See also

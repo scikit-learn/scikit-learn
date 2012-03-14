@@ -82,7 +82,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> neigh = KNeighborsClassifier(n_neighbors=2)
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print neigh.predict([[1.5]])
+    >>> print(neigh.predict([[1.5]]))
     [0]
 
     See also
@@ -200,7 +200,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> neigh = RadiusNeighborsClassifier(radius=1.0)
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     RadiusNeighborsClassifier(...)
-    >>> print neigh.predict([[1.5]])
+    >>> print(neigh.predict([[1.5]]))
     [0]
 
     See also
