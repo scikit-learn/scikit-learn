@@ -256,7 +256,8 @@ div.sphinxsidebarwrapper {
 {% if theme_collapsiblesidebar|tobool %}
 /* for collapsible sidebar */
 div#sidebarbutton {
-    background-color: #ff9c34;
+    background-color: gray;
+    opacity: 0.1;
 }
 {% endif %}
 
