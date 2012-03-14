@@ -10,7 +10,7 @@ Nearest Centroid Classification
 import warnings
 
 import numpy as np
-import scipy.ndimage as ndimage
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..utils.validation import check_arrays
@@ -89,10 +89,9 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
-        self.centroids_ = np.array([np.mean([X[i] for i in range(n_samples)
-                                             if y[i] == cur_class], axis=0)
+        self.centroids_ = np.array([X[y == cur_class].mean(axis=0)
                                     for cur_class in classes])
-        self.dataset_centroid_ = np.mean(X, axis=0)
+        self.dataset_centroid_ = X.mean(axis=0)
         if self.shrink_threshold:
             # Number of clusters in each class.
             nk = np.array([np.sum(classes == cur_class)
@@ -101,10 +100,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             m = np.sqrt((1. / nk) + (1. / n_samples))
             # Calculate deviation using the standard deviation of centroids.
             variance = np.sum(np.power(X - self.centroids_[y], 2), axis=0)
+            assert variance.shape == (n_features,)
             s = np.sqrt(variance / (n_samples - n_classes))
             s0 = np.median(s)  # To deter outliers from affecting the results.
             s = s + s0
-            assert s.shape == (n_features,), "{},{}".format(s.shape, n_features)
             ms = np.array([[m[j] * s[i] for i in range(n_features)]
                            for j in range(n_classes)])
             deviation = ((self.centroids_ - self.dataset_centroid_) / ms)

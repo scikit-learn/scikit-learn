@@ -3,6 +3,7 @@ Testing for the nearest centroid module.
 """
 
 import numpy as np
+from scipy import sparse as sp
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -14,6 +15,7 @@ from sklearn import datasets
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+X_csr = sp.csr_matrix(X)  # Sparse matrix
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
@@ -38,7 +40,10 @@ def test_classification_toy():
     """Check classification on a toy dataset."""
     clf = NearestCentroid()
     clf.fit(X, y)
-
+    assert_array_equal(clf.predict(T), true_result)
+    # Same test, but with a sparse matrix.
+    clf = NearestCentroid()
+    clf.fit(X_csr, y)
     assert_array_equal(clf.predict(T), true_result)
 
 
@@ -49,15 +54,27 @@ def test_iris():
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.9, "Failed with score = " + str(score)
 
+
 def test_iris_shrinkage():
     """Check consistency on dataset iris, when using shrinkage."""
     for metric in ('euclidean', 'cosine'):
-        for shrink_threshold in [0.1, 0.5]:
+        for shrink_threshold in [None, 0.1, 0.5]:
             clf = NearestCentroid(shrink_threshold=shrink_threshold)
             clf = clf.fit(iris.data, iris.target)
             score = np.mean(clf.predict(iris.data) == iris.target)
             assert score > 0.8, "Failed with score = " + str(score)
-            
+
+
+def test_iris_shrinkage_sparse():
+    """Check quality on iris, when using shrinkage and sparse matrix."""
+    iris_sparse = sp.csr_matrix(iris.data)
+    for metric in ('euclidean', 'cosine'):
+        for shrink_threshold in [None, 0.1, 0.5]:
+            clf = NearestCentroid(shrink_threshold=shrink_threshold)
+            clf = clf.fit(iris_sparse, iris.target)
+            score = np.mean(clf.predict(iris.data) == iris.target)
+            assert score > 0.8, "Failed with score = " + str(score)
+
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
