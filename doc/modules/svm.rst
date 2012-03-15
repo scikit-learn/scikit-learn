@@ -85,7 +85,7 @@ training samples::
     >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
     gamma=0.5, kernel='rbf', probability=False, scale_C=True, shrinking=True,
-    tol=0.001)
+    tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -124,7 +124,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
     gamma=1.0, kernel='rbf', probability=False, scale_C=True, shrinking=True,
-    tol=0.001)
+    tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -271,7 +271,7 @@ floating point values instead of integer values::
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=None, cache_size=200, coef0=0.0, degree=3,
     epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, scale_C=True,
-    shrinking=True, tol=0.001)
+    shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -469,7 +469,7 @@ vectors and the test vectors must be provided.
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
     gamma=0.0, kernel='precomputed', probability=False, scale_C=True,
-    shrinking=True, tol=0.001)
+    shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([ 0.,  1.])
