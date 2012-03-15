@@ -7,7 +7,7 @@ from ..base import BaseLibSVM
 class SparseBaseLibSVM(BaseLibSVM):
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C, class_weight):
+                 scale_C, class_weight, verbose):
 
         assert kernel in self._sparse_kernels, \
                "kernel should be one of %s, "\
@@ -15,7 +15,7 @@ class SparseBaseLibSVM(BaseLibSVM):
 
         super(SparseBaseLibSVM, self).__init__(impl, kernel, degree, gamma,
                 coef0, tol, C, nu, epsilon, shrinking, probability, cache_size,
-                scale_C, True, class_weight)
+                scale_C, True, class_weight, verbose)
 
     def fit(self, X, y, sample_weight=None):
         X = scipy.sparse.csr_matrix(X, dtype=np.float64)
