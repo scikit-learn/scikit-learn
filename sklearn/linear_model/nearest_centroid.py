@@ -56,7 +56,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     See also
     --------
-    sklearn.neighbourds.KNeighborsClassifier: Nearest Neighbours Classifier
+    sklearn.neighbors.KNeighborsClassifier: Nearest Neighbors Classifier
 
     Reference
     ---------
