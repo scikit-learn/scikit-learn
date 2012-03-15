@@ -21,6 +21,8 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
 from .utils.fixes import unique, in1d
 from .externals.joblib import Parallel, delayed
+import numbers
+from sklearn.externals import six
 
 
 class LeaveOneOut(object):
@@ -77,7 +79,7 @@ class LeaveOneOut(object):
 
     def __iter__(self):
         n = self.n
-        for i in xrange(n):
+        for i in range(n):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
@@ -152,7 +154,7 @@ class LeavePOut(object):
     def __iter__(self):
         n = self.n
         p = self.p
-        comb = combinations(range(n), p)
+        comb = combinations(list(range(n)), p)
         for idx in comb:
             test_index = np.zeros(n, dtype=np.bool)
             test_index[np.array(idx)] = True
@@ -261,7 +263,7 @@ class KFold(object):
         k = self.k
         fold_size = n // k
 
-        for i in xrange(k):
+        for i in range(k):
             test_index = np.zeros(n, dtype=np.bool)
             if i < k - 1:
                 test_index[self.idxs[i * fold_size:(i + 1) * fold_size]] = True
@@ -351,7 +353,7 @@ class StratifiedKFold(object):
         n = y.size
         idx = np.argsort(y)
 
-        for i in xrange(k):
+        for i in range(k):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[idx[i::k]] = True
             train_index = np.logical_not(test_index)
@@ -517,7 +519,7 @@ class LeavePLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         unique_labels = unique(labels)
-        comb = combinations(range(self.n_unique_labels), self.p)
+        comb = combinations(list(range(self.n_unique_labels)), self.p)
 
         for idx in comb:
             test_index = np.zeros(labels.size, dtype=np.bool)
@@ -919,7 +921,7 @@ class StratifiedShuffleSplit(object):
         k = ceil(n / self.n_test)
         l = floor((n - self.n_test) / self.n_train)
 
-        for i in xrange(self.n_iterations):
+        for i in range(self.n_iterations):
             ik = i % k
             permutation = rng.permutation(self.n)
             idx = np.argsort(y[permutation])
@@ -1068,7 +1070,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
     is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
-    if operator.isNumberType(cv):
+    if isinstance(cv, numbers.Number):
         if classifier:
             cv = StratifiedKFold(y, cv, indices=is_sparse)
         else:
@@ -1246,7 +1248,7 @@ def train_test_split(*arrays, **options):
                       train_fraction=train_fraction,
                       random_state=random_state,
                       indices=True)
-    train, test = iter(cv).next()
+    train, test = six.advance_iterator(iter(cv))
     splitted = []
     for a in arrays:
         splitted.append(a[train])

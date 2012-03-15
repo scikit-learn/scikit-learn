@@ -10,7 +10,8 @@ We first find the separating plane with a plain SVC and then plot
 (dashed) the separating hyperplane with automatically correction for
 unbalanced classes.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

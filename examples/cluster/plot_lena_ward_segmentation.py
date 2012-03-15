@@ -7,12 +7,13 @@ Compute the segmentation of a 2D image with Ward hierarchical
 clustering. The clustering is spatially constrained in order
 for each segmented region to be in one piece.
 """
+from __future__ import print_function
 
 # Author : Vincent Michel, 2010
 #          Alexandre Gramfort, 2011
 # License: BSD Style.
 
-print __doc__
+print(__doc__)
 
 import time as time
 import numpy as np
@@ -34,14 +35,14 @@ connectivity = grid_to_graph(*lena.shape)
 
 ###############################################################################
 # Compute clustering
-print "Compute structured hierarchical clustering..."
+print("Compute structured hierarchical clustering...")
 st = time.time()
 n_clusters = 15  # number of regions
 ward = Ward(n_clusters=n_clusters, connectivity=connectivity).fit(X)
 label = np.reshape(ward.labels_, lena.shape)
-print "Elaspsed time: ", time.time() - st
-print "Number of pixels: ", label.size
-print "Number of clusters: ", np.unique(label).size
+print("Elaspsed time: ", time.time() - st)
+print("Number of pixels: ", label.size)
+print("Number of clusters: ", np.unique(label).size)
 
 ###############################################################################
 # Plot the results on an image

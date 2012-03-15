@@ -23,7 +23,9 @@ Thus rather than using the 'predict' method of the objects, we set the
 threshold on the decision_function to separate out the corresponding
 fraction.
 """
-print __doc__
+from __future__ import print_function
+import six
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -66,7 +68,7 @@ for i, offset in enumerate(clusters_separation):
     # Fit the model with the One-Class SVM
     pl.figure(figsize=(10, 5))
     pl.set_cmap(pl.cm.Blues_r)
-    for i, (clf_name, clf) in enumerate(classifiers.iteritems()):
+    for i, (clf_name, clf) in enumerate(six.iteritems(classifiers)):
         # fit the data and tag outliers
         clf.fit(X)
         y_pred = clf.decision_function(X).ravel()

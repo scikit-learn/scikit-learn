@@ -141,7 +141,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     visited = np.empty(n_nodes, dtype=bool)
 
     # recursive merge loop
-    for k in xrange(n_samples, n_nodes):
+    for k in range(n_samples, n_nodes):
         # identify the merge
         while True:
             inert, i, j = heappop(inertia)

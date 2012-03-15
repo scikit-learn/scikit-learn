@@ -11,6 +11,7 @@ from ..base import BaseEstimator
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
+from sklearn.externals import six
 
 
 class RFE(BaseEstimator):
@@ -298,7 +299,7 @@ class RFECV(RFE):
             ranking_ = rfe.fit(X[train], y[train]).ranking_
 
             # Score each subset of features
-            for k in xrange(1, max(ranking_)):
+            for k in range(1, max(ranking_)):
                 mask = ranking_ <= k
                 estimator = clone(self.estimator)
                 estimator.fit(X[train][:, mask], y[train])
@@ -323,7 +324,7 @@ class RFECV(RFE):
         best_score = np.inf
         best_k = None
 
-        for k, score in sorted(scores.iteritems()):
+        for k, score in sorted(six.iteritems(scores)):
             if score < best_score:
                 best_score = score
                 best_k = k
@@ -342,7 +343,7 @@ class RFECV(RFE):
         self.ranking_ = rfe.ranking_
 
         self.cv_scores_ = [0] * len(scores)
-        for k, score in scores.iteritems():
+        for k, score in six.iteritems(scores):
             self.cv_scores_[k - 1] = score / n
 
         return self

@@ -176,7 +176,7 @@ reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
   >>> vectorizer = CountVectorizer()
-  >>> vectorizer
+  >>> vectorizer                                              # doctest: +SKIP
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
           lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
@@ -209,8 +209,9 @@ Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
-  >>> vectorizer.get_feature_names()
-  [u'and', u'document', u'first', u'is', u'one', u'second', u'the', u'third', u'this']
+  >>> vectorizer.get_feature_names()           # doctest: +NORMALIZE_WHITESPACE
+  [u'and', u'document', u'first', u'is', u'one', u'second', u'the', u'third',
+   u'this']
 
   >>> X.toarray()           # doctest: +ELLIPSIS
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -289,8 +290,9 @@ class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
-  >>> transformer
-  TfidfTransformer(norm='l2', smooth_idf=True, sublinear_tf=False, use_idf=True)
+  >>> transformer                                             # doctest: +SKIP
+  TfidfTransformer(norm='l2', smooth_idf=True, sublinear_tf=False,
+  ...              use_idf=True)
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.

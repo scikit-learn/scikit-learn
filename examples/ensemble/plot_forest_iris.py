@@ -14,7 +14,8 @@ In the first row, the classifiers are built using the sepal width and the sepal
 length features only, on the second row using the petal length and sepal length
 only, and on the third row using the petal width and the petal length only.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -84,7 +85,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         pl.axis("tight")
 
         # Plot the training points
-        for i, c in zip(xrange(n_classes), plot_colors):
+        for i, c in zip(range(n_classes), plot_colors):
             idx = np.where(y == i)
             pl.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i])
 

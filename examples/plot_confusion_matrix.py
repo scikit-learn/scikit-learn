@@ -6,7 +6,8 @@ Confusion matrix
 Example of confusion matrix usage to evaluate the quality
 of the output of a classifier.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import random
 import pylab as pl
@@ -18,7 +19,7 @@ iris = datasets.load_iris()
 X = iris.data
 y = iris.target
 n_samples, n_features = X.shape
-p = range(n_samples)
+p = list(range(n_samples))
 random.seed(0)
 random.shuffle(p)
 X, y = X[p], y[p]
@@ -31,7 +32,7 @@ y_ = classifier.fit(X[:half], y[:half]).predict(X[half:])
 # Compute confusion matrix
 cm = confusion_matrix(y[half:], y_)
 
-print cm
+print(cm)
 
 # Show confusion matrix
 pl.matshow(cm)

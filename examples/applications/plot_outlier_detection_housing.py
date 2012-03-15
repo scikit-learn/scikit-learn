@@ -45,7 +45,9 @@ a good compromise between the shape of the data scatter matrix and the
 risk of over-fitting the data.
 
 """
-print __doc__
+from __future__ import print_function
+import six
+print(__doc__)
 
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 # License: BSD
@@ -75,7 +77,7 @@ legend2 = {}
 # Learn a frontier for outlier detection with several classifiers
 xx1, yy1 = np.meshgrid(np.linspace(-8, 28, 500), np.linspace(3, 40, 500))
 xx2, yy2 = np.meshgrid(np.linspace(3, 10, 500), np.linspace(-5, 45, 500))
-for i, (clf_name, clf) in enumerate(classifiers.iteritems()):
+for i, (clf_name, clf) in enumerate(six.iteritems(classifiers)):
     plt.figure(1)
     clf.fit(X1)
     Z1 = clf.decision_function(np.c_[xx1.ravel(), yy1.ravel()])

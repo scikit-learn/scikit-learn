@@ -6,11 +6,12 @@ Swiss Roll reduction with LLE
 An illustration of Swiss Roll reduction
 with locally linear embedding
 """
+from __future__ import print_function
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD, (C) INRIA 2011
 
-print __doc__
+print(__doc__)
 
 import pylab as pl
 # This import is needed to modify the way figure behaves
@@ -22,9 +23,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn import manifold, datasets
 X, color = datasets.samples_generator.make_swiss_roll(n_samples=1500)
 
-print "Computing LLE embedding"
+print("Computing LLE embedding")
 X_r, err = manifold.locally_linear_embedding(X, n_neighbors=12, out_dim=2)
-print "Done. Reconstruction error: %g" % err
+print("Done. Reconstruction error: %g" % err)
 
 #----------------------------------------------------------------------
 # Plot result

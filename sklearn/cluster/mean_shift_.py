@@ -11,6 +11,7 @@ import numpy as np
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator
 from ..neighbors import NearestNeighbors
+from sklearn.externals import six
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
@@ -193,7 +194,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
+    bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if \
                           freq >= min_bin_freq], dtype=np.float32)
     bin_seeds = bin_seeds * bin_size
     return bin_seeds

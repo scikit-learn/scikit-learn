@@ -567,7 +567,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                     weights=1. - scaling * rng.random_integers(0,
                                     1, size=(n_features,)),
                     eps=eps)
-            for k in xrange(n_resampling))
+            for k in range(n_resampling))
 
     all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values

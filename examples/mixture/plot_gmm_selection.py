@@ -14,7 +14,8 @@ Unlike Bayesian procedures, such inferences are prior-free.
 In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import itertools
 
@@ -36,7 +37,7 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
 
 lowest_bic = np.infty
 bic = []
-n_components_range = range(1, 7)
+n_components_range = list(range(1, 7))
 cv_types = ['spherical', 'tied', 'diag', 'full']
 for cv_type in cv_types:
     for n_components in n_components_range:

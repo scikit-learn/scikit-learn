@@ -13,8 +13,9 @@ to set C and gamma in an RBF-Kernel SVM.
 
 We use a logarithmic grid for both parameters.
 """
+from __future__ import print_function
 
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

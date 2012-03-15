@@ -160,7 +160,7 @@ class GMMTester():
         g.covars_ = self.covars[self.covariance_type]
         g.weights_ = self.weights
 
-        gaussidx = np.repeat(range(self.n_components), 5)
+        gaussidx = np.repeat(list(range(self.n_components)), 5)
         n_samples = len(gaussidx)
         X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 
@@ -203,7 +203,7 @@ class GMMTester():
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
-        for iter in xrange(5):
+        for iter in range(5):
             g.fit(X, n_iter=1, params=params, init_params='')
             trainll.append(self.score(g, X))
         g.fit(X, n_iter=10, params=params, init_params='')  # finish fitting

@@ -61,7 +61,8 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD
@@ -80,8 +81,8 @@ from sklearn import cluster, covariance, manifold
 
 # Choose a time period reasonnably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime.datetime(2003, 01, 01)
-d2 = datetime.datetime(2008, 01, 01)
+d1 = datetime.datetime(2003, 0o1, 0o1)
+d2 = datetime.datetime(2008, 0o1, 0o1)
 
 symbol_dict = {
         'TOT': 'Total',
@@ -175,7 +176,7 @@ _, labels = cluster.affinity_propagation(edge_model.covariance_)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):
-    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
+    print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
 ###############################################################################
 # Find a low-dimension embedding for visualization: find the best position of

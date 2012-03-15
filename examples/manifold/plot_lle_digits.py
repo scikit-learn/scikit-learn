@@ -5,13 +5,14 @@ Manifold learning on handwritten digits: Locally Linear Embedding, Isomap...
 
 An illustration of various embeddings on the digits dataset.
 """
+from __future__ import print_function
 
 # Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD, (C) INRIA 2011
 
-print __doc__
+print(__doc__)
 from time import time
 
 import numpy as np
@@ -75,7 +76,7 @@ pl.title('A selection from the 64-dimensional digits dataset')
 
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
-print "Computing random projection"
+print("Computing random projection")
 rng = np.random.RandomState(42)
 Q, _ = qr_economic(rng.normal(size=(n_features, 2)))
 X_projected = np.dot(Q.T, X.T).T
@@ -85,7 +86,7 @@ plot_embedding(X_projected, "Random Projection of the digits")
 #----------------------------------------------------------------------
 # Projection on to the first 2 principal components
 
-print "Computing PCA projection"
+print("Computing PCA projection")
 t0 = time()
 X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
 plot_embedding(X_pca,
@@ -95,7 +96,7 @@ plot_embedding(X_pca,
 #----------------------------------------------------------------------
 # Projection on to the first 2 linear discriminant components
 
-print "Computing LDA projection"
+print("Computing LDA projection")
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
@@ -107,10 +108,10 @@ plot_embedding(X_lda,
 
 #----------------------------------------------------------------------
 # Isomap projection of the digits dataset
-print "Computing Isomap embedding"
+print("Computing Isomap embedding")
 t0 = time()
 X_iso = manifold.Isomap(n_neighbors, out_dim=2).fit_transform(X)
-print "Done."
+print("Done.")
 plot_embedding(X_iso,
     "Isomap projection of the digits (time %.2fs)" %
     (time() - t0))
@@ -118,12 +119,12 @@ plot_embedding(X_iso,
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
-print "Computing LLE embedding"
+print("Computing LLE embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
                                       method='standard')
 t0 = time()
 X_lle = clf.fit_transform(X)
-print "Done. Reconstruction error: %g" % clf.reconstruction_error_
+print("Done. Reconstruction error: %g" % clf.reconstruction_error_)
 plot_embedding(X_lle,
     "Locally Linear Embedding of the digits (time %.2fs)" %
     (time() - t0))
@@ -131,12 +132,12 @@ plot_embedding(X_lle,
 
 #----------------------------------------------------------------------
 # Modified Locally linear embedding of the digits dataset
-print "Computing modified LLE embedding"
+print("Computing modified LLE embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
                                       method='modified')
 t0 = time()
 X_mlle = clf.fit_transform(X)
-print "Done. Reconstruction error: %g" % clf.reconstruction_error_
+print("Done. Reconstruction error: %g" % clf.reconstruction_error_)
 plot_embedding(X_mlle,
     "Modified Locally Linear Embedding of the digits (time %.2fs)" %
     (time() - t0))
@@ -144,12 +145,12 @@ plot_embedding(X_mlle,
 
 #----------------------------------------------------------------------
 # HLLE embedding of the digits dataset
-print "Computing Hessian LLE embedding"
+print("Computing Hessian LLE embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
                                       method='hessian')
 t0 = time()
 X_hlle = clf.fit_transform(X)
-print "Done. Reconstruction error: %g" % clf.reconstruction_error_
+print("Done. Reconstruction error: %g" % clf.reconstruction_error_)
 plot_embedding(X_hlle,
     "Hessian Locally Linear Embedding of the digits (time %.2fs)" %
     (time() - t0))
@@ -157,12 +158,12 @@ plot_embedding(X_hlle,
 
 #----------------------------------------------------------------------
 # LTSA embedding of the digits dataset
-print "Computing LTSA embedding"
+print("Computing LTSA embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
                                       method='ltsa')
 t0 = time()
 X_ltsa = clf.fit_transform(X)
-print "Done. Reconstruction error: %g" % clf.reconstruction_error_
+print("Done. Reconstruction error: %g" % clf.reconstruction_error_)
 plot_embedding(X_ltsa,
     "Local Tangent Space Alignment of the digits (time %.2fs)" %
     (time() - t0))

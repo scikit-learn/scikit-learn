@@ -9,10 +9,11 @@ with various manifold learning methods.
 For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
 """
+from __future__ import print_function
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
 
-print __doc__
+print(__doc__)
 
 from time import time
 
@@ -49,7 +50,7 @@ for i, method in enumerate(methods):
                                         eigen_solver='auto',
                                         method=method).fit_transform(X)
     t1 = time()
-    print "%s: %.2g sec" % (methods[i], t1 - t0)
+    print("%s: %.2g sec" % (methods[i], t1 - t0))
 
     ax = fig.add_subplot(232 + i)
     pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
@@ -61,7 +62,7 @@ for i, method in enumerate(methods):
 t0 = time()
 Y = manifold.Isomap(n_neighbors, out_dim).fit_transform(X)
 t1 = time()
-print "Isomap: %.2g sec" % (t1 - t0)
+print("Isomap: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(236)
 pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.title("Isomap (%.2g sec)" % (t1 - t0))

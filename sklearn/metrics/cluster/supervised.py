@@ -246,10 +246,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     n_C = [float(np.sum(labels_true == c)) for c in classes]
     n_K = [float(np.sum(labels_pred == k)) for k in clusters]
 
-    for i in xrange(len(classes)):
+    for i in range(len(classes)):
         entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
 
-    for j in xrange(len(clusters)):
+    for j in range(len(clusters)):
         entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
 
     for i, c in enumerate(classes):

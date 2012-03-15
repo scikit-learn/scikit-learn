@@ -2,6 +2,7 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
+from __future__ import print_function
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -132,7 +133,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     if verbose:
         if verbose > 1:
-            print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
+            print("Step\t\tAdded\t\tDropped\t\tActive set size\t\tC")
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -203,8 +204,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             n_active += 1
 
             if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
-                                                            n_active, C)
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
+                                                            n_active, C))
+
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
@@ -303,8 +305,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-                                                      n_active, abs(temp))
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
+                                                      n_active, abs(temp)))
 
     # resize coefs in case of early stop
     alphas = alphas[:n_iter + 1]

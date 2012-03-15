@@ -11,8 +11,9 @@ Three binary and two multi-class classification datasets
 are generated, with different numbers of informative
 features and clusters per class.
 """
+from __future__ import print_function
 
-print __doc__
+print(__doc__)
 
 import pylab as pl
 

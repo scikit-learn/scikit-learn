@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
@@ -324,7 +325,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Maximum Likelihood Estimation of the parameters
             if self.verbose:
                 print("Performing Maximum Likelihood Estimation of the "
-                    + "autocorrelation parameters...")
+                      + "autocorrelation parameters...")
             self.theta, self.reduced_likelihood_function_value, par = \
                 self.arg_max_reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value):
@@ -335,7 +336,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Given parameters
             if self.verbose:
                 print("Given autocorrelation parameters. "
-                    + "Computing Gaussian Process model parameters...")
+                      + "Computing Gaussian Process model parameters...")
             self.theta = self.theta0
             self.reduced_likelihood_function_value, par = \
                 self.reduced_likelihood_function()
@@ -354,7 +355,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # (it is required only when MSE is wanted in self.predict)
             if self.verbose:
                 print("Light storage mode specified. "
-                    + "Flushing autocorrelation matrix...")
+                      + "Flushing autocorrelation matrix...")
             self.D = None
             self.ij = None
             self.F = None
@@ -440,8 +441,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Light storage mode (need to recompute C, F, Ft and G)
                     if self.verbose:
                         print("This GaussianProcess used 'light' storage mode "
-                            + "at instanciation. Need to recompute "
-                            + "autocorrelation matrix...")
+                              "at instanciation. Need to recompute "
+                              "autocorrelation matrix...")
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
                     self.C = par['C']
@@ -659,9 +660,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         best_optimal_par = []
 
         if self.verbose:
-            print "The chosen optimizer is: " + str(self.optimizer)
+            print("The chosen optimizer is: " + str(self.optimizer))
             if self.random_start > 1:
-                print str(self.random_start) + " random starts are required."
+                print(str(self.random_start) + " random starts are required.")
 
         percent_completed = 0.
 
@@ -718,7 +719,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print "%s completed" % (5 * percent_completed)
+                        print("%s completed" % (5 * percent_completed))
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -748,9 +749,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Iterate over all dimensions of theta allowing for anisotropy
             if verbose:
                 print("Now improving allowing for anisotropy...")
-            for i in np.random.permutation(range(theta0.size)):
+            for i in np.random.permutation(list(range(theta0.size))):
                 if verbose:
-                    print "Proceeding along dimension %d..." % (i + 1)
+                    print("Proceeding along dimension %d..." % (i + 1))
                 self.theta0 = array2d(theta_iso)
                 self.thetaL = array2d(thetaL[0, i])
                 self.thetaU = array2d(thetaU[0, i])

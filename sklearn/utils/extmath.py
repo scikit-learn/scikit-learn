@@ -118,7 +118,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
 
     # perform power iterations with Y to further 'imprint' the top
     # singular vectors of A in Y
-    for i in xrange(n_iterations):
+    for i in range(n_iterations):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples

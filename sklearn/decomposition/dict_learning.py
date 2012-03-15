@@ -1,5 +1,6 @@
 """ Dictionary learning
 """
+from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD
 
@@ -136,7 +137,7 @@ def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         new_code = np.empty((n_samples, n_atoms))
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=1000)
-        for k in xrange(n_samples):
+        for k in range(n_samples):
             # A huge amount of time is spent in this loop. It needs to be
             # tight
 
@@ -151,7 +152,7 @@ def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         try:
             new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in xrange(n_samples):
+            for k in range(n_samples):
                 # A huge amount of time is spent in this loop. It needs to be
                 # tight.
                 _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
@@ -335,7 +336,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     R += Y
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    for k in xrange(n_atoms):
+    for k in range(n_atoms):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
         dictionary[:, k] = np.dot(R, code[k, :].T)
@@ -346,7 +347,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 sys.stdout.write("+")
                 sys.stdout.flush()
             elif verbose:
-                print "Adding new random atom"
+                print("Adding new random atom")
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
@@ -481,17 +482,17 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     current_cost = np.nan
 
     if verbose == 1:
-        print '[dict_learning]',
+        print('[dict_learning]', end=' ')
 
-    for ii in xrange(max_iter):
+    for ii in range(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            print ("Iteration % 3i "
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
-                    (ii, dt, dt / 60, current_cost))
+            print("Iteration % 3i "
+                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
+                  (ii, dt, dt / 60, current_cost))
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
@@ -512,9 +513,9 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
             if dE < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
-                    print ""
+                    print("")
                 elif verbose:
-                    print "--- Convergence reached after %d iterations" % ii
+                    print("--- Convergence reached after %d iterations" % ii)
                 break
         if ii % 5 == 0 and callback is not None:
             callback(locals())
@@ -633,7 +634,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
-        print '[dict_learning]',
+        print('[dict_learning]', end=' ')
 
     n_batches = floor(float(len(X)) / chunk_size)
     if shuffle:
@@ -649,7 +650,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     # The data approximation
     B = np.zeros((n_features, n_atoms))
 
-    for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
+    for ii, this_X in itertools.izip(range(iter_offset, iter_offset + n_iter),
                                      batches):
         dt = (time.time() - t0)
         if verbose == 1:
@@ -657,8 +658,8 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
-                    (ii, dt, dt / 60))
+                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
+                      (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha).T
@@ -687,14 +688,14 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
     if return_code:
         if verbose > 1:
-            print 'Learning code...',
+            print('Learning code...', end=' ')
         elif verbose == 1:
-            print '|',
+            print('|', end=' ')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
                              n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
-            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
+            print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
         return code, dictionary.T
 
     return dictionary.T

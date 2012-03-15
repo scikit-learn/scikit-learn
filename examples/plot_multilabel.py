@@ -25,7 +25,8 @@ SVCs with linear kernels to learn a discriminative model for each class.
 Note that PCA is used to perform an unsupervised dimensionality reduction,
 while CCA is used to perform a supervised one.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import matplotlib.pylab as pl

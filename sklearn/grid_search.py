@@ -2,6 +2,7 @@
 The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
 of an estimator.
 """
+from __future__ import print_function
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
@@ -18,6 +19,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import deprecated
+from sklearn.externals import six
 
 
 class IterGrid(object):
@@ -75,8 +77,8 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                     for k, v in clf_params.iteritems()))
-        print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
+                                     for k, v in six.iteritems(clf_params)))
+        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # update parameters of the classifier after a copy of its base structure
     # FIXME we should be doing a clone here
@@ -143,7 +145,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
                                                        start_time))
-        print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
+        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
     return this_score, clf, this_n_test_samples
 
 

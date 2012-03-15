@@ -390,7 +390,7 @@ class GMM(BaseEstimator):
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
-        for comp in xrange(self.n_components):
+        for comp in range(self.n_components):
             # occurrences of current component in X
             comp_in_X = (comp == comps)
             # number of those occurrences
@@ -474,7 +474,7 @@ class GMM(BaseEstimator):
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
-            for i in xrange(n_iter):
+            for i in range(n_iter):
                 # Expectation step
                 curr_log_likelihood, responsibilities = self.eval(X)
                 log_likelihood.append(curr_log_likelihood.sum())
@@ -707,7 +707,7 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
     # Distribution"
     n_features = X.shape[1]
     cv = np.empty((gmm.n_components, n_features, n_features))
-    for c in xrange(gmm.n_components):
+    for c in range(gmm.n_components):
         post = responsibilities[:, c]
         # Underflow Errors in doing post * X.T are  not important
         np.seterr(under='ignore')

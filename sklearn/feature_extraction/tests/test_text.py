@@ -1,3 +1,131 @@
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
 import warnings
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
@@ -46,7 +174,7 @@ def uppercase(s):
 
 
 def strip_eacute(s):
-    return s.replace(u'\xe9', u'e')
+    return s.replace('\xe9', 'e')
 
 
 def split_tokenize(s):
@@ -59,77 +187,77 @@ def lazy_analyze(s):
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
-    a = u'\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
-    expected = u'aaaaaaceeee'
+    a = '\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    expected = 'aaaaaaceeee'
     assert_equal(strip_accents_unicode(a), expected)
 
-    a = u'\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
-    expected = u'iiiinooooouuuuy'
+    a = '\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_unicode(a), expected)
 
     # check some arabic
-    a = u'\u0625'  # halef with a hamza below
-    expected = u'\u0627'  # simple halef
+    a = '\u0625'  # halef with a hamza below
+    expected = '\u0627'  # simple halef
     assert_equal(strip_accents_unicode(a), expected)
 
     # mix letters accentuated and not
-    a = u"this is \xe0 test"
-    expected = u'this is a test'
+    a = "this is \xe0 test"
+    expected = 'this is a test'
     assert_equal(strip_accents_unicode(a), expected)
 
 
 def test_to_ascii():
     # check some classical latin accentuated symbols
-    a = u'\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
-    expected = u'aaaaaaceeee'
+    a = '\xe0\xe1\xe2\xe3\xe4\xe5\xe7\xe8\xe9\xea\xeb'
+    expected = 'aaaaaaceeee'
     assert_equal(strip_accents_ascii(a), expected)
 
-    a = u'\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
-    expected = u'iiiinooooouuuuy'
+    a = '\xec\xed\xee\xef\xf1\xf2\xf3\xf4\xf5\xf6\xf9\xfa\xfb\xfc\xfd'
+    expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_ascii(a), expected)
 
     # check some arabic
-    a = u'\u0625'  # halef with a hamza below
-    expected = u''  # halef has no direct ascii match
+    a = '\u0625'  # halef with a hamza below
+    expected = ''  # halef has no direct ascii match
     assert_equal(strip_accents_ascii(a), expected)
 
     # mix letters accentuated and not
-    a = u"this is \xe0 test"
-    expected = u'this is a test'
+    a = "this is \xe0 test"
+    expected = 'this is a test'
     assert_equal(strip_accents_ascii(a), expected)
 
 
 def test_word_analyzer_unigrams():
     wa = CountVectorizer(strip_accents='ascii').build_analyzer()
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
-                u'etait', u'pas', u'tres', u'bon']
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
+                'etait', 'pas', 'tres', 'bon']
     assert_equal(wa(text), expected)
 
     text = "This is a test, really.\n\n I met Harry yesterday."
-    expected = [u'this', u'is', u'test', u'really', u'met', u'harry',
-                u'yesterday']
+    expected = ['this', 'is', 'test', 'really', 'met', 'harry',
+                'yesterday']
     assert_equal(wa(text), expected)
 
     wa = CountVectorizer(input='file').build_analyzer()
     text = StringIO("This is a test with a file-like object!")
-    expected = [u'this', u'is', u'test', u'with', u'file', u'like',
-                u'object']
+    expected = ['this', 'is', 'test', 'with', 'file', 'like',
+                'object']
     assert_equal(wa(text), expected)
 
     # with custom preprocessor
     wa = CountVectorizer(preprocessor=uppercase).build_analyzer()
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'AI', u'MANGE', u'DU', u'KANGOUROU', u'CE', u'MIDI',
-                u'ETAIT', u'PAS', u'TRES', u'BON']
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
+                'ETAIT', 'PAS', 'TRES', 'BON']
     assert_equal(wa(text), expected)
 
     # with custom tokenizer
     wa = CountVectorizer(tokenizer=split_tokenize,
                          strip_accents='ascii').build_analyzer()
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u"j'ai", u'mange', u'du', u'kangourou', u'ce', u'midi,',
-                u"c'etait", u'pas', u'tres', u'bon.']
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
+                "c'etait", 'pas', 'tres', 'bon.']
     assert_equal(wa(text), expected)
 
 
@@ -137,18 +265,18 @@ def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          min_n=1, max_n=2).build_analyzer()
 
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
-                u'pas', u'tres', u'bon', u'ai mange', u'mange du',
-                u'du kangourou', u'kangourou ce', u'ce midi', u'midi etait',
-                u'etait pas', u'pas tres', u'tres bon']
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi', 'etait',
+                'pas', 'tres', 'bon', 'ai mange', 'mange du',
+                'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
+                'etait pas', 'pas tres', 'tres bon']
     assert_equal(wa(text), expected)
 
 
 def test_unicode_decode_error():
     # decode_error default to strict, so this should fail
     # First, encode (as bytes) a unicode string.
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
@@ -165,23 +293,23 @@ def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
                            min_n=3, max_n=6).build_analyzer()
 
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
-    expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
+    expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
     assert_equal(cnga(text)[:5], expected)
-    expected = [u's tres', u' tres ', u'tres b', u'res bo', u'es bon']
+    expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
     assert_equal(cnga(text)[-5:], expected)
 
     text = "This \n\tis a test, really.\n\n I met Harry yesterday"
-    expected = [u'thi', u'his', u'is ', u's i', u' is']
+    expected = ['thi', 'his', 'is ', 's i', ' is']
     assert_equal(cnga(text)[:5], expected)
 
-    expected = [u' yeste', u'yester', u'esterd', u'sterda', u'terday']
+    expected = [' yeste', 'yester', 'esterd', 'sterda', 'terday']
     assert_equal(cnga(text)[-5:], expected)
 
     cnga = CountVectorizer(input='file', analyzer='char',
                            min_n=3, max_n=6).build_analyzer()
     text = StringIO("This is a test with a file-like object!")
-    expected = [u'thi', u'his', u'is ', u's i', u' is']
+    expected = ['thi', 'his', 'is ', 's i', ' is']
     assert_equal(cnga(text)[:5], expected)
 
 
@@ -292,7 +420,7 @@ def test_vectorizer():
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
-    assert_equal(counts_train[0, v1.vocabulary_[u"pizza"]], 2)
+    assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
     v2 = CountVectorizer(vocabulary=v1.vocabulary_)
@@ -304,24 +432,24 @@ def test_vectorizer():
             counts_test = counts_test.tocsr()
 
         vocabulary = v.vocabulary_
-        assert_equal(counts_test[0, vocabulary[u"salad"]], 1)
-        assert_equal(counts_test[0, vocabulary[u"tomato"]], 1)
-        assert_equal(counts_test[0, vocabulary[u"water"]], 1)
+        assert_equal(counts_test[0, vocabulary["salad"]], 1)
+        assert_equal(counts_test[0, vocabulary["tomato"]], 1)
+        assert_equal(counts_test[0, vocabulary["water"]], 1)
 
         # stop word from the fixed list
-        assert_false(u"the" in vocabulary)
+        assert_false("the" in vocabulary)
 
         # stop word found automatically by the vectorizer DF thresholding
         # words that are high frequent across the complete corpus are likely
         # to be not informative (either real stop words of extraction
         # artifacts)
-        assert_false(u"copyright" in vocabulary)
+        assert_false("copyright" in vocabulary)
 
         # not present in the sample
-        assert_equal(counts_test[0, vocabulary[u"coke"]], 0)
-        assert_equal(counts_test[0, vocabulary[u"burger"]], 0)
-        assert_equal(counts_test[0, vocabulary[u"beer"]], 0)
-        assert_equal(counts_test[0, vocabulary[u"pizza"]], 0)
+        assert_equal(counts_test[0, vocabulary["coke"]], 0)
+        assert_equal(counts_test[0, vocabulary["burger"]], 0)
+        assert_equal(counts_test[0, vocabulary["beer"]], 0)
+        assert_equal(counts_test[0, vocabulary["pizza"]], 0)
 
     # test tf-idf
     t1 = TfidfTransformer(norm='l1')
@@ -393,21 +521,21 @@ def test_vectorizer_max_features():
 
 
 def test_vectorizer_max_df():
-    test_data = [u'abc', u'dea']  # the letter a occurs in both strings
+    test_data = ['abc', 'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0)
     vect.fit(test_data)
-    assert_true(u'a' in vect.vocabulary_.keys())
+    assert_true('a' in vect.vocabulary_.keys())
     assert_equals(len(vect.vocabulary_.keys()), 5)
 
     vect.max_df = 0.5
     vect.fit(test_data)
-    assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
+    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equals(len(vect.vocabulary_.keys()), 4)  # the others remain
 
 
 def test_binary_occurrences():
     # by default multiple occurrences are counted as longs
-    test_data = [u'aaabc', u'abbde']
+    test_data = ['aaabc', 'abbde']
     vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())

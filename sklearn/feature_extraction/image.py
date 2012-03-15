@@ -260,7 +260,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     else:
         n_patches = all_patches
         patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
-        for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
+        for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
             p[:] = image[i:i + p_h, j:j + p_w, :]
 
     # remove the color dimension if useless
@@ -301,11 +301,11 @@ def reconstruct_from_patches_2d(patches, image_size):
     # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
-    for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
+    for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
         img[i:i + p_h, j:j + p_w] += p
 
-    for i in xrange(i_h):
-        for j in xrange(i_w):
+    for i in range(i_h):
+        for j in range(i_w):
             # divide by the amount of overlap
             # XXX: is this the most efficient way? memory-wise yes, cpu wise?
             img[i, j] /= float(min(i + 1, p_h, i_h - i) *

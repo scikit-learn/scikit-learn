@@ -40,7 +40,8 @@ Here is a sample output of a run on a quad-core machine::
       vect__max_features: 50000
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -72,13 +73,13 @@ categories = [
 # Uncomment the following to do the analysis on all the categories
 #categories = None
 
-print "Loading 20 newsgroups dataset for categories:"
-print categories
+print("Loading 20 newsgroups dataset for categories:")
+print(categories)
 
 data = fetch_20newsgroups(subset='train', categories=categories)
-print "%d documents" % len(data.filenames)
-print "%d categories" % len(data.target_names)
-print
+print("%d documents" % len(data.filenames))
+print("%d categories" % len(data.target_names))
+print()
 
 ###############################################################################
 # define a pipeline combining a text feature extractor with a simple
@@ -110,17 +111,17 @@ if __name__ == "__main__":
     # classifier
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
 
-    print "Performing grid search..."
-    print "pipeline:", [name for name, _ in pipeline.steps]
-    print "parameters:"
+    print("Performing grid search...")
+    print("pipeline:", [name for name, _ in pipeline.steps])
+    print("parameters:")
     pprint(parameters)
     t0 = time()
     grid_search.fit(data.data, data.target)
-    print "done in %0.3fs" % (time() - t0)
-    print
+    print("done in %0.3fs" % (time() - t0))
+    print()
 
-    print "Best score: %0.3f" % grid_search.best_score
-    print "Best parameters set:"
+    print("Best score: %0.3f" % grid_search.best_score)
+    print("Best parameters set:")
     best_parameters = grid_search.best_estimator.get_params()
     for param_name in sorted(parameters.keys()):
-        print "\t%s: %r" % (param_name, best_parameters[param_name])
+        print("\t%s: %r" % (param_name, best_parameters[param_name]))

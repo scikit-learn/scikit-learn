@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
@@ -481,9 +482,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
             if verbose > 2:
-                print model
+                print(model)
             elif verbose > 1:
-                print 'Path: %03i out of %03i' % (i, n_alphas)
+                print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()

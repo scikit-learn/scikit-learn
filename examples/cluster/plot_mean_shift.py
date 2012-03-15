@@ -10,7 +10,8 @@ feature space analysis". IEEE Transactions on Pattern Analysis and
 Machine Intelligence. 2002. pp. 603-619.
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -35,7 +36,7 @@ cluster_centers = ms.cluster_centers_
 labels_unique = np.unique(labels)
 n_clusters_ = len(labels_unique)
 
-print "number of estimated clusters : %d" % n_clusters_
+print("number of estimated clusters : %d" % n_clusters_)
 
 ###############################################################################
 # Plot result
@@ -46,7 +47,7 @@ pl.figure(1)
 pl.clf()
 
 colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-for k, col in zip(range(n_clusters_), colors):
+for k, col in zip(list(range(n_clusters_)), colors):
     my_members = labels == k
     cluster_center = cluster_centers[k]
     pl.plot(X[my_members, 0], X[my_members, 1], col + '.')

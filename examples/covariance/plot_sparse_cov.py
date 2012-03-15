@@ -48,7 +48,8 @@ set by internal cross-validation in the GraphLassoCV. As can be
 seen on figure 2, the grid to compute the cross-validation score is
 iteratively refined in the neighborhood of the maximum.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
 # License: BSD Style
 # Copyright: INRIA
