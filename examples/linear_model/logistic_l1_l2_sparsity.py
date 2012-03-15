@@ -19,12 +19,12 @@ print __doc__
 import numpy as np
 
 from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import load_boston
 from sklearn import datasets
 
-# FIXME: the iris dataset has only 4 features!
-iris = datasets.load_iris()
-X = iris.data
-y = iris.target
+boston = datasets.load_boston()
+X = boston.data
+y = boston.target
 
 # Set regularization parameter
 for C in (0.1, 1, 10):

@@ -7,18 +7,11 @@ Lasso regression example
 print __doc__
 
 import numpy as np
+from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 
 ###############################################################################
 # generate some sparse data to play with
-
-n_samples, n_features = 50, 200
-X = np.random.randn(n_samples, n_features)
-coef = 3 * np.random.randn(n_features)
-coef[10:] = 0  # sparsify coef
-y = np.dot(X, coef)
-
-# add noise
-y += 0.01 * np.random.normal((n_samples,))
+X, y = make_sparse_uncorrelated(random_state=0)
 
 # Split data in train set and test set
 n_samples = X.shape[0]
