@@ -225,13 +225,14 @@ div.sphinxsidebar {
     width: 200px;
     float: left;
     margin-left: 0;
+    margin-right: 0;
     background-color: inherit;
     border-top-left-radius: 15px;
     -moz-border-radius:15px;
     border-top-width: 0;
     border-left-width: 0;
     border-bottom-width: 0;
-    margin-top: 5px;
+    margin-top: 0;
 }
 
 div.sphinxsidebar h3 {
@@ -247,6 +248,17 @@ div.sphinxsidebar {
     font-size: 80%;
     line-height: 1.5em;
 }
+
+div.sphinxsidebarwrapper {
+    padding: 0 0 0 0;
+}
+
+{% if theme_collapsiblesidebar|tobool %}
+/* for collapsible sidebar */
+div#sidebarbutton {
+    background-color: #F0F0F0;
+}
+{% endif %}
 
 
 input {
@@ -298,6 +310,12 @@ div.body h2,
 div.body h3 {
     text-align: left;
 }
+
+div.bodywrapper {
+    margin: 0 0 0 0;
+    
+}
+
 
 div.bodywrapper h1 {
     margin: 0 -10px 0 -10px;

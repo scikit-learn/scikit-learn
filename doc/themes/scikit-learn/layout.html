@@ -5,10 +5,17 @@
     Layout for scikit-learn, after a design made by Angel Soler
     (http://webylimonada.org)
 
+    Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
+
+
     :copyright: Fabian Pedregosa
     :license: BSD
 #}
 {% extends "basic/layout.html" %}
+
+{% if theme_collapsiblesidebar|tobool %}
+{% set script_files = script_files + ['_static/sidebar.js'] %}
+{% endif %}
 
 {% block extrahead %}
 <script type="text/javascript">
@@ -85,12 +92,12 @@
 {% block content %}
     <div class="content-wrapper">
 
-    <div class="sphinxsidebar">
-
-    {%- if pagename != 'index' %}
-	{%- if parents %}
-	<div class="rel">
-	{% else %}
+      <div class="sphinxsidebar">
+	<div class="sphinxsidebarwrapper">
+	  {%- if pagename != 'index' %}
+	  {%- if parents %}
+	  <div class="rel">
+	   {% else %}
 	<div class="rel rellarge">
 	{% endif %}
 	<!-- rellinks[1:] is an ugly hack to avoid link to module
@@ -188,6 +195,8 @@
 	{{ toc }}
     {% endif %}
     </div>
+	  </div>
+
 
       <div class="content">
           {%- block document %}
@@ -196,6 +205,7 @@
         <div class="clearer"></div>
       </div>
     </div>
+  
 {% endblock %}
 
 
@@ -226,3 +236,5 @@
     {%- endif %}
     </div>
 {%- endblock %}
+
+
