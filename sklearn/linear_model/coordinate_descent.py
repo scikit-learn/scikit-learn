@@ -665,9 +665,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
             if verbose > 2:
-                print model
+                print(model)
             elif verbose > 1:
-                print 'Path: %03i out of %03i' % (i, n_alphas)
+                print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
@@ -1100,10 +1100,10 @@ class MultiTaskElasticNet(Lasso):
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
             l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
             warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     [ 0.0872422  0.0872422]
 
     See also
@@ -1260,10 +1260,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
             normalize=False, tol=0.0001, warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [[ 0.89393398  0.        ]
      [ 0.89393398  0.        ]]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     [ 0.10606602  0.10606602]
 
     See also

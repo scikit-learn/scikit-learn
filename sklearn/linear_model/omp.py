@@ -66,7 +66,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     residual = y
     gamma = np.empty(0)
     n_active = 0
-    indices = range(X.shape[1])  # keeping track of swapping
+    indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=X.dtype)
@@ -155,7 +155,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (Gram,))
     potrs, = get_lapack_funcs(('potrs',), (Gram,))
 
-    indices = range(len(Gram))  # keeping track of swapping
+    indices = np.arange(len(Gram))  # keeping track of swapping
     alpha = Xy
     tol_curr = tol_0
     delta = 0
@@ -298,7 +298,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
                                   copy_Gram=copy_X, copy_Xy=False)
 
     coef = np.zeros((X.shape[1], y.shape[1]))
-    for k in xrange(y.shape[1]):
+    for k in range(y.shape[1]):
         x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
                                copy_X=copy_X)
         coef[idx, k] = x

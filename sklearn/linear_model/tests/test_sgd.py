@@ -466,7 +466,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         """Test if ValueError is raised if sample_weight has wrong shape"""
         clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
         # provided sample_weight too long
-        clf.fit(X, Y, sample_weight=range(7))
+        clf.fit(X, Y, sample_weight=np.arange(7))
 
     @raises(ValueError)
     def test_partial_fit_exception(self):

@@ -123,7 +123,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     W[:, 0] = np.sqrt(S[0]) * np.abs(U[:, 0])
     H[0, :] = np.sqrt(S[0]) * np.abs(V[0, :])
 
-    for j in xrange(1, n_components):
+    for j in range(1, n_components):
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
@@ -209,13 +209,13 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
     # values justified in the paper
     alpha = 1
     beta = 0.1
-    for n_iter in xrange(1, max_iter + 1):
+    for n_iter in range(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
         proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
         if proj_gradient < tol:
             break
 
-        for inner_iter in xrange(1, 20):
+        for inner_iter in range(1, 20):
             Hn = H - alpha * grad
             # Hn = np.where(Hn > 0, Hn, 0)
             Hn = _pos(Hn)
@@ -489,7 +489,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
 
-        for n_iter in xrange(1, self.max_iter + 1):
+        for n_iter in range(1, self.max_iter + 1):
             # stopping condition
             # as discussed in paper
             proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
@@ -562,7 +562,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         """
         X = atleast2d_or_csr(X)
         W = np.zeros((X.shape[0], self.n_components))
-        for j in xrange(0, X.shape[0]):
+        for j in range(0, X.shape[0]):
             W[j, :], _ = nnls(self.components_.T, X[j, :])
         return W
 

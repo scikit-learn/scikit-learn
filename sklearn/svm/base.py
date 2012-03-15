@@ -31,10 +31,10 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     # would have to take care in the sparse case
     coef = []
     sv_locs = np.cumsum(np.hstack([[0], n_support]))
-    for class1 in xrange(n_class):
+    for class1 in range(n_class):
         # SVs for class1:
         sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]
-        for class2 in xrange(class1 + 1, n_class):
+        for class2 in range(class1 + 1, n_class):
             # SVs for class1:
             sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]
 

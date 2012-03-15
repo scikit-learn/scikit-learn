@@ -176,7 +176,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
-        for i in xrange(np.size(self.classes_)):
+        for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /

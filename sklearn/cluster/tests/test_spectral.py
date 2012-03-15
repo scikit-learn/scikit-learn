@@ -1,6 +1,7 @@
 """Testing for Spectral Clustering methods"""
 
-from cPickle import dumps, loads
+from sklearn.externals.six.moves import cPickle
+dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
 from scipy import sparse

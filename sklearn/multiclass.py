@@ -440,7 +440,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
-    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
+    Y = np.array([code_book[cls_idx[y[i]]] for i in range(X.shape[0])],
                  dtype=np.int)
 
     estimators = Parallel(n_jobs=n_jobs)(

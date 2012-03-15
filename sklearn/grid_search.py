@@ -2,6 +2,7 @@
 The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
 of an estimator.
 """
+from __future__ import print_function
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
@@ -80,8 +81,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in clf_params.iteritems()))
-        print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
+                      for k, v in clf_params.items()))
+        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
     # update parameters of the classifier after a copy of its base structure
     clf = clone(base_clf)
     clf.set_params(**clf_params)
@@ -134,7 +136,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
                                                        start_time))
-        print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
+        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
     return this_score, clf_params, _num_samples(X)
 
 
