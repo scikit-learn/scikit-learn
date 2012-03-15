@@ -255,7 +255,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                 C, 0., 0., shrinking, probability, cache_size, scale_C,
-                sparse="auto", class_weight=class_weight)
+                "auto", class_weight)
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
@@ -371,7 +371,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                 tol, 0., nu, 0., shrinking, probability, cache_size,
-                scale_C=True, sparse="auto", class_weight=None)
+                True, "auto", None)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -478,7 +478,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                 tol, C, 0., epsilon, shrinking, probability, cache_size,
-                scale_C, sparse="auto", class_weight=None)
+                scale_C, "auto", None)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -590,7 +590,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                 tol, C, nu, 0., shrinking, probability, cache_size, scale_C,
-                sparse="auto", class_weight=None)
+                "auto", None)
 
 
 class OneClassSVM(BaseLibSVM):
@@ -668,7 +668,7 @@ class OneClassSVM(BaseLibSVM):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
                 coef0, tol, 0., nu, 0., shrinking, False, cache_size,
-                scale_C=True, sparse="auto", class_weight=None)
+                True, "auto", None)
 
     def fit(self, X, sample_weight=None, **params):
         """

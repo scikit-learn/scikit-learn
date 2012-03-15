@@ -105,7 +105,7 @@ class SVR(SparseBaseLibSVM, RegressorMixin):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C, class_weight=None)
+                                  cache_size, scale_C, None)
 
 
 class NuSVR(SparseBaseLibSVM, RegressorMixin):
@@ -140,7 +140,7 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                 tol, C, nu, epsilon, shrinking, probability, cache_size,
-                scale_C, class_weight=None)
+                scale_C, None)
 
 
 class OneClassSVM(SparseBaseLibSVM):
