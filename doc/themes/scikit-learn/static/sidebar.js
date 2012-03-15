@@ -103,7 +103,7 @@ $(function() {
 	  viewport_height = $(window).height();
     sidebarbutton.find('span').css({
         'display': 'block',
-        'margin-top': (viewport_height - sidebar.position().top - 20) / 2
+        'margin-top': (viewport_height - sidebar.position().top + 60) / 2
     });
 
     sidebarbutton.click(toggle_sidebar);
