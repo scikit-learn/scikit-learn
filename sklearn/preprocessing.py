@@ -21,6 +21,10 @@ from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
 from .utils.sparsefuncs import inplace_csr_column_scale
 from .utils.sparsefuncs import mean_variance_axis0
+from .externals import six
+
+zip = six.moves.zip
+map = six.moves.map
 
 __all__ = ['Binarizer',
            'KernelCenterer',

@@ -398,12 +398,12 @@ def load_boston():
     data_file = csv.reader(open(join(module_path, 'data',
                                      'boston_house_prices.csv')))
     fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
-    temp = data_file.next()
+    temp = next(data_file)
     n_samples = int(temp[0])
     n_features = int(temp[1])
     data = np.empty((n_samples, n_features))
     target = np.empty((n_samples,))
-    temp = data_file.next()  # names of features
+    temp = next(data_file)  # names of features
     feature_names = np.array(temp)
 
     for i, d in enumerate(data_file):

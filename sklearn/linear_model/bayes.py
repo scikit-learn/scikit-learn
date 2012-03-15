@@ -1,6 +1,7 @@
 """
 Various bayesian regression
 """
+from __future__ import print_function
 
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
 # License: BSD 3 clause
@@ -206,7 +207,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             ### Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
-                    print "Convergence after ", str(iter_), " iterations"
+                    print("Convergence after ", str(iter_), " iterations")
                 break
             coef_old_ = np.copy(coef_)
 
@@ -419,7 +420,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             ### Check for convergence
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
-                    print "Converged after %s iterations" % iter_
+                    print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
 

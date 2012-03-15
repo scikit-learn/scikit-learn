@@ -449,7 +449,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
                                 sample_weight)
-            for i in xrange(len(self.classes_)))
+            for i in range(len(self.classes_)))
 
         for i, (coef, intercept) in enumerate(result):
             self.coef_[i] = coef

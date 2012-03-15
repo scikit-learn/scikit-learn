@@ -10,9 +10,14 @@
 import inspect
 import pkgutil
 
-import urllib2
 import scipy as sp
 from functools import wraps
+
+try:
+    from urllib2 import URLError, quote
+except ImportError:
+    from urllib.error import URLError
+    from urllib.parse import quote
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -122,9 +127,8 @@ def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     savemat(matfile, datasets, oned_as='column')
 
 
-class mock_urllib2(object):
-
-    def __init__(self, mock_datasets):
+class UrlopenMock(object):
+    def __init__(self, target_module, mock_datasets):
         """Object that mocks the urllib2 module to fake requests to mldata.
 
         `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
@@ -138,9 +142,19 @@ class mock_urllib2(object):
         returns it. Otherwise, it raises an URLError.
         """
         self.mock_datasets = mock_datasets
+        self.target_module = target_module
 
-    class HTTPError(urllib2.URLError):
+    class HTTPError(URLError):
         code = 404
+
+    def __enter__(self):
+        self._urlopen_ref = self.target_module.urlopen
+        self.target_module.urlopen = self.urlopen
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.target_module.urlopen = self._urlopen_ref
+        return False
 
     def urlopen(self, urlname):
         dataset_name = urlname.split('/')[-1]
@@ -158,10 +172,10 @@ class mock_urllib2(object):
             matfile.seek(0)
             return matfile
         else:
-            raise mock_urllib2.HTTPError('%s not found.' % urlname)
+            raise UrlopenMock.HTTPError('%s not found.' % urlname)
 
     def quote(self, string, safe='/'):
-        return urllib2.quote(string, safe)
+        return quote(string, safe)
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",

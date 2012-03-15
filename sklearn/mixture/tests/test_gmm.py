@@ -51,7 +51,7 @@ def _naive_lmvnpdf_diag(X, mu, cv):
     # slow and naive implementation of lmvnpdf
     ref = np.empty((len(X), len(mu)))
     stds = np.sqrt(cv)
-    for i, (m, std) in enumerate(itertools.izip(mu, stds)):
+    for i, (m, std) in enumerate(zip(mu, stds)):
         ref[:, i] = np.log(stats.norm.pdf(X, m, std)).sum(axis=1)
     return ref
 
@@ -162,7 +162,7 @@ class GMMTester():
         g.covars_ = self.covars[self.covariance_type]
         g.weights_ = self.weights
 
-        gaussidx = np.repeat(range(self.n_components), 5)
+        gaussidx = np.repeat(np.arange(self.n_components), 5)
         n_samples = len(gaussidx)
         X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 
@@ -206,7 +206,7 @@ class GMMTester():
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
-        for iter in xrange(5):
+        for iter in range(5):
             g.params = params
             g.init_params = ''
             g.fit(X)

@@ -346,7 +346,7 @@ def test_normalizer_l1():
         assert_true(isinstance(X_norm, sp.csr_matrix))
 
         X_norm = toarray(X_norm)
-        for i in xrange(3):
+        for i in range(3):
             assert_almost_equal(row_sums[i], 1.0)
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
@@ -381,7 +381,7 @@ def test_normalizer_l2():
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
-            for i in xrange(3):
+            for i in range(3):
                 assert_almost_equal(la.norm(X_norm[i]), 1.0)
             assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
@@ -394,7 +394,7 @@ def test_normalizer_l2():
         assert_true(isinstance(X_norm, sp.csr_matrix))
 
         X_norm = toarray(X_norm)
-        for i in xrange(3):
+        for i in range(3):
             assert_almost_equal(la.norm(X_norm[i]), 1.0)
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
 

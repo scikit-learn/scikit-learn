@@ -1,5 +1,6 @@
 """ Dictionary learning
 """
+from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD
 
@@ -15,6 +16,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.six.moves import zip
 from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -292,7 +294,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     R += Y
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    for k in xrange(n_components):
+    for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
         dictionary[:, k] = np.dot(R, code[k, :].T)
@@ -303,7 +305,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 sys.stdout.write("+")
                 sys.stdout.flush()
             elif verbose:
-                print "Adding new random atom"
+                print("Adding new random atom")
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
@@ -440,9 +442,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     current_cost = np.nan
 
     if verbose == 1:
-        print '[dict_learning]',
+        print('[dict_learning]', end=' ')
 
-    for ii in xrange(max_iter):
+    for ii in range(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -471,9 +473,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
             if dE < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
-                    print ""
+                    print("")
                 elif verbose:
-                    print "--- Convergence reached after %d iterations" % ii
+                    print("--- Convergence reached after %d iterations" % ii)
                 break
         if ii % 5 == 0 and callback is not None:
             callback(locals())
@@ -593,7 +595,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
-        print '[dict_learning]',
+        print('[dict_learning]', end=' ')
 
     n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
@@ -609,8 +611,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     # The data approximation
     B = np.zeros((n_features, n_components))
 
-    for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
-                                     batches):
+    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -647,14 +648,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     if return_code:
         if verbose > 1:
-            print 'Learning code...',
+            print('Learning code...', end=' ')
         elif verbose == 1:
-            print '|',
+            print('|', end=' ')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
                              n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
-            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
+            print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
         return code, dictionary.T
 
     return dictionary.T

@@ -144,7 +144,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     # Check early stopping
     if remaining_iterations == 0:
         if verbose:
-            print 'Maximum number of iterations reached'
+            print('Maximum number of iterations reached')
         det = fast_logdet(covariance)
         results = location, covariance, det, support, dist
 

@@ -1,6 +1,7 @@
 # Authors: Gilles Louppe, Mathieu Blondel
 # License: BSD
 
+import sys
 import numpy as np
 
 from ..base import TransformerMixin
