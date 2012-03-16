@@ -71,6 +71,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     Examples
     --------
+    >>> import os
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
@@ -79,8 +80,10 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> out_file = tree.export_graphviz(clf, out_file=tempfile.TemporaryFile())
-    >>> out_file.close()
+    >>> export_file = tree.export_graphviz(clf,
+    ...     out_file='test_export_graphvix.dot')
+    >>> export_file.close()
+    >>> os.unlink(export_file.name)
     """
     def node_to_str(tree, node_id):
         value = tree.value[node_id]
