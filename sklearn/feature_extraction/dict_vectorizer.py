@@ -8,6 +8,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import atleast2d_or_csr
 
 
 def _tosequence(X):
@@ -139,8 +140,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         D : list of dict_type objects, length = n_samples
             Feature mappings for the samples in X.
         """
-        if not sp.issparse(X):
-            X = np.atleast_2d(X)
+        X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
 
         names = self.get_feature_names()
         Xd = [dict_type() for _ in xrange(X.shape[0])]
@@ -177,23 +177,45 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         """
         X = _tosequence(X)
 
-        zeros = sp.lil_matrix if self.sparse else np.zeros
         dtype = self.dtype
         vocab = self.vocabulary_
 
-        Xa = zeros((len(X), len(vocab)), dtype=dtype)
+        if self.sparse:
+            i_ind = []
+            j_ind = []
+            values = []
 
-        for i, x in enumerate(X):
-            for f, v in x.iteritems():
-                if isinstance(v, basestring):
-                    f = "%s%s%s" % (f, self.separator, v)
-                    v = 1
-                try:
-                    Xa[i, vocab[f]] = dtype(v)
-                except KeyError:
-                    pass
+            for i, x in enumerate(X):
+                for f, v in x.iteritems():
+                    if isinstance(v, basestring):
+                        f = "%s%s%s" % (f, self.separator, v)
+                        v = 1
+                    try:
+                        j = vocab[f]
+                        i_ind.append(i)
+                        j_ind.append(j)
+                        values.append(dtype(v))
+                    except KeyError:
+                        pass
 
-        return Xa
+            shape = len(X), len(vocab)
+            return sp.coo_matrix((values, (i_ind, j_ind)),
+                                 shape=(len(X), len(vocab)), dtype=dtype)
+
+        else:
+            Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
+
+            for i, x in enumerate(X):
+                for f, v in x.iteritems():
+                    if isinstance(v, basestring):
+                        f = "%s%s%s" % (f, self.separator, v)
+                        v = 1
+                    try:
+                        Xa[i, vocab[f]] = dtype(v)
+                    except KeyError:
+                        pass
+
+            return Xa
 
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices."""
