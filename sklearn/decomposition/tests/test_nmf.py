@@ -82,14 +82,14 @@ def test_nls_nn_input():
 
 def test_nls_nn_output():
     """Test that NLS solver doesn't return negative values"""
-    A = np.atleast_2d(list(range(1, 5)))
+    A = np.atleast_2d(np.arange(1, 5))
     Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, -A), A.T, A, 0.001, 100)
     assert_false((Ap < 0).any())
 
 
 def test_nls_close():
     """Test that the NLS results should be close"""
-    A = np.atleast_2d(list(range(1, 5)))
+    A = np.atleast_2d(np.arange(1, 5))
     Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, A), A.T, np.zeros_like(A),
                                    0.001, 100)
     assert_true((np.abs(Ap - A) < 0.01).all())

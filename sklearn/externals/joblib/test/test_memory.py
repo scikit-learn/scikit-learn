@@ -425,11 +425,11 @@ def test_format_signature():
     """ Test the signature formatting.
     """
     func = MemorizedFunc(f, cachedir=env['dir'])
-    path, sgn = func.format_signature(f, list(range(10)))
+    path, sgn = func.format_signature(f, np.arange(10))
     yield nose.tools.assert_equal, \
                 sgn, \
                 'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'
-    path, sgn = func.format_signature(f, list(range(10)), y=list(range(10)))
+    path, sgn = func.format_signature(f, np.arange(10), y=np.arange(10))
     yield nose.tools.assert_equal, \
                 sgn, \
         'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], y=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'

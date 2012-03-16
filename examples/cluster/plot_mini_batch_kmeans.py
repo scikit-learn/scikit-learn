@@ -74,7 +74,7 @@ order = distance.argmin(axis=1)
 
 # KMeans
 ax = fig.add_subplot(1, 3, 1)
-for k, col in zip(list(range(n_clusters)), colors):
+for k, col in zip(range(n_clusters), colors):
     my_members = k_means_labels == k
     cluster_center = k_means_cluster_centers[k]
     ax.plot(X[my_members, 0], X[my_members, 1], 'w',
@@ -89,7 +89,7 @@ pl.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
 
 # MiniBatchKMeans
 ax = fig.add_subplot(1, 3, 2)
-for k, col in zip(list(range(n_clusters)), colors):
+for k, col in zip(range(n_clusters), colors):
     my_members = mbk_means_labels == order[k]
     cluster_center = mbk_means_cluster_centers[order[k]]
     ax.plot(X[my_members, 0], X[my_members, 1], 'w',

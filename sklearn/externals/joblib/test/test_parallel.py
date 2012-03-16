@@ -22,6 +22,7 @@ except:
 
 if sys.version_info[0] == 3:
     PickleError = pickle.PicklingError
+import numpy as np
 
 from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt, \
         multiprocessing, cpu_count
@@ -66,7 +67,7 @@ def test_cpu_count():
 ###############################################################################
 # Test parallel
 def test_simple_parallel():
-    X = list(range(5))
+    X = np.arange(5)
     for n_jobs in (1, 2, -1, -2):
         yield (nose.tools.assert_equal, [square(x) for x in X],
                 Parallel(n_jobs=-1)(
@@ -106,7 +107,7 @@ def test_nested_loop():
 def test_parallel_kwargs():
     """ Check the keyword argument processing of pmap.
     """
-    lst = list(range(10))
+    lst = np.arange(10)
     for n_jobs in (1, 4):
         yield (nose.tools.assert_equal,
                [f(x, y=1) for x in lst],

@@ -22,7 +22,7 @@ X = iris.data
 y = iris.target
 X, y = X[y != 2], y[y != 2]  # Keep also 2 classes (0 and 1)
 n_samples, n_features = X.shape
-p = list(range(n_samples))  # Shuffle samples
+p = np.arange(n_samples)  # Shuffle samples
 random.seed(0)
 random.shuffle(p)
 X, y = X[p], y[p]

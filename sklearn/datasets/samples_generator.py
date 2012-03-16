@@ -223,7 +223,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-        indices = list(range(n_features))
+        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
@@ -466,7 +466,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-        indices = list(range(n_features))
+        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
         ground_truth = ground_truth[indices]

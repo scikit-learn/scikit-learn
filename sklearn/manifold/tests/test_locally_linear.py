@@ -41,7 +41,7 @@ def test_barycenter_kneighbors_graph():
 def test_lle_simple_grid():
     rng = np.random.RandomState(0)
     # grid of equidistant points in 2D, out_dim = n_dim
-    X = np.array(list(product(list(range(5)), repeat=2)))
+    X = np.array(list(product(np.arange(5), repeat=2)))
     out_dim = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
     tol = .1
@@ -70,7 +70,7 @@ def test_lle_simple_grid():
 
 def test_lle_manifold():
     # similar test on a slightly more complex manifold
-    X = np.array(list(product(list(range(20)), repeat=2)))
+    X = np.array(list(product(np.arange(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     out_dim = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,

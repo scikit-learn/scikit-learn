@@ -132,20 +132,20 @@ def test_cross_val_score():
 
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
-    assert_raises(ValueError, cval.train_test_split, list(range(3)),
+    assert_raises(ValueError, cval.train_test_split, np.arange(3),
                   train_fraction=1.1)
-    assert_raises(ValueError, cval.train_test_split, list(range(3)),
+    assert_raises(ValueError, cval.train_test_split, np.arange(3),
                   test_fraction=0.6, train_fraction=0.6)
-    assert_raises(TypeError, cval.train_test_split, list(range(3)),
+    assert_raises(TypeError, cval.train_test_split, np.arange(3),
                   some_argument=1.1)
-    assert_raises(ValueError, cval.train_test_split, list(range(3)),
-                  list(range(42)))
+    assert_raises(ValueError, cval.train_test_split, np.arange(3),
+                  np.arange(42))
 
 
 def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
-    y = list(range(10))
+    y = np.arange(10)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = \
             cval.train_test_split(X, X_s, y)
     assert_array_equal(X_train, X_s_train.toarray())

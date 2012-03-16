@@ -47,7 +47,7 @@ pl.figure(1)
 pl.clf()
 
 colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-for k, col in zip(list(range(n_clusters_)), colors):
+for k, col in zip(range(n_clusters_), colors):
     my_members = labels == k
     cluster_center = cluster_centers[k]
     pl.plot(X[my_members, 0], X[my_members, 1], col + '.')

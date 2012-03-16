@@ -160,7 +160,7 @@ class GMMTester():
         g.covars_ = self.covars[self.covariance_type]
         g.weights_ = self.weights
 
-        gaussidx = np.repeat(list(range(self.n_components)), 5)
+        gaussidx = np.repeat(np.arange(self.n_components), 5)
         n_samples = len(gaussidx)
         X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 

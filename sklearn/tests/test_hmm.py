@@ -271,7 +271,7 @@ class GaussianHMMBaseTester(object):
         # picks the actual component used to generate the observations.
         h.means_ = 20 * h.means_
 
-        gaussidx = np.repeat(list(range(self.n_components)), 5)
+        gaussidx = np.repeat(np.arange(self.n_components), 5)
         nobs = len(gaussidx)
         obs = self.prng.randn(nobs, self.n_features) + h.means_[gaussidx]
 
@@ -450,7 +450,7 @@ class MultinomialHMMTestCase(TestCase):
         self.assertEquals(h.n_symbols, self.n_symbols)
 
     def test_eval(self):
-        idx = np.repeat(list(range(self.n_components)), 10)
+        idx = np.repeat(np.arange(self.n_components), 10)
         nobs = len(idx)
         obs = [int(x) for x in np.floor(self.prng.rand(nobs) * self.n_symbols)]
 
@@ -557,7 +557,7 @@ class GMMHMMBaseTester(object):
         for g in h.gmms:
             g.means_ *= 20
 
-        refstateseq = np.repeat(list(range(self.n_components)), 5)
+        refstateseq = np.repeat(np.arange(self.n_components), 5)
         nobs = len(refstateseq)
         obs = [h.gmms[x].sample(1).flatten() for x in refstateseq]
 

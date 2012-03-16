@@ -12,7 +12,6 @@ from __future__ import print_function
 
 from itertools import combinations
 from math import ceil, floor, factorial
-import operator
 
 import numpy as np
 import scipy.sparse as sp
@@ -154,7 +153,7 @@ class LeavePOut(object):
     def __iter__(self):
         n = self.n
         p = self.p
-        comb = combinations(list(range(n)), p)
+        comb = combinations(np.arange(n), p)
         for idx in comb:
             test_index = np.zeros(n, dtype=np.bool)
             test_index[np.array(idx)] = True
@@ -519,7 +518,7 @@ class LeavePLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         unique_labels = unique(labels)
-        comb = combinations(list(range(self.n_unique_labels)), self.p)
+        comb = combinations(np.arange(self.n_unique_labels), self.p)
 
         for idx in comb:
             test_index = np.zeros(labels.size, dtype=np.bool)

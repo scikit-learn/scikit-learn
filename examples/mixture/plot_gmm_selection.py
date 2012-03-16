@@ -37,7 +37,7 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
 
 lowest_bic = np.infty
 bic = []
-n_components_range = list(range(1, 7))
+n_components_range = np.arange(1, 7)
 cv_types = ['spherical', 'tied', 'diag', 'full']
 for cv_type in cv_types:
     for n_components in n_components_range:

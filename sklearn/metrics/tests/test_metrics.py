@@ -45,7 +45,7 @@ def make_prediction(dataset=None, binary=False):
         X, y = X[y < 2], y[y < 2]
 
     n_samples, n_features = X.shape
-    p = list(range(n_samples))
+    p = np.arange(n_samples)
 
     random.seed(0)
     random.shuffle(p)
@@ -295,7 +295,7 @@ def test_classification_report():
 avg / total       0.62      0.61      0.56        75
 """
     report = classification_report(
-        y_true, y_pred, labels=list(range(len(iris.target_names))),
+        y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
 

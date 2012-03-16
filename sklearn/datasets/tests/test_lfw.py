@@ -86,13 +86,13 @@ def setup_module():
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
-            first, second = random_state.sample(list(range(counts[name])), 2)
+            first, second = random_state.sample(np.arange(counts[name]), 2)
             f.write('%s\t%d\t%d\n' % (name, first, second))
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
-            first_index = random_state.choice(list(range(counts[first_name])))
-            second_index = random_state.choice(list(range(counts[second_name])))
+            first_index = random_state.choice(np.arange(counts[first_name]))
+            second_index = random_state.choice(np.arange(counts[second_name]))
             f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index,
                                           second_name, second_index))
 

@@ -30,6 +30,7 @@ print(__doc__)
 
 from time import time
 import logging
+import numpy as np
 import pylab as pl
 
 from sklearn.cross_validation import train_test_split
@@ -121,7 +122,7 @@ y_pred = clf.predict(X_test_pca)
 print("done in %0.3fs" % (time() - t0))
 
 print(classification_report(y_test, y_pred, target_names=target_names))
-print(confusion_matrix(y_test, y_pred, labels=list(range(n_classes))))
+print(confusion_matrix(y_test, y_pred, labels=np.arange(n_classes)))
 
 
 ###############################################################################

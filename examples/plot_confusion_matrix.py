@@ -10,6 +10,7 @@ from __future__ import print_function
 print(__doc__)
 
 import random
+import numpy as np
 import pylab as pl
 from sklearn import svm, datasets
 from sklearn.metrics import confusion_matrix
@@ -19,7 +20,7 @@ iris = datasets.load_iris()
 X = iris.data
 y = iris.target
 n_samples, n_features = X.shape
-p = list(range(n_samples))
+p = np.arange(n_samples)
 random.seed(0)
 random.shuffle(p)
 X, y = X[p], y[p]
