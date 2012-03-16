@@ -519,7 +519,7 @@ class GraphLassoCV(GraphLasso):
                 print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'\
                         % (i + 1, n_refinements, time.time() - t0))
 
-        path = zip(*path)
+        path = list(zip(*path))
         cv_scores = list(path[1])
         alphas = list(path[0])
         # Finally, compute the score with alpha = 0

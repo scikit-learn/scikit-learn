@@ -7,6 +7,7 @@ sparse Logistic Regression
 #
 # License: BSD Style.
 import itertools
+import sys
 
 import numpy as np
 from scipy.sparse import issparse
@@ -19,6 +20,11 @@ from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 from ..externals.joblib import Memory
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 ###############################################################################

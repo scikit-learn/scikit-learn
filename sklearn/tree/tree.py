@@ -12,12 +12,19 @@ randomized trees.
 
 from __future__ import division
 import numpy as np
+import sys
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 
 from . import _tree
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
+
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -110,6 +117,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     if out_file is None:
         out_file = open("tree.dot", "w")
+
     elif isinstance(out_file, basestring):
         out_file = open(out_file, "w")
 

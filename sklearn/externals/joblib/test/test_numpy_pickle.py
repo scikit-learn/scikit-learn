@@ -2,6 +2,7 @@
 Test the numpy pickler as a replacement of the standard pickler.
 
 """
+from __future__ import print_function
 
 from tempfile import mkdtemp
 import copy
@@ -39,10 +40,10 @@ _float = float(1)
 typelist.append(_float)
 _complex = complex(1)
 typelist.append(_complex)
-_string = str(1)
+_string = b"1".decode('ascii')
 typelist.append(_string)
-_unicode = unicode(1)
-typelist.append(_unicode)
+_bytes = b"1"
+typelist.append(_bytes)
 _tuple = ()
 typelist.append(_tuple)
 _list = []
@@ -91,9 +92,9 @@ def setup_module():
     """
     env['dir'] = mkdtemp()
     env['filename'] = os.path.join(env['dir'], 'test.pkl')
-    print 80 * '_'
-    print 'setup numpy_pickle'
-    print 80 * '_'
+    print(80 * '_')
+    print('setup numpy_pickle')
+    print(80 * '_')
 
 
 def teardown_module():
@@ -102,9 +103,9 @@ def teardown_module():
     shutil.rmtree(env['dir'])
     #del env['dir']
     #del env['filename']
-    print 80 * '_'
-    print 'teardown numpy_pickle'
-    print 80 * '_'
+    print(80 * '_')
+    print('teardown numpy_pickle')
+    print(80 * '_')
 
 
 ###############################################################################

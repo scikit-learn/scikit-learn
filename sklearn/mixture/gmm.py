@@ -16,6 +16,15 @@ from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp
 from .. import cluster
 
+try:
+    # Python 2
+    from itertools import izip
+    zip = izip
+except ImportError:
+    # Python 3
+    pass
+
+
 EPS = np.finfo(float).eps
 
 
@@ -604,7 +613,6 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     """Log probability for full covariance matrices.
     """
     from scipy import linalg
-    import itertools
     if hasattr(linalg, 'solve_triangular'):
         # only in scipy since 0.9
         solve_triangular = linalg.solve_triangular
@@ -614,7 +622,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     n_samples, n_dim = X.shape
     nmix = len(means)
     log_prob = np.empty((n_samples, nmix))
-    for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
+    for c, (mu, cv) in enumerate(zip(means, covars)):
         try:
             cv_chol = linalg.cholesky(cv, lower=True)
         except linalg.LinAlgError:

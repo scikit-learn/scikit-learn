@@ -1,6 +1,7 @@
 """
 Utilities for fast persistence of big data, with optional compression.
 """
+from __future__ import print_function
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
@@ -12,6 +13,11 @@ import sys
 import os
 import zlib
 import warnings
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -240,9 +246,9 @@ class NumpyPickler(pickle.Pickler):
             except:
                 self._npy_counter -= 1
                 # XXX: We should have a logging mechanism
-                print 'Failed to save %s to .npy file:\n%s' % (
+                print('Failed to save %s to .npy file:\n%s' % (
                         type(obj),
-                        traceback.format_exc())
+                        traceback.format_exc()))
         return pickle.Pickler.save(self, obj)
 
     def close(self):

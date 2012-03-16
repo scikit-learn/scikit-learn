@@ -7,6 +7,13 @@ Exceptions
 
 import sys
 
+try:
+    # Python 2
+    from itertools import ifilter as filter
+except ImportError:
+    # Python 3
+    pass
+
 
 class JoblibException(Exception):
     """ A simple exception with an error message that you can get to.

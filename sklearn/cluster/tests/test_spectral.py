@@ -1,6 +1,12 @@
 """Testing for Spectral Clustering methods"""
 
-from cPickle import dumps, loads
+
+try:
+    # Python 2
+    from cPickle import dumps, loads
+except ImportError:
+    # Python 3
+    from pickle import dumps, loads
 import nose
 from nose.tools import assert_true
 

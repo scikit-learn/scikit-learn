@@ -8,7 +8,14 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
-import itertools
+try:
+    # Python 2
+    from itertools import izip
+    zip = izip
+except ImportError:
+    # Python 3
+    pass
+
 import warnings
 
 import numpy as np
@@ -129,7 +136,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     inertia = np.empty(len(coord_row), dtype=np.float)
     _hierarchical.compute_ward_dist(moments_1, moments_2,
                              coord_row, coord_col, inertia)
-    inertia = zip(inertia, coord_row, coord_col)
+    inertia = list(zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields
@@ -173,7 +180,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                    coord_row, coord_col, ini)
-        for tupl in itertools.izip(ini, coord_row, coord_col):
+        for tupl in zip(ini, coord_row, coord_col):
             heappush(inertia, tupl)
 
     # Separate leaves in children (empty lists up to now)
@@ -315,7 +322,7 @@ class Ward(BaseEstimator):
         self
         """
         memory = self.memory
-        if isinstance(memory, basestring):
+        if isinstance(memory, str):
             memory = Memory(cachedir=memory)
 
         if not self.connectivity is None:

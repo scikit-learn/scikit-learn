@@ -195,7 +195,7 @@ class CountVectorizer(BaseEstimator):
                  stop_words=None, token_pattern=r"\b\w\w+\b",
                  min_n=1, max_n=1, analyzer='word',
                  max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long):
+                 vocabulary=None, binary=False, dtype=np.long):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -497,8 +497,8 @@ class CountVectorizer(BaseEstimator):
             X = np.asmatrix(X)
         n_samples = X.shape[0]
 
-        terms = np.array(self.vocabulary_.keys())
-        indices = np.array(self.vocabulary_.values())
+        terms = np.array(list(self.vocabulary_.keys()))
+        indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
@@ -656,7 +656,7 @@ class TfidfVectorizer(CountVectorizer):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  analyzer='word', stop_words=None, token_pattern=r"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, norm='l2',
+                 vocabulary=None, binary=False, dtype=np.long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
@@ -754,7 +754,7 @@ class Vectorizer(TfidfVectorizer):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  analyzer='word', stop_words=None, token_pattern=r"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, norm='l2',
+                 vocabulary=None, binary=False, dtype=np.long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
         warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
                      " in 0.13. Please use TfidfVectorizer instead.",

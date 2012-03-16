@@ -1,131 +1,4 @@
 from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
-from __future__ import unicode_literals
 import warnings
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
@@ -147,7 +20,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 
 import pickle
-from StringIO import StringIO
+from io import StringIO
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -390,12 +263,10 @@ def test_tfidf_no_smoothing():
         tfidf = tr.fit_transform(X).toarray()
         assert_equal(len(w), 1)
         # For Python 3 compatibility
-        if hasattr(w[0].message,'args') :
-            assert_true("divide by zero encountered in divide" in\
-                w[0].message.args[0])
-        else :
-            assert_true("divide by zero encountered in divide" in\
-                w[0].message)
+        if hasattr(w[0].message, 'args'):
+            assert_true("divide by zero" in w[0].message.args[0])
+        else:
+            assert_true("divide by zero" in w[0].message)
 
 
 def test_sublinear_tf():

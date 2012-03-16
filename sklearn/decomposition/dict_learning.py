@@ -9,6 +9,14 @@ import sys
 import itertools
 import warnings
 
+try:
+    # Python 2
+    from itertools import izip
+    zip = izip
+except ImportError:
+    # Python 3
+    pass
+
 from math import sqrt, floor, ceil
 
 import numpy as np
@@ -650,8 +658,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     # The data approximation
     B = np.zeros((n_features, n_atoms))
 
-    for ii, this_X in itertools.izip(range(iter_offset, iter_offset + n_iter),
-                                     batches):
+    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")

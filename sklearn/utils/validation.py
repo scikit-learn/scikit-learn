@@ -5,6 +5,12 @@ Utilities for input validation
 import numpy as np
 import scipy.sparse as sp
 import warnings
+import sys
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 def assert_all_finite(X):

@@ -50,7 +50,7 @@ def _naive_lmvnpdf_diag(X, mu, cv):
     # slow and naive implementation of lmvnpdf
     ref = np.empty((len(X), len(mu)))
     stds = np.sqrt(cv)
-    for i, (m, std) in enumerate(itertools.izip(mu, stds)):
+    for i, (m, std) in enumerate(zip(mu, stds)):
         ref[:, i] = np.log(stats.norm.pdf(X, m, std)).sum(axis=1)
     return ref
 

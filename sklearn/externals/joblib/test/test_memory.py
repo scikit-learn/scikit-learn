@@ -1,6 +1,7 @@
 """
 Test the memory module.
 """
+from __future__ import print_function
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
@@ -42,26 +43,26 @@ def setup_module():
     if os.path.exists(cachedir):
         shutil.rmtree(cachedir)
     # Don't make the cachedir, Memory should be able to do that on the fly
-    print 80 * '_'
-    print 'test_memory setup'
-    print 80 * '_'
+    print(80 * '_')
+    print('test_memory setup')
+    print(80 * '_')
 
 
 def _rmtree_onerror(func, path, excinfo):
-    print '!' * 79
-    print 'os function failed:', repr(func)
-    print 'file to be removed:', path
-    print 'exception was:', excinfo[1]
-    print '!' * 79
+    print('!' * 79)
+    print('os function failed:', repr(func))
+    print('file to be removed:', path)
+    print('exception was:', excinfo[1])
+    print('!' * 79)
 
 
 def teardown_module():
     """ Test teardown.
     """
     shutil.rmtree(env['dir'], False, _rmtree_onerror)
-    print 80 * '_'
-    print 'test_memory teardown'
-    print 80 * '_'
+    print(80 * '_')
+    print('test_memory teardown')
+    print(80 * '_')
 
 
 ###############################################################################
@@ -424,11 +425,11 @@ def test_format_signature():
     """ Test the signature formatting.
     """
     func = MemorizedFunc(f, cachedir=env['dir'])
-    path, sgn = func.format_signature(f, range(10))
+    path, sgn = func.format_signature(f, list(range(10)))
     yield nose.tools.assert_equal, \
                 sgn, \
                 'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'
-    path, sgn = func.format_signature(f, range(10), y=range(10))
+    path, sgn = func.format_signature(f, list(range(10)), y=list(range(10)))
     yield nose.tools.assert_equal, \
                 sgn, \
         'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], y=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'

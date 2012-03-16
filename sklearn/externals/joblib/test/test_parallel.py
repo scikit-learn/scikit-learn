@@ -1,6 +1,7 @@
 """
 Test the parallel module.
 """
+from __future__ import print_function
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2010-2011 Gael Varoquaux
@@ -65,7 +66,7 @@ def test_cpu_count():
 ###############################################################################
 # Test parallel
 def test_simple_parallel():
-    X = range(5)
+    X = list(range(5))
     for n_jobs in (1, 2, -1, -2):
         yield (nose.tools.assert_equal, [square(x) for x in X],
                 Parallel(n_jobs=-1)(
@@ -86,8 +87,8 @@ def test_simple_parallel():
     except Exception:
         # Cannot use 'except as' to maintain Python 2.5 compatibility
         e = sys.exc_info()[1]
-        print sys.stdout.getvalue()
-        print sys.stderr.getvalue()
+        print(sys.stdout.getvalue())
+        print(sys.stderr.getvalue())
         raise e
     finally:
         sys.stdout = orig_stdout
@@ -105,7 +106,7 @@ def test_nested_loop():
 def test_parallel_kwargs():
     """ Check the keyword argument processing of pmap.
     """
-    lst = range(10)
+    lst = list(range(10))
     for n_jobs in (1, 4):
         yield (nose.tools.assert_equal,
                [f(x, y=1) for x in lst],

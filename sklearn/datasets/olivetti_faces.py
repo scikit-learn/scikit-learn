@@ -25,8 +25,15 @@ from __future__ import print_function
 
 from os.path import join, exists
 from os import makedirs
-from cStringIO import StringIO
-import urllib2
+from io import StringIO
+try:
+    # Python 2
+    import urllib2
+    urlopen = urllib2.urlopen
+except ImportError:
+    # Python 3
+    import urllib.request
+    urlopen = urllib.request.urlopen
 
 import numpy as np
 from scipy.io.matlab import loadmat

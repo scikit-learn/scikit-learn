@@ -67,7 +67,7 @@ def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
-    from StringIO import StringIO
+    from io import StringIO
 
     # test export code
     out = StringIO()
