@@ -72,6 +72,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     Examples
     --------
+    >>> import os
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
@@ -80,8 +81,10 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> out_file = tree.export_graphviz(clf, out_file=tempfile.TemporaryFile())
-    >>> out_file.close()
+    >>> export_file = tree.export_graphviz(clf,
+    ...     out_file='test_export_graphvix.dot')
+    >>> export_file.close()
+    >>> os.unlink(export_file.name)
     """
     def node_to_str(tree, node_id):
         if feature_names is not None:
@@ -116,10 +119,16 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             recurse(tree, right_child, node_id)
 
     if out_file is None:
-        out_file = open("tree.dot", "w")
+        if PY3:
+            out_file = open("tree.dot", "w", encoding="utf-8")
+        else:
+            out_file = open("tree.dot", "wb")
 
     elif isinstance(out_file, basestring):
-        out_file = open(out_file, "w")
+        if PY3:
+            out_file = open(out_file, "w", encoding="utf-8")
+        else:
+            out_file = open(out_file, "wb")
 
     out_file.write("digraph Tree {\n")
     recurse(decision_tree.tree_, 0)

@@ -87,12 +87,8 @@ class UrlopenMock(object):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
-            if PY3:
-                from io import BytesIO
-                matfile = BytesIO()
-            else:
-                from io import StringIO
-                matfile = StringIO()
+            from io import BytesIO
+            matfile = BytesIO()
 
             dataset = self.mock_datasets[dataset_name]
             ordering = None
