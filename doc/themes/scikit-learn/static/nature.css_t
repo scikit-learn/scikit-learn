@@ -260,6 +260,18 @@ div#sidebarbutton {
 }
 {% endif %}
 
+div.buttons {
+    display: block;
+    border-top-left-radius: .8em;		
+    background-color: #FF9C34;
+    color: black;
+    padding: 7px 10px 5px 10px;
+    position: fixed;
+    bottom: 0;
+    right: 0; 
+}
+
+
 
 input {
     border: 1px solid #ccc;
