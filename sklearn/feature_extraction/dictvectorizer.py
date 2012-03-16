@@ -27,6 +27,12 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     names to feature values into Numpy arrays or scipy.sparse matrices for use
     with scikit-learn estimators.
 
+    When feature values are strings, this transformer will do a binary one-hot
+    (aka one-of-K) coding: one boolean-valued feature is constructed for each
+    of the possible string values that the feature can take on. For instance,
+    a feature "f" that can take on the values "ham" and "spam" will become two
+    features in the output, one signifying "f=ham", the other "f=spam".
+
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
 
@@ -35,6 +41,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     dtype : callable, optional
         The type of feature values. Passed to Numpy array/scipy.sparse matrix
         constructors as the dtype argument.
+    separator: string, optional
+        Separator string used when constructing new features for one-hot
+        coding.
     sparse: boolean, optional
         Whether transform should produce scipy.sparse matrices.
 
@@ -54,8 +63,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     array([[ 4.,  0.,  0.]])
     """
 
-    def __init__(self, dtype=np.float64, sparse=True):
+    def __init__(self, dtype=np.float64, separator="=", sparse=True):
         self.dtype = dtype
+        self.separator = separator
         self.sparse = sparse
 
     def fit(self, X, y=None):
@@ -76,7 +86,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         vocab = {}
 
         for x in X:
-            for f in x:
+            for f, v in x.iteritems():
+                if isinstance(v, basestring):
+                    f = "%s%s%s" % (f, self.separator, v)
                 vocab.setdefault(f, len(vocab))
 
         self.vocabulary_ = vocab
@@ -110,6 +122,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         X must have been produced by this DictVectorizer's transform or
         fit_transform method; it may only have passed through transformers
         that preserve the number of features and their order.
+
+        In the case of one-hot/one-of-K coding, the constructed feature
+        names and values are returned rather than the original ones.
 
         Parameters
         ----------
@@ -170,6 +185,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         for i, x in enumerate(X):
             for f, v in x.iteritems():
+                if isinstance(v, basestring):
+                    f = "%s%s%s" % (f, self.separator, v)
+                    v = 1
                 try:
                     Xa[i, vocab[f]] = dtype(v)
                 except KeyError:

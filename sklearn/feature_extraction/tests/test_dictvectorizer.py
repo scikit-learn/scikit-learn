@@ -44,6 +44,18 @@ def test_feature_selection():
         assert_equal(v.get_feature_names(), ["useful1", "useful2"])
 
 
+def test_one_of_k():
+    D_in = [{"version": "1", "ham": 2},
+            {"version": "2", "spam": .3},
+            {"version=3": True, "spam": -1}]
+    v = DictVectorizer()
+    X = v.fit_transform(D_in)
+    assert_equal(X.shape, (3, 5))
+
+    D_out = v.inverse_transform(X)
+    assert_equal(D_out[0], {"version=1": 1, "ham": 2})
+
+
 def test_unseen_features():
     D = [{"camelot": 0, "spamalot": 1}]
     v = DictVectorizer(sparse=False).fit(D)
