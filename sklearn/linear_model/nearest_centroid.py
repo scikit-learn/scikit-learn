@@ -10,10 +10,11 @@ Nearest Centroid Classification
 import warnings
 
 import numpy as np
+from scipy import sparse as sp
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..utils.validation import check_arrays
+from ..utils.validation import check_arrays, atleast2d_or_csr
 from ..base import ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 
@@ -83,14 +84,24 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         """
         X, y = check_arrays(X, y)
         n_samples, n_features = X.shape
+        assert n_samples == len(y), ("n_samples", n_samples, "len(y)", len(y))
         classes = np.unique(y)
         classes.sort()
         self.classes_ = classes
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
-        self.centroids_ = np.array([X[y == cur_class].mean(axis=0)
-                                    for cur_class in classes])
+        assert len(X.shape) == 2, X
+        # Mask mapping each class to it's members.
+        self.centroids_ = np.empty((n_classes, n_features))
+        for i, cur_class in enumerate(classes):
+            center_mask = y == cur_class
+            if sp.issparse(X):
+                center_mask = np.arange(len(y))[center_mask]
+            self.centroids_[i] == X[center_mask].mean(axis=0)
+        assert self.centroids_.shape == (n_classes, n_features), (
+            self.centroids_.shape, (n_classes, n_features))
+        assert len(self.centroids_.shape) == 2
         self.dataset_centroid_ = X.mean(axis=0)
         if self.shrink_threshold:
             # Number of clusters in each class.
@@ -115,6 +126,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             deviation *= signs
             # Now adjust the centroids using the deviation
             self.centroids_ = self.dataset_centroid_ + (ms * deviation)
+            assert self.centroids_.shape == (n_classes, n_features)
         return self
 
     def predict(self, X):
@@ -130,8 +142,11 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
+        X = atleast2d_or_csr(X)
         if not hasattr(self, "centroids_"):
             raise AttributeError("Model has not been trained yet.")
+        assert X.shape[1] == self.centroids_.shape[1], "{},{},{},{}".format(
+            X, self.centroids_, type(X), type(self.centroids_))
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]
 

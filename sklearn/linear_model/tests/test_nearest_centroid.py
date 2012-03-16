@@ -18,6 +18,7 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 X_csr = sp.csr_matrix(X)  # Sparse matrix
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
+T_csr = sp.csr_matrix(T)
 true_result = [-1, 1, 1]
 
 # also load the iris dataset
@@ -37,14 +38,22 @@ boston.target = boston.target[perm]
 
 
 def test_classification_toy():
-    """Check classification on a toy dataset."""
+    """Check classification on a toy dataset, including sparse versions."""
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
-    # Same test, but with a sparse matrix.
+    # Same test, but with a sparse matrix to fit and test.
+    clf = NearestCentroid()
+    clf.fit(X_csr, y)
+    assert_array_equal(clf.predict(T_csr), true_result)
+    # Fit with sparse, test with non-sparse
     clf = NearestCentroid()
     clf.fit(X_csr, y)
     assert_array_equal(clf.predict(T), true_result)
+    # Fit with non-sparse, test with sparse
+    clf = NearestCentroid()
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T_csr), true_result)
 
 
 def test_iris():
@@ -67,7 +76,7 @@ def test_iris_shrinkage():
 
 def test_iris_shrinkage_sparse():
     """Check quality on iris, when using shrinkage and sparse matrix."""
-    iris_sparse = sp.csr_matrix(iris.data)
+    iris_sparse = sp.csr_matrix(np.array(iris.data))
     for metric in ('euclidean', 'cosine'):
         for shrink_threshold in [None, 0.1, 0.5]:
             clf = NearestCentroid(shrink_threshold=shrink_threshold)
