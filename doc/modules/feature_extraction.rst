@@ -26,14 +26,14 @@ stored) and storing feature names in addition to values.
 ``DictVectorizer`` implements what is called one-of-K or "one-hot" coding for
 categorical (aka nominal, discrete) features. For a dictionary such as::
 
-    >>> {"word-2": "guitar",
-    ...  "pos-2": "NN",
-    ...  "word-1": "and",
-    ...  "pos-1": "CC",
-    ...  "word+1": "player",
-    ...  "pos+1": "NN",
-    ...  "word+2": "stand",
-    ...  "pos+2": "VB"}
+    {"word-2": "guitar",
+     "pos-2": "NN",
+     "word-1": "and",
+     "pos-1": "CC",
+     "word+1": "player",
+     "pos+1": "NN",
+     "word+2": "stand",
+     "pos+2": "VB"}
 
 it will construct new, binary features ``"word-2=guitar"``, ``"pos-2=NN"``, etc.
 

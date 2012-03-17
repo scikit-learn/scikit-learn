@@ -4,7 +4,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from nose.tools import assert_equal, assert_in, assert_not_in
+from nose.tools import assert_equal, assert_true, assert_false
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import DictVectorizer
@@ -62,8 +62,8 @@ def test_one_of_k():
     assert_equal(D_out[0], {"version=1": 1, "ham": 2})
 
     names = v.get_feature_names()
-    assert_in("version=2", names)
-    assert_not_in("version", names)
+    assert_true("version=2" in names)
+    assert_false("version" in names)
 
 
 def test_unseen_features():
