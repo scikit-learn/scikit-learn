@@ -175,8 +175,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        X = _tosequence(X)
-
         dtype = self.dtype
         vocab = self.vocabulary_
 
@@ -198,10 +196,12 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                     except KeyError:
                         pass
 
+            shape = (i + 1, len(vocab))
             return sp.coo_matrix((values, (i_ind, j_ind)),
-                                 shape=(len(X), len(vocab)), dtype=dtype)
+                                 shape=shape, dtype=dtype)
 
         else:
+            X = _tosequence(X)
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
