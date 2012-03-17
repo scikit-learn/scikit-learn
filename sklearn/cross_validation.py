@@ -869,7 +869,7 @@ class StratifiedShuffleSplit(object):
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import StratifiedShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> sss = StratifiedShuffleSplit(y, 3, test_size=0.5, random_state=0)
