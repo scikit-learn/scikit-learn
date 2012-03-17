@@ -198,7 +198,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                     except KeyError:
                         pass
 
-            shape = len(X), len(vocab)
             return sp.coo_matrix((values, (i_ind, j_ind)),
                                  shape=(len(X), len(vocab)), dtype=dtype)
 
@@ -218,7 +217,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             return Xa
 
     def get_feature_names(self):
-        """Returns a list of feature names, ordered by their indices."""
+        """Returns a list of feature names, ordered by their indices.
+
+        If one-of-K coding is applied to categorical features, this will
+        include the constructed feature names but not the original ones.
+        """
         return [f for f, i in sorted(self.vocabulary_.iteritems(),
                                      key=itemgetter(1))]
 
