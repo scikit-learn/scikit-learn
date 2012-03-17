@@ -2,9 +2,6 @@
 """
 import sys
 
-from io import StringIO
-from StringIO import StringIO
-
 import numpy as np
 from scipy import linalg
 
