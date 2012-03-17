@@ -24,8 +24,8 @@ def _get_class_weight(class_weight, y):
         if class_weight is None:
             keys = values = []
         else:
-            keys = class_weight.keys()
-            values = class_weight.values()
+            keys = list(class_weight.keys())
+            values = list(class_weight.values())
         weight = np.asarray(values, dtype=np.float64, order='C')
         weight_label = np.asarray(keys, dtype=np.int32, order='C')
 
