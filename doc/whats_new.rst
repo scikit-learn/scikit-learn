@@ -18,6 +18,9 @@ Changelog
    - Regressors can now be used as base estimator in the :ref:`multiclass`
      module by `Mathieu Blondel`_.
 
+   - Simple dict-based feature loader with support for categorical variables
+     (:class:`feature_extraction.DictVectorizer`) by `Lars Buitinck`_.
+
    - Added Matthews correlation coefficient (:func:`metrics.matthews_corrcoef`)
      and added macro and micro average options to
      :func:`metrics.precision_score`, :func:`metrics.recall_score` and
