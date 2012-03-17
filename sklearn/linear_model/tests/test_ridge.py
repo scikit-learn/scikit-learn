@@ -275,12 +275,12 @@ def test_class_weights():
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
 
-    clf = RidgeClassifier(fit_intercept=False, class_weight=None)
+    clf = RidgeClassifier(class_weight=None)
     clf.fit(X, y)
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
     # we give a small weights to class 1
-    clf = RidgeClassifier(fit_intercept=False, class_weight={1: 0.001})
+    clf = RidgeClassifier(class_weight={1: 0.001})
     clf.fit(X, y)
 
     # now the hyperplane should rotate clock-wise and
@@ -290,20 +290,17 @@ def test_class_weights():
 
 def test_class_weights_cv():
     """
-    Test class weights.
+    Test class weights for cross validated ridge classifier.
     """
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
 
-    clf = RidgeClassifierCV(fit_intercept=False, class_weight=None)
+    clf = RidgeClassifierCV(class_weight=None, alphas=[.01, .1, 1])
     clf.fit(X, y)
-    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
     # we give a small weights to class 1
-    clf = RidgeClassifierCV(fit_intercept=False, class_weight={1: 0.001})
+    clf = RidgeClassifierCV(class_weight={1: 0.001}, alphas=[.01, .1, 1, 10])
     clf.fit(X, y)
 
-    # now the hyperplane should rotate clock-wise and
-    # the prediction on this point should shift
-    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+    assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))
