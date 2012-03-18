@@ -1,12 +1,24 @@
+"""Gradient Boosting methods
+
+This module contains methods for fitting gradient boosted
+regression trees for both classification and regression
+
+The module structure is the following:
+
+- The ``BaseGradientBoosting`` base class implements a common ``fit`` method
+  for all the estimators in the module. Regression and classification
+  only differ the the concrete ``LossFunction`` used.
+
+- ``GradientBoostingClassifier`` implements gradient boosting for
+  classification problems.
+
+- ``GradientBoostingRegressor`` implements gradient boosting for
+  classification problems.
+"""
+
 # Authors: Peter Prettenhofer, Scott White
-#
 # License: BSD Style.
-#
-# TODO:
-#      * Huber loss for regression
-#      * Partial-dependency plots
-#      * Routine to find optimal n_estimators
-#
+
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 
@@ -18,10 +30,11 @@ from ..base import RegressorMixin
 from ..utils import check_random_state
 
 from ..tree.tree import _build_tree
-from ..tree.tree import compute_feature_importances
+from ..tree.tree import _compute_feature_importances
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
 from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
+from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
@@ -127,7 +140,7 @@ class LossFunction(object):
         """
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                learn_rate=1.0, k=0):
+                                sample_mask, learn_rate=1.0, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -145,24 +158,28 @@ class LossFunction(object):
         y_pred : np.ndarray, shape=(n,):
             The predictions.
         """
+        # compute leaf for each sample in ``X``.
+        terminal_regions = np.empty((X.shape[0], ), dtype=np.int32)
+        _apply_tree(X, tree.children, tree.feature, tree.threshold,
+                    terminal_regions)
+
+        # mask all which are not in sample mask.
+        masked_terminal_regions = terminal_regions.copy()
+        masked_terminal_regions[~sample_mask] = -1
+
+        # update each leaf (= perform line search)
         for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:
-            self._update_terminal_region(tree, leaf, X, y, residual,
+            self._update_terminal_region(tree, masked_terminal_regions,
+                                         leaf, X, y, residual,
                                          y_pred[:, k])
 
-        # update predictions
-        mask = tree.terminal_region != -1
-        y_pred[mask, k] += learn_rate * \
-                        tree.value[:, 0].take(tree.terminal_region[mask],
-                                              axis=0)
-
-        # FIXME ``tree.predict`` is faster than taking `tree.terminal_region``
-        #y_pred[:, k] += learn_rate * tree.predict(X).ravel()
-
-        # save memory
-        del tree.terminal_region
+        # update predictions (both in-bag and out-of-bag)
+        y_pred[:, k] += learn_rate * tree.value[:, 0].take(terminal_regions,
+                                                           axis=0)
 
     @abstractmethod
-    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
         """Template method for updating terminal regions (=leafs). """
 
 
@@ -190,18 +207,16 @@ class LeastSquaresError(RegressionLossFunction):
         return y - pred.ravel()
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                learn_rate=1.0, k=0):
+                                sample_mask, learn_rate=1.0, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
         """
-        # ``tree.predict`` is faster than taking `tree.terminal_region``
+        # update predictions
         y_pred[:, k] += learn_rate * tree.predict(X).ravel()
 
-        # save memory
-        del tree.terminal_region
-
-    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
         pass
 
 
@@ -217,9 +232,10 @@ class LeastAbsoluteError(RegressionLossFunction):
     def negative_gradient(self, y, pred, **kargs):
         return np.sign(y - pred.ravel())
 
-    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
         """LAD updates terminal regions to median estimates. """
-        terminal_region = np.where(tree.terminal_region == leaf)[0]
+        terminal_region = np.where(terminal_regions == leaf)[0]
         tree.value[leaf, 0] = np.median(y.take(terminal_region, axis=0) - \
                                         pred.take(terminal_region, axis=0))
 
@@ -250,9 +266,10 @@ class BinomialDeviance(LossFunction):
     def negative_gradient(self, y, pred, **kargs):
         return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
 
-    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
         """Make a single Newton-Raphson step. """
-        terminal_region = np.where(tree.terminal_region == leaf)[0]
+        terminal_region = np.where(terminal_regions == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
         y = y.take(terminal_region, axis=0)
 
@@ -292,9 +309,10 @@ class MultinomialDeviance(LossFunction):
         """Compute negative gradient for the ``k``-th class. """
         return y - np.exp(pred[:, k]) / np.sum(np.exp(pred), axis=1)
 
-    def _update_terminal_region(self, tree, leaf, X, y, residual, pred):
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
         """Make a single Newton-Raphson step. """
-        terminal_region = np.where(tree.terminal_region == leaf)[0]
+        terminal_region = np.where(terminal_regions == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
 
         y = y.take(terminal_region, axis=0)
@@ -375,11 +393,12 @@ class BaseGradientBoosting(BaseEnsemble):
                                self.min_samples_split, self.min_samples_leaf,
                                0.0, self.n_features, self.random_state,
                                1, _find_best_split, sample_mask,
-                               X_argsorted, True)
+                               X_argsorted)
 
             # update tree leafs
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
-                                               self.learn_rate, k=k)
+                                               sample_mask, self.learn_rate,
+                                               k=k)
             # add tree to ensemble
             self.estimators_[-1].append(tree)
 
@@ -451,18 +470,14 @@ class BaseGradientBoosting(BaseEnsemble):
             # fit next stage of trees
             y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
 
-            # update out-of-bag predictions and track loss
+            # track deviance (= loss)
             if self.subsample < 1.0:
                 self.train_deviance[i] = loss(y[sample_mask],
                                               y_pred[sample_mask])
-
-                y_pred_oob = y_pred[~sample_mask]
-                y_pred[~sample_mask] = self._predict(
-                    X[~sample_mask], old_pred=y_pred_oob)
                 self.oob_deviance[i] = loss(y[~sample_mask],
-                                            y_pred_oob)
+                                            y_pred[~sample_mask])
             else:
-                # no need to fancy index w/ no sub-sampling
+                # no need to fancy index w/ no subsampling
                 self.train_deviance[i] = loss(y, y_pred)
 
             if monitor:
@@ -511,8 +526,8 @@ class BaseGradientBoosting(BaseEnsemble):
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(compute_feature_importances(tree, self.n_features,
-                                                        method='squared')
+            stage_sum = sum(_compute_feature_importances(tree, self.n_features,
+                                                         method='squared')
                             for tree in stage) / len(stage)
             total_sum += stage_sum
 
@@ -573,7 +588,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     See also
     --------
-    DecisionTreeClassifier, RandomForestClassifier
+    sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
 
     References
     ----------
@@ -697,7 +712,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     See also
     --------
-    DecisionTreeRegressor, RandomForestRegressor
+    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
