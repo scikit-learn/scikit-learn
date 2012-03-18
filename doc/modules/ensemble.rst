@@ -303,7 +303,7 @@ regression one usually chooses the mean of the target values.
 Gradient Boosting attempts to solve this minimization problem
 numerically via steepest descent: The steepest descent direction is
 the negative gradient of the loss function evaluated at the current
-model :math:`F_{m-1}` which can be calculated for any differentialble
+model :math:`F_{m-1}` which can be calculated for any differentiable
 loss function:
 
   .. math::
