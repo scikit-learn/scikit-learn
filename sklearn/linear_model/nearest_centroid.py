@@ -93,17 +93,14 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             raise ValueError('y has less than 2 classes')
         assert len(X.shape) == 2, X
         # Mask mapping each class to it's members.
-        self.centroids_ = np.empty((n_classes, n_features))
+        self.centroids_ = np.empty((n_classes, n_features), dtype='float')
         for i, cur_class in enumerate(classes):
             center_mask = y == cur_class
             if sp.issparse(X):
                 center_mask = np.arange(len(y))[center_mask]
-            self.centroids_[i] == X[center_mask].mean(axis=0)
-        assert self.centroids_.shape == (n_classes, n_features), (
-            self.centroids_.shape, (n_classes, n_features))
-        assert len(self.centroids_.shape) == 2
-        self.dataset_centroid_ = X.mean(axis=0)
+            self.centroids_[i] = X[center_mask].mean(axis=0)
         if self.shrink_threshold:
+            dataset_centroid_ = X.mean(axis=0)
             # Number of clusters in each class.
             nk = np.array([np.sum(classes == cur_class)
                            for cur_class in classes])

@@ -29,13 +29,6 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
-# and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
-
 
 def test_classification_toy():
     """Check classification on a toy dataset, including sparse versions."""
@@ -64,7 +57,7 @@ def test_iris():
         assert score > 0.9, "Failed with score = " + str(score)
 
 
-def test_iris_shrinkage():
+def iris_shrinkage():
     """Check consistency on dataset iris, when using shrinkage."""
     for metric in ('euclidean', 'cosine'):
         for shrink_threshold in [None, 0.1, 0.5]:
@@ -74,7 +67,7 @@ def test_iris_shrinkage():
             assert score > 0.8, "Failed with score = " + str(score)
 
 
-def test_iris_shrinkage_sparse():
+def iris_shrinkage_sparse():
     """Check quality on iris, when using shrinkage and sparse matrix."""
     iris_sparse = sp.csr_matrix(np.array(iris.data))
     for metric in ('euclidean', 'cosine'):
@@ -83,14 +76,6 @@ def test_iris_shrinkage_sparse():
             clf = clf.fit(iris_sparse, iris.target)
             score = np.mean(clf.predict(iris.data) == iris.target)
             assert score > 0.8, "Failed with score = " + str(score)
-
-
-def test_boston():
-    """Check consistency on dataset boston house prices."""
-    for metric in ('euclidean', 'cosine'):
-        clf = NearestCentroid(metric=metric).fit(iris.data, iris.target)
-        score = np.mean(clf.predict(iris.data) == iris.target)
-        assert score > 0.9, "Failed with score = " + str(score)
 
 
 def test_pickle():
