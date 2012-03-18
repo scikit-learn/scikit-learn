@@ -172,6 +172,7 @@ amount of time (e.g., on large datasets).
 
 .. _gradient_boosting:
 
+
 Gradient Tree Boosting
 ======================
 
@@ -196,11 +197,15 @@ The disadvantages of GBRT are:
   + Scalability, due to the sequential nature of boosting it can
     hardly be parallelized.
 
+The module :mod:`sklearn.ensemble` provides methods
+for both classification and regression via gradient boosted regression
+trees.
+
 Classification
 ==============
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
-classification via the deviance loss function.
+classification via the deviance loss function (``loss='deviance'``).
 The following example shows how to fit a gradient boosting classifier
 with 100 decision stumps as weak learners::
 
@@ -218,7 +223,7 @@ with 100 decision stumps as weak learners::
 
 The number of weak learners (i.e. regression trees) is controlled by the
 parameter ``n_estimators``; The maximum depth of each tree is controlled via
-``max_depth``. ``Learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
+``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
 Regression
@@ -226,8 +231,8 @@ Regression
 
 :class:`GradientBoostingRegressor` supports a number of different loss
 functions for regression which can be specified via the argument
-``loss``. Currently, supported are least squares (``ls``) and
-least absolute deviation (``lad``), which is more robust w.r.t.
+``loss``. Currently, supported are least squares (``loss='ls'``) and
+least absolute deviation (``loss='lad'``), which is more robust w.r.t.
 outliers. See [F2001]_ for detailed information.
 
     >>> import numpy as np
@@ -313,9 +318,6 @@ Where the step length :math:`\gamma_m` is choosen using line search:
     \gamma_m = \arg\min_{\gamma} \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i)
     - \gamma \frac{\partial L(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)})
 
-The module :mod:`gradient_boosting` provides classes for regression
-(:class:`GradientBoostingRegressor`) and classification
-(:class:`GradientBoostingClassifier`).
 The algorithms for regression and classification
 only differ in the concrete loss function used.
 
