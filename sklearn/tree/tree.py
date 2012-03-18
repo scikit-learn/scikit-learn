@@ -134,7 +134,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-def compute_feature_importances(tree, n_features, method='gini'):
+def _compute_feature_importances(tree, n_features, method='gini'):
     """Computes the importance of each feature (aka variable).
 
     The following `method`s are supported:
@@ -313,8 +313,7 @@ class Tree(object):
 
 def _build_tree(X, y, criterion, max_depth, min_samples_split,
                 min_samples_leaf, min_density, max_features, random_state,
-                n_classes, find_split, sample_mask=None, X_argsorted=None,
-                store_terminal_region=False):
+                n_classes, find_split, sample_mask=None, X_argsorted=None):
     """Build a tree by recursively partitioning the data. """
 
     if max_depth <= 10:
@@ -326,7 +325,7 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
 
     # Recursively partition X
     def recursive_partition(X, X_argsorted, y, sample_mask, depth,
-                            parent, is_left_child, sample_indices):
+                            parent, is_left_child):
         # Count samples
         n_node_samples = sample_mask.sum()
 
@@ -352,16 +351,11 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
             node_id = tree.add_leaf(parent, is_left_child, value, init_error,
                                     n_node_samples)
 
-            if store_terminal_region:
-                # remember which samples ended up in this leaf
-                tree.terminal_region[sample_indices[sample_mask]] = node_id
-
         # Current node is internal node (= split node)
         else:
             # Sample mask is too sparse?
             if n_node_samples / X.shape[0] <= min_density:
                 X = X[sample_mask]
-                sample_indices = sample_indices[sample_mask]
                 X_argsorted = np.asfortranarray(
                     np.argsort(X.T, axis=1).astype(np.int32).T)
                 y = y[sample_mask]
@@ -377,22 +371,16 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
             # left child recursion
             recursive_partition(X, X_argsorted, y,
                                 np.logical_and(split, sample_mask),
-                                depth + 1, node_id, True, sample_indices)
+                                depth + 1, node_id, True)
 
             # right child recursion
             recursive_partition(X, X_argsorted, y,
                                 np.logical_and(np.logical_not(split),
                                                sample_mask),
-                                depth + 1, node_id, False, sample_indices)
-
+                                depth + 1, node_id, False)
 
     # setup auxiliary data structures and check input before
     # recursive partitioning
-
-    if store_terminal_region:
-        tree.terminal_region = np.empty((X.shape[0],), dtype=np.int32)
-        tree.terminal_region.fill(-1)
-
     if X.dtype != DTYPE or not np.isfortran(X):
         X = np.asanyarray(X, dtype=DTYPE, order="F")
 
@@ -406,11 +394,8 @@ def _build_tree(X, y, criterion, max_depth, min_samples_split,
         X_argsorted = np.asfortranarray(
             np.argsort(X.T, axis=1).astype(np.int32).T)
 
-    sample_indices = np.arange(X.shape[0])
-
     # build the tree by recursive partitioning
-    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False,
-                        sample_indices)
+    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
 
     # compactify the tree data structure
     tree.resize(tree.node_count)
@@ -543,7 +528,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             if not self.tree_:
                 raise ValueError("Estimator not fitted, " \
                                  "call `fit` before `feature_importances_`.")
-            self.feature_importances_ = compute_feature_importances(
+            self.feature_importances_ = _compute_feature_importances(
                 self.tree_, self.n_features_)
 
         return self
