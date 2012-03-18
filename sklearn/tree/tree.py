@@ -95,10 +95,13 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         if node_id == Tree.LEAF:
             raise ValueError("Invalid node_id %s" % Tree.LEAF)
         left_child, right_child = tree.children[node_id, :]
+
+        # add node with description
         out_file.write('%d [label="%s"] ;\n' %
                 (node_id, node_to_str(tree, node_id)))
 
         if not parent is None:
+            # add edge to parent
             out_file.write('%d -> %d ;\n' % (parent, node_id))
 
         if not (left_child == Tree.LEAF):
