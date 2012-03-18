@@ -75,7 +75,7 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C, sparse, class_weight):
+                 scale_C, sparse, class_weight, verbose):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -104,6 +104,7 @@ class BaseLibSVM(BaseEstimator):
         self.scale_C = scale_C
         self.sparse = sparse
         self.class_weight = class_weight
+        self.verbose = verbose
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -186,6 +187,8 @@ class BaseLibSVM(BaseEstimator):
         epsilon = self.epsilon
         if epsilon is None:
             epsilon = 0.1
+
+        libsvm.set_verbosity_wrap(self.verbose)
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -278,6 +281,8 @@ class BaseLibSVM(BaseEstimator):
             C = C / float(X.shape[0])
 
         self.scaled_C_ = C
+
+        libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
             self.n_support_, self.probA_, self.probB_ = \

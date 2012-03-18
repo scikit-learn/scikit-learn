@@ -30,6 +30,7 @@ Kernel:
 Example
 -------
 >>> from sklearn import datasets
+>>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
 >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -276,6 +277,7 @@ class LabelPropagation(BaseLabelPropagation):
     Examples
     --------
     >>> from sklearn import datasets
+    >>> from sklearn.semi_supervised import LabelPropagation
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
@@ -340,6 +342,7 @@ class LabelSpreading(BaseLabelPropagation):
     Examples
     --------
     >>> from sklearn import datasets
+    >>> from sklearn.semi_supervised import LabelSpreading
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,

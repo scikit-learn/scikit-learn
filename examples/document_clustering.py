@@ -17,7 +17,7 @@ k-means.
 # License: Simplified BSD
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import Vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import metrics
 
 from sklearn.cluster import KMeans, MiniBatchKMeans
@@ -75,7 +75,8 @@ true_k = np.unique(labels).shape[0]
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer(max_df=0.95, max_features=10000)
+vectorizer = TfidfVectorizer(max_df=0.5, max_features=10000,
+                             stop_words='english')
 X = vectorizer.fit_transform(dataset.data)
 
 print "done in %fs" % (time() - t0)

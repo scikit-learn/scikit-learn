@@ -103,6 +103,7 @@ uses.
    cross_validation.LeavePOut
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.StratifiedShuffleSplit
 
 .. autosummary::
    :toctree: generated/
@@ -258,6 +259,12 @@ Samples generator
 
 .. currentmodule:: sklearn
 
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_extraction.DictVectorizer
+
 From images
 -----------
 
@@ -280,6 +287,8 @@ From images
 
    feature_extraction.image.PatchExtractor
 
+.. _text_feature_extraction_ref:
+
 From text
 ---------
 
@@ -293,12 +302,9 @@ From text
    :toctree: generated/
    :template: class.rst
 
-   feature_extraction.text.RomanPreprocessor
-   feature_extraction.text.WordNGramAnalyzer
-   feature_extraction.text.CharNGramAnalyzer
    feature_extraction.text.CountVectorizer
    feature_extraction.text.TfidfTransformer
-   feature_extraction.text.Vectorizer
+   feature_extraction.text.TfidfVectorizer
 
 
 .. _feature_selection_ref:
