@@ -249,7 +249,7 @@ outliers. See [F2001]_ for detailed information.
     6.90...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the boston house-price dataset
+with least squares loss and 500 base learners to the Boston house-price dataset
 (see :func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
 Plots like these are often used for early stopping. The plot on the right
