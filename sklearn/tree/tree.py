@@ -35,14 +35,6 @@ REGRESSION = {
     "mse": _tree.MSE,
 }
 
-GRAPHVIZ_TREE_TEMPLATE = """\
-%(current)s [label="%(current_gv)s"] ;
-%(left_child)s [label="%(left_child_gv)s"] ;
-%(right_child)s [label="%(right_child_gv)s"] ;
-%(current)s -> %(left_child)s ;
-%(current)s -> %(right_child)s ;
-"""
-
 
 def export_graphviz(decision_tree, out_file=None, feature_names=None):
     """Export a decision tree in DOT format.
@@ -85,42 +77,33 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
-        if tree.children[node_id, 0] == tree.children[node_id, 1] == Tree.LEAF:
-            return "error = %s\\nsamples = %s\\nvalue = %s" \
-                % (tree.init_error[node_id], tree.n_samples[node_id],
-                   tree.value[node_id])
+        if feature_names is not None:
+            feature = feature_names[tree.feature[node_id]]
         else:
-            if feature_names is not None:
-                feature = feature_names[tree.feature[node_id]]
-            else:
-                feature = "X[%s]" % tree.feature[node_id]
-
-            return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
-                   % (feature, tree.threshold[node_id],
-                      tree.init_error[node_id], tree.n_samples[node_id],
+            feature = "X[%s]" % tree.feature[node_id]
+        if tree.children[node_id, 0] == Tree.LEAF:
+            return "error = %s\\nsamples = %s\\nvalue = %s" \
+                   % (tree.init_error[node_id], tree.n_samples[node_id],
                       tree.value[node_id])
 
-    def recurse(tree, node_id):
+        return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+               % (feature, tree.threshold[node_id],
+                  tree.init_error[node_id], tree.n_samples[node_id],
+                  tree.value[node_id])
+
+    def recurse(tree, node_id, parent=None):
         if node_id == Tree.LEAF:
             raise ValueError("Invalid node_id %s" % Tree.LEAF)
         left_child, right_child = tree.children[node_id, :]
-        node_data = {
-            "current": node_id,
-            "current_gv": node_to_str(tree, node_id),
-            "left_child": left_child,
-            "left_child_gv": node_to_str(tree, left_child),
-            "right_child": right_child,
-            "right_child_gv": node_to_str(tree, right_child),
-        }
+        out_file.write('%d [label="%s"] ;\n' %
+                (node_id, node_to_str(tree, node_id)))
 
-        out_file.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
+        if not parent is None:
+            out_file.write('%d -> %d ;\n' % (parent, node_id))
 
-        if not (tree.children[left_child, 0] == tree.children[left_child, 1] \
-                == Tree.LEAF):
-            recurse(tree, left_child)
-        if not (tree.children[right_child, 0] == \
-                tree.children[right_child, 1] == Tree.LEAF):
-            recurse(tree, right_child)
+        if not (left_child == Tree.LEAF):
+            recurse(tree, left_child, node_id)
+            recurse(tree, right_child, node_id)
 
     if out_file is None:
         out_file = open("tree.dot", "w")

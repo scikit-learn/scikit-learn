@@ -77,8 +77,8 @@ def test_graphviz_toy():
     "0 [label=\"X[0] <= 0.0\\nerror = 0.5"
     "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
     "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -96,8 +96,8 @@ def test_graphviz_toy():
     "0 [label=\"feature1 <= 0.0\\nerror = 0.5"
     "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
     "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
