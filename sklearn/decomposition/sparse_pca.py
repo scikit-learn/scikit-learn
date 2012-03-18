@@ -144,7 +144,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='dense_cholesky')
-        U /= np.sqrt((U ** 2).sum(axis=0))
+        s = np.sqrt((U ** 2).sum(axis=0))
+        s[s == 0] = 1
+        U /= s
         return U
 
 
