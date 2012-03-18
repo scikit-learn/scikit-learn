@@ -4,7 +4,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_not_equal
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
@@ -52,6 +52,13 @@ def test_kfold():
     assert_raises(ValueError, cval.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
     assert_raises(ValueError, cval.StratifiedKFold, y, 3)
+
+
+def test_shuffle_kfold():
+    kf = cval.KFold(300, 3, shuffle=True, random_state=0)
+    for train, test in kf:
+        assert_not_equal(train[0], 0)
+        break
 
 
 def test_stratified_shuffle_split():
