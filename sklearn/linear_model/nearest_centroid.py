@@ -61,8 +61,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Reference
     ---------
-    Diagnosis of multiple cancer types by shrunken centroids of gene expression
-    TODO: better referencing!
+    Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
+    multiple cancer types by shrunken centroids of gene expression. Proceedings
+    of the National Academy of Sciences of the United States of America, 
+    99(10), 6567-6572. The National Academy of Sciences.
 
     """
 
