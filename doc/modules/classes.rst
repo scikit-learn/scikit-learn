@@ -259,6 +259,12 @@ Samples generator
 
 .. currentmodule:: sklearn
 
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_extraction.DictVectorizer
+
 From images
 -----------
 

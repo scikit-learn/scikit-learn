@@ -12,6 +12,32 @@ features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
 
+Loading features from dicts
+===========================
+
+The class :class:`DictVectorizer` can be used to convert feature arrays
+represented as lists of standard Python ``dict`` objects to the NumPy/SciPy
+representation used by scikit-learn estimators.
+
+While not particularly fast to process, Python's ``dict`` has the advantages
+of being convenient to use, being sparse (absent features need not be
+stored) and storing feature names in addition to values.
+
+``DictVectorizer`` implements what is called one-of-K or "one-hot" coding for
+categorical (aka nominal, discrete) features. For a dictionary such as::
+
+    {"word-2": "guitar",
+     "pos-2": "NN",
+     "word-1": "and",
+     "pos-1": "CC",
+     "word+1": "player",
+     "pos+1": "NN",
+     "word+2": "stand",
+     "pos+2": "VB"}
+
+it will construct new, binary features ``"word-2=guitar"``, ``"pos-2=NN"``, etc.
+
+
 .. _text_feature_extraction:
 
 Text feature extraction
