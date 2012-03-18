@@ -86,7 +86,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
                    % (tree.init_error[node_id], tree.n_samples[node_id],
                       tree.value[node_id])
 
-        return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+        return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
                % (feature, tree.threshold[node_id],
                   tree.init_error[node_id], tree.n_samples[node_id],
                   tree.value[node_id])
@@ -97,7 +97,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         left_child, right_child = tree.children[node_id, :]
 
         # add node with description
-        out_file.write('%d [label="%s"] ;\n' %
+        out_file.write('%d [label="%s", shape="box"] ;\n' %
                 (node_id, node_to_str(tree, node_id)))
 
         if not parent is None:
