@@ -4,7 +4,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true
-from nose.tools import assert_raises, assert_not_equal
+from nose.tools import assert_raises
 
 from ..base import BaseEstimator
 from ..datasets import make_regression
@@ -53,12 +53,38 @@ def test_kfold():
     y = [0, 0, 1, 1, 2]
     assert_raises(ValueError, cval.StratifiedKFold, y, 3)
 
+    # Check all indices are returned in the test folds
+    kf = cval.KFold(300, 3)
+    all_folds = None
+    for train, test in kf:
+        if all_folds is None:
+            all_folds = test.copy()
+        else:
+            all_folds = np.concatenate((all_folds, test))
+
+    all_folds.sort()
+    assert_array_equal(all_folds, np.arange(300))
+
 
 def test_shuffle_kfold():
+    # Check the indices are shuffled properly, and that all indices are
+    # returned in the different test folds
     kf = cval.KFold(300, 3, shuffle=True, random_state=0)
+    all_folds = None
     for train, test in kf:
-        assert_not_equal(train[0], 0)
-        break
+        sorted_array = np.arange(100)
+        assert np.any(sorted_array != train)
+        sorted_array = np.arange(101, 200)
+        assert np.any(sorted_array != train)
+        sorted_array = np.arange(201, 300)
+        assert np.any(sorted_array != train)
+        if all_folds is None:
+            all_folds = test.copy()
+        else:
+            all_folds = np.concatenate((all_folds, test))
+
+    all_folds.sort()
+    assert_array_equal(all_folds, np.arange(300))
 
 
 def test_stratified_shuffle_split():
