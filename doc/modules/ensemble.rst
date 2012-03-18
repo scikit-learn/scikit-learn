@@ -199,10 +199,10 @@ The disadvantages of GBRT are:
 Classification
 ==============
 
-:class:`GradientBoostingClassifier` supports binary classification via
-the binomial deviance loss function.  The following example shows how
-to fit a gradient boosting classifier with 100 decision stumps as weak
-learners::
+:class:`GradientBoostingClassifier` supports both binary and multi-class
+classification via the deviance loss function.
+The following example shows how to fit a gradient boosting classifier
+with 100 decision stumps as weak learners::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
