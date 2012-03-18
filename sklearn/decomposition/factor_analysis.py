@@ -64,7 +64,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     ICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
-    def __init__(self, n_components, tol=.0001, copy=True, random_state=None):
+    def __init__(self, n_components, tol=.001, copy=True, random_state=None):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -95,10 +95,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError("n_components must be smaller than n_features.")
 
         # initialize model:
-        # TODO check random state
         loadings = self.random_state.uniform(size=(n_features,
             self.n_components))
-        uniqueness = np.ones(n_features)
+        uniqueness = np.diag(self.cov_)
         latent = np.zeros((n_samples, self.n_components))
         while True:
             latent_old = latent
@@ -108,10 +107,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             latent = np.dot(X, np.dot(loadings, inv.T)
                     / uniqueness[:, np.newaxis])
             latent_cov = n_samples * inv + np.dot(latent.T, latent)
+            latent_times_X = np.dot(latent.T, X)
             # maximization step, optimize loadings and cov
-            loadings = np.dot(np.dot(X.T, latent), linalg.inv(latent_cov))
+            loadings = linalg.solve(latent_cov.T, latent_times_X, sym_pos=True).T
             uniqueness = np.diag(self.cov_
-                   - np.dot(loadings, np.dot(latent.T, X) / n_samples))
+                   - np.dot(loadings, latent_times_X / n_samples))
+            print(linalg.norm(latent_old - latent))
             if linalg.norm(latent_old - latent) < self.tol:
                 break
 
@@ -121,12 +122,24 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        """Apply dimensionality reduction to X using the model.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+            The latent factors of X.
+        """
         X_transformed = X - self.mean_
         X_transformed = np.dot(X_transformed, self.components_.T)
         return X_transformed
 
     def fit_transform(self, X, y=None):
-        """Fit the ICA model to X and then apply dimensionality reduction to X
+        """Fit the FA model to X and then apply dimensionality reduction to X
         using the learned model.
 
         Parameters
