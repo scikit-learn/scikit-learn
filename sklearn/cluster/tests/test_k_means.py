@@ -5,6 +5,7 @@ from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
+from nose import SkipTest
 from nose.tools import assert_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
@@ -154,7 +155,17 @@ def test_k_means_plus_plus_init():
     _check_fitted_model(k_means)
 
 
+def _get_mac_os_version():
+    import platform
+    mac_version, _, _ = platform.mac_ver()
+    if mac_version:
+        # turn something like '10.7.3' into '10.7'
+        return '.'.join(mac_version.split('.')[:2])
+
+
 def test_k_means_plus_plus_init_2_jobs():
+    if _get_mac_os_version() == '10.7':
+        raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
     k_means = KMeans(init="k-means++", k=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
     _check_fitted_model(k_means)

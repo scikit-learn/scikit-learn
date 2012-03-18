@@ -200,10 +200,8 @@ def auc(x, y):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
-    # reorder the data points according to the x axis
-    order = np.argsort(x)
-    x = x[order]
-    y = y[order]
+    # reorder the data points according to the x axis and using y to break ties
+    x, y = np.array(sorted(points for points in zip(x, y))).T
 
     h = np.diff(x)
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0

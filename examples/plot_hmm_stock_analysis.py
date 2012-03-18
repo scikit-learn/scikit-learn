@@ -43,7 +43,7 @@ X = np.column_stack([diff, volume])
 
 ###############################################################################
 # Run Gaussian HMM
-print "fittiing to HMM and decoding ...",
+print "fitting to HMM and decoding ...",
 n_components = 5
 
 # make an HMM instance and execute fit

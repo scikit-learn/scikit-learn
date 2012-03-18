@@ -2122,6 +2122,7 @@ static const char *solver_type_table[]=
 	"L1R_L2LOSS_SVC", "L1R_LR", "L2R_LR_DUAL", NULL
 };
 
+#if 0
 int save_model(const char *model_file_name, const struct model *model_)
 {
 	int i;
@@ -2264,6 +2265,7 @@ struct model *load_model(const char *model_file_name)
 
 	return model_;
 }
+#endif
 
 int get_nr_feature(const model *model_)
 {
