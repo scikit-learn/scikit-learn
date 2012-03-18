@@ -346,7 +346,8 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
-    **References**:
+    References
+    ----------
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
@@ -372,7 +373,7 @@ class _RidgeGCV(LinearModel):
 
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        return (v_prime * Q**2).sum(axis=-1)
+        return (v_prime * Q ** 2).sum(axis=-1)
 
     def _diag_dot(self, D, B):
         # compute dot(diag(D), B)
@@ -489,7 +490,7 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c =_errors(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
             else:
                 out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
             M[:, i] = out.ravel()

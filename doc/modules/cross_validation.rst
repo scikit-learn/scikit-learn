@@ -357,6 +357,12 @@ Here is a usage example::
 validation that allows a finer control on the number of iterations and
 the proportion of samples in on each side of the train / test split.
 
+See also
+--------
+:class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
+stratified splits, *i.e* which creates splits by preserving the same
+percentage for each target class as in the complete set.
+
 .. _Bootstrap:
 
 Bootstrapping cross-validation

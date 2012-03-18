@@ -48,11 +48,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
     CM : array, shape = [n_classes, n_classes]
         confusion matrix
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/Confusion_matrix
-
     """
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -106,9 +104,8 @@ def roc_curve(y_true, y_score):
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
@@ -203,10 +200,8 @@ def auc(x, y):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
-    # reorder the data points according to the x axis
-    order = np.argsort(x)
-    x = x[order]
-    y = y[order]
+    # reorder the data points according to the x axis and using y to break ties
+    x, y = np.array(sorted(points for points in zip(x, y))).T
 
     h = np.diff(x)
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
@@ -373,9 +368,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         fbeta_score of the positive class in binary classification or weighted
         average of the fbeta_score of each class for the multiclass task.
 
-    Notes
-    -----
-    **References:**
+    References
+    ----------
     R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
     Addison Wesley, pp. 327-328.
 
@@ -441,9 +435,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         f1_score of the positive class in binary classification or weighted
         average of the f1_scores of each class for the multiclass task
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/F1_score
 
     """
@@ -516,9 +509,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     f1_score: array, shape = [n_unique_labels], dtype = np.double
     support: array, shape = [n_unique_labels], dtype = np.long
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
 
     """
@@ -822,6 +814,10 @@ def r2_score(y_true, y_pred):
     Notes
     -----
     This is not a symmetric function.
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     numerator = ((y_true - y_pred) ** 2).sum()

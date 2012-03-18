@@ -346,7 +346,7 @@ def predict_prob_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] T,
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object. predict_wrap skips this step.
 
-    See scikits.learn.svm.predict for a complete list of parameters.
+    See sklearn.svm.predict for a complete list of parameters.
 
     Parameters
     ----------

@@ -167,8 +167,6 @@ def test_lasso_path():
                             clf.mse_path_[5].mean(),
                             significant=2)
 
-
-
     # test set
     assert_true(clf.score(X_test, y_test) > 0.99)
 
@@ -181,13 +179,13 @@ def test_enet_path():
         # Here we have a small number of iterations, and thus the
         # ElasticNet might not converge. This is to speed up tests
         warnings.simplefilter("ignore", UserWarning)
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95,], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
         assert_almost_equal(clf.alpha, 0.002, 2)
         assert_equal(clf.rho_, 0.95)
 
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95,], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95], cv=3,
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
     assert_almost_equal(clf.alpha, 0.002, 2)

@@ -1,4 +1,5 @@
 import warnings
-warnings.warn('scikits.learn namespace is deprecated, please use sklearn instead')
+warnings.warn('scikits.learn namespace is deprecated and will be removed in '
+        '0.12, please use sklearn instead')
 from sklearn.feature_extraction.text import *
 

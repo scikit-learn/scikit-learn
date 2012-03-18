@@ -5,6 +5,7 @@ import warnings
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, BlasNotFoundError
+    import numpy
 
     config = Configuration('sklearn', parent_package, top_path)
 
@@ -34,12 +35,20 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('neighbors')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
+    config.add_subpackage('semi_supervised')
     config.add_subpackage("tree")
     config.add_subpackage("tree/tests")
     config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
+
+    # add cython extension module for hmm
+    config.add_extension(
+        '_hmmc',
+        sources=['_hmmc.c'],
+        include_dirs=[numpy.get_include()],
+    )
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)

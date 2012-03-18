@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
 
 
@@ -104,6 +104,49 @@ def test_grid_search_sparse_score_func():
     # Smoke test the score
     #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
     #                        cv.score(X_[:180], y[:180]))
+
+
+def test_grid_search_precomputed_kernel():
+    """Test that grid search works when the input features are given in the
+    form of a precomputed kernel matrix """
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+
+    # compute the training kernel matrix corresponding to the linear kernel
+    K_train = np.dot(X_[:180], X_[:180].T)
+    y_train = y_[:180]
+
+    clf = SVC(kernel='precomputed')
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    cv.fit(K_train, y_train)
+
+    assert_true(cv.best_score_ >= 0)
+
+    # compute the test kernel matrix
+    K_test = np.dot(X_[180:], X_[:180].T)
+    y_test = y_[180:]
+
+    y_pred = cv.predict(K_test)
+
+    assert_true(np.mean(y_pred == y_test) >= 0)
+
+
+def test_grid_search_precomputed_kernel_error_nonsquare():
+    """Test that grid search returns an error with a non-square precomputed
+    training kernel matrix"""
+    K_train = np.zeros((10, 20))
+    y_train = np.ones((10, ))
+    clf = SVC(kernel='precomputed')
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    assert_raises(ValueError, cv.fit, K_train, y_train)
+
+
+def test_grid_search_precomputed_kernel_error_kernel_function():
+    """Test that grid search returns an error when using a kernel_function"""
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+    kernel_function = lambda x1, x2: np.dot(x1, x2.T)
+    clf = SVC(kernel=kernel_function)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    assert_raises(ValueError, cv.fit, X_, y_)
 
 
 class BrokenClassifier(BaseEstimator):

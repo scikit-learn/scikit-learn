@@ -191,7 +191,7 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
 
 
@@ -281,7 +281,7 @@ and `rho` by cross-validation.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
@@ -592,7 +592,7 @@ zero) model.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_logistic_l1_l2_sparsity.py`
+  * :ref:`example_linear_model_plot_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 

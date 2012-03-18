@@ -75,7 +75,7 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C, sparse, class_weight):
+                 scale_C, sparse, class_weight, verbose):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -104,6 +104,7 @@ class BaseLibSVM(BaseEstimator):
         self.scale_C = scale_C
         self.sparse = sparse
         self.class_weight = class_weight
+        self.verbose = verbose
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -176,11 +177,18 @@ class BaseLibSVM(BaseEstimator):
 
         # set default parameters
         C = self.C
+        if C is None:
+            C = X.shape[0]
         if getattr(self, 'scale_C', False):
-            C = self.C / float(X.shape[0])
+            C = C / float(X.shape[0])
+
+        self.scaled_C_ = C
+
         epsilon = self.epsilon
         if epsilon is None:
             epsilon = 0.1
+
+        libsvm.set_verbosity_wrap(self.verbose)
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -267,8 +275,14 @@ class BaseLibSVM(BaseEstimator):
             self.gamma = 1.0 / X.shape[1]
 
         C = self.C
+        if C is None:
+            C = X.shape[0]
         if self.scale_C:
-            C /= float(X.shape[0])
+            C = C / float(X.shape[0])
+
+        self.scaled_C_ = C
+
+        libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
             self.n_support_, self.probA_, self.probB_ = \
@@ -338,13 +352,15 @@ class BaseLibSVM(BaseEstimator):
         if epsilon == None:
             epsilon = 0.1
 
+        C = 0.0  # C is not useful here
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_,
             self.label_, self.probA_, self.probB_,
             svm_type=svm_type,
-            kernel=self.kernel, C=self.C, nu=self.nu,
+            kernel=self.kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
@@ -352,6 +368,8 @@ class BaseLibSVM(BaseEstimator):
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
         kernel_type = self._sparse_kernels.index(self.kernel)
+
+        C = 0.0  # C is not useful here
 
         return libsvm_sparse.libsvm_sparse_predict(
                       X.data, X.indices, X.indptr,
@@ -361,7 +379,7 @@ class BaseLibSVM(BaseEstimator):
                       self.dual_coef_.data, self._intercept_,
                       LIBSVM_IMPL.index(self.impl), kernel_type,
                       self.degree, self.gamma, self.coef0, self.tol,
-                      self.C, self.class_weight_label_, self.class_weight_,
+                      C, self.class_weight_label_, self.class_weight_,
                       self.nu, self.epsilon, self.shrinking,
                       self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
@@ -410,12 +428,14 @@ class BaseLibSVM(BaseEstimator):
         if epsilon == None:
             epsilon = 0.1
 
+        C = 0.0  # C is not useful here
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self.label_,
             self.probA_, self.probB_,
-            svm_type=svm_type, kernel=self.kernel, C=self.C, nu=self.nu,
+            svm_type=svm_type, kernel=self.kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
@@ -492,6 +512,8 @@ class BaseLibSVM(BaseEstimator):
 
         X = array2d(X, dtype=np.float64, order="C")
 
+        C = 0.0  # C is not useful here
+
         epsilon = self.epsilon
         if epsilon == None:
             epsilon = 0.1
@@ -500,7 +522,7 @@ class BaseLibSVM(BaseEstimator):
             self.dual_coef_, self._intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
-            kernel=self.kernel, C=self.C, nu=self.nu,
+            kernel=self.kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
@@ -565,9 +587,9 @@ class BaseLibLinear(BaseEstimator):
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
         }
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class=False, fit_intercept=True, intercept_scaling=1,
-                 scale_C=True, class_weight=None):
+    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=None,
+            multi_class='ovr', fit_intercept=True, intercept_scaling=1,
+            scale_C=True, class_weight=None):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -596,9 +618,12 @@ class BaseLibLinear(BaseEstimator):
           - loss
           - dual
         """
-        if self.multi_class:
+        if self.multi_class == 'crammer_singer':
             solver_type = 'MC_SVC'
         else:
+            if self.multi_class != 'ovr':
+                raise ValueError("`multi_class` must be one of `ovr`, "
+                        "`crammer_singer`")
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
@@ -658,9 +683,12 @@ class BaseLibLinear(BaseEstimator):
                              (X.shape[0], y.shape[0]))
 
         C = self.C
+        if C is None:
+            C = X.shape[0]
         if self.scale_C:
             C = C / float(X.shape[0])
 
+        self.scaled_C_ = C
         train = liblinear.csr_train_wrap if self._sparse \
                                          else liblinear.train_wrap
         self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
@@ -684,10 +712,12 @@ class BaseLibLinear(BaseEstimator):
         X = self._validate_for_predict(X)
         self._check_n_features(X)
 
+        C = 0.0  # C is not useful here
+
         predict = liblinear.csr_predict_wrap if self._sparse \
                                              else liblinear.predict_wrap
         return predict(X, self.raw_coef_, self._get_solver_type(), self.tol,
-                       self.C, self.class_weight_label_, self.class_weight_,
+                       C, self.class_weight_label_, self.class_weight_,
                        self.label_, self._get_bias())
 
     def decision_function(self, X):
@@ -706,12 +736,14 @@ class BaseLibLinear(BaseEstimator):
         X = self._validate_for_predict(X)
         self._check_n_features(X)
 
+        C = 0.0  # C is not useful here
+
         dfunc_wrap = liblinear.csr_decision_function_wrap \
                        if self._sparse \
                        else liblinear.decision_function_wrap
 
         dec_func = dfunc_wrap(X, self.raw_coef_, self._get_solver_type(),
-                self.tol, self.C, self.class_weight_label_, self.class_weight_,
+                self.tol, C, self.class_weight_label_, self.class_weight_,
                 self.label_, self._get_bias())
 
         return dec_func
