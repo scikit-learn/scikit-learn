@@ -40,7 +40,7 @@ from ..tree._tree import DTYPE
 
 
 __all__ = ["GradientBoostingClassifier",
-           "GradientBoostingRegressor",]
+           "GradientBoostingRegressor"]
 
 
 # ignore overflows due to exp(-pred) in BinomailDeviance
