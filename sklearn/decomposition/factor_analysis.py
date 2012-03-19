@@ -98,7 +98,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         # initialize model:
         loadings = self.random_state.uniform(size=(n_features,
             self.n_components))
-        uniqueness = np.diag(self.cov_)
+        uniqueness = 1. / np.diag(self.cov_)
         latent = np.zeros((n_samples, self.n_components))
 
         for i in xrange(self.max_iter):
