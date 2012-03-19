@@ -134,46 +134,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-def _compute_feature_importances(tree, n_features, method='gini'):
-    """Computes the importance of each feature (aka variable).
 
-    The following `method`s are supported:
-
-      * 'gini' : The difference of the initial error and the error of the
-                 split times the number of samples that passed the node.
-      * 'squared' : The empirical improvement in squared error.
-
-    Parameters
-    ----------
-    tree : tree.Tree
-        A `Tree` object.
-    n_features : int
-        The number of features.
-    method : str
-        The method to estimate the importance of a feature. Either 'gini'
-        or 'mse'.
-    """
-    gini = lambda tree, node: (tree.n_samples[node] * \
-                               (tree.init_error[node] - tree.best_error[node]))
-    squared = lambda tree, node: (tree.init_error[node] - \
-                                  tree.best_error[node]) ** 2.0
-    method = {
-        'gini': gini,
-        'squared': squared
-        }[method]
-
-    importances = np.zeros((n_features,), dtype=np.float64)
-
-    for node in range(tree.node_count):
-        if (tree.children[node, 0]
-            == tree.children[node, 1]
-            == Tree.LEAF):
-            continue
-        else:
-            importances[tree.feature[node]] += method(tree, node)
-
-    importances /= np.sum(importances)
-    return importances
 
 
 class Tree(object):
@@ -309,6 +270,44 @@ class Tree(object):
         _tree._predict_tree(X, self.children, self.feature, self.threshold,
                             self.value, out)
         return out
+
+    def compute_feature_importances(self, n_features, method="gini"):
+        """Computes the importance of each feature (aka variable).
+
+        The following `method`s are supported:
+
+          * 'gini' : The difference of the initial error and the error of the
+                     split times the number of samples that passed the node.
+          * 'squared' : The empirical improvement in squared error.
+
+        Parameters
+        ----------
+        n_features : int
+            The number of features.
+
+        method : str, optional (default="gini")
+            The method to estimate the importance of a feature. Either "gini"
+            or "mse".
+        """
+        gini = lambda node: (self.n_samples[node] * \
+                                (self.init_error[node] - self.best_error[node]))
+        squared = lambda node: (self.init_error[node] - \
+                                self.best_error[node]) ** 2.0
+
+        method = gini if method == "gini" else squared
+        importances = np.zeros((n_features,), dtype=np.float64)
+
+        for node in range(self.node_count):
+            if (self.children[node, 0]
+                == self.children[node, 1]
+                == Tree.LEAF):
+                continue
+
+            else:
+                importances[self.feature[node]] += method(node)
+
+        importances /= np.sum(importances)
+        return importances
 
 
 def _build_tree(X, y, criterion, max_depth, min_samples_split,
@@ -528,8 +527,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             if not self.tree_:
                 raise ValueError("Estimator not fitted, " \
                                  "call `fit` before `feature_importances_`.")
-            self.feature_importances_ = _compute_feature_importances(
-                self.tree_, self.n_features_)
+            self.feature_importances_ = \
+                self.tree_.compute_feature_importances(self.n_features_)
 
         return self
 
