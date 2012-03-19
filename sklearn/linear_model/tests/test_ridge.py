@@ -92,6 +92,24 @@ def test_ridge_shapes():
     assert_equal(ridge.intercept_.shape, (2, ))
 
 
+def test_ridge_intercept():
+    """Test intercept with multiple targets GH issue #708
+    """
+    n_samples, n_features = 5, 10
+    X = np.random.randn(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    Y = np.c_[y, 1. + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    intercept = ridge.intercept_
+
+    ridge.fit(X, Y)
+    assert_almost_equal(ridge.intercept_[0], intercept)
+    assert_almost_equal(ridge.intercept_[1], intercept + 1.)
+
+
 def test_toy_ridge_object():
     """Test BayesianRegression ridge classifier
 
