@@ -134,9 +134,6 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-
-
-
 class Tree(object):
     """Struct-of-arrays representation of a binary decision tree.
 
@@ -267,8 +264,13 @@ class Tree(object):
 
     def predict(self, X):
         out = np.empty((X.shape[0], self.value.shape[1]), dtype=DTYPE)
-        _tree._predict_tree(X, self.children, self.feature, self.threshold,
-                            self.value, out)
+
+        _tree._predict_tree(X,
+                            self.children,
+                            self.feature,
+                            self.threshold,
+                            self.value,
+                            out)
         return out
 
     def compute_feature_importances(self, n_features, method="gini"):
@@ -276,9 +278,9 @@ class Tree(object):
 
         The following `method`s are supported:
 
-          * 'gini' : The difference of the initial error and the error of the
+          * "gini" : The difference of the initial error and the error of the
                      split times the number of samples that passed the node.
-          * 'squared' : The empirical improvement in squared error.
+          * "squared" : The empirical improvement in squared error.
 
         Parameters
         ----------
@@ -289,12 +291,18 @@ class Tree(object):
             The method to estimate the importance of a feature. Either "gini"
             or "mse".
         """
-        gini = lambda node: (self.n_samples[node] * \
-                                (self.init_error[node] - self.best_error[node]))
-        squared = lambda node: (self.init_error[node] - \
-                                self.best_error[node]) ** 2.0
+        if method == "gini":
+            method = lambda node: (self.n_samples[node] * \
+                                     (self.init_error[node] -
+                                      self.best_error[node]))
+        elif method == "mse":
+            method = lambda node: (self.init_error[node] - \
+                                   self.best_error[node]) ** 2.0
+        else:
+            raise ValueError(
+                'Invalid value for method. Allowed string '
+                'values are "gini", or "mse".')
 
-        method = gini if method == "gini" else squared
         importances = np.zeros((n_features,), dtype=DTYPE)
 
         for node in range(self.node_count):
@@ -302,11 +310,11 @@ class Tree(object):
                 == self.children[node, 1]
                 == Tree.LEAF):
                 continue
-
             else:
                 importances[self.feature[node]] += method(node)
 
         importances /= np.sum(importances)
+
         return importances
 
 
