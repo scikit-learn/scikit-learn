@@ -29,7 +29,6 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state
 
-from ..tree.tree import _build_tree
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
 from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
@@ -392,10 +391,11 @@ class BaseGradientBoosting(BaseEnsemble):
             residual = loss.negative_gradient(y, y_pred, k=k)
 
             # induce regression tree on residuals
-            tree = _build_tree(X, residual, MSE(), self.max_depth,
+            tree = Tree(1, self.n_features)
+            tree.build(X, residual, MSE(), self.max_depth,
                                self.min_samples_split, self.min_samples_leaf,
                                0.0, self.n_features, self.random_state,
-                               1, _find_best_split, sample_mask,
+                               _find_best_split, sample_mask,
                                X_argsorted)
 
             # update tree leafs
@@ -529,8 +529,7 @@ class BaseGradientBoosting(BaseEnsemble):
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=DTYPE)
         for stage in self.estimators_:
-            stage_sum = sum(tree.compute_feature_importances(self.n_features,
-                                                         method='squared')
+            stage_sum = sum(tree.compute_feature_importances(method='squared')
                             for tree in stage) / len(stage)
             total_sum += stage_sum
 
