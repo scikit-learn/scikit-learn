@@ -45,6 +45,14 @@ def configuration(parent_package='', top_path=None):
          sources=['graph_shortest_path.c'],
          include_dirs=[numpy.get_include()])
 
+    config.add_extension('seq_dataset',
+         sources=['seq_dataset.c'],
+         include_dirs=[numpy.get_include()])
+
+    config.add_extension('weight_vector',
+         sources=['weight_vector.c'],
+         include_dirs=[numpy.get_include()])
+
     return config
 
 
