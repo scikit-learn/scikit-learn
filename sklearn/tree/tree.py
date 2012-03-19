@@ -281,9 +281,9 @@ class Tree(object):
             # Split samples
             if depth < max_depth and n_node_samples >= min_samples_split \
                and n_node_samples >= 2 * min_samples_leaf:
-                feature, threshold, best_error, init_error = find_split(X, y,
-                        X_argsorted, sample_mask, n_node_samples,
-                        min_samples_leaf, max_features, criterion, random_state)
+                feature, threshold, best_error, init_error = find_split(
+                    X, y, X_argsorted, sample_mask, n_node_samples,
+                    min_samples_leaf, max_features, criterion, random_state)
             else:
                 feature = -1
                 init_error = _tree._error_at_leaf(y, sample_mask, criterion,
@@ -406,6 +406,7 @@ class Tree(object):
         importances /= np.sum(importances)
 
         return importances
+
 
 class BaseDecisionTree(BaseEstimator, SelectorMixin):
     """Base class for decision trees.

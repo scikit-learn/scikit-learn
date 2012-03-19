@@ -245,7 +245,7 @@ def test_parallel():
     y1 = forest.predict(boston.data)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(boston.data)
-    assert_array_almost_equal(y1, y2, 10)
+    assert_array_almost_equal(y1, y2, 3)
 
     # Use all cores on the classification dataset
     forest = RandomForestClassifier(n_jobs=-1)
