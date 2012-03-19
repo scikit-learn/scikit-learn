@@ -506,14 +506,15 @@ class OrthogonalMatchingPursuit(LinearModel):
         """
         X = array2d(X)
         y = np.asarray(y)
-        if y.ndim == 1:
-            y = y[:, np.newaxis]
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
                                                         self.normalize,
                                                         self.copy_X)
+
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
 
         if self.n_nonzero_coefs == None and self.tol is None:
             self.n_nonzero_coefs = int(0.1 * n_features)
