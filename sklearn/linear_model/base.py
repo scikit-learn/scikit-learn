@@ -55,12 +55,12 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])
-        y_mean = y.mean()
+        y_mean = y.mean(axis=0)
         y = y - y_mean
     else:
         X_mean = np.zeros(X.shape[1])
         X_std = np.ones(X.shape[1])
-        y_mean = 0.
+        y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
     return X, y, X_mean, y_mean, X_std
 
 

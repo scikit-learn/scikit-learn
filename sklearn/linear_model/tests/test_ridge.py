@@ -68,6 +68,48 @@ def test_ridge():
     assert_true(ridge.score(X, y) > 0.9)
 
 
+def test_ridge_shapes():
+    """Test shape of coef_ and intercept_
+    """
+    n_samples, n_features = 5, 10
+    X = np.random.randn(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    Y1 = y[:, np.newaxis]
+    Y = np.c_[y, 1 + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (n_features,))
+    assert_equal(ridge.intercept_.shape, ())
+
+    ridge.fit(X, Y1)
+    assert_equal(ridge.coef_.shape, (1, n_features))
+    assert_equal(ridge.intercept_.shape, (1, ))
+
+    ridge.fit(X, Y)
+    assert_equal(ridge.coef_.shape, (2, n_features))
+    assert_equal(ridge.intercept_.shape, (2, ))
+
+
+def test_ridge_intercept():
+    """Test intercept with multiple targets GH issue #708
+    """
+    n_samples, n_features = 5, 10
+    X = np.random.randn(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    Y = np.c_[y, 1. + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    intercept = ridge.intercept_
+
+    ridge.fit(X, Y)
+    assert_almost_equal(ridge.intercept_[0], intercept)
+    assert_almost_equal(ridge.intercept_[1], intercept + 1.)
+
+
 def test_toy_ridge_object():
     """Test BayesianRegression ridge classifier
 
