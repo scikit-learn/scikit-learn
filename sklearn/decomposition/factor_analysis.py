@@ -64,14 +64,15 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     ICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
-    def __init__(self, n_components, tol=.001, copy=True, random_state=None):
+    def __init__(self, n_components, tol=.001, copy=True, random_state=None, max_iter=1000):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.random_state = random_state
+        self.max_iter = max_iter
 
     def fit(self, X, y=None):
-        """Fit the ICA model to X using EM.
+        """Fit the FA model to X using EM.
 
         Parameters
         ----------
@@ -99,8 +100,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             self.n_components))
         uniqueness = np.diag(self.cov_)
         latent = np.zeros((n_samples, self.n_components))
-        while True:
-            latent_old = latent
+
+        for i in xrange(self.max_iter):
             # expectation step, find latent representation
             inv = linalg.inv(np.eye(self.n_components) + np.dot(loadings.T /
                 uniqueness, loadings))
@@ -112,9 +113,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             loadings = linalg.solve(latent_cov.T, latent_times_X, sym_pos=True).T
             uniqueness = np.diag(self.cov_
                    - np.dot(loadings, latent_times_X / n_samples))
-            print(linalg.norm(latent_old - latent))
-            if linalg.norm(latent_old - latent) < self.tol:
-                break
 
         self.loadings_ = loadings
         self.uniqueness_ = np.diag(uniqueness)
