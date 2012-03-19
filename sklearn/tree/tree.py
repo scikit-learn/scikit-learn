@@ -160,17 +160,17 @@ class Tree(object):
     feature : np.ndarray of int32
         The feature to split on (only for internal nodes).
 
-    threshold : np.ndarray of float64
+    threshold : np.ndarray of DTYPE
         The threshold of each node (only for leaves).
 
-    value : np.ndarray of float64, shape=(capacity, n_classes)
+    value : np.ndarray of DTYPE, shape=(capacity, n_classes)
         Contains the constant prediction value of each node.
 
-    best_error : np.ndarray of float64
+    best_error : np.ndarray of DTYPE
         The error of the (best) split.
         For leaves `init_error == `best_error`.
 
-    init_error : np.ndarray of float64
+    init_error : np.ndarray of DTYPE
         The initial error of the node (before splitting).
         For leaves `init_error == `best_error`.
 
@@ -190,11 +190,11 @@ class Tree(object):
         self.feature = np.empty((capacity,), dtype=np.int32)
         self.feature.fill(Tree.UNDEFINED)
 
-        self.threshold = np.empty((capacity,), dtype=np.float64)
-        self.value = np.empty((capacity, k), dtype=np.float64)
+        self.threshold = np.empty((capacity,), dtype=DTYPE)
+        self.value = np.empty((capacity, k), dtype=DTYPE)
 
-        self.best_error = np.empty((capacity,), dtype=np.float32)
-        self.init_error = np.empty((capacity,), dtype=np.float32)
+        self.best_error = np.empty((capacity,), dtype=DTYPE)
+        self.init_error = np.empty((capacity,), dtype=DTYPE)
         self.n_samples = np.empty((capacity,), dtype=np.int32)
 
     def resize(self, capacity=None):
@@ -266,7 +266,7 @@ class Tree(object):
         return node_id
 
     def predict(self, X):
-        out = np.empty((X.shape[0], self.value.shape[1]), dtype=np.float64)
+        out = np.empty((X.shape[0], self.value.shape[1]), dtype=DTYPE)
         _tree._predict_tree(X, self.children, self.feature, self.threshold,
                             self.value, out)
         return out
@@ -295,7 +295,7 @@ class Tree(object):
                                 self.best_error[node]) ** 2.0
 
         method = gini if method == "gini" else squared
-        importances = np.zeros((n_features,), dtype=np.float64)
+        importances = np.zeros((n_features,), dtype=DTYPE)
 
         for node in range(self.node_count):
             if (self.children[node, 0]
