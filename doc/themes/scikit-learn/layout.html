@@ -48,11 +48,6 @@
    {%- endif %}
 
    
-   <div class='buttons'>
-       <a href="{{ pathto(master_doc) }}">
-          Next
-       </a>  
-   </div>
 
     <div class="header-wrapper">
       <div class="header">
@@ -97,6 +92,8 @@
     </div>
 {% endblock %}
 
+
+
 {% block content %}
     <div class="content-wrapper">
 
@@ -106,8 +103,8 @@
 	  {%- if parents %}
 	  <div class="rel">
 	   {% else %}
-	<div class="rel rellarge">
-	{% endif %}
+	   <div class="rel rellarge">
+	     {% endif %}
 	<!-- rellinks[1:] is an ugly hack to avoid link to module
 	    index  -->
 	{%- for rellink in rellinks[1:]|reverse %}
@@ -243,6 +240,43 @@
     </span>
     {%- endif %}
     </div>
+
+
+{%- if pagename != 'index' %}
+{%- if parents %}
+<div class="rel">
+  {% else %}
+  <div class="rel rellarge">
+    {% endif %}
+    
+    {%- for rellink in rellinks[1:]|reverse %}
+    
+    <div class='buttons'>
+      <a href="{{ pathto(rellink[0]) }}">
+        Next
+      </a>  
+    </div>
+    {%- if rellinks[-1] %}
+    <div class='buttons'>
+      <a href="{{ pathto(master_doc) }}">
+        Home
+      </a>  
+    </div>
+    {% endif %}
+    {%- endfor %}
+    {% endif %}
+  </div>
+
+
+
+
+
+
+   
+
+
+
+
 {%- endblock %}
 
 
