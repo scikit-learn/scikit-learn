@@ -1,7 +1,7 @@
 """Gradient Boosting methods
 
-This module contains methods for fitting gradient boosted
-regression trees for both classification and regression
+This module contains methods for fitting gradient boosted regression trees for
+both classification and regression.
 
 The module structure is the following:
 
@@ -29,8 +29,6 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state
 
-from ..tree.tree import _build_tree
-from ..tree.tree import _compute_feature_importances
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
 from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
@@ -38,20 +36,14 @@ from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
-
 __all__ = ["GradientBoostingClassifier",
-           "GradientBoostingRegressor",]
-
-
-# ignore overflows due to exp(-pred) in BinomailDeviance
-#np.seterr(invalid='raise', under='raise', divide='raise', over='ignore')
+           "GradientBoostingRegressor"]
 
 
 class MedianPredictor(object):
     """A simple initial estimator that predicts the median
     of the training targets.
     """
-
     def fit(self, X, y):
         self.median = np.median(y)
 
@@ -65,7 +57,6 @@ class MeanPredictor(object):
     """A simple initial estimator that predicts the mean
     of the training targets.
     """
-
     def fit(self, X, y):
         self.mean = np.mean(y)
 
@@ -79,7 +70,6 @@ class ClassPriorPredictor(object):
     """A simple initial estimator that predicts the class prior
     of the training targets.
     """
-
     def fit(self, X, y):
         self.prior = np.log(np.sum(y) / np.sum(1.0 - y))
 
@@ -93,7 +83,6 @@ class MultiClassPriorPredictor(object):
     """A simple initial estimator that predicts the multi class priors
     of the training targets.
     """
-
     def fit(self, X, y):
         self.classes_ = np.unique(y)
         self.n_classes = len(self.classes_)
@@ -200,7 +189,6 @@ class RegressionLossFunction(LossFunction):
 class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
     Terminal regions need not to be updated for least squares. """
-
     def init_estimator(self):
         return MeanPredictor()
 
@@ -226,7 +214,6 @@ class LeastSquaresError(RegressionLossFunction):
 
 class LeastAbsoluteError(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
-
     def init_estimator(self):
         return MedianPredictor()
 
@@ -250,7 +237,6 @@ class BinomialDeviance(LossFunction):
     Binary classification is a special case; here, we only need to
     fit one tree instead of ``n_classes`` trees.
     """
-
     def __init__(self, n_classes):
         if n_classes != 2:
             raise ValueError("%s requires 2 classes." %
@@ -287,7 +273,6 @@ class BinomialDeviance(LossFunction):
 
 
 class MultinomialDeviance(LossFunction):
-
     def __init__(self, n_classes):
         if n_classes < 3:
             raise ValueError("%s requires more than 2 classes."
@@ -342,7 +327,6 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
-
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, random_state):
         if n_estimators <= 0:
@@ -387,22 +371,25 @@ class BaseGradientBoosting(BaseEnsemble):
         loss = self.loss_
         self.estimators_.append([])
         original_y = y
+
         for k in range(loss.K):
             if loss.is_multi_class():
                 y = np.array(original_y == k, dtype=np.float64)
+
             residual = loss.negative_gradient(y, y_pred, k=k)
 
             # induce regression tree on residuals
-            tree = _build_tree(X, residual, MSE(), self.max_depth,
-                               self.min_samples_split, self.min_samples_leaf,
-                               0.0, self.n_features, self.random_state,
-                               1, _find_best_split, sample_mask,
-                               X_argsorted)
+            tree = Tree(1, self.n_features)
+            tree.build(X, residual, MSE(), self.max_depth,
+                       self.min_samples_split, self.min_samples_leaf, 0.0,
+                       self.n_features, self.random_state, _find_best_split,
+                       sample_mask, X_argsorted)
 
             # update tree leafs
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
                                                sample_mask, self.learn_rate,
                                                k=k)
+
             # add tree to ensemble
             self.estimators_[-1].append(tree)
 
@@ -530,8 +517,7 @@ class BaseGradientBoosting(BaseEnsemble):
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(_compute_feature_importances(tree, self.n_features,
-                                                         method='squared')
+            stage_sum = sum(tree.compute_feature_importances(method='squared')
                             for tree in stage) / len(stage)
             total_sum += stage_sum
 

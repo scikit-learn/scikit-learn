@@ -65,7 +65,7 @@ def test_parameter_checks():
                   min_samples_split=-1.0)
 
     assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=0)
-    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=-1.0)
+    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=-1.)
 
     assert_raises(ValueError, GradientBoostingClassifier, subsample=0.0)
     assert_raises(ValueError, GradientBoostingClassifier, subsample=1.1)
@@ -194,7 +194,7 @@ def test_feature_importances():
     feature_importances = clf.feature_importances_
 
     # true feature importance ranking
-    true_ranking = np.array([3,  1,  8, 10,  2,  9,  4, 11,  0,  6,  7,  5, 12])
+    true_ranking = np.array([3, 1, 8, 10, 2, 9, 4, 11, 0, 6, 7, 5, 12])
 
     assert_array_equal(true_ranking, feature_importances.argsort())
 
@@ -260,5 +260,5 @@ def test_monitor():
         if i >= 9:
             return True
     clf.fit(X, y, monitor=monitor)
-    assert len(clf.estimators_) == 10, "Fitting must abort in 10-th iteration" \
+    assert len(clf.estimators_) == 10, "Fitting must abort in 10-th iteration"\
            " but %d stages fitted." % len(clf.estimators_)
