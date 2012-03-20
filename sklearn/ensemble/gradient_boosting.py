@@ -32,12 +32,16 @@ from ..utils import check_random_state
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
 from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
+from ..tree._tree import _random_sample_mask
 from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
 __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
+
+
+np.seterr(over='raise')
 
 
 class MedianPredictor(object):
@@ -395,7 +399,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return y_pred
 
-    def fit(self, X, y, monitor=None):
+    def fit(self, X, y):
         """Fit the gradient boosting model.
 
         Parameters
@@ -445,36 +449,32 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.estimators_ = []
 
-        self.train_deviance = np.zeros((self.n_estimators,), dtype=np.float64)
-        self.oob_deviance = np.zeros((self.n_estimators), dtype=np.float64)
+        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
+        n_inbag = max(1, int(self.subsample * n_samples))
 
         # perform boosting iterations
         for i in range(self.n_estimators):
 
             # subsampling
             if self.subsample < 1.0:
-                sample_mask = self.random_state.rand(n_samples) \
-                              >= (1.0 - self.subsample)
+                sample_mask = _random_sample_mask(n_samples, n_inbag,
+                                                  self.random_state)
 
             # fit next stage of trees
             y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
-                self.train_deviance[i] = loss(y[sample_mask],
-                                              y_pred[sample_mask])
-                self.oob_deviance[i] = loss(y[~sample_mask],
-                                            y_pred[~sample_mask])
+                self.train_score_[i] = loss(y[sample_mask],
+                                            y_pred[sample_mask])
+                self.oob_score_[i] = loss(y[~sample_mask],
+                                          y_pred[~sample_mask])
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_deviance[i] = loss(y, y_pred)
-
-            if monitor:
-                stop = monitor(self, i)
-                if stop:
-                    break
+                self.train_score_[i] = loss(y, y_pred)
 
         return self
 
@@ -522,7 +522,6 @@ class BaseGradientBoosting(BaseEnsemble):
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)
-        importances = 100.0 * (importances / importances.max())
         return importances
 
 
@@ -599,7 +598,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, random_state)
 
-    def fit(self, X, y, monitor=None):
+    def fit(self, X, y):
         """Fit the gradient boosting model.
 
         Parameters
@@ -626,8 +625,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.loss == 'deviance':
             self.loss = 'mdeviance' if len(self.classes_) > 2 else 'bdeviance'
 
-        return super(GradientBoostingClassifier, self).fit(X, y,
-                                                           monitor=monitor)
+        return super(GradientBoostingClassifier, self).fit(X, y)
 
     def predict(self, X):
         P = self.predict_proba(X)
@@ -691,6 +689,36 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
 
+    Attributes
+    ----------
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_score_` : array, shape = [n_estimators]
+        Score of the training dataset obtained using an out-of-bag estimate.
+        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the out-of-bag sample.
+
+    `train_score_` : array, shape = [n_estimators]
+        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the in-bag sample.
+        If ``subsample == 1`` this is the deviance on the training data.
+
+    Attributes
+    ----------
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_score_` : array, shape = [n_estimators]
+        Score of the training dataset obtained using an out-of-bag estimate.
+        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the out-of-bag sample.
+
+    `train_score_` : array, shape = [n_estimators]
+        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the in-bag sample.
+        If ``subsample == 1`` this is the deviance on the training data.
+
     Examples
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0]]
@@ -723,7 +751,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, random_state)
 
-    def fit(self, X, y, monitor=None):
+    def fit(self, X, y):
         """Fit the gradient boosting model.
 
         Parameters
@@ -745,8 +773,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Returns self.
         """
         self.n_classes = 1
-        return super(GradientBoostingRegressor, self).fit(X, y,
-                                                          monitor=monitor)
+        return super(GradientBoostingRegressor, self).fit(X, y)
 
     def predict(self, X):
         X = np.atleast_2d(X)
