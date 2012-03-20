@@ -8,9 +8,17 @@
 Changelog
 ---------
 
-   - Merged dense and sparse implementations and added `partial_fit` (support
-     for online/minibatch learning) and warm_start to the :ref:`sgd` module by
-     `Mathieu Blondel`_.
+   - Gradient boosted regression trees (:ref:`gradient_boosting`)
+     for classification and regression by `Peter Prettenhofer`_
+     and `Scott White`_ .
+
+   - Merged dense and sparse implementations of :ref:`sgd` module and
+     exposed utility extension types for sequential
+     datasets :ref:`seq_dataset` and weight vectors :ref:`weight_vector`
+     by `Peter Prettenhofer`_.
+
+   - Added `partial_fit` (support for online/minibatch learning) and
+     warm_start to the :ref:`sgd` module by `Mathieu Blondel`_.
 
    - Dense and sparse implementations of :ref:`svm` classes and
      :class:`linear_model.LogisticRegression` merged by `Lars Buitinck`_.
@@ -40,7 +48,7 @@ Changelog
      Woolam. **Note** the semi-supervised API is still work in progress,
      and may change.
 
-   - Added BIC/AIC model selection to classical :ref:`gmm` and unified 
+   - Added BIC/AIC model selection to classical :ref:`gmm` and unified
      the API with the remainder of scikit-learn, by `Bertrand Thirion`_
 
    - :ref:`k_means` can now be run in parallel, using the `n_jobs` argument
@@ -1076,3 +1084,5 @@ of commits):
 .. _Satrajit Ghosh: http://www.mit.edu/~satra/
 
 .. _Robert Layton: http://www.twitter.com/robertlayton
+
+.. _Scott White: http://twitter.com/scottblanc
