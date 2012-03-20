@@ -61,7 +61,7 @@ k-Nearest neighbors classifier
 
 The simplest possible classifier is the 
 `nearest neighbor <http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
-given a new observation `x_test`, find in the training set (i.e. the data 
+given a new observation ``X_test``, find in the training set (i.e. the data 
 used to train the estimator) the observation with the closest feature vector.
 (Please see the :ref:`Nearest Neighbors section<neighbors>` of the online
 Scikit-learn documentation for more information about this type of classifier.)
@@ -108,8 +108,8 @@ The curse of dimensionality
 -------------------------------
 
 If the data is only described by one feature, with values ranging from 0
-to 1, with `n` train observations, new data will be no further away than
-`1/n` and the nearest neighbor decision rule will be efficient as soon as
+to 1, with `n` training observations, new data will be no further away than
+`1/n`. Thus, the nearest neighbor decision rule will be efficient as soon as
 `1/n` is small compared to the scale of between-class feature variations.
 
 If the number of features is `p`, the number of training samples to pave
@@ -119,7 +119,7 @@ This number scales exponentialy `p`, the dimensionality of the problem.
 In other words, the prediction problem becomes much harder for
 high-dimensional data. This is called the 
 `curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_ 
-and is the core problem that machine learning addresses.
+and is a core problem that machine learning addresses.
 
 Linear model: from regression to sparsity
 ==========================================
@@ -457,7 +457,7 @@ classification --:class:`SVC` (Support Vector Classification).
 Using kernels
 --------------
 
-Classes are not always separable in feature space. The solution is to
+Classes are not always linearly separable in feature space. The solution is to
 build a decision function that is not linear but that may be for instance
 polynomial. This is done using the *kernel trick* that can be seen as
 creating an decision energy by positioning *kernels* on observations:

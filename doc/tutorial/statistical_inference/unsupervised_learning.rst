@@ -277,12 +277,12 @@ data by projecting on a principal subspace.
 
 .. Eigenfaces here?
 
-Indenpendant Component Analysis: ICA
+Independent Component Analysis: ICA
 -------------------------------------
 
 :ref:`ICA` selects components so that the distribution of their loadings carries
-a maximum amount of independant information. It is able to recover
-**non-Gaussian** independant signals:
+a maximum amount of independent information. It is able to recover
+**non-Gaussian** independent signals:
 
 .. image:: ../../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
    :target: ../../auto_examples/decomposition/plot_ica_blind_source_separation.html
