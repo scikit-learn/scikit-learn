@@ -7,15 +7,11 @@ Nearest Centroid Classification
 #
 # License: BSD Style.
 
-import warnings
-
 import numpy as np
 from scipy import sparse as sp
-from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..utils.validation import check_arrays, atleast2d_or_csr
-from ..base import ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 
 
@@ -63,7 +59,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     ---------
     Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
     multiple cancer types by shrunken centroids of gene expression. Proceedings
-    of the National Academy of Sciences of the United States of America, 
+    of the National Academy of Sciences of the United States of America,
     99(10), 6567-6572. The National Academy of Sciences.
 
     """
@@ -99,33 +95,42 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         for i, cur_class in enumerate(classes):
             center_mask = y == cur_class
             if sp.issparse(X):
-                center_mask = np.arange(len(y))[center_mask]
+                center_mask = np.where(center_mask)[0]
+                #print center_mask
+                #center_mask = np.arange(n_samples)[y == cur_class]
+                #print center_mask
+                #print 
             self.centroids_[i] = X[center_mask].mean(axis=0)
         if self.shrink_threshold:
-            dataset_centroid_ = X.mean(axis=0)
+            dataset_centroid_ = np.array(X.mean(axis=0))[0]
             # Number of clusters in each class.
             nk = np.array([np.sum(classes == cur_class)
                            for cur_class in classes])
             # m parameter for determining deviation
             m = np.sqrt((1. / nk) + (1. / n_samples))
             # Calculate deviation using the standard deviation of centroids.
-            variance = np.sum(np.power(X - self.centroids_[y], 2), axis=0)
-            assert variance.shape == (n_features,)
+            variance = np.array(np.power(X - self.centroids_[y], 2))
+            variance = variance.sum(axis=0)
+            assert variance.shape == (n_features,), (
+                variance.shape, (n_features,))
             s = np.sqrt(variance / (n_samples - n_classes))
             s0 = np.median(s)  # To deter outliers from affecting the results.
-            s = s + s0
+            s += s0
             ms = np.array([[m[j] * s[i] for i in range(n_features)]
                            for j in range(n_classes)])
-            deviation = ((self.centroids_ - self.dataset_centroid_) / ms)
+            deviation = ((self.centroids_ - dataset_centroid_) / ms)
             # Soft thresholding: if the deviation crosses 0 during shrinking,
             # it becomes zero.
             signs = np.sign(deviation)
             deviation = (np.abs(deviation) - self.shrink_threshold)
             deviation[deviation < 0] = 0
-            deviation *= signs
+            deviation = np.multiply(deviation, signs)
             # Now adjust the centroids using the deviation
-            self.centroids_ = self.dataset_centroid_ + (ms * deviation)
-            assert self.centroids_.shape == (n_classes, n_features)
+            msd = np.array(np.multiply(ms, deviation))
+            self.centroids_ = np.array([dataset_centroid_ + msd[i]
+                                        for i in range(n_classes)])
+            assert self.centroids_.shape == (n_classes, n_features), (
+                self.centroids_.shape, (n_classes, n_features))
         return self
 
     def predict(self, X):
@@ -148,4 +153,3 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             X, self.centroids_, type(X), type(self.centroids_))
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]
-

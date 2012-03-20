@@ -57,7 +57,7 @@ def test_iris():
         assert score > 0.9, "Failed with score = " + str(score)
 
 
-def iris_shrinkage():
+def test_iris_shrinkage():
     """Check consistency on dataset iris, when using shrinkage."""
     for metric in ('euclidean', 'cosine'):
         for shrink_threshold in [None, 0.1, 0.5]:
