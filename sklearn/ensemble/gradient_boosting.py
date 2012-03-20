@@ -41,9 +41,6 @@ __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
 
 
-np.seterr(over='raise')
-
-
 class MedianPredictor(object):
     """A simple initial estimator that predicts the median
     of the training targets.
