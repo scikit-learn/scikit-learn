@@ -6,10 +6,10 @@ import warnings
 def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0,
              scale_C=True):
     """
-    Return the maximum value for C that yields a model with coefficients
-    and intercept set to zero for l1 penalized classifiers,
-    such as LinearSVC with penalty='l1' and linear_model.LogisticRegression
-    with penalty='l1'.
+    Return the lowest bound for C such that for C in (l1_min_C, infinity) 
+    the model is guaranteed not to be empty. This applies to l1 penalized 
+    classifiers, such as LinearSVC with penalty='l1' and 
+    linear_model.LogisticRegression with penalty='l1'.
 
     This value is valid if class_weight parameter in fit() is not set.
 
