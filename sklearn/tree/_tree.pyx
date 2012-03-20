@@ -408,7 +408,7 @@ cdef class MSE(RegressionCriterion):
 def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
                 np.ndarray[np.int32_t, ndim=2] children,
                 np.ndarray[np.int32_t, ndim=1] feature,
-                np.ndarray[DTYPE_t, ndim=1] threshold,
+                np.ndarray[np.float64_t, ndim=1] threshold,
                 np.ndarray[np.int32_t, ndim=1] out):
     """Finds the terminal region (=leaf node) for each sample in
     `X` and sets the corresponding element in `out` to its node id."""
@@ -429,9 +429,9 @@ def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
 def _predict_tree(np.ndarray[DTYPE_t, ndim=2] X,
                   np.ndarray[np.int32_t, ndim=2] children,
                   np.ndarray[np.int32_t, ndim=1] feature,
-                  np.ndarray[DTYPE_t, ndim=1] threshold,
-                  np.ndarray[DTYPE_t, ndim=2] values,
-                  np.ndarray[DTYPE_t, ndim=2] pred):
+                  np.ndarray[np.float64_t, ndim=1] threshold,
+                  np.ndarray[np.float64_t, ndim=2] values,
+                  np.ndarray[np.float64_t, ndim=2] pred):
     """Finds the terminal region (=leaf node) values for each sample. """
     cdef int i = 0
     cdef int n = X.shape[0]
@@ -452,11 +452,11 @@ def _predict_tree(np.ndarray[DTYPE_t, ndim=2] X,
 def _predict_regression_tree_inplace(np.ndarray[DTYPE_t, ndim=2] X,
                                      np.ndarray[np.int32_t, ndim=2] children,
                                      np.ndarray[np.int32_t, ndim=1] feature,
-                                     np.ndarray[DTYPE_t, ndim=1] threshold,
-                                     np.ndarray[DTYPE_t, ndim=2] values,
+                                     np.ndarray[np.float64_t, ndim=1] threshold,
+                                     np.ndarray[np.float64_t, ndim=2] values,
                                      double scale,
                                      int k,
-                                     np.ndarray[DTYPE_t, ndim=2] pred):
+                                     np.ndarray[np.float64_t, ndim=2] pred):
     """Predicts output for regression tree and stores it in ``pred[i, k]`` """
     cdef int i = 0
     cdef int n = X.shape[0]

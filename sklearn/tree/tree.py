@@ -157,17 +157,17 @@ class Tree(object):
     feature : np.ndarray of int32
         The feature to split on (only for internal nodes).
 
-    threshold : np.ndarray of DTYPE
+    threshold : np.ndarray of float64
         The threshold of each node (only for leaves).
 
-    value : np.ndarray of DTYPE, shape=(capacity, n_classes)
+    value : np.ndarray of float64, shape=(capacity, n_classes)
         Contains the constant prediction value of each node.
 
-    best_error : np.ndarray of DTYPE
+    best_error : np.ndarray of float64
         The error of the (best) split.
         For leaves `init_error == `best_error`.
 
-    init_error : np.ndarray of DTYPE
+    init_error : np.ndarray of float64
         The initial error of the node (before splitting).
         For leaves `init_error == `best_error`.
 
@@ -190,11 +190,11 @@ class Tree(object):
         self.feature = np.empty((capacity,), dtype=np.int32)
         self.feature.fill(Tree.UNDEFINED)
 
-        self.threshold = np.empty((capacity,), dtype=DTYPE)
-        self.value = np.empty((capacity, n_classes), dtype=DTYPE)
+        self.threshold = np.empty((capacity,), dtype=np.float64)
+        self.value = np.empty((capacity, n_classes), dtype=np.float64)
 
-        self.best_error = np.empty((capacity,), dtype=DTYPE)
-        self.init_error = np.empty((capacity,), dtype=DTYPE)
+        self.best_error = np.empty((capacity,), dtype=np.float32)
+        self.init_error = np.empty((capacity,), dtype=np.float32)
         self.n_samples = np.empty((capacity,), dtype=np.int32)
 
     def _resize(self, capacity=None):
@@ -356,7 +356,7 @@ class Tree(object):
         return self
 
     def predict(self, X):
-        out = np.empty((X.shape[0], self.value.shape[1]), dtype=DTYPE)
+        out = np.empty((X.shape[0], self.value.shape[1]), dtype=np.float64)
 
         _tree._predict_tree(X,
                             self.children,
@@ -364,6 +364,7 @@ class Tree(object):
                             self.threshold,
                             self.value,
                             out)
+
         return out
 
     def compute_feature_importances(self, method="gini"):
@@ -393,7 +394,7 @@ class Tree(object):
                 'Invalid value for method. Allowed string '
                 'values are "gini", or "mse".')
 
-        importances = np.zeros((self.n_features,), dtype=DTYPE)
+        importances = np.zeros((self.n_features,), dtype=np.float64)
 
         for node in range(self.node_count):
             if (self.children[node, 0]

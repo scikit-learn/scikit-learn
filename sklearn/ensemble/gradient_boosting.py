@@ -48,7 +48,7 @@ class MedianPredictor(object):
         self.median = np.median(y)
 
     def predict(self, X):
-        y = np.empty((X.shape[0], 1), dtype=DTYPE)
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.median)
         return y
 
@@ -61,7 +61,7 @@ class MeanPredictor(object):
         self.mean = np.mean(y)
 
     def predict(self, X):
-        y = np.empty((X.shape[0], 1), dtype=DTYPE)
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
         return y
 
@@ -74,7 +74,7 @@ class ClassPriorPredictor(object):
         self.prior = np.log(np.sum(y) / np.sum(1.0 - y))
 
     def predict(self, X):
-        y = np.empty((X.shape[0], 1), dtype=DTYPE)
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
         return y
 
@@ -86,13 +86,13 @@ class MultiClassPriorPredictor(object):
     def fit(self, X, y):
         self.classes_ = np.unique(y)
         self.n_classes = len(self.classes_)
-        self.priors = np.empty((self.n_classes,), dtype=DTYPE)
+        self.priors = np.empty((self.n_classes,), dtype=np.float64)
         for k in range(0, self.n_classes):
             self.priors[k] = y[y == self.classes_[k]].shape[0] \
                              / float(y.shape[0])
 
     def predict(self, X):
-        y = np.empty((X.shape[0], self.n_classes), dtype=DTYPE)
+        y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y[:] = self.priors
         return y
 
@@ -284,7 +284,7 @@ class MultinomialDeviance(LossFunction):
 
     def __call__(self, y, pred):
         # create one-hot label encoding
-        Y = np.zeros((y.shape[0], self.K), dtype=DTYPE)
+        Y = np.zeros((y.shape[0], self.K), dtype=np.float64)
         for k in range(self.K):
             Y[:, k] = y == k
 
@@ -374,7 +374,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         for k in range(loss.K):
             if loss.is_multi_class():
-                y = np.array(original_y == k, dtype=DTYPE)
+                y = np.array(original_y == k, dtype=np.float64)
 
             residual = loss.negative_gradient(y, y_pred, k=k)
 
@@ -445,8 +445,8 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.estimators_ = []
 
-        self.train_deviance = np.zeros((self.n_estimators,), dtype=DTYPE)
-        self.oob_deviance = np.zeros((self.n_estimators), dtype=DTYPE)
+        self.train_deviance = np.zeros((self.n_estimators,), dtype=np.float64)
+        self.oob_deviance = np.zeros((self.n_estimators), dtype=np.float64)
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
 
@@ -515,7 +515,7 @@ class BaseGradientBoosting(BaseEnsemble):
         if not self.estimators_ or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `feature_importances_`.")
-        total_sum = np.zeros((self.n_features, ), dtype=DTYPE)
+        total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
             stage_sum = sum(tree.compute_feature_importances(method='squared')
                             for tree in stage) / len(stage)
@@ -640,7 +640,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
 
-        P = np.ones((X.shape[0], self.n_classes), dtype=DTYPE)
+        P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
         f = self._predict(X)
 
         if not self.loss_.is_multi_class():
