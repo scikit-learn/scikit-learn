@@ -44,7 +44,7 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
 
-    deviance_decrease = (clf.train_deviance[:-1] - clf.train_deviance[1:])
+    deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
     assert np.any(deviance_decrease >= 0.0), \
            "Train deviance does not monotonically decrease."
 
@@ -250,15 +250,3 @@ def test_serialization():
     clf = pickle.loads(serialized_clf)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
-
-
-def test_monitor():
-    """Check fit monitor."""
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-
-    def monitor(model, i):
-        if i >= 9:
-            return True
-    clf.fit(X, y, monitor=monitor)
-    assert len(clf.estimators_) == 10, "Fitting must abort in 10-th iteration"\
-           " but %d stages fitted." % len(clf.estimators_)
