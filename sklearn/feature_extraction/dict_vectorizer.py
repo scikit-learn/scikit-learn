@@ -5,10 +5,12 @@ from array import array
 from collections import Mapping, Sequence
 from operator import itemgetter
 
+import sys
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..utils import atleast2d_or_csr
 
 
@@ -90,8 +92,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # collect all the possible feature names
         feature_names = set()
         for x in X:
-            for f, v in x.iteritems():
-                if isinstance(v, basestring):
+            for f, v in six.iteritems(x):
+                if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                 feature_names.add(f)
 
@@ -148,14 +150,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         """
         X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
 
+        sample_ids = np.arange(X.shape[0])
         names = self.feature_names_
-        Xd = [dict_type() for _ in xrange(X.shape[0])]
+        Xd = [dict_type() for _ in sample_ids]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
                 Xd[i][names[j]] = X[i, j]
         else:
-            for i in xrange(X.shape[0]):
+            for i in sample_ids:
                 d = Xd[i]
                 for j, v in enumerate(X[i, :]):
                     if v != 0:
@@ -203,7 +206,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             values = []
 
             for x in X:
-                for f, v in x.iteritems():
+                for f, v in six.iteritems(x):
                     if isinstance(v, basestring):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
@@ -226,7 +229,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
-                for f, v in x.iteritems():
+                for f, v in six.iteritems(x):
                     if isinstance(v, basestring):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
@@ -265,7 +268,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(new_vocab.iteritems(),
+        self.feature_names_ = [f for f, i in sorted(six.iteritems(new_vocab),
                                                     key=itemgetter(1))]
 
         return self
