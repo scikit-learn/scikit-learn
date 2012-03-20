@@ -16,7 +16,7 @@ The module structure is the following:
   classification problems.
 """
 
-# Authors: Peter Prettenhofer, Scott White
+# Authors: Peter Prettenhofer, Scott White, Gilles Louppe
 # License: BSD Style.
 
 from __future__ import division
