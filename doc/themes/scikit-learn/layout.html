@@ -241,42 +241,21 @@
     {%- endif %}
     </div>
 
-
-{%- if pagename != 'index' %}
-{%- if parents %}
-<div class="rel">
-  {% else %}
-  <div class="rel rellarge">
+    {%- if pagename != 'index' %}
+    {%- if parents %}
+     <div class="rel">
+    {% else %}
+     <div class="rel rellarge">
     {% endif %}
-    
     {%- for rellink in rellinks[1:]|reverse %}
-    
     <div class='buttons'>
       <a href="{{ pathto(rellink[0]) }}">
         Next
       </a>  
     </div>
-    {%- if rellinks[-1] %}
-    <div class='buttons'>
-      <a href="{{ pathto(master_doc) }}">
-        Home
-      </a>  
-    </div>
-    {% endif %}
     {%- endfor %}
     {% endif %}
-  </div>
-
-
-
-
-
-
-   
-
-
-
-
+     </div>
 {%- endblock %}
 
 
