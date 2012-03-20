@@ -32,7 +32,8 @@ X = X.astype(np.float32)
 X_train, X_test = X[:2000], X[2000:]
 y_train, y_test = y[:2000], y[2000:]
 
-original_params = {'n_estimators': 1000, 'max_depth': 2, 'random_state': 1}
+original_params = {'n_estimators': 1000, 'max_depth': 2, 'random_state': 1,
+                   'min_samples_split': 5}
 
 pl.figure()
 

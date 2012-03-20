@@ -30,7 +30,7 @@ offset = int(X.shape[0] * 0.9)
 X_train, y_train = X[:offset], y[:offset]
 X_test, y_test = X[offset:], y[offset:]
 
-################################################################################
+###############################################################################
 # Fit regression model
 params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 1,
           'learn_rate': 0.01, 'loss': 'ls'}
@@ -40,30 +40,32 @@ clf.fit(X_train, y_train)
 mse = mean_squared_error(y_test, clf.predict(X_test))
 print("MSE: %.4f" % mse)
 
-################################################################################
+###############################################################################
 # Plot training deviance
 
 # compute test set deviance
 y_pred = clf.init.predict(X_test)
-test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
+test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
 for i, stage in enumerate(clf.estimators_):
     y_pred = clf._predict(X_test, old_pred=y_pred, stage_index=i)
-    test_deviance[i] = clf.loss_(y_test, y_pred)
+    test_score[i] = clf.loss_(y_test, y_pred)
 
 pl.figure(figsize=(12, 6))
 pl.subplot(1, 2, 1)
 pl.title('Deviance')
-pl.plot(np.arange(params['n_estimators']) + 1, clf.train_deviance, 'b-',
+pl.plot(np.arange(params['n_estimators']) + 1, clf.train_score_, 'b-',
         label='Training Set Deviance')
-pl.plot(np.arange(params['n_estimators']) + 1, test_deviance, 'r-',
+pl.plot(np.arange(params['n_estimators']) + 1, test_score, 'r-',
         label='Test Set Deviance')
 pl.legend(loc='upper right')
 pl.xlabel('Boosting Iterations')
 pl.ylabel('Deviance')
 
-################################################################################
+###############################################################################
 # Plot feature importance
 feature_importance = clf.feature_importances_
+# make importances relative to max importance
+feature_importance = 100.0 * (feature_importance / feature_importance.max())
 sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
 pl.subplot(1, 2, 2)
