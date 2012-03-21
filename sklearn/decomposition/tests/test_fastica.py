@@ -113,6 +113,10 @@ def test_fastica_nowhiten():
     ica.fit(m)
     ica.get_mixing_matrix()
 
+    # test for issue #697
+    ica = FastICA(n_components=1, whiten=False)
+    ica.fit(m)  # should raise warning
+
 
 def test_non_square_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
