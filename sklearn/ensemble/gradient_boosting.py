@@ -457,6 +457,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # subsampling
             if self.subsample < 1.0:
+                # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   self.random_state)
 
