@@ -8,6 +8,7 @@ Independent Component Analysis, by  Hyvarinen et al.
 # Author: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #         Bertrand Thirion, Alexandre Gramfort
 # License: BSD 3 clause
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -129,11 +130,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     algorithm : {'parallel', 'deflation'}, optional
         Apply a parallel or deflational FASTICA algorithm.
     whiten: boolean, optional
-        If true perform an initial whitening of the data. Do not set to
-        false unless the data is already white, as you will get incorrect
-        results.
-        If whiten is true, the data is assumed to have already been
+        If True perform an initial whitening of the data.
+        If False, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
+        Otherwise you will get incorrect results.
+        In this case the parameter n_components will be ignored.
     fun : string or function, optional
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
@@ -246,6 +247,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
                          '(one of logcosh, exp or cube) or a function')
 
     n, p = X.shape
+
+    if whiten == False and n_components is not None:
+        n_components = None
+        warnings.warn('Ignoring n_components with whiten=False.')
 
     if n_components is None:
         n_components = min(n, p)
