@@ -293,8 +293,8 @@ class Tree(object):
 
             # Current node is leaf
             if feature == -1:
-                node_id = self._add_leaf(parent, is_left_child, value,
-                                         init_error, n_node_samples)
+                self._add_leaf(parent, is_left_child, value,
+                               init_error, n_node_samples)
 
             # Current node is internal node (= split node)
             else:
@@ -310,8 +310,9 @@ class Tree(object):
                 split = X[:, feature] <= threshold
 
                 node_id = self._add_split_node(parent, is_left_child, feature,
-                                               threshold, best_error, init_error,
-                                              n_node_samples, value)
+                                               threshold, best_error,
+                                               init_error, n_node_samples,
+                                               value)
 
                 # left child recursion
                 recursive_partition(X, X_argsorted, y,
@@ -341,8 +342,10 @@ class Tree(object):
 
         # Pre-allocate some space
         if max_depth <= 10:
+            # allocate space for complete binary tree
             init_capacity = (2 ** (max_depth + 1)) - 1
         else:
+            # allocate fixed size and dynamically resize later
             init_capacity = 2047
 
         self._resize(init_capacity)
