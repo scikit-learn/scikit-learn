@@ -1,4 +1,3 @@
-import random
 import numpy as np
 
 from nose.tools import raises
@@ -7,8 +6,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
 
-from ... import datasets
-from ... import svm
 from ..metrics import auc
 from ..metrics import classification_report
 from ..metrics import confusion_matrix
@@ -26,47 +23,27 @@ from ..metrics import zero_one
 from ..metrics import hinge_loss
 
 
-def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+def make_prediction(binary=False):
+    """Make some classification predictions on a toy dataset
 
-    If binary is True restrict to a binary classification problem instead of a
-    multiclass classification problem
+    If binary is True restrict to a binary classification problem
+    instead of a multiclass classification problem.
+
     """
-
-    if dataset is None:
-        # import some data to play with
-        dataset = datasets.load_iris()
-
-    X = dataset.data
-    y = dataset.target
-
     if binary:
-        # restrict to a binary classification task
-        X, y = X[y < 2], y[y < 2]
-
-    n_samples, n_features = X.shape
-    p = np.arange(n_samples)
-
-    random.seed(0)
-    random.shuffle(p)
-    X, y = X[p], y[p]
-    half = int(n_samples / 2)
-
-    # add noisy features to make the problem harder and avoid perfect results
-    np.random.seed(0)
-    X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
-
-    # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel='linear', probability=True, scale_C=True)
-    probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
-
-    if binary:
-        # only interested in probabilities of the positive case
-        # XXX: do we really want a special API for the binary case?
-        probas_pred = probas_pred[:, 1]
-
-    y_pred = clf.predict(X[half:])
-    y_true = y[half:]
+        y_true = np.array([0, 0, 1, 1])
+        y_pred = np.array([0, 0, 1, 0])
+        probas_pred = np.array([0.46, 0.01, 0.75, 0.45])
+        assert_array_equal(y_pred == 1, probas_pred > 0.5)
+    else:
+        y_true = np.array([0, 0, 1, 1, 2, 2])
+        y_pred = np.array([0, 0, 1, 0, 2, 1])
+        probas_pred = np.array([
+            [0.90, 0.98, 0.25, 0.60, 0.00, 0.20],
+            [0.10, 0.01, 0.65, 0.40, 0.25, 0.45],
+            [0.00, 0.01, 0.10, 0.00, 0.75, 0.25],
+        ])
+        assert_array_equal(y_pred, probas_pred.argmax(axis=0))
     return y_true, y_pred, probas_pred
 
 
@@ -76,7 +53,7 @@ def test_roc_curve():
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
     roc_auc = auc(fpr, tpr)
-    assert_array_almost_equal(roc_auc, 0.80, decimal=2)
+    assert_array_almost_equal(roc_auc, 0.75, decimal=2)
 
 
 @raises(ValueError)
@@ -93,7 +70,7 @@ def test_roc_curve_confidence():
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
     roc_auc = auc(fpr, tpr)
-    assert_array_almost_equal(roc_auc, 0.80, decimal=2)
+    assert_array_almost_equal(roc_auc, 0.75, decimal=2)
 
 
 def test_roc_curve_hard():
@@ -154,22 +131,22 @@ def test_precision_recall_f1_score_binary():
 
     # detailed measures for each class
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
-    assert_array_almost_equal(p, [0.73, 0.75], 2)
-    assert_array_almost_equal(r, [0.76, 0.72], 2)
-    assert_array_almost_equal(f, [0.75, 0.74], 2)
-    assert_array_equal(s, [25, 25])
+    assert_array_almost_equal(p, [0.67, 1.00], 2)
+    assert_array_almost_equal(r, [1.00, 0.50], 2)
+    assert_array_almost_equal(f, [0.80, 0.67], 2)
+    assert_array_equal(s, [2, 2])
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
     # class (e.g. label == 1)
     ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.75, 2)
+    assert_array_almost_equal(ps, 1.00, 2)
 
     rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.72, 2)
+    assert_array_almost_equal(rs, 0.50, 2)
 
     fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.74, 2)
+    assert_array_almost_equal(fs, 0.67, 2)
 
 
 def test_confusion_matrix_binary():
@@ -177,7 +154,7 @@ def test_confusion_matrix_binary():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[19, 6], [7, 18]])
+    assert_array_equal(cm, [[2, 0], [1, 1]])
 
     tp = cm[0, 0]
     tn = cm[1, 1]
@@ -191,7 +168,7 @@ def test_confusion_matrix_binary():
         true_mcc = num / den
     mcc = matthews_corrcoef(y_true, y_pred)
     assert_array_almost_equal(mcc, true_mcc, decimal=2)
-    assert_array_almost_equal(mcc, 0.48, decimal=2)
+    assert_array_almost_equal(mcc, 0.58, decimal=2)
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -200,46 +177,46 @@ def test_precision_recall_f1_score_multiclass():
 
     # compute scores with default labels introspection
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
-    assert_array_almost_equal(p, [0.82, 0.55, 0.47], 2)
-    assert_array_almost_equal(r, [0.92, 0.17, 0.90], 2)
-    assert_array_almost_equal(f, [0.87, 0.26, 0.62], 2)
-    assert_array_equal(s, [25, 30, 20])
+    assert_array_almost_equal(p, [0.67, 0.50, 1.00], 2)
+    assert_array_almost_equal(r, [1.00, 0.50, 0.50], 2)
+    assert_array_almost_equal(f, [0.80, 0.50, 0.67], 2)
+    assert_array_equal(s, [2, 2, 2])
 
     # averaging tests
     ps = precision_score(y_true, y_pred, pos_label=1, average='micro')
-    assert_array_almost_equal(ps, 0.61, 2)
+    assert_array_almost_equal(ps, 0.67, 2)
 
     rs = recall_score(y_true, y_pred, average='micro')
-    assert_array_almost_equal(rs, 0.61, 2)
+    assert_array_almost_equal(rs, 0.67, 2)
 
     fs = f1_score(y_true, y_pred, average='micro')
-    assert_array_almost_equal(fs, 0.61, 2)
+    assert_array_almost_equal(fs, 0.67, 2)
 
     ps = precision_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(ps, 0.62, 2)
+    assert_array_almost_equal(ps, 0.72, 2)
 
     rs = recall_score(y_true, y_pred, average='macro')
     assert_array_almost_equal(rs, 0.66, 2)
 
     fs = f1_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(fs, 0.58, 2)
+    assert_array_almost_equal(fs, 0.66, 2)
 
     ps = precision_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(ps, 0.62, 2)
+    assert_array_almost_equal(ps, 0.72, 2)
 
     rs = recall_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(rs, 0.61, 2)
+    assert_array_almost_equal(rs, 0.67, 2)
 
     fs = f1_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(fs, 0.55, 2)
+    assert_array_almost_equal(fs, 0.66, 2)
 
     # same prediction but with and explicit label ordering
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, labels=[0, 2, 1], average=None)
-    assert_array_almost_equal(p, [0.82, 0.47, 0.55], 2)
-    assert_array_almost_equal(r, [0.92, 0.90, 0.17], 2)
-    assert_array_almost_equal(f, [0.87, 0.62, 0.26], 2)
-    assert_array_equal(s, [25, 20, 30])
+    assert_array_almost_equal(p, [0.67, 1.00, 0.50], 2)
+    assert_array_almost_equal(r, [1.00, 0.50, 0.50], 2)
+    assert_array_almost_equal(f, [0.80, 0.67, 0.50], 2)
+    assert_array_equal(s, [2, 2, 2])
 
 
 def test_zero_precision_recall():
@@ -268,46 +245,45 @@ def test_confusion_matrix_multiclass():
 
     # compute confusion matrix with default labels introspection
     cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[23, 2,  0],
-                            [5,  5, 20],
-                            [0,  2, 18]])
+    assert_array_equal(cm, [[2, 0, 0],
+                            [1, 1, 0],
+                            [0, 1, 1]])
 
     # compute confusion matrix with explicit label ordering
     cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[23, 0,  2],
-                            [0, 18,  2],
-                            [5, 20,  5]])
+    assert_array_equal(cm, [[2, 0, 0],
+                            [0, 1, 1],
+                            [1, 0, 1]])
 
 
 def test_classification_report():
     """Test performance report"""
-    iris = datasets.load_iris()
-    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+    y_true, y_pred, _ = make_prediction(binary=False)
 
     # print classification report with class names
     expected_report = """\
              precision    recall  f1-score   support
 
-     setosa       0.82      0.92      0.87        25
- versicolor       0.56      0.17      0.26        30
-  virginica       0.47      0.90      0.62        20
+          a       0.67      1.00      0.80         2
+          b       0.50      0.50      0.50         2
+          c       1.00      0.50      0.67         2
 
-avg / total       0.62      0.61      0.56        75
+avg / total       0.72      0.67      0.66         6
 """
     report = classification_report(
-        y_true, y_pred, labels=np.arange(len(iris.target_names)),
-        target_names=iris.target_names)
+        y_true, y_pred, labels=np.arange(3),
+        target_names=['a', 'b', 'c'])
     assert_equal(report, expected_report)
 
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
 
-          0       0.82      0.92      0.87        25
-          1       0.56      0.17      0.26        30
-          2       0.47      0.90      0.62        20
+          0       0.67      1.00      0.80         2
+          1       0.50      0.50      0.50         2
+          2       1.00      0.50      0.67         2
 
-avg / total       0.62      0.61      0.56        75
+avg / total       0.72      0.67      0.66         6
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
@@ -319,7 +295,7 @@ def test_precision_recall_curve():
 
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.82, 2)
+    assert_array_almost_equal(precision_recall_auc, 0.75, 2)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
@@ -332,14 +308,14 @@ def test_losses():
     y_true, y_pred, _ = make_prediction(binary=True)
     n = y_true.shape[0]
 
-    assert_equal(zero_one(y_true, y_pred), 13)
-    assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
+    assert_equal(zero_one(y_true, y_pred), 1)
+    assert_almost_equal(mean_squared_error(y_true, y_pred), 1.0 / n, 2)
     assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
 
-    assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
+    assert_almost_equal(explained_variance_score(y_true, y_pred), 0.25, 2)
     assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
 
-    assert_almost_equal(r2_score(y_true, y_pred), -0.04, 2)
+    assert_almost_equal(r2_score(y_true, y_pred), 0.00, 2)
     assert_almost_equal(r2_score(y_true, y_true), 1.00, 2)
 
 
