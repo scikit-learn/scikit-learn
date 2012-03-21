@@ -122,7 +122,7 @@ class LossFunction(object):
     def negative_gradient(self, y, y_pred, **kargs):
         """Compute the negative gradient.
 
-        Paramters
+        Parameters
         ---------
         y : np.ndarray, shape=(n,)
             The target labels.
