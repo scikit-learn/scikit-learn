@@ -303,9 +303,11 @@ class RidgeClassifier(Ridge):
         self : returns an instance of self.
         """
         if self.class_weight is None:
-            self.class_weight = {}
+            class_weight = {}
+        else:
+            class_weight = self.class_weight
 
-        sample_weight_classes = np.array([self.class_weight.get(k, 1.0) for k in y])
+        sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
         Ridge.fit(self, X, Y, solver=solver, sample_weight=sample_weight_classes)
@@ -584,7 +586,7 @@ class RidgeCV(LinearModel):
     See also
     --------
     Ridge: Ridge regression
-    RidgeClassifier: Ridge classifiert
+    RidgeClassifier: Ridge classifier
     RidgeCV: Ridge regression with built-in cross validation
     """
 
@@ -686,7 +688,7 @@ class RidgeClassifierCV(RidgeCV):
     See also
     --------
     Ridge: Ridge regression
-    RidgeClassifier: Ridge classifiert
+    RidgeClassifier: Ridge classifier
     RidgeCV: Ridge regression with built-in cross validation
 
     Notes
