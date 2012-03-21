@@ -110,7 +110,7 @@ $(function() {
     sidebarbutton.attr('title', _('Collapse sidebar'));
     sidebarbutton.css({
         'border-left': '1px solid ' + dark_color,
-	'border-top-left-radius' : '.8em',
+	'border-top-left-radius' : '15px',
         'font-size': '1.2em',
         'cursor': 'pointer',
         'height': bodywrapper.height(),
@@ -120,10 +120,10 @@ $(function() {
 
     sidebarbutton.hover(
       function () {
-          $(this).css('background-color', dark_color);
+          $(this).css('background-color', '#D0D0D0');
       },
       function () {
-          $(this).css('background-color', light_color);
+          $(this).css('background-color', '#F0F0F0');
       }
     );
   }
