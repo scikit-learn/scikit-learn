@@ -24,7 +24,7 @@ these arrays is the **samples** axis, while the second is the
 
     It is made of 150 observations of irises, each described by 4
     features: their sepal and petal length and width, as detailed in
-    `iris.DESCR.
+    `iris.DESCR`.
 
 When the data is not intially in the `(n_samples, n_features)` shape, it
 needs to be preprocessed to be used by the scikit.

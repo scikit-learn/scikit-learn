@@ -107,17 +107,26 @@ Scikit-learn documentation for more information about this type of classifier.)
 The curse of dimensionality
 -------------------------------
 
-If the data is only described by one feature, with values ranging from 0
-to 1, with `n` training observations, new data will be no further away than
-`1/n`. Thus, the nearest neighbor decision rule will be efficient as soon as
+For an estimator to be effective, you need the distance between neighboring 
+points to be less than some value `d`, which depends on the problem. 
+In one dimension, this requires on average `n ~ 1/d` points.
+In the context of the above `KNN` example, if the data is only described by 
+one feature, with values ranging from 0 to 1 and with `n` training observations,
+new data will thus be no further away than `1/n`. 
+Therefore, the nearest neighbor decision rule will be efficient as soon as
 `1/n` is small compared to the scale of between-class feature variations.
 
-If the number of features is `p`, the number of training samples to pave
-the `[0, 1]` space with a between-point distance of `d`, is `1/d**p`.
-This number scales exponentialy `p`, the dimensionality of the problem.
+If the number of features is `p`, you now require `n ~ 1/d^p` points.
+Let's say that we require 10 points in one dimension: Now `10^p` points 
+are required in `p` dimensions to pave the `[0, 1]` space.
+As `p` becomes large, the number of training points required for a good
+estimator grows exponentially.
 
-In other words, the prediction problem becomes much harder for
-high-dimensional data. This is called the 
+For example, if each point is just a single number (8 bytes), then an 
+effective `KNN` estimator in a paltry `p~20` dimensions would require more training 
+data than the current estimated size of the entire internet! (±1000 Exabytes or so).
+
+This is called the 
 `curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_ 
 and is a core problem that machine learning addresses.
 
