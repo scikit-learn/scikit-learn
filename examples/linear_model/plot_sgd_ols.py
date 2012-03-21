@@ -9,18 +9,15 @@ squares solution for a random set of points in the plane.
 """
 print __doc__
 
-import numpy as np
 import pylab as pl
 
 from sklearn.linear_model import SGDRegressor
+from sklearn.datasets.samples_generator import make_regression
 
 # this is our test set, it's just a straight line with some
 # gaussian noise
-xmin, xmax = -5, 5
-n_samples = 100
-X = [[i] for i in np.linspace(xmin, xmax, n_samples)]
-Y = 2 + 0.5 * np.linspace(xmin, xmax, n_samples) \
-      + np.random.randn(n_samples, 1).ravel()
+X, Y = make_regression(n_samples=100, n_features=1, n_informative=1,\
+                        random_state=0, noise=35)
 
 # run the classifier
 clf = SGDRegressor(alpha=0.1, n_iter=20)
