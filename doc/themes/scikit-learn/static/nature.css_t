@@ -27,9 +27,9 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 0 0 15px 15px;
-    -moz-border-radius: 0 15px 0 15px;
-    margin-top: 0px;
+    border-radius: 15px;
+    -moz-border-radius: 15px 15px 15px 15px;
+    margin-top: 10px;
 }
 
 ul.horizontal, ul.horizontal li {
@@ -129,7 +129,7 @@ div.content-wrapper {
 }
 
 div.content {
-    margin-left: 200px;
+    margin-left: 210px;
     padding-bottom: 10px;
 }
 
@@ -222,7 +222,7 @@ div.sphinxsidebar ul ul ul {
 }
 
 div.sphinxsidebar {
-    width: 200px;
+    width: 210px;
     float: left;
     margin-left: 0;
     margin-right: 0;
@@ -251,6 +251,7 @@ div.sphinxsidebar {
 
 div.sphinxsidebarwrapper {
     padding: 0 0 0 0;
+    width: 199px;
 }
 
 {% if theme_collapsiblesidebar|tobool %}
