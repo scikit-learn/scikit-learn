@@ -260,6 +260,25 @@ div#sidebarbutton {
 }
 {% endif %}
 
+div.buttonPrevious, div.buttonNext {
+    display: block;
+    background-color: #A7D6E2;
+    color: black;
+    padding: 7px 10px 5px 10px;
+    position: fixed;
+    bottom: 0;
+}
+
+div.buttonPrevious {
+    border-top-right-radius: .8em;		
+    right: 1; 
+}
+
+div.buttonNext {
+    border-top-left-radius: .8em;		
+    right: 0; 
+}
+
 
 input {
     border: 1px solid #ccc;
