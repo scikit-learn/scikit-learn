@@ -17,8 +17,8 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 import scipy.sparse.linalg as sp_linalg
-from joblib import Parallel, delayed
 
+from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
