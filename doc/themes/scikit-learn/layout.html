@@ -245,14 +245,24 @@
      <div class="rel rellarge">
     {% endif %}
     {%- for rellink in rellinks[1:]|reverse %}
-    <div class='buttons'>
+    <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">
-        Next
+        {{loop.cycle('Previous', 'Next')}}
       </a>  
     </div>
     {%- endfor %}
     {% endif %}
      </div>
+     <script type="text/javascript">
+       $("div.buttonNext, div.buttonPrevious").hover(
+           function () {
+               $(this).css('background-color', '#FF9C34');
+           },
+           function () {
+               $(this).css('background-color', '#A7D6E2');
+           }
+       );
+     </script>
 {%- endblock %}
 
 
