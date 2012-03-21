@@ -171,7 +171,7 @@ class LossFunction(object):
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
-        """Template method for updating terminal regions (=leafs). """
+        """Template method for updating terminal regions (=leaves). """
 
 
 class RegressionLossFunction(LossFunction):
@@ -382,7 +382,7 @@ class BaseGradientBoosting(BaseEnsemble):
                        self.n_features, self.random_state, _find_best_split,
                        sample_mask, X_argsorted)
 
-            # update tree leafs
+            # update tree leaves
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
                                                sample_mask, self.learn_rate,
                                                k=k)
