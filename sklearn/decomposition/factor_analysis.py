@@ -113,6 +113,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             loadings = linalg.solve(latent_cov.T, latent_times_X, sym_pos=True).T
             uniqueness = np.diag(self.cov_
                    - np.dot(loadings, latent_times_X / n_samples))
+            #print(linalg.norm(latent_old - latent))
+            #if linalg.norm(latent_old - latent) < self.tol:
+                #break
 
         self.loadings_ = loadings
         self.uniqueness_ = np.diag(uniqueness)
