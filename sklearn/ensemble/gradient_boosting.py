@@ -55,9 +55,7 @@ class MedianPredictor(object):
 
 
 class MeanPredictor(object):
-    """A simple initial estimator that predicts the mean
-    of the training targets.
-    """
+    """An estimator that predicts the mean of the training targets."""
     def fit(self, X, y):
         self.mean = np.mean(y)
 
@@ -68,11 +66,10 @@ class MeanPredictor(object):
 
 
 class ClassPriorPredictor(object):
-    """A simple initial estimator that predicts the class prior
-    of the training targets.
-    """
+    """An estimator that predicts the log odds ratio."""
     def fit(self, X, y):
-        self.prior = np.log(np.sum(y) / np.sum(1.0 - y))
+        n_pos = np.sum(y)
+        self.prior = np.log(n_pos / (y.shape[0] - n_pos))
 
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
@@ -81,8 +78,8 @@ class ClassPriorPredictor(object):
 
 
 class MultiClassPriorPredictor(object):
-    """A simple initial estimator that predicts the multi class priors
-    of the training targets.
+    """An estimator that predicts the prob of each class in the
+    training data.
     """
     def fit(self, X, y):
         self.classes_ = np.unique(y)
@@ -311,7 +308,6 @@ class MultinomialDeviance(LossFunction):
         numerator *= (self.K - 1) / self.K
 
         denominator = np.sum((y - residual) * (1.0 - y + residual))
-        #denominator = np.sum(abs(residual) * (1 - abs(residual)))
 
         if denominator == 0.0:
             tree.value[leaf, 0] = 0.0
