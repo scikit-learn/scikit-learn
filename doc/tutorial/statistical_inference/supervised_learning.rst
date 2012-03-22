@@ -452,7 +452,7 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> svc.fit(iris_X_train, iris_y_train)
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
       kernel='linear', probability=False, scale_C=True, shrinking=True,
-      tol=0.001)
+      tol=0.001, verbose=False)
 
 
 .. warning:: **Normalizing data**
