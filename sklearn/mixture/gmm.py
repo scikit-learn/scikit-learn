@@ -124,8 +124,8 @@ class GMM(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    rng : numpy.random object, optional
-        Must support the full numpy random number generator API.
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
 
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent

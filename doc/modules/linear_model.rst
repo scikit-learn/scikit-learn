@@ -592,7 +592,7 @@ zero) model.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_logistic_l1_l2_sparsity.py`
+  * :ref:`example_linear_model_plot_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 

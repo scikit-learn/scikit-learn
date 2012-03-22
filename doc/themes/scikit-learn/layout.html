@@ -5,10 +5,18 @@
     Layout for scikit-learn, after a design made by Angel Soler
     (http://webylimonada.org)
 
+    Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
+    Update: Next-page button added - 16/03/2012 - Jaques Grobler
+
+
     :copyright: Fabian Pedregosa
     :license: BSD
 #}
 {% extends "basic/layout.html" %}
+
+{% if theme_collapsiblesidebar|tobool %}
+{% set script_files = script_files + ['_static/sidebar.js'] %}
+{% endif %}
 
 {% block extrahead %}
 <script type="text/javascript">
@@ -39,6 +47,7 @@
            Latest stable version</a></p></p>
      </div>
    {%- endif %}
+
     <div class="header-wrapper">
       <div class="header">
         {%- if logo %}
@@ -85,14 +94,14 @@
 {% block content %}
     <div class="content-wrapper">
 
-    <div class="sphinxsidebar">
-
-    {%- if pagename != 'index' %}
-	{%- if parents %}
-	<div class="rel">
-	{% else %}
-	<div class="rel rellarge">
-	{% endif %}
+      <div class="sphinxsidebar">
+	<div class="sphinxsidebarwrapper">
+	  {%- if pagename != 'index' %}
+	  {%- if parents %}
+	  <div class="rel">
+	   {% else %}
+	   <div class="rel rellarge">
+	     {% endif %}
 	<!-- rellinks[1:] is an ugly hack to avoid link to module
 	    index  -->
 	{%- for rellink in rellinks[1:]|reverse %}
@@ -188,6 +197,8 @@
 	{{ toc }}
     {% endif %}
     </div>
+	  </div>
+
 
       <div class="content">
           {%- block document %}
@@ -196,6 +207,7 @@
         <div class="clearer"></div>
       </div>
     </div>
+  
 {% endblock %}
 
 
@@ -225,4 +237,32 @@
     </span>
     {%- endif %}
     </div>
+
+    {%- if pagename != 'index' %}
+    {%- if parents %}
+     <div class="rel">
+    {% else %}
+     <div class="rel rellarge">
+    {% endif %}
+    {%- for rellink in rellinks[1:]|reverse %}
+    <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
+      <a href="{{ pathto(rellink[0]) }}">
+        {{loop.cycle('Previous', 'Next')}}
+      </a>  
+    </div>
+    {%- endfor %}
+    {% endif %}
+     </div>
+     <script type="text/javascript">
+       $("div.buttonNext, div.buttonPrevious").hover(
+           function () {
+               $(this).css('background-color', '#FF9C34');
+           },
+           function () {
+               $(this).css('background-color', '#A7D6E2');
+           }
+       );
+     </script>
 {%- endblock %}
+
+
