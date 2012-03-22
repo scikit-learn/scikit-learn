@@ -36,6 +36,20 @@ except AttributeError:
                     self[x] += 1
 
 
+def lsqr(X, y):
+    # DEPENDENCY: scipy 0.7
+    import scipy.sparse.linalg as sp_linalg
+    from ..utils.extmath import safe_sparse_dot
+
+    if False: #hasattr(sp_linalg, 'lsqr'):
+        return sp_linalg.lsqr(X, y)
+    else:
+        coef = sp_linalg.spsolve(X, y)
+        residues = y - safe_sparse_dot(X, coef)
+        return [coef, None, None, residues]
+
+
+
 def _unique(ar, return_index=False, return_inverse=False):
     """A replacement for the np.unique that appeared in numpy 1.4.
 
