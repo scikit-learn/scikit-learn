@@ -204,6 +204,12 @@ class KFold(object):
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
 
+    shuffle: boolean, optional
+        whether to shuffle the data before splitting into batches
+
+    random_state: int or RandomState
+            Pseudo number generator state used for random sampling.
+
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -233,8 +239,10 @@ class KFold(object):
     classification tasks).
     """
 
-    def __init__(self, n, k, indices=True):
+    def __init__(self, n, k, indices=True, shuffle=False, random_state=None):
         _validate_kfold(k, n)
+        random_state = check_random_state(random_state)
+
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
@@ -242,6 +250,9 @@ class KFold(object):
             raise ValueError("k must be an integer")
         self.k = int(k)
         self.indices = indices
+        self.idxs = np.arange(n)
+        if shuffle:
+            random_state.shuffle(self.idxs)
 
     def __iter__(self):
         n = self.n
@@ -251,14 +262,13 @@ class KFold(object):
         for i in xrange(k):
             test_index = np.zeros(n, dtype=np.bool)
             if i < k - 1:
-                test_index[i * fold_size:(i + 1) * fold_size] = True
+                test_index[self.idxs[i * fold_size:(i + 1) * fold_size]] = True
             else:
-                test_index[i * fold_size:] = True
+                test_index[self.idxs[i * fold_size:]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
-                train_index = ind[train_index]
-                test_index = ind[test_index]
+                train_index = self.idxs[train_index]
+                test_index = self.idxs[test_index]
             yield train_index, test_index
 
     def __repr__(self):
