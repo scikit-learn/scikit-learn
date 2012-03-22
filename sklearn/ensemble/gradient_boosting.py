@@ -42,7 +42,7 @@ __all__ = ["GradientBoostingClassifier",
 
 
 class MedianEstimator(object):
-    """An estimator that predicts the median of the training targets."""
+    """An estimator predicting the median of the training targets."""
     def fit(self, X, y):
         self.median = np.median(y)
 
@@ -53,7 +53,7 @@ class MedianEstimator(object):
 
 
 class MeanEstimator(object):
-    """An estimator that predicts the mean of the training targets."""
+    """An estimator predicting the mean of the training targets."""
     def fit(self, X, y):
         self.mean = np.mean(y)
 
@@ -63,8 +63,8 @@ class MeanEstimator(object):
         return y
 
 
-class ClassPriorEstimator(object):
-    """An estimator that predicts the log odds ratio."""
+class LogOddsEstimator(object):
+    """An estimator predicting the log odds ratio."""
     def fit(self, X, y):
         n_pos = np.sum(y)
         self.prior = np.log(n_pos / (y.shape[0] - n_pos))
@@ -75,17 +75,14 @@ class ClassPriorEstimator(object):
         return y
 
 
-class MultiClassPriorEstimator(object):
-    """An estimator that predicts the prob of each class in the
-    training data.
+class PriorProbabilityEstimator(object):
+    """An estimator predicting the probability of each
+    class in the training data.
     """
     def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        self.n_classes = len(self.classes_)
-        self.priors = np.empty((self.n_classes,), dtype=np.float64)
-        for k in range(0, self.n_classes):
-            self.priors[k] = y[y == self.classes_[k]].shape[0] \
-                             / float(y.shape[0])
+        class_counts = np.bincount(y)
+        self.n_classes = len(class_counts)
+        self.priors = class_counts / float(y.shape[0])
 
     def predict(self, X):
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
@@ -241,7 +238,7 @@ class BinomialDeviance(LossFunction):
         super(BinomialDeviance, self).__init__(1)
 
     def init_estimator(self):
-        return ClassPriorEstimator()
+        return LogOddsEstimator()
 
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
@@ -276,7 +273,7 @@ class MultinomialDeviance(LossFunction):
         super(MultinomialDeviance, self).__init__(n_classes)
 
     def init_estimator(self):
-        return MultiClassPriorEstimator()
+        return PriorProbabilityEstimator()
 
     def __call__(self, y, pred):
         # create one-hot label encoding
