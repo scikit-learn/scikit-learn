@@ -81,11 +81,10 @@ class PriorProbabilityEstimator(object):
     """
     def fit(self, X, y):
         class_counts = np.bincount(y)
-        self.n_classes = len(class_counts)
         self.priors = class_counts / float(y.shape[0])
 
     def predict(self, X):
-        y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
+        y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
         return y
 
