@@ -242,7 +242,7 @@ class BinomialDeviance(LossFunction):
         """Compute the deviance (= negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
-        return np.sum(np.logaddexp(0.0, -2.0 * y * pred)) / y.shape[0]
+        return np.sum(np.logaddexp(0.0, -2 * y * pred)) / y.shape[0]
 
     def negative_gradient(self, y, pred, **kargs):
         return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
@@ -255,7 +255,7 @@ class BinomialDeviance(LossFunction):
         y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
-        denominator = np.sum((y - residual) * (1.0 - y + residual))
+        denominator = np.sum((y - residual) * (1 - y + residual))
 
         if denominator == 0.0:
             tree.value[leaf, 0] = 0.0
