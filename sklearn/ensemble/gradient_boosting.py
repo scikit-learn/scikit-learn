@@ -41,10 +41,8 @@ __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
 
 
-class MedianPredictor(object):
-    """A simple initial estimator that predicts the median
-    of the training targets.
-    """
+class MedianEstimator(object):
+    """An estimator that predicts the median of the training targets."""
     def fit(self, X, y):
         self.median = np.median(y)
 
@@ -54,7 +52,7 @@ class MedianPredictor(object):
         return y
 
 
-class MeanPredictor(object):
+class MeanEstimator(object):
     """An estimator that predicts the mean of the training targets."""
     def fit(self, X, y):
         self.mean = np.mean(y)
@@ -65,7 +63,7 @@ class MeanPredictor(object):
         return y
 
 
-class ClassPriorPredictor(object):
+class ClassPriorEstimator(object):
     """An estimator that predicts the log odds ratio."""
     def fit(self, X, y):
         n_pos = np.sum(y)
@@ -77,7 +75,7 @@ class ClassPriorPredictor(object):
         return y
 
 
-class MultiClassPriorPredictor(object):
+class MultiClassPriorEstimator(object):
     """An estimator that predicts the prob of each class in the
     training data.
     """
@@ -188,7 +186,7 @@ class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
     Terminal regions need not to be updated for least squares. """
     def init_estimator(self):
-        return MeanPredictor()
+        return MeanEstimator()
 
     def __call__(self, y, pred):
         return np.mean((y - pred.ravel()) ** 2.0)
@@ -213,7 +211,7 @@ class LeastSquaresError(RegressionLossFunction):
 class LeastAbsoluteError(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
     def init_estimator(self):
-        return MedianPredictor()
+        return MedianEstimator()
 
     def __call__(self, y, pred):
         return np.abs(y - pred.ravel()).mean()
@@ -243,7 +241,7 @@ class BinomialDeviance(LossFunction):
         super(BinomialDeviance, self).__init__(1)
 
     def init_estimator(self):
-        return ClassPriorPredictor()
+        return ClassPriorEstimator()
 
     def __call__(self, y, pred):
         """Compute the deviance (= negative log-likelihood). """
@@ -278,7 +276,7 @@ class MultinomialDeviance(LossFunction):
         super(MultinomialDeviance, self).__init__(n_classes)
 
     def init_estimator(self):
-        return MultiClassPriorPredictor()
+        return MultiClassPriorEstimator()
 
     def __call__(self, y, pred):
         # create one-hot label encoding
