@@ -93,7 +93,8 @@ pl.figure()
 plot_ic_criterion(model_aic, 'AIC', 'b')
 plot_ic_criterion(model_bic, 'BIC', 'r')
 pl.legend()
-pl.title('Information-criterion for model selection (training time %.3fs)' % t_bic)
+pl.title('Information-criterion for model selection (training time %.3fs)'
+         % t_bic)
 
 ##############################################################################
 # LassoCV: coordinate descent
@@ -111,7 +112,7 @@ pl.figure()
 ymin, ymax = 2300, 3800
 pl.plot(m_log_alphas, model.mse_path_, ':')
 pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
-        label='Average accross the folds', linewidth=2)
+        label='Average across the folds', linewidth=2)
 pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
            label='alpha: CV estimate')
 
@@ -119,8 +120,8 @@ pl.legend()
 
 pl.xlabel('-log(lambda)')
 pl.ylabel('Mean square error')
-pl.title('Mean square error on each fold: coordinate descent (train time: %.2fs)' %
-            t_lasso_cv)
+pl.title('Mean square error on each fold: coordinate descent '
+         '(train time: %.2fs)' % t_lasso_cv)
 pl.axis('tight')
 pl.ylim(ymin, ymax)
 
@@ -139,7 +140,7 @@ m_log_alphas = -np.log10(model.cv_alphas)
 pl.figure()
 pl.plot(m_log_alphas, model.cv_mse_path_, ':')
 pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
-        label='Average accross the folds', linewidth=2)
+        label='Average across the folds', linewidth=2)
 pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
            label='alpha CV')
 pl.legend()

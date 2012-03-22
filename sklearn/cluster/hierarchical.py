@@ -7,7 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
-import heapq
+from heapq import heapify, heappop, heappush, heappushpop
 import itertools
 import warnings
 
@@ -19,7 +19,7 @@ from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 
-from . import _inertia
+from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 
 
@@ -43,7 +43,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         connectivity matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
-        Defaut is None, i.e, the ward algorithm is unstructured.
+        Default is None, i.e, the Ward algorithm is unstructured.
 
     n_components : int (optional)
         Number of connected components. If None the number of connected
@@ -65,7 +65,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves : int
         The number of leaves in the tree
     """
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -114,14 +114,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     coord_col = np.array(coord_col, dtype=np.int)
 
     # build moments as a list
-    moments = [np.zeros(n_nodes), np.zeros((n_nodes, n_features))]
-    moments[0][:n_samples] = 1
-    moments[1][:n_samples] = X
+    moments_1 = np.zeros(n_nodes)
+    moments_1[:n_samples] = 1
+    moments_2 = np.zeros((n_nodes, n_features))
+    moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _inertia.compute_ward_dist(moments[0], moments[1],
-                               coord_row, coord_col, inertia)
+    _hierarchical.compute_ward_dist(moments_1, moments_2,
+                             coord_row, coord_col, inertia)
     inertia = zip(inertia, coord_row, coord_col)
-    heapq.heapify(inertia)
+    heapify(inertia)
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
@@ -129,27 +130,31 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
 
-    # recursive merge loop
-    for k in range(n_samples, n_nodes):
+    visited = np.empty(n_nodes, dtype=bool)
 
+    # recursive merge loop
+    for k in xrange(n_samples, n_nodes):
         # identify the merge
         while True:
-            node = heapq.heappop(inertia)
-            i, j = node[1], node[2]
+            inert, i, j = heappop(inertia)
             if used_node[i] and used_node[j]:
                 break
-        parent[i], parent[j], heights[k] = k, k, node[0]
+        parent[i], parent[j], heights[k] = k, k, inert
         children.append([i, j])
-        used_node[i], used_node[j] = False, False
+        used_node[i] = used_node[j] = False
 
         # update the moments
-        for p in range(2):
-            moments[p][k] = moments[p][i] + moments[p][j]
+        moments_1[k] = moments_1[i] + moments_1[j]
+        moments_2[k] = moments_2[i] + moments_2[j]
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
+        visited[:] = False
+        visited[k] = True
         for l in set(A[i]).union(A[j]):
-            if parent[l] == l:
+            l = _hierarchical._get_parent(l, parent)
+            if not visited[l]:
+                visited[l] = True
                 coord_col.append(l)
                 A[l].append(k)
         A.append(coord_col)
@@ -158,10 +163,10 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_row.fill(k)
         ini = np.empty(len(coord_row), dtype=np.float)
 
-        _inertia.compute_ward_dist(moments[0], moments[1],
+        _hierarchical.compute_ward_dist(moments_1, moments_2,
                                    coord_row, coord_col, ini)
         for tupl in itertools.izip(ini, coord_row, coord_col):
-            heapq.heappush(inertia, tupl)
+            heappush(inertia, tupl)
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
@@ -172,36 +177,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
-
-def _hc_get_descendent(ind, children, n_leaves):
-    """Function returning all the descendent leaves of a set of nodes.
-
-    Parameters
-    ----------
-    ind : list of int
-        A list that indicates the nodes for which we want the descendents.
-
-    children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        This is not defined for leaves.
-
-    n_leaves : int
-        Number of leaves.
-
-    Return
-    ------
-    descendent : list of int
-    """
-    descendent = []
-    while len(ind) != 0:
-        i = ind.pop()
-        if i < n_leaves:
-            descendent.append(i)
-        else:
-            ci = children[i - n_leaves]
-            ind.extend((ci[0], ci[1]))
-    return descendent
-
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
@@ -218,20 +193,33 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_leaves : int
         Number of leaves of the tree.
 
-    Return
-    ------
+    Returns
+    -------
     labels : array [n_points]
         cluster labels for each point
 
     """
-    nodes = [np.max(children[-1]) + 1]
+    if n_clusters > n_leaves:
+        raise ValueError('Cannot extract more clusters than samples: '
+            '%s clusters where given for a tree with %s leaves.'
+            % (n_clusters, n_leaves))
+    # In this function, we store nodes as a heap to avoid recomputing
+    # the max of the nodes: the first element is always the smallest
+    # We use negated indices as heaps work on smallest elements, and we
+    # are interested in largest elements
+    # children[-1] is the root of the tree
+    nodes = [-(max(children[-1]) + 1)]
     for i in range(n_clusters - 1):
-        nodes.extend(children[np.max(nodes) - n_leaves])
-        nodes.remove(np.max(nodes))
-    labels = np.zeros(n_leaves, dtype=np.int)
+        # As we have a heap, nodes[0] is the smallest element
+        these_children = children[-nodes[0] - n_leaves]
+        # Insert the 2 children and remove the largest node
+        heappush(nodes, -these_children[0])
+        heappushpop(nodes, -these_children[1])
+    label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        labels[_hc_get_descendent([node], children, n_leaves)] = i
-    return labels
+        label[_hierarchical._hc_get_descendent(-node,
+                                children, n_leaves)] = i
+    return label
 
 
 ###############################################################################
@@ -248,7 +236,7 @@ class Ward(BaseEstimator):
     connectivity : sparse matrix.
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
-        Defaut is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hiearchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
@@ -260,24 +248,18 @@ class Ward(BaseEstimator):
         Copy the connectivity matrix or work inplace.
 
     n_components : int (optional)
-        The number of connected components in the graph defined by the
+        The number of connected components in the graph defined by the \
         connectivity matrix. If not set, it is estimated.
-
-    Methods
-    -------
-    fit:
-        Compute the clustering
 
     Attributes
     ----------
-    children_ : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
+    `children_` : array-like, shape = [n_nodes, 2]
+        List of the children of each nodes.  Leaves of the tree do not appear.
 
-    labels_ : array [n_points]
+    `labels_` : array [n_points]
         cluster labels for each point
 
-    n_leaves_ : int
+    `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
     """
@@ -306,6 +288,16 @@ class Ward(BaseEstimator):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
+        if not self.connectivity is None:
+            if not sparse.issparse(self.connectivity):
+                raise TypeError("`connectivity` should be a sparse matrix or "
+                        "None, got: %r" % type(self.connectivity))
+
+            if (self.connectivity.shape[0] != X.shape[0] or
+                    self.connectivity.shape[1] != X.shape[0]):
+                raise ValueError("`connectivity` does not have shape "
+                        "(n_samples, n_samples)")
+
         # Construct the tree
         self.children_, self.n_components, self.n_leaves_ = \
                 memory.cache(ward_tree)(X, self.connectivity,
@@ -330,7 +322,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     connectivity : sparse matrix
         connectivity matrix. Defines for each feature the neigbhoring
         features following a given structure of the data.
-        Defaut is None, i.e, the hiearchical agglomeration algorithm is
+        Default is None, i.e, the hiearchical agglomeration algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
@@ -345,21 +337,16 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
 
-    Methods
-    -------
-    fit:
-        Compute the clustering of features
-
     Attributes
     ----------
-    children_ : array-like, shape = [n_nodes, 2]
+    `children_` : array-like, shape = [n_nodes, 2]
         List of the children of each nodes.
         Leaves of the tree do not appear.
 
-    labels_ : array [n_points]
+    `labels_` : array [n_points]
         cluster labels for each point
 
-    n_leaves_ : int
+    `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
     """

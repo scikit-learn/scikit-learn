@@ -40,7 +40,7 @@ except:
 
 ax.set_title("Original data")
 ax = fig.add_subplot(212)
-ax.scatter(X_r[:,0], X_r[:,1], c=color, cmap=pl.cm.Spectral)
+ax.scatter(X_r[:, 0], X_r[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.axis('tight')
 pl.xticks([]), pl.yticks([])
 pl.title('Projected data')

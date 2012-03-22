@@ -1,12 +1,14 @@
+from itertools import product
 import numpy as np
-
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from nose.tools import assert_true
+
+
 from sklearn import datasets
 from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
-from sklearn.utils.fixes import product
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
@@ -104,7 +106,7 @@ def test_transform():
     X_iso2 = iso.transform(X + noise)
 
     # Make sure the rms error on re-embedding is comparable to noise_scale
-    assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale
+    assert_true(np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale)
 
 
 def test_pipeline():
@@ -112,7 +114,7 @@ def test_pipeline():
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('isomap', manifold.Isomap()),
-         ('neighbors_clf', neighbors.NeighborsClassifier())])
+         ('neighbors_clf', neighbors.KNeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
 

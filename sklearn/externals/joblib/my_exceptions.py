@@ -7,6 +7,7 @@ Exceptions
 
 import sys
 
+
 class JoblibException(Exception):
     """ A simple exception with an error message that you can get to.
     """
@@ -21,9 +22,9 @@ class JoblibException(Exception):
     def __repr__(self):
         return '%s\n%s\n%s\n%s' % (
                     self.__class__.__name__,
-                    75*'_',
+                    75 * '_',
                     self.message,
-                    75*'_')
+                    75 * '_')
 
     __str__ = __repr__
 
@@ -35,15 +36,15 @@ class TransportableException(JoblibException):
 
     def __init__(self, message, etype):
         self.message = message
-        self.etype   = etype
+        self.etype = etype
 
     def __reduce__(self):
         # For pickling
         return self.__class__, (self.message, self.etype), {}
 
 
-
 _exception_mapping = dict()
+
 
 def _mk_exception(exception, name=None):
     # Create an exception inheriting from both JoblibException
@@ -91,4 +92,3 @@ def _mk_common_exceptions():
 # Updating module locals so that the exceptions pickle right. AFAIK this
 # works only at module-creation time
 locals().update(_mk_common_exceptions())
-

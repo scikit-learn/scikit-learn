@@ -8,11 +8,11 @@ import numpy as np
 from collections import defaultdict
 
 from scipy.linalg import svd
-from sklearn.utils.extmath import fast_svd
+from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
-def compute_bench(samples_range, features_range, q=3, rank=50):
+def compute_bench(samples_range, features_range, n_iterations=3, rank=50):
 
     it = 0
 
@@ -25,7 +25,8 @@ def compute_bench(samples_range, features_range, q=3, rank=50):
             print '===================='
             print 'Iteration %03d of %03d' % (it, max_it)
             print '===================='
-            X = make_low_rank_matrix(n_samples, n_features, effective_rank=rank,
+            X = make_low_rank_matrix(n_samples, n_features,
+                                  effective_rank=rank,
                                   tail_strength=0.2)
 
             gc.collect()
@@ -35,22 +36,25 @@ def compute_bench(samples_range, features_range, q=3, rank=50):
             results['scipy svd'].append(time() - tstart)
 
             gc.collect()
-            print "benching scikit-learn fast_svd: q=0"
+            print "benching scikit-learn randomized_svd: n_iterations=0"
             tstart = time()
-            fast_svd(X, rank, q=0)
-            results['scikit-learn fast_svd (q=0)'].append(time() - tstart)
+            randomized_svd(X, rank, n_iterations=0)
+            results['scikit-learn randomized_svd (n_iterations=0)'].append(
+                time() - tstart)
 
             gc.collect()
-            print "benching scikit-learn fast_svd: q=%d " % q
+            print ("benching scikit-learn randomized_svd: n_iterations=%d "
+                   % n_iterations)
             tstart = time()
-            fast_svd(X, rank, q=q)
-            results['scikit-learn fast_svd (q=%d)' % q].append(time() - tstart)
+            randomized_svd(X, rank, n_iterations=n_iterations)
+            results['scikit-learn randomized_svd (n_iterations=%d)'
+                    % n_iterations].append(time() - tstart)
 
     return results
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(2, 1000, 4).astype(np.int)

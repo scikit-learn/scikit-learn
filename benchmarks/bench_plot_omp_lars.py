@@ -108,7 +108,7 @@ if __name__ == '__main__':
     for i, (label, timings) in enumerate(sorted(results.iteritems())):
         ax = fig.add_subplot(1, 2, i)
         vmax = max(1 - timings.min(), -1 + timings.max())
-        pl.matshow(timings, fignum=False, vmin=1-vmax, vmax=1+vmax)
+        pl.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)
         ax.set_xticklabels([''] + map(str, samples_range))
         ax.set_yticklabels([''] + map(str, features_range))
         pl.xlabel('n_samples')

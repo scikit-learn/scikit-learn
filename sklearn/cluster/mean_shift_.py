@@ -10,7 +10,7 @@ import numpy as np
 
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator
-from ..neighbors import BallTree
+from ..neighbors import NearestNeighbors
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
@@ -40,8 +40,10 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    d, _ = BallTree(X).query(X, int(X.shape[0] * quantile),
-                             return_distance=True)
+    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
+    nbrs.fit(X)
+    d, _ = nbrs.kneighbors(X, return_distance=True)
+
     bandwidth = np.mean(np.max(d, axis=1))
     return bandwidth
 
@@ -103,14 +105,16 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     n_points, n_features = X.shape
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
     center_intensity_dict = {}
-    ball_tree = BallTree(X)  # to efficiently look up nearby points
+    nbrs = NearestNeighbors(radius=bandwidth).fit(X)
 
     # For each seed, climb gradient until convergence or max_iterations
     for my_mean in seeds:
         completed_iterations = 0
         while True:
             # Find mean of points within bandwidth
-            points_within = X[ball_tree.query_radius([my_mean], bandwidth)[0]]
+            i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth,
+                                           return_distance=False)[0]
+            points_within = X[i_nbrs]
             if len(points_within) == 0:
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
@@ -130,18 +134,19 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                                  key=lambda tup: tup[1], reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
-    cc_tree = BallTree(sorted_centers)
+    nbrs = NearestNeighbors(radius=bandwidth).fit(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
-            neighbor_idxs = cc_tree.query_radius([center], bandwidth)[0]
+            neighbor_idxs = nbrs.radius_neighbors([center],
+                                                  return_distance=False)[0]
             unique[neighbor_idxs] = 0
             unique[i] = 1  # leave the current point as unique
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    centers_tree = BallTree(cluster_centers)
+    nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
     labels = np.zeros(n_points, dtype=np.int)
-    distances, idxs = centers_tree.query(X, 1)
+    distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
         labels = idxs.flatten()
     else:
@@ -215,27 +220,16 @@ class MeanShift(BaseEstimator):
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    Methods
-    -------
-    fit(X):
-        Compute MeanShift clustering
-
     Attributes
     ----------
-    cluster_centers_: array, [n_clusters, n_features]
+    `cluster_centers_` : array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    labels_:
+    `labels_` :
         Labels of each point
 
     Notes
     -----
-
-    Reference:
-
-    Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
-    feature space analysis". IEEE Transactions on Pattern Analysis and
-    Machine Intelligence. 2002. pp. 603-619.
 
     Scalability:
 
@@ -250,6 +244,14 @@ class MeanShift(BaseEstimator):
 
     Note that the estimate_bandwidth function is much less scalable than
     the mean shift algorithm and will be the bottleneck if it is used.
+
+    References
+    ----------
+
+    Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
+    feature space analysis". IEEE Transactions on Pattern Analysis and
+    Machine Intelligence. 2002. pp. 603-619.
+
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
                  cluster_all=True):

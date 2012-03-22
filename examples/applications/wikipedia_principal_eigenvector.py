@@ -43,11 +43,11 @@ import numpy as np
 
 from scipy import sparse
 
-from sklearn.utils.extmath import fast_svd
+from sklearn.utils.extmath import randomized_svd
 from sklearn.externals.joblib import Memory
 
 
-################################################################################
+###############################################################################
 # Where to download the data, if not already on disk
 redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
@@ -69,7 +69,7 @@ for url, filename in resources:
         print
 
 
-################################################################################
+###############################################################################
 # Loading the redirect files
 
 memory = Memory(cachedir=".")
@@ -170,9 +170,9 @@ X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
 names = dict((i, name) for name, i in index_map.iteritems())
 
-print "Computing the principal singular vectors using fast_svd"
+print "Computing the principal singular vectors using randomized_svd"
 t0 = time()
-U, s, V = fast_svd(X, 5, q=3)
+U, s, V = randomized_svd(X, 5, n_iterations=3)
 print "done in %0.3fs" % (time() - t0)
 
 # print the names of the wikipedia related strongest compenents of the the
@@ -224,4 +224,3 @@ t0 = time()
 scores = centrality_scores(X, max_iter=100, tol=1e-10)
 print "done in %0.3fs" % (time() - t0)
 pprint([names[i] for i in np.abs(scores).argsort()[-10:]])
-

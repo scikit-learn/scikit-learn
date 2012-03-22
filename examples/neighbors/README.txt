@@ -3,5 +3,4 @@
 Nearest Neighbors
 -----------------------
 
-Examples concerning the `sklearn.neighbors` package.
-
+Examples concerning the :mod:`sklearn.neighbors` package.

@@ -54,20 +54,19 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     -----
     See examples/plot_dbscan.py for an example.
 
-    Reference:
+    References
+    ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
     """
+    X = np.asarray(X)
     n = X.shape[0]
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
     index_order = np.arange(n)
     random_state.shuffle(index_order)
-    assert len(index_order) == n, ("Index order must be of length n"
-                                   " (%d expected, %d given)"
-                                   % (n, len(index_order)))
     D = pairwise_distances(X, metric=metric)
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
@@ -120,38 +119,33 @@ class DBSCAN(BaseEstimator):
 
     Parameters
     ----------
-    eps: float, optional
+    eps : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood.
-    min_samples: int, optional
+    min_samples : int, optional
         The number of samples in a neighborhood for a point to be considered
         as a core point.
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.calculate_distance for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-    random_state: numpy.RandomState, optional
+    random_state : numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
-    verbose: boolean, optional
+    verbose : boolean, optional
         The verbosity level
-
-    Methods
-    -------
-    fit:
-        Compute the clustering
 
     Attributes
     ----------
-    core_sample_indices_: array, shape = [n_core_samples]
+    `core_sample_indices_` : array, shape = [n_core_samples]
         Indices of core samples.
 
-    components_: array, shape = [n_core_samples, n_features]
+    `components_` : array, shape = [n_core_samples, n_features]
         Copy of each core sample found by training.
 
-    labels_ : array, shape = [n_samples]
+    `labels_` : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
@@ -159,7 +153,8 @@ class DBSCAN(BaseEstimator):
     -----
     See examples/plot_dbscan.py for an example.
 
-    Reference:
+    References
+    ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
@@ -190,6 +185,6 @@ class DBSCAN(BaseEstimator):
 
         self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
-                                                         **self._get_params())
+                                                         **self.get_params())
         self.components_ = X[self.core_sample_indices_].copy()
         return self

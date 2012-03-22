@@ -3,6 +3,11 @@
 
    - Make labels sorted in group_classes, Dan Yamins.
    
+   Modified 2012:
+
+   - Changes roles of +1 and -1 to match scikit API, Andreas Mueller
+        See issue 546: https://github.com/scikit-learn/scikit-learn/pull/546
+   
  */
 
 #include <math.h>
@@ -1925,9 +1930,9 @@ model* train(const problem *prob, const parameter *param)
 			int e0 = start[0]+count[0];
 			k=0;
 			for(; k<e0; k++)
-				sub_prob.y[k] = +1;
-			for(; k<sub_prob.l; k++)
 				sub_prob.y[k] = -1;
+			for(; k<sub_prob.l; k++)
+				sub_prob.y[k] = +1;
 
 			train_one(&sub_prob, param, &model_->w[0], weighted_C[0], weighted_C[1]);
 		}
@@ -2053,7 +2058,7 @@ int predict_values(const struct model *model_, const struct feature_node *x, dou
 	}
 
 	if(nr_class==2)
-		return (dec_values[0]>0)?model_->label[0]:model_->label[1];
+		return (dec_values[0]>0)?model_->label[1]:model_->label[0];
 	else
 	{
 		int dec_max_idx = 0;
@@ -2091,7 +2096,10 @@ int predict_probability(const struct model *model_, const struct feature_node *x
 			prob_estimates[i]=1/(1+exp(-prob_estimates[i]));
 
 		if(nr_class==2) // for binary classification
-			prob_estimates[1]=1.-prob_estimates[0];
+        {
+			prob_estimates[1]=prob_estimates[0];
+			prob_estimates[0]=1.-prob_estimates[0];
+        }
 		else
 		{
 			double sum=0;
@@ -2114,6 +2122,7 @@ static const char *solver_type_table[]=
 	"L1R_L2LOSS_SVC", "L1R_LR", "L2R_LR_DUAL", NULL
 };
 
+#if 0
 int save_model(const char *model_file_name, const struct model *model_)
 {
 	int i;
@@ -2256,6 +2265,7 @@ struct model *load_model(const char *model_file_name)
 
 	return model_;
 }
+#endif
 
 int get_nr_feature(const model *model_)
 {

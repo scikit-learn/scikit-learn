@@ -1,5 +1,5 @@
 """
-LDA: Linear Discriminant Analysis
+The :mod:`sklearn.lda` module implements Linear Discriminant Analysis (LDA).
 """
 # Authors: Matthieu Perrot
 #          Mathieu Blondel
@@ -10,18 +10,29 @@ import numpy as np
 from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
-from .utils.extmath import logsum
+from .utils.extmath import logsumexp
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     """
     Linear Discriminant Analysis (LDA)
 
+    A classifier with a linear decision boundary, generated
+    by fitting class conditional densities to the data
+    and using Bayes' rule.
+
+    The model fits a Gaussian density to each class, assuming that
+    all classes share the same covariance matrix.
+
+    The fitted model can also be used to reduce the dimensionality
+    of the input, by projecting it to the most discriminative
+    directions.
+
     Parameters
     ----------
 
     n_components: int
-        Number of components (< n_classes - 1)
+        Number of components (< n_classes - 1) for dimensionality reduction
 
     priors : array, optional, shape = [n_classes]
         Priors on classes
@@ -51,7 +62,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     See also
     --------
-    QDA
+    sklearn.qda.QDA: Quadratic discriminant analysis
 
     """
 
@@ -79,10 +90,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             Target values (integers)
         store_covariance : boolean
             If True the covariance matrix (shared by all classes) is computed
-            and stored in self.covariance_ attribute.
+            and stored in `self.covariance_` attribute.
         """
-        X = np.asanyarray(X)
-        y = np.asanyarray(y)
+        X = np.asarray(X)
+        y = np.asarray(y)
         if y.dtype.char.lower() not in ('b', 'h', 'i'):
             # We need integer values to be able to use
             # ndimage.measurements and np.bincount on numpy >= 2.0.
@@ -147,7 +158,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         if rank < n_features:
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
-        scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
+        scaling = (scaling * V[:rank]).T / S[:rank]
 
         ## ----------------------------
         ## 3) Between variance scaling
@@ -186,7 +197,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         C : array, shape = [n_samples, n_classes]
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         # center and scale data
         X = np.dot(X - self.xbar_, self.scaling)
         return np.dot(X, self.coef_.T) + self.intercept_
@@ -204,7 +215,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         X_new : array, shape = [n_samples, n_components]
         """
-        X = np.asanyarray(X)
+        X = np.asarray(X)
         # center and scale data
         X = np.dot(X - self.xbar_, self.scaling)
         n_comp = X.shape[1] if self.n_components is None else self.n_components
@@ -263,5 +274,5 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         values = self.decision_function(X)
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
-        normalization = logsum(loglikelihood, axis=1)
+        normalization = logsumexp(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]

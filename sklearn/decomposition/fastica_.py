@@ -8,12 +8,12 @@ Independent Component Analysis, by  Hyvarinen et al.
 # Author: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #         Bertrand Thirion, Alexandre Gramfort
 # License: BSD 3 clause
-
 import warnings
 import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
+from ..utils import array2d, as_float_array, check_random_state
 
 __all__ = ['fastica', 'FastICA']
 
@@ -116,25 +116,25 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_prime='', fun_args={}, max_iter=200,
-            tol=1e-04, w_init=None):
+            tol=1e-04, w_init=None, random_state=None):
     """Perform Fast Independent Component Analysis.
 
     Parameters
     ----------
-    X : (n, p) array of shape = [n_samples, n_features], optional
+    X : array-like, shape = [n_samples, n_features]
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
     n_components : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
     algorithm : {'parallel', 'deflation'}, optional
-        Apply an parallel or deflational FASTICA algorithm.
+        Apply a parallel or deflational FASTICA algorithm.
     whiten: boolean, optional
-        If true perform an initial whitening of the data. Do not set to
-        false unless the data is already white, as you will get incorrect
-        results.
-        If whiten is true, the data is assumed to have already been
+        If True perform an initial whitening of the data.
+        If False, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
+        Otherwise you will get incorrect results.
+        In this case the parameter n_components will be ignored.
     fun : string or function, optional
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
@@ -156,12 +156,16 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If None (default) then an array of normal r.v.'s is used
     source_only: boolean, optional
         if True, only the sources matrix is returned
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Returns
     -------
-    K: (n_components, p) array
-        pre-whitening matrix that projects data onto th first n.comp
-        principal components. Returned only if whiten is True
+    K: (n_components, p) array or None.
+        If whiten is 'True', K is the pre-whitening matrix that projects data
+        onto the first n.comp principal components. If whiten is 'False', K is
+        'None'.
+
     W: (n_components, n_components) array
         estimated un-mixing matrix
         The mixing matrix can be obtained by::
@@ -180,7 +184,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     non-Gaussian (independent) components i.e. X = AS where columns of S
     contain the independent components and A is a linear mixing
     matrix. In short ICA attempts to `un-mix' the data by estimating an
-    un-mixing matrix W where S = W K X.
+    un-mixing matrix W where ``S = W K X.``
 
     This implementation was originally made for data of shape
     [n_features, n_samples]. Now the input is transposed
@@ -188,16 +192,14 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     faster for Fortran-ordered input.
 
     Implemented using FastICA:
-
-    * A. Hyvarinen and E. Oja, Independent Component Analysis:
-      Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-      pp. 411-430
+    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    Algorithms and Applications, Neural Networks, 13(4-5), 2000,
+    pp. 411-430`
 
     """
+    random_state = check_random_state(random_state)
     # make interface compatible with other decompositions
-    warnings.warn("Please note: the interface of fastica has changed: "
-                  "X is now assumed to be of shape [n_samples, n_features]")
-    X = X.T
+    X = array2d(X).T
 
     algorithm_funcs = {'parallel': _ica_par,
                        'deflation': _ica_def}
@@ -246,6 +248,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     n, p = X.shape
 
+    if whiten == False and n_components is not None:
+        n_components = None
+        warnings.warn('Ignoring n_components with whiten=False.')
+
     if n_components is None:
         n_components = min(n, p)
     if (n_components > min(n, p)):
@@ -265,12 +271,14 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         X1 = np.dot(K, X)
         # see (13.6) p.267 Here X1 is white and data
         # in X has been projected onto a subspace by PCA
+        X1 *= np.sqrt(p)
     else:
-        X1 = X.copy()
-    X1 *= np.sqrt(p)
+        # X must be casted to floats to avoid typing issues with numpy
+        # 2.0 and the line below
+        X1 = as_float_array(X, copy=True)
 
     if w_init is None:
-        w_init = np.random.normal(size=(n_components, n_components))
+        w_init = random_state.normal(size=(n_components, n_components))
     else:
         w_init = np.asarray(w_init)
         if w_init.shape != (n_components, n_components):
@@ -294,7 +302,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return K, W, S.T
     else:
         S = np.dot(W, X)
-        return W, S.T
+        return None, W, S.T
 
 
 class FastICA(BaseEstimator):
@@ -304,47 +312,44 @@ class FastICA(BaseEstimator):
     ----------
     n_components : int, optional
         Number of components to use. If none is passed, all are used.
-    algorithm: {'parallel', 'deflation'}
+    algorithm : {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA
-    whiten: boolean, optional
+    whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
-    fun: {'logcosh', 'exp', or 'cube'}, or a callable
+    fun : {'logcosh', 'exp', or 'cube'}, or a callable
         The non-linear function used in the FastICA loop to approximate
         negentropy. If a function is passed, it derivative should be
         passed as the 'fun_prime' argument.
-    fun_prime: None or a callable
+    fun_prime : None or a callable
         The derivative of the non-linearity used.
     max_iter : int, optional
         Maximum number of iterations during fit
     tol : float, optional
         Tolerance on update at each iteration
-    w_init: None of an (n_components, n_components) ndarray
+    w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
 
     Attributes
     ----------
-    unmixing_matrix_ : 2D array, [n_components, n_samples]
+    `unmixing_matrix_` : 2D array, [n_components, n_samples]
         The unmixing matrix
-
-    Methods
-    -------
-    get_mixing_matrix() :
-        Returns an estimate of the mixing matrix
 
     Notes
     -----
 
-    Implementation based on :
-    A. Hyvarinen and E. Oja, Independent Component Analysis:
+    Implementation based on
+    `A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430
+    pp. 411-430`
 
     """
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_prime='', fun_args=None, max_iter=200,
-                 tol=1e-4, w_init=None):
+                 tol=1e-4, w_init=None, random_state=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
@@ -355,13 +360,18 @@ class FastICA(BaseEstimator):
         self.max_iter = max_iter
         self.tol = tol
         self.w_init = w_init
+        self.random_state = random_state
 
     def fit(self, X):
         whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
-                        self.tol, self.w_init)
-        self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+                        self.tol, self.w_init,
+                        random_state=self.random_state)
+        if self.whiten == True:
+            self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+        else:
+            self.unmixing_matrix_ = unmixing_
         self.components_ = sources_
         return self
 

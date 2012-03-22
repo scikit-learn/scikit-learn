@@ -36,7 +36,7 @@ connectivity = grid_to_graph(*lena.shape)
 # Compute clustering
 print "Compute structured hierarchical clustering..."
 st = time.time()
-n_clusters = 15 # number of regions
+n_clusters = 15  # number of regions
 ward = Ward(n_clusters=n_clusters, connectivity=connectivity).fit(X)
 label = np.reshape(ward.labels_, lena.shape)
 print "Elaspsed time: ", time.time() - st
@@ -49,7 +49,7 @@ pl.figure(figsize=(5, 5))
 pl.imshow(lena, cmap=pl.cm.gray)
 for l in range(n_clusters):
     pl.contour(label == l, contours=1,
-            colors=[pl.cm.spectral(l/float(n_clusters)), ])
+            colors=[pl.cm.spectral(l / float(n_clusters)), ])
 pl.xticks(())
 pl.yticks(())
 pl.show()

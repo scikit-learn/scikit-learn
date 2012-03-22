@@ -327,24 +327,24 @@ def test_kneighbors_graph():
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  1.01      ,  0.        ],
-         [ 1.01      ,  0.        ,  0.        ],
-         [ 0.        ,  1.40716026,  0.        ]])
+        [[0.00,  1.01,        0.],
+         [1.01,  0.,          0.],
+         [0.00,  1.40716026,  0.]])
 
     # n_neighbors = 2
     A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
         A.todense(),
-        [[ 1.,  1.,  0.],
-         [ 1.,  1.,  0.],
-         [ 0.,  1.,  1.]])
+        [[1.,  1.,  0.],
+         [1.,  1.,  0.],
+         [0.,  1.,  1.]])
 
     A = neighbors.kneighbors_graph(X, 2, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  1.01      ,  2.23606798],
-         [ 1.01      ,  0.        ,  1.40716026],
-         [ 2.23606798,  1.40716026,  0.        ]])
+        [[0.,          1.01,        2.23606798],
+         [1.01,        0.,          1.40716026],
+         [2.23606798,  1.40716026,  0.]])
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
@@ -360,16 +360,16 @@ def test_radius_neighbors_graph():
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
     assert_array_equal(
         A.todense(),
-        [[ 1.,  1.,  0.],
-         [ 1.,  1.,  1.],
-         [ 0.,  1.,  1.]])
+        [[1.,  1.,  0.],
+         [1.,  1.,  1.],
+         [0.,  1.,  1.]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='distance')
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.        ,  1.01      ,  0.        ],
-         [ 1.01      ,  0.        ,  1.40716026],
-         [ 0.        ,  1.40716026,  0.        ]])
+        [[0.,   1.01,       0.],
+         [1.01, 0.,         1.40716026],
+         [0.,   1.40716026, 0.]])
 
 
 def test_neighbors_badargs():

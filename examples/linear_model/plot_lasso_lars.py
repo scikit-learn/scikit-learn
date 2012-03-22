@@ -38,4 +38,3 @@ pl.ylabel('Coefficients')
 pl.title('LASSO Path')
 pl.axis('tight')
 pl.show()
-

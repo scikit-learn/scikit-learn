@@ -5,7 +5,8 @@ Common utilities for testing clustering.
 
 import numpy as np
 
-################################################################################
+
+###############################################################################
 # Generate sample data
 
 def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
@@ -14,10 +15,10 @@ def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
 
     # the data is voluntary shifted away from zero to check clustering
     # algorithm robustness w.r.t. non centered data
-    means = np.array([[ 1,  1, 1, 0],
+    means = np.array([[1,  1, 1, 0],
                       [-1, -1, 0, 1],
-                      [ 1, -1, 1, 1],
-                      [ -1, 1, 1, 0],
+                      [1, -1, 1, 1],
+                      [-1, 1, 1, 0],
                     ]) + 10
 
     X = np.empty((0, n_features))

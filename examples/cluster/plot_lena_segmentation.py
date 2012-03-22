@@ -35,8 +35,8 @@ graph = image.img_to_graph(lena)
 # The smaller beta is, the more independant the segmentation is of the
 # actual image. For beta=1, the segmentation is close to a voronoi
 beta = 5
-eps  = 1e-6
-graph.data = np.exp(-beta*graph.data/lena.std()) + eps
+eps = 1e-6
+graph.data = np.exp(-beta * graph.data / lena.std()) + eps
 
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed)
@@ -44,13 +44,13 @@ N_REGIONS = 11
 labels = spectral_clustering(graph, k=N_REGIONS)
 labels = labels.reshape(lena.shape)
 
-################################################################################
+###############################################################################
 # Visualize the resulting regions
 pl.figure(figsize=(5, 5))
 pl.imshow(lena,   cmap=pl.cm.gray)
 for l in range(N_REGIONS):
     pl.contour(labels == l, contours=1,
-            colors=[pl.cm.spectral(l/float(N_REGIONS)), ])
+            colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
 pl.xticks(())
 pl.yticks(())
 pl.show()

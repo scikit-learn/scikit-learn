@@ -7,7 +7,7 @@ that adds to libsvm some capabilities, like index of support vectors
 and efficient representation of dense matrices.
 
 These are low-level routines, but can be used for flexibility or
-performance reasons. See scikits.learn.svm for a higher-level API.
+performance reasons. See sklearn.svm for a higher-level API.
 
 Low-level memory management is done in libsvm_helper.c. If we happen
 to run out of memory a MemoryError will be raised. In practice this is
@@ -97,8 +97,8 @@ def fit(
 
     cache_size : float64
 
-    Return
-    ------
+    Returns
+    -------
     support : array, shape=[n_support]
         index of support vectors
 
@@ -153,7 +153,9 @@ def fit(
     # check parameters
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
-        raise ValueError(error_msg)
+        # for SVR: epsilon is called p in libsvm
+        error_repl = error_msg.replace("p < 0", "epsilon < 0")
+        raise ValueError(error_repl)
 
     # this does the real work
     model = svm_train(&problem, &param)
@@ -272,8 +274,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         C parameter in C-Support Vector Classification
 
 
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
 
@@ -337,6 +339,8 @@ def predict_proba(
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
 
+    See sklearn.svm.predict for a complete list of parameters.
+
     Parameters
     ----------
     X: array-like, dtype=float
@@ -346,12 +350,8 @@ def predict_proba(
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
 
 
-    Optional Parameters
-    -------------------
-    See scikits.learn.svm.predict for a complete list of parameters.
-
-    Return
-    ------
+    Returns
+    -------
     dec_values : array
         predicted values.
     """

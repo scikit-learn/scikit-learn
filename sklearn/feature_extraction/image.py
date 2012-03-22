@@ -1,5 +1,6 @@
 """
-Utilities to extract features from images.
+The :mod:`sklearn.feature_extraction.image` submodule gathers utilities to
+extract features from images.
 """
 
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
@@ -8,11 +9,12 @@ Utilities to extract features from images.
 #          Vlad Niculae
 # License: BSD
 
+from itertools import product
 import numpy as np
 from scipy import sparse
+
 from ..utils.fixes import in1d
-from ..utils import check_random_state
-from ..utils.fixes import product
+from ..utils import array2d, check_random_state
 from ..base import BaseEstimator
 
 
@@ -231,7 +233,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
-    image = np.atleast_2d(image)
+    image = array2d(image)
 
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]

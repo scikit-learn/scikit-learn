@@ -11,6 +11,7 @@ import inspect
 import warnings
 import os
 
+
 def get_func_code(func):
     """ Attempts to retrieve a reliable function code hash.
 
@@ -39,7 +40,8 @@ def get_func_code(func):
         source_file_obj = file(source_file)
         first_line = func.func_code.co_firstlineno
         # All the lines after the function definition:
-        source_lines = list(itertools.islice(source_file_obj, first_line-1, None))
+        source_lines = list(itertools.islice(source_file_obj, first_line - 1,
+                                             None))
         return ''.join(inspect.getblock(source_lines)), source_file, first_line
     except:
         # If the source code fails, we use the hash. This is fragile and
@@ -52,6 +54,14 @@ def get_func_code(func):
             # in the repr, so it might not persist accross sessions,
             # however it will work for ufuncs.
             return repr(func), source_file, -1
+
+
+def _clean_win_chars(string):
+    "Windows cannot encode some characters in filenames"
+    import urllib
+    for char in ('<', '>', '!', ':', '\\'):
+        string = string.replace(char, urllib.quote(char))
+    return string
 
 
 def get_func_name(func, resolv_alias=True, win_characters=True):
@@ -83,11 +93,13 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
         module = ''
     if module == '__main__':
         try:
-            filename = inspect.getsourcefile(func)
+            filename = os.path.abspath(inspect.getsourcefile(func))
         except:
             filename = None
         if filename is not None:
-            filename = filename.replace('/', '-')
+            # mangling of full path to filename
+            filename = filename.replace(os.sep, '-')
+            filename = filename.replace(":", "-")
             if filename.endswith('.py'):
                 filename = filename[:-3]
             module = module + '-' + filename
@@ -111,13 +123,12 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
             module.append(klass.__name__)
     if os.name == 'nt' and win_characters:
         # Stupid windows can't encode certain characters in filenames
-        import urllib
-        for char in ('<', '>', '!', ':'):
-            name = name.replace(char, urllib.quote(char))
+        name = _clean_win_chars(name)
+        module = [_clean_win_chars(s) for s in module]
     return module, name
 
 
-def filter_args(func, ignore_lst, *args, **kwargs):
+def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     """ Filters the given args and kwargs using a list of arguments to
         ignore, and a function specification.
 
@@ -150,14 +161,14 @@ def filter_args(func, ignore_lst, *args, **kwargs):
         if ignore_lst:
             warnings.warn('Cannot inspect object %s, ignore list will '
                 'not work.' % func, stacklevel=2)
-        return {'*':args, '**':kwargs}
+        return {'*': args, '**': kwargs}
     arg_spec = inspect.getargspec(func)
     # We need to if/them to account for different versions of Python
     if hasattr(arg_spec, 'args'):
-        arg_names    = arg_spec.args
+        arg_names = arg_spec.args
         arg_defaults = arg_spec.defaults
         arg_keywords = arg_spec.keywords
-        arg_varargs  = arg_spec.varargs
+        arg_varargs = arg_spec.varargs
     else:
         arg_names, arg_varargs, arg_keywords, arg_defaults = arg_spec
     arg_defaults = arg_defaults or {}
@@ -195,7 +206,6 @@ def filter_args(func, ignore_lst, *args, **kwargs):
                            )
                         )
 
-
     varkwargs = dict()
     for arg_name, arg_value in kwargs.iteritems():
         if arg_name in arg_dict:
@@ -209,7 +219,7 @@ def filter_args(func, ignore_lst, *args, **kwargs):
     if arg_keywords is not None:
         arg_dict['**'] = varkwargs
     if arg_varargs is not None:
-        varargs = args[arg_position+1:]
+        varargs = args[arg_position + 1:]
         arg_dict['*'] = varargs
 
     # Now remove the arguments to be ignored
@@ -227,4 +237,3 @@ def filter_args(func, ignore_lst, *args, **kwargs):
                                                    )))
     # XXX: Return a sorted list of pairs?
     return arg_dict
-

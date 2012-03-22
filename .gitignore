@@ -3,10 +3,11 @@
 *~
 .#*
 *.swp
+*.swo
 .DS_Store
 build
-scikits/learn/datasets/__config__.py
-scikits/learn/**/*.html
+sklearn/datasets/__config__.py
+sklearn/**/*.html
 
 dist/
 doc/_build/
@@ -36,4 +37,3 @@ nips2010_pdf/
 *.nt.bz2
 *.tar.gz
 *.tgz
-joblib

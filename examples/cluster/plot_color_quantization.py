@@ -10,7 +10,7 @@ unique colors to 64, while preserving the overall appearance quality.
 
 In this example, pixels are represented in a 3D-space and K-means is used to
 find 64 color clusters. In the image processing literature, the codebook
-obtained from K-means (the cluster centers) is called the color palette. Using a
+obtained from K-means (the cluster centers) is called the color palette. Using
 a single byte, up to 256 colors can be addressed, whereas an RGB encoding
 requires 3 bytes per pixel. The GIF file format, for example, uses such a
 palette.
@@ -61,7 +61,7 @@ labels = kmeans.predict(image_array)
 print "done in %0.3fs." % (time() - t0)
 
 
-codebook_random = shuffle(image_array, random_state=0)[:n_colors+1]
+codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
 print "Predicting color indices on the full image (random)"
 t0 = time()
 dist = euclidean_distances(codebook_random, image_array, squared=True)

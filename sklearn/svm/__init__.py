@@ -1,5 +1,5 @@
 """
-Support Vector Machine algorithms.
+The :mod:`sklearn.svm` module includes Support Vector Machine algorithms.
 """
 
 # See http://scikit-learn.sourceforge.net/modules/svm.html for complete

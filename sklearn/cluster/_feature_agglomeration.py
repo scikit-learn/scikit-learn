@@ -6,7 +6,9 @@ agglomeration.
 # License: BSD 3 clause
 
 import numpy as np
+
 from ..base import TransformerMixin
+from ..utils import array2d
 
 
 ###############################################################################
@@ -31,6 +33,7 @@ class AgglomerationTransform(TransformerMixin):
                        return an array of value of size M.
                        Defaut is np.mean
         """
+        X = np.asarray(X)
         nX = []
         for l in np.unique(self.labels_):
             nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
@@ -47,8 +50,8 @@ class AgglomerationTransform(TransformerMixin):
         Xred : array of size k
             The values to be assigned to each cluster of samples
 
-        Return
-        ------
+        Returns
+        -------
         X : array of size nb_samples
             A vector of size nb_samples with the values of Xred assigned to
             each of the cluster of samples.
@@ -63,6 +66,6 @@ class AgglomerationTransform(TransformerMixin):
                 X[self.labels_ == unil[i]] = Xred[i]
             else:
                 ncol = np.sum(self.labels_ == unil[i])
-                X[:, self.labels_ == unil[i]] = np.tile(np.atleast_2d(Xred
-                                                        [:, i]).T, ncol)
+                X[:, self.labels_ == unil[i]] = np.tile(array2d(Xred[:, i]).T,
+                                                        ncol)
         return X

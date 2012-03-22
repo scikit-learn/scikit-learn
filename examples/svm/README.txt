@@ -3,5 +3,4 @@
 Support Vector Machines
 -----------------------
 
-Examples concerning the `sklearn.svm` package.
-
+Examples concerning the :mod:`sklearn.svm` package.

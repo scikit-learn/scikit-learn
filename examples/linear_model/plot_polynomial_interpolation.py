@@ -31,20 +31,18 @@ import pylab as pl
 
 from sklearn.linear_model import Ridge
 
-np.random.seed(0)
-
 
 def f(x):
     """ function to approximate by polynomial interpolation"""
     return x * np.sin(x)
-
 
 # generate points used to plot
 x_plot = np.linspace(0, 10, 100)
 
 # generate points and keep a subset of them
 x = np.linspace(0, 10, 100)
-np.random.shuffle(x)
+rng = np.random.RandomState(0)
+rng.shuffle(x)
 x = np.sort(x[:20])
 y = f(x)
 

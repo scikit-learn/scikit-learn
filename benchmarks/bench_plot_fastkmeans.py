@@ -20,7 +20,7 @@ def compute_bench(samples_range, features_range):
         for n_features in features_range:
             it += 1
             print '=============================='
-            print 'Iteration %03d of %03d' %(it, max_it)
+            print 'Iteration %03d of %03d' % (it, max_it)
             print '=============================='
             print ''
             data = nr.random_integers(-50, 50, (n_samples, n_features))
@@ -70,7 +70,7 @@ def compute_bench_2(chunks):
     for chunk in chunks:
         it += 1
         print '=============================='
-        print 'Iteration %03d of %03d' %(it, max_it)
+        print 'Iteration %03d of %03d' % (it, max_it)
         print '=============================='
         print ''
 
@@ -93,7 +93,7 @@ def compute_bench_2(chunks):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(50, 150, 5).astype(np.int)
@@ -126,7 +126,6 @@ if __name__ == '__main__':
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
 
-
     i = 0
     for c, (label, timings) in zip('br',
                                    sorted(results_2.iteritems())):
@@ -136,6 +135,5 @@ if __name__ == '__main__':
         ax.plot(chunks, y, color=c, alpha=0.8)
         ax.set_xlabel('chunks')
         ax.set_ylabel(label)
-
 
     plt.show()

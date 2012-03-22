@@ -1,16 +1,21 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Gael Varoquaux <gael.varoquaux@inria.fr>
 #
 # License: BSD Style.
 
 import sys
 import warnings
+import itertools
+import operator
+
 import numpy as np
 
 from .base import LinearModel
 from ..utils import as_float_array
 from ..cross_validation import check_cv
+from ..externals.joblib import Parallel, delayed
 from . import cd_fast
 
 
@@ -20,8 +25,24 @@ from . import cd_fast
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
 
-    rho=1 is the lasso penalty. Currently, rho <= 0.01 is not
-    reliable, unless you supply your own sequence of alpha.
+    Minimizes the objective function::
+
+            1 / (2 * n_samples) * ||y - Xw||^2_2 +
+            + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+            a * L1 + b * L2
+
+    where::
+
+            alpha = a + b and rho = a / (a + b)
+
+    The parameter rho corresponds to alpha in the glmnet R package while
+    alpha corresponds to the lambda parameter in glmnet. Specifically, rho =
+    1 is the lasso penalty. Currently, rho <= 0.01 is not reliable, unless
+    you supply your own sequence of alpha.
 
     Parameters
     ----------
@@ -59,30 +80,18 @@ class ElasticNet(LinearModel):
         dual gap for optimality and continues until it is smaller
         than tol.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
-
-    The parameter rho corresponds to alpha in the glmnet R package
-    while alpha corresponds to the lambda parameter in glmnet.
-    More specifically, the penalty is::
-
-        alpha*rho*L1 + alpha*(1-rho)*L2
-
-    If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
-
-        a*L1 + b*L2
-
-    for::
-
-        alpha = a + b and rho = a/(a+b)
-
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4):
+                 copy_X=True, tol=1e-4, warm_start=False):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -92,6 +101,7 @@ class ElasticNet(LinearModel):
         self.max_iter = max_iter
         self.copy_X = copy_X
         self.tol = tol
+        self.warm_start = warm_start
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -104,7 +114,7 @@ class ElasticNet(LinearModel):
             Target
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomuted.
+            only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
 
@@ -118,25 +128,27 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
-        X = as_float_array(X, self.copy_X)
+        y = np.asarray(y, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
         X_init = X
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        copy=False)
+                self.fit_intercept, self.normalize, copy=self.copy_X)
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
-            precompute = 'auto'  # recompute Gram
+            # recompute Gram
+            # FIXME: it could be updated from precompute and X_mean
+            # instead of recomputed
+            precompute = 'auto'
         if X_init is not X and Xy is not None:
             Xy = None  # recompute Xy
 
         if coef_init is None:
-            self.coef_ = np.zeros(n_features, dtype=np.float64)
+            if not self.warm_start or self.coef_ is None:
+                self.coef_ = np.zeros(n_features, dtype=np.float64)
         else:
             self.coef_ = coef_init
 
@@ -146,7 +158,7 @@ class ElasticNet(LinearModel):
         X = np.asfortranarray(X)  # make data contiguous in memory
 
         # precompute if n_samples > n_features
-        if hasattr(self.precompute, '__array__'):
+        if hasattr(precompute, '__array__'):
             Gram = precompute
         elif precompute == True or \
                (precompute == 'auto' and n_samples > n_features):
@@ -182,6 +194,10 @@ class ElasticNet(LinearModel):
 class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
+    The optimization objective for Lasso is::
+
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with rho=1.0 (no L2 penalty).
 
@@ -215,6 +231,10 @@ class Lasso(ElasticNet):
         dual gap for optimality and continues until it is smaller
         than tol.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
 
     Attributes
     ----------
@@ -230,7 +250,7 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001)
+       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
@@ -238,9 +258,12 @@ class Lasso(ElasticNet):
 
     See also
     --------
+    lars_path
+    lasso_path
     LassoLars
-    decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
 
     Notes
     -----
@@ -252,11 +275,11 @@ class Lasso(ElasticNet):
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
-                 tol=1e-4):
+                 tol=1e-4, warm_start=False):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                             fit_intercept=fit_intercept, normalize=normalize,
                             precompute=precompute, copy_X=copy_X,
-                            max_iter=max_iter, tol=tol)
+                            max_iter=max_iter, tol=tol, warm_start=warm_start)
 
 
 ###############################################################################
@@ -267,6 +290,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                normalize=False, copy_X=True, verbose=False,
                **params):
     """Compute Lasso path with coordinate descent
+
+    The optimization objective for Lasso is::
+
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -295,7 +322,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Xy : array-like, optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomuted.
+        only when the Gram matrix is precomputed.
 
     fit_intercept : bool
         Fit or not an intercept
@@ -318,10 +345,20 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py
+    for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    See also
+    --------
+    lars_path
+    Lasso
+    LassoLars
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
     """
     return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
                      precompute=precompute, Xy=Xy,
@@ -334,6 +371,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               normalize=False, copy_X=True, verbose=False,
               **params):
     """Compute Elastic-Net path with coordinate descent
+
+    The Elastic Net optimization function is::
+
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
 
     Parameters
     ----------
@@ -366,7 +408,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Xy : array-like, optional
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomuted.
+        only when the Gram matrix is precomputed.
 
     fit_intercept : bool
         Fit or not an intercept
@@ -390,6 +432,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
+
+    See also
+    --------
+    ElasticNet
+    ElasticNetCV
     """
     X = as_float_array(X, copy_X)
 
@@ -444,6 +491,18 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 
+def _path_residuals(X, y, train, test, path, path_params, rho=1):
+    this_mses = list()
+    if 'rho' in path_params:
+        path_params['rho'] = rho
+    models_train = path(X[train], y[train], **path_params)
+    this_mses = np.empty(len(models_train))
+    for i_model, model in enumerate(models_train):
+        y_ = model.predict(X[test])
+        this_mses[i_model] = ((y_ - y[test]) ** 2).mean()
+    return this_mses, rho
+
+
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
 
@@ -476,18 +535,24 @@ class LinearModelCV(LinearModel):
         y : numpy array of shape [n_samples]
             Target values
 
-        fit_params : kwargs
-            keyword arguments passed to the Lasso fit method
-
         """
         X = np.asfortranarray(X, dtype=np.float64)
-        y = np.asanyarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
-        path_params = self._get_params()
-        del path_params['cv']
+        path_params = self.get_params()
+        if 'rho' in path_params:
+            rhos = np.atleast_1d(path_params['rho'])
+            # For the first path, we need to set rho
+            path_params['rho'] = rhos[0]
+        else:
+            rhos = [1, ]
+        path_params.pop('cv', None)
+        path_params.pop('n_jobs', None)
 
         # Start to compute path on full data
+        # XXX: is this really useful: we are fitting models that we won't
+        # use later
         models = self.path(X, y, **path_params)
 
         # Update the alphas list
@@ -500,29 +565,40 @@ class LinearModelCV(LinearModel):
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
-        n_folds = len(folds)
-        mse_alphas = np.zeros((n_folds, n_alphas))
-        for i, (train, test) in enumerate(folds):
-            if self.verbose:
-                print '%s: fold % 2i out of % 2i' % (
-                        self.__class__.__name__, i, n_folds),
-                sys.stdout.flush()
-            models_train = self.path(X[train], y[train], **path_params)
-            for i_alpha, model in enumerate(models_train):
-                y_ = model.predict(X[test])
-                mse_alphas[i, i_alpha] += ((y_ - y[test]) ** 2).mean()
-            if self.verbose == 1:
-                print ''
+        best_mse = np.inf
+        all_mse_paths = list()
 
-        i_best_alpha = np.argmin(np.mean(mse_alphas, axis=0))
-        model = models[i_best_alpha]
+        # We do a double for loop folded in one, in order to be able to
+        # iterate in parallel on rho and folds
+        for rho, mse_alphas in itertools.groupby(
+                    Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                        delayed(_path_residuals)(X, y, train, test,
+                                    self.path, path_params, rho=rho)
+                            for rho in rhos for train, test in folds
+                    ), operator.itemgetter(1)):
 
+            mse_alphas = [m[0] for m in mse_alphas]
+            mse_alphas = np.array(mse_alphas)
+            mse = np.mean(mse_alphas, axis=0)
+            i_best_alpha = np.argmin(mse)
+            this_best_mse = mse[i_best_alpha]
+            all_mse_paths.append(mse_alphas.T)
+            if this_best_mse < best_mse:
+                model = models[i_best_alpha]
+                best_rho = rho
+
+        if hasattr(model, 'rho'):
+            if model.rho != best_rho:
+                # Need to refit the model
+                model.rho = best_rho
+                model.fit(X, y)
+            self.rho_ = model.rho
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.alpha = model.alpha
         self.alphas = np.asarray(alphas)
         self.coef_path_ = np.asarray([model.coef_ for model in models])
-        self.mse_path_ = mse_alphas.T
+        self.mse_path_ = np.squeeze(all_mse_paths)
         return self
 
 
@@ -530,6 +606,10 @@ class LassoCV(LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
+
+    The optimization objective for Lasso is::
+
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Parameters
     ----------
@@ -566,6 +646,20 @@ class LassoCV(LinearModelCV):
     verbose : bool or integer
         amount of verbosity
 
+    Attributes
+    ----------
+    `alpha_`: float
+        The amount of penalization choosen by cross validation
+
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `mse_path_`: array, shape = [n_alphas, n_folds]
+        mean square error for the test set on each fold, varying alpha
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -573,9 +667,17 @@ class LassoCV(LinearModelCV):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    See also
+    --------
+    lars_path
+    lasso_path
+    LassoLars
+    Lasso
+    LassoLarsCV
     """
     path = staticmethod(lasso_path)
-    estimator = Lasso
+    n_jobs = 1
 
 
 class ElasticNetCV(LinearModelCV):
@@ -590,6 +692,12 @@ class ElasticNetCV(LinearModelCV):
         l1 and l2 penalties). For rho = 0
         the penalty is an L1 penalty. For rho = 1 it is an L2 penalty.
         For 0 < rho < 1, the penalty is a combination of L1 and L2
+        This parameter can be a list, in which case the different
+        values are tested by cross-validation and the one giving the best
+        prediction score is used. Note that a good choice of list of
+        values for rho is often to put more values close to 1
+        (i.e. Lasso) and less close to 0 (i.e. Ridge), as in [.1, .5, .7,
+        .9, .95, .99, 1]
 
     eps : float, optional
         Length of the path. eps=1e-3 means that
@@ -624,6 +732,30 @@ class ElasticNetCV(LinearModelCV):
     verbose : bool or integer
         amount of verbosity
 
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If '-1', use
+        all the CPUs. Note that this is used only if multiple values for
+        rho are given.
+
+    Attributes
+    ----------
+    `alpha_`: float
+        The amount of penalization choosen by cross validation
+
+    `rho_`: float
+        The compromise between l1 and l2 penalization choosen by
+        cross validation
+
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    `mse_path_`: array, shape = [n_rho, n_alpha, n_folds]
+        mean square error for the test set on each fold, varying rho and
+        alpha
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -634,27 +766,32 @@ class ElasticNetCV(LinearModelCV):
 
     The parameter rho corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
-    More specifically, the penalty is::
+    More specifically, the optimization objective is::
 
-        alpha*rho*L1 + alpha*(1-rho)*L2
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
 
-        a*L1 + b*L2
+        a * L1 + b * L2
 
     for::
 
-        alpha = a + b and rho = a/(a+b)
+        alpha = a + b and rho = a / (a + b)
+
+    See also
+    --------
+    enet_path
+    ElasticNet
 
     """
     path = staticmethod(enet_path)
-    estimator = ElasticNet
 
     def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0):
+                 verbose=0, n_jobs=1):
         self.rho = rho
         self.eps = eps
         self.n_alphas = n_alphas
@@ -667,3 +804,4 @@ class ElasticNetCV(LinearModelCV):
         self.cv = cv
         self.copy_X = copy_X
         self.verbose = verbose
+        self.n_jobs = n_jobs

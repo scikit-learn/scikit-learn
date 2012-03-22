@@ -3,5 +3,4 @@
 Decision Trees
 --------------
 
-Examples concerning the `scikits.learn.tree` package.
-
+Examples concerning the :mod:`sklearn.tree` package.

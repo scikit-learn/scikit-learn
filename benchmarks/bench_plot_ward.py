@@ -10,7 +10,7 @@ import pylab as pl
 
 from sklearn.cluster import Ward
 
-ward = Ward(n_clusters=15)
+ward = Ward(n_clusters=3)
 
 n_samples = np.logspace(.5, 3, 9)
 n_features = np.logspace(1, 3.5, 7)
@@ -29,7 +29,7 @@ for i, n in enumerate(n_samples):
         hierarchy.ward(X)
         scipy_time[j, i] = time.time() - t0
 
-ratio = scikits_time/scipy_time
+ratio = scikits_time / scipy_time
 
 pl.clf()
 pl.imshow(np.log(ratio), aspect='auto', origin="lower")

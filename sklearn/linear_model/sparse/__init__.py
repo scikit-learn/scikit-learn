@@ -1,7 +1,6 @@
 """
-:mod:`sklearn.linear_model.sparse` is the sparse counterpart
-of :mod:`sklearn.linear_model`.
-
+The :mod:`sklearn.linear_model.sparse` submodule is the sparse counterpart of
+the :mod:`sklearn.linear_model` module.
 """
 
 from .coordinate_descent import Lasso, ElasticNet

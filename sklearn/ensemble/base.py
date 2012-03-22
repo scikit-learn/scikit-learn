@@ -1,33 +1,68 @@
+"""
+Base class for ensemble-based estimators.
+"""
+
+# Authors: Gilles Louppe
+# License: BSD 3
+
+from ..base import clone
 from ..base import BaseEstimator
-"""
-Base class for all ensemble classes
-"""
+
+
 class BaseEnsemble(BaseEstimator):
+    """Base class for all ensemble classes.
 
-    def __init__(self, estimator, **params):
+    Warning: This class should not be used directly. Use derived classes
+    instead.
 
-        self.estimator = estimator
-        if not issubclass(estimator, BaseEstimator):
+    Parameters
+    ----------
+    base_estimator : object, optional (default=None)
+        The base estimator from which the ensemble is built.
+
+    n_estimators : integer
+        The number of estimators in the ensemble.
+
+    estimator_params : list of strings
+        The list of attributes to use as parameters when instantiating a
+        new base estimator. If none are given, default parameters are used.
+    """
+    def __init__(self, base_estimator, n_estimators, estimator_params=[]):
+        # Check parameters
+        if not isinstance(base_estimator, BaseEstimator):
             raise TypeError("estimator must be a subclass of BaseEstimator")
-        self.params = params
-        self.estimators = []
+        if n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than zero.")
+
+        # Set parameters
+        self.base_estimator = base_estimator
+        self.n_estimators = n_estimators
+        self.estimator_params = estimator_params
+
+        # Don't instantiate estimators now! Parameters of base_estimator might
+        # still change. Eg., when grid-searching with the nested object syntax.
+        # This needs to be filled by the derived classes.
+        self.estimators_ = []
+
+    def _make_estimator(self, append=True):
+        """Makes, configures and returns a copy of the base estimator.
+
+        Warning: This method should be used to properly instantiate new
+        sub-estimators.
+        """
+        estimator = clone(self.base_estimator)
+        estimator.set_params(**dict((p, getattr(self, p))
+                                    for p in self.estimator_params))
+
+        if append:
+            self.estimators_.append(estimator)
+
+        return estimator
 
     def __len__(self):
-
-        return len(self.estimators)
+        """Returns the number of estimators in the ensemble."""
+        return len(self.estimators_)
 
     def __getitem__(self, index):
-
-        return self.estimators[index]
-
-    def __setitem__(self, index, thing):
-
-        self.estimators[index] = thing
-
-    def __delitem__(self, index):
-
-        del self.estimators[index]
-    
-    def append(self, thing):
-
-        return self.estimators.append(thing)
+        """Returns the index'th estimator in the ensemble."""
+        return self.estimators_[index]

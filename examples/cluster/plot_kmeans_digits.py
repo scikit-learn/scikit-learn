@@ -3,12 +3,27 @@
 A demo of K-Means clustering on the handwritten digits data
 ===========================================================
 
-Comparing various initialization strategies in terms of runtime and quality of
-the results.
+In this example with compare the various initialization strategies for
+K-means in terms of runtime and quality of the results.
 
-TODO: explode the ouput of the cluster labeling and digits.target groundtruth
-as categorical boolean arrays of shape (n_sample, n_unique_labels) and measure
-the Pearson correlation as an additional measure of the clustering quality.
+As the ground truth is known here, we also apply different cluster
+quality metrics to judge the goodness of fit of the cluster labels to the
+ground truth.
+
+Cluster quality metrics evaluated (see :ref:`clustering_evaluation` for
+definitions and discussions of the metrics):
+
+=========== ========================================================
+Shorthand    full name
+=========== ========================================================
+homo         homogeneity score
+compl        completeness score
+v-meas       V measure
+ARI          adjusted Rand index
+AMI          adjusted mutual information
+silhouette   silhouette coefficient
+=========== ========================================================
+
 """
 print __doc__
 
@@ -33,78 +48,56 @@ labels = digits.target
 
 sample_size = 300
 
-print "n_digits: %d" % n_digits
-print "n_features: %d" % n_features
-print "n_samples: %d" % n_samples
-print
+print "n_digits: %d, \t n_samples %d, \t n_features %d" % (n_digits,
+                                                        n_samples, n_features)
 
-print "Raw k-means with k-means++ init..."
-t0 = time()
-km = KMeans(init='k-means++', k=n_digits, n_init=10).fit(data)
-print "done in %0.3fs" % (time() - t0)
-print "Inertia: %f" % km.inertia_
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
-print "Adjusted Rand Index: %0.3f" % \
-    metrics.adjusted_rand_score(labels, km.labels_)
-#print ("Silhouette Coefficient: %0.3f" %
-#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
-print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(data, km.labels_,
-                                metric='euclidean', sample_size=sample_size))
-print
 
-print "Raw k-means with random centroid init..."
-t0 = time()
-km = KMeans(init='random', k=n_digits, n_init=10).fit(data)
-print "done in %0.3fs" % (time() - t0)
-print "Inertia: %f" % km.inertia_
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
-print "Adjusted Rand Index: %0.3f" % \
-    metrics.adjusted_rand_score(labels, km.labels_)
-#print ("Silhouette Coefficient: %0.3f" %
-#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
-print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(data, km.labels_,
-                                metric='euclidean', sample_size=sample_size))
-print
+print 79 * '_'
+print ('% 9s' % 'init'
+      '    time  inertia    homo   compl  v-meas     ARI     AMI  silhouette')
 
-print "Raw k-means with PCA-based centroid init..."
+
+def bench_k_means(estimator, name, data):
+    t0 = time()
+    estimator.fit(data)
+    print '% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f' % (
+         name, (time() - t0), estimator.inertia_,
+         metrics.homogeneity_score(labels, estimator.labels_),
+         metrics.completeness_score(labels, estimator.labels_),
+         metrics.v_measure_score(labels, estimator.labels_),
+         metrics.adjusted_rand_score(labels, estimator.labels_),
+         metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+         metrics.silhouette_score(data, estimator.labels_,
+                                  metric='euclidean',
+                                  sample_size=sample_size),
+         )
+
+bench_k_means(KMeans(init='k-means++', k=n_digits, n_init=10),
+              name="k-means++", data=data)
+
+bench_k_means(KMeans(init='random', k=n_digits, n_init=10),
+              name="random", data=data)
+
 # in this case the seeding of the centers is deterministic, hence we run the
 # kmeans algorithm only once with n_init=1
-t0 = time()
 pca = PCA(n_components=n_digits).fit(data)
-km = KMeans(init=pca.components_, k=n_digits, n_init=1).fit(data)
-print "done in %0.3fs" % (time() - t0)
-print "Inertia: %f" % km.inertia_
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
-print "Adjusted Rand Index: %0.3f" % \
-    metrics.adjusted_rand_score(labels, km.labels_)
-#print ("Silhouette Coefficient: %0.3f" %
-#       metrics.silhouette_score(D, km.labels_, metric='precomputed'))
-print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(data, km.labels_,
-                                metric='euclidean', sample_size=sample_size))
-print
+bench_k_means(KMeans(init=pca.components_, k=n_digits, n_init=1),
+              name="PCA-based",
+              data=data)
+print 79 * '_'
 
-# Plot k-means++ form on a 2D plot using PCA
-print "Raw k-means with k-means++ init, reduced to two dimensions using PCA..."
-t0 = time()
+###############################################################################
+# Visualize the results on PCA-reduced data
+
 reduced_data = PCA(n_components=2).fit_transform(data)
 kmeans = KMeans(init='k-means++', k=n_digits, n_init=10).fit(reduced_data)
-print "done in %0.3fs" % (time() - t0)
 
 # Step size of the mesh. Decrease to increase the quality of the VQ.
 h = .02     # point in the mesh [x_min, m_max]x[y_min, y_max].
 
 # Plot the decision boundary. For that, we will asign a color to each
-x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
-y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
+x_min, x_max = reduced_data[:, 0].min() + 1, reduced_data[:, 0].max() - 1
+y_min, y_max = reduced_data[:, 1].min() + 1, reduced_data[:, 1].max() - 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
 # Obtain labels for each point in mesh. Use last trained model.
@@ -112,16 +105,23 @@ Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.set_cmap(pl.cm.Paired)
-pl.pcolormesh(xx, yy, Z)
+pl.figure(1)
+pl.clf()
+pl.imshow(Z, interpolation='nearest',
+          extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+          cmap=pl.cm.Paired,
+          aspect='auto', origin='lower')
 
+pl.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
 # Plot the centroids as a white X
 centroids = kmeans.cluster_centers_
 pl.scatter(centroids[:, 0], centroids[:, 1],
            marker='x', s=169, linewidths=3,
-           color='w')
-pl.title('K-means clustering algorithm of the Digits dataset '
-         'with Vector Quantization\n'
+           color='w', zorder=10)
+pl.title('K-means clustering on the digits dataset (PCA-reduced data)\n'
          'Centroids are marked with white cross')
-pl.axis('tight')
+pl.xlim(x_min, x_max)
+pl.ylim(y_min, y_max)
+pl.xticks(())
+pl.yticks(())
 pl.show()

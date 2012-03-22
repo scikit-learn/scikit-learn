@@ -34,15 +34,16 @@ from sklearn import datasets
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.mixture import GMM
 
+
 def make_ellipses(gmm, ax):
     for n, color in enumerate('rgb'):
-        v, w = np.linalg.eigh(gmm.covars[n][:2, :2])
+        v, w = np.linalg.eigh(gmm._get_covars()[n][:2, :2])
         u = w[0] / np.linalg.norm(w[0])
-        angle = np.arctan(u[1]/u[0])
-        angle = 180 * angle / np.pi # convert to degrees
+        angle = np.arctan2(u[1], u[0])
+        angle = 180 * angle / np.pi  # convert to degrees
         v *= 9
-        ell = mpl.patches.Ellipse(gmm.means[n, :2], v[0], v[1], 180 + angle,
-                                  color=color)
+        ell = mpl.patches.Ellipse(gmm.means_[n, :2], v[0], v[1],
+                                  180 + angle, color=color)
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
         ax.add_artist(ell)
@@ -64,12 +65,12 @@ y_test = iris.target[test_index]
 n_classes = len(np.unique(y_train))
 
 # Try GMMs using different types of covariances.
-classifiers = dict((x, GMM(n_components=n_classes, cvtype=x))
+classifiers = dict((x, GMM(n_components=n_classes, covariance_type=x))
                     for x in ['spherical', 'diag', 'tied', 'full'])
 
 n_classifiers = len(classifiers)
 
-pl.figure(figsize=(3*n_classifiers/2, 6))
+pl.figure(figsize=(3 * n_classifiers / 2, 6))
 pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
                    left=.01, right=.99)
 
@@ -77,18 +78,18 @@ pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
 for index, (name, classifier) in enumerate(classifiers.iteritems()):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
-    classifier.means = [X_train[y_train == i, :].mean(axis=0)
-                        for i in xrange(n_classes)]
+    classifier.means_ = np.array([X_train[y_train == i].mean(axis=0)
+                                  for i in xrange(n_classes)])
 
     # Train the other parameters using the EM algorithm.
     classifier.fit(X_train, init_params='wc', n_iter=20)
 
-    h = pl.subplot(2, n_classifiers/2, index + 1)
+    h = pl.subplot(2, n_classifiers / 2, index + 1)
     make_ellipses(classifier, h)
 
     for n, color in enumerate('rgb'):
         data = iris.data[iris.target == n]
-        pl.scatter(data[:,0], data[:, 1], 0.8, color=color,
+        pl.scatter(data[:, 0], data[:, 1], 0.8, color=color,
                     label=iris.target_names[n])
     # Plot the test data with crosses
     for n, color in enumerate('rgb'):
@@ -96,12 +97,12 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
         pl.plot(data[:, 0], data[:, 1], 'x', color=color)
 
     y_train_pred = classifier.predict(X_train)
-    train_accuracy  = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100
+    train_accuracy = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100
     pl.text(0.05, 0.9, 'Train accuracy: %.1f' % train_accuracy,
                     transform=h.transAxes)
 
     y_test_pred = classifier.predict(X_test)
-    test_accuracy  = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
+    test_accuracy = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
     pl.text(0.05, 0.8, 'Test accuracy: %.1f' % test_accuracy,
                     transform=h.transAxes)
 

@@ -27,9 +27,9 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 15px;
-    -moz-border-radius: 15px;
-    margin-top: 10px;
+    border-radius: 0 0 15px 15px;
+    -moz-border-radius: 0 15px 0 15px;
+    margin-top: 0px;
 }
 
 ul.horizontal, ul.horizontal li {
@@ -179,10 +179,6 @@ div.related a {
     color: #E2F3CC;
 }
 
-div.rel {
-    text-align: center;
-    margin-top: 20px;
-}
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
@@ -227,16 +223,16 @@ div.sphinxsidebar ul ul ul {
 
 div.sphinxsidebar {
     width: 200px;
-    overflow: hidden;
     float: left;
     margin-left: 0;
+    margin-right: 0;
     background-color: inherit;
     border-top-left-radius: 15px;
     -moz-border-radius:15px;
     border-top-width: 0;
     border-left-width: 0;
     border-bottom-width: 0;
-    margin-top: 5px;
+    margin-top: 0;
 }
 
 div.sphinxsidebar h3 {
@@ -251,6 +247,36 @@ div.sphinxsidebar ul {
 div.sphinxsidebar {
     font-size: 80%;
     line-height: 1.5em;
+}
+
+div.sphinxsidebarwrapper {
+    padding: 0 0 0 0;
+}
+
+{% if theme_collapsiblesidebar|tobool %}
+/* for collapsible sidebar */
+div#sidebarbutton {
+    background-color: #F0F0F0;
+}
+{% endif %}
+
+div.buttonPrevious, div.buttonNext {
+    display: block;
+    background-color: #A7D6E2;
+    color: black;
+    padding: 7px 10px 5px 10px;
+    position: fixed;
+    bottom: 0;
+}
+
+div.buttonPrevious {
+    border-top-right-radius: .8em;		
+    right: 1; 
+}
+
+div.buttonNext {
+    border-top-left-radius: .8em;		
+    right: 0; 
 }
 
 
@@ -303,6 +329,12 @@ div.body h2,
 div.body h3 {
     text-align: left;
 }
+
+div.bodywrapper {
+    margin: 0 0 0 0;
+    
+}
+
 
 div.bodywrapper h1 {
     margin: 0 -10px 0 -10px;
@@ -423,4 +455,111 @@ div.viewcode-block:target {
     background-color: #f4debf;
     border-top: 1px solid #ac9;
     border-bottom: 1px solid #ac9;
+}
+
+div.rel {
+    text-align: center;
+    margin: 5px 3px 0px 2px;
+    background-color: #ff9c34;
+    color: white;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+}
+
+div.rel div.spacer  {
+    background-color: white;
+    width: 1px;
+    height: 57px;
+    display: inline-block;
+    margin-bottom: -10px;
+}
+
+div.rel div.rellink  {
+    display: inline-block;
+    padding: 4px 2px 0px 2px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: auto;
+    width: 28%;
+    vertical-align: top;
+    position: relative
+}
+
+div.rellarge {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+div.rellarge div.rellink  {
+    width: 40%;
+    margin-bottom: 0px;
+}
+
+div.rellarge div.spacer  {
+    height: 45px;
+}
+
+div.rel a,
+div.rel a:link,
+div.rel a:visited,
+div.rel a:hover {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+div.rel a:hover {
+    color: #EEE;
+}
+
+div.rel span.smallrellink {
+    font-size: 8px;
+    line-height: 10px;
+}
+
+div.rel span.hiddenrellink {
+    display: none;
+    z-index: 100;
+}
+
+div.rellink:hover span.hiddenrellink {
+    display: block;
+    position: absolute;
+    left: -20px; top: 30px;
+    width: 200px;
+    background-color: #ff9c34;
+    padding: 3px;
+    border: 2px solid #3E4349;
+    color: white;
+}
+
+th.field-name {
+    white-space: nowrap;
+}
+
+
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
+}
+
+/* ------- Fix maximum size of thumbnails in example gallery -------------- */
+div#examples.section .figure img {
+    max-width: 160px;
+    max-height: 160px;
+    display: block;
+    margin: auto;
+}
+
+/* ------- Zoom plots to make them fit in layout -------------------------- */
+div.body img {
+    max-width:805px;
 }

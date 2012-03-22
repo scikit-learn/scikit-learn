@@ -12,6 +12,7 @@ Unsupervised learning
     modules/clustering
     modules/decomposition
     modules/covariance
+    modules/outlier_detection
     modules/hmm
 
 

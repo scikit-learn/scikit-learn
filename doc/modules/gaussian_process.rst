@@ -24,7 +24,7 @@ The advantages of Gaussian Processes for Machine Learning are:
       region of interest.
 
     - Versatile: different :ref:`linear regression models
-      <linear_regression_models>` and :ref:`correlation models
+      <linear_model>` and :ref:`correlation models
       <correlation_models>` can be specified. Common models are provided, but
       it is also possible to specify custom models provided they are
       stationary.
@@ -45,9 +45,11 @@ The disadvantages of Gaussian Processes for Machine Learning include:
 Thanks to the Gaussian property of the prediction, it has been given varied
 applications: e.g. for global optimization, probabilistic classification.
 
+Examples
+========
 
 An introductory regression example
-==================================
+----------------------------------
 
 Say we want to surrogate the function :math:`g(x) = x \sin(x)`. To do so,
 the function is evaluated onto a design of experiments. Then, we define a
@@ -71,27 +73,49 @@ parameters or alternatively it uses the given parameters.
     >>> y = f(X).ravel()
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
     >>> gp = gaussian_process.GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, y)  # doctest: +ELLIPSIS
+    >>> gp.fit(X, y)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     GaussianProcess(beta0=None, corr=<function squared_exponential at 0x...>,
-            normalize=True, nugget=2.22...-15,
+            normalize=True, nugget=array(2.22...-15),
             optimizer='fmin_cobyla', random_start=1,
             regr=<function constant at 0x...>, storage_mode='full',
             theta0=array([[ 0.01]]), thetaL=array([[ 0.0001]]),
             thetaU=array([[ 0.1]]), verbose=False)
     >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
 
+
+Fitting Noisy Data
+------------------
+
+When the data to be fit includes noise, the Gaussian process model can be
+used by specifying the variance of the noise for each point.
+:class:`GaussianProcess` takes a parameter ``nugget`` which 
+is added to the diagonal of the correlation matrix between training points:
+in general this is a type of Tikhonov regularization.  In the special case
+of a squared-exponential correlation function, this normalization is 
+equivalent to specifying a fractional variance in the input.  That is
+
+.. math::
+   \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
+
+With ``nugget`` and ``corr`` properly set, Gaussian Processes can be
+used to robustly recover an underlying function from noisy data:
+
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_2.png
+   :target: ../auto_examples/gaussian_process/plot_gp_regression.html
+   :align: center
+
 .. topic:: Other examples
 
   * :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
 
-  * :ref:`example_gaussian_process_plot_gp_regression.py`
+
 
 Mathematical formulation
 ========================
 
 
 The initial assumption
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 Suppose one wants to model the output of a computer experiment, say a
 mathematical function:
@@ -135,7 +159,7 @@ and zero otherwise : a *dirac* correlation model -- sometimes referred to as a
 
 
 The best linear unbiased prediction (BLUP)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------
 
 We now derive the *best linear unbiased prediction* of the sample path
 :math:`g` conditioned on the observations:
@@ -240,7 +264,7 @@ decomposition algorithm.
 
 
 The empirical best linear unbiased predictor (EBLUP)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------
 
 Until now, both the autocorrelation and regression models were assumed given.
 In practice however they are never known in advance so that one has to make
@@ -332,3 +356,6 @@ toolbox.
       <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
       Sondergaard 2002,
 
+    * W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
+      Morris (1992). Screening, predicting, and computer experiments.
+      Technometrics, 34(1) 15--25.

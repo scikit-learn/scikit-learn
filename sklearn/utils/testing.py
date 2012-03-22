@@ -2,13 +2,11 @@
 
 # Copyright (c) 2011 Pietro Berkes
 # License: Simplified BSD
-import sys
-import warnings
+
 from .fixes import savemat
 import urllib2
 from StringIO import StringIO
 import scipy as sp
-import numpy.testing
 
 
 def assert_in(obj, in_=None, out_=None):

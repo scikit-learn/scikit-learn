@@ -1,14 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
-
+from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-                          assert_equal, assert_array_equal
-
+                          assert_equal
 from sklearn import datasets
-from sklearn.metrics import mean_square_error
+from sklearn.metrics import mean_squared_error
 
 from sklearn.linear_model.base import LinearRegression
-
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
@@ -36,6 +34,7 @@ np.random.seed(0)
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
+
 def test_ridge():
     """Ridge regression convergence test using score
 
@@ -52,10 +51,10 @@ def test_ridge():
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert_equal(ridge.coef_.shape, (X.shape[1], ))
-    assert ridge.score(X, y) > 0.5
+    assert_true(ridge.score(X, y) > 0.5)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert ridge.score(X, y) > 0.5
+    assert_true(ridge.score(X, y) > 0.5)
 
     # With more features than samples
     n_samples, n_features = 5, 10
@@ -63,10 +62,53 @@ def test_ridge():
     X = np.random.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
-    assert ridge.score(X, y) > .9
+    assert_true(ridge.score(X, y) > .9)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert ridge.score(X, y) > 0.9
+    assert_true(ridge.score(X, y) > 0.9)
+
+
+def test_ridge_shapes():
+    """Test shape of coef_ and intercept_
+    """
+    n_samples, n_features = 5, 10
+    X = np.random.randn(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    Y1 = y[:, np.newaxis]
+    Y = np.c_[y, 1 + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (n_features,))
+    assert_equal(ridge.intercept_.shape, ())
+
+    ridge.fit(X, Y1)
+    assert_equal(ridge.coef_.shape, (1, n_features))
+    assert_equal(ridge.intercept_.shape, (1, ))
+
+    ridge.fit(X, Y)
+    assert_equal(ridge.coef_.shape, (2, n_features))
+    assert_equal(ridge.intercept_.shape, (2, ))
+
+
+def test_ridge_intercept():
+    """Test intercept with multiple targets GH issue #708
+    """
+    n_samples, n_features = 5, 10
+    X = np.random.randn(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    Y = np.c_[y, 1. + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    intercept = ridge.intercept_
+
+    ridge.fit(X, Y)
+    assert_almost_equal(ridge.intercept_[0], intercept)
+    assert_almost_equal(ridge.intercept_[1], intercept + 1.)
+
 
 def test_toy_ridge_object():
     """Test BayesianRegression ridge classifier
@@ -83,7 +125,7 @@ def test_toy_ridge_object():
     assert_equal(len(clf.coef_.shape), 1)
     assert_equal(type(clf.intercept_), np.float64)
 
-    Y = np.vstack((Y,Y)).T
+    Y = np.vstack((Y, Y)).T
 
     clf.fit(X, Y)
     X_test = [[1], [2], [3], [4]]
@@ -105,12 +147,13 @@ def test_ridge_vs_lstsq():
     ols = LinearRegression(fit_intercept=False)
 
     ridge.fit(X, y)
-    ols.fit (X, y)
+    ols.fit(X, y)
     assert_almost_equal(ridge.coef_, ols.coef_)
 
     ridge.fit(X, y)
-    ols.fit (X, y)
+    ols.fit(X, y)
     assert_almost_equal(ridge.coef_, ols.coef_)
+
 
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
@@ -122,9 +165,9 @@ def _test_ridge_loo(filter_):
     ridge = Ridge(fit_intercept=False)
 
     # generalized cross-validation (efficient leave-one-out)
-    K, v, Q = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
-    errors, c = ridge_gcv._errors(v, Q, y_diabetes, 1.0)
-    values, c = ridge_gcv._values(K, v, Q, y_diabetes, 1.0)
+    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
+    values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
     # brute-force leave-one-out: remove one example at a time
     errors2 = []
@@ -143,13 +186,23 @@ def _test_ridge_loo(filter_):
     assert_almost_equal(errors, errors2)
     assert_almost_equal(values, values2)
 
+    # generalized cross-validation (efficient leave-one-out,
+    # SVD variation)
+    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
+    errors3, c = ridge_gcv._errors_svd(1.0, y_diabetes, *decomp)
+    values3, c = ridge_gcv._values_svd(1.0, y_diabetes, *decomp)
+
+    # check that efficient and SVD efficient LOO give same results
+    assert_almost_equal(errors, errors3)
+    assert_almost_equal(values, values3)
+
     # check best alpha
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
     best_alpha = ridge_gcv.best_alpha
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
-    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_square_error)
+    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_squared_error)
     ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.best_alpha, best_alpha)
 
@@ -159,17 +212,18 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv.best_alpha, best_alpha)
 
     # simulate several responses
-    Y = np.vstack((y_diabetes,y_diabetes)).T
+    Y = np.vstack((y_diabetes, y_diabetes)).T
 
     ridge_gcv.fit(filter_(X_diabetes), Y)
     Y_pred = ridge_gcv.predict(filter_(X_diabetes))
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
     y_pred = ridge_gcv.predict(filter_(X_diabetes))
 
-    assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
+    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T,
                               Y_pred, decimal=5)
 
     return ret
+
 
 def _test_ridge_cv(filter_):
     n_samples = X_diabetes.shape[0]
@@ -189,14 +243,16 @@ def _test_ridge_cv(filter_):
     assert_equal(len(ridge_cv.coef_.shape), 1)
     assert_equal(type(ridge_cv.intercept_), np.float64)
 
+
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
     return np.round(ridge.score(filter_(X_diabetes), y_diabetes), 5)
 
+
 def _test_multi_ridge_diabetes(filter_):
     # simulate several responses
-    Y = np.vstack((y_diabetes,y_diabetes)).T
+    Y = np.vstack((y_diabetes, y_diabetes)).T
     n_features = X_diabetes.shape[1]
 
     ridge = Ridge(fit_intercept=False)
@@ -205,8 +261,9 @@ def _test_multi_ridge_diabetes(filter_):
     Y_pred = ridge.predict(filter_(X_diabetes))
     ridge.fit(filter_(X_diabetes), y_diabetes)
     y_pred = ridge.predict(filter_(X_diabetes))
-    assert_array_almost_equal(np.vstack((y_pred,y_pred)).T,
+    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T,
                               Y_pred, decimal=3)
+
 
 def _test_ridge_classifiers(filter_):
     n_classes = np.unique(y_iris).shape[0]
@@ -215,14 +272,15 @@ def _test_ridge_classifiers(filter_):
         clf.fit(filter_(X_iris), y_iris)
         assert_equal(clf.coef_.shape, (n_classes, n_features))
         y_pred = clf.predict(filter_(X_iris))
-        assert np.mean(y_iris == y_pred) >= 0.8
+        assert_true(np.mean(y_iris == y_pred) >= 0.8)
 
     n_samples = X_iris.shape[0]
     cv = KFold(n_samples, 5)
     clf = RidgeClassifierCV(cv=cv)
     clf.fit(filter_(X_iris), y_iris)
     y_pred = clf.predict(filter_(X_iris))
-    assert np.mean(y_iris == y_pred) >= 0.8
+    assert_true(np.mean(y_iris == y_pred) >= 0.8)
+
 
 def _test_tolerance(filter_):
     ridge = Ridge(tol=1e-5)
@@ -233,7 +291,8 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert score >= score2
+    assert_true(score >= score2)
+
 
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
@@ -249,6 +308,3 @@ def test_dense_sparse():
         # test that the outputs are the same
         if ret_dense != None and ret_sparse != None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
-
-
-

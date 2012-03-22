@@ -21,12 +21,12 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-X /= X.std(0) # Standardize data (easier to set the rho parameter)
+X /= X.std(0)  # Standardize data (easier to set the rho parameter)
 
-################################################################################
+###############################################################################
 # Compute paths
 
-eps = 5e-3 # the smaller it is the longer is the path
+eps = 5e-3  # the smaller it is the longer is the path
 
 print "Computing regularization path using the lasso..."
 models = lasso_path(X, y, eps=eps)
@@ -38,7 +38,7 @@ models = enet_path(X, y, eps=eps, rho=0.8)
 alphas_enet = np.array([model.alpha for model in models])
 coefs_enet = np.array([model.coef_ for model in models])
 
-################################################################################
+###############################################################################
 # Display results
 
 ax = pl.gca()
@@ -52,4 +52,3 @@ pl.title('Lasso and Elastic-Net Paths')
 pl.legend((l1[-1], l2[-1]), ('Lasso', 'Elastic-Net'), loc='lower left')
 pl.axis('tight')
 pl.show()
-

@@ -19,9 +19,9 @@ For instance in::
   % cd  ~/data/mlcomp
   % unzip /path/to/dataset-379-20news-18828_XXXXX.zip
 
-You should get a folder ``~/data/mlcomp/379`` with a file named ``metadata`` and
-subfolders ``raw``, ``train`` and ``test`` holding the text documents organized
-by newsgroups.
+You should get a folder ``~/data/mlcomp/379`` with a file named ``metadata``
+and subfolders ``raw``, ``train`` and ``test`` holding the text documents
+organized by newsgroups.
 
 Then set the ``MLCOMP_DATASETS_HOME`` environment variable pointing to
 the root folder holding the uncompressed archive::
@@ -46,8 +46,8 @@ import scipy.sparse as sp
 import pylab as pl
 
 from sklearn.datasets import load_mlcomp
-from sklearn.feature_extraction.text import Vectorizer
-from sklearn.linear_model.sparse import SGDClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.naive_bayes import MultinomialNB
@@ -66,7 +66,7 @@ print "%d categories" % len(news_train.target_names)
 
 print "Extracting features from the dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer()
+vectorizer = TfidfVectorizer(charset='latin1')
 X_train = vectorizer.fit_transform((open(f).read()
                                     for f in news_train.filenames))
 print "done in %fs" % (time() - t0)
@@ -90,7 +90,8 @@ y_test = news_test.target
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_test.shape
 
-################################################################################
+
+###############################################################################
 # Benchmark classifiers
 def benchmark(clf_class, params, name):
     print "parameters:", params
@@ -99,7 +100,8 @@ def benchmark(clf_class, params, name):
     print "done in %fs" % (time() - t0)
 
     if hasattr(clf, 'coef_'):
-        print "Percentage of non zeros coef: %f" % (np.mean(clf.coef_ != 0) * 100)
+        print "Percentage of non zeros coef: %f" % (
+          np.mean(clf.coef_ != 0) * 100)
 
     print "Predicting the outcomes of the testing set"
     t0 = time()
@@ -109,7 +111,8 @@ def benchmark(clf_class, params, name):
     print "Classification report on test set for classifier:"
     print clf
     print
-    print classification_report(y_test, pred, target_names=news_test.target_names)
+    print classification_report(y_test, pred,
+       target_names=news_test.target_names)
 
     cm = confusion_matrix(y_test, pred)
     print "Confusion matrix:"
@@ -133,9 +136,7 @@ parameters = {
 benchmark(SGDClassifier, parameters, 'SGD')
 
 print "Testbenching a MultinomialNB classifier..."
-parameters = {
-    'alpha': 0.01
-}
+parameters = {'alpha': 0.01}
 
 benchmark(MultinomialNB, parameters, 'MultinomialNB')
 

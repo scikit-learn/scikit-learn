@@ -2,16 +2,16 @@
 Test the pipeline module.
 """
 
-from nose.tools import assert_raises, assert_equal, assert_false
+from nose.tools import assert_raises, assert_equal, assert_false, assert_true
 
-from ..base import BaseEstimator, clone
-from ..pipeline import Pipeline
-from ..svm import SVC
-from ..linear_model import LogisticRegression
-from ..feature_selection import SelectKBest, f_classif
-from ..decomposition.pca import PCA, RandomizedPCA
-from ..datasets import load_iris
-from ..preprocessing import Scaler
+from sklearn.base import BaseEstimator, clone
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.decomposition.pca import PCA, RandomizedPCA
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import Scaler
 
 
 class IncorrectT(BaseEstimator):
@@ -56,12 +56,12 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(AssertionError, Pipeline,
+    pipe = assert_raises(TypeError, Pipeline,
                         [('svc', IncorrectT)])
     # Smoke test with only an estimator
     clf = T()
     pipe = Pipeline([('svc', clf)])
-    assert_equal(pipe._get_params(deep=True),
+    assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf))
 
     # Check that params are set
@@ -82,15 +82,15 @@ def test_pipeline_init():
     repr(pipe)
 
     # Check that params are not set when naming them wrong
-    assert_raises(AssertionError, pipe.set_params, anova__C=0.1)
+    assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
     pipe2 = clone(pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that appart from estimators, the parameters are the same
-    params = pipe._get_params()
-    params2 = pipe2._get_params()
+    params = pipe.get_params()
+    params2 = pipe2.get_params()
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
@@ -122,10 +122,10 @@ def test_pipeline_fit_params():
     pipe = Pipeline([('transf', TransfT()), ('clf', FitParamT())])
     pipe.fit(X=None, y=None, clf__should_succeed=True)
     # classifier should return True
-    assert pipe.predict(None)
+    assert_true(pipe.predict(None))
     # and transformer params should not be changed
-    assert pipe.named_steps['transf'].a is None
-    assert pipe.named_steps['transf'].b is None
+    assert_true(pipe.named_steps['transf'].a is None)
+    assert_true(pipe.named_steps['transf'].b is None)
 
 
 def test_pipeline_methods_pca_svm():

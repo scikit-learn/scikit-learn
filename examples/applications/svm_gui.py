@@ -67,9 +67,10 @@ class Model(object):
 
     def dump_svmlight_file(self, file):
         data = np.array(self.data)
-        X = data[:, :2]
+        X = data[:, 0:2]
         y = data[:, 2]
         dump_svmlight_file(X, y, file)
+
 
 class Controller(object):
     def __init__(self, model):
@@ -82,7 +83,7 @@ class Controller(object):
     def fit(self):
         print "fit the model"
         train = np.array(self.model.data)
-        X = train[:, :2]
+        X = train[:, 0:2]
         y = train[:, 2]
 
         C = float(self.complexity.get())
@@ -302,6 +303,7 @@ class ControllBar(object):
         Tk.Button(fm, text='Clear', width=5,
                   command=controller.clear_data).pack(side=Tk.LEFT)
 
+
 def get_parser():
     from optparse import OptionParser
     op = OptionParser()
@@ -310,9 +312,10 @@ def get_parser():
               help="Path where to dump data.")
     return op
 
+
 def main(argv):
     op = get_parser()
-    opts, args =  op.parse_args(argv[1:])
+    opts, args = op.parse_args(argv[1:])
     root = Tk.Tk()
     model = Model()
     controller = Controller(model)

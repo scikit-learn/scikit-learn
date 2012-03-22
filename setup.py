@@ -17,7 +17,7 @@ MAINTAINER_EMAIL = 'fabian.pedregosa@inria.fr'
 URL = 'http://scikit-learn.sourceforge.net'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION = '0.10-git'
+VERSION = '0.11-git'
 
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -84,7 +84,7 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
-          zip_safe=False,  # the package can run out of an .egg file
+          zip_safe=False, # the package can run out of an .egg file
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',

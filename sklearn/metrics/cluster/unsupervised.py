@@ -16,7 +16,7 @@ def silhouette_score(X, labels, metric='euclidean',
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
     distance (a) and the mean nearest-cluster distance (b) for each sample.
-    The Silhouette Coefficient for a sample is (b - a) / max(a, b).
+    The Silhouette Coefficient for a sample is ``(b - a) / max(a, b)``.
     To clarrify, b is the distance between a sample and the nearest cluster
     that b is not a part of.
 
@@ -29,29 +29,29 @@ def silhouette_score(X, labels, metric='euclidean',
 
     Parameters
     ----------
-    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
              label values for each sample
 
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by metrics.pairwise.pairwise_distances. If X is the distance
         array itself, use "precomputed" as the metric.
 
-    sample_size: int or None
+    sample_size : int or None
         The size of the sample to use when computing the Silhouette
         Coefficient. If sample_size is None, no sampling is used.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    **kwds: optional keyword parameters
+    `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -63,6 +63,7 @@ def silhouette_score(X, labels, metric='euclidean',
 
     References
     ----------
+
     Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
         and Applied Mathematics 20: 53-65. doi:10.1016/0377-0427(87)90125-7.
@@ -91,7 +92,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
     distance (a) and the mean nearest-cluster distance (b) for each sample.
-    The Silhouette Coefficient for a sample is (b - a) / max(a, b).
+    The Silhouette Coefficient for a sample is ``(b - a) / max(a, b)``.
 
     This function returns the Silhoeutte Coefficient for each sample.
 
@@ -100,20 +101,20 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     Parameters
     ----------
-    X: array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
              label values for each sample
 
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by metrics.pairwise.pairwise_distances. If X is the distance
         array itself, use "precomputed" as the metric.
 
-    **kwds: optional keyword parameters
+    `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -125,6 +126,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     References
     ----------
+
     Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
         Interpretation and Validation of Cluster Analysis". Computational
         and Applied Mathematics 20: 53-65. doi:10.1016/0377-0427(87)90125-7.
@@ -147,10 +149,10 @@ def _intra_cluster_distance(distances_row, labels, i):
     Parameters
     ----------
     distances_row : array, shape = [n_samples]
-                    Pairwise distance matrix between sample i and each sample.
+        Pairwise distance matrix between sample i and each sample.
 
     labels : array, shape = [n_samples]
-             label values for each sample
+        label values for each sample
 
     i : int
         Sample index being calculated. It is excluded from calculation and
@@ -173,10 +175,10 @@ def _nearest_cluster_distance(distances_row, labels, i):
     Parameters
     ----------
     distances_row : array, shape = [n_samples]
-                    Pairwise distance matrix between sample i and each sample.
+        Pairwise distance matrix between sample i and each sample.
 
     labels : array, shape = [n_samples]
-             label values for each sample
+        label values for each sample
 
     i : int
         Sample index being calculated. It is used to determine the current

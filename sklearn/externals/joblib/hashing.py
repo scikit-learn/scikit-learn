@@ -10,8 +10,18 @@ hashing of numpy arrays.
 import pickle
 import hashlib
 import sys
-import cStringIO
 import types
+import struct
+
+if sys.version_info[0] == 3:
+    # in python3, StringIO does not accept binary data
+    # see http://packages.python.org/six/
+    import io
+    StringIO = io.BytesIO
+else:
+    import cStringIO
+    StringIO = cStringIO.StringIO
+
 
 class Hasher(pickle.Pickler):
     """ A subclass of pickler, to do cryptographic hashing, rather than
@@ -19,7 +29,7 @@ class Hasher(pickle.Pickler):
     """
 
     def __init__(self, hash_name='md5'):
-        self.stream = cStringIO.StringIO()
+        self.stream = StringIO()
         pickle.Pickler.__init__(self, self.stream, protocol=2)
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
@@ -40,6 +50,36 @@ class Hasher(pickle.Pickler):
             cls = obj.im_class
             obj = (func_name, inst, cls)
         pickle.Pickler.save(self, obj)
+
+    if sys.version_info[0] < 3:
+        # The dispatch table of the pickler is not accessible in Python
+        # 3, as these lines are only bugware for IPython, we skip them.
+        def save_global(self, obj, name=None, pack=struct.pack):
+            # We have to override this method in order to deal with objects
+            # defined interactively in IPython that are not injected in
+            # __main__
+            module = getattr(obj, "__module__", None)
+            if module == '__main__':
+                my_name = name
+                if my_name is None:
+                    my_name = obj.__name__
+                mod = sys.modules[module]
+                if not hasattr(mod, my_name):
+                    # IPython doesn't inject the variables define
+                    # interactively in __main__
+                    setattr(mod, my_name, obj)
+            pickle.Pickler.save_global(self, obj, name=name, pack=struct.pack)
+
+        dispatch = pickle.Pickler.dispatch.copy()
+        # builtin
+        dispatch[type(len)] = save_global
+        # type
+        dispatch[type(object)] = save_global
+        # classobj
+        dispatch[type(pickle.Pickler)] = save_global
+        # function
+        dispatch[type(pickle.dump)] = save_global
+
 
 class NumpyHasher(Hasher):
     """ Special case the hasher for when numpy is loaded.
@@ -112,4 +152,3 @@ def hash(obj, hash_name='md5', coerce_mmap=False):
     else:
         hasher = Hasher(hash_name=hash_name)
     return hasher.hash(obj)
-

@@ -3,9 +3,11 @@ import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
+from nose.tools import assert_true
 
 from sklearn.linear_model.sparse.coordinate_descent import Lasso as SparseLasso
-from sklearn.linear_model.sparse.coordinate_descent import ElasticNet as SparseENet
+from sklearn.linear_model.sparse.coordinate_descent \
+        import ElasticNet as SparseENet
 from sklearn.linear_model.coordinate_descent import Lasso as DenseLasso
 from sklearn.linear_model.coordinate_descent import ElasticNet as DenseENet
 
@@ -112,11 +114,11 @@ def make_sparse_data(n_samples, n_features, n_informative, seed=42):
 
     # generate a ground truth model
     w = random_state.randn(n_features)
-    w[n_informative:] = 0.0 # only the top features are impacting the model
+    w[n_informative:] = 0.0  # only the top features are impacting the model
 
     X = random_state.randn(n_samples, n_features)
     rnd = random_state.uniform(size=(n_samples, n_features))
-    X[rnd > 0.5] = 0.0 # 50% of zeros in input signal
+    X[rnd > 0.5] = 0.0  # 50% of zeros in input signal
 
     # generate training ground truth labels
     y = np.dot(X, w)
@@ -136,19 +138,19 @@ def test_sparse_enet_not_as_toy_dataset():
                        max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert s_clf.score(X_test, y_test) > 0.85
+    assert_true(s_clf.score(X_test, y_test) > 0.85)
 
     # check the convergence is the same as the dense version
     d_clf = DenseENet(alpha=0.1, rho=0.8, fit_intercept=False,
                       max_iter=max_iter, tol=1e-7)
     d_clf.fit(X_train, y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert d_clf.score(X_test, y_test) > 0.85
+    assert_true(d_clf.score(X_test, y_test) > 0.85)
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
 
     # check that the coefs are sparse
-    assert np.sum(s_clf.coef_ != 0.0) < 2 * n_informative
+    assert_true(np.sum(s_clf.coef_ != 0.0) < 2 * n_informative)
 
 
 def test_sparse_lasso_not_as_toy_dataset():
@@ -164,15 +166,14 @@ def test_sparse_lasso_not_as_toy_dataset():
                         max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert s_clf.score(X_test, y_test) > 0.85
+    assert_true(s_clf.score(X_test, y_test) > 0.85)
 
     # check the convergence is the same as the dense version
-    d_clf = DenseLasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
+    d_clf = DenseLasso(alpha=0.1, fit_intercept=False, max_iter=max_iter,
+            tol=1e-7)
     d_clf.fit(X_train, y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert d_clf.score(X_test, y_test) > 0.85
+    assert_true(d_clf.score(X_test, y_test) > 0.85)
 
     # check that the coefs are sparse
     assert_equal(np.sum(s_clf.coef_ != 0.0), n_informative)
-
-

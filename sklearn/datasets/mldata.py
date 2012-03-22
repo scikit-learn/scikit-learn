@@ -3,10 +3,10 @@
 # Copyright (c) 2011 Pietro Berkes
 # License: Simplified BSD
 
-from __future__ import with_statement
 import os
 from os.path import join, exists
 import re
+import scipy as sp
 from scipy import io
 from shutil import copyfileobj
 import urllib2
@@ -116,7 +116,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
         urlname = MLDATA_BASE_URL % urllib2.quote(dataname)
         try:
             mldata_url = urllib2.urlopen(urlname)
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             if e.code == 404:
                 e.msg = "Dataset '%s' not found on mldata.org." % dataname
             raise
@@ -185,6 +185,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     if transpose_data:
         dataset['data'] = dataset['data'].T
     if 'target' in dataset:
-        dataset['target'] = dataset['target'].squeeze()
+        if not sp.sparse.issparse(dataset['target']):
+            dataset['target'] = dataset['target'].squeeze()
 
     return Bunch(**dataset)

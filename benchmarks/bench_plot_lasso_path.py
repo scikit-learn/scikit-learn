@@ -43,7 +43,7 @@ def compute_bench(samples_range, features_range):
             print "benching lars_path (with Gram):",
             sys.stdout.flush()
             tstart = time()
-            G = np.dot(X.T, X) # precomputed Gram matrix
+            G = np.dot(X.T, X)  # precomputed Gram matrix
             Xy = np.dot(X.T, y)
             lars_path(X, y, Xy=Xy, Gram=G, method='lasso')
             delta = time() - tstart
@@ -81,7 +81,7 @@ def compute_bench(samples_range, features_range):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(10, 2000, 5).astype(np.int)

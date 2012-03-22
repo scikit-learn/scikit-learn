@@ -1,3 +1,5 @@
+.. _cross_validation:
+
 ================
 Cross-Validation
 ================
@@ -5,19 +7,51 @@ Cross-Validation
 .. currentmodule:: sklearn.cross_validation
 
 Learning the parameters of a prediction function and testing it on the
-same data yields a methodological bias. To **avoid over-fitting**, we
-have to define two different sets : a *learning set* :math:`X^l, y^l`
-which is used for learning the prediction function (also called *training
-set*), and a *test set* :math:`X^t, y^t` which is used for testing the
-prediction function.  However, by defining these two sets, we drastically
-reduce the number of samples which can be used for learning the model,
-and the results can depend on a particular couple of *learning set*
-and *test set*.
+same data is a methodological mistake: a model that would just repeat
+the labels of the samples that it has just seen would have a perfect
+score but would fail to predict anything useful on yet-unseen data.
+
+To **avoid over-fitting**, we have to define two different sets :
+a **training set** ``X_train, y_train`` which is used for learning
+the parameters of a predictive model, and a **testing set** ``X_test,
+y_test`` which is used for evaluating the fitted predictive model.
+
+In scikit-learn such a random split can be quickly computed with the
+:func:`train_test_split` helper function. Let load the iris data set to
+fit a linear Support Vector Machine model on it::
+
+  >>> import numpy as np
+  >>> from sklearn import cross_validation
+  >>> from sklearn import datasets
+  >>> from sklearn import svm
+
+  >>> iris = datasets.load_iris()
+  >>> iris.data.shape, iris.target.shape
+  ((150, 4), (150,))
+
+We can now quickly sample a training set while holding out 40% of the
+data for testing (evaluating) our classifier::
+
+  >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
+  ...     iris.data, iris.target, test_fraction=0.4, random_state=0)
+
+  >>> X_train.shape, y_train.shape
+  ((90, 4), (90,))
+  >>> X_test.shape, y_test.shape
+  ((60, 4), (60,))
+
+  >>> clf = svm.SVC(kernel='linear', C=100).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
+  0.96...
+
+However, by defining these two sets, we drastically reduce the number
+of samples which can be used for learning the model, and the results can
+depend on a particular random choice for the pair of (train, test) sets.
 
 A solution is to **split the whole data several consecutive times in
-different learning set and test set**, and to return the averaged value of
+different train set and test set**, and to return the averaged value of
 the prediction scores obtained with the different sets. Such a procedure
-is called *cross-validation*. This approach can be **computationally
+is called **cross-validation**. This approach can be **computationally
 expensive, but does not waste too much data** (as it is the case when
 fixing an arbitrary test set), which is a major advantage in problem
 such as inverse inference where the number of samples is very small.
@@ -27,20 +61,14 @@ Computing cross-validated metrics
 =================================
 
 The simplest way to use perform cross-validation in to call the
-:func:`cross_val_score` helper function on the estimator and the dataset::
+:func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a
 linear kernel Support Vector Machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
-  >>> from sklearn import datasets
-  >>> from sklearn import svm
-  >>> from sklearn import cross_validation
-
-  >>> iris = datasets.load_iris()
-  >>> clf = svm.SVC(kernel='linear')
-
+  >>> clf = svm.SVC(kernel='linear', C=100)
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
@@ -63,7 +91,7 @@ scoring function, e.g. from the metrics module::
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
 
-In the case of the Iris dataset, the samples are balanced accross target
+In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
 When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
@@ -79,7 +107,7 @@ validation iterator instead, for instance::
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.95...,  0.95...])
+  array([ 0.97...,  1.        ,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 
@@ -100,6 +128,19 @@ that can be used to generate dataset splits according to different cross
 validation strategies.
 
 
+.. topic:: Boolean mask vs integer indices
+
+   Most cross validators support generating both boolean masks or integer
+   indices to select the samples from a given fold.
+
+   When the data matrix is sparse, only the integer indices will work as
+   expected. Integer indexing is hence the default behavior (since version
+   0.10).
+
+   You can explicitly pass ``indices=False`` to the constructor of the
+   CV object (when supported) to use the boolean mask method instead.
+
+
 K-fold
 ------
 
@@ -115,7 +156,7 @@ Example of 2-fold::
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
 
-  >>> kf = KFold(len(Y), 2)
+  >>> kf = KFold(len(Y), 2, indices=False)
   >>> print kf
   sklearn.cross_validation.KFold(n=4, k=2)
 
@@ -154,7 +195,13 @@ percentage for each target class as in the complete set.
 Example of stratified 2-fold::
 
   >>> from sklearn.cross_validation import StratifiedKFold
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.], [0., 1.]]
+  >>> X = [[0., 0.],
+  ...      [1., 1.],
+  ...      [-1., -1.],
+  ...      [2., 2.],
+  ...      [3., 3.],
+  ...      [4., 4.],
+  ...      [0., 1.]]
   >>> Y = [0, 0, 0, 1, 1, 1, 0]
 
   >>> skf = StratifiedKFold(Y, 2)
@@ -163,8 +210,8 @@ Example of stratified 2-fold::
 
   >>> for train, test in skf:
   ...     print train, test
-  [False  True False False  True False  True] [ True False  True  True False  True False]
-  [ True False  True  True False  True False] [False  True False False  True False  True]
+  [1 4 6] [0 2 3 5]
+  [0 2 3 5] [1 4 6]
 
 
 Leave-One-Out - LOO
@@ -186,10 +233,10 @@ not waste much data as only one sample is removed from the learning set::
 
   >>> for train, test in loo:
   ...    print train, test
-  [False  True  True  True] [ True False False False]
-  [ True False  True  True] [False  True False False]
-  [ True  True False  True] [False False  True False]
-  [ True  True  True False] [False False False  True]
+  [1 2 3] [0]
+  [0 2 3] [1]
+  [0 1 3] [2]
+  [0 1 2] [3]
 
 
 Leave-P-Out - LPO
@@ -210,12 +257,12 @@ Example of Leave-2-Out::
 
   >>> for train, test in lpo:
   ...     print train, test
-  [False False  True  True] [ True  True False False]
-  [False  True False  True] [ True False  True False]
-  [False  True  True False] [ True False False  True]
-  [ True False False  True] [False  True  True False]
-  [ True False  True False] [False  True False  True]
-  [ True  True False False] [False False  True  True]
+  [2 3] [0 1]
+  [1 3] [0 2]
+  [1 2] [0 3]
+  [0 3] [1 2]
+  [0 2] [1 3]
+  [0 1] [2 3]
 
 
 Leave-One-Label-Out - LOLO
@@ -244,8 +291,8 @@ a training set using the samples of all the experiments except one::
 
   >>> for train, test in lolo:
   ...     print train, test
-  [False False  True  True] [ True  True False False]
-  [ True  True False False] [False False  True  True]
+  [2 3] [0 1]
+  [0 1] [2 3]
 
 Another common application is to use time information: for instance the
 labels could be the year of collection of the samples and thus allow
@@ -271,9 +318,9 @@ Example of Leave-2-Label Out::
 
   >>> for train, test in lplo:
   ...     print train, test
-  [False False False False  True  True] [ True  True  True  True False False]
-  [False False  True  True False False] [ True  True False False  True  True]
-  [ True  True False False False False] [False False  True  True  True  True]
+  [4 5] [0 1 2 3]
+  [2 3] [0 1 4 5]
+  [0 1] [2 3 4 5]
 
 .. _ShuffleSplit:
 
@@ -297,18 +344,24 @@ Here is a usage example::
   >>> len(ss)
   3
   >>> print ss                                            # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=False, ...)
+  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index
   ...
-  [ True  True  True False False] [False False False  True  True]
-  [ True  True  True False False] [False False False  True  True]
-  [False  True False  True  True] [ True False  True False False]
+  [1 3 4] [2 0]
+  [1 4 3] [0 2]
+  [4 0 2] [1 3]
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
 the proportion of samples in on each side of the train / test split.
+
+See also
+--------
+:class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
+stratified splits, *i.e* which creates splits by preserving the same
+percentage for each target class as in the complete set.
 
 .. _Bootstrap:
 

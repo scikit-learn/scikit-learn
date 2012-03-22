@@ -4,8 +4,8 @@ from sklearn.datasets import load_linnerud
 from sklearn import pls
 
 d = load_linnerud()
-X = d['data_exercise']
-Y = d['data_physiological']
+X = d.data
+Y = d.target
 
 
 def test_pls():
@@ -92,8 +92,8 @@ def test_pls():
     assert_array_almost_equal(pls_ca.x_loadings_, x_loadings)
 
     y_loadings = np.array(
-        [[ 0.66591533,  0.77358148],
-         [ 0.67602364, -0.62871191],
+        [[0.66591533,  0.77358148],
+         [0.67602364, -0.62871191],
          [-0.35892128, -0.11981924]])
     assert_array_almost_equal(pls_ca.y_loadings_, y_loadings)
 
@@ -104,9 +104,9 @@ def test_pls():
     assert_array_almost_equal(pls_ca.x_weights_, x_weights)
 
     y_weights = np.array(
-        [[ 0.58989127,  0.7890047 ],
-         [ 0.77134053, -0.61351791],
-         [-0.2388767 , -0.03267062]])
+        [[0.58989127,  0.7890047],
+         [0.77134053, -0.61351791],
+         [-0.2388767, -0.03267062]])
     assert_array_almost_equal(pls_ca.y_weights_, y_weights)
 
     # 2) Regression PLS (PLS2): "Non regression test"
@@ -121,8 +121,8 @@ def test_pls():
     assert_array_almost_equal(pls2.x_loadings_, x_loadings)
 
     y_loadings = np.array(
-        [[ 0.32456184,  0.29892183],
-         [ 0.42439636,  0.61970543],
+        [[0.32456184,  0.29892183],
+         [0.42439636,  0.61970543],
          [-0.13143144, -0.26348971]])
     assert_array_almost_equal(pls2.y_loadings_, y_loadings)
 
@@ -133,13 +133,13 @@ def test_pls():
     assert_array_almost_equal(pls2.x_weights_, x_weights)
 
     y_weights = np.array(
-        [[ 0.58989127,  0.40572461],
-         [ 0.77134053,  0.84112205],
-         [-0.2388767 , -0.35763282]])
+        [[0.58989127,  0.40572461],
+         [0.77134053,  0.84112205],
+         [-0.2388767, -0.35763282]])
     assert_array_almost_equal(pls2.y_weights_, y_weights)
 
     ypred_2 = np.array(
-        [[ 180.33278555,   35.57034871,   56.06817703],
-         [ 192.06235219,   37.95306771,   54.12925192]])
+        [[180.33278555,   35.57034871,   56.06817703],
+         [192.06235219,   37.95306771,   54.12925192]])
 
     assert_array_almost_equal(pls2.predict(X[:2]), ypred_2)

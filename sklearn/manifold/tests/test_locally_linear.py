@@ -1,9 +1,10 @@
+from itertools import product
 import numpy as np
+from nose.tools import assert_true
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
-from sklearn.utils.fixes import product
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -23,15 +24,15 @@ def test_barycenter_kneighbors_graph():
     A = barycenter_kneighbors_graph(X, 1)
     assert_array_almost_equal(
         A.todense(),
-        [[ 0.,  1.,  0.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+        [[0.,  1.,  0.],
+         [1.,  0.,  0.],
+         [0.,  1.,  0.]])
 
     A = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
     pred = np.dot(A.todense(), X)
-    assert np.linalg.norm(pred - X) / X.shape[0] < 1
+    assert_true(np.linalg.norm(pred - X) / X.shape[0] < 1)
 
 
 #----------------------------------------------------------------------
@@ -52,7 +53,7 @@ def test_lle_simple_grid():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert clf.embedding_.shape[1] == out_dim
+        assert_true(clf.embedding_.shape[1] == out_dim)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         # FIXME: ARPACK fails this test ...
@@ -72,7 +73,8 @@ def test_lle_manifold():
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
+                                          random_state=0)
     tol = 1.5
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
@@ -82,7 +84,7 @@ def test_lle_manifold():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert clf.embedding_.shape[1] == out_dim
+        assert_true(clf.embedding_.shape[1] == out_dim)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         details = "solver: " + solver
@@ -97,9 +99,18 @@ def test_pipeline():
     iris = datasets.load_iris()
     clf = pipeline.Pipeline(
         [('filter', manifold.LocallyLinearEmbedding()),
-         ('clf', neighbors.NeighborsClassifier())])
+         ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(iris.data, iris.target)
     assert_lower(.7, clf.score(iris.data, iris.target))
+
+
+# Test the error raised when the weight matrix is singular
+def test_singular_matrix():
+    from nose.tools import assert_raises
+    M = np.ones((10, 3))
+
+    assert_raises(ValueError, manifold.locally_linear_embedding,
+                  M, 2, 1, method='standard', eigen_solver='arpack')
 
 
 if __name__ == '__main__':

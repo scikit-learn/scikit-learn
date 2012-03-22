@@ -23,7 +23,7 @@ from sklearn.svm import SVC
 from sklearn import datasets
 
 iris = datasets.load_iris()
-X = iris.data[:, :2] # we only take the first two features for visualization
+X = iris.data[:, 0:2]  # we only take the first two features for visualization
 y = iris.target
 
 n_features = X.shape[1]
@@ -40,7 +40,7 @@ classifiers = {
 
 n_classifiers = len(classifiers)
 
-pl.figure(figsize=(3*2, n_classifiers*2))
+pl.figure(figsize=(3 * 2, n_classifiers * 2))
 pl.subplots_adjust(bottom=.2, top=.95)
 
 for index, (name, classifier) in enumerate(classifiers.iteritems()):
@@ -51,14 +51,14 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
     print  "classif_rate for %s : %f " % (name, classif_rate)
 
     # View probabilities=
-    xx = np.linspace(3,9,100)
-    yy = np.linspace(1,5,100).T
+    xx = np.linspace(3, 9, 100)
+    yy = np.linspace(1, 5, 100).T
     xx, yy = np.meshgrid(xx, yy)
-    Xfull = np.c_[xx.ravel(),yy.ravel()]
+    Xfull = np.c_[xx.ravel(), yy.ravel()]
     probas = classifier.predict_proba(Xfull)
     n_classes = np.unique(y_pred).size
     for k in range(n_classes):
-        pl.subplot(n_classifiers, n_classes, index*n_classes + k + 1)
+        pl.subplot(n_classifiers, n_classes, index * n_classes + k + 1)
         pl.title("Class %d" % k)
         if k == 0:
             pl.ylabel(name)

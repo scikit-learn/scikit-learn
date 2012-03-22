@@ -24,7 +24,7 @@ from sklearn import linear_model
 n_samples_train, n_samples_test, n_features = 75, 150, 500
 np.random.seed(0)
 coef = np.random.randn(n_features)
-coef[50:] = 0.0 # only the top 10 features are impacting the model
+coef[50:] = 0.0  # only the top 10 features are impacting the model
 X = np.random.randn(n_samples_train + n_samples_test, n_features)
 y = np.dot(X, coef)
 
@@ -73,4 +73,3 @@ pl.plot(coef_, label='Estimated coef')
 pl.legend()
 pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
 pl.show()
-
