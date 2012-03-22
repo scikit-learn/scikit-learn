@@ -100,6 +100,8 @@ class LossFunction(object):
     """
     __metaclass__ = ABCMeta
 
+    is_multi_class = False
+
     def __init__(self, n_classes):
         self.K = n_classes
 
@@ -109,9 +111,6 @@ class LossFunction(object):
     @abstractmethod
     def __call__(self, y, pred):
         """Compute the loss of prediction ``pred`` and ``y``. """
-
-    def is_multi_class(self):
-        return False
 
     @abstractmethod
     def negative_gradient(self, y, y_pred, **kargs):
@@ -266,6 +265,9 @@ class BinomialDeviance(LossFunction):
 
 
 class MultinomialDeviance(LossFunction):
+
+    is_multi_class = True
+
     def __init__(self, n_classes):
         if n_classes < 3:
             raise ValueError("%s requires more than 2 classes."
@@ -283,9 +285,6 @@ class MultinomialDeviance(LossFunction):
 
         return np.sum(-1 * (Y * pred).sum(axis=1) +
                       np.log(np.exp(pred).sum(axis=1)))
-
-    def is_multi_class(self):
-        return True
 
     def negative_gradient(self, y, pred, k=0):
         """Compute negative gradient for the ``k``-th class. """
@@ -365,7 +364,7 @@ class BaseGradientBoosting(BaseEnsemble):
         original_y = y
 
         for k in range(loss.K):
-            if loss.is_multi_class():
+            if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
             residual = loss.negative_gradient(y, y_pred, k=k)
@@ -630,7 +629,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
         f = self._predict(X)
 
-        if not self.loss_.is_multi_class():
+        if not self.loss_.is_multi_class:
             P[:, 1] = 1.0 / (1.0 + np.exp(-f.ravel()))
             P[:, 0] -= P[:, 1]
         else:
