@@ -1,7 +1,7 @@
 """
 Test the fastica algorithm.
 """
-
+import warnings
 import numpy as np
 from numpy.testing import assert_almost_equal
 from nose.tools import assert_true
@@ -112,6 +112,13 @@ def test_fastica_nowhiten():
     ica = FastICA(whiten=False)
     ica.fit(m)
     ica.get_mixing_matrix()
+
+    # test for issue #697
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        ica = FastICA(n_components=1, whiten=False)
+        ica.fit(m)  # should raise warning
+        assert_true(len(w) == 1)  # 1 warning should be raised
 
 
 def test_non_square_fastica(add_noise=False):
