@@ -23,6 +23,7 @@ from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
+from ..utils.fixes import lsqr
 
 
 ###
@@ -165,21 +166,16 @@ class LinearRegression(LinearModel):
                 self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
-            if hasattr(sp_linalg, 'lsqr'):
-                if y.ndim < 2:
-                    out = sp_linalg.lsqr(X, y)
-                    self.coef_ = out[0]
-                    self.residues_ = out[3]
-                else:
-                    # sparse_lstsq cannot handle y with shape (M, K)
-                    outs = Parallel(n_jobs=n_jobs)(delayed(sp_linalg.lsqr)
-                            (X, y[:, j].ravel()) for j in range(y.shape[1]))
-                    self.coef_ = np.vstack(out[0] for out in outs)
-                    self.residues_ = np.vstack(out[3] for out in outs)
+            if y.ndim < 2:
+                out = lsqr(X, y)
+                self.coef_ = out[0]
+                self.residues_ = out[3]
             else:
-                # DEPENDENCY: scipy 0.7
-                self.coef_ = sp_linalg.spsolve(X, y)
-                self.residues_ = y - safe_sparse_dot(X, self.coef_)
+                # sparse_lstsq cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs)(delayed(lsqr)
+                        (X, y[:, j].ravel()) for j in range(y.shape[1]))
+                self.coef_ = np.vstack(out[0] for out in outs)
+                self.residues_ = np.vstack(out[3] for out in outs)
         else:
             self.coef_, self.residues_, self.rank_, self.singular_ = \
                     linalg.lstsq(X, y)
