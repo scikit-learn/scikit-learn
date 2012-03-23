@@ -70,12 +70,13 @@ Functions
    :template: class.rst
 
    covariance.EmpiricalCovariance
-   covariance.ShrunkCovariance
-   covariance.LedoitWolf
-   covariance.OAS
+   covariance.EllipticEnvelop
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.LedoitWolf
    covariance.MinCovDet
+   covariance.OAS
+   covariance.ShrunkCovariance
 
 .. autosummary::
    :toctree: generated/
