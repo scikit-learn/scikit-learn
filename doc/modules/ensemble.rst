@@ -235,6 +235,8 @@ functions for regression which can be specified via the argument
 least absolute deviation (``loss='lad'``), which is more robust w.r.t.
 outliers. See [F2001]_ for detailed information.
 
+::
+
     >>> import numpy as np
     >>> from sklearn.metrics import mean_squared_error
     >>> from sklearn.datasets import make_friedman1
@@ -381,7 +383,7 @@ stopping. For a more detailed discussion of the interaction between
 Subsampling
 -----------
 
-[F1999]_ propsed stochastic gradient boosting, which combines gradient
+[F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
 the available training data.
