@@ -40,7 +40,7 @@ $(function() {
   // margin-left of the bodywrapper and width of the sidebar
   // with the sidebar collapsed
   var bw_margin_collapsed = '-190px';
-  var ssb_width_collapsed = '.8em';
+  var ssb_width_collapsed = '1.0em';
 
   // colors used by the current theme
   var dark_color = $('.related').css('background-color');
@@ -75,7 +75,7 @@ $(function() {
     sidebar.css('width', ssb_width_expanded);
     sidebarwrapper.show();
     sidebarbutton.css({
-        'margin-left': ssb_width_expanded-12,
+        'margin-left': ssb_width_expanded-13,
         'height': bodywrapper.height()
     });
     sidebarbutton.find('span').text('«');
@@ -87,7 +87,7 @@ $(function() {
     sidebarwrapper.css({
         'float': 'left' ,
         'margin-right': '0',
-        'width': ssb_width_expanded - 10
+        'width': ssb_width_expanded - 13
     });
     // create the button
     sidebar.append(
@@ -110,7 +110,7 @@ $(function() {
     sidebarbutton.attr('title', _('Collapse sidebar'));
     sidebarbutton.css({
         'border-left': '1px solid ' + dark_color,
-	'border-top-left-radius' : '.8em',
+	'border-top-left-radius' : '15px',
         'font-size': '1.2em',
         'cursor': 'pointer',
         'height': bodywrapper.height(),
@@ -120,10 +120,10 @@ $(function() {
 
     sidebarbutton.hover(
       function () {
-          $(this).css('background-color', dark_color);
+          $(this).css('background-color', '#D0D0D0');
       },
       function () {
-          $(this).css('background-color', light_color);
+          $(this).css('background-color', '#F0F0F0');
       }
     );
   }
