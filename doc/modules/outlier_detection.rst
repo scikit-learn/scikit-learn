@@ -118,6 +118,11 @@ This strategy is illustrated below.
      (:class:`covariance.MinCovDet`) of location and covariance to
      assess the degree of outlyingness of an observation.
 
+.. topic:: References:
+
+    ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
+        covariance determinant estimator" Technometrics 41(3), 212 (1999)
+     
 One-class SVM versus elliptic envelop
 --------------------------------------
 
