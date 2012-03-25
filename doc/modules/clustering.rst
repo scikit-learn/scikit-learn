@@ -43,54 +43,66 @@ Overview of clustering methods
 
 .. list-table::
    :header-rows: 1
-   :widths: 15 15 18 25 20
+   :widths: 14 15 19 25 20
 
    * - Method name
      - Parameters
      - Scalability
      - Usecase
-     - Geometry
+     - Geometry (metric used)
 
-   * - `K-Means <k_means>`_
+   * - :ref:`K-Means <k_means>`
      - number of clusters
-     - Very scalable
+     - Very large `n_samples`, medium `n_clusters` with
+       :ref:`MiniBatch code <mini_batch_kmeans>`
      - General-purpose, even cluster size, flat geometry, not too many clusters 
      - Distances between points 
 
-   * - `Affinity propagation <affinity_propagation>`_
+   * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference 
      - Not scalable with n_samples
      - Many clusters, uneven cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
-   * - `Mean-shift <mean_shift>`_
+   * - :ref:`Mean-shift <mean_shift>`
      - bandwidth 
      - Not scalable with n_samples
      - Many clusters, uneven cluster size, non-flat geometry
      - Distances between points 
 
-   * - `Spectral clustering <spectral_clustering>`_
+   * - :ref:`Spectral clustering <spectral_clustering>`
      - number of clusters
-     - Very scalable
+     - Medium `n_samples`, small `n_clusters`
      - Few clusters, even cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
-   * - `Hierarchical clustering <hierarchical_clustering>`_
+   * - :ref:`Hierarchical clustering <hierarchical_clustering>`
      - number of clusters
-     - Very scalable
-     - Few clusters, even cluster size, flat geometry
+     - Large `n_samples` and `n_clusters`
+     - Many clusters, possibly connectivity constraints
      - Distances between points 
 
-   * - `DBSCAN <dbscan>`_
+   * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
-     - Very scalable
+     - Very large `n_samples`, medium `n_clusters`
      - Non-flat geometry, uneven cluster sizes
      - Distances between nearest points 
+
+   * - :ref:`Gaussian mixtures <mixture>`
+     - many
+     - Not scalable
+     - Flat geometry, even or uneven cluster sizes
+     - Distances to cluster center
 
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
 above.
+
+Gaussian mixture models, useful for clustering, are described in
+:ref:`another chapter of the documentation <mixture>` dedicated to
+mixture models. KMeans can be seen as a special case of Gaussian mixture
+model with equal covariance per component.
 
 .. _k_means:
 
