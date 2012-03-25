@@ -23,11 +23,6 @@ Expected results for the top 5 most represented people in the dataset::
         avg / total       0.86      0.84      0.85       282
 
 
-.. image:: /images/plot_face_recognition_1.png
-    :scale: 50%
-
-.. image:: /images/plot_face_recognition_2.png
-    :scale: 50%
 
 """
 print __doc__
