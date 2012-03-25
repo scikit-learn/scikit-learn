@@ -37,6 +37,57 @@ Here a visual comparison of some of the clustering algorithms in scikit-learn:
    :align: center
    :scale: 50
 
+Overview of clustering methods
+===============================
+
+.. pros/cons columns?
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 20 20 20 20
+
+   * - Method name
+     - Parameters
+     - Scalability
+     - Strategy
+     - Geometry
+
+   * - `K-Means <k_means>`_
+     - number of clusters
+     - Very scalable
+     - Finding centroid
+     - Distances between points 
+
+   * - `Affinity propagation <affinity_propagation>`_
+     - damping, sample preference 
+     - Not scalable with n_samples
+     - Propagation in graph
+     - Graph distance (e.g. nearest-neighbor graph)
+
+   * - `Mean-shift <mean_shift>`_
+     - bandwidth 
+     - Not scalable with n_samples
+     - Iterative density estimation
+     - Distances between points 
+
+   * - `Spectral clustering <spectral_clustering>`_
+     - number of clusters
+     - Very scalable
+     - Propagation in graph
+     - Graph distance (e.g. nearest-neighbor graph)
+
+   * - `Hierarchical clustering <hierarchical_clustering>`_
+     - number of clusters
+     - Very scalable
+     - Merging of connections
+     - Distances between points 
+
+   * - `DBSCAN <dbscan>`_
+     - neighborhood size
+     - Very scalable
+     - Iterative density estimation
+     - Distances between nearest points 
+
 .. _k_means:
 
 K-means
@@ -129,6 +180,8 @@ will have difficulties scaling to thousands of samples.
  * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
+
+.. _mean_shift:
 
 Mean Shift
 ==========

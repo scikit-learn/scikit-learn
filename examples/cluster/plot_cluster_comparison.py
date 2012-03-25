@@ -78,8 +78,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     dbscan = DBSCAN(eps=.3)
     affinity_propagation = AffinityPropagation(damping=.9)
 
-    for algorithm in [two_means, dbscan, spectral, ms, ward_five,
-                      affinity_propagation]:
+    for algorithm in [two_means, affinity_propagation, ms, spectral,
+                      ward_five, dbscan]:
         # predict cluster memberships
         if algorithm == spectral:
             algorithm.fit(connectivity)
