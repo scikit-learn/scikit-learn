@@ -44,48 +44,48 @@ Overview of clustering methods
 
 .. list-table::
    :header-rows: 1
-   :widths: 15 20 20 20 20
+   :widths: 15 15 18 25 20
 
    * - Method name
      - Parameters
      - Scalability
-     - Strategy
+     - Usecase
      - Geometry
 
    * - `K-Means <k_means>`_
      - number of clusters
      - Very scalable
-     - Finding centroid
+     - General-purpose, even cluster size, flat geometry, not too many clusters 
      - Distances between points 
 
    * - `Affinity propagation <affinity_propagation>`_
      - damping, sample preference 
      - Not scalable with n_samples
-     - Propagation in graph
+     - Many clusters, uneven cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - `Mean-shift <mean_shift>`_
      - bandwidth 
      - Not scalable with n_samples
-     - Iterative density estimation
+     - Many clusters, uneven cluster size, non-flat geometry
      - Distances between points 
 
    * - `Spectral clustering <spectral_clustering>`_
      - number of clusters
      - Very scalable
-     - Propagation in graph
+     - Few clusters, even cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - `Hierarchical clustering <hierarchical_clustering>`_
      - number of clusters
      - Very scalable
-     - Merging of connections
+     - Few clusters, even cluster size, flat geometry
      - Distances between points 
 
    * - `DBSCAN <dbscan>`_
      - neighborhood size
      - Very scalable
-     - Iterative density estimation
+     - Non-flat geometry, uneven cluster sizes
      - Distances between nearest points 
 
 .. _k_means:
