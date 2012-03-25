@@ -372,7 +372,9 @@ if it has more than min_points points which are of a similarity greater than
 the given threshold eps. This is shown in the figure below, where the color
 indicates cluster membership and large circles indicate core points found by
 the algorithm. Moreover, the algorithm can detect outliers, indicated by black
-points below.
+points below. The outliers are defined as points which do not belong to
+any current cluster and do not have enough close neighbours to start a
+new cluster.
 
 .. |dbscan_results| image:: ../auto_examples/cluster/images/plot_dbscan_1.png
         :target: ../auto_examples/cluster/plot_dbscan.html
