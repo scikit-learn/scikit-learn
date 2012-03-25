@@ -1,48 +1,61 @@
-.. _getting_started:
+.. _introduction:
 
-Getting started: an introduction to machine learning with scikit-learn
+An Introduction to machine learning with scikit-learn
 =======================================================================
 
 .. topic:: Section contents
 
-    In this section, we introduce the machine learning vocabulary that we
-    use through-out `scikit-learn` and give a simple learning example.
+    In this section, we introduce the `machine learning 
+    <http://en.wikipedia.org/wiki/Machine_learning>`_
+    vocabulary that we use through-out `scikit-learn` and give a 
+    simple learning example.
 
 
 Machine learning: the problem setting
 ---------------------------------------
 
-In general, a learning problem considers a set of n **samples** of
+In general, a learning problem considers a set of n 
+`samples <http://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
 data and try to predict properties of unknown data. If each sample is
 more than a single number, and for instance a multi-dimensional entry
-(aka **multivariate** data), is it said to have several attributes,
+(aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_ 
+data), is it said to have several attributes,
 or **features**.
 
 We can separate learning problems in a few large categories:
 
- * **supervised learning**, in which the data comes with additional
-   attributes that we want to predict. This problem can be either:
+ * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_, 
+   in which the data comes with additional attributes that we want to predict 
+   (:ref:`Click here <supervised-learning>`
+   to go to the Scikit-Learn supervised learning page).This problem 
+   can be either:
 
-    * **classification**: samples belong to two or more classes and we
+    * `classification 
+      <http://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
+      samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
       of unlabeled data. An example of classification problem would
       be the digit recognition example, in which the aim is to assign
       each input vector to one of a finite number of discrete
       categories.
 
-    * **regression**: if the desired output consists of one or more
+    * `regression <http://en.wikipedia.org/wiki/Regression_analysis>`_:
+      if the desired output consists of one or more
       continuous variables, then the task is called *regression*. An
       example of a regression problem would be the prediction of the
       length of a salmon as a function of its age and weight.
 
- * **unsupervised learning**, in which the training data consists of a
-   set of input vectors x without any corresponding target
-   values. The goal in such problems may be to discover groups of
-   similar examples within the data, where it is called
-   *clustering*, or to determine the distribution of data within the
-   input space, known as *density estimation*, or to project the data
-   from a high-dimensional space down to two or thee dimensions for
-   the purpose of *visualization*.
+ * `unsupervised learning <http://en.wikipedia.org/wiki/Unsupervised_learning>`_,
+   in which the training data consists of a set of input vectors x 
+   without any corresponding target values. The goal in such problems 
+   may be to discover groups of similar examples within the data, where 
+   it is called `clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_, 
+   or to determine the distribution of data within the input space, known as 
+   `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or 
+   to project the data from a high-dimensional space down to two or thee 
+   dimensions for the purpose of *visualization* 
+   (:ref:`Click here <unsupervised-learning>` 
+   to go to the Scikit-Learn unsupervised learning page).
 
 .. topic:: Training set and testing set
 
@@ -122,7 +135,8 @@ Learning and Predicting
 
 In the case of the digits dataset, the task is to predict the value of a
 hand-written digit from an image. We are given samples of each of the 10
-possible classes on which we *fit* an `estimator` to be able to *predict*
+possible classes on which we *fit* an 
+`estimator <http://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
 the labels corresponding to new data.
 
 In `scikit-learn`, an **estimator** is just a plain Python class that
@@ -165,7 +179,8 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: images/last_digit.png
+.. image:: ../../auto_examples/images/plot_digits_last_image_1.png
+    :target: ../../auto_examples/plot_digits_last_image.html
     :align: center
     :scale: 50
 
