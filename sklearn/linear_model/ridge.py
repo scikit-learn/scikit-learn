@@ -66,9 +66,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     solver : {'auto', 'dense_cholesky', 'sparse_cg'}, optional
         Solver to use in the computational routines. 'delse_cholesky'
         will use the standard scipy.linalg.solve function, 'sparse_cg'
-        will use the a conjugate gradient solver as found in
+        will use the conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
-        appropiate depending on the matrix X.
+        appropriate depending on the matrix X.
 
     tol: float
         Precision of the solution.
@@ -203,10 +203,10 @@ class Ridge(LinearModel):
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
             routines. 'delse_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the a
+            scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropiate depending on the matrix X.
+            appropriate depending on the matrix X.
 
         Returns
         -------
@@ -293,10 +293,10 @@ class RidgeClassifier(Ridge):
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
             routines. 'delse_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the a
+            scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropiate depending on the matrix X.
+            appropriate depending on the matrix X.
 
         Returns
         -------
@@ -669,16 +669,16 @@ class RidgeClassifierCV(RidgeCV):
 
     score_func: callable, optional
         function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (big is good)
+        order to evaluate the performance of prediction (big is good)
         if None is passed, the score of the estimator is maximized
 
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (small is good)
+        order to evaluate the performance of prediction (small is good)
         if None is passed, the score of the estimator is maximized
 
     cv : cross-validation generator, optional
-        If None, Generalized Cross-Validationn (efficient Leave-One-Out)
+        If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
     class_weight : dict, optional
