@@ -92,7 +92,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
         # plot
         pl.subplot(4, 6, plot_num)
         if i_dataset == 0:
-            pl.title(str(algorithm).split('(')[0])
+            pl.title(str(algorithm).split('(')[0], size=18)
         pl.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist())
 
         if hasattr(algorithm, 'cluster_centers_'):
