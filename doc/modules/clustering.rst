@@ -30,17 +30,16 @@ data can be found in the `labels_` attribute.
     and :class:`SpectralClustering` can work with arbitrary objects, as
     long as a similarity measure exists for such objects.
 
-Here a visual comparison of some of the clustering algorithms in scikit-learn:
+Overview of clustering methods
+===============================
 
 .. figure:: ../auto_examples/cluster/images/plot_cluster_comparison_1.png
    :target: ../auto_examples/cluster/plot_cluster_comparison.html
    :align: center
    :scale: 50
 
-Overview of clustering methods
-===============================
+   A comparison of the clustering algorithms in scikit-learn
 
-.. pros/cons columns?
 
 .. list-table::
    :header-rows: 1
@@ -87,6 +86,11 @@ Overview of clustering methods
      - Very scalable
      - Non-flat geometry, uneven cluster sizes
      - Distances between nearest points 
+
+Non-flat geometry clustering is useful when the clusters have a specific
+shape, i.e. a non-flat manifold, and the standard euclidean distance is
+not the right metric. This case arises in the two top rows of the figure
+above.
 
 .. _k_means:
 
