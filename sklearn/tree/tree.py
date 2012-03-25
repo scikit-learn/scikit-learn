@@ -82,7 +82,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         else:
             feature = "X[%s]" % tree.feature[node_id]
         if tree.children[node_id, 0] == Tree.LEAF:
-            return "error = %s\\nsamples = %s\\nvalue = %s" \
+            return "error = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (tree.init_error[node_id], tree.n_samples[node_id],
                       tree.value[node_id])
 
