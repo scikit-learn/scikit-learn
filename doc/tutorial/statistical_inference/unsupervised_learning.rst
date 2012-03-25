@@ -16,8 +16,6 @@ Clustering: grouping observations together
    >>> # Set the PRNG   
    >>> import numpy as np
    >>> np.random.seed(1)
-   >>> # Import pylab
-   >>> import pylab as pl
 
 
 K-means clustering

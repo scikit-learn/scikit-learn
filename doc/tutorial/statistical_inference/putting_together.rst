@@ -3,7 +3,6 @@ Putting it all together
 =========================
 
 ..  Imports
-    >>> import pylab as pl
     >>> import numpy as np
 
 Pipelining

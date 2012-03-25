@@ -42,8 +42,8 @@ needs to be preprocessed to be used by the scikit.
         >>> digits = datasets.load_digits()
         >>> digits.images.shape
         (1797, 8, 8)
-        >>> import pylab as pl
-        >>> pl.imshow(digits.images[-1], cmap=pl.cm.gray_r) #doctest: +ELLIPSIS
+        >>> import pylab as pl #doctest: +SKIP
+        >>> pl.imshow(digits.images[-1], cmap=pl.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
 
     To use this dataset with the scikit, we transform each 8x8 image in a

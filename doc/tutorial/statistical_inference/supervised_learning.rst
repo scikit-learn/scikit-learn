@@ -211,15 +211,15 @@ induces high variance:
     >>> test = np.c_[ 0, 2].T
     >>> regr = linear_model.LinearRegression()
     
-    >>> import pylab as pl
+    >>> import pylab as pl # doctest: +SKIP
     >>> pl.figure() # doctest: +SKIP
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
     ...    regr.fit(X, y)
-    ...    pl.plot(test, regr.predict(test))
-    ...    pl.scatter(this_X, y, s=3) 
+    ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...    pl.scatter(this_X, y, s=3)  # doctest: +SKIP
 
 
 
@@ -243,8 +243,8 @@ regression:
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
-    ...    pl.plot(test, regr.predict(test))
-    ...    pl.scatter(this_X, y, s=3)
+    ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...    pl.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 `alpha` parameter, the higher the bias and the lower the variance.
