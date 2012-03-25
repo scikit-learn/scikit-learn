@@ -296,8 +296,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
         # we give a small weights to class 1
-        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False, )
-        clf.fit(X, y, class_weight={1: 0.001})
+        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False,
+                class_weight={1: 0.001})
+        clf.fit(X, y)
 
         # now the hyperplane should rotate clock-wise and
         # the prediction on this point should shift
@@ -312,8 +313,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         X = [[1, 0], [0, 1]]
         y = [0, 1]
-        clf_weighted = self.factory(alpha=0.1, n_iter=1000)
-        clf_weighted.fit(X, y, class_weight={0: 0.5, 1: 0.5})
+        clf_weighted = self.factory(alpha=0.1, n_iter=1000, class_weight=
+                {0: 0.5, 1: 0.5})
+        clf_weighted.fit(X, y)
 
         # should be similar up to some epsilon due to learning rate schedule
         assert_almost_equal(clf.coef_, clf_weighted.coef_, decimal=2)
@@ -321,14 +323,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     @raises(ValueError)
     def test_wrong_class_weight_label(self):
         """ValueError due to not existing class label."""
-        clf = self.factory(alpha=0.1, n_iter=1000)
-        clf.fit(X, Y, class_weight={0: 0.5})
+        clf = self.factory(alpha=0.1, n_iter=1000, class_weight={0: 0.5})
+        clf.fit(X, Y)
 
     @raises(ValueError)
     def test_wrong_class_weight_format(self):
         """ValueError due to wrong class_weight argument type."""
-        clf = self.factory(alpha=0.1, n_iter=1000)
-        clf.fit(X, Y, class_weight=[0.5])
+        clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
+        clf.fit(X, Y)
 
     def test_auto_weight(self):
         """Test class weights for imbalanced data"""
@@ -374,8 +376,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_true(metrics.f1_score(y, y_pred) > 0.96)
 
         # fit another using a fit parameter override
-        clf = self.factory(n_iter=1000, class_weight=None)
-        clf.fit(X_imbalanced, y_imbalanced, class_weight="auto")
+        clf = self.factory(n_iter=1000, class_weight="auto")
+        clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_true(metrics.f1_score(y, y_pred) > 0.96)
 

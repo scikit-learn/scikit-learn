@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-                          assert_equal
+                          assert_equal, assert_array_equal
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 
@@ -308,3 +308,41 @@ def test_dense_sparse():
         # test that the outputs are the same
         if ret_dense != None and ret_sparse != None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+
+def test_class_weights():
+    """
+    Test class weights.
+    """
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    clf = RidgeClassifier(class_weight=None)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+
+    # we give a small weights to class 1
+    clf = RidgeClassifier(class_weight={1: 0.001})
+    clf.fit(X, y)
+
+    # now the hyperplane should rotate clock-wise and
+    # the prediction on this point should shift
+    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+
+
+def test_class_weights_cv():
+    """
+    Test class weights for cross validated ridge classifier.
+    """
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    clf = RidgeClassifierCV(class_weight=None, alphas=[.01, .1, 1])
+    clf.fit(X, y)
+
+    # we give a small weights to class 1
+    clf = RidgeClassifierCV(class_weight={1: 0.001}, alphas=[.01, .1, 1, 10])
+    clf.fit(X, y)
+
+    assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))
