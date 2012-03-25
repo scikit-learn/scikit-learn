@@ -3,12 +3,11 @@
 Cross-validation on diabetes Dataset Exercise
 ===============================================
 
-This exercise is used in the
-:ref:`cv_estimators_tut` part of the 
-:ref:`model_selection_tut` section of the
-:ref:`stat_learn_tut_index`.
+This exercise is used in the :ref:`cv_estimators_tut` part of the
+:ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
 print __doc__
+
 import numpy as np
 import pylab as pl
 

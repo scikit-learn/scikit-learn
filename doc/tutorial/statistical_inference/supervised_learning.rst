@@ -401,9 +401,11 @@ This is known as :class:`LogisticRegression`.
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
-   .. toctree::
+   .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
+       :lines: 12-17
 
-        digits_classification_exercise
+   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
+
 
 Support vector machines (SVMs)
 ================================
@@ -551,18 +553,12 @@ creating an decision energy by positioning *kernels* on observations:
     :align: right
     :scale: 70
 
-.. topic:: **Excercise**
+.. topic:: **Exercise**
    :class: green
 
    Try classifying classes 1 and 2 from the iris dataset with SVMs, with
    the 2 first features. Leave out 10% of each class and test prediction
    performance on these observations.
-
-   The solution is available below:
-
-   .. toctree::
-
-        iris_classification_exercise.rst
 
    **Warning**: the classes are ordered, do not leave out the last 10%,
    you would be testing on only one class.
@@ -570,8 +566,10 @@ creating an decision energy by positioning *kernels* on observations:
    **Hint**: You can use the `decision_function` method on a grid to get
    intuitions.
 
-..  
- Gaussian process: introducing the notion of posterior estimate
- ===============================================================
+   .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
+       :lines: 15-22 
+
+   Solution: :download:`../../auto_examples/exercises/plot_iris_exercise.py`
+
 
 

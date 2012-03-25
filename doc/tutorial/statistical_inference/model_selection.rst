@@ -105,12 +105,12 @@ of the computer.
 
     - Takes a label array to group observations
 
+.. currentmodule:: sklearn.svm
+
 .. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
    :target: ../../tutorial/statistical_inference/digits_cv_exercise.html
    :align: right
-   :scale: 75
-
-.. currentmodule:: sklearn.svm
+   :scale: 100
 
 .. topic:: **Exercise**
    :class: green
@@ -119,9 +119,12 @@ of the computer.
    estimator with an RBF kernel as a function of parameter `C` (use a 
    logarithmic grid of points, from `1` to `10`).
 
-   .. toctree::
+   .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
+       :lines: 13-23 
 
-      digits_cv_exercise.rst
+   Solution: :download:`../../auto_examples/exercises/plot_cv_digits.py`
+
+
 
 Grid-search and cross-validated estimators
 ============================================
@@ -209,6 +212,9 @@ appended to their name.
 
    **Bonus**: How much can you trust the selection of alpha?
 
-   .. toctree::
+   .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
+       :lines: 11-23
 
-      diabetes_cv_exercise
+   Solution: :download:`../../auto_examples/exercises/plot_cv_diabetes.py`
+
+
