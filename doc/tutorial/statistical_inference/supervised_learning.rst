@@ -397,7 +397,7 @@ This is known as :class:`LogisticRegression`.
 .. topic:: **Exercise**
    :class: green
 
-   Try classifying the digits dataset with nearest neihbors and a linear
+   Try classifying the digits dataset with nearest neighbors and a linear
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
