@@ -17,7 +17,6 @@ Clustering: grouping observations together
    >>> import numpy as np
    >>> np.random.seed(1)
 
-
 K-means clustering
 -------------------
 
@@ -111,9 +110,12 @@ algorithms. The simplest clustering algorithm is the
     `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
     For instance, this can be used to posterize an image::
 
-    
-	>>> import scipy as sp
-    	>>> lena = sp.lena()
+        >>> import scipy as sp
+        >>> try:
+        ...    lena = sp.lena()
+        ... except AttributeError:
+        ...    from scipy import misc
+        ...    lena = misc.lena()
     	>>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
     	>>> k_means = cluster.KMeans(k=5, n_init=1)
     	>>> k_means.fit(X) # doctest: +ELLIPSIS
@@ -179,6 +181,7 @@ clustering an image:
 
 .. literalinclude:: ../../auto_examples/cluster/plot_lena_ward_segmentation.py
     :lines: 24-44
+
 ..
     >>> from sklearn.feature_extraction.image import grid_to_graph
     >>> connectivity = grid_to_graph(*lena.shape)
