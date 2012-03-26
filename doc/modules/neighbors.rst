@@ -388,3 +388,18 @@ notably, if this causes a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification,
 removing noisy features.
 
+.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_1.png
+   :target: ../auto_examples/neighbors/plot_classification.html
+   :scale: 50
+
+.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_2.png
+   :target: ../auto_examples/neighbors/plot_classification.html
+   :scale: 50
+
+.. centered:: |nearest_centroid_1| |nearest_centroid_2|
+
+.. topic:: Examples:
+
+  * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
+    classification using nearest centroid with different shrink thresholds.
+
