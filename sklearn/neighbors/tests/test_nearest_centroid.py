@@ -7,7 +7,7 @@ from scipy import sparse as sp
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
 
-from sklearn.linear_model import NearestCentroid
+from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
 
 # toy sample
