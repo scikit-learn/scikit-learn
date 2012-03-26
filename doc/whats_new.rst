@@ -68,7 +68,7 @@ Changelog
      by `Yannick Schwartz`_.
 
    - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
-      ``shrink_thrshold`` parameter, which implements shrunken centroid
+      ``shrink_threshold`` parameter, which implements shrunken centroid
       classification, by `Robert Layton`_.
 
 API changes summary
