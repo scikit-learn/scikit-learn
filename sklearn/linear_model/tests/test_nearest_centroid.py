@@ -67,7 +67,7 @@ def test_iris_shrinkage():
             assert score > 0.8, "Failed with score = " + str(score)
 
 
-def iris_shrinkage_sparse():
+def test_iris_shrinkage_sparse():
     """Check quality on iris, when using shrinkage and sparse matrix."""
     iris_sparse = sp.csr_matrix(np.array(iris.data))
     for metric in ('euclidean', 'cosine'):
