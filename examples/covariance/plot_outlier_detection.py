@@ -31,7 +31,7 @@ import matplotlib.font_manager
 from scipy import stats
 
 from sklearn import svm
-from sklearn.covariance import EllipticEnvelop
+from sklearn.covariance import EllipticEnvelope
 
 # Example settings
 n_samples = 200
@@ -42,7 +42,7 @@ clusters_separation = [0, 1, 2]
 classifiers = {
     "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
                                      kernel="rbf", gamma=0.1),
-    "robust covariance estimator": EllipticEnvelop(contamination=.1),
+    "robust covariance estimator": EllipticEnvelope(contamination=.1),
     }
 
 # Compare given classifiers under given settings
