@@ -264,6 +264,11 @@ class BinomialDeviance(LossFunction):
 
 
 class MultinomialDeviance(LossFunction):
+    """Multinomial deviance loss function for multi-class classification.
+
+    For multi-class classification we need to fit ``n_classes`` trees at
+    each stage.
+    """
 
     is_multi_class = True
 
@@ -513,11 +518,14 @@ class BaseGradientBoosting(BaseEnsemble):
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
-    """Gradient Boosting for classification. GB builds an additive model in a
+    """Gradient Boosting for classification.
+
+    GB builds an additive model in a
     forward stage-wise fashion; it allows for the optimization of
-    arbitrary differentiable loss functions. In each stage a regression
-    tree is fit on the negative gradient of binomial or multinomial
-    deviance.
+    arbitrary differentiable loss functions. In each stage ``n_classes``
+    regression trees are fit on the negative gradient of the
+    binomial or multinomial deviance loss function. Binary classification
+    is a special case where only a single regression tree is induced.
 
     Parameters
     ----------
@@ -637,10 +645,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
-    """Gradient Boosting for regression. GB builds an additive model in a
-    forward stage-wise fashion; it allows for the optimization of
-    arbitrary differentiable loss functions. In each stage a regression
-    tree is fit on the negative gradient of the given loss function.
+    """Gradient Boosting for regression.
+
+    GB builds an additive model in a forward stage-wise fashion;
+    it allows for the optimization of arbitrary differentiable loss functions.
+    In each stage a regression tree is fit on the negative gradient of the
+    given loss function.
 
     Parameters
     ----------
