@@ -94,10 +94,6 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             center_mask = y == cur_class
             if sp.issparse(X):
                 center_mask = np.where(center_mask)[0]
-                #print center_mask
-                #center_mask = np.arange(n_samples)[y == cur_class]
-                #print center_mask
-                #print 
             self.centroids_[i] = X[center_mask].mean(axis=0)
         if self.shrink_threshold:
             dataset_centroid_ = np.array(X.mean(axis=0))[0]
