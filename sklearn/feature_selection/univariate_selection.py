@@ -190,8 +190,8 @@ def f_regression(X, y, center=True):
     """
 
     # orthogonalize everything wrt to confounds
-    y = as_float_array(y).ravel()
-    X = as_float_array(X)
+    y = as_float_array(y, copy=True).ravel()
+    X = as_float_array(X, copy=True)
     if center:
         y -= np.mean(y)
         X -= np.mean(X, 0)
