@@ -116,8 +116,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             s = np.sqrt(variance / (n_samples - n_classes))
             s0 = np.median(s)  # To deter outliers from affecting the results.
             s += s0
-            ms = np.array([[m[j] * s[i] for i in range(n_features)]
-                           for j in range(n_classes)])
+            mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
+            ms = mm * s
             deviation = ((self.centroids_ - dataset_centroid_) / ms)
             # Soft thresholding: if the deviation crosses 0 during shrinking,
             # it becomes zero.
