@@ -82,14 +82,12 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         """
         X, y = check_arrays(X, y)
         n_samples, n_features = X.shape
-        assert n_samples == len(y), ("n_samples", n_samples, "len(y)", len(y))
         classes = np.unique(y)
         classes.sort()
         self.classes_ = classes
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
-        assert len(X.shape) == 2, X
         # Mask mapping each class to it's members.
         self.centroids_ = np.empty((n_classes, n_features), dtype='float')
         for i, cur_class in enumerate(classes):
@@ -111,8 +109,6 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             # Calculate deviation using the standard deviation of centroids.
             variance = np.array(np.power(X - self.centroids_[y], 2))
             variance = variance.sum(axis=0)
-            assert variance.shape == (n_features,), (
-                variance.shape, (n_features,))
             s = np.sqrt(variance / (n_samples - n_classes))
             s0 = np.median(s)  # To deter outliers from affecting the results.
             s += s0
@@ -129,8 +125,6 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             msd = np.array(np.multiply(ms, deviation))
             self.centroids_ = np.array([dataset_centroid_ + msd[i]
                                         for i in range(n_classes)])
-            assert self.centroids_.shape == (n_classes, n_features), (
-                self.centroids_.shape, (n_classes, n_features))
         return self
 
     def predict(self, X):
@@ -149,7 +143,5 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         X = atleast2d_or_csr(X)
         if not hasattr(self, "centroids_"):
             raise AttributeError("Model has not been trained yet.")
-        assert X.shape[1] == self.centroids_.shape[1], "{},{},{},{}".format(
-            X, self.centroids_, type(X), type(self.centroids_))
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]
