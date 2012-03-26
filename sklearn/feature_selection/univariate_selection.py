@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import array2d, safe_asarray, deprecated
+from ..utils import array2d, safe_asarray, deprecated, as_float_array
 from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
@@ -190,8 +190,8 @@ def f_regression(X, y, center=True):
     """
 
     # orthogonalize everything wrt to confounds
-    y = y.copy().ravel()
-    X = X.copy()
+    y = as_float_array(y, copy=True).ravel()
+    X = as_float_array(X, copy=True)
     if center:
         y -= np.mean(y)
         X -= np.mean(X, 0)
