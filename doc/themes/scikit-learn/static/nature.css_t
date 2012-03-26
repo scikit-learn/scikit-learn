@@ -27,9 +27,8 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 15px;
-    -moz-border-radius: 15px 15px 15px 15px;
-    margin-top: 10px;
+    border-radius: 0px 0px 15px 15px;
+    -moz-border-radius: 0px 0px 15px 15px;
 }
 
 ul.horizontal, ul.horizontal li {
