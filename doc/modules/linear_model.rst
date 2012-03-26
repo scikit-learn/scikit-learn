@@ -639,14 +639,15 @@ Nearest Centroids Classifier
 ============================
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
-each class by the centroid of its members. In effect, this makes it similar to
-the label updating phase of the :class:`KMeans` algorithm. It also has no
-parameters to optimize, making it a good baseline classifier. It does, however,
-suffer on non-convex data, as well as when classes have drastically different 
-variances, as equal variance in all dimensions is assumed. See Linear 
-Discriminant Analysis (:class:`lda.LDA`) and Quadratic Discriminant Analysis
-(:class:`qda.QDA`) for more complex methods that do not make this assumpation.
-Usage of the default :class:`NearestCentroid` is simple:
+each class by the centroid (mean) of its members. In effect, this makes it
+similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
+It also has no parameters to choose, making it a good baseline classifier. It
+does, however, suffer on non-convex classes, as well as when classes have
+drastically different variances, as equal variance in all dimensions is
+assumed. See Linear Discriminant Analysis (:class:`sklearn.lda.LDA`) and
+Quadratic Discriminant Analysis (:class:`sklearn.qda.QDA`) for more complex
+methods that do not make this assumpation. Usage of the default
+:class:`NearestCentroid` is simple:
 
     >>> from sklearn.linear_model.nearest_centroid import NearestCentroid
     >>> import numpy as np
@@ -663,10 +664,10 @@ Nearest Shrunken Centroids
 --------------------------
 
 The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter, 
-which implements the nearest centroid classifier. In effect, the value of each
-feature for each centroid is divided by the within-class variance of that
-feature. The feature values are then reduced by `shrink_threshold`. Most
-notably, if a particular feature value crosses zero during this time, it is set
+which implements the nearest shrunken centroid classifier. In effect, the value
+of each feature for each centroid is divided by the within-class variance of
+that feature. The feature values are then reduced by `shrink_threshold`. Most
+notably, if this causes a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification,
 removing noisy features.
 
