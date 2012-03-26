@@ -10,7 +10,7 @@ import numpy as np
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet, \
-    EllipticEnvelop
+    EllipticEnvelope
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -74,7 +74,7 @@ def test_outlier_detection():
     """
     np.random.RandomState(0)
     X = np.random.randn(100, 10)
-    clf = EllipticEnvelop(contamination=0.1)
+    clf = EllipticEnvelope(contamination=0.1)
     clf.fit(X)
     y_pred = clf.predict(X)
 
