@@ -226,6 +226,13 @@ parameter ``n_estimators``; The maximum depth of each tree is controlled via
 ``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
+.. note: Classification with more than 2 classes requires the induction
+         of ``n_classes`` regression trees at each at each iteration,
+         thus, the total number of induced trees equals
+         ``n_classes * n_estimators``. For datasets with a large number
+         of classes we strongly recommend to use
+         :class:`RandomForestClassifier` as an alternative to GBRT.
+
 Regression
 ==========
 
@@ -346,10 +353,12 @@ the parameter ``loss``:
       probability estimates).  The initial model is given by the
       log odds-ratio.
     * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for ``K``-class classification (provides
-      probability estimates).  The initial model is given by the
-      prior probability of each class. At each iteration ``K`` regression
-      trees have to be constructed.
+      log-likelihood loss function for multi-class classification with
+      ``n_classes`` mutually exclusive classes. It provides
+      probability estimates.  The initial model is given by the
+      prior probability of each class. At each iteration ``n_classes``
+      regression trees have to be constructed which makes GBRT rather
+      inefficient for data sets with a large number of classes.
 
 Regularization
 ==============
