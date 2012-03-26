@@ -53,7 +53,7 @@ def test_f_regression():
     on a simple simulated regression problem
     """
     X, Y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+        n_informative=5, shuffle=False, random_state=0)
 
     F, pv = f_regression(X, Y)
     assert(F > 0).all()
@@ -61,6 +61,21 @@ def test_f_regression():
     assert(pv < 1).all()
     assert(pv[:5] < 0.05).all()
     assert(pv[5:] > 1.e-4).all()
+
+
+def test_f_regression_input_dtype():
+    """
+    Test whether f_regression returns the same value
+    for any numeric data_type
+    """
+
+    X = np.random.rand(10, 20)
+    y = np.arange(10).astype(int)
+
+    F1, pv1 = f_regression(X, y)
+    F2, pv2 = f_regression(X, y.astype(float))
+    assert_array_equal(F1, F2)
+    assert_array_equal(pv1, pv2)
 
 
 def test_f_classif_multi_class():
