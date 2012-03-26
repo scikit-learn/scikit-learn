@@ -5,7 +5,6 @@ Testing for the nearest centroid module.
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
 from sklearn.linear_model import NearestCentroid
