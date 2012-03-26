@@ -388,6 +388,9 @@ notably, if this causes a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification,
 removing noisy features.
 
+In this example, using a small shrink threshold of increases the accuracy of
+the model from 0.81 to 0.82.
+
 .. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_1.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
