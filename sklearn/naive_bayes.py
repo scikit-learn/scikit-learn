@@ -155,7 +155,7 @@ class GaussianNB(BaseNB):
 
         self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
-        _, n_features = X.shape
+        n_samples, n_features = X.shape
 
         self.theta_ = np.empty((n_classes, n_features))
         self.sigma_ = np.empty((n_classes, n_features))
@@ -163,7 +163,7 @@ class GaussianNB(BaseNB):
         for i, y_i in enumerate(unique_y):
             self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
             self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0)
-            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_classes
+            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
         return self
 
     def _joint_log_likelihood(self, X):
