@@ -686,11 +686,10 @@ class KMeans(BaseEstimator):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        X = safe_asarray(X, dtype=np.float64)
+        X = atleast2d_or_csr(X, dtype=np.float64)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
-        X = as_float_array(X, copy=False)
         return X
 
     def _check_test_data(self, X):
