@@ -29,6 +29,18 @@ def test_gnb():
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
+def test_prior():
+    """Test whether class priors are properly set. """
+    for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
+        clf = cls().fit(X, y)
+        if hasattr(clf, 'class_prior_'):
+            assert_array_almost_equal(np.array([3, 3]) / 6.0,
+                                  clf.class_prior_, 8)
+        else:
+            assert_array_almost_equal(np.log(np.array([3, 3]) / 6.0),
+                                      clf.class_log_prior_, 8)
+
+
 # Data is 6 random points in a 100 dimensional space classified to
 # three classes.
 X2 = np.random.randint(5, size=(6, 100))
