@@ -22,6 +22,8 @@ behavior.
 """
 print __doc__
 
+import time
+
 import numpy as np
 import pylab as pl
 
@@ -32,8 +34,9 @@ from sklearn.preprocessing import Scaler
 
 np.random.seed(0)
 
-# Generate datasets
-n_samples = 300
+# Generate datasets. We choose the size big enough to see the scalability
+# of the algorithms, but not too big to avoid too long running times
+n_samples = 1500
 noisy_circles = datasets.make_circles(n_samples=n_samples, factor=.5,
                                       noise=.05)
 noisy_moons = datasets.make_moons(n_samples=n_samples, noise=.05)
@@ -67,23 +70,25 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
 
     # create clustering estimators
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.KMeans(k=2)
+    two_means = cluster.MiniBatchKMeans(k=2)
     ward_five = cluster.Ward(n_clusters=2, connectivity=connectivity)
     spectral = cluster.SpectralClustering(k=2, mode='arpack')
-    dbscan = cluster.DBSCAN(eps=.3)
+    dbscan = cluster.DBSCAN(eps=.2)
     affinity_propagation = cluster.AffinityPropagation(damping=.9)
 
     for algorithm in [two_means, affinity_propagation, ms, spectral,
                       ward_five, dbscan]:
         # predict cluster memberships
+        t0 = time.time()
         if algorithm == spectral:
             algorithm.fit(connectivity)
         elif algorithm == affinity_propagation:
             # Set a low preference to avoid creating too many
-            # clusters
-            algorithm.fit(-distances, p=-20*distances.max())
+            # clusters. This parameter is hard to set in practice
+            algorithm.fit(-distances, p=-50*distances.max())
         else:
             algorithm.fit(X)
+        t1 = time.time()
         if hasattr(algorithm, 'labels_'):
             y_pred = algorithm.labels_.astype(np.int)
         else:
@@ -98,11 +103,14 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
         if hasattr(algorithm, 'cluster_centers_'):
             centers = algorithm.cluster_centers_
             center_colors = colors[:len(centers)]
-            pl.scatter(centers[:, 0], centers[:, 1], s=100, c=center_colors)
+            pl.scatter(centers[:, 0], centers[:, 1], s=5, c=center_colors)
         pl.xlim(-2, 2)
         pl.ylim(-2, 2)
         pl.xticks(())
         pl.yticks(())
+        pl.text(.99, .01, ('%.2fs' % (t1 - t0)).lstrip('0'),
+                transform=pl.gca().transAxes, size=15,
+                horizontalalignment='right')
         plot_num += 1
 
 pl.show()
