@@ -108,7 +108,7 @@ of the computer.
 .. currentmodule:: sklearn.svm
 
 .. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
-   :target: ../../tutorial/statistical_inference/digits_cv_exercise.html
+   :target: ../../auto_examples/exercises/plot_cv_digits.html
    :align: right
    :scale: 100
 
