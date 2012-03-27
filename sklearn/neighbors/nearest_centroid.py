@@ -79,27 +79,33 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
+            Note that centroid shrinking cannot be used with sparse matrices.
         y : array, shape = [n_samples]
             Target values (integers)
         """
         X, y = check_arrays(X, y)
+        if sp.issparse(X) and self.shrink_threshold:
+            raise ValueError("threshold shrinking not supported"
+                             " for sparse input")
+
         n_samples, n_features = X.shape
         classes = np.unique(y)
-        classes.sort()
         self.classes_ = classes
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
+
         # Mask mapping each class to it's members.
-        self.centroids_ = np.empty((n_classes, n_features), dtype='float')
+        self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
         for i, cur_class in enumerate(classes):
             center_mask = y == cur_class
             if sp.issparse(X):
                 center_mask = np.where(center_mask)[0]
             self.centroids_[i] = X[center_mask].mean(axis=0)
+
         if self.shrink_threshold:
             dataset_centroid_ = np.array(X.mean(axis=0))[0]
             # Number of clusters in each class.
@@ -111,8 +117,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             variance = np.array(np.power(X - self.centroids_[y], 2))
             variance = variance.sum(axis=0)
             s = np.sqrt(variance / (n_samples - n_classes))
-            s0 = np.median(s)  # To deter outliers from affecting the results.
-            s += s0
+            s += np.median(s)  # To deter outliers from affecting the results.
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
             ms = mm * s
             deviation = ((self.centroids_ - dataset_centroid_) / ms)
@@ -123,9 +128,9 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             deviation[deviation < 0] = 0
             deviation = np.multiply(deviation, signs)
             # Now adjust the centroids using the deviation
-            msd = np.array(np.multiply(ms, deviation))
+            msd = np.multiply(ms, deviation)
             self.centroids_ = np.array([dataset_centroid_ + msd[i]
-                                        for i in range(n_classes)])
+                                        for i in xrange(n_classes)])
         return self
 
     def predict(self, X):

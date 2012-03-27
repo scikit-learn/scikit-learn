@@ -65,16 +65,6 @@ def test_iris_shrinkage():
             assert score > 0.8, "Failed with score = " + str(score)
 
 
-def test_iris_shrinkage_sparse():
-    """Check quality on iris, when using shrinkage and sparse matrix."""
-    iris_sparse = sp.csr_matrix(iris.data)
-    for shrink_threshold in [None, 0.1, 0.5]:
-        clf = NearestCentroid(shrink_threshold=shrink_threshold)
-        clf = clf.fit(iris_sparse, iris.target)
-        score = np.mean(clf.predict(iris.data) == iris.target)
-        assert score > 0.8, "Failed with score = " + str(score)
-
-
 def test_pickle():
     import pickle
 
