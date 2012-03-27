@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Nearest Centroid Classification
 """
@@ -16,8 +17,7 @@ from ..metrics.pairwise import pairwise_distances
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
-    """
-    Nearest Centroid Classification
+    """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
     the class with the nearest centroid.
@@ -53,7 +53,12 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     See also
     --------
-    sklearn.neighbors.KNeighborsClassifier: Nearest Neighbors Classifier
+    sklearn.neighbors.KNeighborsClassifier: nearest neighbors classifier
+
+    Notes
+    -----
+    When used for text classification with tf–idf vectors, this classifier is
+    also known as the Rocchio classifier.
 
     Reference
     ---------
