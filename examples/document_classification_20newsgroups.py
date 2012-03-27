@@ -212,7 +212,7 @@ results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
 
 # Train NearestCentroid without threshold
 print 80 * '='
-print "NearestCentroid (no shrinkage)"
+print "NearestCentroid, no shrinkage"
 results.append(benchmark(NearestCentroid()))
 
 # Train sparse Naive Bayes classifiers
