@@ -38,6 +38,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import NearestCentroid
 from sklearn.utils.extmath import density
 from sklearn import metrics
 
@@ -208,6 +209,11 @@ print 80 * '='
 print "Elastic-Net penalty"
 results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                       penalty="elasticnet")))
+
+# Train NearestCentroid without threshold
+print 80 * '='
+print "NearestCentroid (no shrinkage)"
+results.append(benchmark(NearestCentroid()))
 
 # Train sparse Naive Bayes classifiers
 print 80 * '='

@@ -66,7 +66,7 @@ def test_iris_shrinkage():
 
 def test_iris_shrinkage_sparse():
     """Check quality on iris, when using shrinkage and sparse matrix."""
-    iris_sparse = sp.csr_matrix(np.array(iris.data))
+    iris_sparse = sp.csr_matrix(iris.data)
     for metric in ('euclidean', 'cosine'):
         for shrink_threshold in [None, 0.1, 0.5]:
             clf = NearestCentroid(shrink_threshold=shrink_threshold)
