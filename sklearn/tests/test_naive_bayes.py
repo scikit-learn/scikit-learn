@@ -1,11 +1,15 @@
 import cPickle as pickle
-from cStringIO import StringIO
 import numpy as np
 import scipy.sparse
-from numpy.testing import (assert_almost_equal, assert_array_equal,
-                           assert_array_almost_equal, assert_equal)
 
-from ..naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from cStringIO import StringIO
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_equal
+from nose.tools import assert_raises
+
+from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -29,22 +33,25 @@ def test_gnb():
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
-def test_prior():
+def test_gnb_prior():
     """Test whether class priors are properly set. """
-    for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
-        clf = cls().fit(X, y)
-        if hasattr(clf, 'class_prior_'):
-            assert_array_almost_equal(np.array([3, 3]) / 6.0,
-                                  clf.class_prior_, 8)
-        else:
-            assert_array_almost_equal(np.log(np.array([3, 3]) / 6.0),
-                                      clf.class_log_prior_, 8)
+    clf = GaussianNB().fit(X, y)
+    assert_array_almost_equal(np.array([3, 3]) / 6.0,
+                              clf.class_prior_, 8)
 
 
 # Data is 6 random points in a 100 dimensional space classified to
 # three classes.
 X2 = np.random.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
+
+
+def test_discrete_prior():
+    """Test whether class priors are properly set. """
+    for cls in [BernoulliNB, MultinomialNB]:
+        clf = cls().fit(X2, y2)
+        assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
+                                  clf.class_log_prior_, 8)
 
 
 def test_mnnb():
@@ -72,14 +79,23 @@ def test_mnnb():
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
 
-    clf = MultinomialNB(alpha=2, fit_prior=False).fit(X2, y2)
-    y_pred = clf.predict(X2)
+    for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
+        clf = cls().fit(X2, y2)
+        y_pred = clf.predict(X2)
 
-    store = StringIO()
-    pickle.dump(clf, store)
-    clf = pickle.load(StringIO(store.getvalue()))
+        store = StringIO()
+        pickle.dump(clf, store)
+        clf = pickle.load(StringIO(store.getvalue()))
 
-    assert_array_equal(y_pred, clf.predict(X2))
+        assert_array_equal(y_pred, clf.predict(X2))
+
+
+def test_input_check():
+    """Test input checks"""
+    for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
+        clf = cls()
+        print clf
+        assert_raises(ValueError, clf.fit, X2, y2[:-1])
 
 
 def test_discretenb_predict_proba():
@@ -92,20 +108,23 @@ def test_discretenb_predict_proba():
 
     # test binary case (1-d output)
     y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
-    for cls, X in ([BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]):
-        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], y)
-        assert_equal(clf.predict([4, 1]), 2)
-        assert_equal(clf.predict_proba([0, 1]).shape, (1, 2))
-        assert_equal(clf.predict_proba([[0, 1], [1, 0]]).sum(axis=1), [1, 1])
+    for cls, X in zip([BernoulliNB, MultinomialNB],
+                      [X_bernoulli, X_multinomial]):
+        clf = cls().fit(X, y)
+        assert_equal(clf.predict(X[-1]), 2)
+        assert_equal(clf.predict_proba(X[0]).shape, (1, 2))
+        assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
+                                  np.array([1., 1.]), 6)
 
     # test multiclass case (2-d output, must sum to one)
     y = [0, 1, 2]
-    for cls, X in ([BernoulliNB, MultinomialNB], [X_bernoulli, X_multinomial]):
-        clf = MultinomialNB().fit([[0, 1], [1, 3], [4, 0]], y)
-        assert_equal(clf.predict_proba([0, 1]).shape, (1, 3))
-        assert_equal(clf.predict_proba([[0, 1], [1, 0]]).shape, (2, 3))
-        assert_almost_equal(np.sum(clf.predict_proba([1, 5])), 1)
-        assert_almost_equal(np.sum(clf.predict_proba([3, 0])), 1)
+    for cls, X in zip([BernoulliNB, MultinomialNB],
+                      [X_bernoulli, X_multinomial]):
+        clf = cls().fit(X, y)
+        assert_equal(clf.predict_proba(X[0]).shape, (1, 3))
+        assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
+        assert_almost_equal(np.sum(clf.predict_proba(X[1])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba(X[-1])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
@@ -118,6 +137,16 @@ def test_discretenb_uniform_prior():
         clf = cls()
         clf.set_params(fit_prior=False)
         clf.fit([[0], [0], [1]], [0, 0, 1])
+        prior = np.exp(clf.class_log_prior_)
+        assert_array_equal(prior, np.array([.5, .5]))
+
+
+def test_discretenb_provide_prior():
+    """Test whether discrete NB classes use provided prior"""
+
+    for cls in [BernoulliNB, MultinomialNB]:
+        clf = cls()
+        clf.fit([[0], [0], [1]], [0, 0, 1], class_prior=[0.5, 0.5])
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
 
