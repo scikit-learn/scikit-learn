@@ -94,7 +94,6 @@ def test_input_check():
     """Test input checks"""
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
         clf = cls()
-        print clf
         assert_raises(ValueError, clf.fit, X2, y2[:-1])
 
 
