@@ -40,10 +40,6 @@ The same task has been used in a number of papers including:
 
 [1] http://archive.ics.uci.edu/ml/datasets/Covertype
 
-To run this example use your favorite python shell::
-
-  % ipython benchmark/bench_covertype.py
-
 """
 from __future__ import division
 
@@ -57,6 +53,7 @@ print __doc__
 from time import time
 import os
 import numpy as np
+from optparse import OptionParser
 
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -64,6 +61,20 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
+
+op = OptionParser()
+op.add_option("--classifiers",
+              dest="classifiers", default='liblinear,GaussianNB,SGD,CART',
+              help="comma-separated list of classifiers to benchmark. "
+                   "default: %default. available: "
+                   "liblinear,GaussianNB,SGD,CART,ExtraTrees,RandomForest")
+
+op.print_help()
+
+(opts, args) = op.parse_args()
+if len(args) > 0:
+    op.error("this script takes no arguments.")
+    sys.exit(1)
 
 ######################################################################
 ## Download the data, if not already on disk
@@ -133,9 +144,9 @@ print("%s %d (%d, %d)" % ("number of train samples:".ljust(25),
 print("%s %d (%d, %d)" % ("number of test samples:".ljust(25),
                           X_test.shape[0], np.sum(y_test == 1),
                           np.sum(y_test == -1)))
-print("")
-print("Training classifiers...")
-print("")
+
+
+classifiers = dict()
 
 
 ######################################################################
@@ -159,12 +170,11 @@ liblinear_parameters = {
     'dual': False,
     'tol': 1e-3,
     }
-liblinear_res = benchmark(LinearSVC(**liblinear_parameters))
-liblinear_err, liblinear_train_time, liblinear_test_time = liblinear_res
+classifiers['liblinear'] = LinearSVC(**liblinear_parameters)
 
 ######################################################################
 ## Train GaussianNB model
-gnb_err, gnb_train_time, gnb_test_time = benchmark(GaussianNB())
+classifiers['GaussianNB'] = GaussianNB()
 
 ######################################################################
 ## Train SGD model
@@ -172,28 +182,42 @@ sgd_parameters = {
     'alpha': 0.001,
     'n_iter': 2,
     }
-sgd_err, sgd_train_time, sgd_test_time = benchmark(SGDClassifier(
-    **sgd_parameters))
+classifiers['SGD'] = SGDClassifier( **sgd_parameters)
 
 ######################################################################
 ## Train CART model
-cart_err, cart_train_time, cart_test_time = benchmark(
-    DecisionTreeClassifier(min_samples_split=5,
-                           max_depth=None))
+classifiers['CART'] = DecisionTreeClassifier(min_samples_split=5,
+                                             max_depth=None)
 
-## ######################################################################
-## ## Train RandomForest model
-## rf_err, rf_train_time, rf_test_time = benchmark(
-##     RandomForestClassifier(n_estimators=20,
-##                            min_samples_split=5,
-##                            max_depth=None))
+######################################################################
+## Train RandomForest model
+classifiers['RandomForest'] = RandomForestClassifier(n_estimators=20,
+                                                     min_samples_split=5,
+                                                     max_features=None,
+                                                     max_depth=None)
 
-## ## ######################################################################
-## ## ## Train Extra-Trees model
-## et_err, et_train_time, et_test_time = benchmark(
-##     ExtraTreesClassifier(n_estimators=20,
-##                          min_samples_split=5,
-##                          max_depth=None))
+######################################################################
+## Train Extra-Trees model
+classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
+                                                 min_samples_split=5,
+                                                 max_features=None,
+                                                 max_depth=None)
+
+
+selected_classifiers = opts.classifiers.split(',')
+for name in selected_classifiers:
+    if name not in classifiers:
+        op.error('classifier %r unknwon')
+        sys.exit(1)
+
+print("")
+print("Training Classifiers")
+print("====================")
+print("")
+err, train_time, test_time = {}, {}, {}
+for name in sorted(selected_classifiers):
+    print("Training %s ..." % name)
+    err[name], train_time[name], test_time[name] = benchmark(classifiers[name])
 
 ######################################################################
 ## Print classification performance
@@ -212,12 +236,8 @@ def print_row(clf_type, train_time, test_time, err):
 print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time",
                        "error-rate"))
 print("-" * 44)
-print_row("Liblinear", liblinear_train_time, liblinear_test_time,
-          liblinear_err)
-print_row("GaussianNB", gnb_train_time, gnb_test_time, gnb_err)
-print_row("SGD", sgd_train_time, sgd_test_time, sgd_err)
-print_row("CART", cart_train_time, cart_test_time, cart_err)
-## print_row("RandomForest", rf_train_time, rf_test_time, rf_err)
-## print_row("Extra-Trees", et_train_time, et_test_time, et_err)
+
+for name in sorted(selected_classifiers, key=lambda name: err[name]):
+    print_row(name, train_time[name], test_time[name], err[name])
 print("")
 print("")
