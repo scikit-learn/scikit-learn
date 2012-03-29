@@ -49,7 +49,8 @@ cdef void _predict_regression_tree_inplace(np.ndarray[DTYPE_t, ndim=2] X,
         pred[i, k] += scale * values[node_id, 0]
 
 
-def predict_stages(np.ndarray estimators,
+@cython.nonecheck(False)
+def predict_stages(np.ndarray[object, ndim=2] estimators,
                    np.ndarray[DTYPE_t, ndim=2] X, double scale,
                    np.ndarray[np.float64_t, ndim=2] pred):
     cdef int i
