@@ -192,7 +192,7 @@ def f_regression(X, y, center=True):
     X = as_float_array(X, copy=False)  # copy only if center
     if center:
         y = y - np.mean(y)
-        X = X.copy(order='F')  # faster in fortran
+        X = X.copy('F')  # faster in fortran
         X -= np.mean(X, axis=0)
 
     # compute the correlation
