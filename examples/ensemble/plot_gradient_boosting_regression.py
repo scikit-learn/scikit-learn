@@ -44,10 +44,9 @@ print("MSE: %.4f" % mse)
 # Plot training deviance
 
 # compute test set deviance
-y_pred = clf.init.predict(X_test)
 test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
-for i, stage in enumerate(clf.estimators_):
-    y_pred = clf._predict(X_test, old_pred=y_pred, stage_index=i)
+
+for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
     test_score[i] = clf.loss_(y_test, y_pred)
 
 pl.figure(figsize=(12, 6))
