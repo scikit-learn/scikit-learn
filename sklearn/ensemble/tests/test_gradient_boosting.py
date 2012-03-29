@@ -8,6 +8,7 @@ from numpy.testing import assert_equal
 
 from nose.tools import assert_raises
 
+from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -135,7 +136,7 @@ def test_boston():
         assert_raises(ValueError, clf.predict, boston.data)
         clf.fit(boston.data, boston.target)
         y_pred = clf.predict(boston.data)
-        mse = np.mean((y_pred - boston.target) ** 2.0)
+        mse = mean_squared_error(boston.target, y_pred)
         assert mse < 6.0, "Failed with loss %s and mse = %.4f" % (loss, mse)
 
 
@@ -165,7 +166,7 @@ def test_regression_synthetic():
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor()
     clf.fit(X_train, y_train)
-    mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 5.0, "Failed on Friedman1 with mse = %.4f" % mse
 
     # Friedman2
@@ -174,7 +175,7 @@ def test_regression_synthetic():
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
-    mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 1700.0, "Failed on Friedman2 with mse = %.4f" % mse
 
     # Friedman3
@@ -183,7 +184,7 @@ def test_regression_synthetic():
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
-    mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 0.015, "Failed on Friedman3 with mse = %.4f" % mse
 
 
@@ -230,6 +231,24 @@ def test_check_inputs():
 
     clf = GradientBoostingClassifier().fit(X, y)
     assert_raises(ValueError, clf.predict, X_sparse)
+
+
+def test_staged_predict():
+    """Test whether staged decision function eventually gives
+    the same prediction.
+    """
+    X, y = datasets.make_friedman1(n_samples=1200,
+                                   random_state=1, noise=1.0)
+    X_train, y_train = X[:200], y[:200]
+    X_test, y_test = X[200:], y[200:]
+    clf = GradientBoostingRegressor()
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    for y in clf.staged_predict(X_test):
+        assert_equal(y.shape, y_pred.shape)
+
+    assert_array_equal(y_pred, y)
 
 
 def test_serialization():
