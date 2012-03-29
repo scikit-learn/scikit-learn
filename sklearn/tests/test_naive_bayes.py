@@ -15,6 +15,16 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 y = np.array([1, 1, 1, 2, 2, 2])
 
+# A bit more random tests
+rng = np.random.RandomState(0)
+X1 = rng.normal(size=(10, 3))
+y1 = (rng.normal(size=(10)) > 0).astype(np.int)
+
+# Data is 6 random integer points in a 100 dimensional space classified to
+# three classes.
+X2 = rng.randint(5, size=(6, 100))
+y2 = np.array([1, 1, 2, 2, 3, 3])
+
 
 def test_gnb():
     """
@@ -38,12 +48,9 @@ def test_gnb_prior():
     clf = GaussianNB().fit(X, y)
     assert_array_almost_equal(np.array([3, 3]) / 6.0,
                               clf.class_prior_, 8)
-
-
-# Data is 6 random points in a 100 dimensional space classified to
-# three classes.
-X2 = np.random.randint(5, size=(6, 100))
-y2 = np.array([1, 1, 2, 2, 3, 3])
+    clf.fit(X1, y1)
+    # Check that the class priors sum to 1
+    assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
 
 def test_discrete_prior():
