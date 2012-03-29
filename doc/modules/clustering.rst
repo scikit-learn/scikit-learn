@@ -91,8 +91,8 @@ Overview of clustering methods
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
-     - Flat geometry, even or uneven cluster sizes
-     - Distances to cluster center
+     - Flat geometry, good for density estimation
+     - Mahalanobis distances to  centers
 
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
