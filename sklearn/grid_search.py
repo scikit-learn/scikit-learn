@@ -147,6 +147,23 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     return this_score, clf, this_n_test_samples
 
 
+def _check_param_grid(param_grid):
+    if hasattr(param_grid, 'items'):
+        param_grid = [param_grid]
+
+    for p in param_grid:
+        for v in p.itervalues():
+            if isinstance(v, np.ndarray) and v.ndim > 1:
+                raise ValueError("Parameter array should be one-dimensional.")
+
+            check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
+            if not True in check:
+                raise ValueError("Parameter values should be a list.")
+
+            if len(v) == 0:
+                raise ValueError("Parameter values should be a non-empty list.")
+
+
 class GridSearchCV(BaseEstimator):
     """Grid search on the parameters of a classifier
 
@@ -287,6 +304,8 @@ class GridSearchCV(BaseEstimator):
                     "If no loss_func is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % estimator)
+
+        _check_param_grid(param_grid)
 
         self.estimator = estimator
         self.param_grid = param_grid

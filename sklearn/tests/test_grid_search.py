@@ -76,6 +76,20 @@ def test_grid_search_one_grid_point():
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
 
 
+def test_grid_search_bad_param_grid():
+    param_dict = {"C": 1.0}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": []}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": np.ones(6).reshape(3,2)}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+
 def test_grid_search_sparse():
     """Test that grid search works with both dense and sparse matrices"""
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
