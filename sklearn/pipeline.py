@@ -74,14 +74,16 @@ class Pipeline(BaseEstimator):
     def __init__(self, steps):
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
-        self.steps = steps
         if len(self.named_steps) != len(steps):
             raise ValueError("Names provided are not unique: %s" % names)
+
+        self.steps = zip(names, estimators)     # shallow copy of steps
         transforms = estimators[:-1]
         estimator = estimators[-1]
-        for t in  transforms:
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not \
-                    hasattr(t, "transform"):
+
+        for t in transforms:
+            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) \
+              or not hasattr(t, "transform"):
                 raise TypeError("All intermediate steps a the chain should "
                         "be transforms and implement fit and transform"
                         "'%s' (type %s) doesn't)" % (t, type(t)))
