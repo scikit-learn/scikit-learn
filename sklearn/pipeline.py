@@ -15,26 +15,24 @@ from .base import BaseEstimator
 # is needed in the Attributes section so as not to upset sphinx.
 
 class Pipeline(BaseEstimator):
-    """ Pipeline of transforms with a final estimator
+    """Pipeline of transforms with a final estimator.
 
-    Sequentialy apply a list of transforms and a final estimator.
-    Intermediate steps of the pipeline must be 'transforms', that
-    is that they must implements fit and transform methods
-    The final estimator need only implements fit.
+    Sequentially apply a list of transforms and a final estimator.
+    Intermediate steps of the pipeline must be 'transforms', that is, they
+    must implements fit and transform methods.
+    The final estimator needs only implements fit.
 
-    The purpose of the pipeline is to assemble several steps that can
-    be cross-validated together while setting different parameters.
-    For this, it enables to setting parameters of the various steps
-    using their names and the parameter name separated by a '__',
-    as in the example below.
+    The purpose of the pipeline is to assemble several steps that can be
+    cross-validated together while setting different parameters.
+    For this, it enables setting parameters of the various steps using their
+    names and the parameter name separated by a '__', as in the example below.
 
     Parameters
     ----------
-
     steps: list
-        List of (name, transform) object (implementing
-        fit/transform) that are chained, in the order in which
-        they are chained, with the last object an estimator.
+        List of (name, transform) tuples (implementing fit/transform) that are
+        chained, in the order in which they are chained, with the last object
+        an estimator.
 
     Attributes
     ----------
@@ -42,10 +40,8 @@ class Pipeline(BaseEstimator):
         List of the named object that compose the pipeline, in the \
         order that they are applied on the data.
 
-
     Examples
     --------
-
     >>> from sklearn import svm
     >>> from sklearn.datasets import samples_generator
     >>> from sklearn.feature_selection import SelectKBest
