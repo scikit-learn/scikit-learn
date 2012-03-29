@@ -9,7 +9,7 @@ from sklearn.feature_selection.univariate_selection import (f_classif,
                                     GenericUnivariateSelect)
 from nose.tools import assert_true
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy import stats
 from sklearn.datasets.samples_generator import make_classification, \
                                                      make_regression
@@ -70,12 +70,12 @@ def test_f_regression_input_dtype():
     """
 
     X = np.random.rand(10, 20)
-    y = np.arange(10).astype(int)
+    y = np.arange(10).astype(np.int)
 
     F1, pv1 = f_regression(X, y)
-    F2, pv2 = f_regression(X, y.astype(float))
-    assert_array_equal(F1, F2)
-    assert_array_equal(pv1, pv2)
+    F2, pv2 = f_regression(X, y.astype(np.float))
+    assert_array_almost_equal(F1, F2, 5)
+    assert_array_almost_equal(pv1, pv2, 5)
 
 
 def test_f_classif_multi_class():

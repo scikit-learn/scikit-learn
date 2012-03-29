@@ -188,18 +188,17 @@ def f_regression(X, y, center=True):
     pval : array of shape(m)
         the set of p-values
     """
-
-    # orthogonalize everything wrt to confounds
-    y = as_float_array(y, copy=True).ravel()
-    X = as_float_array(X, copy=True)
+    y = as_float_array(y, copy=False).ravel()
+    X = as_float_array(X, copy=False)  # copy only if center
     if center:
-        y -= np.mean(y)
-        X -= np.mean(X, 0)
+        y = y - np.mean(y)
+        X = X.copy(order='F')  # faster in fortran
+        X -= np.mean(X, axis=0)
 
     # compute the correlation
-    X /= np.sqrt(np.sum(X ** 2, 0))
-    y /= np.sqrt(np.sum(y ** 2))
     corr = np.dot(y, X)
+    corr /= np.sqrt(np.sum(X ** 2, 0))
+    corr /= np.sqrt(np.sum(y ** 2))
 
     # convert to p-value
     dof = y.size - 2
