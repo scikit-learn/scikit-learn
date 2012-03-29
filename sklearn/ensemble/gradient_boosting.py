@@ -503,12 +503,18 @@ class BaseGradientBoosting(BaseEnsemble):
 
         Returns
         -------
-        f : array of shape = [n_samples]
+        f : array of shape = [n_samples, n_classes]
             The decision function of the input samples. Classes are
-            ordered by arithmetical order.
+            ordered by arithmetical order. Regression and binary
+            classification are special cases with ``n_classes == 1``.
         """
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
+
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise ValueError("Estimator not fitted, call `fit` " \
+                             "before `staged_decision_function`.")
+
         f = self.init.predict(X).astype(np.float64)
 
         for i in range(self.n_estimators):
@@ -622,10 +628,35 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         return super(GradientBoostingClassifier, self).fit(X, y)
 
     def predict(self, X):
+        """Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted classes.
+        """
         P = self.predict_proba(X)
         return self.classes_.take(np.argmax(P, axis=1), axis=0)
 
     def predict_proba(self, X):
+        """Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class probabilities of the input samples. Classes are
+            ordered by arithmetical order.
+        """
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
         if self.estimators_ is None or len(self.estimators_) == 0:
@@ -774,6 +805,18 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         return super(GradientBoostingRegressor, self).fit(X, y)
 
     def predict(self, X):
+        """Predict regression target for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = [n_samples]
+            The predicted values.
+        """
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
         if self.estimators_ is None or len(self.estimators_) == 0:
@@ -783,3 +826,22 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y = self.init.predict(X).astype(np.float64)
         predict_stages(self.estimators_, X, self.learn_rate, y)
         return y.ravel()
+
+    def staged_predict(self, X):
+        """Predict regression target at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for y in self.staged_decision_function(X):
+            yield y.ravel()
