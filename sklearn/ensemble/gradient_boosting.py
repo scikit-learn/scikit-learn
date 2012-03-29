@@ -31,11 +31,12 @@ from ..utils import check_random_state
 
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
-from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
 from ..tree._tree import _random_sample_mask
 from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
+
+from ._gradient_boosting import predict_stages
 
 __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
@@ -359,12 +360,11 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.random_state = check_random_state(random_state)
 
-        self.estimators_ = []
+        self.estimators_ = None
 
-    def fit_stage(self, X, X_argsorted, y, y_pred, sample_mask):
+    def fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
         """Fit another stage of ``n_classes`` trees to the boosting model. """
         loss = self.loss_
-        self.estimators_.append([])
         original_y = y
 
         for k in range(loss.K):
@@ -386,7 +386,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                k=k)
 
             # add tree to ensemble
-            self.estimators_[-1].append(tree)
+            self.estimators_[i, k] = tree
 
         return y_pred
 
@@ -438,7 +438,7 @@ class BaseGradientBoosting(BaseEnsemble):
         # init predictions
         y_pred = self.init.predict(X)
 
-        self.estimators_ = []
+        self.estimators_ = np.empty((self.n_estimators, loss.K), dtype=np.object)
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
@@ -456,7 +456,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                   self.random_state)
 
             # fit next stage of trees
-            y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
+            y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
@@ -470,41 +470,13 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return self
 
-    def _predict(self, X, old_pred=None, stage_index=-1):
-        """Predict targets with current model. Re-uses predictions
-        from previous iteration if available.
-
-        Returns
-        -------
-        y_pred : np.ndarray, shape=(n, K)
-            The predictions of the current model, where ``n == X.shape[0]``
-            and ``K == self._loss.K``.
-        """
-        learn_rate = self.learn_rate
-        if old_pred is not None:
-            y = old_pred
-            stage = self.estimators_[stage_index]
-            for k, tree in enumerate(stage):
-                _tree_predict(X, tree.children, tree.feature,
-                              tree.threshold, tree.value, learn_rate,
-                              k, y)
-        else:
-            y = self.init.predict(X)
-            for stage in self.estimators_:
-                for k, tree in enumerate(stage):
-                    _tree_predict(X, tree.children, tree.feature,
-                                  tree.threshold, tree.value, learn_rate,
-                                  k, y)
-
-        return y
-
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
         raise NotImplementedError()
 
     @property
     def feature_importances_(self):
-        if not self.estimators_ or len(self.estimators_) == 0:
+        if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
@@ -629,12 +601,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def predict_proba(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators_) == 0:
+        if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
 
         P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
-        f = self._predict(X)
+
+        f = self.init.predict(X).astype(np.float64)
+        predict_stages(self.estimators_, X, self.learn_rate, f)
 
         if not self.loss_.is_multi_class:
             P[:, 1] = 1.0 / (1.0 + np.exp(-f.ravel()))
@@ -775,8 +749,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def predict(self, X):
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators_) == 0:
+        if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
-        y = self._predict(X).ravel()
-        return y
+
+        y = self.init.predict(X).astype(np.float64)
+        predict_stages(self.estimators_, X, self.learn_rate, y)
+        return y.ravel()
