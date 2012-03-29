@@ -164,6 +164,18 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter values should be a non-empty list.")
 
 
+def _has_one_grid_point(param_grid):
+    if hasattr(param_grid, 'items'):
+        param_grid = [param_grid]
+
+    for p in param_grid:
+        for v in p.itervalues():
+            if len(v) > 1:
+                return False
+
+    return True
+
+
 class GridSearchCV(BaseEstimator):
     """Grid search on the parameters of a classifier
 
@@ -319,6 +331,12 @@ class GridSearchCV(BaseEstimator):
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
 
+    def _set_methods(self):
+        if hasattr(self.best_estimator_, 'predict'):
+            self.predict = self.best_estimator_.predict
+        if hasattr(self.best_estimator_, 'predict_proba'):
+            self.predict_proba = self.best_estimator_.predict_proba
+
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
 
@@ -339,6 +357,7 @@ class GridSearchCV(BaseEstimator):
         self._set_params(**params)
         estimator = self.estimator
         cv = self.cv
+
         if hasattr(X, 'shape'):
             n_samples = X.shape[0]
         else:
@@ -355,6 +374,16 @@ class GridSearchCV(BaseEstimator):
 
         grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)
+
+        # Return early if there is only one grid point.
+        if _has_one_grid_point(self.param_grid):
+            params = iter(grid).next()
+            base_clf.set_params(**params)
+            base_clf.fit(X, y)
+            self.best_estimator_ = base_clf
+            self._set_methods()
+            return self
+
         pre_dispatch = self.pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                 pre_dispatch=pre_dispatch)(
@@ -407,10 +436,7 @@ class GridSearchCV(BaseEstimator):
             best_estimator.fit(X, y, **self.fit_params)
 
         self.best_estimator_ = best_estimator
-        if hasattr(best_estimator, 'predict'):
-            self.predict = best_estimator.predict
-        if hasattr(best_estimator, 'predict_proba'):
-            self.predict_proba = best_estimator.predict_proba
+        self._set_methods()
 
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
