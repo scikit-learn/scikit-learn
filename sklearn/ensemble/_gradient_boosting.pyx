@@ -41,6 +41,34 @@ cdef void _predict_regression_tree_inplace(np.ndarray[DTYPE_t, ndim=2] X,
         pred[i, k] += scale * values[node_id, 0]
 
 
+cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
+                                                np.int32_t *children,
+                                                np.int32_t *feature,
+                                                np.float64_t *threshold,
+                                                np.float64_t * values,
+                                                double scale,
+                                                int k,
+                                                int K,
+                                                int n,
+                                                int n_features,
+                                                np.float64_t *pred):
+    """Predicts output for regression tree and stores it in ``pred[i, k]`` """
+    cdef int i = 0
+    cdef int node_id = 0
+    cdef int stride = 2
+    cdef int feature_idx
+    for i in range(n):
+        node_id = 0
+        # While node_id not a leaf
+        while children[node_id * stride] != -1 and children[(node_id * stride) + 1] != -1:
+            feature_idx = feature[node_id]
+            if X[(i * n_features) + feature_idx] <= threshold[node_id]:
+                node_id = <int>(children[node_id * stride])
+            else:
+                node_id = <int>(children[(node_id * stride) + 1])
+        pred[(i * K) + k] += scale * values[node_id]
+
+
 @cython.nonecheck(False)
 def predict_stages(np.ndarray[object, ndim=2] estimators,
                    np.ndarray[DTYPE_t, ndim=2] X, double scale,
@@ -53,13 +81,23 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef int i
     cdef int k
     cdef int n_estimators = estimators.shape[0]
+    cdef int n = X.shape[0]
+    cdef int n_features = X.shape[1]
     cdef int K = estimators.shape[1]
+    cdef object tree
     for i in range(n_estimators):
         for k in range(K):
             tree = estimators[i, k]
-            _predict_regression_tree_inplace(X, tree.children, tree.feature,
-                                             tree.threshold, tree.value,
-                                             scale, k, out)
+            ## _predict_regression_tree_inplace(X, tree.children, tree.feature,
+            ##                                  tree.threshold, tree.value,
+            ##                                  scale, k, out)
+            _predict_regression_tree_inplace_fast(<DTYPE_t*>(X.data),
+                                                  <np.int32_t*>((<np.ndarray>(tree.children)).data),
+                                                  <np.int32_t*>((<np.ndarray>(tree.feature)).data),
+                                                  <np.float64_t*>((<np.ndarray>(tree.threshold)).data),
+                                                  <np.float64_t*>((<np.ndarray>(tree.value)).data),
+                                                  scale, k, K, n, n_features,
+                                                  <np.float64_t*>((<np.ndarray>out).data))
 
 
 @cython.nonecheck(False)
