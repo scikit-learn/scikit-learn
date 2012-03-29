@@ -15,14 +15,6 @@ cimport numpy as np
 # Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
-ctypedef np.int8_t BOOL_t
-
-cdef extern from "math.h":
-    cdef extern double log(double x)
-    cdef extern double pow(double base, double exponent)
-
-cdef extern from "float.h":
-    cdef extern double DBL_MAX
 
 
 cdef void _predict_regression_tree_inplace(np.ndarray[DTYPE_t, ndim=2] X,
@@ -52,7 +44,12 @@ cdef void _predict_regression_tree_inplace(np.ndarray[DTYPE_t, ndim=2] X,
 @cython.nonecheck(False)
 def predict_stages(np.ndarray[object, ndim=2] estimators,
                    np.ndarray[DTYPE_t, ndim=2] X, double scale,
-                   np.ndarray[np.float64_t, ndim=2] pred):
+                   np.ndarray[np.float64_t, ndim=2] out):
+    """Add predictions of ``estimators`` to ``out``.
+
+    Each estimator is scaled by ``scale`` before its prediction
+    is added to ``out``.
+    """
     cdef int i
     cdef int k
     cdef int n_estimators = estimators.shape[0]
@@ -62,4 +59,25 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
             tree = estimators[i, k]
             _predict_regression_tree_inplace(X, tree.children, tree.feature,
                                              tree.threshold, tree.value,
-                                             scale, k, pred)
+                                             scale, k, out)
+
+
+@cython.nonecheck(False)
+def predict_stage(np.ndarray[object, ndim=2] estimators,
+                  int stage,
+                  np.ndarray[DTYPE_t, ndim=2] X, double scale,
+                  np.ndarray[np.float64_t, ndim=2] pred):
+    """Add predictions of ``estimators[stage]`` to ``out``.
+
+    Each estimator in the stage is scaled by ``scale`` before
+    its prediction is added to ``out``.
+    """
+    cdef int i
+    cdef int k
+    cdef int n_estimators = estimators.shape[0]
+    cdef int K = estimators.shape[1]
+    for k in range(K):
+        tree = estimators[stage, k]
+        _predict_regression_tree_inplace(X, tree.children, tree.feature,
+                                         tree.threshold, tree.value,
+                                         scale, k, pred)
