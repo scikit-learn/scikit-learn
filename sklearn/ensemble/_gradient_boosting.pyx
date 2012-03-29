@@ -52,7 +52,10 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 int n,
                                                 int n_features,
                                                 np.float64_t *pred):
-    """Predicts output for regression tree and stores it in ``pred[i, k]`` """
+    """Predicts output for regression tree and stores it in ``pred[i, k]``.
+
+    This is 5x faster than the variant.
+    """
     cdef int i = 0
     cdef int node_id = 0
     cdef int stride = 2
@@ -60,7 +63,8 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     for i in range(n):
         node_id = 0
         # While node_id not a leaf
-        while children[node_id * stride] != -1 and children[(node_id * stride) + 1] != -1:
+        while children[node_id * stride] != -1 and \
+                  children[(node_id * stride) + 1] != -1:
             feature_idx = feature[node_id]
             if X[(i * n_features) + feature_idx] <= threshold[node_id]:
                 node_id = <int>(children[node_id * stride])
@@ -91,13 +95,16 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
             ## _predict_regression_tree_inplace(X, tree.children, tree.feature,
             ##                                  tree.threshold, tree.value,
             ##                                  scale, k, out)
-            _predict_regression_tree_inplace_fast(<DTYPE_t*>(X.data),
-                                                  <np.int32_t*>((<np.ndarray>(tree.children)).data),
-                                                  <np.int32_t*>((<np.ndarray>(tree.feature)).data),
-                                                  <np.float64_t*>((<np.ndarray>(tree.threshold)).data),
-                                                  <np.float64_t*>((<np.ndarray>(tree.value)).data),
-                                                  scale, k, K, n, n_features,
-                                                  <np.float64_t*>((<np.ndarray>out).data))
+
+            # looks weird but is necessary
+            _predict_regression_tree_inplace_fast(
+                <DTYPE_t*>(X.data),
+                <np.int32_t*>((<np.ndarray>(tree.children)).data),
+                <np.int32_t*>((<np.ndarray>(tree.feature)).data),
+                <np.float64_t*>((<np.ndarray>(tree.threshold)).data),
+                <np.float64_t*>((<np.ndarray>(tree.value)).data),
+                scale, k, K, n, n_features,
+                <np.float64_t*>((<np.ndarray>out).data))
 
 
 @cython.nonecheck(False)
