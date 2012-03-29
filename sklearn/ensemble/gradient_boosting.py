@@ -37,6 +37,7 @@ from ..tree._tree import MSE
 from ..tree._tree import DTYPE
 
 from ._gradient_boosting import predict_stages
+from ._gradient_boosting import predict_stage
 
 __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
@@ -363,7 +364,7 @@ class BaseGradientBoosting(BaseEnsemble):
         self.estimators_ = None
 
     def fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
-        """Fit another stage of ``n_classes`` trees to the boosting model. """
+        """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
 
@@ -404,7 +405,7 @@ class BaseGradientBoosting(BaseEnsemble):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            0, 1, ..., n_classes_-1
 
         Returns
         -------
@@ -420,7 +421,7 @@ class BaseGradientBoosting(BaseEnsemble):
                              "number of samples.")
         self.n_features = n_features
 
-        loss = LOSS_FUNCTIONS[self.loss](self.n_classes)
+        loss = LOSS_FUNCTIONS[self.loss](self.n_classes_)
 
         # store loss object for future use
         self.loss_ = loss
@@ -438,7 +439,8 @@ class BaseGradientBoosting(BaseEnsemble):
         # init predictions
         y_pred = self.init.predict(X)
 
-        self.estimators_ = np.empty((self.n_estimators, loss.K), dtype=np.object)
+        self.estimators_ = np.empty((self.n_estimators, loss.K),
+                                    dtype=np.object)
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
@@ -488,13 +490,38 @@ class BaseGradientBoosting(BaseEnsemble):
         importances = total_sum / len(self.estimators_)
         return importances
 
+    def staged_decision_function(self, X):
+        """Compute decision function for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        f : array of shape = [n_samples]
+            The decision function of the input samples. Classes are
+            ordered by arithmetical order.
+        """
+        X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
+        f = self.init.predict(X).astype(np.float64)
+
+        for i in range(self.n_estimators):
+            predict_stage(self.estimators_, i, X, self.learn_rate, f)
+            yield f
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
 
     GB builds an additive model in a
     forward stage-wise fashion; it allows for the optimization of
-    arbitrary differentiable loss functions. In each stage ``n_classes``
+    arbitrary differentiable loss functions. In each stage ``n_classes_``
     regression trees are fit on the negative gradient of the
     binomial or multinomial deviance loss function. Binary classification
     is a special case where only a single regression tree is induced.
@@ -579,7 +606,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            0, 1, ..., n_classes_-1
 
         Returns
         -------
@@ -587,7 +614,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Returns self.
         """
         self.classes_ = np.unique(y)
-        self.n_classes = len(self.classes_)
+        self.n_classes_ = len(self.classes_)
         y = np.searchsorted(self.classes_, y)
         if self.loss == 'deviance':
             self.loss = 'mdeviance' if len(self.classes_) > 2 else 'bdeviance'
@@ -605,7 +632,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
 
-        P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
+        P = np.ones((X.shape[0], self.n_classes_), dtype=np.float64)
 
         f = self.init.predict(X).astype(np.float64)
         predict_stages(self.estimators_, X, self.learn_rate, f)
@@ -736,14 +763,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            0, 1, ..., n_classes_-1
 
         Returns
         -------
         self : object
             Returns self.
         """
-        self.n_classes = 1
+        self.n_classes_ = 1
         return super(GradientBoostingRegressor, self).fit(X, y)
 
     def predict(self, X):
