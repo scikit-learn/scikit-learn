@@ -233,6 +233,33 @@ def test_check_inputs():
     assert_raises(ValueError, clf.predict, X_sparse)
 
 
+def test_check_inputs_predict():
+    """X has wrong shape """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X, y)
+
+    x = np.array([1.0, 2.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([])
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf.fit(X, np.random.rand(len(X)))
+
+    x = np.array([1.0, 2.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([])
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+
 def test_staged_predict():
     """Test whether staged decision function eventually gives
     the same prediction.
@@ -274,3 +301,17 @@ def test_serialization():
     clf = pickle.loads(serialized_clf)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
+
+
+def test_degenerate_targets():
+    """Check if we can fit even though all targets are equal. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    # classifier should raise exception
+    assert_raises(ValueError, clf.fit, X, np.ones(len(X)))
+
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf.fit(X, np.ones(len(X)))
+    clf.predict(np.random.rand(2))
+    assert_array_equal(np.ones((1,), dtype=np.float64),
+                       clf.predict(np.random.rand(2)))
