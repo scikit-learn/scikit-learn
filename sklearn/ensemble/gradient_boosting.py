@@ -514,6 +514,9 @@ class BaseGradientBoosting(BaseEnsemble):
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, call `fit` " \
                              "before `staged_decision_function`.")
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
 
         f = self.init.predict(X).astype(np.float64)
 
@@ -662,6 +665,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
 
         P = np.ones((X.shape[0], self.n_classes_), dtype=np.float64)
 
@@ -822,6 +828,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
 
         y = self.init.predict(X).astype(np.float64)
         predict_stages(self.estimators_, X, self.learn_rate, y)
