@@ -26,10 +26,10 @@ cdef void _predict_regression_tree_inplace(np.ndarray[DTYPE_t, ndim=2] X,
                                            int k,
                                            np.ndarray[np.float64_t, ndim=2] pred):
     """Predicts output for regression tree and stores it in ``pred[i, k]`` """
-    cdef int i = 0
-    cdef int n = X.shape[0]
-    cdef int node_id = 0
-    cdef int K = values.shape[1]
+    cdef Py_ssize_t i = 0
+    cdef Py_ssize_t n = X.shape[0]
+    cdef np.int32_t node_id = 0
+    cdef Py_ssize_t K = values.shape[1]
     for i in range(n):
         node_id = 0
         # While node_id not a leaf
@@ -54,12 +54,14 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 np.float64_t *pred):
     """Predicts output for regression tree and stores it in ``pred[i, k]``.
 
-    This is 5x faster than the variant.
+    This function operates directly on the data arrays of the tree
+    data structures. This is 5x faster than the variant above because
+    it allows us to avoid buffer validation.
     """
-    cdef int i = 0
-    cdef int node_id = 0
-    cdef int stride = 2
-    cdef int feature_idx
+    cdef Py_ssize_t i
+    cdef np.int32_t node_id
+    cdef np.int32_t feature_idx
+    cdef int stride = 2  # children.shape[1]
     for i in range(n):
         node_id = 0
         # While node_id not a leaf
@@ -67,9 +69,9 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                   children[(node_id * stride) + 1] != -1:
             feature_idx = feature[node_id]
             if X[(i * n_features) + feature_idx] <= threshold[node_id]:
-                node_id = <int>(children[node_id * stride])
+                node_id = children[node_id * stride]
             else:
-                node_id = <int>(children[(node_id * stride) + 1])
+                node_id = children[(node_id * stride) + 1]
         pred[(i * K) + k] += scale * values[node_id]
 
 
@@ -82,12 +84,12 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     Each estimator is scaled by ``scale`` before its prediction
     is added to ``out``.
     """
-    cdef int i
-    cdef int k
-    cdef int n_estimators = estimators.shape[0]
-    cdef int n = X.shape[0]
-    cdef int n_features = X.shape[1]
-    cdef int K = estimators.shape[1]
+    cdef Py_ssize_t i
+    cdef Py_ssize_t k
+    cdef Py_ssize_t n_estimators = estimators.shape[0]
+    cdef Py_ssize_t n = X.shape[0]
+    cdef Py_ssize_t n_features = X.shape[1]
+    cdef Py_ssize_t K = estimators.shape[1]
     cdef object tree
     for i in range(n_estimators):
         for k in range(K):
@@ -96,7 +98,9 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
             ##                                  tree.threshold, tree.value,
             ##                                  scale, k, out)
 
-            # looks weird but is necessary
+            # avoid buffer validation by casting to ndarray
+            # and get data pointer
+            # need brackets because of casting operator priority
             _predict_regression_tree_inplace_fast(
                 <DTYPE_t*>(X.data),
                 <np.int32_t*>((<np.ndarray>(tree.children)).data),
@@ -117,10 +121,10 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
     Each estimator in the stage is scaled by ``scale`` before
     its prediction is added to ``out``.
     """
-    cdef int i
-    cdef int k
-    cdef int n_estimators = estimators.shape[0]
-    cdef int K = estimators.shape[1]
+    cdef Py_ssize_t i
+    cdef Py_ssize_t k
+    cdef Py_ssize_t n_estimators = estimators.shape[0]
+    cdef Py_ssize_t K = estimators.shape[1]
     for k in range(K):
         tree = estimators[stage, k]
         _predict_regression_tree_inplace(X, tree.children, tree.feature,
