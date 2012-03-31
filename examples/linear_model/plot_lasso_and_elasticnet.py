@@ -49,7 +49,7 @@ from sklearn.linear_model import ElasticNet
 
 enet = ElasticNet(alpha=alpha, rho=0.7)
 
-y_pred_enet = enet.fit(X_train, y_train, positive_constraint=True).predict(X_test)
+y_pred_enet = enet.fit(X_train, y_train).predict(X_test)
 r2_score_enet = r2_score(y_test, y_pred_enet)
 print enet
 print "r^2 on test data : %f" % r2_score_enet
