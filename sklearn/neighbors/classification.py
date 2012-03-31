@@ -97,11 +97,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     def __init__(self, n_neighbors=5,
                  weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 warn_on_equidistant=True):
+                 warn_on_equidistant=True, p=2):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          warn_on_equidistant=warn_on_equidistant)
+                          warn_on_equidistant=warn_on_equidistant,
+                          p=p)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -201,10 +202,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     """
 
     def __init__(self, radius=1.0, weights='uniform',
-                 algorithm='auto', leaf_size=30):
+                 algorithm='auto', leaf_size=30, p=2):
         self._init_params(radius=radius,
                           algorithm=algorithm,
-                          leaf_size=leaf_size)
+                          leaf_size=leaf_size,
+                          p=p)
         self.weights = _check_weights(weights)
 
     def predict(self, X):

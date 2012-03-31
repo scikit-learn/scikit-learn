@@ -78,9 +78,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30,
-                 warn_on_equidistant=True):
+                 warn_on_equidistant=True, p=2):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          warn_on_equidistant=warn_on_equidistant)
+                          warn_on_equidistant=warn_on_equidistant,
+                          p=p)
