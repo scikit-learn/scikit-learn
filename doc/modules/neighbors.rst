@@ -8,7 +8,7 @@ Nearest Neighbors
 
 .. currentmodule:: sklearn.neighbors
 
-:mod:`sklearn.neighbors` provides functionality for unsupervised and 
+:mod:`sklearn.neighbors` provides functionality for unsupervised and
 supervised neighbors-based learning methods.  Unsupervised nearest neighbors
 is the foundation of many other learning methods,
 notably manifold learning and spectral clustering.  Supervised neighbors-based
@@ -59,7 +59,7 @@ Nearest Neighbors Classification
 Neighbors-based classification is a type of *instance-based learning* or
 *non-generalizing learning*: it does not attempt to construct a general
 internal model, but simply stores instances of the training data.
-Classification is computed from a simple majority vote of the nearest 
+Classification is computed from a simple majority vote of the nearest
 neighbors of each point: a query point is assigned the data class which
 has the most representatives within the nearest neighbors of the point.
 
@@ -74,7 +74,7 @@ the user.
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
 is the more commonly used of the two techniques.  The
 optimal choice of the value :math:`k` is highly data-dependent: in general
-a larger :math:`k` suppresses the effects of noise, but makes the 
+a larger :math:`k` suppresses the effects of noise, but makes the
 classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
@@ -128,13 +128,13 @@ learning based on the neighbors within a fixed radius :math:`r` of the
 query point, where :math:`r` is a floating-point value specified by the
 user.
 
-The basic nearest neighbors regression uses uniform weights: that is, 
+The basic nearest neighbors regression uses uniform weights: that is,
 each point in the local neighborhood contributes uniformly to the
 classification of a query point.  Under some circumstances, it can be
 advantageous to weight points such that nearby points contribute more
 to the regression than faraway points.  This can be accomplished through
 the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
-assigns equal weights to all points.  ``weights = 'distance'`` assigns 
+assigns equal weights to all points.  ``weights = 'distance'`` assigns
 weights proportional to the inverse of the distance from the query point.
 Alternatively, a user-defined function of the distance can be supplied,
 which will be used to compute the weights.
@@ -164,9 +164,9 @@ machine learning.  The most naive neighbor search implementation involves
 the brute-force computation of distances between all pairs of points in the
 dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
 as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
-competetive for small data samples.  
+competetive for small data samples.
 However, as the number of samples :math:`N` grows, the brute-force
-approach quickly becomes infeasible.  In the classes within 
+approach quickly becomes infeasible.  In the classes within
 :mod:`sklearn.neighbors`, brute-force neighbors searches are specified
 using the keyword ``algorithm = 'brute'``, and are computed using the
 routines available in :mod:`sklearn.metrics.pairwise`.
@@ -182,14 +182,14 @@ structures attempt to reduce the required number of distance calculations
 by efficiently encoding aggregate distance information for the sample.
 The basic idea is that if point :math:`A` is very distant from point
 :math:`B`, and point :math:`B` is very close to point :math:`C`,
-then we know that points :math:`A` and :math:`C` 
+then we know that points :math:`A` and :math:`C`
 are very distant, *without having to explicitly calculate their distance*.
 In this way, the computational cost of a nearest neighbors search can be
-reduced to :math:`O[D N \log(N)]` or better.  This is a significant 
+reduced to :math:`O[D N \log(N)]` or better.  This is a significant
 improvement over brute-force for large :math:`N`.
 
-An early approach to taking advantage of this aggregate information was 
-the *KD tree* data structure (short for *K-dimensional tree*), which 
+An early approach to taking advantage of this aggregate information was
+the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
 to an arbitrary number of dimensions.  The KD tree is a tree
 structure which recursively partitions the parameter space along the data
@@ -201,7 +201,7 @@ point can be determined with only :math:`O[\log(N)]` distance computations.
 Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
 neighbors searches, it becomes inefficient as :math:`D` grows very large:
 this is one manifestation of the so-called "curse of dimensionality".
-In scikit-learn, KD tree neighbors searches are specified using the 
+In scikit-learn, KD tree neighbors searches are specified using the
 keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`scipy.spatial.cKDTree`.
 
@@ -255,7 +255,7 @@ Choice of Nearest Neighbors Algorithm
 The optimal algorithm for a given dataset is a complicated choice, and
 depends on a number of factors:
 
-* number of samples :math:`N` (i.e. ``n_samples``) and dimensionality 
+* number of samples :math:`N` (i.e. ``n_samples``) and dimensionality
   :math:`D` (i.e. ``n_features``).
 
   * *Brute force* query time grows as :math:`O[D N]`
@@ -264,10 +264,10 @@ depends on a number of factors:
     to precisely characterise.  For small :math:`D` (less than 20 or so)
     the cost is approximately :math:`O[D\log(N)]`, and the KD tree
     query can be very efficient.
-    For larger :math:`D`, the cost increases to nearly `O[DN]`, and 
+    For larger :math:`D`, the cost increases to nearly `O[DN]`, and
     the overhead due to the tree
     structure can lead to queries which are slower than brute force.
-  
+
   For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
   comparable to :math:`N`, and brute force algorithms can be more efficient
   than a tree-based approach.  Both :class:`cKDTree` and :class:`BallTree`
@@ -284,7 +284,7 @@ depends on a number of factors:
   distinguished from the concept as used in "sparse" matrices.  The data
   matrix may have no zero entries, but the **structure** can still be
   "sparse" in this sense).
-  
+
   * *Brute force* query time is unchanged by data structure.
   * *Ball tree* and *KD tree* query times can be greatly influenced
     by data structure.  In general, sparser data with a smaller intrinsic
@@ -292,7 +292,7 @@ depends on a number of factors:
     internal representation is aligned with the parameter axes, it will not
     generally show as much improvement as ball tree for arbitrarily
     structured data.
-  
+
   Datasets used in machine learning tend to be very structured, and are
   very well-suited for tree-based queries.
 
@@ -341,7 +341,7 @@ leaf nodes.  The level of this switch can be specified with the parameter
   the size of the training set, queries become essentially brute force.
   A good compromise between these is ``leaf_size = 30``, the default value
   of the parameter.
-  
+
 **memory**
   As ``leaf_size`` increases, the memory required to store a tree structure
   decreases.  This is especially important in the case of ball tree, which
@@ -352,11 +352,11 @@ leaf nodes.  The level of this switch can be specified with the parameter
 ``leaf_size`` is not referenced for brute force queries.
 
 
-Nearest Centroids Classifier
-============================
+Nearest Centroid Classifier
+===========================
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
-each class by the centroid (mean) of its members. In effect, this makes it
+each class by the centroid of its members. In effect, this makes it
 similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
@@ -377,18 +377,18 @@ methods that do not make this assumption. Usage of the default
     [1]
 
 
-Nearest Shrunken Centroids
---------------------------
+Nearest Shrunken Centroid
+-------------------------
 
-The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter, 
+The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
 of each feature for each centroid is divided by the within-class variance of
 that feature. The feature values are then reduced by `shrink_threshold`. Most
-notably, if this causes a particular feature value crosses zero, it is set
-to zero. In effect, this removes the feature from affecting the classification,
-removing noisy features.
+notably, if a particular feature value crosses zero, it is set
+to zero. In effect, this removes the feature from affecting the classification.
+This is useful, for example, for removing noisy features.
 
-In this example, using a small shrink threshold of increases the accuracy of
+In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
 .. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_1.png
