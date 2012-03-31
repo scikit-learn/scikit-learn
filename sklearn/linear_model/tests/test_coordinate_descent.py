@@ -245,12 +245,12 @@ def test_lasso_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    lasso = Lasso(alpha=0.1, max_iter=1000)
-    lasso.fit(X, y, positive_constraint=True)
+    lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
+    lasso.fit(X, y)
     assert_true(min(lasso.coef_) >= 0)
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True)
-    lasso.fit(X, y, positive_constraint=True)
+    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
+    lasso.fit(X, y)
     assert_true(min(lasso.coef_) >= 0)
 
 
@@ -258,12 +258,12 @@ def test_enet_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000)
-    enet.fit(X, y, positive_constraint=True)
+    enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
+    enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, precompute=True)
-    enet.fit(X, y, positive_constraint=True)
+    enet = ElasticNet(alpha=0.1, max_iter=1000, precompute=True, positive=True)
+    enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
 
 if __name__ == '__main__':

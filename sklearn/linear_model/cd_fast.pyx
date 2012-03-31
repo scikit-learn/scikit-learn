@@ -42,7 +42,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive_constraint=False):
+                            int max_iter, double tol, bool positive=False):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -103,7 +103,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                        <DOUBLE*>R.data, 1)
 
 
-            if tmp >= 0 or not positive_constraint:
+            if positive and tmp < 0 :
+                w[ii] = 0.0
+            else:
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
@@ -155,7 +157,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] Q,
                             np.ndarray[DOUBLE, ndim=1] q,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive_constraint=False):
+                            int max_iter, double tol, bool positive=False):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -211,7 +213,9 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
 
             tmp = q[ii] - H[ii]
             
-            if tmp >= 0 or not positive_constraint:
+            if positive and tmp < 0 :
+                w[ii] = 0.0
+            else:
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (Q[ii,ii] + beta)
 
