@@ -84,6 +84,9 @@ class ElasticNet(LinearModel):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    positive: bool, optional
+        When set to True, forces the coefficients to be positive.
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -91,7 +94,7 @@ class ElasticNet(LinearModel):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -102,8 +105,9 @@ class ElasticNet(LinearModel):
         self.copy_X = copy_X
         self.tol = tol
         self.warm_start = warm_start
+        self.positive = positive
 
-    def fit(self, X, y, Xy=None, coef_init=None, positive_Constraint=False):
+    def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -117,8 +121,6 @@ class ElasticNet(LinearModel):
             only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
-        positive_Constraint: bool, optional
-            When set to True, forces the coefficients to be positive.
 
         Notes
         -----
@@ -172,14 +174,14 @@ class ElasticNet(LinearModel):
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
                                                 X, y, self.max_iter, self.tol,
-                                                positive_Constraint)
+                                                self.positive)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
                                 beta, Gram, Xy, y, self.max_iter, self.tol,
-                                 positive_Constraint)
+                                 self.positive)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -238,6 +240,9 @@ class Lasso(ElasticNet):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    positive: bool, optional
+        When set to True, forces the coefficients to be positive.
+
 
     Attributes
     ----------
@@ -278,11 +283,12 @@ class Lasso(ElasticNet):
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
-                 tol=1e-4, warm_start=False):
+                 tol=1e-4, warm_start=False, positive=False):
         super(Lasso, self).__init__(alpha=alpha, rho=1.0,
                             fit_intercept=fit_intercept, normalize=normalize,
                             precompute=precompute, copy_X=copy_X,
-                            max_iter=max_iter, tol=tol, warm_start=warm_start)
+                            max_iter=max_iter, tol=tol, warm_start=warm_start,
+                            positive=positive)
 
 
 ###############################################################################
