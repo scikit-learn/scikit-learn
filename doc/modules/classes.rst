@@ -782,6 +782,7 @@ Pairwise metrics
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
    neighbors.BallTree
+   neighbors.NearestCentroid
 
 .. autosummary::
    :toctree: generated/
