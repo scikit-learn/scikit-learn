@@ -118,7 +118,7 @@ class ElasticNet(LinearModel):
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
         positive_Constraint: bool, optional
-            When set to True, constrains the coefficients to be positive.
+            When set to True, forces the coefficients to be positive.
 
         Notes
         -----
