@@ -43,7 +43,7 @@ data in *folds* that we use for training and testing::
 
 .. currentmodule:: sklearn.cross_validation
 
-This is called a :class:`KFold` cross validation 
+This is called a :class:`KFold` cross validation
 
 .. _cv_generators_tut:
 
@@ -64,7 +64,7 @@ of indices for this purpose::
     Train: [0 1 4 5] | test: [2 3]
     Train: [0 1 2 3] | test: [4 5]
 
-The cross-validation can then be implemented easily:: 
+The cross-validation can then be implemented easily::
 
     >>> kfold = cross_validation.KFold(len(X_digits), k=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
@@ -85,7 +85,7 @@ of the computer.
 
 .. list-table::
 
-   * 
+   *
 
     - :class:`KFold` **(n, k)**
 
@@ -95,7 +95,7 @@ of the computer.
 
     - :class:`LeaveOneLabelOut` **(labels)**
 
-   * 
+   *
 
     - Split it K folds, train on K-1, test on left-out
 
@@ -116,11 +116,11 @@ of the computer.
    :class: green
 
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an RBF kernel as a function of parameter `C` (use a 
+   estimator with an RBF kernel as a function of parameter `C` (use a
    logarithmic grid of points, from `1` to `10`).
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
-       :lines: 13-23 
+       :lines: 13-23
 
    Solution: :download:`../../auto_examples/exercises/plot_cv_digits.py`
 
@@ -141,7 +141,7 @@ estimator during the construction and exposes an estimator API::
 
     >>> from sklearn.grid_search import GridSearchCV
     >>> gammas = np.logspace(-6, -1, 10)
-    >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas), 
+    >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas),
     ...                    n_jobs=-1)
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
@@ -165,7 +165,7 @@ a stratified 3-fold.
 
         >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
 	array([ 0.98497496,  0.97829716,  0.97996661])
-        
+
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set `gamma`, the other one by
     `cross_val_score` to measure the prediction performance of the
@@ -198,8 +198,8 @@ automatically by cross-validation::
         n_alphas=100, normalize=False, precompute='auto', tol=0.0001,
         verbose=False)
     >>> # The estimator chose automatically its lambda:
-    >>> lasso.alpha
-    0.013180196198701137
+    >>> lasso.alpha # doctest: +ELLIPSIS
+    0.01318...
 
 These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
