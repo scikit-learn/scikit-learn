@@ -70,7 +70,7 @@ Functions
    :template: class.rst
 
    covariance.EmpiricalCovariance
-   covariance.EllipticEnvelop
+   covariance.EllipticEnvelope
    covariance.GraphLasso
    covariance.GraphLassoCV
    covariance.LedoitWolf

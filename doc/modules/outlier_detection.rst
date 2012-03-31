@@ -95,7 +95,7 @@ distributed). From this assumption, we generaly try to define the
 observations which stand far enough from the fit shape. 
 
 The scikit-learn provides an object
-:class:`covariance.EllipticEnvelop` that fits a robust covariance
+:class:`covariance.EllipticEnvelope` that fits a robust covariance
 estimate to the data, and thus fits an ellipse to the central data
 points, ignoring points outside the central mode.
 
@@ -134,7 +134,7 @@ inlying data is very challenging, and a One-class SVM gives useful
 results in these situations.
 
 The examples below illustrate how the performance of the
-:class:`coavariance.EllipticEnvelop` degrades as the data is less and
+:class:`covariance.EllipticEnvelope` degrades as the data is less and
 less unimodal.  :class:`svm.OneClassSVM` works better on data with
 multiple modes.
 
@@ -159,13 +159,13 @@ multiple modes.
         rotational symmetry of the inlier population. In addition, it
         fits a bit the outlyers present in the training set. On the
         opposite, the decision rule based on fitting an
-        :class:`covariance.EllipticEnvelop` learns an ellipse, which
+        :class:`covariance.EllipticEnvelope` learns an ellipse, which
         fits well the inlier distribution.
       - |outlier1| 
 
    * 
       - As the inlier distribution becomes bimodal, the
-        :class:`covariance.EllipticEnvelop` does not fit well the
+        :class:`covariance.EllipticEnvelope` does not fit well the
         inliers. However, we can see that the :class:`svm.OneClassSVM`
         tends to overfit: because it has not model of inliers, it
         interprets a region where, by chance some outliers are
@@ -175,7 +175,7 @@ multiple modes.
    * 
       - If the inlier distribution is strongly non Gaussian, the
         :class:`svm.OneClassSVM` is able to recover a reasonable
-        approximation, whereas the :class:`covariance.EllipticEnvelop`
+        approximation, whereas the :class:`covariance.EllipticEnvelope`
         completely fails.
       - |outlier3|
 
