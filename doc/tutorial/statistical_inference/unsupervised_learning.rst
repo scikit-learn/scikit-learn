@@ -154,8 +154,10 @@ Hierarchical agglomerative clustering: Ward
 A :ref:`hierarchical_clustering` method is a type of cluster analysis 
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
+
   * **Agglomerative** - `bottom-up` approaches, or
   * **Divisive** - `top-down` approaches.
+
 For estimating a large number of clusters, top-down approaches are both
 statisticaly ill-posed, and slow - due to it starting with all observations
 as one cluster, which it splits recursively. Agglomerative 

@@ -58,8 +58,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     When used for text classification with tf–idf vectors, this classifier is
     also known as the Rocchio classifier.
 
-    Reference
-    ---------
+    References
+    ----------
     Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
     multiple cancer types by shrunken centroids of gene expression. Proceedings
     of the National Academy of Sciences of the United States of America,
@@ -144,11 +144,11 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
 
-        Note
-        ----
+        Notes
+        -----
         If the metric constructor parameter is "precomputed", X is assumed to
         be the distance matrix between the data to be predicted and
-        self.centroids_.
+        ``self.centroids_``.
         """
         X = atleast2d_or_csr(X)
         if not hasattr(self, "centroids_"):
