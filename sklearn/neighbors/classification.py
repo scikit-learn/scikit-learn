@@ -68,6 +68,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         ordering of the training data.
         If the fit method is ``'kd_tree'``, no warnings will be generated.
 
+    p: integer, optional (default = 2)
+        Parameter for the Minkowski metric from sklearn.metrics.pairwise.pairwise_distances.
+        When p = 1, this is equivalent to using manhattan_distance,
+        and euclidean_distance for p = 2. For arbitrary p,
+        minkowski_distance is used.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -174,6 +180,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
+        
+    p: integer, optional (default = 2)
+        Parameter for the Minkowski metric from sklearn.metrics.pairwise.pairwise_distances.
+        When p = 1, this is equivalent to using manhattan_distance,
+        and euclidean_distance for p = 2. For arbitrary p,
+        minkowski_distance is used.
 
     Examples
     --------

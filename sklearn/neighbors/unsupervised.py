@@ -44,6 +44,12 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         different labels, then the result will be dependent on the
         ordering of the training data.
         If the fit method is ``'kd_tree'``, no warnings will be generated.
+        
+    p: integer, optional (default = 2)
+        Parameter for the Minkowski metric from sklearn.metrics.pairwise.pairwise_distances.
+        When p = 1, this is equivalent to using manhattan_distance,
+        and euclidean_distance for p = 2. For arbitrary p,
+        minkowski_distance is used.
 
     Examples
     --------
