@@ -9,6 +9,7 @@ from numpy.testing import assert_equal
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
+from sklearn.metrics.pairwise import pairwise_distances
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -44,6 +45,13 @@ def test_classification_toy():
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T_csr), true_result)
+
+
+def test_precomputed():
+    clf = NearestCentroid(metric="precomputed")
+    clf.fit(X, y)
+    S = pairwise_distances(T, clf.centroids_)
+    assert_array_equal(clf.predict(S), true_result)
 
 
 def test_iris():
