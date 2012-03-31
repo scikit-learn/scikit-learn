@@ -103,7 +103,7 @@ class ElasticNet(LinearModel):
         self.tol = tol
         self.warm_start = warm_start
 
-    def fit(self, X, y, Xy=None, coef_init=None):
+    def fit(self, X, y, Xy=None, coef_init=None, positive_Constraint=False):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -117,6 +117,8 @@ class ElasticNet(LinearModel):
             only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
+        positive_Constraint: bool, optional
+            When set to True, constrains the coefficients to be positive.
 
         Notes
         -----
@@ -169,14 +171,15 @@ class ElasticNet(LinearModel):
         if Gram is None:
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                                                    X, y, self.max_iter,
-                                                    self.tol)
+                                                X, y, self.max_iter, self.tol,
+                                                positive_Constraint)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                                beta, Gram, Xy, y, self.max_iter, self.tol)
+                                beta, Gram, Xy, y, self.max_iter, self.tol,
+                                 positive_Constraint)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
