@@ -241,6 +241,18 @@ def test_lasso_alpha_warning():
         assert_true(len(w) > 0)  # warnings should be raised
 
 
+def test_lasso_positive_constraint():
+    X = [[-1], [0], [1]]
+    y = [1, 0, -1]       # just a straight line with negative slope
+
+    lasso = Lasso(alpha=0.1, max_iter=1000)
+    lasso.fit(X, y, positive_Constraint=True)
+    assert_true(min(lasso.coef_) >= 0)
+
+    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True)
+    lasso.fit(X, y, positive_Constraint=True)
+    assert_true(min(lasso.coef_) >= 0)
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
