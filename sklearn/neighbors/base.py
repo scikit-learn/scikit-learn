@@ -208,11 +208,13 @@ class KNeighborsMixin(object):
             if self.p == 1:
                 dist = pairwise_distances(X, self._fit_X, 'manhattan')
             elif self.p == 2:
-                dist = pairwise_distances(X, self._fit_X, 'euclidean', squared=False)
+                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+                                          squared=False)
             elif self.p == np.inf:
                 dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
-                dist = pairwise_distances(X, self._fit_X, 'minkowski', p=self.p)
+                dist = pairwise_distances(X, self._fit_X, 'minkowski',
+                                          p=self.p)
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             if self.warn_on_equidistant and n_neighbors < self._fit_X.shape[0]:
@@ -379,11 +381,13 @@ class RadiusNeighborsMixin(object):
             if self.p == 1:
                 dist = pairwise_distances(X, self._fit_X, 'manhattan')
             elif self.p == 2:
-                dist = pairwise_distances(X, self._fit_X, 'euclidean', squared=False)
+                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+                                          squared=False)
             elif self.p == np.inf:
                 dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
-                dist = pairwise_distances(X, self._fit_X, 'minkowski', p=self.p)
+                dist = pairwise_distances(X, self._fit_X, 'minkowski',
+                                          p=self.p)
 
             neigh_ind = [np.where(d < radius)[0] for d in dist]
 

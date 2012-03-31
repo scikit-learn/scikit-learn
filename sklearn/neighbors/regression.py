@@ -71,10 +71,10 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         If the fit method is ``'kd_tree'``, no warnings will be generated.
 
     p: integer, optional (default = 2)
-        Parameter for the Minkowski metric from sklearn.metrics.pairwise.pairwise_distances.
-        When p = 1, this is equivalent to using manhattan_distance,
-        and euclidean_distance for p = 2. For arbitrary p,
-        minkowski_distance is used.
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance, and euclidean_distance for
+        p = 2. For arbitrary p, minkowski_distance is used.
 
     Examples
     --------
@@ -103,7 +103,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, weights='uniform',
-                 algorithm='auto', leaf_size=30, warn_on_equidistant=True, p=2):
+                 algorithm='auto', leaf_size=30, warn_on_equidistant=True,
+                 p=2):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
@@ -183,12 +184,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
-        
+
     p: integer, optional (default = 2)
-        Parameter for the Minkowski metric from sklearn.metrics.pairwise.pairwise_distances.
-        When p = 1, this is equivalent to using manhattan_distance,
-        and euclidean_distance for p = 2. For arbitrary p,
-        minkowski_distance is used.
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance, and euclidean_distance for
+        p = 2. For arbitrary p, minkowski_distance is used.
 
     Examples
     --------
