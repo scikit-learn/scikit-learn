@@ -27,10 +27,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.calculate_distance for its
+        the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
     shrink_threshold : float, optional
         Threshold for shrinking centroids to remove features.
 
@@ -145,6 +143,12 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array, shape = [n_samples]
+
+        Note
+        ----
+        If the metric constructor parameter is "precomputed", X is assumed to
+        be the distance matrix between the data to be predicted and
+        self.centroids_.
         """
         X = atleast2d_or_csr(X)
         if not hasattr(self, "centroids_"):
