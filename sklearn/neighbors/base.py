@@ -209,6 +209,8 @@ class KNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X, 'manhattan')
             elif self.p == 2:
                 dist = pairwise_distances(X, self._fit_X, 'euclidean', squared=False)
+            elif self.p == np.inf:
+                dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
                 dist = pairwise_distances(X, self._fit_X, 'minkowski', p=self.p)
             # XXX: should be implemented with a partial sort
@@ -378,6 +380,8 @@ class RadiusNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X, 'manhattan')
             elif self.p == 2:
                 dist = pairwise_distances(X, self._fit_X, 'euclidean', squared=False)
+            elif self.p == np.inf:
+                dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
                 dist = pairwise_distances(X, self._fit_X, 'minkowski', p=self.p)
 

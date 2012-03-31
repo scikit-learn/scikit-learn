@@ -19,7 +19,7 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
-P = (1, 2, 3, 4)
+P = (1, 2, 3, 4, np.inf)
 
 
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
@@ -141,6 +141,7 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
                 j = d.argsort()
                 d[:] = d[j]
                 i[:] = i[j]
+                i1[:] = i1[j]
             results.append((dist, ind))
 
             assert_array_almost_equal(np.concatenate(list(ind)),
