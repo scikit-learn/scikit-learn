@@ -60,7 +60,6 @@ def test_pairwise_distances():
     S = np.dot(X, X.T)
     S2 = pairwise_distances(S, metric="precomputed")
     assert_true(S is S2)
-    assert_raises(ValueError, pairwise_distances, X, None, "precomputed")
     # Test with sparse X and Y
     X_sparse = csr_matrix(X)
     Y_sparse = csr_matrix(Y)
