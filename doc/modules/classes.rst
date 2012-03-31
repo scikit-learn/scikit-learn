@@ -178,6 +178,7 @@ Samples generator
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
+   datasets.make_hastie_10_2
    datasets.make_low_rank_matrix
    datasets.make_moons
    datasets.make_multilabel_classification

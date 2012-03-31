@@ -14,7 +14,7 @@ Changelog
 
    - Merged dense and sparse implementations of :ref:`sgd` module and
      exposed utility extension types for sequential
-     datasets :ref:`seq_dataset` and weight vectors :ref:`weight_vector`
+     datasets `seq_dataset` and weight vectors `weight_vector`
      by `Peter Prettenhofer`_.
 
    - Added `partial_fit` (support for online/minibatch learning) and
@@ -76,7 +76,7 @@ Changelog
 
    - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
      a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
-     by `Yannick Schwartz`_.
+     by `Yannick Schwartz`.
 
    - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
       ``shrink_threshold`` parameter, which implements shrunken centroid
