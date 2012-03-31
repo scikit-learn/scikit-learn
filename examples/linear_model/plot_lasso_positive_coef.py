@@ -12,18 +12,15 @@ import pylab as pl
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
 from sklearn.datasets.samples_generator import make_regression
+from sklearn.cross_validation import train_test_split
 
 ###############################################################################
 # generate some sparse data to play with
-n_samples = 100
-n_features = 1000
 
-X, y, coef = make_regression(n_samples=n_samples, n_features=n_features,
-                     coef=True, random_state=0)
+X, y, coef = make_regression(n_samples=100, n_features=1000, noise=0.5,
+                     coef=True, random_state=3)
 
-X_train, y_train = X[:n_samples / 2], y[:n_samples / 2]
-X_test, y_test = X[n_samples / 2:], y[n_samples / 2:]
-
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 ###############################################################################
 # Lasso
