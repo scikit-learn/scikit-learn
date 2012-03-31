@@ -207,6 +207,7 @@ def _fix_connectivity(X, connectivity, n_components, labels):
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
 
+
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
 

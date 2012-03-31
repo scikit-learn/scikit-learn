@@ -18,6 +18,7 @@ from . import MinCovDet
 from ..base import ClassifierMixin
 from ..utils import deprecated
 
+
 class OutlierDetectionMixin(ClassifierMixin):
     """Set of methods for outliers detection with covariance estimators.
 
@@ -118,7 +119,7 @@ class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
         Estimated robust covariance matrix
 
     `precision_`: array-like, shape (n_features, n_features)
-        Estimated pseudo inverse matrix. 
+        Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
     `support_`: array-like, shape (n_samples,)

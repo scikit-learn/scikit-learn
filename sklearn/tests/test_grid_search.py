@@ -85,7 +85,7 @@ def test_grid_search_bad_param_grid():
     clf = SVC()
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
-    param_dict = {"C": np.ones(6).reshape(3,2)}
+    param_dict = {"C": np.ones(6).reshape(3, 2)}
     clf = SVC()
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 

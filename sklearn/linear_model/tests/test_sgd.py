@@ -313,8 +313,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         X = [[1, 0], [0, 1]]
         y = [0, 1]
-        clf_weighted = self.factory(alpha=0.1, n_iter=1000, class_weight=
-                {0: 0.5, 1: 0.5})
+        clf_weighted = self.factory(alpha=0.1, n_iter=1000,
+                class_weight={0: 0.5, 1: 0.5})
         clf_weighted.fit(X, y)
 
         # should be similar up to some epsilon due to learning rate schedule
