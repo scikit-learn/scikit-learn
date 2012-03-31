@@ -95,7 +95,7 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train)
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=5,
+    KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=5, p=2,
                warn_on_equidistant=True, weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
