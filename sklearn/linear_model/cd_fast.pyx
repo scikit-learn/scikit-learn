@@ -8,6 +8,7 @@ cimport numpy as np
 import numpy as np
 import numpy.linalg as linalg
 cimport cython
+from cpython cimport bool
 import warnings
 
 cdef extern from "math.h":
@@ -41,7 +42,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol):
+                            int max_iter, double tol, bool positive_Constraint=False):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -100,8 +101,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             tmp = ddot(n_samples,
                        <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                        <DOUBLE*>R.data, 1)
+            
+#            if tmp < 0:
+#                if positive:
+#                    continue
 
-            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+            if tmp >= 0 or not positive_Constraint:
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
             if w[ii] != 0.0:
@@ -152,7 +158,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] Q,
                             np.ndarray[DOUBLE, ndim=1] q,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol):
+                            int max_iter, double tol, bool positive_Constraint=False):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -207,8 +213,9 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                       <DOUBLE*>H.data, 1)
 
             tmp = q[ii] - H[ii]
-
-            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+            
+            if tmp >= 0 or not positive_Constraint:
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (Q[ii,ii] + beta)
 
             if w[ii] != 0.0:
