@@ -101,10 +101,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             tmp = ddot(n_samples,
                        <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                        <DOUBLE*>R.data, 1)
-            
-#            if tmp < 0:
-#                if positive:
-#                    continue
+
 
             if tmp >= 0 or not positive_Constraint:
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
