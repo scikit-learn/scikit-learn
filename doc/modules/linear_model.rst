@@ -182,7 +182,8 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
+       normalize=False, positive=False, precompute='auto', tol=0.0001,
+       warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 

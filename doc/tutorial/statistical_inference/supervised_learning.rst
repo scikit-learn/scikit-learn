@@ -329,14 +329,13 @@ application of Occam's razor: `prefer simpler models`.
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, precompute='auto', tol=0.0001,
-       warm_start=False)
+       max_iter=1000, normalize=False, positive=False, precompute='auto',
+       tol=0.0001, warm_start=False)
     >>> print regr.coef_   
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 
 .. topic:: **Different algorithms for a same problem**
-
     Different algorithms can be used to solve the same mathematical
     problem. For instance the `Lasso` object in the `scikit-learn`
     solves the lasso regression using a 
