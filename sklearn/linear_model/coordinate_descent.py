@@ -173,15 +173,13 @@ class ElasticNet(LinearModel):
         if Gram is None:
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                                                X, y, self.max_iter, self.tol,
-                                                self.positive)
+                            X, y, self.max_iter, self.tol, self.positive)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
             self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                                beta, Gram, Xy, y, self.max_iter, self.tol,
-                                 self.positive)
+                    beta, Gram, Xy, y, self.max_iter, self.tol, self.positive)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -258,7 +256,8 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
+       normalize=False, positive=False, precompute='auto', tol=0.0001,
+        warm_start=False)
     >>> print clf.coef_
     [ 0.85  0.  ]
     >>> print clf.intercept_
