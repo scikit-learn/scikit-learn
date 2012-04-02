@@ -95,8 +95,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 feature_names.add(f)
 
         # sort the feature names to define the mapping
-        feature_names = list(feature_names)
-        feature_names.sort()
+        feature_names = sorted(feature_names)
         self.vocabulary_ = dict((f, i) for i, f in enumerate(feature_names))
         self.feature_names_ = feature_names
 
