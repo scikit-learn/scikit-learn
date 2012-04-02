@@ -11,31 +11,88 @@ The :mod:`sklearn.feature_extraction` module can be used to extract
 features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
+.. _dict_feature_extraction:
 
 Loading features from dicts
 ===========================
 
-The class :class:`DictVectorizer` can be used to convert feature arrays
-represented as lists of standard Python ``dict`` objects to the NumPy/SciPy
-representation used by scikit-learn estimators.
+The class :class:`DictVectorizer` can be used to convert feature
+arrays represented as lists of standard Python ``dict`` objects to the
+NumPy/SciPy representation used by scikit-learn estimators.
 
-While not particularly fast to process, Python's ``dict`` has the advantages
-of being convenient to use, being sparse (absent features need not be
-stored) and storing feature names in addition to values.
+While not particularly fast to process, Python's ``dict`` has the
+advantages of being convenient to use, being sparse (absent features
+need not be stored) and storing feature names in addition to values.
 
-``DictVectorizer`` implements what is called one-of-K or "one-hot" coding for
-categorical (aka nominal, discrete) features. For a dictionary such as::
+:class:`DictVectorizer` implements what is called one-of-K or "one-hot"
+coding for categorical (aka nominal, discrete) features. Categorical
+features are "attribute-value" pairs where the value is restricted
+to a list of discrete of possibilities without ordering (e.g. topic
+identifiers, types of objects, tags, names...).
 
-    {"word-2": "guitar",
-     "pos-2": "NN",
-     "word-1": "and",
-     "pos-1": "CC",
-     "word+1": "player",
-     "pos+1": "NN",
-     "word+2": "stand",
-     "pos+2": "VB"}
+In the following, "city" is a categorical attribute while "temperature"
+is a traditional numerical feature::
 
-it will construct new, binary features ``"word-2=guitar"``, ``"pos-2=NN"``, etc.
+  >>> measurements = [
+  ...     {'city': 'Dubai', 'temperature': 33.},
+  ...     {'city': 'London', 'temperature': 12.},
+  ...     {'city': 'San Fransisco', 'temperature': 18.},
+  ... ]
+
+  >>> from sklearn.feature_extraction import DictVectorizer
+  >>> vec = DictVectorizer()
+
+  >>> vec.fit_transform(measurements).toarray()
+  array([[  1.,   0.,   0.,  33.],
+         [  0.,   1.,   0.,  12.],
+         [  0.,   0.,   1.,  18.]])
+
+  >>> vec.get_feature_names()
+  ['city=Dubai', 'city=London', 'city=San Fransisco', 'temperature']
+
+:class:`DictVectorizer` is also a useful representation transformation
+for training sequence classifiers in Natural Language Processing models
+that typically work by extracting feature windows around a particular
+word of interest.
+
+For example, suppose that we have a first algorithm that extracts Part of
+Speech (PoS) tags that we want to use as complementary tags for training
+a sequence classifier (e.g. a chunker). The following dict could be
+such a window of feature extracted around the word 'sat' in the sentence
+'The cat sat on the mat.'::
+
+  >>> pos_window = [
+  ...     {
+  ...         'word-2': 'the',
+  ...         'pos-2': 'DT',
+  ...         'word-1': 'cat',
+  ...         'pos-1': 'NN',
+  ...         'word+1': 'on',
+  ...         'pos+1': 'PP',
+  ...     },
+  ...     # in a real application one would extract many such dictionaries
+  ... ]
+
+This description can be vectorized into a sparse 2 dimensional matrix
+suitable for feeding into a classifier (maybe after being piped into a
+:class:`text.TfidfTransformer` for normalization)::
+
+  >>> vec = DictVectorizer()
+  >>> pos_vectorized = vec.fit_transform(pos_window)
+  >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
+  <1x6 sparse matrix of type '<type 'numpy.float64'>'
+      with 6 stored elements in COOrdinate format>
+  >>> pos_vectorized.toarray()
+  array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
+  >>> vec.get_feature_names()
+  ['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat', 'word-2=the']
+
+As you can imagine, if one extracts such a context around each individual
+word of a corpus of documents the resulting matrix will be very wide
+(many one-hot-features) with most of them being valued to zero most
+of the time. So as to make the resulting data structure able to fit in
+memory the ``DictVectorizer`` class uses a ``scipy.sparse`` matrix by
+default instead of a ``numpy.ndarray``.
 
 
 .. _text_feature_extraction:
