@@ -1,10 +1,13 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD-style.
 
+from random import Random
 import numpy as np
 import scipy.sparse as sp
 
-from nose.tools import assert_equal, assert_true, assert_false
+from nose.tools import assert_equal
+from nose.tools import assert_true
+from nose.tools import assert_false
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import DictVectorizer
@@ -72,3 +75,18 @@ def test_unseen_features():
     X = v.transform({"push the pram a lot": 2})
 
     assert_array_equal(X, np.zeros((1, 2)))
+
+
+def test_deterministic_vocabulary():
+    # Generate equal dictionaries with different memory layouts
+    items = [("%03d" % i, i) for i in range(1000)]
+    rng = Random(42)
+    d_sorted = dict(items)
+    rng.shuffle(items)
+    d_shuffled = dict(items)
+
+    # check that the memory layout does not impact the resulting vocabulary
+    v_1 = DictVectorizer().fit([d_sorted])
+    v_2 = DictVectorizer().fit([d_shuffled])
+
+    assert_equal(v_1.vocabulary_, v_2.vocabulary_)
