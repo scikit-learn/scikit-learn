@@ -97,7 +97,9 @@ class LossFunction(object):
     Attributes
     ----------
     K : int
-        The number of classes; 1 for regression.
+        The number of regression trees to be induced;
+        1 for regression and binary classification;
+        ``n_classes`` for multi-class classification.
     """
     __metaclass__ = ABCMeta
 
@@ -518,11 +520,11 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("X.shape[1] should be %d, not %d." %
                              (self.n_features, X.shape[1]))
 
-        f = self.init.predict(X).astype(np.float64)
+        score = self.init.predict(X).astype(np.float64)
 
         for i in range(self.n_estimators):
-            predict_stage(self.estimators_, i, X, self.learn_rate, f)
-            yield f
+            predict_stage(self.estimators_, i, X, self.learn_rate, score)
+            yield score
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
@@ -643,8 +645,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        P = self.predict_proba(X)
-        return self.classes_.take(np.argmax(P, axis=1), axis=0)
+        probas = self.predict_proba(X)
+        return self.classes_.take(np.argmax(probas, axis=1), axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -669,17 +671,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             raise ValueError("X.shape[1] should be %d, not %d." %
                              (self.n_features, X.shape[1]))
 
-        P = np.ones((X.shape[0], self.n_classes_), dtype=np.float64)
+        proba = np.ones((X.shape[0], self.n_classes_), dtype=np.float64)
 
-        f = self.init.predict(X).astype(np.float64)
-        predict_stages(self.estimators_, X, self.learn_rate, f)
+        score = self.init.predict(X).astype(np.float64)
+        predict_stages(self.estimators_, X, self.learn_rate, score)
 
         if not self.loss_.is_multi_class:
-            P[:, 1] = 1.0 / (1.0 + np.exp(-f.ravel()))
-            P[:, 0] -= P[:, 1]
+            proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+            proba[:, 0] -= proba[:, 1]
         else:
-            P = np.exp(f) / np.sum(np.exp(f), axis=1)[:, np.newaxis]
-        return P
+            proba = np.exp(score) / np.sum(np.exp(score), axis=1)[:, np.newaxis]
+        return proba
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
