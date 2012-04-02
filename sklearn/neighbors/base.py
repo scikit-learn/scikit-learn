@@ -209,7 +209,7 @@ class KNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X, 'manhattan')
             elif self.p == 2:
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          squared=False)
+                                          squared=True)
             elif self.p == np.inf:
                 dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
@@ -226,7 +226,10 @@ class KNeighborsMixin(object):
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
-                return dist[j, neigh_ind], neigh_ind
+                if self.p == 2:
+                    return np.sqrt(dist[j, neigh_ind]), neigh_ind
+                else:
+                    return dist[j, neigh_ind], neigh_ind
             else:
                 return neigh_ind
         elif self._fit_method == 'ball_tree':
@@ -382,7 +385,8 @@ class RadiusNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X, 'manhattan')
             elif self.p == 2:
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          squared=False)
+                                          squared=True)
+                radius *= radius
             elif self.p == np.inf:
                 dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
@@ -402,9 +406,14 @@ class RadiusNeighborsMixin(object):
                 dtype_F = object
 
             if return_distance:
-                dist = np.array([d[neigh_ind[i]] \
-                                     for i, d in enumerate(dist)],
-                                dtype=dtype_F)
+                if self.p == 2:
+                    dist = np.array([np.sqrt(d[neigh_ind[i]]) \
+                                        for i, d in enumerate(dist)],
+                                    dtype=dtype_F)
+                else:
+                    dist = np.array([d[neigh_ind[i]] \
+                                         for i, d in enumerate(dist)],
+                                    dtype=dtype_F)
                 return dist, neigh_ind
             else:
                 return neigh_ind
