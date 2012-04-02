@@ -31,11 +31,13 @@ from ..utils import check_random_state
 
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
-from ..tree._tree import _predict_regression_tree_inplace as _tree_predict
 from ..tree._tree import _random_sample_mask
 from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
 from ..tree._tree import DTYPE
+
+from ._gradient_boosting import predict_stages
+from ._gradient_boosting import predict_stage
 
 __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
@@ -95,7 +97,9 @@ class LossFunction(object):
     Attributes
     ----------
     K : int
-        The number of classes; 1 for regression.
+        The number of regression trees to be induced;
+        1 for regression and binary classification;
+        ``n_classes`` for multi-class classification.
     """
     __metaclass__ = ABCMeta
 
@@ -359,12 +363,11 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.random_state = check_random_state(random_state)
 
-        self.estimators_ = []
+        self.estimators_ = None
 
-    def fit_stage(self, X, X_argsorted, y, y_pred, sample_mask):
-        """Fit another stage of ``n_classes`` trees to the boosting model. """
+    def fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
+        """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
-        self.estimators_.append([])
         original_y = y
 
         for k in range(loss.K):
@@ -386,7 +389,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                k=k)
 
             # add tree to ensemble
-            self.estimators_[-1].append(tree)
+            self.estimators_[i, k] = tree
 
         return y_pred
 
@@ -404,7 +407,7 @@ class BaseGradientBoosting(BaseEnsemble):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            0, 1, ..., n_classes_-1
 
         Returns
         -------
@@ -420,7 +423,7 @@ class BaseGradientBoosting(BaseEnsemble):
                              "number of samples.")
         self.n_features = n_features
 
-        loss = LOSS_FUNCTIONS[self.loss](self.n_classes)
+        loss = LOSS_FUNCTIONS[self.loss](self.n_classes_)
 
         # store loss object for future use
         self.loss_ = loss
@@ -438,7 +441,8 @@ class BaseGradientBoosting(BaseEnsemble):
         # init predictions
         y_pred = self.init.predict(X)
 
-        self.estimators_ = []
+        self.estimators_ = np.empty((self.n_estimators, loss.K),
+                                    dtype=np.object)
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
@@ -456,7 +460,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                   self.random_state)
 
             # fit next stage of trees
-            y_pred = self.fit_stage(X, X_argsorted, y, y_pred, sample_mask)
+            y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
@@ -470,41 +474,13 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return self
 
-    def _predict(self, X, old_pred=None, stage_index=-1):
-        """Predict targets with current model. Re-uses predictions
-        from previous iteration if available.
-
-        Returns
-        -------
-        y_pred : np.ndarray, shape=(n, K)
-            The predictions of the current model, where ``n == X.shape[0]``
-            and ``K == self._loss.K``.
-        """
-        learn_rate = self.learn_rate
-        if old_pred is not None:
-            y = old_pred
-            stage = self.estimators_[stage_index]
-            for k, tree in enumerate(stage):
-                _tree_predict(X, tree.children, tree.feature,
-                              tree.threshold, tree.value, learn_rate,
-                              k, y)
-        else:
-            y = self.init.predict(X)
-            for stage in self.estimators_:
-                for k, tree in enumerate(stage):
-                    _tree_predict(X, tree.children, tree.feature,
-                                  tree.threshold, tree.value, learn_rate,
-                                  k, y)
-
-        return y
-
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
         raise NotImplementedError()
 
     @property
     def feature_importances_(self):
-        if not self.estimators_ or len(self.estimators_) == 0:
+        if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
@@ -516,13 +492,47 @@ class BaseGradientBoosting(BaseEnsemble):
         importances = total_sum / len(self.estimators_)
         return importances
 
+    def staged_decision_function(self, X):
+        """Compute decision function for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        f : array of shape = [n_samples, n_classes]
+            The decision function of the input samples. Classes are
+            ordered by arithmetical order. Regression and binary
+            classification are special cases with ``n_classes == 1``.
+        """
+        X = np.atleast_2d(X)
+        X = X.astype(DTYPE)
+
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise ValueError("Estimator not fitted, call `fit` " \
+                             "before `staged_decision_function`.")
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
+
+        score = self.init.predict(X).astype(np.float64)
+
+        for i in range(self.n_estimators):
+            predict_stage(self.estimators_, i, X, self.learn_rate, score)
+            yield score
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
 
     GB builds an additive model in a
     forward stage-wise fashion; it allows for the optimization of
-    arbitrary differentiable loss functions. In each stage ``n_classes``
+    arbitrary differentiable loss functions. In each stage ``n_classes_``
     regression trees are fit on the negative gradient of the
     binomial or multinomial deviance loss function. Binary classification
     is a special case where only a single regression tree is induced.
@@ -607,7 +617,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            0, 1, ..., n_classes_-1
 
         Returns
         -------
@@ -615,7 +625,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Returns self.
         """
         self.classes_ = np.unique(y)
-        self.n_classes = len(self.classes_)
+        self.n_classes_ = len(self.classes_)
         y = np.searchsorted(self.classes_, y)
         if self.loss == 'deviance':
             self.loss = 'mdeviance' if len(self.classes_) > 2 else 'bdeviance'
@@ -623,25 +633,55 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         return super(GradientBoostingClassifier, self).fit(X, y)
 
     def predict(self, X):
-        P = self.predict_proba(X)
-        return self.classes_.take(np.argmax(P, axis=1), axis=0)
+        """Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted classes.
+        """
+        probas = self.predict_proba(X)
+        return self.classes_.take(np.argmax(probas, axis=1), axis=0)
 
     def predict_proba(self, X):
+        """Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class probabilities of the input samples. Classes are
+            ordered by arithmetical order.
+        """
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators_) == 0:
+        if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
 
-        P = np.ones((X.shape[0], self.n_classes), dtype=np.float64)
-        f = self._predict(X)
+        proba = np.ones((X.shape[0], self.n_classes_), dtype=np.float64)
+
+        score = self.init.predict(X).astype(np.float64)
+        predict_stages(self.estimators_, X, self.learn_rate, score)
 
         if not self.loss_.is_multi_class:
-            P[:, 1] = 1.0 / (1.0 + np.exp(-f.ravel()))
-            P[:, 0] -= P[:, 1]
+            proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+            proba[:, 0] -= proba[:, 1]
         else:
-            P = np.exp(f) / np.sum(np.exp(f), axis=1)[:, np.newaxis]
-        return P
+            proba = np.exp(score) / np.sum(np.exp(score), axis=1)[:, np.newaxis]
+        return proba
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -762,21 +802,57 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes-1
+            0, 1, ..., n_classes_-1
 
         Returns
         -------
         self : object
             Returns self.
         """
-        self.n_classes = 1
+        self.n_classes_ = 1
         return super(GradientBoostingRegressor, self).fit(X, y)
 
     def predict(self, X):
+        """Predict regression target for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = [n_samples]
+            The predicted values.
+        """
         X = np.atleast_2d(X)
         X = X.astype(DTYPE)
-        if len(self.estimators_) == 0:
+        if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
-        y = self._predict(X).ravel()
-        return y
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
+
+        y = self.init.predict(X).astype(np.float64)
+        predict_stages(self.estimators_, X, self.learn_rate, y)
+        return y.ravel()
+
+    def staged_predict(self, X):
+        """Predict regression target at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for y in self.staged_decision_function(X):
+            yield y.ravel()

@@ -52,10 +52,9 @@ for label, color, setting in [('No shrinkage', 'orange',
     clf.fit(X_train, y_train)
 
     # compute test set deviance
-    y_pred = clf.init.predict(X_test)
     test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
-    for i, stage in enumerate(clf.estimators_):
-        y_pred = clf._predict(X_test, old_pred=y_pred, stage_index=i)
+
+    for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         test_deviance[i] = clf.loss_(y_test, y_pred)
 
     pl.plot(np.arange(test_deviance.shape[0]) + 1, test_deviance, '-',

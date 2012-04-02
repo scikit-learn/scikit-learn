@@ -8,6 +8,7 @@ from numpy.testing import assert_equal
 
 from nose.tools import assert_raises
 
+from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -135,7 +136,7 @@ def test_boston():
         assert_raises(ValueError, clf.predict, boston.data)
         clf.fit(boston.data, boston.target)
         y_pred = clf.predict(boston.data)
-        mse = np.mean((y_pred - boston.target) ** 2.0)
+        mse = mean_squared_error(boston.target, y_pred)
         assert mse < 6.0, "Failed with loss %s and mse = %.4f" % (loss, mse)
 
 
@@ -165,7 +166,7 @@ def test_regression_synthetic():
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor()
     clf.fit(X_train, y_train)
-    mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 5.0, "Failed on Friedman1 with mse = %.4f" % mse
 
     # Friedman2
@@ -174,7 +175,7 @@ def test_regression_synthetic():
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
-    mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 1700.0, "Failed on Friedman2 with mse = %.4f" % mse
 
     # Friedman3
@@ -183,7 +184,7 @@ def test_regression_synthetic():
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
-    mse = np.mean((clf.predict(X_test) - y_test) ** 2.0)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 0.015, "Failed on Friedman3 with mse = %.4f" % mse
 
 
@@ -232,6 +233,56 @@ def test_check_inputs():
     assert_raises(ValueError, clf.predict, X_sparse)
 
 
+def test_check_inputs_predict():
+    """X has wrong shape """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X, y)
+
+    x = np.array([1.0, 2.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([])
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf.fit(X, np.random.rand(len(X)))
+
+    x = np.array([1.0, 2.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([])
+    assert_raises(ValueError, clf.predict, x)
+
+    x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
+    assert_raises(ValueError, clf.predict, x)
+
+
+def test_staged_predict():
+    """Test whether staged decision function eventually gives
+    the same prediction.
+    """
+    X, y = datasets.make_friedman1(n_samples=1200,
+                                   random_state=1, noise=1.0)
+    X_train, y_train = X[:200], y[:200]
+    X_test, y_test = X[200:], y[200:]
+    clf = GradientBoostingRegressor()
+    # test raise ValueError if not fitted
+    assert_raises(ValueError, lambda X: np.fromiter(
+        clf.staged_predict(X), dtype=np.float64), X_test)
+
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    # test if prediction for last stage equals ``predict``
+    for y in clf.staged_predict(X_test):
+        assert_equal(y.shape, y_pred.shape)
+
+    assert_array_equal(y_pred, y)
+
+
 def test_serialization():
     """Check model serialization."""
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
@@ -250,3 +301,17 @@ def test_serialization():
     clf = pickle.loads(serialized_clf)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
+
+
+def test_degenerate_targets():
+    """Check if we can fit even though all targets are equal. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    # classifier should raise exception
+    assert_raises(ValueError, clf.fit, X, np.ones(len(X)))
+
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf.fit(X, np.ones(len(X)))
+    clf.predict(np.random.rand(2))
+    assert_array_equal(np.ones((1,), dtype=np.float64),
+                       clf.predict(np.random.rand(2)))
