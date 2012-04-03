@@ -23,7 +23,6 @@ from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
-from ..utils import safe_asarray
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
