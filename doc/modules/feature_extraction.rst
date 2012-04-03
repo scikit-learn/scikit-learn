@@ -73,7 +73,7 @@ such a window of feature extracted around the word 'sat' in the sentence
   ...     # in a real application one would extract many such dictionaries
   ... ]
 
-This description can be vectorized into a sparse 2 dimensional matrix
+This description can be vectorized into a sparse two-dimensional matrix
 suitable for feeding into a classifier (maybe after being piped into a
 :class:`text.TfidfTransformer` for normalization)::
 
@@ -284,7 +284,8 @@ scheme developed for information retrieval (as a ranking function
 for search engines results), that has also found good use in document
 classification and clustering.
 
-This normalization is implemented by the :class:`TfidfTransformer` class::
+This normalization is implemented by the :class:`text.TfidfTransformer`
+class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
