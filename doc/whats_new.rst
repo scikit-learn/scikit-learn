@@ -153,6 +153,9 @@ API changes summary
      difficult to be Cythonized. If you are interested, you can look in the
      history codes by git.
 
+   - The SVMlight format loader now supports files with both zero-based and
+     one-based column indices, since both occur "in the wild".
+
 .. _changes_0_10:
 
 0.10

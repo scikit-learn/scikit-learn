@@ -49,7 +49,6 @@ def test_load_svmlight_file_multilabel():
     X, y = load_svmlight_file(multifile, multilabel=True)
     assert_equal(y, [(0, 1), (2,), (1, 2)])
 
-
 def test_load_svmlight_files():
     X_train, y_train, X_test, y_test = load_svmlight_files([datafile] * 2,
                                                            dtype=np.float32)
@@ -86,6 +85,12 @@ def test_load_invalid_file():
 
 
 @raises(ValueError)
+def test_load_zero_based():
+    f = BytesIO("-1 4:1.\n1 0:1\n")
+    load_svmlight_file(f, zero_based=False)
+
+
+@raises(ValueError)
 def test_load_invalid_file2():
     load_svmlight_files([datafile, invalidfile, datafile])
 
@@ -107,9 +112,10 @@ def test_dump():
     Xd = Xs.toarray()
 
     for X in (Xs, Xd):
-        f = BytesIO()
-        dump_svmlight_file(X, y, f)
-        f.seek(0)
-        X2, y2 = load_svmlight_file(f)
-        assert_array_equal(Xd, X2.toarray())
-        assert_array_equal(y, y2)
+        for zero_based in (True, False):
+            f = BytesIO()
+            dump_svmlight_file(X, y, f, zero_based=zero_based)
+            f.seek(0)
+            X2, y2 = load_svmlight_file(f, zero_based=zero_based)
+            assert_array_equal(Xd, X2.toarray())
+            assert_array_equal(y, y2)
