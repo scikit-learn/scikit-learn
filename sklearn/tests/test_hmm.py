@@ -249,7 +249,6 @@ class GaussianHMMBaseTester(object):
                           np.zeros((self.n_components - 2, self.n_components)))
 
         h.means_ = self.means
-        assert_array_almost_equal(h.means_, self.means)
         self.assertEquals(h.n_features, self.n_features)
         self.assertRaises(ValueError, h.__setattr__, 'means_', [])
         self.assertRaises(ValueError, h.__setattr__, 'means_',
