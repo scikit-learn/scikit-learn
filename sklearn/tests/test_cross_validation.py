@@ -1,5 +1,6 @@
 """Test the cross_validation module"""
 
+import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
@@ -133,12 +134,39 @@ def test_cross_val_score():
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
     assert_raises(ValueError, cval.train_test_split, range(3),
-            train_fraction=1.1)
+            train_size=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3),
-            test_fraction=0.6, train_fraction=0.6)
+            test_size=0.6, train_size=0.6)
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size=2, train_size=4)
     assert_raises(TypeError, cval.train_test_split, range(3),
             some_argument=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3), range(42))
+
+
+def test_shuffle_split_warnings():
+    # change warnings.warn to catch the message
+    warn_queue = []
+    warnings_warn = warnings.warn
+    warnings.warn = lambda msg: warn_queue.append(msg)
+
+    expected_message = ("test_fraction is deprecated in 0.11, use "
+                        "test_size instead",
+                        "train_fraction is deprecated in 0.11, use "
+                        "train_size instead")
+
+    cval.ShuffleSplit(10, 3, test_fraction=0.1)
+    cval.ShuffleSplit(10, 3, train_fraction=0.1)
+    cval.train_test_split(range(3), test_fraction=0.1)
+    cval.train_test_split(range(3), train_fraction=0.1)
+    assert len(warn_queue) == 4
+    assert warn_queue[0] == expected_message[0]
+    assert warn_queue[1] == expected_message[1]
+    assert warn_queue[2] == expected_message[0]
+    assert warn_queue[3] == expected_message[1]
+
+    # restore default behavior
+    warnings.warn = warnings_warn
 
 
 def test_train_test_split():
