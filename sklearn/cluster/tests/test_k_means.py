@@ -294,6 +294,11 @@ def test_k_means_invalid_init():
     assert_raises(ValueError, k_means.fit, X)
 
 
+def test_mini_match_k_means_invalid_init():
+    k_means = MiniBatchKMeans(init="invalid", n_init=1, k=n_clusters)
+    assert_raises(ValueError, k_means.fit, X)
+
+
 def test_k_means_copyx():
     """Check if copy_x=False returns nearly equal X after de-centering."""
     my_X = X.copy()

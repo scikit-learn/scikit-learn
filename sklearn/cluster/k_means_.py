@@ -573,7 +573,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     else:
         raise ValueError("the init parameter for the k-means should "
             "be 'k-means++' or 'random' or an ndarray, "
-            "'%s' (type '%s') was passed.")
+            "'%s' (type '%s') was passed." % (init, type(init)))
 
     if sp.issparse(centers):
         centers = centers.toarray()
