@@ -10,19 +10,13 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr
+from ..externals.six import iteritems
 
 
 PY3 = sys.version_info[0] == 3
 
 if PY3:
     basestring = str
-
-
-def iteritems(d):
-    if PY3:
-        return d.items()
-    else:
-        return d.iteritems()
 
 
 def _tosequence(X):
@@ -264,7 +258,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(new_vocab.iteritems(),
+        self.feature_names_ = [f for f, i in sorted(iteritems(new_vocab),
                                                     key=itemgetter(1))]
 
         return self
