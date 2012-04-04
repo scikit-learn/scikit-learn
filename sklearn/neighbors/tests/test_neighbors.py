@@ -19,6 +19,7 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
+P = (1, 2, 3, 4, np.inf)
 
 
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
@@ -73,21 +74,24 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
     test = rng.rand(n_query_pts, n_features)
 
-    results_nodist = []
-    results = []
 
-    for algorithm in ALGORITHMS:
-        neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
-                                           algorithm=algorithm)
-        neigh.fit(X)
+    for p in P:
+        results_nodist = []
+        results = []
+        
+        for algorithm in ALGORITHMS:
+            neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                               algorithm=algorithm,
+                                               p=p)
+            neigh.fit(X)
 
-        results_nodist.append(neigh.kneighbors(test, return_distance=False))
-        results.append(neigh.kneighbors(test, return_distance=True))
+            results_nodist.append(neigh.kneighbors(test, return_distance=False))
+            results.append(neigh.kneighbors(test, return_distance=True))
 
-    for i in range(len(results) - 1):
-        assert_array_almost_equal(results_nodist[i], results[i][1])
-        assert_array_almost_equal(results[i][0], results[i + 1][0])
-        assert_array_almost_equal(results[i][1], results[i + 1][1])
+        for i in range(len(results) - 1):
+            assert_array_almost_equal(results_nodist[i], results[i][1])
+            assert_array_almost_equal(results[i][0], results[i + 1][0])
+            assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
 def test_unsupervised_inputs():
@@ -119,32 +123,35 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
 
     test = rng.rand(n_query_pts, n_features)
 
-    results = []
+    for p in P:
+        results = []
 
-    for algorithm in ALGORITHMS:
-        neigh = neighbors.NearestNeighbors(radius=radius,
-                                           algorithm=algorithm)
-        neigh.fit(X)
+        for algorithm in ALGORITHMS:
+            neigh = neighbors.NearestNeighbors(radius=radius,
+                                               algorithm=algorithm,
+                                               p=p)
+            neigh.fit(X)
 
-        ind1 = neigh.radius_neighbors(test, return_distance=False)
+            ind1 = neigh.radius_neighbors(test, return_distance=False)
 
-        # sort the results: this is not done automatically for
-        # radius searches
-        dist, ind = neigh.radius_neighbors(test, return_distance=True)
-        for (d, i, i1) in zip(dist, ind, ind1):
-            j = d.argsort()
-            d[:] = d[j]
-            i[:] = i[j]
-        results.append((dist, ind))
+            # sort the results: this is not done automatically for
+            # radius searches
+            dist, ind = neigh.radius_neighbors(test, return_distance=True)
+            for (d, i, i1) in zip(dist, ind, ind1):
+                j = d.argsort()
+                d[:] = d[j]
+                i[:] = i[j]
+                i1[:] = i1[j]
+            results.append((dist, ind))
 
-        assert_array_almost_equal(np.concatenate(list(ind)),
-                                  np.concatenate(list(ind1)))
+            assert_array_almost_equal(np.concatenate(list(ind)),
+                                      np.concatenate(list(ind1)))
 
-    for i in range(len(results) - 1):
-        assert_array_almost_equal(np.concatenate(list(results[i][0])),
-                                  np.concatenate(list(results[i + 1][0]))),
-        assert_array_almost_equal(np.concatenate(list(results[i][1])),
-                                  np.concatenate(list(results[i + 1][1])))
+        for i in range(len(results) - 1):
+            assert_array_almost_equal(np.concatenate(list(results[i][0])),
+                                      np.concatenate(list(results[i + 1][0]))),
+            assert_array_almost_equal(np.concatenate(list(results[i][1])),
+                                      np.concatenate(list(results[i + 1][1])))
 
 
 def test_kneighbors_classifier(n_samples=40,
