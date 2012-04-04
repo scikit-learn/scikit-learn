@@ -33,7 +33,7 @@ We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
   >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
-  ...     iris.data, iris.target, test_fraction=0.4, random_state=0)
+  ...     iris.data, iris.target, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
   ((90, 4), (90,))
@@ -103,7 +103,7 @@ validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]
   >>> cv = cross_validation.ShuffleSplit(n_samples, n_iterations=3,
-  ...     test_fraction=0.3, random_state=0)
+  ...     test_size=0.3, random_state=0)
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
@@ -339,12 +339,12 @@ generator.
 
 Here is a usage example::
 
-  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_fraction=0.25,
+  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_size=0.25,
   ...     random_state=0)
   >>> len(ss)
   3
   >>> print ss                                            # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=True, ...)
+  ShuffleSplit(5, n_iterations=3, test_size=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index

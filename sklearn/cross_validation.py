@@ -11,6 +11,7 @@ validation and performance evaluation.
 from itertools import combinations
 from math import ceil, floor, factorial
 import operator
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -686,14 +687,16 @@ class ShuffleSplit(object):
     n_iterations : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_fraction : float (default 0.1)
-        Should be between 0.0 and 1.0 and represent the proportion of
-        the dataset to include in the test split.
+    test_size : float (default 0.1) or int
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split. If
+        int, represents the absolute number of test samples.
 
-    train_fraction : float or None (default is None)
-        Should be between 0.0 and 1.0 and represent the proportion of
-        the dataset to include in the train split. If None, the value is
-        automatically set to the complement of the test fraction.
+    train_size : float, int, or None (default is None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test fraction.
 
     indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
@@ -707,12 +710,12 @@ class ShuffleSplit(object):
     --------
     >>> from sklearn import cross_validation
     >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
-    ...     test_fraction=.25, random_state=0)
+    ...     test_size=.25, random_state=0)
     >>> len(rs)
     3
     >>> print rs
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_iterations=3, test_fraction=0.25, indices=True, ...)
+    ShuffleSplit(4, n_iterations=3, test_size=0.25, indices=True, ...)
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
@@ -721,7 +724,7 @@ class ShuffleSplit(object):
     TRAIN: [0 2 1] TEST: [3]
 
     >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
-    ...     train_fraction=0.5, test_fraction=.25, random_state=0)
+    ...     train_size=0.5, test_size=.25, random_state=0)
     >>> for train_index, test_index in rs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
@@ -734,36 +737,37 @@ class ShuffleSplit(object):
     Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def __init__(self, n, n_iterations=10, test_fraction=0.1,
-                 train_fraction=None, indices=True, random_state=None):
+    def __init__(self, n, n_iterations=10, test_size=0.1,
+                 train_size=None, indices=True, random_state=None,
+                 test_fraction=None, train_fraction=None):
         self.n = n
         self.n_iterations = n_iterations
-        self.test_fraction = test_fraction
-        self.train_fraction = train_fraction
+
+        if test_fraction is not None:
+            warnings.warn(
+                "test_fraction is deprecated in 0.11, use test_size instead")
+            test_size = test_fraction
+        if train_fraction is not None:
+            warnings.warn(
+                "train_fraction is deprecated in 0.11, use train_size instead")
+            train_size = train_fraction
+
+        self.test_size = test_size
+        self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        if test_fraction >= 1.0:
-            raise ValueError(
-                "test_fraction=%f should be smaller than 1.0" % test_fraction)
-        if (train_fraction is not None
-            and train_fraction + test_fraction > 1.0):
-            raise ValueError(
-                'The sum of train_fraction=%f and test_fraction=%f '
-                'should be smaller or equal than 1.0' %
-                (train_fraction, test_fraction))
+
+        self.n_train, self.n_test = _validate_shuffle_split(n,
+                                                            test_size,
+                                                            train_size)
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        n_test = ceil(self.test_fraction * self.n)
-        if self.train_fraction is None:
-            n_train = self.n - n_test
-        else:
-            n_train = floor(self.train_fraction * self.n)
         for i in range(self.n_iterations):
             # random partition
             permutation = rng.permutation(self.n)
-            ind_test = permutation[:n_test]
-            ind_train = permutation[n_test:n_test + n_train]
+            ind_test = permutation[:self.n_test]
+            ind_train = permutation[self.n_test:self.n_test + self.n_train]
 
             if self.indices:
                 yield ind_train, ind_test
@@ -775,18 +779,72 @@ class ShuffleSplit(object):
                 yield train_mask, test_mask
 
     def __repr__(self):
-        return ('%s(%d, n_iterations=%d, test_fraction=%s, indices=%s, '
+        return ('%s(%d, n_iterations=%d, test_size=%s, indices=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iterations,
-                    str(self.test_fraction),
+                    str(self.test_size),
                     self.indices,
                     self.random_state,
                 ))
 
     def __len__(self):
         return self.n_iterations
+
+
+def _validate_shuffle_split(n, test_size, train_size):
+    if isinstance(test_size, float) and test_size >= 1.:
+        raise ValueError(
+            'test_size=%f should be smaller '
+            'than 1.0 or be an integer' % test_size)
+    elif isinstance(test_size, int) and test_size >= n:
+        raise ValueError(
+            'test_size=%d should be smaller '
+            'than the number of samples %d' % (test_size, n))
+
+    if train_size is not None:
+        if isinstance(train_size, float):
+            if train_size >= 1.:
+                raise ValueError("train_size=%f should be smaller "
+                                 "than 1.0 or be an integer" % train_size)
+            elif isinstance(test_size, float) and train_size + test_size > 1.:
+                raise ValueError('The sum of test_size and train_size = %f, '
+                                 'should be smaller than 1.0. Reduce '
+                                 'test_size and/or train_size.' %
+                                 (train_size + test_size))
+
+        elif isinstance(train_size, int):
+            if train_size >= n:
+                raise ValueError("train_size=%d should be smaller "
+                                 "than the number of samples %d" %
+                                 (train_size, n))
+            elif isinstance(test_size, int) and train_size + test_size >= n:
+                raise ValueError('The sum of train_size and test_size = %d, '
+                                 'should be smaller than the number of '
+                                 'samples %d. Reduce test_size and/or '
+                                 'train_size.' % (train_size + test_size, n))
+
+    if isinstance(test_size, float):
+        n_test = ceil(test_size * n)
+    else:
+        n_test = float(test_size)
+
+    if train_size is None:
+        n_train = n - n_test
+    else:
+        if isinstance(train_size, float):
+            n_train = floor(train_size * n)
+        else:
+            n_train = float(train_size)
+
+    if n_train + n_test > n:
+        raise ValueError('The sum of train_size and test_size = %d, '
+                         'should be smaller than the number of '
+                         'samples %d. Reduce test_size and/or '
+                         'train_size.' % (n_train + n_test, n))
+
+    return n_train, n_test
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
@@ -797,47 +855,7 @@ def _validate_stratified_shuffle_split(y, test_size, train_size):
                          " number of labels for any class cannot"
                          " be less than 2.")
 
-    if isinstance(test_size, float) and test_size >= 1.:
-        raise ValueError(
-            'test_size=%f should be smaller '
-            'than 1.0 or be an integer' % test_size)
-    elif isinstance(test_size, int) and test_size >= y.size:
-        raise ValueError(
-            'test_size=%d should be smaller '
-            'than the number of samples %d' % (test_size, y.size))
-
-    if train_size is not None:
-        if isinstance(train_size, float) and train_size >= 1.:
-            raise ValueError("train_size=%f should be smaller "
-                             "than 1.0 or be an integer" % train_size)
-        elif isinstance(train_size, int) and train_size >= y.size:
-            raise ValueError("train_size=%d should be smaller "
-                             "than the number of samples %d" %
-                             (train_size, y.size))
-
-    if isinstance(test_size, float):
-        n_test = ceil(test_size * y.size)
-    else:
-        n_test = float(test_size)
-
-    if train_size is None:
-        if isinstance(test_size, float):
-            n_train = y.size - n_test
-        else:
-            n_train = float(y.size - test_size)
-    else:
-        if isinstance(train_size, float):
-            n_train = floor(train_size * y.size)
-        else:
-            n_train = float(train_size)
-
-    if n_train + n_test > y.size:
-        raise ValueError('The sum of n_train and n_test = %d, should '
-                         'be smaller than the number of samples %d. '
-                         'Reduce test_size and/or train_size.' %
-                         (n_train + n_test, y.size))
-
-    return n_train, n_test
+    return _validate_shuffle_split(y.size, test_size, train_size)
 
 
 class StratifiedShuffleSplit(object):
@@ -1184,14 +1202,16 @@ def train_test_split(*arrays, **options):
         Python lists or tuples occurring in arrays are converted to 1D numpy
         arrays.
 
-    test_fraction : float (default 0.25)
-        Should be between 0.0 and 1.0 and represent the proportion of
-        the dataset to include in the test split.
+    test_size : float (default 0.25) or int
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split. If
+        int, represents the absolute number of test samples.
 
-    train_fraction : float or None (default is None)
-        Should be between 0.0 and 1.0 and represent the proportion of
-        the dataset to include in the train split. If None, the value is
-        automatically set to the complement of the test fraction.
+    train_size : float, int, or None (default is None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test fraction.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1214,7 +1234,7 @@ def train_test_split(*arrays, **options):
     [0, 1, 2, 3, 4]
 
     >>> a_train, a_test, b_train, b_test = train_test_split(
-    ...     a, b, test_fraction=0.33, random_state=42)
+    ...     a, b, test_size=0.33, random_state=42)
     ...
     >>> a_train
     array([[4, 5],
@@ -1233,15 +1253,27 @@ def train_test_split(*arrays, **options):
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
 
-    test_fraction = options.pop('test_fraction', 0.25)
+    test_fraction = options.pop('test_fraction', None)
+    if test_fraction is not None:
+        warnings.warn(
+            "test_fraction is deprecated in 0.11, use test_size instead")
+    else:
+        test_fraction = 0.25
+
     train_fraction = options.pop('train_fraction', None)
+    if train_fraction is not None:
+        warnings.warn(
+            "train_fraction is deprecated in 0.11, use train_size instead")
+
+    test_size = options.pop('test_size', test_fraction)
+    train_size = options.pop('train_size', train_fraction)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
 
     arrays = check_arrays(*arrays, **options)
     n_samples = arrays[0].shape[0]
-    cv = ShuffleSplit(n_samples, test_fraction=test_fraction,
-                      train_fraction=train_fraction,
+    cv = ShuffleSplit(n_samples, test_size=test_size,
+                      train_size=train_size,
                       random_state=random_state,
                       indices=True)
     train, test = iter(cv).next()
