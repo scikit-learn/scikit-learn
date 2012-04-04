@@ -315,6 +315,10 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=1.0)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=0.1,
             train_fraction=0.95)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=11)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8,
+            train_size=3)
 
 
 def test_shufflesplit_reproducible():
