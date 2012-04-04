@@ -10,10 +10,12 @@ of Gaussian Mixture Models.
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp
+from ..utils import deprecated
 from .. import cluster
 
 EPS = np.finfo(float).eps
@@ -183,8 +185,8 @@ class GMM(BaseEstimator):
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, min_covar=0.001, n_components=2,
-            random_state=None, thresh=0.01)
+    GMM(covariance_type=None, init_params='wmc', min_covar=0.001, n_components=2,
+      n_init=1, n_iter=100, params='wmc', random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -200,23 +202,31 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, min_covar=0.001, n_components=2,
-            random_state=None, thresh=0.01)
+    GMM(covariance_type=None, init_params='wmc', min_covar=0.001, n_components=2,
+      n_init=1, n_iter=100, params='wmc', random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
-                 random_state=None, thresh=1e-2, min_covar=1e-3):
+                 random_state=None, thresh=1e-2, min_covar=1e-3, 
+                 n_iter=100, n_init=1, params='wmc', init_params='wmc'):
         self.n_components = n_components
         self._covariance_type = covariance_type
         self.thresh = thresh
         self.min_covar = min_covar
         self.random_state = random_state
+        self.n_iter = n_iter
+        self.n_init = n_init
+        self.params = params
+        self.init_params = init_params
 
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('bad covariance_type: ' + str(covariance_type))
+
+        if n_init < 1:
+            raise ValueError('GMM estimation requires at least one run')
 
         self.weights_ = np.ones(self.n_components) / self.n_components
 
@@ -407,8 +417,7 @@ class GMM(BaseEstimator):
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X, n_iter=100, n_init=1, thresh=1e-2, params='wmc',
-            init_params='wmc'):
+    def fit(self, X, **kwargs):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
@@ -448,21 +457,37 @@ class GMM(BaseEstimator):
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
+        if kwargs:
+            warnings.warn("Setting paremters in the 'fit' method is deprecated"
+                    "Set it on initialization instead.",
+                    DeprecationWarning)
+            # initialisations for in case the user still adds parameters to fit
+            # so things don't break
+            if kwargs.has_key('n_init'):
+                if kwargs['n_init'] < 1:
+                    raise ValueError('GMM estimation requires at least one run')
+                else:
+                    self.n_init = kwargs['n_init']
+            if kwargs.has_key('n_iter'):
+                self.n_iter =  kwargs['n_iter']
+            if kwargs.has_key('params'):
+                self.params = kwargs['params']
+            if kwargs.has_key('init_params'):
+                self.init_params = kwargs['init_params']
+            
 
         max_log_prob = - np.infty
-        if n_init < 1:
-            raise ValueError('GMM estimation requires at least one run')
 
-        for _ in range(n_init):
-            if 'm' in init_params or not hasattr(self, 'means_'):
+        for _ in range(self.n_init):
+            if 'm' in self.init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
                     k=self.n_components).fit(X).cluster_centers_
 
-            if 'w' in init_params or not hasattr(self, 'weights_'):
+            if 'w' in self.init_params or not hasattr(self, 'weights_'):
                 self.weights_ = np.tile(1.0 / self.n_components,
                                         self.n_components)
 
-            if 'c' in init_params or not hasattr(self, 'covars_'):
+            if 'c' in self.init_params or not hasattr(self, 'covars_'):
                 cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
                 if not cv.shape:
                     cv.shape = (1, 1)
@@ -474,7 +499,7 @@ class GMM(BaseEstimator):
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
-            for i in xrange(n_iter):
+            for i in xrange(self.n_iter):
                 # Expectation step
                 curr_log_likelihood, responsibilities = self.eval(X)
                 log_likelihood.append(curr_log_likelihood.sum())
@@ -486,16 +511,16 @@ class GMM(BaseEstimator):
                     break
 
                 # Maximization step
-                self._do_mstep(X, responsibilities, params, self.min_covar)
+                self._do_mstep(X, responsibilities, self.params, self.min_covar)
 
-            # if the results is better, keep it
-            if n_iter:
+            # if the results are better, keep it
+            if self.n_iter:
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
                     best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
-        if n_iter:
+        if self.n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
             self.weights_ = best_params['weights']
