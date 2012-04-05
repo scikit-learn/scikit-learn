@@ -14,7 +14,8 @@ prior is implied on the weights.
 The estimation of the model is done by iteratively maximizing the
 marginal log-likelihood of the observations.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

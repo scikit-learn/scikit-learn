@@ -136,7 +136,7 @@ def test_hash_memmap():
             gc.collect()
             try:
                 os.unlink(filename)
-            except OSError, e:
+            except OSError as e:
                 # Under windows, some files don't get erased.
                 if not os.name == 'nt':
                     raise e

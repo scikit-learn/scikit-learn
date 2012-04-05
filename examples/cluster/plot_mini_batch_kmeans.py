@@ -12,7 +12,8 @@ MiniBatchKMeans, and plot the results.
 We will also plot the points that are labelled differently between the two
 algorithms.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import time
 

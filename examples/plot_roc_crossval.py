@@ -7,7 +7,8 @@ Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier using
 cross-validation.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 from scipy import interp

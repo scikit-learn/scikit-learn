@@ -18,7 +18,8 @@ first diagonal). This is also true for components 2 in both dataset,
 however, the correlation across datasets for different components is
 weak: the point cloud is very spherical.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -41,10 +42,10 @@ Y_train = Y[:n / 2]
 X_test = X[n / 2:]
 Y_test = Y[n / 2:]
 
-print "Corr(X)"
-print np.round(np.corrcoef(X.T), 2)
-print "Corr(Y)"
-print np.round(np.corrcoef(Y.T), 2)
+print("Corr(X)")
+print(np.round(np.corrcoef(X.T), 2))
+print("Corr(Y)")
+print(np.round(np.corrcoef(Y.T), 2))
 
 ###############################################################################
 # Canonical (symetric) PLS
@@ -108,11 +109,11 @@ Y = np.dot(X, B) + np.random.normal(size=n * q).reshape((n, q)) + 5
 
 pls2 = PLSRegression(n_components=3)
 pls2.fit(X, Y)
-print "True B (such that: Y = XB + Err)"
-print B
+print("True B (such that: Y = XB + Err)")
+print(B)
 # compare pls2.coefs with B
-print "Estimated B"
-print np.round(pls2.coefs, 1)
+print("Estimated B")
+print(np.round(pls2.coefs, 1))
 pls2.predict(X)
 
 ###############################################################################
@@ -125,8 +126,8 @@ y = X[:, 0] + 2 * X[:, 1] + np.random.normal(size=n * 1) + 5
 pls1 = PLSRegression(n_components=3)
 pls1.fit(X, y)
 # note that the number of compements exceeds 1 (the dimension of y)
-print "Estimated betas"
-print np.round(pls1.coefs, 1)
+print("Estimated betas")
+print(np.round(pls1.coefs, 1))
 
 ###############################################################################
 # CCA (PLS mode B with symetric deflation)

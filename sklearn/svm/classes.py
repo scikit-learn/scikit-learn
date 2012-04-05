@@ -239,7 +239,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
             gamma=0.5, kernel='rbf', probability=False, scale_C=True,
             shrinking=True, tol=0.001, verbose=False)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
 
     See also
@@ -363,7 +363,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> clf.fit(X, y)
     NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5,
        probability=False, shrinking=True, tol=0.001, verbose=False)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
 
     See also

@@ -128,7 +128,7 @@ class GaussianNB(BaseNB):
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
     GaussianNB()
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
 
@@ -174,7 +174,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
-        for i in xrange(np.size(self.classes_)):
+        for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
@@ -345,7 +345,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
     MultinomialNB(alpha=1.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     Notes
@@ -402,7 +402,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
     BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     References

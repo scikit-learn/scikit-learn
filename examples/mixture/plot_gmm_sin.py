@@ -31,7 +31,7 @@ np.random.seed(0)
 X = np.zeros((n_samples, 2))
 step = 4 * np.pi / n_samples
 
-for i in xrange(X.shape[0]):
+for i in range(X.shape[0]):
     x = i * step - 6
     X[i, 0] = x + np.random.normal(0, 0.1)
     X[i, 1] = 3 * (np.sin(x) + np.random.normal(0, .2))

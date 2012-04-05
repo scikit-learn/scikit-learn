@@ -12,6 +12,9 @@ from scipy import linalg
 
 from ..utils import array2d, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..externals import six
+map = six.moves.map
+zip = six.moves.zip
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -131,11 +134,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     n_samples_per_cluster = []
 
-    for k in xrange(n_clusters):
+    for k in range(n_clusters):
         n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
                                      / n_clusters_per_class))
 
-    for i in xrange(n_samples - sum(n_samples_per_cluster)):
+    for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
     # Intialize X and y
@@ -146,10 +149,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
     if not hypercube:
-        for k in xrange(n_clusters):
+        for k in range(n_clusters):
             C[k, :] *= generator.rand()
 
-        for f in xrange(n_informative):
+        for f in range(n_informative):
             C[:, f] *= generator.rand()
 
     generator.shuffle(C)
@@ -158,7 +161,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     pos = 0
     pos_end = 0
 
-    for k in xrange(n_clusters):
+    for k in range(n_clusters):
         # Number of samples in cluster k
         n_samples_k = n_samples_per_cluster[k]
 
@@ -198,7 +201,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Randomly flip labels
     if flip_y >= 0.0:
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             if generator.rand() < flip_y:
                 y[i] = generator.randint(n_classes)
 
@@ -206,7 +209,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     constant_shift = shift is not None
     constant_scale = scale is not None
 
-    for f in xrange(n_features):
+    for f in range(n_features):
         if not constant_shift:
             shift = (2 * generator.rand() - 1) * class_sep
 
@@ -220,7 +223,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-        indices = range(n_features)
+        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
@@ -463,7 +466,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-        indices = range(n_features)
+        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
         ground_truth = ground_truth[indices]
@@ -632,7 +635,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     n_centers = centers.shape[0]
     n_samples_per_center = [int(n_samples // n_centers)] * n_centers
 
-    for i in xrange(n_samples % n_centers):
+    for i in range(n_samples % n_centers):
         n_samples_per_center[i] += 1
 
     for i, n in enumerate(n_samples_per_center):
@@ -958,7 +961,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
 
     # generate code
     X = np.zeros((n_components, n_samples))
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         idx = np.arange(n_components)
         generator.shuffle(idx)
         idx = idx[:n_nonzero_coefs]

@@ -18,7 +18,8 @@ weight are non zero. Applying univariate feature selection before the SVM
 increases the SVM weight attributed to the significant features, and will
 thus improve classification.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

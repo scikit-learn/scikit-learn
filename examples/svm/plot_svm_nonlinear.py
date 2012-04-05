@@ -9,7 +9,8 @@ inputs.
 
 The color map illustrates the decision function learn by the SVC.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

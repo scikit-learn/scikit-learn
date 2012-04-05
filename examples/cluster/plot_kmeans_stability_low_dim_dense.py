@@ -21,7 +21,8 @@ between ground truth clusters.
 The dataset used for evaluation is a 2D grid of isotropic gaussian
 clusters widely spaced.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
@@ -81,7 +82,7 @@ cases = [
 ]
 
 for factory, init, params in cases:
-    print "Evaluation of %s with %s init" % (factory.__name__, init)
+    print("Evaluation of %s with %s init" % (factory.__name__, init))
     inertia = np.empty((len(n_init_range), n_runs))
 
     for run_id in range(n_runs):

@@ -88,7 +88,7 @@ if __name__ == '__main__':
     features_range = np.linspace(10, 2000, 5).astype(np.int)
     results = compute_bench(samples_range, features_range)
 
-    max_time = max(max(t) for t in results.itervalues())
+    max_time = max(max(t) for t in results.values())
 
     fig = plt.figure()
     i = 1

@@ -6,7 +6,8 @@ Pipeline Anova SVM
 Simple usage of Pipeline that runs successively a univariate
 feature selection with anova and then a C-SVM of the selected features.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 from sklearn import svm
 from sklearn.datasets import samples_generator

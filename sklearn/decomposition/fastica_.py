@@ -4,6 +4,7 @@ Python implementation of the fast ICA algorithms.
 Reference: Tables 8.3 and 8.4 page 196 in the book:
 Independent Component Analysis, by  Hyvarinen et al.
 """
+from __future__ import print_function
 
 # Author: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #         Bertrand Thirion, Alexandre Gramfort

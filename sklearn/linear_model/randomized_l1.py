@@ -7,6 +7,7 @@ sparse Logistic Regression
 #
 # License: BSD Style.
 import itertools
+import sys
 
 import numpy as np
 from scipy.sparse import issparse
@@ -19,6 +20,11 @@ from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 from ..externals.joblib import Memory
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 ###############################################################################
@@ -567,7 +573,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                     weights=1. - scaling * rng.random_integers(0,
                                     1, size=(n_features,)),
                     eps=eps)
-            for k in xrange(n_resampling))
+            for k in range(n_resampling))
 
     all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values

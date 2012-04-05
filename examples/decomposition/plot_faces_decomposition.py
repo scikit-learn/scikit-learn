@@ -9,7 +9,8 @@ matrix decomposition (dimension reduction) methods from the module
 :ref:`decompositions`) .
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
 # License: BSD
@@ -45,7 +46,7 @@ faces_centered = faces - faces.mean(axis=0)
 # local centering
 faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 
-print "Dataset consists of %d faces" % n_samples
+print("Dataset consists of %d faces" % n_samples)
 
 
 ###############################################################################
@@ -107,7 +108,7 @@ plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 # Do the estimation and plot it
 
 for name, estimator, center, transpose in estimators:
-    print "Extracting the top %d %s..." % (n_components, name)
+    print("Extracting the top %d %s..." % (n_components, name))
     t0 = time()
     data = faces
     if center:
@@ -116,7 +117,7 @@ for name, estimator, center, transpose in estimators:
         data = data.T
     estimator.fit(data)
     train_time = (time() - t0)
-    print "done in %0.3fs" % train_time
+    print("done in %0.3fs" % train_time)
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:

@@ -17,7 +17,8 @@ The coefficients, the residual sum of squares and
 the variance score are also calculated.
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 
 # Code source: Jaques Grobler

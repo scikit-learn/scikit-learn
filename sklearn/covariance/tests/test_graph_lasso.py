@@ -1,7 +1,6 @@
 """ Test the graph_lasso module.
 """
 import sys
-from StringIO import StringIO
 
 import numpy as np
 from scipy import linalg
@@ -10,6 +9,14 @@ from sklearn.covariance import graph_lasso, GraphLasso, GraphLassoCV, \
             empirical_covariance
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.utils import check_random_state
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    from io import StringIO
+else:
+    # In Python 2 we want to access both str and unicode
+    from StringIO import StringIO
 
 
 def test_graph_lasso(random_state=0):

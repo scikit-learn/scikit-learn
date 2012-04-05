@@ -6,7 +6,8 @@ Recursive feature elimination
 A recursive feature elimination example showing the relevance of pixels in
 a digit classification task.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 from sklearn.svm import SVC
 from sklearn.datasets import load_digits

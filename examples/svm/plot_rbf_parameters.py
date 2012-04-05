@@ -14,7 +14,8 @@ against simplicity of the decision surface. A low C makes
 the decision surface smooth, while a high C aims at classifying
 all training examples correctly.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

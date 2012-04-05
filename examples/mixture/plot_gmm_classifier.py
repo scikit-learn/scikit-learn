@@ -19,7 +19,9 @@ crosses. The iris dataset is four-dimensional. Only the first two
 dimensions are shown here, and thus some points are separated in other
 dimensions.
 """
-print __doc__
+from __future__ import print_function
+import six
+print(__doc__)
 
 # Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
 # License: BSD Style.
@@ -54,7 +56,7 @@ iris = datasets.load_iris()
 # (25%) sets.
 skf = StratifiedKFold(iris.target, k=4)
 # Only take the first fold.
-train_index, test_index = skf.__iter__().next()
+train_index, test_index = six.advance_iterator(skf.__iter__())
 
 
 X_train = iris.data[train_index]
@@ -75,11 +77,11 @@ pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
                    left=.01, right=.99)
 
 
-for index, (name, classifier) in enumerate(classifiers.iteritems()):
+for index, (name, classifier) in enumerate(six.iteritems(classifiers)):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
     classifier.means_ = np.array([X_train[y_train == i].mean(axis=0)
-                                  for i in xrange(n_classes)])
+                                  for i in range(n_classes)])
 
     # Train the other parameters using the EM algorithm.
     classifier.fit(X_train, init_params='wc', n_iter=20)

@@ -22,6 +22,7 @@ from os import makedirs
 import numpy as np
 
 from ..utils import check_random_state
+from sklearn.externals import six
 
 
 class Bunch(dict):
@@ -231,7 +232,7 @@ def load_iris():
     module_path = dirname(__file__)
     data_file = csv.reader(open(join(module_path, 'data', 'iris.csv')))
     fdescr = open(join(module_path, 'descr', 'iris.rst'))
-    temp = data_file.next()
+    temp = six.advance_iterator(data_file)
     n_samples = int(temp[0])
     n_features = int(temp[1])
     target_names = np.array(temp[2:])
@@ -398,12 +399,12 @@ def load_boston():
     data_file = csv.reader(open(join(module_path, 'data',
                                      'boston_house_prices.csv')))
     fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
-    temp = data_file.next()
+    temp = six.advance_iterator(data_file)
     n_samples = int(temp[0])
     n_features = int(temp[1])
     data = np.empty((n_samples, n_features))
     target = np.empty((n_samples,))
-    temp = data_file.next()  # names of features
+    temp = six.advance_iterator(data_file)  # names of features
     feature_names = np.array(temp)
 
     for i, d in enumerate(data_file):

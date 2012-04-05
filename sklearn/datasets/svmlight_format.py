@@ -9,6 +9,9 @@ predict.
 This format is used as the default format for both svmlight and the
 libsvm command line programs.
 """
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
@@ -17,6 +20,7 @@ libsvm command line programs.
 
 import numpy as np
 from ._svmlight_format import _load_svmlight_file
+from sklearn.externals import six
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -117,7 +121,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     load_svmlight_file
     """
     files = iter(files)
-    result = list(load_svmlight_file(files.next(), n_features, dtype))
+    result = list(load_svmlight_file(six.advance_iterator(files), n_features, dtype))
     n_features = result[0].shape[1]
 
     for f in files:
@@ -133,10 +137,10 @@ def _dump_svmlight(X, y, f):
 
     is_sp = int(hasattr(X, "tocsr"))
 
-    for i in xrange(X.shape[0]):
-        s = u" ".join([u"%d:%f" % (j + 1, X[i, j])
+    for i in range(X.shape[0]):
+        s = " ".join(["%d:%f" % (j + 1, X[i, j])
                        for j in X[i].nonzero()[is_sp]])
-        f.write((u"%f %s\n" % (y[i], s)).encode('ascii'))
+        f.write(("%f %s\n" % (y[i], s)).encode('ascii'))
 
 
 def dump_svmlight_file(X, y, f):

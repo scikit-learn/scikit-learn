@@ -10,6 +10,12 @@ import itertools
 import inspect
 import warnings
 import os
+import sys
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 def get_func_code(func):
@@ -36,9 +42,9 @@ def get_func_code(func):
     source_file = None
     try:
         # Try to retrieve the source code.
-        source_file = func.func_code.co_filename
+        source_file = func.__code__.co_filename
         source_file_obj = file(source_file)
-        first_line = func.func_code.co_firstlineno
+        first_line = func.__code__.co_firstlineno
         # All the lines after the function definition:
         source_lines = list(itertools.islice(source_file_obj, first_line - 1,
                                              None))
@@ -47,7 +53,7 @@ def get_func_code(func):
         # If the source code fails, we use the hash. This is fragile and
         # might change from one session to another.
         if hasattr(func, 'func_code'):
-            return str(func.func_code.__hash__()), source_file, -1
+            return str(func.__code__.__hash__()), source_file, -1
         else:
             # Weird objects like numpy ufunc don't have func_code
             # This is fragile, as quite often the id of the object is
@@ -105,7 +111,7 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
             module = module + '-' + filename
     module = module.split('.')
     if hasattr(func, 'func_name'):
-        name = func.func_name
+        name = func.__name__
     elif hasattr(func, '__name__'):
         name = func.__name__
     else:
@@ -113,13 +119,13 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
     # Hack to detect functions not defined at the module-level
     if resolv_alias:
         # TODO: Maybe add a warning here?
-        if hasattr(func, 'func_globals') and name in func.func_globals:
-            if not func.func_globals[name] is func:
+        if hasattr(func, 'func_globals') and name in func.__globals__:
+            if not func.__globals__[name] is func:
                 name = '%s-alias' % name
     if inspect.ismethod(func):
         # We need to add the name of the class
         if hasattr(func, 'im_class'):
-            klass = func.im_class
+            klass = func.__self__.__class__
             module.append(klass.__name__)
     if os.name == 'nt' and win_characters:
         # Stupid windows can't encode certain characters in filenames
@@ -175,7 +181,7 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     if inspect.ismethod(func):
         # First argument is 'self', it has been removed by Python
         # we need to add it back:
-        args = [func.im_self, ] + args
+        args = [func.__self__, ] + args
     # XXX: Maybe I need an inspect.isbuiltin to detect C-level methods, such
     # as on ndarrays.
 
@@ -202,12 +208,12 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
                            name,
                            repr(args)[1:-1],
                            ', '.join('%s=%s' % (k, v)
-                                    for k, v in kwargs.iteritems())
+                                    for k, v in kwargs.items())
                            )
                         )
 
     varkwargs = dict()
-    for arg_name, arg_value in kwargs.iteritems():
+    for arg_name, arg_value in kwargs.items():
         if arg_name in arg_dict:
             arg_dict[arg_name] = arg_value
         elif arg_keywords is not None:

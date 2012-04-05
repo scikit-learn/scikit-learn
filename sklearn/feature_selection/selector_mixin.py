@@ -1,8 +1,14 @@
 
+import sys
 import numpy as np
 
 from ..base import TransformerMixin
 from ..utils import safe_mask
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 class SelectorMixin(TransformerMixin):

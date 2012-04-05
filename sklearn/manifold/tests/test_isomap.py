@@ -28,7 +28,7 @@ def test_isomap_simple_grid():
     n_neighbors = Npts - 1
 
     # grid of equidistant points in 2D, out_dim = n_dim
-    X = np.array(list(product(range(N_per_side), repeat=2)))
+    X = np.array(list(product(np.arange(N_per_side), repeat=2)))
 
     # distances from each point to all others
     G = neighbors.kneighbors_graph(X, n_neighbors,
@@ -54,7 +54,7 @@ def test_isomap_reconstruction_error():
     n_neighbors = Npts - 1
 
     # grid of equidistant points in 2D, out_dim = n_dim
-    X = np.array(list(product(range(N_per_side), repeat=2)))
+    X = np.array(list(product(np.arange(N_per_side), repeat=2)))
 
     # add noise in a third dimension
     rng = np.random.RandomState(0)

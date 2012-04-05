@@ -9,7 +9,16 @@ import re
 import scipy as sp
 from scipy import io
 from shutil import copyfileobj
-import urllib2
+try:
+    # Python 2
+    from urllib2 import HTTPError
+    from urllib2 import urlopen
+    from urllib2 import quote
+except ImportError:
+    # Python 3
+    from urllib.error import HTTPError
+    from urllib.request import urlopen
+    from urllib.request import quote
 
 from .base import get_data_home, Bunch
 
@@ -82,13 +91,13 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     >>> iris = fetch_mldata('iris')
     >>> iris.target[0]
     1
-    >>> print iris.data[0]
+    >>> print(iris.data[0])
     [-0.555556  0.25     -0.864407 -0.916667]
 
     Load the 'leukemia' dataset from mldata.org, which respects the
     sklearn axes convention:
     >>> leuk = fetch_mldata('leukemia', transpose_data=False)
-    >>> print leuk.data.shape[0]
+    >>> print(leuk.data.shape[0])
     7129
 
     Load an alternative 'iris' dataset, which has different names for the
@@ -113,10 +122,10 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     # if the file does not exist, download it
     if not exists(filename):
-        urlname = MLDATA_BASE_URL % urllib2.quote(dataname)
+        urlname = MLDATA_BASE_URL % quote(dataname)
         try:
-            mldata_url = urllib2.urlopen(urlname)
-        except urllib2.HTTPError as e:
+            mldata_url = urlopen(urlname)
+        except HTTPError as e:
             if e.code == 404:
                 e.msg = "Dataset '%s' not found on mldata.org." % dataname
             raise

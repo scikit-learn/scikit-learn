@@ -25,7 +25,8 @@ silhouette   silhouette coefficient
 =========== ========================================================
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 from time import time
 import numpy as np
@@ -48,19 +49,19 @@ labels = digits.target
 
 sample_size = 300
 
-print "n_digits: %d, \t n_samples %d, \t n_features %d" % (n_digits,
-                                                        n_samples, n_features)
+print("n_digits: %d, \t n_samples %d, \t n_features %d" % (n_digits,
+                                                        n_samples, n_features))
 
 
-print 79 * '_'
-print ('% 9s' % 'init'
+print(79 * '_')
+print('% 9s' % 'init'
       '    time  inertia    homo   compl  v-meas     ARI     AMI  silhouette')
 
 
 def bench_k_means(estimator, name, data):
     t0 = time()
     estimator.fit(data)
-    print '% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f' % (
+    print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f' % (
          name, (time() - t0), estimator.inertia_,
          metrics.homogeneity_score(labels, estimator.labels_),
          metrics.completeness_score(labels, estimator.labels_),
@@ -70,7 +71,7 @@ def bench_k_means(estimator, name, data):
          metrics.silhouette_score(data, estimator.labels_,
                                   metric='euclidean',
                                   sample_size=sample_size),
-         )
+         ))
 
 bench_k_means(KMeans(init='k-means++', k=n_digits, n_init=10),
               name="k-means++", data=data)
@@ -84,7 +85,7 @@ pca = PCA(n_components=n_digits).fit(data)
 bench_k_means(KMeans(init=pca.components_, k=n_digits, n_init=1),
               name="PCA-based",
               data=data)
-print 79 * '_'
+print(79 * '_')
 
 ###############################################################################
 # Visualize the results on PCA-reduced data

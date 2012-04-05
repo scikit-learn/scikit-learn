@@ -15,6 +15,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
 from ..utils import array2d, safe_asarray, deprecated, as_float_array
 from ..utils.extmath import safe_sparse_dot
+from functools import reduce
 
 ######################################################################
 # Scoring functions

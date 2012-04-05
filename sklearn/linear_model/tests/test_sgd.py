@@ -403,7 +403,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         """Test if ValueError is raised if sample_weight has wrong shape"""
         clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
         # provided sample_weight too long
-        clf.fit(X, Y, sample_weight=range(7))
+        clf.fit(X, Y, sample_weight=np.arange(7))
 
     @raises(ValueError)
     def test_partial_fit_exception(self):
@@ -412,7 +412,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X3, Y3)
 
     def test_partial_fit_binary(self):
-        third = X.shape[0] / 3
+        third = X.shape[0] // 3
         clf = self.factory(alpha=0.01)
         classes = np.unique(Y)
 
@@ -431,7 +431,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(y_pred, true_result)
 
     def test_partial_fit_multiclass(self):
-        third = X2.shape[0] / 3
+        third = X2.shape[0] // 3
         clf = self.factory(alpha=0.01)
         classes = np.unique(Y2)
 
@@ -588,7 +588,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                                     err_msg=err_msg)
 
     def test_partial_fit(self):
-        third = X.shape[0] / 3
+        third = X.shape[0] // 3
         clf = self.factory(alpha=0.01)
 
         clf.partial_fit(X[:third], Y[:third])

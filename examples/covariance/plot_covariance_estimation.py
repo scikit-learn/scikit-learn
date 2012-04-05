@@ -22,7 +22,8 @@ but better approximate the MSE optimal value, especially for a small
 number a observations.
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

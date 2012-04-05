@@ -101,7 +101,7 @@ if __name__ == '__main__':
     samples_range = np.linspace(1000, 5000, 5).astype(np.int)
     features_range = np.linspace(1000, 5000, 5).astype(np.int)
     results = compute_bench(samples_range, features_range)
-    max_time = max(np.max(t) for t in results.itervalues())
+    max_time = max(np.max(t) for t in results.values())
 
     import pylab as pl
     fig = pl.figure()

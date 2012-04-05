@@ -1,6 +1,7 @@
 """
 Helpers for embarrassingly parallel code.
 """
+from __future__ import print_function
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
@@ -311,7 +312,7 @@ class Parallel(Logger):
                 self._jobs.append(job)
                 self.n_dispatched += 1
             except AssertionError:
-                print '[Parallel] Pool seems closed'
+                print('[Parallel] Pool seems closed')
             finally:
                 self._lock.release()
 
@@ -323,7 +324,12 @@ class Parallel(Logger):
             try:
                 # XXX: possible race condition shuffling the order of
                 # dispatchs in the next two lines.
-                func, args, kwargs = self._iterable.next()
+                if hasattr(self._iterable, 'next'):
+                    # Python 2
+                    func, args, kwargs = self._iterable.next()
+                else:
+                    # Python 3
+                    func, args, kwargs = next(self._iterable)
                 self.dispatch(func, args, kwargs)
                 self._dispatch_amount -= 1
             except ValueError:
@@ -399,7 +405,7 @@ class Parallel(Logger):
                 self._lock.release()
             try:
                 self._output.append(job.get())
-            except tuple(self.exceptions), exception:
+            except tuple(self.exceptions) as exception:
                 if isinstance(exception,
                         (KeyboardInterrupt, WorkerInterrupt)):
                     # We have captured a user interruption, clean up

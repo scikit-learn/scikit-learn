@@ -22,14 +22,14 @@ def test_pls():
     assert_array_almost_equal(
         [np.abs(np.corrcoef(pls_bynipals.x_loadings_[:, k],
                                pls_bysvd.x_loadings_[:, k])[1, 0])
-                           for k in xrange(n_components)],
+                           for k in range(n_components)],
         np.ones(n_components),
         err_msg="nipals and svd implementation lead to different x loadings")
 
     assert_array_almost_equal(
         [np.abs(np.corrcoef(pls_bynipals.y_loadings_[:, k],
                                pls_bysvd.y_loadings_[:, k])[1, 0])
-                           for k in xrange(n_components)],
+                           for k in range(n_components)],
         np.ones(n_components),
         err_msg="nipals and svd implementation lead to different y loadings")
 

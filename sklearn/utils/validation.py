@@ -5,6 +5,12 @@ Utilities for input validation
 import numpy as np
 import scipy.sparse as sp
 import warnings
+import sys
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 def assert_all_finite(X):
@@ -184,7 +190,7 @@ def check_random_state(seed):
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
-    if isinstance(seed, int):
+    if isinstance(seed, (int, np.integer)):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed

@@ -6,7 +6,8 @@ Recursive feature elimination with cross-validation
 A recursive feature elimination example with automatic tuning of the
 number of features selected with cross-validation.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 from sklearn.svm import SVC
@@ -33,12 +34,12 @@ rfecv = RFECV(estimator=svc,
               loss_func=zero_one)
 rfecv.fit(X, y)
 
-print "Optimal number of features : %d" % rfecv.n_features_
+print("Optimal number of features : %d" % rfecv.n_features_)
 
 # Plot number of features VS. cross-validation scores
 import pylab as pl
 pl.figure()
 pl.xlabel("Number of features selected")
 pl.ylabel("Cross validation score (nb of misclassifications)")
-pl.plot(xrange(1, len(rfecv.cv_scores_) + 1), rfecv.cv_scores_)
+pl.plot(range(1, len(rfecv.cv_scores_) + 1), rfecv.cv_scores_)
 pl.show()

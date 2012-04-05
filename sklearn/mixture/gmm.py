@@ -16,6 +16,15 @@ from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp
 from .. import cluster
 
+try:
+    # Python 2
+    from itertools import izip
+    zip = izip
+except ImportError:
+    # Python 3
+    pass
+
+
 EPS = np.finfo(float).eps
 
 
@@ -193,8 +202,8 @@ class GMM(BaseEstimator):
     >>> np.round(g.covars_, 2) #doctest: +SKIP
     array([[[ 1.02]],
            [[ 0.96]]])
-    >>> g.predict([[0], [2], [9], [10]])
-    array([1, 1, 0, 0])
+    >>> g.predict([[0], [2], [9], [10]]) #doctest: +ELLIPSIS
+    array([1, 1, 0, 0]...)
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
     array([-2.19, -4.58, -1.75, -1.21])
     >>> # Refit the model on new data (initial parameters remain the
@@ -390,7 +399,7 @@ class GMM(BaseEstimator):
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
-        for comp in xrange(self.n_components):
+        for comp in range(self.n_components):
             # occurrences of current component in X
             comp_in_X = (comp == comps)
             # number of those occurrences
@@ -474,7 +483,7 @@ class GMM(BaseEstimator):
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
-            for i in xrange(n_iter):
+            for i in range(n_iter):
                 # Expectation step
                 curr_log_likelihood, responsibilities = self.eval(X)
                 log_likelihood.append(curr_log_likelihood.sum())
@@ -604,7 +613,6 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     """Log probability for full covariance matrices.
     """
     from scipy import linalg
-    import itertools
     if hasattr(linalg, 'solve_triangular'):
         # only in scipy since 0.9
         solve_triangular = linalg.solve_triangular
@@ -614,7 +622,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     n_samples, n_dim = X.shape
     nmix = len(means)
     log_prob = np.empty((n_samples, nmix))
-    for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
+    for c, (mu, cv) in enumerate(zip(means, covars)):
         try:
             cv_chol = linalg.cholesky(cv, lower=True)
         except linalg.LinAlgError:
@@ -707,7 +715,7 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
     # Distribution"
     n_features = X.shape[1]
     cv = np.empty((gmm.n_components, n_features, n_features))
-    for c in xrange(gmm.n_components):
+    for c in range(gmm.n_components):
         post = responsibilities[:, c]
         # Underflow Errors in doing post * X.T are  not important
         np.seterr(under='ignore')

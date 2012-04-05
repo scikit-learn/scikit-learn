@@ -358,7 +358,7 @@ class _BaseHMM(BaseEstimator):
         obs = [self._generate_sample_from_state(
                                 currstate, random_state=random_state)]
 
-        for _ in xrange(n - 1):
+        for _ in range(n - 1):
             rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
             hidden_states.append(currstate)
@@ -416,7 +416,7 @@ class _BaseHMM(BaseEstimator):
         self._init(obs, init_params)
 
         logprob = []
-        for i in xrange(n_iter):
+        for i in range(n_iter):
             # Expectation step
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
@@ -548,7 +548,7 @@ class _BaseHMM(BaseEstimator):
                         framelogprob, lnP, lneta)
                 stats["trans"] += np.exp(logsumexp(lneta, 0))
             else:
-                for t in xrange(len(framelogprob)):
+                for t in range(len(framelogprob)):
                     zeta = (fwdlattice[t - 1][:, np.newaxis]
                             + self._log_transmat + framelogprob[t]
                             + bwdlattice[t])
@@ -753,7 +753,7 @@ class GaussianHMM(_BaseHMM):
             elif self._covariance_type in ('tied', 'full'):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
-                    for c in xrange(self.n_components):
+                    for c in range(self.n_components):
                         stats['obs*obs.T'][c] += posteriors[t, c] * obsobsT
 
     def _do_mstep(self, stats, params):
@@ -797,7 +797,7 @@ class GaussianHMM(_BaseHMM):
             elif self._covariance_type in ('tied', 'full'):
                 cvnum = np.empty((self.n_components, self.n_features,
                                   self.n_features))
-                for c in xrange(self.n_components):
+                for c in range(self.n_components):
                     obsmean = np.outer(stats['obs'][c], self._means_[c])
 
                     cvnum[c] = (means_weight * np.outer(meandiff[c],
@@ -987,7 +987,7 @@ class GMMHMM(_BaseHMM):
         self.covars_prior = covars_prior
         if gmms is None:
             gmms = []
-            for x in xrange(self.n_components):
+            for x in range(self.n_components):
                 if covariance_type is None:
                     g = GMM(n_mix)
                 else:

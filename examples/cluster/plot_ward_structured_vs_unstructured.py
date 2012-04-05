@@ -16,13 +16,14 @@ respect the structure of the swiss roll and extend across different folds of
 the manifolds. On the opposite, when opposing connectivity constraints,
 the clusters form a nice parcellation of the swiss roll.
 """
+from __future__ import print_function
 
 # Authors : Vincent Michel, 2010
 #           Alexandre Gramfort, 2010
 #           Gael Varoquaux, 2010
 # License: BSD
 
-print __doc__
+print(__doc__)
 
 import time as time
 import numpy as np
@@ -41,12 +42,12 @@ X[:, 1] *= .5
 
 ###############################################################################
 # Compute clustering
-print "Compute unstructured hierarchical clustering..."
+print("Compute unstructured hierarchical clustering...")
 st = time.time()
 ward = Ward(n_clusters=6).fit(X)
 label = ward.labels_
-print "Elapsed time: ", time.time() - st
-print "Number of points: ", label.size
+print("Elapsed time: ", time.time() - st)
+print("Number of points: ", label.size)
 
 ###############################################################################
 # Plot result
@@ -66,12 +67,12 @@ connectivity = kneighbors_graph(X, n_neighbors=10)
 
 ###############################################################################
 # Compute clustering
-print "Compute structured hierarchical clustering..."
+print("Compute structured hierarchical clustering...")
 st = time.time()
 ward = Ward(n_clusters=6, connectivity=connectivity).fit(X)
 label = ward.labels_
-print "Elapsed time: ", time.time() - st
-print "Number of points: ", label.size
+print("Elapsed time: ", time.time() - st)
+print("Number of points: ", label.size)
 
 ###############################################################################
 # Plot result

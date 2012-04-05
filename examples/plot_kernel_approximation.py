@@ -32,7 +32,8 @@ The usage of :class:`RBFSampler` is described in detail in
 :ref:`kernel_approximation`.
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #         modified Andreas Mueller

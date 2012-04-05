@@ -27,7 +27,9 @@ to a normalized variance:  That is
    \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
 
 """
-print __doc__
+from __future__ import print_function
+import six
+print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>
@@ -69,9 +71,9 @@ sigma = np.sqrt(MSE)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 fig = pl.figure()
-pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
-pl.plot(x, y_pred, 'b-', label=u'Prediction')
+pl.plot(x, f(x), 'r:', label=six.u('$f(x) = x\,\sin(x)$'))
+pl.plot(X, y, 'r.', markersize=10, label=six.u('Observations'))
+pl.plot(x, y_pred, 'b-', label=six.u('Prediction'))
 pl.fill(np.concatenate([x, x[::-1]]), \
         np.concatenate([y_pred - 1.9600 * sigma,
                        (y_pred + 1.9600 * sigma)[::-1]]), \
@@ -112,9 +114,9 @@ sigma = np.sqrt(MSE)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 fig = pl.figure()
-pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-pl.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')
-pl.plot(x, y_pred, 'b-', label=u'Prediction')
+pl.plot(x, f(x), 'r:', label=six.u('$f(x) = x\,\sin(x)$'))
+pl.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=six.u('Observations'))
+pl.plot(x, y_pred, 'b-', label=six.u('Prediction'))
 pl.fill(np.concatenate([x, x[::-1]]), \
         np.concatenate([y_pred - 1.9600 * sigma,
                        (y_pred + 1.9600 * sigma)[::-1]]), \

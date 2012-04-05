@@ -7,7 +7,8 @@ One-class SVM with non-linear kernel (RBF)
 algorithm that learns a decision function for novelty detection:
 classifying new data as similar or different to the training set.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl

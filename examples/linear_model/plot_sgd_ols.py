@@ -7,7 +7,8 @@ Simple Ordinary Least Squares example with stochastic
 gradient descent, we draw the linear least
 squares solution for a random set of points in the plane.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import pylab as pl
 

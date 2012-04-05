@@ -11,7 +11,8 @@ importance of the whole forest.
 As expected, the knee in the blue plot suggests that 3 features are
 informative, while the remaining are not.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 
@@ -38,10 +39,10 @@ importances = forest.feature_importances_
 indices = np.argsort(importances)[::-1]
 
 # Print the feature ranking
-print "Feature ranking:"
+print("Feature ranking:")
 
-for f in xrange(10):
-    print "%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]])
+for f in range(10):
+    print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the trees and of the forest
 import pylab as pl
@@ -49,7 +50,7 @@ pl.figure()
 pl.title("Feature importances")
 
 for tree in forest.estimators_:
-    pl.plot(xrange(10), tree.feature_importances_[indices], "r")
+    pl.plot(range(10), tree.feature_importances_[indices], "r")
 
-pl.plot(xrange(10), importances[indices], "b")
+pl.plot(range(10), importances[indices], "b")
 pl.show()

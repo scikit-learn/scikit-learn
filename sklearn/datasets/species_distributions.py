@@ -29,19 +29,36 @@ Notes:
  * See examples/applications/plot_species_distribution_modeling.py
    for an example of using this dataset
 """
+from __future__ import print_function
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
 # License: Simplified BSD
 
-from cStringIO import StringIO
+import sys
+if sys.version_info[0] == 3:
+    # in python3, StringIO does not accept binary data
+    # see http://packages.python.org/six/
+    import io
+    StringIO = io.BytesIO
+else:
+    import cStringIO
+    StringIO = cStringIO.StringIO
+
 
 from os import makedirs
 from os.path import join
 from os.path import exists
 
-import urllib2
+try:
+    # Python 2
+    import urllib2
+    urlopen = urllib2.urlopen
+except ImportError:
+    # Python 3
+    import urllib.request
+    urlopen = urllib.request.urlopen
 
 import numpy as np
 
@@ -218,9 +235,9 @@ def fetch_species_distributions(data_home=None,
     dtype = np.int16
 
     if not exists(join(data_home, DATA_ARCHIVE_NAME)):
-        print 'Downloading species data from %s to %s' % (SAMPLES_URL,
-                                                          data_home)
-        X = np.load(StringIO(urllib2.urlopen(SAMPLES_URL).read()))
+        print('Downloading species data from %s to %s' % (SAMPLES_URL,
+                                                          data_home))
+        X = np.load(StringIO(urlopen(SAMPLES_URL).read()))
 
         for f in X.files:
             fhandle = StringIO(X[f])
@@ -229,15 +246,15 @@ def fetch_species_distributions(data_home=None,
             if 'test' in f:
                 test = _load_csv(fhandle)
 
-        print 'Downloading coverage data from %s to %s' % (COVERAGES_URL,
-                                                           data_home)
+        print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
+                                                           data_home))
 
-        X = np.load(StringIO(urllib2.urlopen(COVERAGES_URL).read()))
+        X = np.load(StringIO(urlopen(COVERAGES_URL).read()))
 
         coverages = []
         for f in X.files:
             fhandle = StringIO(X[f])
-            print ' - converting', f
+            print(' - converting', f)
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages,
                                dtype=dtype)

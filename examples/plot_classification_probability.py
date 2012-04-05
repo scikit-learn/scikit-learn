@@ -10,7 +10,9 @@ well as L1 and L2 penalized logistic regression.
 The logistic regression is not a multiclass classifier out of the box. As
 a result it can identify only the first class.
 """
-print __doc__
+from __future__ import print_function
+import six
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
@@ -43,12 +45,12 @@ n_classifiers = len(classifiers)
 pl.figure(figsize=(3 * 2, n_classifiers * 2))
 pl.subplots_adjust(bottom=.2, top=.95)
 
-for index, (name, classifier) in enumerate(classifiers.iteritems()):
+for index, (name, classifier) in enumerate(six.iteritems(classifiers)):
     classifier.fit(X, y)
 
     y_pred = classifier.predict(X)
     classif_rate = np.mean(y_pred.ravel() == y.ravel()) * 100
-    print  "classif_rate for %s : %f " % (name, classif_rate)
+    print("classif_rate for %s : %f " % (name, classif_rate))
 
     # View probabilities=
     xx = np.linspace(3, 9, 100)

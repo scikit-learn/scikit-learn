@@ -6,7 +6,8 @@ Precision-Recall
 Example of Precision-Recall metric to evaluate the quality
 of the output of a classifier.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import random
 import pylab as pl
@@ -21,7 +22,7 @@ X = iris.data
 y = iris.target
 X, y = X[y != 2], y[y != 2]  # Keep also 2 classes (0 and 1)
 n_samples, n_features = X.shape
-p = range(n_samples)  # Shuffle samples
+p = np.arange(n_samples)  # Shuffle samples
 random.seed(0)
 random.shuffle(p)
 X, y = X[p], y[p]
@@ -38,7 +39,7 @@ probas_ = classifier.fit(X[:half], y[:half]).predict_proba(X[half:])
 # Compute Precision-Recall and plot curve
 precision, recall, thresholds = precision_recall_curve(y[half:], probas_[:, 1])
 area = auc(recall, precision)
-print "Area Under Curve: %0.2f" % area
+print("Area Under Curve: %0.2f" % area)
 
 pl.clf()
 pl.plot(recall, precision, label='Precision-Recall curve')

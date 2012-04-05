@@ -10,11 +10,12 @@ which the score obtained is greater than the classification score
 obtained in the first place.
 
 """
+from __future__ import print_function
 
 # Author:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD
 
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -46,7 +47,7 @@ score, permutation_scores, pvalue = permutation_test_score(svm, X, y,
                                             zero_one_score, cv=cv,
                                             n_permutations=100, n_jobs=1)
 
-print "Classification score %s (pvalue : %s)" % (score, pvalue)
+print("Classification score %s (pvalue : %s)" % (score, pvalue))
 
 ###############################################################################
 # View histogram of permutation scores

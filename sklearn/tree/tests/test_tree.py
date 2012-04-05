@@ -2,6 +2,7 @@
 Testing for the tree module (sklearn.tree).
 """
 
+import sys
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -12,6 +13,8 @@ from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
+
+PY3 = sys.version_info[0] == 3
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -67,14 +70,21 @@ def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
-    from StringIO import StringIO
+    if PY3:
+        # Python 3
+        from io import StringIO
+        FileObject = StringIO
+    else:
+        # Python 2
+        from io import BytesIO
+        FileObject = BytesIO
 
     # test export code
-    out = StringIO()
+    out = FileObject()
     tree.export_graphviz(clf, out_file=out)
     contents1 = out.getvalue()
 
-    tree_toy = StringIO("digraph Tree {\n"
+    tree_toy = FileObject("digraph Tree {\n"
     "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
     "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
     "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
@@ -88,12 +98,12 @@ def test_graphviz_toy():
         "graphviz output test failed\n: %s != %s" % (contents1, contents2)
 
     # test with feature_names
-    out = StringIO()
+    out = FileObject()
     out = tree.export_graphviz(clf, out_file=out,
                                feature_names=["feature1", ""])
     contents1 = out.getvalue()
 
-    tree_toy = StringIO("digraph Tree {\n"
+    tree_toy = FileObject("digraph Tree {\n"
     "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
     "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
     "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
@@ -107,7 +117,7 @@ def test_graphviz_toy():
         "graphviz output test failed\n: %s != %s" % (contents1, contents2)
 
     # test improperly formed feature_names
-    out = StringIO()
+    out = FileObject()
     assert_raises(IndexError, tree.export_graphviz,
                   clf, out, feature_names=[])
 

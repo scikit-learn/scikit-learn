@@ -2,6 +2,7 @@
 clustering.
 
 """
+from __future__ import print_function
 # Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 
@@ -131,11 +132,11 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
             unconverged = np.sum((se == convit) + (se == 0)) != n_points
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
-                    print "Converged after %d iterations." % it
+                    print("Converged after %d iterations." % it)
                 break
     else:
         if verbose:
-            print "Did not converged"
+            print("Did not converged")
 
     I = np.where(np.diag(A + R) > 0)[0]
     K = I.size  # Identify exemplars

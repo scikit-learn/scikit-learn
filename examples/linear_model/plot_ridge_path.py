@@ -10,11 +10,12 @@ Shows the effect of collinearity in the coefficients or the
 and the solution tends towards the ordinary least squares, coefficients
 exhibit big oscillations.
 """
+from __future__ import print_function
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD Style.
 
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

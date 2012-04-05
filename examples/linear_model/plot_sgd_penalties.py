@@ -7,8 +7,9 @@ Plot the contours of the three penalties supported by
 `sklearn.linear_model.stochastic_gradient`.
 
 """
+from __future__ import print_function
 from __future__ import division
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

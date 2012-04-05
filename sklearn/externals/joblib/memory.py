@@ -3,6 +3,7 @@ A context object for caching a function's return value each time it
 is called with the same input arguments.
 
 """
+from __future__ import print_function
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
@@ -172,7 +173,7 @@ class MemorizedFunc(Logger):
                     t = time.time() - t0
                     _, name = get_func_name(self.func)
                     msg = '%s cache loaded - %s' % (name, format_time(t))
-                    print max(0, (80 - len(msg))) * '_' + msg
+                    print(max(0, (80 - len(msg))) * '_' + msg)
                 return out
             except Exception:
                 # XXX: Should use an exception logger
@@ -309,7 +310,7 @@ class MemorizedFunc(Logger):
         """
         start_time = time.time()
         if self._verbose:
-            print self.format_call(*args, **kwargs)
+            print(self.format_call(*args, **kwargs))
         output_dir, argument_hash = self.get_output_dir(*args, **kwargs)
         output = self.func(*args, **kwargs)
         self._persist_output(output, output_dir)
@@ -318,7 +319,7 @@ class MemorizedFunc(Logger):
         if self._verbose:
             _, name = get_func_name(self.func)
             msg = '%s - %s' % (name, format_time(duration))
-            print max(0, (80 - len(msg))) * '_' + msg
+            print(max(0, (80 - len(msg))) * '_' + msg)
         return output
 
     def format_call(self, *args, **kwds):
@@ -352,8 +353,8 @@ class MemorizedFunc(Logger):
                 arg = '\n%s' % arg
             previous_length = len(arg)
             arg_str.append(arg)
-        arg_str.extend(['%s=%s' % (v, self.format(i)) for v, i in
-                                    kwds.iteritems()])
+        arg_str.extend(['%s=%s' % (v, self.format(i))
+                        for v, i in kwds.items()])
         arg_str = ', '.join(arg_str)
 
         signature = '%s(%s)' % (name, arg_str)
@@ -378,7 +379,7 @@ class MemorizedFunc(Logger):
         argument_dict = filter_args(self.func, self.ignore,
                                     args, kwargs)
 
-        input_repr = dict((k, repr(v)) for k, v in argument_dict.iteritems())
+        input_repr = dict((k, repr(v)) for k, v in argument_dict.items())
         if json is not None:
             # This can fail do to race-conditions with multiple
             # concurrent joblibs removing the file or the directory
@@ -398,10 +399,10 @@ class MemorizedFunc(Logger):
         """
         if self._verbose > 1:
             t = time.time() - self.timestamp
-            print '[Memory]% 16s: Loading %s...' % (
+            print('[Memory]% 16s: Loading %s...' % (
                                     format_time(t),
                                     self.format_signature(self.func)[0]
-                                    )
+                                    ))
         filename = os.path.join(output_dir, 'output.pkl')
         return numpy_pickle.load(filename,
                                  mmap_mode=self.mmap_mode)

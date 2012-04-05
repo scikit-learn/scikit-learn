@@ -10,7 +10,8 @@ partly-homogenous regions.
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD

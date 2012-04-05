@@ -38,7 +38,8 @@ In a second time, we set alpha and compare the performance of different
 feature selection methods, using the area under curve (AUC) of the
 precision-recall.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 # Author: Alexandre Gramfort and Gael Varoquaux
 # License: BSD

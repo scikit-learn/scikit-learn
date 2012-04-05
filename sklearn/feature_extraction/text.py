@@ -9,6 +9,16 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
+from __future__ import unicode_literals
 
 import re
 import unicodedata
@@ -22,6 +32,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .stop_words import ENGLISH_STOP_WORDS
+from sklearn.externals import six
 
 
 def strip_accents_unicode(s):
@@ -37,7 +48,7 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    return u''.join([c for c in unicodedata.normalize('NFKD', s)
+    return ''.join([c for c in unicodedata.normalize('NFKD', s)
                      if not unicodedata.combining(c)])
 
 
@@ -62,13 +73,13 @@ def strip_tags(s):
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
     """
-    return re.compile(ur"<([^>]+)>", flags=re.UNICODE).sub(u" ", s)
+    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
 
 
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
-    elif isinstance(stop, str) or isinstance(stop, unicode):
+    elif isinstance(stop, str) or isinstance(stop, str):
         raise ValueError("not a built-in stop list: %s" % stop)
     else:               # assume it's a collection
         return stop
@@ -176,15 +187,15 @@ class CountVectorizer(BaseEstimator):
         Type of the matrix returned by fit_transform() or transform().
     """
 
-    _white_spaces = re.compile(ur"\s\s+")
+    _white_spaces = re.compile(r"\s\s+")
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 stop_words=None, token_pattern=r"\b\w\w+\b",
                  min_n=1, max_n=1, analyzer='word',
                  max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long):
+                 vocabulary=None, binary=False, dtype=np.long):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -235,22 +246,22 @@ class CountVectorizer(BaseEstimator):
             original_tokens = tokens
             tokens = []
             n_original_tokens = len(original_tokens)
-            for n in xrange(self.min_n,
+            for n in range(self.min_n,
                             min(self.max_n + 1, n_original_tokens + 1)):
-                for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(u" ".join(original_tokens[i: i + n]))
+                for i in range(n_original_tokens - n + 1):
+                    tokens.append(" ".join(original_tokens[i: i + n]))
 
         return tokens
 
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(u" ", text_document)
+        text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
-        for n in xrange(self.min_n, min(self.max_n + 1, text_len + 1)):
-            for i in xrange(text_len - n + 1):
+        for n in range(self.min_n, min(self.max_n + 1, text_len + 1)):
+            for i in range(text_len - n + 1):
                 ngrams.append(text_document[i: i + n])
         return ngrams
 
@@ -323,7 +334,7 @@ class CountVectorizer(BaseEstimator):
         vocabulary = self.vocabulary_
 
         for i, term_count_dict in enumerate(term_count_dicts):
-            for term, count in term_count_dict.iteritems():
+            for term, count in six.iteritems(term_count_dict):
                 j = vocabulary.get(term)
                 if j is not None:
                     i_indices.append(i)
@@ -332,7 +343,7 @@ class CountVectorizer(BaseEstimator):
             # free memory as we go
             term_count_dict.clear()
 
-        shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
+        shape = (len(term_count_dicts), max(six.itervalues(vocabulary)) + 1)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
@@ -399,7 +410,7 @@ class CountVectorizer(BaseEstimator):
             term_counts.update(term_count_current)
 
             if max_df < 1.0:
-                document_counts.update(term_count_current.iterkeys())
+                document_counts.update(six.iterkeys(term_count_current))
 
             term_counts_per_doc.append(term_count_current)
 
@@ -408,7 +419,7 @@ class CountVectorizer(BaseEstimator):
         # filter out stop words: terms that occur in almost all documents
         if max_df < 1.0:
             max_document_count = max_df * n_doc
-            stop_words = set(t for t, dc in document_counts.iteritems()
+            stop_words = set(t for t, dc in six.iteritems(document_counts)
                                if dc > max_document_count)
         else:
             stop_words = set()
@@ -486,19 +497,19 @@ class CountVectorizer(BaseEstimator):
             X = np.asmatrix(X)
         n_samples = X.shape[0]
 
-        terms = np.array(self.vocabulary_.keys())
-        indices = np.array(self.vocabulary_.values())
+        terms = np.array(list(self.vocabulary_.keys()))
+        indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                for i in xrange(n_samples)]
+                for i in range(n_samples)]
 
     def get_feature_names(self):
         """Array mapping from feature integer indicex to feature name"""
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
-        return [t for t, i in sorted(self.vocabulary_.iteritems(),
+        return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
 
 
@@ -643,9 +654,9 @@ class TfidfVectorizer(CountVectorizer):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 analyzer='word', stop_words=None, token_pattern=r"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, norm='l2',
+                 vocabulary=None, binary=False, dtype=np.long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
@@ -741,9 +752,9 @@ class Vectorizer(TfidfVectorizer):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 analyzer='word', stop_words=None, token_pattern=r"\b\w\w+\b",
                  min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, norm='l2',
+                 vocabulary=None, binary=False, dtype=np.long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
         warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
                      " in 0.13. Please use TfidfVectorizer instead.",

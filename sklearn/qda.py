@@ -52,7 +52,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     >>> clf = QDA()
     >>> clf.fit(X, y)
     QDA(priors=None)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
     See also

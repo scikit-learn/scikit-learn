@@ -10,7 +10,8 @@ For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from
 the training samples.
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -66,7 +67,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     pl.axis("tight")
 
     # Plot the training points
-    for i, color in zip(xrange(n_classes), plot_colors):
+    for i, color in zip(range(n_classes), plot_colors):
         idx = np.where(y == i)
         pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
 

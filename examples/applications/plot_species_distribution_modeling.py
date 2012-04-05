@@ -35,6 +35,7 @@ References
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 """
+from __future__ import print_function
 
 # Authors: Peter Prettenhoer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
@@ -51,6 +52,7 @@ from sklearn.datasets.base import Bunch
 from sklearn.datasets import fetch_species_distributions
 from sklearn.datasets.species_distributions import construct_grids
 from sklearn import svm, metrics
+import six
 
 # if basemap is available, we'll use it.
 # otherwise, we'll improvise later...
@@ -60,7 +62,7 @@ try:
 except ImportError:
     basemap = False
 
-print __doc__
+print(__doc__)
 
 
 def create_species_bunch(species_name,
@@ -76,7 +78,7 @@ def create_species_bunch(species_name,
 
     points = dict(test=test, train=train)
 
-    for label, pts in points.iteritems():
+    for label, pts in six.iteritems(points):
         # choose points associated with the desired species
         pts = pts[pts['species'] == species_name]
         bunch['pts_%s' % label] = pts
@@ -130,8 +132,8 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
 
     # Fit, predict, and plot for each species.
     for i, species in enumerate([BV_bunch, MM_bunch]):
-        print "_" * 80
-        print "Modeling distribution of species '%s'" % species.name
+        print("_" * 80)
+        print("Modeling distribution of species '%s'" % species.name)
 
         # Standardize features
         mean = species.cov_train.mean(axis=0)
@@ -139,29 +141,29 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         train_cover_std = (species.cov_train - mean) / std
 
         # Fit OneClassSVM
-        print " - fit OneClassSVM ... ",
+        print(" - fit OneClassSVM ... ", end=' ')
         clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.5)
         clf.fit(train_cover_std)
-        print "done. "
+        print("done. ")
 
         # Plot map of South America
         pl.subplot(1, 2, i + 1)
         if basemap:
-            print " - plot coastlines using basemap"
+            print(" - plot coastlines using basemap")
             m = Basemap(projection='cyl', llcrnrlat=Y.min(),
                         urcrnrlat=Y.max(), llcrnrlon=X.min(),
                         urcrnrlon=X.max(), resolution='c')
             m.drawcoastlines()
             m.drawcountries()
         else:
-            print " - plot coastlines from coverage"
+            print(" - plot coastlines from coverage")
             pl.contour(X, Y, land_reference,
                        levels=[-9999], colors="k",
                        linestyles="solid")
             pl.xticks([])
             pl.yticks([])
 
-        print " - predict species distribution"
+        print(" - predict species distribution")
 
         # Predict species distribution using the training data
         Z = np.ones((data.Ny, data.Nx), dtype=np.float64)
@@ -201,9 +203,9 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)
         roc_auc = metrics.auc(fpr, tpr)
         pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
-        print "\n Area under the ROC curve : %f" % roc_auc
+        print("\n Area under the ROC curve : %f" % roc_auc)
 
-    print "\ntime elapsed: %.2fs" % (time() - t0)
+    print("\ntime elapsed: %.2fs" % (time() - t0))
 
 
 plot_species_distribution()

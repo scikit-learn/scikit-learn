@@ -9,6 +9,7 @@ estimator, as a chain of transforms and estimators.
 # Licence: BSD
 
 from .base import BaseEstimator
+from sklearn.externals import six
 
 
 # One round of beers on me if someone finds out why the backslash
@@ -97,8 +98,8 @@ class Pipeline(BaseEstimator):
             return super(Pipeline, self).get_params(deep=False)
         else:
             out = self.named_steps.copy()
-            for name, step in self.named_steps.iteritems():
-                for key, value in step.get_params(deep=True).iteritems():
+            for name, step in six.iteritems(self.named_steps):
+                for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
             return out
 
@@ -106,7 +107,7 @@ class Pipeline(BaseEstimator):
 
     def _pre_transform(self, X, y=None, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
-        for pname, pval in fit_params.iteritems():
+        for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X

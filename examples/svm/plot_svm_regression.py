@@ -7,7 +7,8 @@ Toy example of 1D regression using linear, polynominial and RBF
 kernels.
 
 """
-print __doc__
+from __future__ import print_function
+print(__doc__)
 
 ###############################################################################
 # Generate sample data

@@ -29,6 +29,7 @@ The module structure is the following:
   sub-estimator implementations.
 
 """
+from __future__ import print_function
 
 # Authors: Gilles Louppe, Brian Holt
 # License: BSD 3
@@ -60,7 +61,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
     random_state = check_random_state(seed)
     trees = []
 
-    for i in xrange(n_trees):
+    for i in range(n_trees):
         if verbose > 1:
             print("building tree %d of %d" % (i + 1, n_trees))
         seed = random_state.randint(MAX_INT)
@@ -117,14 +118,14 @@ def _partition_trees(forest):
         n_jobs = min(forest.n_jobs, forest.n_estimators)
 
     # Partition trees between jobs
-    n_trees = [forest.n_estimators / n_jobs] * n_jobs
+    n_trees = [int(forest.n_estimators / n_jobs)] * n_jobs
 
-    for i in xrange(forest.n_estimators % n_jobs):
+    for i in range(forest.n_estimators % n_jobs):
         n_trees[i] += 1
 
     starts = [0] * (n_jobs + 1)
 
-    for i in xrange(1, n_jobs + 1):
+    for i in range(1, n_jobs + 1):
         starts[i] = starts[i - 1] + n_trees[i - 1]
 
     return n_jobs, n_trees, starts
@@ -212,7 +213,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 X_argsorted,
                 self.random_state.randint(MAX_INT),
                 verbose=self.verbose)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
@@ -326,7 +327,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X, self.n_classes_)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         p = sum(all_p) / self.n_estimators
@@ -405,7 +406,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
         all_y_hat = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         y_hat = sum(all_y_hat) / self.n_estimators
