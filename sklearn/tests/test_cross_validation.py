@@ -164,10 +164,10 @@ def test_shuffle_split_warnings():
     warnings_warn = warnings.warn
     warnings.warn = lambda msg: warn_queue.append(msg)
 
-    expected_message = ("test_fraction is deprecated in 0.11, use "
-                        "test_size instead",
-                        "train_fraction is deprecated in 0.11, use "
-                        "train_size instead")
+    expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
+                        "for removal in 0.12, use test_size instead",
+                        "train_fraction is deprecated in 0.11 and scheduled "
+                        "for removal in 0.12, use train_size instead")
 
     cval.ShuffleSplit(10, 3, test_fraction=0.1)
     cval.ShuffleSplit(10, 3, train_fraction=0.1)
