@@ -470,9 +470,9 @@ class GMM(BaseEstimator):
                     self.n_init = kwargs['n_init']
             if kwargs['n_iter']:
                 self.n_iter =  kwargs['n_iter']
-            if kwargs.['params']:
+            if kwargs['params']:
                 self.params = kwargs['params']
-            if kwargs.['init_params']:
+            if kwargs['init_params']:
                 self.init_params = kwargs['init_params']
             
 
