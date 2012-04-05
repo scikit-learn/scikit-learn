@@ -745,11 +745,13 @@ class ShuffleSplit(object):
 
         if test_fraction is not None:
             warnings.warn(
-                "test_fraction is deprecated in 0.11, use test_size instead")
+                "test_fraction is deprecated in 0.11 and scheduled for "
+                "removal in 0.12, use test_size instead")
             test_size = test_fraction
         if train_fraction is not None:
             warnings.warn(
-                "train_fraction is deprecated in 0.11, use train_size instead")
+                "train_fraction is deprecated in 0.11 and scheduled for "
+                "removal in 0.12, use train_size instead")
             train_size = train_fraction
 
         self.test_size = test_size
@@ -1256,14 +1258,16 @@ def train_test_split(*arrays, **options):
     test_fraction = options.pop('test_fraction', None)
     if test_fraction is not None:
         warnings.warn(
-            "test_fraction is deprecated in 0.11, use test_size instead")
+            "test_fraction is deprecated in 0.11 and scheduled for "
+            "removal in 0.12, use test_size instead")
     else:
         test_fraction = 0.25
 
     train_fraction = options.pop('train_fraction', None)
     if train_fraction is not None:
         warnings.warn(
-            "train_fraction is deprecated in 0.11, use train_size instead")
+            "train_fraction is deprecated in 0.11 and scheduled for "
+            "removal in 0.12, use train_size instead")
 
     test_size = options.pop('test_size', test_fraction)
     train_size = options.pop('train_size', train_fraction)
