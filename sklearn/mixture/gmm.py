@@ -458,21 +458,21 @@ class GMM(BaseEstimator):
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
         if kwargs:
-            warnings.warn("Setting paramters in the 'fit' method is deprecated"
+            warnings.warn("Setting parameters in the 'fit' method is deprecated"
                     "Set it on initialization instead.",
                     DeprecationWarning)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
-            if kwargs.has_key('n_init'):
+            if kwargs['n_init']:
                 if kwargs['n_init'] < 1:
                     raise ValueError('GMM estimation requires at least one run')
                 else:
                     self.n_init = kwargs['n_init']
-            if kwargs.has_key('n_iter'):
+            if kwargs['n_iter']:
                 self.n_iter =  kwargs['n_iter']
-            if kwargs.has_key('params'):
+            if kwargs.['params']:
                 self.params = kwargs['params']
-            if kwargs.has_key('init_params'):
+            if kwargs.['init_params']:
                 self.init_params = kwargs['init_params']
             
 
