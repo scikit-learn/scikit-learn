@@ -463,16 +463,16 @@ class GMM(BaseEstimator):
                     DeprecationWarning)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
-            if kwargs['n_init']:
+            if 'n_iter' in kwargs:
+                self.n_iter =  kwargs['n_iter']
+            if 'n_init' in kwargs:
                 if kwargs['n_init'] < 1:
                     raise ValueError('GMM estimation requires at least one run')
                 else:
                     self.n_init = kwargs['n_init']
-            if kwargs['n_iter']:
-                self.n_iter =  kwargs['n_iter']
-            if kwargs['params']:
+            if 'params' in kwargs:
                 self.params = kwargs['params']
-            if kwargs['init_params']:
+            if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
             
 
