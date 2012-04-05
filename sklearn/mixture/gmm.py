@@ -458,7 +458,7 @@ class GMM(BaseEstimator):
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
         if kwargs:
-            warnings.warn("Setting paremters in the 'fit' method is deprecated"
+            warnings.warn("Setting paramters in the 'fit' method is deprecated"
                     "Set it on initialization instead.",
                     DeprecationWarning)
             # initialisations for in case the user still adds parameters to fit
