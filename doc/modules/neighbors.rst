@@ -33,8 +33,8 @@ handwritten digits or satellite image scenes. It is often successful
 in classification situations where the decision boundary is very irregular.
 
 The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
-`scipy.sparse` matrices as input.  It currently supports only the Euclidean
-distance metric.
+`scipy.sparse` matrices as input.  Arbitrary Minkowski metrics are supported 
+for searches.
 
 
 Unsupervised Nearest Neighbors
