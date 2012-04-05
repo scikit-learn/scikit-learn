@@ -82,6 +82,9 @@ Changelog
       ``shrink_threshold`` parameter, which implements shrunken centroid
       classification, by `Robert Layton`_.
 
+   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for 
+     nearest neighbors searches. The metric can be specified by argument ``p``.
+
 API changes summary
 -------------------
 
@@ -152,6 +155,15 @@ API changes summary
    - Beam pruning option in :class:`_BaseHMM` module is removed since it is
      difficult to be Cythonized. If you are interested, you can look in the
      history codes by git.
+
+   - Options in class :class:`ShuffleSplit` are now consistent with
+     :class:`StratifiedShuffleSplit`. Options ``test_fraction`` and
+     ``train_fraction`` are deprecated and renamed to ``test_size`` and
+     ``train_size`` and can accept both ``float`` and ``int``.
+
+   - Argument ``p`` added to classes in :ref:`neighbors` to specify an 
+     arbitrary Minkowski metric for nearest neighbors searches.
+
 
 .. _changes_0_10:
 
