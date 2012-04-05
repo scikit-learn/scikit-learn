@@ -8,16 +8,69 @@ import urllib2
 from StringIO import StringIO
 import scipy as sp
 
+import nose.tools
 
-def assert_in(obj, in_=None, out_=None):
-    """Checks that all names in `in_` as in `obj`, but no name
-    in `out_` is."""
+_NOSE_TOOLS = dir(nose.tools)
+
+if 'assert_in' in _NOSE_TOOLS:
+    assert_in = nose.tools.assert_in
+else:
+    def assert_in(member, container, msg=None):
+        """
+        Checks member is present in container
+        definition of assert_in if missing in nose.tools
+
+        Parameters
+        ----------
+        member: object
+        container: container or iterator
+        msg: message if assertion fails
+        """
+        if not msg:
+            msg = "%s not in %s" % (member, container)
+        nose.tools.assert_true((member in container), msg=msg)
+
+
+if 'assert_not_in' in _NOSE_TOOLS:
+    assert_in = nose.tools.assert_in
+else:
+    def assert_not_in(member, container, msg=None):
+        """
+        Checks member is NOT in container
+        definition of assert_not_in if missing in nose.tools
+
+        Parameters
+        ----------
+        member: object
+        container: container or iterator
+        msg: message if assertion fails
+        """
+        if not msg:
+            msg = "%s in %s" % (member, container)
+        nose.tools.assert_false((member in container), msg=msg)
+
+
+def assert_contained(obj, in_=None, out_=None):
+    """Checks
+    * that all objects in `in_` are in `obj`,
+    * that all objects in `out` are NOT in `object`
+
+    Parameters
+    ----------
+    obj: container or iterable (implements __contains__ or __iter__).
+    in_: iterable or None (default)
+        if not None, the items in this iterable must be in obj
+        for the assert to succeed
+    out_: iterable or None (default)
+        if not None the items in this iterable must NOT be in obj
+        for the assert to succeed
+    """
     if in_ is not None:
-        for name in in_:
-            assert name in obj
+        for item in in_:
+            assert_in(item, obj)
     if out_ is not None:
-        for name in out_:
-            assert name not in obj
+        for item in out_:
+            assert_not_in(item, obj)
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
@@ -91,3 +144,8 @@ class mock_urllib2(object):
 
     def quote(self, string, safe='/'):
         return urllib2.quote(string, safe)
+
+
+# objects that are imported from this module by default
+__all__ = assert_contained, assert_in, assert_not_in, fake_mldata_cache, \
+    mock_urllib2
