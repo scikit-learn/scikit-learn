@@ -654,10 +654,11 @@ class VBGMM(DPGMM):
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None):
+                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
-            thresh=thresh, verbose=verbose, min_covar=min_covar)
+            thresh=thresh, verbose=verbose, min_covar=min_covar,
+            n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
 
     def eval(self, X):
