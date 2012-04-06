@@ -136,6 +136,22 @@ class GMM(BaseEstimator):
     thresh : float, optional
         Convergence threshold.
 
+    n_iter : int, optional
+        Number of EM iterations to perform.
+
+    n_init : int, optional
+        Number of initializations to perform. the best results is kept
+
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    init_params : string, optional
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
     Attributes
     ----------
     covariance_type : string
@@ -423,31 +439,15 @@ class GMM(BaseEstimator):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string ''. Likewise, if you
-        would like just to do an initialization, call this method with
-        n_iter=0.
+        argument init_params to the empty string '' when creating the 
+        GMM object. Likewise, if you would like just to do an 
+        initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
-
-        n_iter : int, optional
-            Number of EM iterations to perform.
-
-        n_init : int, optional
-            number of initializations to perform. the best results is kept
-
-        params : string, optional
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-
-        init_params : string, optional
-            Controls which parameters are updated in the initialization
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+            corresponds to a single data point.       
         """
         ## initialization step
         X = np.asarray(X)
