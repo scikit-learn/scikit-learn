@@ -48,8 +48,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     p: integer, optional (default = 2)
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
-        equivalent to using manhattan_distance, and euclidean_distance for
-        p = 2. For arbitrary p, minkowski_distance is used.
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     Examples
     --------
