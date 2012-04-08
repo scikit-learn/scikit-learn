@@ -74,18 +74,18 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
     test = rng.rand(n_query_pts, n_features)
 
-
     for p in P:
         results_nodist = []
         results = []
-        
+
         for algorithm in ALGORITHMS:
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                p=p)
             neigh.fit(X)
 
-            results_nodist.append(neigh.kneighbors(test, return_distance=False))
+            results_nodist.append(neigh.kneighbors(test,
+                return_distance=False))
             results.append(neigh.kneighbors(test, return_distance=True))
 
         for i in range(len(results) - 1):
