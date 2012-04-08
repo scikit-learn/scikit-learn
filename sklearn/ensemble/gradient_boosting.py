@@ -407,7 +407,7 @@ class BaseGradientBoosting(BaseEnsemble):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes_-1
+            ``0, 1, ..., n_classes_-1``
 
         Returns
         -------
@@ -617,7 +617,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes_-1
+            ``0, 1, ..., n_classes_-1``
 
         Returns
         -------
@@ -802,7 +802,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            0, 1, ..., n_classes_-1
+            ``0, 1, ..., n_classes_-1``
 
         Returns
         -------

@@ -114,7 +114,7 @@ is not the exact inverse transform of `transform` even when
 
 .. topic:: Examples:
 
-    * :ref:`example_applications_plot_face_recognition.py`
+    * :ref:`example_applications_face_recognition.py`
     * :ref:`example_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
