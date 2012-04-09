@@ -77,7 +77,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ----------
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
-            objects) to feature values (must be convertible to dtype).
+            objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
         Returns
@@ -110,7 +110,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ----------
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
-            objects) to feature values (must be convertible to dtype).
+            objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
         Returns
@@ -172,7 +172,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ----------
         X : Mapping or iterable over Mappings, length = n_samples
             Dict(s) or Mapping(s) from feature names (arbitrary Python
-            objects) to feature values (must be convertible to dtype).
+            objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
         Returns
@@ -184,6 +184,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         vocab = self.vocabulary_
 
         if self.sparse:
+            X = [X] if isinstance(X, Mapping) else X
+
             i_ind = []
             j_ind = []
             values = []
