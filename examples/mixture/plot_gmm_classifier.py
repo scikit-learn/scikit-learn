@@ -65,9 +65,9 @@ y_test = iris.target[test_index]
 n_classes = len(np.unique(y_train))
 
 # Try GMMs using different types of covariances.
-classifiers = dict((x, GMM(n_components=n_classes, covariance_type=x, 
-                    init_params='wc', n_iter=20))
-                    for x in ['spherical', 'diag', 'tied', 'full'])
+classifiers = dict((covar_type, GMM(n_components=n_classes, 
+                    covariance_type=covar_type, init_params='wc', n_iter=20))
+                    for covar_type in ['spherical', 'diag', 'tied', 'full'])
 
 n_classifiers = len(classifiers)
 
