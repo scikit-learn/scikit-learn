@@ -128,7 +128,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
 
-            dual_norm_XtA = linalg.norm(np.dot(X.T, R) - beta * w, np.inf)
+            XtA = np.dot(X.T, R) - beta * w
+            if positive:
+                dual_norm_XtA = np.max(XtA)
+            else:
+                dual_norm_XtA = linalg.norm(XtA, np.inf)
+
             # TODO: use squared L2 norm directly
             R_norm = linalg.norm(R)
             w_norm = linalg.norm(w, 2)
@@ -212,7 +217,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                       <DOUBLE*>H.data, 1)
 
             tmp = q[ii] - H[ii]
-            
+
             if positive and tmp < 0 :
                 w[ii] = 0.0
             else:
@@ -239,7 +244,13 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
             # criterion
 
             q_dot_w = np.dot(w, q)
-            dual_norm_XtA = linalg.norm(q - H - beta * w, np.inf)
+
+            XtA = q - H - beta * w
+            if positive:
+                dual_norm_XtA = np.max(XtA)
+            else:
+                dual_norm_XtA = linalg.norm(XtA, np.inf)
+
             R_norm2 = y_norm2 + np.sum(w * H) - 2.0 * q_dot_w
             w_norm = linalg.norm(w, 2)
             if (dual_norm_XtA > alpha):
