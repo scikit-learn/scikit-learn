@@ -796,38 +796,40 @@ class ShuffleSplit(object):
 
 
 def _validate_shuffle_split(n, test_size, train_size):
-    if isinstance(test_size, float) and test_size >= 1.:
+    if isinstance(test_size, (float, np.floating)) and test_size >= 1.:
         raise ValueError(
             'test_size=%f should be smaller '
             'than 1.0 or be an integer' % test_size)
-    elif isinstance(test_size, int) and test_size >= n:
+    elif isinstance(test_size, (int, long, np.integer)) and test_size >= n:
         raise ValueError(
             'test_size=%d should be smaller '
             'than the number of samples %d' % (test_size, n))
 
     if train_size is not None:
-        if isinstance(train_size, float):
+        if isinstance(train_size, (float, np.floating)):
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif isinstance(test_size, float) and train_size + test_size > 1.:
+            elif isinstance(test_size, (float, np.floating)) and \
+                    train_size + test_size > 1.:
                 raise ValueError('The sum of test_size and train_size = %f, '
                                  'should be smaller than 1.0. Reduce '
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
 
-        elif isinstance(train_size, int):
+        elif isinstance(train_size, (int, long, np.integer)):
             if train_size >= n:
                 raise ValueError("train_size=%d should be smaller "
                                  "than the number of samples %d" %
                                  (train_size, n))
-            elif isinstance(test_size, int) and train_size + test_size >= n:
+            elif isinstance(test_size, (int, long, np.integer)) and \
+                    train_size + test_size >= n:
                 raise ValueError('The sum of train_size and test_size = %d, '
                                  'should be smaller than the number of '
                                  'samples %d. Reduce test_size and/or '
                                  'train_size.' % (train_size + test_size, n))
 
-    if isinstance(test_size, float):
+    if isinstance(test_size, (float, np.floating)):
         n_test = ceil(test_size * n)
     else:
         n_test = float(test_size)
@@ -835,7 +837,7 @@ def _validate_shuffle_split(n, test_size, train_size):
     if train_size is None:
         n_train = n - n_test
     else:
-        if isinstance(train_size, float):
+        if isinstance(train_size, (float, np.floating)):
             n_train = floor(train_size * n)
         else:
             n_train = float(train_size)

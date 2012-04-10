@@ -152,6 +152,10 @@ def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split, range(3),
             test_size=0.6, train_size=0.6)
     assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size=np.float32(0.6), train_size=np.float32(0.6))
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size="wrong_type")
+    assert_raises(ValueError, cval.train_test_split, range(3),
             test_size=2, train_size=4)
     assert_raises(TypeError, cval.train_test_split, range(3),
             some_argument=1.1)
