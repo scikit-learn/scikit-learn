@@ -25,7 +25,7 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-def _load_svmlight_file(f, n_features, dtype, bint multilabel, zero_based):
+def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef Py_ssize_t hash_idx
@@ -76,17 +76,7 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel, zero_based):
     data = data.get()
     indices = indices.get()
 
-    if zero_based is False or zero_based == "auto" and np.min(indices) > 0:
-        indices -= 1
-
     if not multilabel:
         labels = labels.get()
 
-    if n_features is not None:
-        shape = (indptr.shape[0] - 1, n_features)
-    else:
-        shape = None    # inferred
-
-    X = sp.csr_matrix((data, indices, indptr), shape)
-
-    return X, labels
+    return data, indices, indptr, labels

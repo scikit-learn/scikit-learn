@@ -16,6 +16,7 @@ libsvm command line programs.
 # License: Simple BSD.
 
 import numpy as np
+import scipy.sparse as sp
 from ._svmlight_format import _load_svmlight_file
 
 
@@ -76,15 +77,29 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
           a list of tuples of length n_samples.
     """
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, n_features, dtype, multilabel,
-                                   zero_based)
-    with open(f, 'rb') as f:
-        return _load_svmlight_file(f, n_features, dtype, multilabel,
-                                   zero_based)
+        data, indices, indptr, y = _load_svmlight_file(f, dtype, multilabel,
+                                                       bool(zero_based))
+    else:
+        with open(f, 'rb') as f:
+            data, indices, indptr, y = _load_svmlight_file(f, dtype,
+                                                           multilabel,
+                                                           bool(zero_based))
+
+    if zero_based is False or zero_based == "auto" and np.min(indices) > 0:
+        indices -= 1
+
+    if n_features is not None:
+        shape = (indptr.shape[0] - 1, n_features)
+    else:
+        shape = None
+
+    X = sp.csr_matrix((data, indices, indptr), shape)
+
+    return X, y
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
-                        multilabel=False, zero_based=True):
+                        multilabel=False, zero_based="auto"):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -99,18 +114,18 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     n_features: int or None
         The number of features to use. If None, it will be inferred from the
-        first file. This argument is useful to load several files that are
-        subsets of a bigger sliced dataset: each subset might not have
-        examples of every feature, hence the inferred shape might vary from
-        one slice to another.
+        maximum column index occurring in any of the files.
 
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based: boolean, optional
+    zero_based: boolean or "auto", optional
         Whether column indices in files are zero-based (True) or one-based
-        (False).
+        (False). If set to "auto", a heuristic check is applied to determine
+        this from the files' contents. Both kinds of files occur "in the wild",
+        but they are unfortunately not self-identifying. Using "auto" or True
+        should always be safe.
 
     Returns
     -------
@@ -129,17 +144,25 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     --------
     load_svmlight_file
     """
-    if zero_based == "auto":
-        raise TypeError("zero_based must be boolean; the heuristic"
-                        " implemented by load_svmlight_file is not supported")
-    files = iter(files)
-    result = list(load_svmlight_file(files.next(), n_features, dtype,
-                                     multilabel, zero_based))
-    n_features = result[0].shape[1]
+    # TODO this might not properly close the files on other Python
+    # implementations than CPython
+    r = [_load_svmlight_file(f if hasattr(f, "read") else open(f, "rb"),
+                             dtype, multilabel, bool(zero_based))
+         for f in files]
 
-    for f in files:
-        result += load_svmlight_file(f, n_features, dtype, multilabel,
-                                     zero_based)
+    if zero_based is False \
+     or zero_based == "auto" and any(np.min(indices) > 0
+                                     for _, indices, _, _ in r):
+        for _, indices, _, _ in r:
+            indices -= 1
+
+    if n_features is None:
+        n_features = max(indices.max() for _, indices, _, _ in r) + 1
+
+    result = []
+    for data, indices, indptr, y in r:
+        shape = (indptr.shape[0] - 1, n_features)
+        result += sp.csr_matrix((data, indices, indptr), shape), y
 
     return result
 
