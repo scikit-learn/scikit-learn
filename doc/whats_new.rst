@@ -90,7 +90,7 @@ API changes summary
 
    - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
      instead.
-
+  
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -98,7 +98,11 @@ API changes summary
 
    - Sparse classes in the :ref:`sgd` module are now deprecated.
 
-   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
+   - In :class:`mixture.GMM`, :class:`mixture.DPGMM` and :class:`mixture.VBGMM`,
+     parameters must be passed to an object when initialising it and not through
+     ``fit``. Now ``fit`` will only accept the data as an input parameter.
+
+    - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
      `sample` and `score` or `predict` should be used instead.
 
    - attribute `_scores` and `_pvalues` in univariate feature selection
