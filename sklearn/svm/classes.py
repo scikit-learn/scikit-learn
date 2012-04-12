@@ -75,6 +75,11 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         of the number of samples. To match liblinear commandline one should use
         scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
+    verbose : bool, default: False
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in liblinear that, if enabled, may not work
+        properly in a multithreaded context.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 \

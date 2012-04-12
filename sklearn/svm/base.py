@@ -135,7 +135,10 @@ class BaseLibSVM(BaseEstimator):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
-        self._sparse = sp.isspmatrix(X) if self.sparse == "auto" else self.sparse
+        if self.sparse == "auto":
+            self._sparse = sp.isspmatrix(X)
+        else:
+            self._sparse = self.sparse
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
                     "Using it in the 'fit' method is deprecated.",
@@ -589,7 +592,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=None,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-            scale_C=True, class_weight=None):
+            scale_C=True, class_weight=None, verbose=False):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -600,6 +603,7 @@ class BaseLibLinear(BaseEstimator):
         self.multi_class = multi_class
         self.scale_C = scale_C
         self.class_weight = class_weight
+        self.verbose = verbose
 
         if not scale_C:
             warnings.warn('SVM: scale_C will disappear and be assumed to be '
@@ -689,8 +693,14 @@ class BaseLibLinear(BaseEstimator):
             C = C / float(X.shape[0])
 
         self.scaled_C_ = C
-        train = liblinear.csr_train_wrap if self._sparse \
-                                         else liblinear.train_wrap
+
+        liblinear.set_verbosity_wrap(self.verbose)
+
+        if self._sparse:
+            train = liblinear.csr_train_wrap
+        else:
+            train = liblinear.train_wrap
+
         self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
                                             self.tol, self._get_bias(), C,
                                             self.class_weight_label_,
@@ -817,3 +827,4 @@ class BaseLibLinear(BaseEstimator):
 
 libsvm.set_verbosity_wrap(0)
 libsvm_sparse.set_verbosity_wrap(0)
+liblinear.set_verbosity_wrap(0)
