@@ -130,7 +130,7 @@ def _partition_trees(forest):
     return n_jobs, n_trees, starts
 
 def _parallel_X_argsort(X):
-    return np.argsort(X.T, axis=1).astype(np.int32).T
+    return np.asarray(np.argsort(X.T, axis=1).T, dtype=np.int32, order="F")
 
 def _partition_features(forest, n_total_features):
     """Private function used to partition features between jobs."""
