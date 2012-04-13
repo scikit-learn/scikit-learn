@@ -124,6 +124,16 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start("optimal")
 
+    def test_multiple_fit(self):
+        """Test multiple calls of fit w/ different shaped inputs."""
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        clf.fit(X, Y)
+        coef = clf.coef_
+
+        clf.fit(X[:, :-1], Y)
+        assert_true(True)
+
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
