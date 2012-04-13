@@ -438,7 +438,7 @@ class GridSearchCV(BaseEstimator):
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = base_clf.set_params(**best_params)
+            best_estimator = clone(base_clf).set_params(**best_params)
             best_estimator.fit(X, y, **self.fit_params)
             self._best_estimator_ = best_estimator
         self._set_methods()
