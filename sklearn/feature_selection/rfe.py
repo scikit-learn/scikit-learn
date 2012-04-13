@@ -110,9 +110,8 @@ class RFE(BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
-
+        col_selector = np.arange(X.shape[1])
+        ranking_ = np.ones(X.shape[1], dtype="i8")
         if getattr(self.estimator, "warm_start", False):
             warm_start = True
         else:
@@ -120,23 +119,25 @@ class RFE(BaseEstimator):
 
         estimator = clone(self.estimator)
 
-        # Elimination
-        while np.sum(support_) > self.n_features_to_select:
 
-            # Select idxs of remaining features
-            features = np.where(support_)[0]
+        # Elimination
+        while len(col_selector) > self.n_features_to_select:
 
             # Rank remaining features
-            estimator.fit(X[:, features], y)
+            estimator.fit(X[:, col_selector], y)
+            
+            threshold = min(step, len(col_selector) - self.n_features_to_select)
             if estimator.coef_.ndim > 1:
                 ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
             else:
                 ranks = np.argsort(estimator.coef_ ** 2)
 
             # Eliminate the worst features
-            threshold = min(step, np.sum(support_) - self.n_features_to_select)
-            support_[features[ranks][:threshold]] = False
-            ranking_[np.logical_not(support_)] += 1                
+            iteration_kept_cols = ranks[threshold:]
+            col_selector = col_selector[iteration_kept_cols]
+            ranking_selector = np.ones(X.shape[1], dtype=np.bool)
+            ranking_selector[col_selector] = False
+            ranking_[ranking_selector] += 1
 
             # If estimator supports warm_start, then update coef_ accordingly,
             # otherwise start with a fresh estimator
@@ -145,22 +146,20 @@ class RFE(BaseEstimator):
                     order = "C"
                 else:
                     order = "F"
-                warm_coef = np.zeros((estimator.coef_.shape[0], len(support_)),
-                                     dtype = estimator.coef_.dtype)
-                warm_coef[:,features] = estimator.coef_
-                estimator.coef_ = warm_coef[:,support_].copy(order)
+                estimator.coef_ = estimator.coef_[:,iteration_kept_cols].copy(order)
 
             else:
-                if np.sum(support_) > self.n_features_to_select:
+                if len(col_selector) > self.n_features_to_select:
                     estimator = clone(self.estimator)
 
         # Set final attributes
-        self.estimator.fit(X[:, support_], y)
-        self.n_features_ = support_.sum()
-        self.support_ = support_
+        self.estimator.fit(X[:, col_selector], y)
+        self.n_features_ = len(col_selector)
+        
+        self.support_ = np.zeros(X.shape[1], dtype=np.bool)
+        self.support_[col_selector] = True
         self.ranking_ = ranking_
-
-
+        print self.ranking_
 
         return self
 
@@ -320,7 +319,7 @@ class RFECV(RFE):
         for train, test in cv:
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
-
+            
             # Score each subset of features
             for k in xrange(1, max(ranking_)):
                 mask = ranking_ <= k
