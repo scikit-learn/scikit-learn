@@ -113,35 +113,58 @@ class RFE(BaseEstimator):
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
 
+        if getattr(self.estimator, "warm_start", False):
+            warm_start = True
+        else:
+            warm_start = False
+
         # Elimination
         while np.sum(support_) > self.n_features_to_select:
             # Select idxs of remaining features
-            features = np.arange(n_features)[support_]
+            features = np.where(support_)[0]
 
-            # If estimator supports warm_start, then update coef_ accordingly
-            if getattr(self.estimator, "warm_start", False):
-                estimator = self.estimator
-                estimator.coef_ = estimator.coef_[features] 
-            else:
-                estimator = clone(self.estimator)
-            
             # Rank remaining features
-            estimator.fit(X[:, features], y)
-            if estimator.coef_.ndim > 1:
-                ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+            self.estimator.fit(X[:, features], y)
+            if self.estimator.coef_.ndim > 1:
+                ranks = np.argsort(np.sum(self.estimator.coef_ ** 2, axis=0))
             else:
-                ranks = np.argsort(estimator.coef_ ** 2)
+                ranks = np.argsort(self.estimator.coef_ ** 2)
 
             # Eliminate the worst features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1                
 
+            # If estimator supports warm_start, then update coef_ accordingly,
+            # otherwise start with a fresh estimator
+            if warm_start:
+                print "estimator.coef flags:"
+                print self.estimator.coef_.flags
+                
+                if self.estimator.coef_.flags["C_CONTIGUOUS"]:
+                    print "Estimator is c contiguous"
+                    order = "C"
+                else:
+                    print "Estimator is f contiguous"
+                    order = "F"
+                warm_coef = np.zeros((self.estimator.coef_.shape[0], len(support_)),
+                                     dtype = self.estimator.coef_.dtype)
+
+                warm_coef[:,features] = self.estimator.coef_
+                print warm_coef.shape
+                self.estimator.coef_ = warm_coef[:,support_].copy(order)
+                print self.estimator.coef_.flags
+
+            else:
+                self.estimator = clone(self.estimator)
+
         # Set final attributes
         self.estimator.fit(X[:, support_], y)
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
+
+
 
         return self
 
