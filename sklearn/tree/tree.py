@@ -395,7 +395,8 @@ class Tree(object):
 
         normalizer = np.sum(importances)
 
-        if normalizer > 0.0: # Avoid dividing by zero (e.g., when root is pure)
+        if normalizer > 0.0:
+            # Avoid dividing by zero (e.g., when root is pure)
             importances /= normalizer
 
         return importances
