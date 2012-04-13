@@ -341,7 +341,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
-        n_classes = classes.shape[0]
 
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
