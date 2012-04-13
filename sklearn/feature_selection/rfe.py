@@ -117,6 +117,7 @@ class RFE(BaseEstimator):
         else:
             warm_start = False
 
+
         estimator = clone(self.estimator)
 
 
@@ -146,6 +147,7 @@ class RFE(BaseEstimator):
                     order = "C"
                 else:
                     order = "F"
+
                 estimator.coef_ = estimator.coef_[:,iteration_kept_cols].copy(order)
 
             else:
@@ -160,6 +162,8 @@ class RFE(BaseEstimator):
         self.support_[col_selector] = True
         self.ranking_ = ranking_
         print self.ranking_
+
+
 
         return self
 
