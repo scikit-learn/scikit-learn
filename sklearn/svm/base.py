@@ -592,7 +592,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=None,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-            scale_C=True, class_weight=None, verbose=False):
+            scale_C=True, class_weight=None, verbose=0):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
