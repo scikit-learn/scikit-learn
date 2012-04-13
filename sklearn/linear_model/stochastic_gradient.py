@@ -629,7 +629,6 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                      coef_init=None, intercept_init=None):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
         self._check_fit_data(X, y)
