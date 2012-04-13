@@ -223,7 +223,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         self._expanded_class_weight = weight
 
-    def _partial_fit(self, X, y, n_iter, classes=None, sample_weight=None):
+    def _partial_fit(self, X, y, n_iter, classes=None, sample_weight=None,
+                     coef_init=None, intercept_init=None):
         X = safe_asarray(X, dtype=np.float64, order="C")
         y = np.asarray(y)
 
@@ -248,7 +249,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         if self.coef_ is None:
             self._allocate_parameter_mem(n_classes, n_features,
-                                         coef_init=None, intercept_init=None)
+                                         coef_init, intercept_init)
 
         # delegate to concrete training procedure
         if n_classes > 2:
@@ -264,7 +265,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self
 
     def partial_fit(self, X, y, classes=None,
-                     class_weight=None, sample_weight=None):
+                    class_weight=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -330,7 +331,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                     "method is deprecated. Set it on initialization instead.",
                     DeprecationWarning)
             self.class_weight = class_weight
+
         X = safe_asarray(X, dtype=np.float64, order="C")
+        # labels can be encoded as float, int, or string literals
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
@@ -345,17 +348,15 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                 coef_init = self.coef_
             if intercept_init is None:
                 intercept_init = self.intercept_
-
-        # Allocate datastructures from input arguments.
-        self._allocate_parameter_mem(n_classes, n_features,
-                                     coef_init, intercept_init)
+        else:
+            self.coef_ = None
+            self.intercept_ = None
 
         # Need to re-initialize in case of multiple call to fit.
         self._init_t()
 
-        self._partial_fit(X, y, self.n_iter,
-                          classes=classes,
-                          sample_weight=sample_weight)
+        self._partial_fit(X, y, self.n_iter, classes,
+                          sample_weight, coef_init, intercept_init)
 
         # fitting is over, we can now transform coef_ to fortran order
         # for faster predictions
@@ -697,6 +698,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                 coef_init = self.coef_
             if intercept_init is None:
                 intercept_init = self.intercept_
+        else:
+            self.coef_ = None
+            self.intercept_ = None
 
         # Need to re-initialize in case of multiple call to fit.
         self._init_t()
