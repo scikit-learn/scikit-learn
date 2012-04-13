@@ -102,7 +102,6 @@ class RFE(BaseEstimator):
         """
         # Initialization
         n_features = X.shape[1]
-
         if 0.0 < self.step < 1.0:
             step = int(self.step * n_features)
         else:
@@ -110,20 +109,13 @@ class RFE(BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        col_selector = np.arange(X.shape[1])
-        ranking_ = np.ones(X.shape[1], dtype="i8")
-        if getattr(self.estimator, "warm_start", False):
-            warm_start = True
-        else:
-            warm_start = False
-
-
-        estimator = clone(self.estimator)
-
-
         # Elimination
+        col_selector = np.arange(n_features)
+        ranking_ = np.ones(n_features, dtype="i8")
+        support_ = np.ones(n_features, dtype=np.bool)
+   
+        estimator = clone(self.estimator)
         while len(col_selector) > self.n_features_to_select:
-
             # Rank remaining features
             estimator.fit(X[:, col_selector], y)
             
@@ -136,20 +128,19 @@ class RFE(BaseEstimator):
             # Eliminate the worst features
             iteration_kept_cols = ranks[threshold:]
             col_selector = col_selector[iteration_kept_cols]
-            ranking_selector = np.ones(X.shape[1], dtype=np.bool)
-            ranking_selector[col_selector] = False
-            ranking_[ranking_selector] += 1
+            invert_sel = np.ones(n_features, dtype=np.bool)
+            invert_sel[col_selector] = False
+            support_[invert_sel] = False
+            ranking_[np.logical_not(support_)] += 1
 
             # If estimator supports warm_start, then update coef_ accordingly,
             # otherwise start with a fresh estimator
-            if warm_start:
+            if getattr(self.estimator, "warm_start", False):
                 if estimator.coef_.flags["C_CONTIGUOUS"]:
                     order = "C"
                 else:
                     order = "F"
-
                 estimator.coef_ = estimator.coef_[:,iteration_kept_cols].copy(order)
-
             else:
                 if len(col_selector) > self.n_features_to_select:
                     estimator = clone(self.estimator)
@@ -157,13 +148,8 @@ class RFE(BaseEstimator):
         # Set final attributes
         self.estimator.fit(X[:, col_selector], y)
         self.n_features_ = len(col_selector)
-        
-        self.support_ = np.zeros(X.shape[1], dtype=np.bool)
-        self.support_[col_selector] = True
+        self.support_ = support_
         self.ranking_ = ranking_
-        print self.ranking_
-
-
 
         return self
 
