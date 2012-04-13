@@ -115,22 +115,27 @@ class RFE(BaseEstimator):
 
         # Elimination
         while np.sum(support_) > self.n_features_to_select:
-            # Remaining features
+            # Select idxs of remaining features
             features = np.arange(n_features)[support_]
 
-            # Rank the remaining features
-            estimator = clone(self.estimator)
+            # If estimator supports warm_start, then update coef_ accordingly
+            if getattr(self.estimator, "warm_start", False):
+                estimator = self.estimator
+                estimator.coef_ = estimator.coef_[features] 
+            else:
+                estimator = clone(self.estimator)
+            
+            # Rank remaining features
             estimator.fit(X[:, features], y)
-
             if estimator.coef_.ndim > 1:
                 ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
             else:
                 ranks = np.argsort(estimator.coef_ ** 2)
 
-            # Eliminate the worse features
+            # Eliminate the worst features
             threshold = min(step, np.sum(support_) - self.n_features_to_select)
             support_[features[ranks][:threshold]] = False
-            ranking_[np.logical_not(support_)] += 1
+            ranking_[np.logical_not(support_)] += 1                
 
         # Set final attributes
         self.estimator.fit(X[:, support_], y)
