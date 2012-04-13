@@ -145,6 +145,8 @@ class BaseLibSVM(BaseEstimator):
                     DeprecationWarning)
             self.class_weight = class_weight
         fit = self._sparse_fit if self._sparse else self._dense_fit
+        if self.verbose:
+            print '[LibSVM]',
         fit(X, y, sample_weight)
         return self
 
@@ -701,6 +703,8 @@ class BaseLibLinear(BaseEstimator):
         else:
             train = liblinear.train_wrap
 
+        if self.verbose:
+            print '[LibLinear]',
         self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
                                             self.tol, self._get_bias(), C,
                                             self.class_weight_label_,
