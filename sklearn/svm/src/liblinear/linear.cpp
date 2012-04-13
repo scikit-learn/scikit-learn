@@ -41,7 +41,7 @@ static void print_string_stdout(const char *s)
 
 static void (*liblinear_print_string) (const char *) = &print_string_stdout;
 
-#if 0
+#if 1
 static void info(const char *fmt,...)
 {
 	char buf[BUFSIZ];

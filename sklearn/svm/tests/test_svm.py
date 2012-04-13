@@ -647,6 +647,20 @@ def test_inheritance():
     clf.decision_function(iris.data[-1])
 
 
+def test_linearsvc_verbose():
+    # stdout: redirect
+    import os
+    stdout = os.dup(1)  # save original stdout
+    os.dup2(os.pipe()[1], 1)  # replace it
+
+    # actual call
+    clf = svm.LinearSVC(verbose=1)
+    clf.fit(X, Y)
+
+    # stdout: restore
+    os.dup2(stdout, 1)  # restore original stdout
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
