@@ -240,7 +240,7 @@ class GridSearchCV(BaseEstimator):
     refit: boolean
         refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
-        this estimator.
+        this GridSearch instance after fitting.
 
     verbose: integer
         Controls the verbosity: the higher, the more messages.
@@ -274,6 +274,9 @@ class GridSearchCV(BaseEstimator):
 
     `best_score_` : float
         score of best_estimator on the left out data.
+
+    `best_params_` : dict
+        Parameter setting that gave the best results on the hold out data.
 
     Notes
     ------
@@ -465,8 +468,9 @@ class GridSearchCV(BaseEstimator):
             return self._best_estimator_
         else:
             raise RuntimeError("Grid search has to be run with 'refit=True'"
-                " to make predictions or obtain an instance "
-                " of the best estimator.")
+                " to make predictions or obtain an instance  of the best "
+                " estimator. To obtain the best parameter settings, "
+                " use ``best_params_``.")
 
     @property
     @deprecated('GridSearchCV.best_estimator is deprecated'
