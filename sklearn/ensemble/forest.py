@@ -237,14 +237,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
-        if self.pre_dispatch is None:
-            pre_dispatch = 2 * n_jobs
-        else:
-            pre_dispatch = self.pre_dispatch
 
         # Parallel loop
         all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                pre_dispatch=pre_dispatch)(
+                pre_dispatch=self.pre_dispatch)(
             delayed(_parallel_build_trees)(
                 n_trees[i],
                 self,
