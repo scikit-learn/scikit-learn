@@ -337,10 +337,10 @@ class GridSearchCV(BaseEstimator):
         self.pre_dispatch = pre_dispatch
 
     def _set_methods(self):
-        if hasattr(self.best_estimator_, 'predict'):
-            self.predict = self.best_estimator_.predict
-        if hasattr(self.best_estimator_, 'predict_proba'):
-            self.predict_proba = self.best_estimator_.predict_proba
+        if hasattr(self._best_estimator_, 'predict'):
+            self.predict = self._best_estimator_.predict
+        if hasattr(self._best_estimator_, 'predict_proba'):
+            self.predict_proba = self._best_estimator_.predict_proba
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
