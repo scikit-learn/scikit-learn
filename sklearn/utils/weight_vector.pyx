@@ -16,7 +16,12 @@ cimport cython
 
 
 cdef class WeightVector(object):
-    """Dense vector represented by a scalar and a numpy array.
+    """Parameter vector for a generalized linear model.
+
+    The model parameters consits of a weight vector and an
+    intercept term (= a constant offset).
+    The weight vector is represented by a scalar and a ndarray.
+    The intercept term is a ndarray.
 
     The class provides methods to ``add`` a sparse vector
     and scale the vector.
@@ -25,23 +30,31 @@ cdef class WeightVector(object):
 
     Attributes
     ----------
-    w : ndarray, dtype=np.float64, order='C'
+    w : ndarray, dtype=np.float64, order='C', shape=(n_features, K)
         The numpy array which backs the weight vector.
     w_data_ptr : np.float64*
-        A pointer to the data of the numpy array.
+        A pointer to the data of the ndarray.
     wscale : double
         The scale of the vector.
+    intercept : ndarray, dtype=np.float64, order='C', shape=(K,)
+        The intercept terms.
+    intercept_data_ptr : np.float64*
+        A pointer to the data of the ndarray
     n_features : int
         The number of features (= dimensionality of ``w``).
     sq_norm : double
         The squared norm of ``w``.
+    K : Pysize_t
+        The number of classes; 1 for regression and binary classification
+        ``n_classes`` for multi-class classification.
     """
 
-    def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
+    def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] w):
         self.w = w
         self.w_data_ptr = <DOUBLE *>w.data
         self.wscale = 1.0
         self.n_features = w.shape[0]
+        self.K = w.shape[1]
         self.sq_norm = np.dot(w, w)
 
     cdef void add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,

@@ -13,14 +13,17 @@ ctypedef np.int32_t INTEGER
 
 cdef class WeightVector(object):
     cdef np.ndarray w
-    cdef DOUBLE *w_data_ptr
+    cdef double *w_data_ptr
     cdef double wscale
+    cdef np.ndarray intercept
+    cdef double *intercept_data_ptr
     cdef Py_ssize_t n_features
+    cdef Py_ssize_t K
     cdef double sq_norm
 
     cdef void add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                  int xnnz, double c)
-    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                  int xnnz, int k, double c)
+    cdef double *dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                     int xnnz)
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
