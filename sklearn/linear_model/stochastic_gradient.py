@@ -162,9 +162,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     """
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
-                eta0=0.0, power_t=0.5, class_weight=None, warm_start=False):
+                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
+                 eta0=0.0, power_t=0.5, class_weight=None, warm_start=False,
+                 multi_class='ovr'):
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                             alpha=alpha, rho=rho,
                                             fit_intercept=fit_intercept,
@@ -176,6 +177,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
+
+        if multi_class not in ('ovr', 'multinomial'):
+            raise ValueError("multi_class must be either 'ovr' or " \
+                             "'multinomial'")
+        if multi_class == 'multinomial' and loss != 'log':
+            raise ValueError("multi_class='multinomial' requires loss='log'")
+        self.multi_class = multi_class
 
     @property
     @deprecated("to be removed in v0.12; use ``classes_`` instead.")
@@ -226,6 +234,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     def _partial_fit(self, X, y, n_iter, classes=None, sample_weight=None,
                      coef_init=None, intercept_init=None):
         X = safe_asarray(X, dtype=np.float64, order="C")
+        if sp.issparse(X):
+            X = _tocsr(X)
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
@@ -424,9 +434,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            X = _tocsr(X)
-
         coef, intercept = fit_binary(self, 1, X, y, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
@@ -438,14 +445,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.intercept_ = np.atleast_1d(intercept)
 
     def _fit_multiclass(self, X, y, sample_weight, n_iter):
-        """Fit a multi-class classifier by combining binary classifiers
+        """Fit a multi-class classifier.
 
-        Each binary classifier predicts one class versus all others. This
-        strategy is called OVA: One Versus All.
+        If ``self.multi_class=='ovr'`` we combine ``n_classes`` binary
+        classifiers. Each binary classifier predicts one class versus
+        all others. This strategy is called OVA: One Versus All or
+        OVR: One Versus the Rest.
         """
-        if sp.issparse(X):
-            X = _tocsr(X)
-
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, n_iter,
