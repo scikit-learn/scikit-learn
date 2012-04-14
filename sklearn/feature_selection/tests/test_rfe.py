@@ -80,7 +80,7 @@ def test_binary_rfecv_warmstart():
 def test_multiclass_rfecv_warmstart():
     X, y = make_classification(n_samples=7000, n_features=4, n_informative=3,
                                n_redundant=0, n_repeated=0, n_classes=3)
-    clf = SGDClassifier(alpha=1, warm_start=False)
+    clf = SGDClassifier(alpha=1, warm_start=True)
 
     rfecv = RFECV(estimator=clf, cv=8, step=1)
     rfecv.fit(X, y)
