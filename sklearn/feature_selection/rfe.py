@@ -113,12 +113,12 @@ class RFE(BaseEstimator):
         col_selector = np.arange(n_features)
         ranking_ = np.ones(n_features, dtype="i8")
         support_ = np.ones(n_features, dtype=np.bool)
-   
+
         estimator = clone(self.estimator)
         while len(col_selector) > self.n_features_to_select:
             # Rank remaining features
             estimator.fit(X[:, col_selector], y)
-            
+
             threshold = min(step, len(col_selector) - self.n_features_to_select)
             if estimator.coef_.ndim > 1:
                 ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
@@ -136,11 +136,11 @@ class RFE(BaseEstimator):
             # If estimator supports warm_start, then update coef_ accordingly,
             # otherwise start with a fresh estimator
             if getattr(self.estimator, "warm_start", False):
-                if estimator.coef_.flags["C_CONTIGUOUS"]:
-                    order = "C"
-                else:
-                    order = "F"
-                estimator.coef_ = estimator.coef_[:,iteration_kept_cols].copy(order)
+                print estimator.coef_.shape
+                new_coefs = np.ascontiguousarray(estimator.coef_[:, iteration_kept_cols])
+                print "Original : %s, \t%s" % (str(estimator.coef_.dtype), str(estimator.coef_.shape))
+                print "New : %s, \t%s" % (str(new_coefs.dtype), str(new_coefs.shape))
+                estimator.coef_ = new_coefs
             else:
                 if len(col_selector) > self.n_features_to_select:
                     estimator = clone(self.estimator)
@@ -309,7 +309,7 @@ class RFECV(RFE):
         for train, test in cv:
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
-            
+
             # Score each subset of features
             for k in xrange(1, max(ranking_)):
                 mask = ranking_ <= k
