@@ -452,20 +452,27 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         all others. This strategy is called OVA: One Versus All or
         OVR: One Versus the Rest.
         """
-        # Use joblib to fit OvA in parallel
-        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary)(self, i, X, y, n_iter,
-                                self._expanded_class_weight[i], 1.,
-                                sample_weight)
-            for i in xrange(len(self.classes_)))
 
-        for i, (coef, intercept) in enumerate(result):
-            self.coef_[i] = coef
-            self.intercept_[i] = intercept
+        if self.multi_class == 'multinomial':
+            pass
+        else:
+            # Use joblib to fit OvA in parallel
+            result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                delayed(fit_binary)(self, i, X, y, n_iter,
+                                    self._expanded_class_weight[i], 1.,
+                                    sample_weight)
+                for i in xrange(len(self.classes_)))
+
+            for i, (coef, intercept) in enumerate(result):
+                self.coef_[i] = coef
+                self.intercept_[i] = intercept
 
 
 def _prepare_fit_binary(est, y, i):
-    """Common initialization for _fit_binary_{dense,sparse}.
+    """Common initialization for _fit_binary.
+
+    Creates binary class labels: ``est.classes_[i]`` is the
+    positive class; all others are negative.
 
     Returns y, coef, intercept.
     """
@@ -489,7 +496,6 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     The i'th class is considered the "positive" class.
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-    assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
     return plain_sgd(coef, intercept, est.loss_function,
