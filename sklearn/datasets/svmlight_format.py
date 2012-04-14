@@ -76,26 +76,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
           y is a ndarray of shape (n_samples,), or, in the multilabel case,
           a list of tuples of length n_samples.
     """
-    if hasattr(f, "read"):
-        data, indices, indptr, y = _load_svmlight_file(f, dtype, multilabel,
-                                                       bool(zero_based))
-    else:
-        with open(f, 'rb') as f:
-            data, indices, indptr, y = _load_svmlight_file(f, dtype,
-                                                           multilabel,
-                                                           bool(zero_based))
-
-    if zero_based is False or zero_based == "auto" and np.min(indices) > 0:
-        indices -= 1
-
-    if n_features is not None:
-        shape = (indptr.shape[0] - 1, n_features)
-    else:
-        shape = None
-
-    X = sp.csr_matrix((data, indices, indptr), shape)
-
-    return X, y
+    return tuple(load_svmlight_files([f], n_features, dtype, multilabel, zero_based))
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
