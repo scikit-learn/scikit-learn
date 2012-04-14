@@ -15,6 +15,8 @@ from time import time
 cimport numpy as np
 cimport cython
 
+from stdlib cimport free, malloc
+
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
@@ -237,8 +239,8 @@ cdef class Huber(Regression):
         return Huber, (self.c,)
 
 
-def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
-              double intercept,
+def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
+              np.ndarray[double, ndim=1, mode='c'] intercept,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
@@ -254,10 +256,10 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     Parameters
     ----------
-    weights : ndarray[double, ndim=1]
+    weights : ndarray[double, ndim=2], shape=(n_features, K)
         The allocated coef_ vector.
-    intercept : double
-        The initial intercept.
+    intercept : ndarray[double, ndim=1], shape=(K,)
+        The array of intercepts; shape
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
@@ -296,6 +298,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    intercept_decay : double
+        An additional scaling factor for the intercept update.
 
     Returns
     -------
@@ -312,28 +316,41 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     cdef WeightVector w = WeightVector(weights)
 
+    # ``K==1`` for both regression and binary classification;
+    # ``K==n_classes`` for multi-class classification.
+    cdef K = w.K
+
+    cdef void *update_weights = NULL
+    if K == 1:
+        update_weights = <void *>&update_weights_binary
+    else:
+        update_weights = <void *>&update_weights_multinomial
+
     cdef DOUBLE *x_data_ptr = NULL
     cdef INTEGER *x_ind_ptr = NULL
 
     # helper variable
     cdef int xnnz
     cdef double eta = 0.0
-    cdef double p = 0.0
-    cdef double update = 0.0
     cdef double sumloss = 0.0
-    cdef DOUBLE y = 0.0
-    cdef DOUBLE sample_weight
+    cdef double y = 0.0
+    cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
 
-    # q vector is only used for L1 regularization
-    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
-    cdef DOUBLE *q_data_ptr = NULL
+    # predictions array
+    cdef double *p = NULL
+    p = <double *> malloc(K * sizeof(double))
+
+    # q array is only used for L1 regularization
+    # it stores the cumulative L1 penalty for each feature
+    cdef double *q = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
-        q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <DOUBLE *> q.data
+        q = <double *> malloc(n_features * sizeof(double))
+        for i in range(n_features):
+            q[i] = 0.0
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -357,27 +374,17 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
 
-            if verbose > 0:
-                sumloss += loss.loss(p, y)
+            weight_update(loss, w, intercept, x_data_ptr, x_ind_ptr,
+                          xnnz, y, sample_weight, p, eta, fit_intercept,
+                          intercept_decay, K)
 
-            if y > 0.0:
-                class_weight = weight_pos
-            else:
-                class_weight = weight_neg
-
-            update = eta * loss.dloss(p, y) * class_weight * sample_weight
-            if update != 0.0:
-                w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
-                if fit_intercept == 1:
-                    intercept -= update * intercept_decay
             if penalty_type >= L2:
                 w.scale(1.0 - (rho * eta * alpha))
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+                l1penalty(w, q, x_ind_ptr, xnnz, u)
             t += 1
             count += 1
 
@@ -400,6 +407,50 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     return weights, intercept
 
 
+cdef void weight_update_binary(Loss loss, WeightVector w, double *intercept,
+                               DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                               int xnnz, double y, double sample_weight,
+                               double *p, double eta, int fit_intercept,
+                               double intercept_decay, int K):
+
+    cdef double update = 0.0
+    cdef class_weight = 1.0
+    p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0) + intercept[0]
+
+    ## if y > 0.0:
+    ##     class_weight = weight_pos
+    ## else:
+    ##     class_weight = weight_neg
+
+    update = eta * loss.dloss(p, y) * class_weight * sample_weight
+    if update != 0.0:
+        w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
+        if fit_intercept == 1:
+            intercept[0] -= update * intercept_decay
+
+    #if verbose > 0:
+    #    sumloss += loss.loss(p, y)
+
+cdef void weight_update_multinomial(Loss loss, WeightVector w, double *intercept,
+                               DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                               int xnnz, double y, double sample_weight,
+                               double *p, double eta, int fit_intercept,
+                               double intercept_decay, int K):
+    cdef double update = 0.0
+    cdef int k
+
+    for k in range(K):
+        p[k] = w.dot(x_data_ptr, x_ind_ptr, xnnz, k) + intercept[k]
+
+    #loglikelihood += log(pd[<int>y])
+    w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, eta)
+    intercept[<int>y] += eta * intercept_decay
+    for k in range(K):
+        update = -1.0 * eta * p[k]
+        w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
+        intercept[k] += update * intercept_decay
+
+
 cdef inline double max(double a, double b):
     return a if a >= b else b
 
@@ -408,7 +459,7 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
+cdef void l1penalty(WeightVector w, double *q,
                     INTEGER *x_ind_ptr, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
@@ -418,17 +469,22 @@ cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
+    cdef int n_features = w.n_features
+    cdef int k = 0
+    cdef int K = w.K
     cdef double wscale = w.wscale
     cdef double* w_data_ptr = w.w_data_ptr
+
     for j in range(xnnz):
-        idx = x_ind_ptr[j]
-        z = w_data_ptr[idx]
-        if (wscale * w_data_ptr[idx]) > 0.0:
-            w_data_ptr[idx] = max(
-                0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
+        for k in range(K):
+            idx = x_ind_ptr[j] + (k * n_features)
+            z = w_data_ptr[idx]
+            if (wscale * w_data_ptr[idx]) > 0.0:
+                w_data_ptr[idx] = max(
+                    0.0, w_data_ptr[idx] - ((u + q[idx]) / wscale))
 
-        elif (wscale * w_data_ptr[idx]) < 0.0:
-            w_data_ptr[idx] = min(
-                0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
+            elif (wscale * w_data_ptr[idx]) < 0.0:
+                w_data_ptr[idx] = min(
+                    0.0, w_data_ptr[idx] + ((u - q[idx]) / wscale))
 
-        q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
+            q[idx] += (wscale * (w_data_ptr[idx] - z))
