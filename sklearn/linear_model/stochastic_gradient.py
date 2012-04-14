@@ -454,7 +454,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """
 
         if self.multi_class == 'multinomial':
-            pass
+
         else:
             # Use joblib to fit OvA in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
@@ -486,7 +486,7 @@ def _prepare_fit_binary(est, y, i):
         coef = est.coef_[i]
         intercept = est.intercept_[i]
 
-    return y_i, coef, intercept
+    return y_i, coef, np.atleast_1d(intercept)
 
 
 def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
@@ -505,6 +505,17 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      pos_weight, neg_weight,
                      est.learning_rate_code, est.eta0,
                      est.power_t, est.t_, intercept_decay)
+
+def fit_multinomial(est, X, y, sample_weights):
+    dataset, intercept_decay = _make_dataset(X, y, sample_weight)
+    y = np.searchsorted(est.classes_, y)
+    coef, intercept =  plain_sgd(est.coef_.T, est.intercept_, est.loss_function,
+                                 est.penalty_type, est.alpha, est.rho,
+                                 dataset, est.n_iter, est.fit_intercept,
+                                 est.verbose, est.shuffle, est.seed,
+                                 1.0, 1.0,
+                                 est.learning_rate_code, est.eta0,
+                                 est.power_t, est.t_, intercept_decay)
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
@@ -751,8 +762,11 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     def _fit_regressor(self, X, y, sample_weight, n_iter):
         dataset, intercept_decay = _make_dataset(X, y, sample_weight)
 
+        #FIXME try to omit this
+        intercept = np.atleast_1d(self.intercept_)
+
         self.coef_, intercept = plain_sgd(self.coef_,
-                                          self.intercept_[0],
+                                          intercept,
                                           self.loss_function,
                                           self.penalty_type,
                                           self.alpha, self.rho,
