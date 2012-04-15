@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
 
 from ..base import BaseEstimator
@@ -177,11 +177,12 @@ def test_shuffle_split_warnings():
     cval.ShuffleSplit(10, 3, train_fraction=0.1)
     cval.train_test_split(range(3), test_fraction=0.1)
     cval.train_test_split(range(3), train_fraction=0.1)
-    assert len(warn_queue) == 4
-    assert warn_queue[0] == expected_message[0]
-    assert warn_queue[1] == expected_message[1]
-    assert warn_queue[2] == expected_message[0]
-    assert warn_queue[3] == expected_message[1]
+
+    assert_equal(len(warn_queue), 4)
+    assert_equal(warn_queue[0], expected_message[0])
+    assert_equal(warn_queue[1], expected_message[1])
+    assert_equal(warn_queue[2], expected_message[0])
+    assert_equal(warn_queue[3], expected_message[1])
 
     # restore default behavior
     warnings.warn = warnings_warn
