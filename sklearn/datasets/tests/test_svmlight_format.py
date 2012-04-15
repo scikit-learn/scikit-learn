@@ -49,6 +49,7 @@ def test_load_svmlight_file_multilabel():
     X, y = load_svmlight_file(multifile, multilabel=True)
     assert_equal(y, [(0, 1), (2,), (1, 2)])
 
+
 def test_load_svmlight_files():
     X_train, y_train, X_test, y_test = load_svmlight_files([datafile] * 2,
                                                            dtype=np.float32)

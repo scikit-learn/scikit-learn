@@ -76,7 +76,8 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
           y is a ndarray of shape (n_samples,), or, in the multilabel case,
           a list of tuples of length n_samples.
     """
-    return tuple(load_svmlight_files([f], n_features, dtype, multilabel, zero_based))
+    return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
+                 zero_based))
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
