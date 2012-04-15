@@ -332,7 +332,9 @@ def test_k_means_non_collapsed():
 
 
 def test_predict():
-    k_means = KMeans(k=n_clusters, random_state=42).fit(X)
+    k_means = KMeans(k=n_clusters, random_state=42)
+
+    k_means.fit(X)
 
     # sanity check: predict centroid labels
     pred = k_means.predict(k_means.cluster_centers_)
@@ -340,7 +342,11 @@ def test_predict():
 
     # sanity check: re-predict labeling for training set samples
     pred = k_means.predict(X)
-    assert_array_equal(k_means.predict(X), k_means.labels_)
+    assert_array_equal(pred, k_means.labels_)
+
+    # re-predict labels for training set using fit_predict
+    pred = k_means.fit_predict(X)
+    assert_array_equal(pred, k_means.labels_)
 
 
 def test_score():
