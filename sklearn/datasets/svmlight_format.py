@@ -80,6 +80,13 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
                  zero_based))
 
 
+def _open_and_load(f, dtype, multilabel, zero_based):
+    if hasattr(f, "read"):
+        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+    with open(f, "rb") as f:
+        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+
+
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
                         multilabel=False, zero_based="auto"):
     """Load dataset from multiple files in SVMlight format
@@ -126,11 +133,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     --------
     load_svmlight_file
     """
-    # TODO this might not properly close the files on other Python
-    # implementations than CPython
-    r = [_load_svmlight_file(f if hasattr(f, "read") else open(f, "rb"),
-                             dtype, multilabel, bool(zero_based))
-         for f in files]
+    r = [_open_and_load(f, dtype, multilabel, bool(zero_based)) for f in files]
 
     if zero_based is False \
      or zero_based == "auto" and any(np.min(indices) > 0
