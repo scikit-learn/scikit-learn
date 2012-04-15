@@ -240,6 +240,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
+        for pl in pred_labels:
+            # Check that all have at least 1 neighbor
+            if len(pl) < 1:
+                raise ValueError('no neighbors found for a test sample, '
+                                 'try using larger radius or removing '
+                                 'outliers')
         weights = _get_weights(neigh_dist, self.weights)
 
         if weights is None:

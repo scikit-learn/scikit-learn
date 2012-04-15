@@ -195,6 +195,28 @@ def test_radius_neighbors_classifier(n_samples=40,
             assert_array_equal(y_pred, y[:n_test_pts])
 
 
+def test_radius_neighbors_classifier_when_no_neighbors():
+    """ Test radius-based classifier when no neighbors found.
+    In this case it should rise an informative exception """
+
+    X = [[1.0, 1.0], [2.0, 2.0]]
+    y = [1, 2]
+    radius = 0.1
+    # Test point (1.4, 1.4) has no neighbors in this radius
+    z = [[1.01, 1.01], [1.4, 1.4]]
+
+    weight_func = lambda d: d ** -2
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      algorithm=algorithm)
+            clf.fit(X, y)
+            assert_raises(ValueError,
+                          clf.predict,
+                          z)
+
+
 def test_kneighbors_classifier_sparse(n_samples=40,
                                       n_features=5,
                                       n_test_pts=10,
