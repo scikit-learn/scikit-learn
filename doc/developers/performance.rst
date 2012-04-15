@@ -203,13 +203,12 @@ us install ``line-prof`` and wire it to IPython::
     c.TerminalIPythonApp.extensions = [
         'line_profiler_ext',
     ]
+    c.InteractiveShellApp.extensions = [
+        'line_profiler_ext',
+    ]
 
   This will register the ``%lprun`` magic command in the IPython terminal
-  client.
-
-  You can do a similar operation ``ipython_notebook_config.py`` and
-  ``ipython_qtconsole_config`` to register the same extensions for the
-  HTML notebook and qtconsole clients.
+  application and the other frontends such as qtconsole and notebook.
 
 Now restart IPython and let us use this new toy::
 
