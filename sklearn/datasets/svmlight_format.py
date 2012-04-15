@@ -136,7 +136,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     r = [_open_and_load(f, dtype, multilabel, bool(zero_based)) for f in files]
 
     if zero_based is False \
-     or zero_based == "auto" and any(np.min(indices) > 0
+     or zero_based == "auto" and all(np.min(indices) > 0
                                      for _, indices, _, _ in r):
         for _, indices, _, _ in r:
             indices -= 1
