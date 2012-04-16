@@ -927,7 +927,7 @@ class StratifiedShuffleSplit(object):
     >>> sss = StratifiedShuffleSplit(y, 3, test_size=0.5, random_state=0)
     >>> len(sss)
     3
-    >>> print sss       # doctest: +ELLIPSIS
+    >>> print(sss)       # doctest: +ELLIPSIS
     StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, ...)
     >>> for train_index, test_index in sss:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
