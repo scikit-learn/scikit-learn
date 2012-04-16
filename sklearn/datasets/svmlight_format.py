@@ -75,9 +75,14 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     where X is a scipy.sparse matrix of shape (n_samples, n_features),
           y is a ndarray of shape (n_samples,), or, in the multilabel case,
           a list of tuples of length n_samples.
+
+    See also
+    --------
+    load_svmlight_files: similar function for loading multiple files in this
+    format, enforcing the same number of features/columns on all of them.
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                 zero_based))
+                                     zero_based))
 
 
 def _open_and_load(f, dtype, multilabel, zero_based):
@@ -127,7 +132,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     When fitting a model to a matrix X_train and evaluating it against a
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
-    be the case if you load them with load_svmlight_file separately.
+    be the case if you load the files individually with load_svmlight_file.
 
     See also
     --------
