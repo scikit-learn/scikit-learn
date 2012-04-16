@@ -1,9 +1,10 @@
 """Test the cross_validation module"""
 
+import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
 
 from ..base import BaseEstimator
@@ -91,6 +92,20 @@ def test_shuffle_kfold():
         assert_array_equal(all_folds, ind)
 
 
+def test_shuffle_split():
+    ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
+    ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
+    ss3 = cval.ShuffleSplit(10, test_size=np.int32(2), random_state=0)
+    ss4 = cval.ShuffleSplit(10, test_size=long(2), random_state=0)
+    for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
+        assert_array_equal(t1[0], t2[0])
+        assert_array_equal(t2[0], t3[0])
+        assert_array_equal(t3[0], t4[0])
+        assert_array_equal(t1[1], t2[1])
+        assert_array_equal(t2[1], t3[1])
+        assert_array_equal(t3[1], t4[1])
+
+
 def test_stratified_shuffle_split():
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
     # Check that error is raised if there is a class with only one sample
@@ -133,12 +148,44 @@ def test_cross_val_score():
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
     assert_raises(ValueError, cval.train_test_split, range(3),
-            train_fraction=1.1)
+            train_size=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3),
-            test_fraction=0.6, train_fraction=0.6)
+            test_size=0.6, train_size=0.6)
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size=np.float32(0.6), train_size=np.float32(0.6))
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size="wrong_type")
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size=2, train_size=4)
     assert_raises(TypeError, cval.train_test_split, range(3),
             some_argument=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3), range(42))
+
+
+def test_shuffle_split_warnings():
+    # change warnings.warn to catch the message
+    warn_queue = []
+    warnings_warn = warnings.warn
+    warnings.warn = lambda msg: warn_queue.append(msg)
+
+    expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
+                        "for removal in 0.12, use test_size instead",
+                        "train_fraction is deprecated in 0.11 and scheduled "
+                        "for removal in 0.12, use train_size instead")
+
+    cval.ShuffleSplit(10, 3, test_fraction=0.1)
+    cval.ShuffleSplit(10, 3, train_fraction=0.1)
+    cval.train_test_split(range(3), test_fraction=0.1)
+    cval.train_test_split(range(3), train_fraction=0.1)
+
+    assert_equal(len(warn_queue), 4)
+    assert_equal(warn_queue[0], expected_message[0])
+    assert_equal(warn_queue[1], expected_message[1])
+    assert_equal(warn_queue[2], expected_message[0])
+    assert_equal(warn_queue[3], expected_message[1])
+
+    # restore default behavior
+    warnings.warn = warnings_warn
 
 
 def test_train_test_split():
@@ -287,6 +334,10 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=1.0)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=0.1,
             train_fraction=0.95)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=11)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8,
+            train_size=3)
 
 
 def test_shufflesplit_reproducible():
