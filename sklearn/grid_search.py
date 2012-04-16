@@ -144,7 +144,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
-    return this_score, clf, this_n_test_samples
+    return this_score, clf_params, this_n_test_samples
 
 
 def _check_param_grid(param_grid):
@@ -238,7 +238,9 @@ class GridSearchCV(BaseEstimator):
         sklearn.cross_validation module for the list of possible objects
 
     refit: boolean
-        refit the best estimator with the entire dataset
+        refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this GridSearch instance after fitting.
 
     verbose: integer
         Controls the verbosity: the higher, the more messages.
@@ -272,6 +274,9 @@ class GridSearchCV(BaseEstimator):
 
     `best_score_` : float
         score of best_estimator on the left out data.
+
+    `best_params_` : dict
+        Parameter setting that gave the best results on the hold out data.
 
     Notes
     ------
@@ -332,10 +337,10 @@ class GridSearchCV(BaseEstimator):
         self.pre_dispatch = pre_dispatch
 
     def _set_methods(self):
-        if hasattr(self.best_estimator_, 'predict'):
-            self.predict = self.best_estimator_.predict
-        if hasattr(self.best_estimator_, 'predict_proba'):
-            self.predict_proba = self.best_estimator_.predict_proba
+        if hasattr(self._best_estimator_, 'predict'):
+            self.predict = self._best_estimator_.predict
+        if hasattr(self._best_estimator_, 'predict_proba'):
+            self.predict_proba = self._best_estimator_.predict_proba
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
@@ -380,7 +385,7 @@ class GridSearchCV(BaseEstimator):
             params = iter(grid).next()
             base_clf.set_params(**params)
             base_clf.fit(X, y)
-            self.best_estimator_ = base_clf
+            self._best_estimator_ = base_clf
             self._set_methods()
             return self
 
@@ -403,7 +408,7 @@ class GridSearchCV(BaseEstimator):
             n_test_samples = 0
             score = 0
             these_points = list()
-            for this_score, estimator, this_n_test_samples in \
+            for this_score, clf_params, this_n_test_samples in \
                                     out[grid_start:grid_start + n_folds]:
                 these_points.append(this_score)
                 if self.iid:
@@ -412,7 +417,7 @@ class GridSearchCV(BaseEstimator):
                 n_test_samples += this_n_test_samples
             if self.iid:
                 score /= float(n_test_samples)
-            scores.append((score, estimator))
+            scores.append((score, clf_params))
             cv_scores.append(these_points)
 
         cv_scores = np.asarray(cv_scores)
@@ -420,22 +425,22 @@ class GridSearchCV(BaseEstimator):
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         best_score = -np.inf
-        for score, estimator in scores:
+        for score, params in scores:
             if score > best_score:
                 best_score = score
-                best_estimator = estimator
+                best_params = params
 
         if best_score is None:
             raise ValueError('Best score could not be found')
         self.best_score_ = best_score
+        self.best_params_ = best_params
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(best_estimator)
+            best_estimator = clone(base_clf).set_params(**best_params)
             best_estimator.fit(X, y, **self.fit_params)
-
-        self.best_estimator_ = best_estimator
+            self._best_estimator_ = best_estimator
         self._set_methods()
 
         # Store the computed scores
@@ -456,6 +461,17 @@ class GridSearchCV(BaseEstimator):
                              % self.best_estimator_)
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
+
+    # TODO around 0.13: remove this property, make it an attribute
+    @property
+    def best_estimator_(self):
+        if hasattr(self, '_best_estimator_'):
+            return self._best_estimator_
+        else:
+            raise RuntimeError("Grid search has to be run with 'refit=True'"
+                " to make predictions or obtain an instance  of the best "
+                " estimator. To obtain the best parameter settings, "
+                " use ``best_params_``.")
 
     @property
     @deprecated('GridSearchCV.best_estimator is deprecated'
