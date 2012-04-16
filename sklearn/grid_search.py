@@ -462,6 +462,7 @@ class GridSearchCV(BaseEstimator):
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
 
+    # TODO around 0.13: remove this property, make it an attribute
     @property
     def best_estimator_(self):
         if hasattr(self, '_best_estimator_'):
