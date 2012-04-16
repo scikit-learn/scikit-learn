@@ -187,6 +187,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
+    outlier_label: int, optional (default = None)
+        Label, which is given for outlier samples (samples with no
+        neighbors on given radius).
+        If set to None, ValueError is raised, when outlier is detected.
 
     Examples
     --------
@@ -215,12 +219,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     """
 
     def __init__(self, radius=1.0, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2):
+                 algorithm='auto', leaf_size=30, p=2, outlier_label=None):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
                           p=p)
         self.weights = _check_weights(weights)
+        self.outlier_label = outlier_label
 
     def predict(self, X):
         """Predict the class labels for the provided data
@@ -240,12 +245,19 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
-        for pl in pred_labels:
+        for i, pl in enumerate(pred_labels):
             # Check that all have at least 1 neighbor
             if len(pl) < 1:
-                raise ValueError('no neighbors found for a test sample, '
-                                 'try using larger radius or removing '
-                                 'outliers')
+                if self.outlier_label:
+                    pred_labels[i] = np.array([self.outlier_label])
+                    neigh_dist[i] = np.array([1e-6])
+                else:
+                    raise ValueError('no neighbors found for a test sample, '
+                                     'you can try using larger radius, '
+                                     'give a label for outliers, '
+                                     'or consider removing them in your '
+                                     'dataset')
+
         weights = _get_weights(neigh_dist, self.weights)
 
         if weights is None:
