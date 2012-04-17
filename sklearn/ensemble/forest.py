@@ -172,8 +172,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -183,7 +182,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
         self.random_state = check_random_state(random_state)
 
         self.feature_importances_ = None
@@ -239,8 +237,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         n_jobs, n_trees, _ = _partition_trees(self)
 
         # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                pre_dispatch=self.pre_dispatch)(
+        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_build_trees)(
                 n_trees[i],
                 self,
@@ -305,8 +302,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -316,8 +312,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            verbose=verbose)
 
     def predict(self, X):
         """Predict class for X.
@@ -407,8 +402,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -418,8 +412,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            verbose=verbose)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -534,23 +527,6 @@ class RandomForestClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
-    pre_dispatch: int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediatly
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -585,8 +561,7 @@ class RandomForestClassifier(ForestClassifier):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -598,8 +573,7 @@ class RandomForestClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -688,23 +662,6 @@ class RandomForestRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
-    pre_dispatch: int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediatly
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -739,8 +696,7 @@ class RandomForestRegressor(ForestRegressor):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -752,8 +708,7 @@ class RandomForestRegressor(ForestRegressor):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -843,23 +798,6 @@ class ExtraTreesClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
-    pre_dispatch: int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediatly
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -896,8 +834,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -909,8 +846,7 @@ class ExtraTreesClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1001,23 +937,6 @@ class ExtraTreesRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
-    pre_dispatch: int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediatly
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -1052,8 +971,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0,
-                       pre_dispatch="2*n_jobs"):
+                       verbose=0):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1065,8 +983,7 @@ class ExtraTreesRegressor(ForestRegressor):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            verbose=verbose)
 
         self.criterion = criterion
         self.max_depth = max_depth
