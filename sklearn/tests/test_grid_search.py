@@ -52,6 +52,14 @@ def test_grid_search():
     grid_search.score(X, y)
 
 
+def test_no_refit():
+    """Test that grid search can be used for model selection only"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search.fit(X, y, refit=False)
+    assert_true(hasattr(grid_search, "best_params_"))
+
+
 def test_grid_search_error():
     """Test that grid search will capture errors on data with different
     length"""

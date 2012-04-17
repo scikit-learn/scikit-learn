@@ -130,6 +130,34 @@ def _partition_trees(forest):
     return n_jobs, n_trees, starts
 
 
+def _parallel_X_argsort(X):
+    """Private function used to sort the features of X."""
+    return np.asarray(np.argsort(X.T, axis=1).T, dtype=np.int32, order="F")
+
+
+def _partition_features(forest, n_total_features):
+    """Private function used to partition features between jobs."""
+    # Compute the number of jobs
+    if forest.n_jobs == -1:
+        n_jobs = min(cpu_count(), n_total_features)
+
+    else:
+        n_jobs = min(forest.n_jobs, n_total_features)
+
+    # Partition features between jobs
+    n_features = [n_total_features / n_jobs] * n_jobs
+
+    for i in xrange(n_total_features % n_jobs):
+        n_features[i] += 1
+
+    starts = [0] * (n_jobs + 1)
+
+    for i in xrange(1, n_jobs + 1):
+        starts[i] = starts[i - 1] + n_features[i - 1]
+
+    return n_jobs, n_features, starts
+
+
 class BaseForest(BaseEnsemble, SelectorMixin):
     """Base class for forests of trees.
 
@@ -144,7 +172,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -154,6 +183,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
+        self.pre_dispatch = pre_dispatch
         self.random_state = check_random_state(random_state)
 
         self.feature_importances_ = None
@@ -190,8 +220,15 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         " if bootstrap=True")
 
             sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-            X_argsorted = np.asfortranarray(
-                np.argsort(X.T, axis=1).astype(np.int32).T)
+
+            n_jobs, _, starts = _partition_features(self, X.shape[1])
+
+            all_X_argsorted = Parallel(n_jobs=n_jobs)(
+                delayed(_parallel_X_argsort)(
+                    X[:, starts[i]:starts[i + 1]])
+                for i in xrange(n_jobs))
+
+            X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
         if isinstance(self.base_estimator, ClassifierMixin):
             self.classes_ = np.unique(y)
@@ -202,7 +239,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         n_jobs, n_trees, _ = _partition_trees(self)
 
         # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                pre_dispatch=self.pre_dispatch)(
             delayed(_parallel_build_trees)(
                 n_trees[i],
                 self,
@@ -267,7 +305,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -277,7 +316,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
     def predict(self, X):
         """Predict class for X.
@@ -322,7 +362,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_p = Parallel(n_jobs=self.n_jobs)(
+        all_p = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X, self.n_classes_)
@@ -367,7 +407,8 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -377,7 +418,8 @@ class ForestRegressor(BaseForest, RegressorMixin):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -402,7 +444,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=self.n_jobs)(
+        all_y_hat = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
             for i in xrange(n_jobs))
@@ -492,6 +534,23 @@ class RandomForestClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -526,7 +585,8 @@ class RandomForestClassifier(ForestClassifier):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -538,7 +598,8 @@ class RandomForestClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -627,6 +688,23 @@ class RandomForestRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -661,7 +739,8 @@ class RandomForestRegressor(ForestRegressor):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -673,7 +752,8 @@ class RandomForestRegressor(ForestRegressor):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -763,6 +843,23 @@ class ExtraTreesClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -799,7 +896,8 @@ class ExtraTreesClassifier(ForestClassifier):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -811,7 +909,8 @@ class ExtraTreesClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -902,6 +1001,23 @@ class ExtraTreesRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controlls the verbosity of the tree building process.
 
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     Attributes
     ----------
     `feature_importances_` : array of shape = [n_features]
@@ -936,7 +1052,8 @@ class ExtraTreesRegressor(ForestRegressor):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
-                       verbose=0):
+                       verbose=0,
+                       pre_dispatch="2*n_jobs"):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -948,7 +1065,8 @@ class ExtraTreesRegressor(ForestRegressor):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
         self.criterion = criterion
         self.max_depth = max_depth

@@ -724,6 +724,14 @@ class KMeans(BaseEstimator):
             n_jobs=self.n_jobs)
         return self
 
+    def fit_predict(self, X):
+        """Compute cluster centers and predict cluster index for each sample.
+
+        Convenience method; equivalent to calling fit(X) followed by
+        predict(X).
+        """
+        return self.fit(X).labels_
+
     def transform(self, X, y=None):
         """Transform the data to a cluster-distance space
 
