@@ -85,6 +85,10 @@ Changelog
 API changes summary
 -------------------
 
+   - In :class:`mixture.GMM`, :class:`mixture.DPGMM` and :class:`mixture.VBGMM`,
+     parameters must be passed to an object when initialising it and not through
+     ``fit``. Now ``fit`` will only accept the data as an input parameter.
+   
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
