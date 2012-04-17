@@ -441,7 +441,7 @@ class GridSearchCV(BaseEstimator):
             best_estimator = clone(base_clf).set_params(**best_params)
             best_estimator.fit(X, y, **self.fit_params)
             self._best_estimator_ = best_estimator
-        self._set_methods()
+            self._set_methods()
 
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
