@@ -85,6 +85,9 @@ Changelog
 API changes summary
 -------------------
 
+   - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
+     instead.
+
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -1092,3 +1095,5 @@ of commits):
 .. _Robert Layton: http://www.twitter.com/robertlayton
 
 .. _Scott White: http://twitter.com/scottblanc
+
+.. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
