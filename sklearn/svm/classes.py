@@ -154,6 +154,8 @@ class SVC(BaseLibSVM, ClassifierMixin):
     see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
+    .. The narrative documentation is available at http://scikit-learn.org/
+
     Parameters
     ----------
     C : float or None, optional (default=None)
