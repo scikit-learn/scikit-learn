@@ -498,6 +498,9 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
+    # coef should be at least 2d
+    coef = coef.reshape((1, coef.shape[0]))
+
     return plain_sgd(coef, intercept, est.loss_function,
                      est.penalty_type, est.alpha, est.rho,
                      dataset, n_iter, est.fit_intercept,
@@ -509,7 +512,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
 def fit_multinomial(est, X, y, sample_weights):
     dataset, intercept_decay = _make_dataset(X, y, sample_weight)
     y = np.searchsorted(est.classes_, y)
-    coef, intercept =  plain_sgd(est.coef_.T, est.intercept_, est.loss_function,
+    coef, intercept =  plain_sgd(est.coef_, est.intercept_, est.loss_function,
                                  est.penalty_type, est.alpha, est.rho,
                                  dataset, est.n_iter, est.fit_intercept,
                                  est.verbose, est.shuffle, est.seed,
