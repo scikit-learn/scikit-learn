@@ -348,6 +348,7 @@ The tied model
 ----------------
 
 The model then is
+
 .. math::
 
   \begin{array}{rcl}

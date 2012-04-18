@@ -85,6 +85,9 @@ Changelog
 API changes summary
 -------------------
 
+   - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
+     instead.
+
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -152,6 +155,9 @@ API changes summary
    - Beam pruning option in :class:`_BaseHMM` module is removed since it is
      difficult to be Cythonized. If you are interested, you can look in the
      history codes by git.
+
+   - The SVMlight format loader now supports files with both zero-based and
+     one-based column indices, since both occur "in the wild".
 
 .. _changes_0_10:
 
@@ -1089,3 +1095,5 @@ of commits):
 .. _Robert Layton: http://www.twitter.com/robertlayton
 
 .. _Scott White: http://twitter.com/scottblanc
+
+.. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
