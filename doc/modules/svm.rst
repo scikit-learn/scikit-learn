@@ -396,10 +396,10 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma <x, x'> + r)^d`. `d` is specified by
     keyword ``degree``, `r` by ``coef0``.
 
-  * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
+  * rbf (:math:`\exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
     specified by keyword ``gamma``.
 
-  * sigmoid (:math:`tanh(<x_i,x_j> + r)`), where `r` is specified by
+  * sigmoid (:math:`\tanh(<x_i,x_j> + r)`), where `r` is specified by
     ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
