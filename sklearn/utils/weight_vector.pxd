@@ -7,24 +7,26 @@ cdef extern from "math.h":
     cdef extern double sqrt(double x)
 
 
-ctypedef np.float64_t DOUBLE
+ctypedef np.float64_t DTYPE
 ctypedef np.int32_t INTEGER
 
 
 cdef class WeightVector(object):
     cdef np.ndarray w
-    cdef double *w_data_ptr
+    cdef np.float64_t *w_data_ptr
     cdef double wscale
     cdef np.ndarray intercept
-    cdef double *intercept_data_ptr
+    cdef np.float64_t *intercept_data_ptr
     cdef Py_ssize_t n_features
     cdef Py_ssize_t K
     cdef double sq_norm
+    cdef int fit_intercept
+    cdef double intercept_decay
 
-    cdef void add(self,  DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+    cdef void add(self,  DTYPE *x_data_ptr, INTEGER *x_ind_ptr,
                   int xnnz, int k, double c)
-    cdef double *dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                    int xnnz)
+    cdef double dot(self, DTYPE *x_data_ptr, INTEGER *x_ind_ptr,
+                    int xnnz, int k)
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
     cdef double norm(self)

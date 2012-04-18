@@ -15,7 +15,7 @@ from time import time
 cimport numpy as np
 cimport cython
 
-from stdlib cimport free, malloc
+from libc.stdlib cimport free, malloc
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
@@ -309,22 +309,25 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         The fitted intercept term.
 
     """
+    cdef WeightVector w = WeightVector(weights, intercept, fit_intercept,
+                                       intercept_decay)
 
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
-    cdef Py_ssize_t n_features = weights.shape[0]
-
-    cdef WeightVector w = WeightVector(weights)
+    cdef Py_ssize_t n_features = w.n_features
 
     # ``K==1`` for both regression and binary classification;
     # ``K==n_classes`` for multi-class classification.
-    cdef K = w.K
+    cdef int K = w.K
 
-    cdef void *update_weights = NULL
+    # function pointer to concrete weight update
+    cdef void (*weight_update)(LossFunction, WeightVector, DOUBLE *,
+                               INTEGER *, int, double, double,
+                               double *, double, int, double, int)
     if K == 1:
-        update_weights = <void *>&update_weights_binary
+        weight_update = &weight_update_binary
     else:
-        update_weights = <void *>&update_weights_multinomial
+        weight_update = &weight_update_multinomial
 
     cdef DOUBLE *x_data_ptr = NULL
     cdef INTEGER *x_ind_ptr = NULL
@@ -343,6 +346,8 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
     # predictions array
     cdef double *p = NULL
     p = <double *> malloc(K * sizeof(double))
+    for i in range(K):
+        p[i] = 0.0
 
     # q array is only used for L1 regularization
     # it stores the cumulative L1 penalty for each feature
@@ -351,6 +356,7 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         q = <double *> malloc(n_features * sizeof(double))
         for i in range(n_features):
             q[i] = 0.0
+
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -375,7 +381,7 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
 
-            weight_update(loss, w, intercept, x_data_ptr, x_ind_ptr,
+            weight_update(loss, w, x_data_ptr, x_ind_ptr,
                           xnnz, y, sample_weight, p, eta, fit_intercept,
                           intercept_decay, K)
 
@@ -404,10 +410,15 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
 
     w.reset_wscale()
 
+    print("free stuff")
+    free(p)
+    if q != NULL:
+        free(q)
+
     return weights, intercept
 
 
-cdef void weight_update_binary(Loss loss, WeightVector w, double *intercept,
+cdef void weight_update_binary(LossFunction loss, WeightVector w,
                                DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                                int xnnz, double y, double sample_weight,
                                double *p, double eta, int fit_intercept,
@@ -415,23 +426,21 @@ cdef void weight_update_binary(Loss loss, WeightVector w, double *intercept,
 
     cdef double update = 0.0
     cdef class_weight = 1.0
-    p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0) + intercept[0]
+    p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
 
     ## if y > 0.0:
     ##     class_weight = weight_pos
     ## else:
     ##     class_weight = weight_neg
 
-    update = eta * loss.dloss(p, y) * class_weight * sample_weight
+    update = eta * loss.dloss(p[0], y) * class_weight * sample_weight
     if update != 0.0:
         w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
-        if fit_intercept == 1:
-            intercept[0] -= update * intercept_decay
 
     #if verbose > 0:
     #    sumloss += loss.loss(p, y)
 
-cdef void weight_update_multinomial(Loss loss, WeightVector w, double *intercept,
+cdef void weight_update_multinomial(LossFunction loss, WeightVector w,
                                DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                                int xnnz, double y, double sample_weight,
                                double *p, double eta, int fit_intercept,
@@ -440,15 +449,13 @@ cdef void weight_update_multinomial(Loss loss, WeightVector w, double *intercept
     cdef int k
 
     for k in range(K):
-        p[k] = w.dot(x_data_ptr, x_ind_ptr, xnnz, k) + intercept[k]
+        p[k] = w.dot(x_data_ptr, x_ind_ptr, xnnz, k)
 
     #loglikelihood += log(pd[<int>y])
     w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, eta)
-    intercept[<int>y] += eta * intercept_decay
     for k in range(K):
         update = -1.0 * eta * p[k]
         w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
-        intercept[k] += update * intercept_decay
 
 
 cdef inline double max(double a, double b):

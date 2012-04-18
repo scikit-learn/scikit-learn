@@ -454,7 +454,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """
 
         if self.multi_class == 'multinomial':
-
+            pass
         else:
             # Use joblib to fit OvA in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
@@ -509,16 +509,17 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      est.learning_rate_code, est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
-def fit_multinomial(est, X, y, sample_weights):
+
+def fit_multinomial(est, X, y, sample_weight):
     dataset, intercept_decay = _make_dataset(X, y, sample_weight)
     y = np.searchsorted(est.classes_, y)
-    coef, intercept =  plain_sgd(est.coef_, est.intercept_, est.loss_function,
-                                 est.penalty_type, est.alpha, est.rho,
-                                 dataset, est.n_iter, est.fit_intercept,
-                                 est.verbose, est.shuffle, est.seed,
-                                 1.0, 1.0,
-                                 est.learning_rate_code, est.eta0,
-                                 est.power_t, est.t_, intercept_decay)
+    coef, intercept = plain_sgd(est.coef_, est.intercept_, est.loss_function,
+                                est.penalty_type, est.alpha, est.rho,
+                                dataset, est.n_iter, est.fit_intercept,
+                                est.verbose, est.shuffle, est.seed,
+                                1.0, 1.0,
+                                est.learning_rate_code, est.eta0,
+                                est.power_t, est.t_, intercept_decay)
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
