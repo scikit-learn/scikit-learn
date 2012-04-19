@@ -210,15 +210,15 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             class_weight = self.class_weight
         if class_weight is None or len(class_weight) == 0:
             # uniform class weights
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+            weight = np.ones(classes.shape[0], dtype=np.float64)
         elif class_weight == 'auto':
             # proportional to the number of samples in the class
             weight = np.array([1.0 / np.sum(y == i) for i in classes],
-                              dtype=np.float64, order='C')
+                              dtype=np.float64)
             weight *= classes.shape[0] / np.sum(weight)
         else:
             # user-defined dictionary
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+            weight = np.ones(classes.shape[0], dtype=np.float64)
             if not isinstance(class_weight, dict):
                 raise ValueError("class_weight must be dict, 'auto', or None,"
                                  " got: %r" % class_weight)
@@ -435,8 +435,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         coef, intercept = fit_binary(self, 1, X, y, n_iter,
-                                     self._expanded_class_weight[1],
-                                     self._expanded_class_weight[0],
+                                     self._expanded_class_weight,
                                      sample_weight)
 
         # need to be 2d
@@ -454,12 +453,14 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """
 
         if self.multi_class == 'multinomial':
-            pass
+            coef, intercept = fit_multinomial(self, X, y, sample_weight)
+            self.coef_ = coef
+            self.intercept_ = intercept
         else:
             # Use joblib to fit OvA in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(fit_binary)(self, i, X, y, n_iter,
-                                    self._expanded_class_weight[i], 1.,
+                                    np.array([self._expanded_class_weight[i], 1.]),
                                     sample_weight)
                 for i in xrange(len(self.classes_)))
 
@@ -489,7 +490,7 @@ def _prepare_fit_binary(est, y, i):
     return y_i, coef, np.atleast_1d(intercept)
 
 
-def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
+def fit_binary(est, i, X, y, n_iter, class_weight,
                sample_weight):
     """Fit a single binary classifier.
 
@@ -505,21 +506,23 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      est.penalty_type, est.alpha, est.rho,
                      dataset, n_iter, est.fit_intercept,
                      est.verbose, est.shuffle, est.seed,
-                     pos_weight, neg_weight,
+                     class_weight,
                      est.learning_rate_code, est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
 
 def fit_multinomial(est, X, y, sample_weight):
+    y = np.array(np.searchsorted(est.classes_, y), dtype=np.float64)
     dataset, intercept_decay = _make_dataset(X, y, sample_weight)
-    y = np.searchsorted(est.classes_, y)
+
     coef, intercept = plain_sgd(est.coef_, est.intercept_, est.loss_function,
                                 est.penalty_type, est.alpha, est.rho,
                                 dataset, est.n_iter, est.fit_intercept,
                                 est.verbose, est.shuffle, est.seed,
-                                1.0, 1.0,
+                                est._expanded_class_weight,
                                 est.learning_rate_code, est.eta0,
                                 est.power_t, est.t_, intercept_decay)
+    return coef, intercept
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
