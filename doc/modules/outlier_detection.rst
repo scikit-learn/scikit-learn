@@ -157,7 +157,7 @@ multiple modes.
       - For a inlier mode well-centered and elliptic, the
         :class:`svm.OneClassSVM` is not able to benefit from the
         rotational symmetry of the inlier population. In addition, it
-        fits a bit the outlyers present in the training set. On the
+        fits a bit the outliers present in the training set. On the
         opposite, the decision rule based on fitting an
         :class:`covariance.EllipticEnvelope` learns an ellipse, which
         fits well the inlier distribution.
