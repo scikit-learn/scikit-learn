@@ -3,6 +3,8 @@ Non-metric Multdimensional Scaling
 """
 
 import numpy as np
+
+from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 
 
@@ -20,7 +22,7 @@ def PAV(distances, similarities, copy=False, verbose=False):
         copy: boolean, optional
     """
     # FIXME ties ?
-    indxs = similarities.argsort()[::-1]
+    indxs = similarities.argsort()
     dis = distances.copy()
 
     sort = True
@@ -48,7 +50,6 @@ def guttman_image_ranking(distances, similarities, verbose=False):
     Guttman image ranking
 
     """
-    # FIXME this isn't working
     sim_arg = similarities.argsort()
     dis_arg = distances.argsort()
     disparities = distances.copy()
@@ -57,15 +58,46 @@ def guttman_image_ranking(distances, similarities, verbose=False):
     return disparities
 
 
-def smacof(similarities, metric=True, p=3, init=None,
-           max_iter=300, verbose=False, eps=1e-3):
+def smacof(similarities, metric=True, p=2, init=None,
+           max_iter=300, verbose=0, eps=1e-3):
     """
+    Computes multidimensional scaling using SMACOF algorithm
+
+    Parameters
+    ----------
+    similarities: symmetric ndarray, shape [n * n]
+        similarities between the points
+
+    metric: boolean, optional, default: True
+        compute metric or nonmetric SMACOF algorithm
+
+    p: int, optional, default: 2
+        number of dimension in which to immerse the similarities
+        overridden if initial array is provided.
+
+    init: {None or ndarray}
+        if None, randomly chooses the initial configuration
+        if ndarray, initialize the SMACOF algorithm with this array
+
+    max_iter: int, optional, default: 300
+        Maximum number of iterations of the SMACOF algorithm for a single run
+
+    verbose: int, optional, default: 0
+        level of verbosity
+
+    eps: float, optional, default: 1e-6
+        relative tolerance w.r.t stress to declare converge
+
+    Returns
+    -------
+    X: ndarray (n, p)
+        coordinates of the n points in a p-space
     """
     n = similarities.shape[0]
 
     if similarities.shape[0] != similarities.shape[1]:
-        raise ValueError("similarities must be a square array (shape=%r)" % \
-                            similarities.shape)
+        raise ValueError("similarities must be a square array (shape=%d)" % \
+                            n)
 
     if np.any(similarities != similarities.T):
         raise ValueError("similarities must be symmetric")
@@ -76,7 +108,9 @@ def smacof(similarities, metric=True, p=3, init=None,
         # Randomly choose initial configuration
         X = np.random.random(size=(n, p))
     else:
-        if n != init.shape[0] or p != init.shape[1]:
+        # overrides the parameter p
+        p = init.shape[1]
+        if n != init.shape[0]:
             raise ValueError("init matrix should be of shape (%d, %d)" % \
                                  (n, p))
         X = init
@@ -85,13 +119,14 @@ def smacof(similarities, metric=True, p=3, init=None,
     for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
-        dis_flat = dis.flatten()
-        # similarities with 0 are considered as missing values
-        dis_flat_w = dis_flat[sim_flat != 0]
 
         if metric:
             disparities = similarities
         else:
+            dis_flat = dis.flatten()
+            # similarities with 0 are considered as missing values
+            dis_flat_w = dis_flat[sim_flat != 0]
+
             # Compute the disparities using a monotonic regression
             disparities_flat = guttman_image_ranking(dis_flat_w,
                                                      sim_flat_w)
@@ -103,20 +138,42 @@ def smacof(similarities, metric=True, p=3, init=None,
 
         # Compute stress
         stress = ((dis.flatten() - \
-                    (disparities + disparities.T).flatten()) ** 2).sum() / 2
+                    disparities.flatten()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
-        ratio = (disparities + disparities.T) / dis
+        ratio = disparities / dis
         ratio[np.isinf(ratio) | np.isnan(ratio)] = 0
         B = - ratio + np.diag(ratio.sum(axis=1))
         X = 1. / n * np.dot(B, X)
-        if verbose:
+        if verbose == 2:
             print 'it: %d, stress %s' % (it, stress)
         if old_stress is not None:
             if(old_stress - stress) < eps:
                 if verbose:
                     print 'breaking at iteration %d with stress %s' % (it,
                                                                        stress)
+                break
         old_stress = stress
 
     return X
+
+
+class MDS(BaseEstimator):
+    """
+    Multidimensional scaling
+
+    Parameters
+    ----------
+
+    Notes
+    -----
+    """
+    def __init__(self, p=2, init=None, max_iter=300, eps=1e-3):
+        self.p = p
+        self.init = init
+        self.max_iter = max_iter
+        self.eps = eps
+
+    def fit():
+        """
+        """
