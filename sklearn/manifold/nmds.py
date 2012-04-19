@@ -21,28 +21,44 @@ def PAV(distances, similarities, copy=False, verbose=False):
 
         copy: boolean, optional
     """
-    # FIXME ties ?
-    indxs = similarities.argsort()
-    dis = distances.copy()
+    # First approach for ties: ignore them. The multidimensional scaling won't
+    # enforce that points with equal similarity be at equal distance.
+    dtype = [('x', float), ('y', float)]
+    el = np.array([(i, j) for i, j in zip(similarities, distances)],
+                  dtype=dtype)
+    indxs = el.argsort(order=['x', 'y'])
 
+    new_blocks = range(len(indxs))
+
+    block = []
     sort = True
     while sort:
-        block = []
-        # FIXME: deal with floating points errors. Else, it stays stuck in the
-        # loop
-        el = dis[indxs][:-1] <= dis[indxs][1:] + np.finfo(np.float).resolution
-        print "number of wrongly sorted elements: %d" % el.sum()
         sort = False
+        blocks = new_blocks[:]
+        new_blocks = []
+        block = []
+        el = distances[indxs[blocks[:-1]]] <= distances[indxs[blocks[1:]]] + \
+             np.finfo(np.float).resolution
         for i, element in enumerate(el):
             if not element:
                 sort = True
-                block.append(i)
-            if element and block:
-                # Average on the block
-                block.append(i)
-                dis[indxs[block]] = dis[indxs][block].mean()
+                block.append(blocks[i])
+            elif element and block:
+                tmp = np.arange(block[0], blocks[i + 1])
+                distances[indxs[tmp]] = distances[indxs[tmp]].mean()
+                new_blocks.append(block[0])
                 block = []
-    return dis
+            else:
+                new_blocks.append(blocks[i])
+        # The last element
+        if block:
+            tmp = np.arange(block[0], len(similarities))
+            distances[indxs[tmp]] = distances[indxs[tmp]].mean()
+            new_blocks.append(block[0])
+        else:
+            new_blocks.append(len(similarities) - 1)
+
+    return distances
 
 
 def guttman_image_ranking(distances, similarities, verbose=False):
@@ -50,10 +66,14 @@ def guttman_image_ranking(distances, similarities, verbose=False):
     Guttman image ranking
 
     """
-    sim_arg = similarities.argsort()
+    dtype = [('x', float), ('y', float)]
+    el = np.array([(i, j) for i, j in zip(similarities, distances)],
+                  dtype=dtype)
+    indxs = el.argsort(order=['x', 'y'])
+
     dis_arg = distances.argsort()
     disparities = distances.copy()
-    for i, j in zip(sim_arg, dis_arg):
+    for i, j in zip(indxs, dis_arg):
         disparities[i] = distances[j]
     return disparities
 
@@ -128,8 +148,8 @@ def smacof(similarities, metric=True, p=2, init=None,
             dis_flat_w = dis_flat[sim_flat != 0]
 
             # Compute the disparities using a monotonic regression
-            disparities_flat = guttman_image_ranking(dis_flat_w,
-                                                     sim_flat_w)
+            disparities_flat = PAV(dis_flat_w,
+                                   sim_flat_w)
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n, n))
