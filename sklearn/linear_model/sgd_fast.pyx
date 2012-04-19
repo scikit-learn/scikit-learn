@@ -247,7 +247,7 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
               SequentialDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
-              double weight_pos, double weight_neg,
+              np.ndarray[double, ndim=1, mode='c'] class_weight,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
@@ -278,10 +278,8 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         Print verbose output; 0 for quite.
     shuffle : int
         Whether to shuffle the training data before each epoch.
-    weight_pos : float
-        The weight of the positive class.
-    weight_neg : float
-        The weight of the negative class.
+    class_weight : ndarray[double, ndim=1], shape=(n_classes,)
+        The class weights.
     seed : int
         The seed of the pseudo random number generator to use when
         shuffling the data
@@ -321,9 +319,9 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
     cdef int K = w.K
 
     # function pointer to concrete weight update
-    cdef void (*weight_update)(LossFunction, WeightVector, DOUBLE *,
-                               INTEGER *, int, double, double,
-                               double *, double, int, double, int)
+    cdef double (*weight_update)(LossFunction, WeightVector, DOUBLE *,
+                                 INTEGER *, int, double, double,
+                                 double *, double *, double, int, int)
     if K == 1:
         weight_update = &weight_update_binary
     else:
@@ -332,13 +330,14 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
     cdef DOUBLE *x_data_ptr = NULL
     cdef INTEGER *x_ind_ptr = NULL
 
+    cdef double *class_weight_data_ptr = <double *>class_weight.data
+
     # helper variable
     cdef int xnnz
-    cdef double eta = 0.0
+    cdef double eta = eta0
     cdef double sumloss = 0.0
     cdef double y = 0.0
     cdef double sample_weight
-    cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
@@ -356,15 +355,13 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         q = <double *> malloc(n_features * sizeof(double))
         for i in range(n_features):
             q[i] = 0.0
-
+    # total cumulative L1 penalty
     cdef double u = 0.0
 
     if penalty_type == L2:
         rho = 1.0
     elif penalty_type == L1:
         rho = 0.0
-
-    eta = eta0
 
     t_start = time()
     for epoch in range(n_iter):
@@ -381,9 +378,9 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
 
-            weight_update(loss, w, x_data_ptr, x_ind_ptr,
-                          xnnz, y, sample_weight, p, eta, fit_intercept,
-                          intercept_decay, K)
+            weight_update(loss, w, x_data_ptr, x_ind_ptr, xnnz, y,
+                          sample_weight, class_weight_data_ptr,
+                          p, eta, fit_intercept, K)
 
             if penalty_type >= L2:
                 w.scale(1.0 - (rho * eta * alpha))
@@ -397,20 +394,19 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         # report epoch information
         if verbose > 0:
             print("Norm: %.2f, NNZs: %d, "\
-            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
-                                                    weights.nonzero()[0].shape[0],
-                                                    intercept, count,
-                                                    sumloss / count))
+            "T: %d, Avg. loss: %.6f" % (w.norm(),
+                                        weights.nonzero()[0].shape[0],
+                                        count,
+                                        sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
-           or np.isnan(intercept) or np.isinf(intercept):
-            raise ValueError("floating-point under-/overflow occured.")
+        ## if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
+        ##    or np.any(np.isnan(intercept)) or np.any(np.isinf(intercept)):
+        ##     raise ValueError("floating-point under-/overflow occured.")
 
     w.reset_wscale()
 
-    print("free stuff")
     free(p)
     if q != NULL:
         free(q)
@@ -418,44 +414,46 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
     return weights, intercept
 
 
-cdef void weight_update_binary(LossFunction loss, WeightVector w,
-                               DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                               int xnnz, double y, double sample_weight,
-                               double *p, double eta, int fit_intercept,
-                               double intercept_decay, int K):
+cdef double weight_update_binary(LossFunction loss, WeightVector w,
+                                 DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                                 int xnnz, double y, double sample_weight,
+                                 double *class_weights, double *p,
+                                 double eta, int fit_intercept, int K):
 
     cdef double update = 0.0
-    cdef class_weight = 1.0
+    cdef double class_weight = class_weights[0]
     p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
 
-    ## if y > 0.0:
-    ##     class_weight = weight_pos
-    ## else:
-    ##     class_weight = weight_neg
+    if y > 0.0:
+        class_weight = class_weights[1]
 
     update = eta * loss.dloss(p[0], y) * class_weight * sample_weight
     if update != 0.0:
         w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
 
-    #if verbose > 0:
-    #    sumloss += loss.loss(p, y)
+    return 0.0  ##loss.loss(p[0], y)
 
-cdef void weight_update_multinomial(LossFunction loss, WeightVector w,
-                               DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                               int xnnz, double y, double sample_weight,
-                               double *p, double eta, int fit_intercept,
-                               double intercept_decay, int K):
+
+cdef double weight_update_multinomial(LossFunction loss, WeightVector w,
+                                      DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                                      int xnnz, double y, double sample_weight,
+                                      double *class_weights,
+                                      double *p, double eta, int fit_intercept,
+                                      int K):
     cdef double update = 0.0
     cdef int k
+    cdef double p_sum = 0.0
 
     for k in range(K):
-        p[k] = w.dot(x_data_ptr, x_ind_ptr, xnnz, k)
+        p[k] = exp(w.dot(x_data_ptr, x_ind_ptr, xnnz, k))
+        p_sum += p[k]
 
-    #loglikelihood += log(pd[<int>y])
     w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, eta)
     for k in range(K):
-        update = -1.0 * eta * p[k]
+        update = -1.0 * eta * (p[k] / p_sum)
         w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
+
+    return 0.0  ##log(p[<int>y] / p_sum)
 
 
 cdef inline double max(double a, double b):
