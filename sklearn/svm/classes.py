@@ -149,6 +149,13 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     The multiclass support is handled according to a one-vs-one scheme.
 
+    For details on the precise mathematical formulation of the provided
+    kernel functions and how `gamma`, `coef0` and `degree` affect each,
+    see the corresponding section in the narrative documentation:
+    :ref:`svm_kernels`.
+
+    .. The narrative documentation is available at http://scikit-learn.org/
+
     Parameters
     ----------
     C : float or None, optional (default=None)
