@@ -57,6 +57,12 @@ class Perceptron(SGDClassifier):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    multi_class : str, 'multi' or 'ovr' (default='multi')
+        Determines the multi-class strategy if `y` contains more than
+        two classes.
+        `multi` trains a standard multi-class perceptron.
+        `ovr` trains n_classes one-vs-rest classifiers.
+
     Attributes
     ----------
     `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
@@ -85,7 +91,8 @@ class Perceptron(SGDClassifier):
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, eta0=1.0,
-                 n_jobs=1, seed=0, class_weight=None, warm_start=False):
+                 n_jobs=1, seed=0, class_weight=None, warm_start=False,
+                 multi_class='multi'):
         super(Perceptron, self).__init__(loss="perceptron",
                                          penalty=penalty,
                                          alpha=alpha, rho=0,
@@ -99,4 +106,5 @@ class Perceptron(SGDClassifier):
                                          power_t=0.5,
                                          warm_start=warm_start,
                                          class_weight=class_weight,
-                                         n_jobs=n_jobs)
+                                         n_jobs=n_jobs,
+                                         multi_class=multi_class)
