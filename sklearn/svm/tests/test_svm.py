@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises, assert_true
 
-from sklearn import svm, linear_model, datasets, metrics
+from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
 
@@ -659,6 +659,12 @@ def test_linearsvc_verbose():
 
     # stdout: restore
     os.dup2(stdout, 1)  # restore original stdout
+
+
+def test_svc_pickle_with_callable_kernel():
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T))
+    b = base.clone(a)
+    b.fit(X, Y)
 
 
 if __name__ == '__main__':
