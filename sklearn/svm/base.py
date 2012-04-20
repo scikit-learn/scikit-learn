@@ -80,17 +80,13 @@ class BaseLibSVM(BaseEstimator):
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
-        if hasattr(kernel, '__call__'):
-            self.kernel_function = kernel
-            self.kernel = 'precomputed'
-        else:
-            self.kernel = kernel
         if not scale_C:
             warnings.warn('SVM: scale_C will disappear and be assumed to be '
                           'True in scikit-learn 0.12', FutureWarning,
                           stacklevel=2)
 
         self.impl = impl
+        self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
@@ -156,7 +152,7 @@ class BaseLibSVM(BaseEstimator):
         sample_weight = np.asarray([] if sample_weight is None
                                       else sample_weight, dtype=np.float64)
 
-        if hasattr(self, 'kernel_function'):
+        if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
             self.__Xfit = X
@@ -449,7 +445,7 @@ class BaseLibSVM(BaseEstimator):
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
-        if hasattr(self, 'kernel_function'):
+        if callable(self.kernel):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
             X = np.asarray(self.kernel_function(X, self.__Xfit),
