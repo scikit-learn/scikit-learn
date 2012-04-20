@@ -200,13 +200,14 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     def _set_loss_function(self, loss):
         """Set concrete LossFunction."""
         loss_functions = {
-            "hinge": Hinge(1.0),
-            "perceptron": Hinge(0.0),
-            "log": Log(),
-            "modified_huber": ModifiedHuber(),
+            "hinge": (Hinge, (1.0,)),
+            "perceptron": (Hinge, (0.0,)),
+            "log": (Log, tuple()),
+            "modified_huber": (ModifiedHuber, tuple()),
         }
         try:
-            self.loss_function = loss_functions[loss]
+            loss_class, args = loss_functions[loss]
+            self.loss_function = loss_class(*args)
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
 
@@ -460,7 +461,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """
 
         if self.multi_class == 'multinomial':
-            assert self.loss = 'log'
+            assert self.loss == 'log'
             coef, intercept = fit_multinomial(self, X, y, sample_weight)
             self.coef_ = coef
             self.intercept_ = intercept
@@ -654,11 +655,12 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
         loss_functions = {
-            "squared_loss": SquaredLoss(),
-            "huber": Huber(self.p),
+            "squared_loss": (SquaredLoss, tuple()),
+            "huber": (Huber, (self.p,)),
         }
         try:
-            self.loss_function = loss_functions[loss]
+            loss_class, args = loss_functions[loss]
+            self.loss_function = loss_class(*args)
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
 
