@@ -101,11 +101,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     verbose: integer, optional
         The verbosity level
 
-    n_jobs: integer, optional
-        The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
-
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
@@ -130,6 +125,18 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+
+    multi_class : str, 'ovr' or 'multinomial' (default='ovr')
+        Determines the multi-class strategy if `y` contains more than
+        two classes.
+        `multinomial` can be used to train a multinomial logistic
+        regression model (aka Maximum Entropy) and can only be used
+        if loss=`log`; `ovr` trains n_classes one-vs-rest classifiers.
+
+    n_jobs: integer, optional
+        The number of CPUs to use to do the OVR (One Versus Rest, for
+        multi-class problems) computation. -1 means 'all CPUs'. Defaults
+        to 1. Only if multi_class=`ovr`.
 
     Attributes
     ----------
@@ -270,6 +277,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             raise ValueError("The number of class labels must be "
                              "greater than one.")
 
+        # update observation count after training
         self.t_ += n_iter * n_samples
 
         return self
@@ -448,16 +456,16 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         If ``self.multi_class=='ovr'`` we combine ``n_classes`` binary
         classifiers. Each binary classifier predicts one class versus
-        all others. This strategy is called OVA: One Versus All or
-        OVR: One Versus the Rest.
+        all others. This strategy is called OVR: One Versus Rest.
         """
 
         if self.multi_class == 'multinomial':
+            assert self.loss = 'log'
             coef, intercept = fit_multinomial(self, X, y, sample_weight)
             self.coef_ = coef
             self.intercept_ = intercept
         else:
-            # Use joblib to fit OvA in parallel
+            # Use joblib to fit OVR in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(fit_binary)(self, i, X, y, n_iter,
                                     np.array([self._expanded_class_weight[i], 1.]),
@@ -656,6 +664,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     def _partial_fit(self, X, y, n_iter, sample_weight=None,
                      coef_init=None, intercept_init=None):
+        """Fit model on input ``X`` and ``y``; this is the ``n_iter``-th
+           call to partial_fit. """
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
 
