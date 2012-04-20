@@ -378,7 +378,7 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
 
-            weight_update(loss, w, x_data_ptr, x_ind_ptr, xnnz, y,
+            sumloss += weight_update(loss, w, x_data_ptr, x_ind_ptr, xnnz, y,
                           sample_weight, class_weight_data_ptr,
                           p, eta, fit_intercept, K)
 
@@ -431,7 +431,7 @@ cdef double weight_update_binary(LossFunction loss, WeightVector w,
     if update != 0.0:
         w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
 
-    return 0.0  ##loss.loss(p[0], y)
+    return loss.loss(p[0], y)
 
 
 cdef double weight_update_multinomial(LossFunction loss, WeightVector w,
@@ -453,7 +453,7 @@ cdef double weight_update_multinomial(LossFunction loss, WeightVector w,
         update = -1.0 * eta * (p[k] / p_sum)
         w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
 
-    return 0.0  ##log(p[<int>y] / p_sum)
+    return log(p[<int>y] / p_sum)
 
 
 cdef inline double max(double a, double b):
