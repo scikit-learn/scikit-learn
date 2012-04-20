@@ -21,7 +21,9 @@ from ..utils import deprecated
 
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
+from ..utils.weight_vector import WeightVector
+from .sgd_fast import (Hinge, Log, ModifiedHuber, SquaredLoss, Huber,
+                       Perceptron, MultinomialLog)
 
 
 def _make_dataset(X, y_i, sample_weight):
@@ -173,6 +175,14 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                  verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
                  eta0=0.0, power_t=0.5, class_weight=None, warm_start=False,
                  multi_class='ovr'):
+        # FIXME refactor - we need to call that before _set_loss_func
+        if multi_class not in ('ovr', 'multinomial', 'multi'):
+            raise ValueError("multi_class must be either 'ovr' or " \
+                             "'multinomial'")
+        if multi_class == 'multinomial' and loss != 'log':
+            raise ValueError("multi_class='multinomial' requires loss='log'")
+        self.multi_class = multi_class
+
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                             alpha=alpha, rho=rho,
                                             fit_intercept=fit_intercept,
@@ -185,13 +195,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-        if multi_class not in ('ovr', 'multinomial'):
-            raise ValueError("multi_class must be either 'ovr' or " \
-                             "'multinomial'")
-        if multi_class == 'multinomial' and loss != 'log':
-            raise ValueError("multi_class='multinomial' requires loss='log'")
-        self.multi_class = multi_class
-
     @property
     @deprecated("to be removed in v0.12; use ``classes_`` instead.")
     def classes(self):
@@ -201,11 +204,15 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """Set concrete LossFunction."""
         loss_functions = {
             "hinge": (Hinge, (1.0,)),
-            "perceptron": (Hinge, (0.0,)),
+            "perceptron": (Perceptron, tuple()),
             "log": (Log, tuple()),
             "modified_huber": (ModifiedHuber, tuple()),
+            "multinomial_log": (MultinomialLog, tuple()),
         }
         try:
+            # FIXME refactor
+            if self.multi_class == 'multinomial' and loss == 'log':
+                loss = 'multinomial_log'
             loss_class, args = loss_functions[loss]
             self.loss_function = loss_class(*args)
         except KeyError:
@@ -460,12 +467,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         all others. This strategy is called OVR: One Versus Rest.
         """
 
-        if self.multi_class == 'multinomial':
-            assert self.loss == 'log'
-            coef, intercept = fit_multinomial(self, X, y, sample_weight)
-            self.coef_ = coef
-            self.intercept_ = intercept
-        else:
+        if self.multi_class == 'ovr':
             # Use joblib to fit OVR in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(fit_binary)(self, i, X, y, n_iter,
@@ -476,6 +478,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             for i, (coef, intercept) in enumerate(result):
                 self.coef_[i] = coef
                 self.intercept_[i] = intercept
+        else:
+            coef, intercept = fit_multiclass(self, X, y, sample_weight)
+            self.coef_ = coef
+            self.intercept_ = intercept
 
 
 def _prepare_fit_binary(est, y, i):
@@ -510,28 +516,34 @@ def fit_binary(est, i, X, y, n_iter, class_weight,
 
     # coef should be at least 2d
     coef = coef.reshape((1, coef.shape[0]))
+    weight_vector = WeightVector(coef, intercept, est.fit_intercept,
+                                 intercept_decay)
 
-    return plain_sgd(coef, intercept, est.loss_function,
-                     est.penalty_type, est.alpha, est.rho,
-                     dataset, n_iter, est.fit_intercept,
-                     est.verbose, est.shuffle, est.seed,
-                     class_weight,
-                     est.learning_rate_code, est.eta0,
-                     est.power_t, est.t_, intercept_decay)
+    plain_sgd(weight_vector, est.loss_function,
+              est.penalty_type, est.alpha, est.rho,
+              dataset, n_iter, est.verbose,
+              est.shuffle, est.seed,
+              class_weight,
+              est.learning_rate_code, est.eta0,
+              est.power_t, est.t_)
+    return weight_vector.w, weight_vector.intercept
 
 
-def fit_multinomial(est, X, y, sample_weight):
+def fit_multiclass(est, X, y, sample_weight):
     y = np.array(np.searchsorted(est.classes_, y), dtype=np.float64)
     dataset, intercept_decay = _make_dataset(X, y, sample_weight)
+    weight_vector = WeightVector(est.coef_, est.intercept_,
+                                 est.fit_intercept,
+                                 intercept_decay)
 
-    coef, intercept = plain_sgd(est.coef_, est.intercept_, est.loss_function,
-                                est.penalty_type, est.alpha, est.rho,
-                                dataset, est.n_iter, est.fit_intercept,
-                                est.verbose, est.shuffle, est.seed,
-                                est._expanded_class_weight,
-                                est.learning_rate_code, est.eta0,
-                                est.power_t, est.t_, intercept_decay)
-    return coef, intercept
+    plain_sgd(weight_vector, est.loss_function,
+              est.penalty_type, est.alpha, est.rho,
+              dataset, est.n_iter,
+              est.verbose, est.shuffle, est.seed,
+              est._expanded_class_weight,
+              est.learning_rate_code, est.eta0,
+              est.power_t, est.t_)
+    return weight_vector.w, weight_vector.intercept
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
@@ -784,20 +796,16 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         #FIXME try to omit this
         intercept = np.atleast_1d(self.intercept_)
 
-        self.coef_, intercept = plain_sgd(self.coef_,
-                                          intercept,
-                                          self.loss_function,
-                                          self.penalty_type,
-                                          self.alpha, self.rho,
-                                          dataset,
-                                          n_iter,
-                                          int(self.fit_intercept),
-                                          int(self.verbose),
-                                          int(self.shuffle),
-                                          self.seed,
-                                          1.0, 1.0,
-                                          self.learning_rate_code,
-                                          self.eta0, self.power_t, self.t_,
-                                          intercept_decay)
+        weight_vector = WeightVector(self.coef_, intercept,
+                                     int(self.fit_intercept),
+                                     intercept_decay)
 
-        self.intercept_ = np.atleast_1d(intercept)
+        plain_sgd(weight_vector, self.loss_function,
+                  self.penalty_type, self.alpha, self.rho,
+                  dataset, n_iter, int(self.verbose),
+                  int(self.shuffle), self.seed,
+                  1.0, 1.0, self.learning_rate_code,
+                  self.eta0, self.power_t, self.t_)
+
+        self.coef_ = weight_vector.w
+        self.intercept_ = np.atleast_1d(weight_vector.intercept)
