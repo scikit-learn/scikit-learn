@@ -433,8 +433,8 @@ def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
     # it stores the cumulative L1 penalty for each feature
     cdef double *q = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
-        q = <double *> malloc(n_features * sizeof(double))
-        for i in range(n_features):
+        q = <double *> malloc(K * n_features * sizeof(double))
+        for i in range(K * n_features):
             q[i] = 0.0
     # total cumulative L1 penalty
     cdef double u = 0.0
@@ -510,23 +510,27 @@ cdef void l1penalty(WeightVector w, double *q,
     """
     cdef double z = 0.0
     cdef int j = 0
-    cdef int idx = 0
-    cdef int n_features = w.n_features
     cdef int k = 0
-    cdef int K = w.K
+    cdef int idx = 0
+    cdef Py_ssize_t n_features = w.n_features
+    cdef Py_ssize_t K = w.K
     cdef double wscale = w.wscale
-    cdef double* w_data_ptr = w.w_data_ptr
+    cdef double *w_data_ptr = w.w_data_ptr
+    cdef double *w_data_ptr_k = w_data_ptr
+    cdef double *q_k = q
 
-    for j in range(xnnz):
-        for k in range(K):
-            idx = x_ind_ptr[j] + (k * n_features)
-            z = w_data_ptr[idx]
-            if (wscale * w_data_ptr[idx]) > 0.0:
-                w_data_ptr[idx] = max(
-                    0.0, w_data_ptr[idx] - ((u + q[idx]) / wscale))
+    for k in range(K):
+        w_data_ptr_k = w_data_ptr + (k * n_features)
+        q_k = q + (k * n_features)
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            z = w_data_ptr_k[idx]
+            if w_data_ptr_k[idx] > 0.0:
+                w_data_ptr_k[idx] = max(
+                    0.0, w_data_ptr_k[idx] - ((u + q_k[idx]) / wscale))
 
-            elif (wscale * w_data_ptr[idx]) < 0.0:
-                w_data_ptr[idx] = min(
-                    0.0, w_data_ptr[idx] + ((u - q[idx]) / wscale))
+            elif w_data_ptr_k[idx] < 0.0:
+                w_data_ptr_k[idx] = min(
+                    0.0, w_data_ptr_k[idx] + ((u - q_k[idx]) / wscale))
 
-            q[idx] += (wscale * (w_data_ptr[idx] - z))
+            q_k[idx] += (wscale * (w_data_ptr_k[idx] - z))
