@@ -83,6 +83,25 @@ cdef class LossFunction:
         """
         raise NotImplementedError()
 
+    cdef double weight_update(self, WeightVector w,
+                              DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                              int xnnz, double y, double sample_weight,
+                              double *class_weights, double *p,
+                              double eta):
+
+        cdef double update = 0.0
+        cdef double class_weight = class_weights[0]
+        p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
+
+        if y > 0.0:
+            class_weight = class_weights[1]
+
+        update = eta * self.dloss(p[0], y) * class_weight * sample_weight
+        if update != 0.0:
+            w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
+
+        return self.loss(p[0], y)
+
 
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
@@ -96,6 +115,16 @@ cdef class Regression(LossFunction):
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification"""
+
+    cpdef double loss(self, double p, double y):
+        raise NotImplementedError()
+
+    cpdef double dloss(self, double p, double y):
+        raise NotImplementedError()
+
+
+cdef class MulticlassClassification(Classification):
+    """Base class for loss functions for multi-class classification"""
 
     cpdef double loss(self, double p, double y):
         raise NotImplementedError()
@@ -191,6 +220,91 @@ cdef class Log(Classification):
         return Log, ()
 
 
+cdef class MultinomialLog(Log):
+    """Multinomial logistic regression loss for y in [0, K-1]"""
+
+    cdef double weight_update(self, WeightVector w, DOUBLE *x_data_ptr,
+                              INTEGER *x_ind_ptr, int xnnz, double y,
+                              double sample_weight, double *class_weights,
+                              double *p, double eta):
+        cdef double update = 0.0
+        cdef int k
+        cdef int K = w.K
+        cdef double p_sum = 0.0
+
+        for k in range(K):
+            p[k] = exp(w.dot(x_data_ptr, x_ind_ptr, xnnz, k))
+            p_sum += p[k]
+
+        w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, eta)
+        for k in range(K):
+            update = -1.0 * eta * (p[k] / p_sum)
+            w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
+
+        return log(p[<int>y] / p_sum)
+
+    def __reduce__(self):
+        return MultinomialLog, ()
+
+
+cdef class Perceptron(Classification):
+    """Perceptron loss"""
+
+    cpdef double loss(self, double p, double y):
+        raise NotImplementedError()
+
+    cpdef double dloss(self, double p, double y):
+        raise NotImplementedError()
+
+    cdef double weight_update(self, WeightVector w, DOUBLE *x_data_ptr,
+                              INTEGER *x_ind_ptr, int xnnz, double y,
+                              double sample_weight, double *class_weights,
+                              double *p, double eta):
+
+        cdef int k
+        cdef int z
+        cdef double max_p = 0.0
+        cdef int K = w.K
+        cdef double update = 0.0
+        cdef double class_weight = class_weights[0]
+
+        if K == 1:
+            # binary case; assume y in {-1, 1}
+            if y > 0.0:
+                class_weight = class_weights[1]
+
+            p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
+
+            if p[0] * y <= 0.0:
+                update = eta * -y * class_weight * sample_weight
+
+            if update != 0.0:
+                w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
+
+        else:
+            # multiclass case; assume y in [0, K-1]
+            class_weight = class_weights[<int>y]
+
+            for k in range(K):
+                p[k] = w.dot(x_data_ptr, x_ind_ptr, xnnz, k)
+                if p[k] >= max_p:
+                    z = k
+                    max_p = p[k]
+
+            if z != <int>y:
+                update = eta * class_weight * sample_weight
+                w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, z, -update)
+
+        if update != 0.0:
+            return 1.0
+        else:
+            return 0.0
+
+    def __reduce__(self):
+        return Perceptron, ()
+
+
 cdef class SquaredLoss(Regression):
     """Squared loss traditional used in linear regression."""
     cpdef double loss(self, double p, double y):
@@ -239,27 +353,18 @@ cdef class Huber(Regression):
         return Huber, (self.c,)
 
 
-def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
-              np.ndarray[double, ndim=1, mode='c'] intercept,
-              LossFunction loss,
-              int penalty_type,
-              double alpha, double rho,
-              SequentialDataset dataset,
-              int n_iter, int fit_intercept,
-              int verbose, int shuffle, int seed,
+def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
+              double alpha, double rho, SequentialDataset dataset,
+              int n_iter,  int verbose, int shuffle, int seed,
               np.ndarray[double, ndim=1, mode='c'] class_weight,
-              int learning_rate, double eta0,
-              double power_t,
-              double t=1.0,
-              double intercept_decay=1.0):
+              int learning_rate, double eta0, double power_t,
+              double t=1.0):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
     ----------
-    weights : ndarray[double, ndim=2], shape=(n_features, K)
-        The allocated coef_ vector.
-    intercept : ndarray[double, ndim=1], shape=(K,)
-        The array of intercepts; shape
+    w : WeightVector
+        The model parameters
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
@@ -272,8 +377,6 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         A concrete ``SequentialDataset`` object.
     n_iter : int
         The number of iterations (epochs).
-    fit_intercept : int
-        Whether or not to fit the intercept (1 or 0).
     verbose : int
         Print verbose output; 0 for quite.
     shuffle : int
@@ -296,20 +399,7 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
-    intercept_decay : double
-        An additional scaling factor for the intercept update.
-
-    Returns
-    -------
-    weights : array, shape=[n_features]
-        The fitted weight vector.
-    intercept : float
-        The fitted intercept term.
-
     """
-    cdef WeightVector w = WeightVector(weights, intercept, fit_intercept,
-                                       intercept_decay)
-
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = w.n_features
@@ -317,15 +407,6 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
     # ``K==1`` for both regression and binary classification;
     # ``K==n_classes`` for multi-class classification.
     cdef int K = w.K
-
-    # function pointer to concrete weight update
-    cdef double (*weight_update)(LossFunction, WeightVector, DOUBLE *,
-                                 INTEGER *, int, double, double,
-                                 double *, double *, double, int, int)
-    if K == 1:
-        weight_update = &weight_update_binary
-    else:
-        weight_update = &weight_update_multinomial
 
     cdef DOUBLE *x_data_ptr = NULL
     cdef INTEGER *x_ind_ptr = NULL
@@ -378,9 +459,9 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
 
-            sumloss += weight_update(loss, w, x_data_ptr, x_ind_ptr, xnnz, y,
-                          sample_weight, class_weight_data_ptr,
-                          p, eta, fit_intercept, K)
+            sumloss += loss.weight_update(w, x_data_ptr, x_ind_ptr, xnnz, y,
+                                          sample_weight, class_weight_data_ptr,
+                                          p, eta)
 
             if penalty_type >= L2:
                 w.scale(1.0 - (rho * eta * alpha))
@@ -395,7 +476,7 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
         if verbose > 0:
             print("Norm: %.2f, NNZs: %d, "\
             "T: %d, Avg. loss: %.6f" % (w.norm(),
-                                        weights.nonzero()[0].shape[0],
+                                        w.w.nonzero()[0].shape[0],
                                         count,
                                         sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
@@ -410,50 +491,6 @@ def plain_sgd(np.ndarray[double, ndim=2, mode='c'] weights,
     free(p)
     if q != NULL:
         free(q)
-
-    return weights, intercept
-
-
-cdef double weight_update_binary(LossFunction loss, WeightVector w,
-                                 DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                                 int xnnz, double y, double sample_weight,
-                                 double *class_weights, double *p,
-                                 double eta, int fit_intercept, int K):
-
-    cdef double update = 0.0
-    cdef double class_weight = class_weights[0]
-    p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
-
-    if y > 0.0:
-        class_weight = class_weights[1]
-
-    update = eta * loss.dloss(p[0], y) * class_weight * sample_weight
-    if update != 0.0:
-        w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
-
-    return loss.loss(p[0], y)
-
-
-cdef double weight_update_multinomial(LossFunction loss, WeightVector w,
-                                      DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                                      int xnnz, double y, double sample_weight,
-                                      double *class_weights,
-                                      double *p, double eta, int fit_intercept,
-                                      int K):
-    cdef double update = 0.0
-    cdef int k
-    cdef double p_sum = 0.0
-
-    for k in range(K):
-        p[k] = exp(w.dot(x_data_ptr, x_ind_ptr, xnnz, k))
-        p_sum += p[k]
-
-    w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, eta)
-    for k in range(K):
-        update = -1.0 * eta * (p[k] / p_sum)
-        w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
-
-    return log(p[<int>y] / p_sum)
 
 
 cdef inline double max(double a, double b):
