@@ -12,10 +12,10 @@ ctypedef np.int32_t INTEGER
 
 
 cdef class WeightVector(object):
-    cdef np.ndarray w
+    cdef public np.ndarray w
     cdef np.float64_t *w_data_ptr
     cdef double wscale
-    cdef np.ndarray intercept
+    cdef public np.ndarray intercept
     cdef np.float64_t *intercept_data_ptr
     cdef Py_ssize_t n_features
     cdef Py_ssize_t K
