@@ -926,3 +926,157 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+
+
+###############################################################################
+# Multi Task Lasso model (Lasso with joint feature selection)
+
+class MultiTaskLasso(Lasso):
+    """Linear Model trained with L1/L2 mixed-norm as regularizer
+
+    The optimization objective for Lasso is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^2_2 + alpha * ||W||_21
+
+    Where ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+    i.e. the sum of norm of earch row.
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Constant that multiplies the L1 term. Defaults to 1.0
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    max_iter: int, optional
+        The maximum number of iterations
+
+    tol: float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than 'tol', the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than tol.
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 1, 2], [0, 1, 2]])
+    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+       normalize=False, positive=False, precompute='auto', tol=0.0001,
+       warm_start=False)
+    >>> print clf.coef_
+    [[ 0.85  0.  ], [ 0.85  0.  ]]
+    >>> print clf.intercept_
+    [0.15, 0.15]
+
+    See also
+    --------
+    Lasso
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
+    """
+
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+                 copy_X=True, max_iter=1000,
+                 tol=1e-4, warm_start=False):
+         self.alpha = alpha
+         self.coef_ = None
+         self.fit_intercept = fit_intercept
+         self.normalize = normalize
+         self.max_iter = max_iter
+         self.copy_X = copy_X
+         self.tol = tol
+         self.warm_start = warm_start
+         self.rho = 1.0
+
+    def fit(self, X, y, Xy=None, coef_init=None):
+        """Fit MultiTaskLasso model with coordinate descent
+
+        Parameters
+        -----------
+        X: ndarray, (n_samples, n_features)
+            Data
+        y: ndarray, (n_samples)
+            Target
+        Xy : array-like, optional
+            Xy = np.dot(X.T, y) that can be precomputed. It is useful
+            only when the Gram matrix is precomputed.
+        coef_init: ndarray of shape n_features
+            The initial coeffients to warm-start the optimization
+
+        Notes
+        -----
+
+        Coordinate descent is an algorithm that considers each column of
+        data at a time hence it will automatically convert the X input
+        as a fortran contiguous numpy array if necessary.
+
+        To avoid memory re-allocation it is advised to allocate the
+        initial data in memory directly using that format.
+        """
+        # X and y must be of type float64
+        X = np.asanyarray(X, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
+
+        n_samples, n_features = X.shape
+        _, n_tasks = y.shape
+
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                self.fit_intercept, self.normalize, copy=self.copy_X)
+
+        if coef_init is None:
+            if not self.warm_start or self.coef_ is None:
+                self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64, order='F')
+        else:
+            self.coef_ = coef_init
+
+        alpha = self.alpha * self.rho * n_samples
+        beta = self.alpha * (1.0 - self.rho) * n_samples
+
+        X = np.asfortranarray(X)  # make data contiguous in memory
+        self.coef_ = np.asfortranarray(self.coef_)  # make coef contiguous in memory
+
+        self.coef_, self.dual_gap_, self.eps_ = \
+                cd_fast.enet_coordinate_descent_multi_task(self.coef_, alpha, beta,
+                        X, y, self.max_iter, self.tol)
+
+        self._set_intercept(X_mean, y_mean, X_std)
+
+        if self.dual_gap_ > self.eps_:
+            warnings.warn('Objective did not converge, you might want'
+                          ' to increase the number of iterations')
+
+        # return self for chaining fit and predict calls
+        return self

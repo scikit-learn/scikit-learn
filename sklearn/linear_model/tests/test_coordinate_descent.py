@@ -15,7 +15,7 @@ from nose.tools import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV
+    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso
 from sklearn.linear_model import LassoLarsCV
 
 
@@ -264,9 +264,16 @@ def test_enet_positive_constraint():
     enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, precompute=True, positive=True)
-    enet.fit(X, y)
-    assert_true(min(enet.coef_) >= 0)
+
+def test_multi_task_lasso():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    Y_test = np.c_[y_test, y_test]
+    clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+    active_set = np.any(clf.coef_, axis=0)
+    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
 
 if __name__ == '__main__':
     import nose
