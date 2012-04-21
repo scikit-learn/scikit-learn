@@ -662,9 +662,12 @@ def test_linearsvc_verbose():
 
 
 def test_svc_pickle_with_callable_kernel():
-    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T))
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True)
     b = base.clone(a)
     b.fit(X, Y)
+    b.predict(X)
+    b.predict_proba(X)
+    b.decision_function(X)
 
 
 if __name__ == '__main__':

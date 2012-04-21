@@ -441,12 +441,16 @@ class BaseLibSVM(BaseEstimator):
 
         C = 0.0  # C is not useful here
 
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self.label_,
             self.probA_, self.probB_,
-            svm_type=svm_type, kernel=self.kernel, C=C, nu=self.nu,
+            svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
@@ -528,12 +532,17 @@ class BaseLibSVM(BaseEstimator):
         epsilon = self.epsilon
         if epsilon == None:
             epsilon = 0.1
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self.label_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
-            kernel=self.kernel, C=C, nu=self.nu,
+            kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
