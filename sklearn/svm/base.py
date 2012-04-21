@@ -80,13 +80,13 @@ class BaseLibSVM(BaseEstimator):
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
-        self.kernel = kernel
         if not scale_C:
             warnings.warn('SVM: scale_C will disappear and be assumed to be '
                           'True in scikit-learn 0.12', FutureWarning,
                           stacklevel=2)
 
         self.impl = impl
+        self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
         self.coef0 = coef0
