@@ -95,7 +95,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             ind = np.arange(X.shape[0])
             train = ind[train]
             test = ind[test]
-        if hasattr(base_clf, 'kernel_function'):
+        if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
             # cannot compute the kernel values with custom function
             raise ValueError(
                 "Cannot use a custom kernel function. "
