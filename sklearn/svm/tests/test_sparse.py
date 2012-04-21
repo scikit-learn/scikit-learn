@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import linalg
 from scipy import sparse
-from sklearn import datasets, svm, linear_model
+from sklearn import datasets, svm, linear_model, base
 from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
@@ -227,6 +227,16 @@ def test_sparse_scale_C():
         error_with_scale = linalg.norm(clf_no_scale.coef_
                            - sp_clf_coef_) / linalg.norm(clf_no_scale.coef_)
         assert_true(error_with_scale > 1e-3)
+
+
+def test_sparse_svc_clone_with_callable_kernel():
+    a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    b = base.clone(a)
+
+    b.fit(X_sp, Y)
+    b.predict(X_sp)
+    b.predict_proba(X_sp)
+    # b.decision_function(X_sp)  # XXX : should be supported
 
 
 if __name__ == '__main__':

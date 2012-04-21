@@ -270,8 +270,12 @@ class BaseLibSVM(BaseEstimator):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
         solver_type = LIBSVM_IMPL.index(self.impl)
-        kernel_type = self._sparse_kernels.index(self.kernel)
+        kernel_type = self._sparse_kernels.index(kernel)
 
         self.class_weight_, self.class_weight_label_ = \
                      _get_class_weight(self.class_weight, y)
@@ -378,7 +382,12 @@ class BaseLibSVM(BaseEstimator):
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
-        kernel_type = self._sparse_kernels.index(self.kernel)
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        kernel_type = self._sparse_kernels.index(kernel)
 
         C = 0.0  # C is not useful here
 
@@ -468,7 +477,12 @@ class BaseLibSVM(BaseEstimator):
 
     def _sparse_predict_proba(self, X):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
-        kernel_type = self._sparse_kernels.index(self.kernel)
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        kernel_type = self._sparse_kernels.index(kernel)
 
         return libsvm_sparse.libsvm_sparse_predict_proba(
             X.data, X.indices, X.indptr,
