@@ -19,9 +19,9 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..utils import deprecated
 
-from .sgd_fast import plain_sgd as plain_sgd
+from .sgd_fast import plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
-from ..utils.weight_vector import WeightVector
+from ..utils.weight_vector import WeightVector, AveragedWeightVector
 from .sgd_fast import (Hinge, Log, ModifiedHuber, SquaredLoss, Huber,
                        Perceptron, MultinomialLog)
 
@@ -35,6 +35,17 @@ def _make_dataset(X, y_i, sample_weight):
         dataset = ArrayDataset(X, y_i, sample_weight)
         intercept_decay = 1.0
     return dataset, intercept_decay
+
+
+def _make_weight_vector(est, coef=None, intercept=None, intercept_decay=1.0):
+    if coef is None:
+        coef = est.coef_
+    if intercept is None:
+        intercept = est.intercept_
+    weight_vector = WeightVector(coef, intercept,
+                                 est.fit_intercept,
+                                 intercept_decay)
+    return weight_vector
 
 
 def _tocsr(X):
@@ -108,6 +119,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         constant: eta = eta0
         optimal: eta = 1.0/(t+t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
+        exponential: eta = eta0 * power_t ** (t / (n_samples * n_iter))
 
     eta0 : double
         The initial learning rate [default 0.01].
@@ -470,7 +482,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         if self.multi_class == 'ovr':
             # Use joblib to fit OVR in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(fit_binary)(self, i, X, y, n_iter,
+                delayed(_fit_binary)(self, i, X, y, n_iter,
                                     np.array([self._expanded_class_weight[i], 1.]),
                                     sample_weight)
                 for i in xrange(len(self.classes_)))
@@ -479,7 +491,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                 self.coef_[i] = coef
                 self.intercept_[i] = intercept
         else:
-            coef, intercept = fit_multiclass(self, X, y, sample_weight)
+            coef, intercept = _fit_multiclass(self, X, y, sample_weight)
             self.coef_ = coef
             self.intercept_ = intercept
 
@@ -505,36 +517,27 @@ def _prepare_fit_binary(est, y, i):
     return y_i, coef, np.atleast_1d(intercept)
 
 
-def fit_binary(est, i, X, y, n_iter, class_weight,
+def _fit_binary(est, i, X, y, n_iter, class_weight,
                sample_weight):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
-
     # coef should be at least 2d
     coef = coef.reshape((1, coef.shape[0]))
-    weight_vector = WeightVector(coef, intercept, est.fit_intercept,
-                                 intercept_decay)
-
-    plain_sgd(weight_vector, est.loss_function,
-              est.penalty_type, est.alpha, est.rho,
-              dataset, n_iter, est.verbose,
-              est.shuffle, est.seed,
-              class_weight,
-              est.learning_rate_code, est.eta0,
-              est.power_t, est.t_)
-    return weight_vector.w, weight_vector.intercept
+    return _fit(est, X, y_i, sample_weight, coef=coef, intercept=intercept)
 
 
-def fit_multiclass(est, X, y, sample_weight):
+def _fit_multiclass(est, X, y, sample_weight):
     y = np.array(np.searchsorted(est.classes_, y), dtype=np.float64)
+    return _fit(est, X, y, sample_weight)
+
+
+def _fit(est, X, y, sample_weight, coef=None, intercept=None):
     dataset, intercept_decay = _make_dataset(X, y, sample_weight)
-    weight_vector = WeightVector(est.coef_, est.intercept_,
-                                 est.fit_intercept,
-                                 intercept_decay)
+    weight_vector = _make_weight_vector(est, coef=coef, intercept=intercept,
+                                        intercept_decay=intercept_decay)
 
     plain_sgd(weight_vector, est.loss_function,
               est.penalty_type, est.alpha, est.rho,
@@ -543,7 +546,8 @@ def fit_multiclass(est, X, y, sample_weight):
               est._expanded_class_weight,
               est.learning_rate_code, est.eta0,
               est.power_t, est.t_)
-    return weight_vector.w, weight_vector.intercept
+    coef, intercept = weight_vector.to_array()
+    return coef, intercept
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
@@ -611,6 +615,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         constant: eta = eta0
         optimal: eta = 1.0/(t+t0)
         invscaling: eta = eta0 / pow(t, power_t) [default]
+        exponential: eta = eta0 * power_t ** (t / (n_samples * n_iter))
 
     eta0 : double, optional
         The initial learning rate [default 0.01].
@@ -791,21 +796,6 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         return self.decision_function(X)
 
     def _fit_regressor(self, X, y, sample_weight, n_iter):
-        dataset, intercept_decay = _make_dataset(X, y, sample_weight)
-
-        #FIXME try to omit this
-        intercept = np.atleast_1d(self.intercept_)
-
-        weight_vector = WeightVector(self.coef_, intercept,
-                                     int(self.fit_intercept),
-                                     intercept_decay)
-
-        plain_sgd(weight_vector, self.loss_function,
-                  self.penalty_type, self.alpha, self.rho,
-                  dataset, n_iter, int(self.verbose),
-                  int(self.shuffle), self.seed,
-                  1.0, 1.0, self.learning_rate_code,
-                  self.eta0, self.power_t, self.t_)
-
-        self.coef_ = weight_vector.w
-        self.intercept_ = np.atleast_1d(weight_vector.intercept)
+        coef, intercept = _fit(self, X, y, sample_weight)
+        self.coef_ = coef
+        self.intercept_ = np.atleast_1d(intercept)
