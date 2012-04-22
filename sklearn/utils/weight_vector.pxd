@@ -30,11 +30,3 @@ cdef class WeightVector(object):
     cdef void scale(self, double c)
     cdef void reset_scale(self)
     cdef double norm(self)
-
-
-cdef class AveragedWeightVector(WeightVector):
-    cdef public np.ndarray w_bar
-    cdef np.float64_t *w_bar_data_ptr
-    cdef double w_bar_scale
-    cdef Py_ssize_t n_updates
-    cdef Py_ssize_t n_dots

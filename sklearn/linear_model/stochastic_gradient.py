@@ -21,7 +21,7 @@ from ..utils import deprecated
 
 from .sgd_fast import plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
-from ..utils.weight_vector import WeightVector, AveragedWeightVector
+from ..utils.weight_vector import WeightVector
 from .sgd_fast import (Hinge, Log, ModifiedHuber, SquaredLoss, Huber,
                        Perceptron, MultinomialLog)
 
