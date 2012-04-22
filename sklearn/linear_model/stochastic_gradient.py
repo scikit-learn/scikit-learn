@@ -462,9 +462,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
-        coef, intercept = fit_binary(self, 1, X, y, n_iter,
-                                     self._expanded_class_weight,
-                                     sample_weight)
+        coef, intercept = _fit_binary(self, 1, X, y, n_iter,
+                                      self._expanded_class_weight,
+                                      sample_weight)
 
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
