@@ -484,11 +484,6 @@ def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
                                         sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
-        # floating-point under-/overflow check.
-        ## if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
-        ##    or np.any(np.isnan(intercept)) or np.any(np.isinf(intercept)):
-        ##     raise ValueError("floating-point under-/overflow occured.")
-
     if w.w_scale != 1.0:
         w.reset_scale()
 
