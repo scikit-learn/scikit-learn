@@ -14,7 +14,7 @@ ctypedef np.int32_t INTEGER
 cdef class WeightVector(object):
     cdef public np.ndarray w
     cdef np.float64_t *w_data_ptr
-    cdef double wscale
+    cdef double w_scale
     cdef public np.ndarray intercept
     cdef np.float64_t *intercept_data_ptr
     cdef Py_ssize_t n_features
@@ -28,5 +28,13 @@ cdef class WeightVector(object):
     cdef double dot(self, DTYPE *x_data_ptr, INTEGER *x_ind_ptr,
                     int xnnz, int k)
     cdef void scale(self, double c)
-    cdef void reset_wscale(self)
+    cdef void reset_scale(self)
     cdef double norm(self)
+
+
+cdef class AveragedWeightVector(WeightVector):
+    cdef public np.ndarray w_bar
+    cdef np.float64_t *w_bar_data_ptr
+    cdef double w_bar_scale
+    cdef Py_ssize_t n_updates
+    cdef Py_ssize_t n_dots
