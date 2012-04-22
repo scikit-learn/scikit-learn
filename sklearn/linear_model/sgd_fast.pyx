@@ -41,6 +41,7 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
+DEF EXPONENTIAL = 4
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -458,6 +459,8 @@ def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
+            elif learning_rate == EXPONENTIAL:
+                eta = eta0 * pow(power_t, t / (n_samples * n_iter))
 
             sumloss += loss.weight_update(w, x_data_ptr, x_ind_ptr, xnnz, y,
                                           sample_weight, class_weight_data_ptr,
@@ -486,7 +489,8 @@ def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
         ##    or np.any(np.isnan(intercept)) or np.any(np.isinf(intercept)):
         ##     raise ValueError("floating-point under-/overflow occured.")
 
-    w.reset_wscale()
+    if w.wscale != 1.0:
+        w.reset_scale()
 
     free(p)
     if q != NULL:
