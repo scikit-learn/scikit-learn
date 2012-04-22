@@ -249,7 +249,8 @@ class BaseSGD(BaseEstimator):
             self.t_ = 1.0 / (eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
-        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
+        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3,
+                               "exponential": 4}
         try:
             self.learning_rate_code = learning_rate_codes[learning_rate]
         except KeyError:
