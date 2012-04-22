@@ -171,9 +171,16 @@ cdef class WeightVector(object):
         return self.w, self.intercept
 
 
-
 cdef class AveragedWeightVector(WeightVector):
     """A weight vector that is averaged over its mutations.
+
+    Averaging adds a factor of two two both memory requirements
+    and runtime. Updates are based on the fact that each weight
+    vector mutation will remain in the average for the next
+    (T - t) iterations, where T is the total number of observations
+    (usually, n_iter * n_samples) and t is the current iteration.
+
+    This assumes that the number of observations is known in advance.
 
     The intercept is not subject to the averaging.
 
@@ -208,8 +215,8 @@ cdef class AveragedWeightVector(WeightVector):
                   np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
                   int fit_intercept, double intercept_decay,
                   int n_updates):
-        self.w_bar = w
-        self.w = np.copy(w)
+        self.w = w
+        self.w_bar = np.copy(w)
         self.w_data_ptr = <np.float64_t *>w.data
         self.w_bar_data_ptr = <np.float64_t *>self.w_bar.data
         self.w_scale = 1.0
