@@ -15,7 +15,6 @@ import warnings
 from ..base import BaseEstimator
 from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp
-from ..utils import deprecated
 from .. import cluster
 
 EPS = np.finfo(float).eps
@@ -121,7 +120,7 @@ class GMM(BaseEstimator):
     n_components : int, optional
         Number of mixture components. Defaults to 1.
 
-    covariance_type : string (read-only), optional
+    covariance_type : string, optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -154,10 +153,6 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    covariance_type : string
-        String describing the type of covariance parameters used by the GMM. \
-        Must be one of 'spherical', 'tied', 'diag', 'full'.
-
     `weights_` : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
@@ -226,7 +221,7 @@ class GMM(BaseEstimator):
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
-                 random_state=None, thresh=1e-2, min_covar=1e-3, 
+                 random_state=None, thresh=1e-2, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc'):
         self.n_components = n_components
         self._covariance_type = covariance_type
@@ -239,7 +234,8 @@ class GMM(BaseEstimator):
         self.init_params = init_params
 
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
-            raise ValueError('bad covariance_type: ' + str(covariance_type))
+            raise ValueError('Invalid value for covariance_type: %s' %
+                            covariance_type)
 
         if n_init < 1:
             raise ValueError('GMM estimation requires at least one run')
@@ -689,6 +685,9 @@ def _validate_covars(covars, covariance_type, n_components):
                 or np.any(linalg.eigvalsh(cv) <= 0)):
                 raise ValueError("component %d of 'full' covars must be "
                                  "symmetric, positive-definite" % n)
+    else:
+        raise ValueError("covariance_type must be one of " +
+                         "'spherical', 'tied', 'diag', 'full'")
 
 
 def distribute_covar_matrix_to_match_covariance_type(
