@@ -1,4 +1,7 @@
 import warnings
+
+from nose.tools import assert_equal
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
@@ -37,11 +40,6 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     y = np.zeros(X.shape[0])
 
-    # change warnings.warn to catch the message
-    warn_queue = []
-    warnings_warn = warnings.warn
-    warnings.warn = lambda msg: warn_queue.append(msg)
-
     expected_message = ("kneighbors: neighbor k+1 and neighbor k "
                         "have the same distance: results will be "
                         "dependent on data order.")
@@ -52,16 +50,14 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     for algorithm in algorithms:
         for estimator in estimators:
-            neigh = estimator(n_neighbors=k, algorithm=algorithm)
-            neigh.fit(X, y)
-            neigh.predict(q)
+            with warnings.catch_warnings(record=True) as warn_queue:
+                neigh = estimator(n_neighbors=k, algorithm=algorithm)
+                neigh.fit(X, y)
+                neigh.predict(q)
+            print algorithm, estimator, len(warn_queue)
 
-            assert len(warn_queue) == 1
-            assert warn_queue[0] == expected_message
-            warn_queue = []
-
-    # restore default behavior
-    warnings.warn = warnings_warn
+            assert_equal(len(warn_queue), 1)
+            assert_equal(warn_queue[0].message.message, expected_message)
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,

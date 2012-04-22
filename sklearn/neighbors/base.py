@@ -16,11 +16,16 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr
 
+class NeighborsWarning(UserWarning):
+    pass
+
+# Make sure that NeighborsWarning are displayed more than once
+warnings.simplefilter("always", NeighborsWarning)
 
 def warn_equidistant():
     msg = ("kneighbors: neighbor k+1 and neighbor k have the same "
            "distance: results will be dependent on data order.")
-    warnings.warn(msg)
+    warnings.warn(msg, NeighborsWarning, stacklevel=3)
 
 
 def _check_weights(weights):
