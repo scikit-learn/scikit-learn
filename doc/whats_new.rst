@@ -162,9 +162,14 @@ API changes summary
    - The SVMlight format loader now supports files with both zero-based and
      one-based column indices, since both occur "in the wild".
 
-   - Options in class :class:`ShuffleSplit` are now consistent with
-     :class:`StratifiedShuffleSplit`. Options ``test_fraction`` and
+   - Arguments in class :class:`ShuffleSplit` are now consistent with
+     :class:`StratifiedShuffleSplit`. Arguments ``test_fraction`` and
      ``train_fraction`` are deprecated and renamed to ``test_size`` and
+     ``train_size`` and can accept both ``float`` and ``int``.
+
+   - Arguments in class :class:`Bootstrap` are now consistent with
+     :class:`StratifiedShuffleSplit`. Arguments ``n_test`` and
+     ``n_train`` are deprecated and renamed to ``test_size`` and
      ``train_size`` and can accept both ``float`` and ``int``.
 
    - Argument ``p`` added to classes in :ref:`neighbors` to specify an 

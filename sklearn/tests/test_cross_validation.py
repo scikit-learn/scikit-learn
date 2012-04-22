@@ -163,7 +163,6 @@ def test_train_test_split_errors():
 
 
 def test_shuffle_split_warnings():
-    # change warnings.warn to catch the message
     expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
                         "for removal in 0.12, use test_size instead",
                         "train_fraction is deprecated in 0.11 and scheduled "
@@ -317,10 +316,10 @@ def test_cross_val_generator_with_indices():
 
 
 def test_bootstrap_errors():
-    assert_raises(ValueError, cval.Bootstrap, 10, n_train=100)
-    assert_raises(ValueError, cval.Bootstrap, 10, n_test=100)
-    assert_raises(ValueError, cval.Bootstrap, 10, n_train=1.1)
-    assert_raises(ValueError, cval.Bootstrap, 10, n_test=1.1)
+    assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
+    assert_raises(ValueError, cval.Bootstrap, 10, test_size=100)
+    assert_raises(ValueError, cval.Bootstrap, 10, train_size=1.1)
+    assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
 
 
 def test_shufflesplit_errors():

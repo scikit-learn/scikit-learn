@@ -390,7 +390,7 @@ smaller than the total dataset if it is very large.
   >>> len(bs)
   3
   >>> print bs
-  Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+  Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
 
   >>> for train_index, test_index in bs:
   ...    print train_index, test_index

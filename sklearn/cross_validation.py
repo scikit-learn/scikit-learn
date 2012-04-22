@@ -569,7 +569,7 @@ class Bootstrap(object):
     n_bootstraps : int (default is 3)
         Number of bootstrapping iterations
 
-    n_train : int or float (default is 0.5)
+    train_size : int or float (default is 0.5)
         If int, number of samples to include in the training split
         (should be smaller than the total number of samples passed
         in the dataset).
@@ -577,7 +577,7 @@ class Bootstrap(object):
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split.
 
-    n_test : int or float or None (default is None)
+    test_size : int or float or None (default is None)
         If int, number of samples to include in the training set
         (should be smaller than the total number of samples passed
         in the dataset).
@@ -597,7 +597,7 @@ class Bootstrap(object):
     >>> len(bs)
     3
     >>> print bs
-    Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+    Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
     >>> for train_index, test_index in bs:
     ...    print "TRAIN:", train_index, "TEST:", test_index
     ...
@@ -613,32 +613,46 @@ class Bootstrap(object):
     # Static marker to be able to introspect the CV type
     indices = True
 
-    def __init__(self, n, n_bootstraps=3, n_train=0.5, n_test=None,
-                 random_state=None):
+    def __init__(self, n, n_bootstraps=3, train_size=.5, test_size=None,
+                 n_train=None, n_test=None, random_state=None):
         self.n = n
         self.n_bootstraps = n_bootstraps
-
-        if isinstance(n_train, float) and n_train >= 0.0 and n_train <= 1.0:
-            self.n_train = ceil(n_train * n)
-        elif isinstance(n_train, int):
-            self.n_train = n_train
+        if n_train is not None:
+            train_size = n_train
+            warnings.warn(
+                "n_train is deprecated in 0.11 and scheduled for "
+                "removal in 0.12, use train_size instead",
+                DeprecationWarning, stacklevel=2)
+        if n_test is not None:
+            test_size = n_test
+            warnings.warn(
+                "n_test is deprecated in 0.11 and scheduled for "
+                "removal in 0.12, use test_size instead",
+                DeprecationWarning, stacklevel=2)
+        if (isinstance(train_size, float) and train_size >= 0.0
+                            and train_size <= 1.0):
+            self.train_size = ceil(train_size * n)
+        elif isinstance(train_size, int):
+            self.train_size = train_size
         else:
-            raise ValueError("Invalid value for n_train: %r" % n_train)
-        if self.n_train > n:
-            raise ValueError("n_train=%d should not be larger than n=%d" %
-                             (self.n_train, n))
+            raise ValueError("Invalid value for train_size: %r" %
+                             train_size)
+        if self.train_size > n:
+            raise ValueError("train_size=%d should not be larger than n=%d" %
+                             (self.train_size, n))
 
-        if isinstance(n_test, float) and n_test >= 0.0 and n_test <= 1.0:
-            self.n_test = ceil(n_test * n)
-        elif isinstance(n_test, int):
-            self.n_test = n_test
-        elif n_test is None:
-            self.n_test = self.n - self.n_train
+        if (isinstance(test_size, float) and test_size >= 0.0
+                    and test_size <= 1.0):
+            self.test_size = ceil(test_size * n)
+        elif isinstance(test_size, int):
+            self.test_size = test_size
+        elif test_size is None:
+            self.test_size = self.n - self.train_size
         else:
-            raise ValueError("Invalid value for n_test: %r" % n_test)
-        if self.n_test > n:
-            raise ValueError("n_test=%d should not be larger than n=%d" %
-                             (self.n_test, n))
+            raise ValueError("Invalid value for test_size: %r" % test_size)
+        if self.test_size > n:
+            raise ValueError("test_size=%d should not be larger than n=%d" %
+                             (self.test_size, n))
 
         self.random_state = random_state
 
@@ -647,22 +661,25 @@ class Bootstrap(object):
         for i in range(self.n_bootstraps):
             # random partition
             permutation = rng.permutation(self.n)
-            ind_train = permutation[:self.n_train]
-            ind_test = permutation[self.n_train:self.n_train + self.n_test]
+            ind_train = permutation[:self.train_size]
+            ind_test = permutation[self.train_size:self.train_size
+                                   + self.test_size]
 
             # bootstrap in each split individually
-            train = rng.randint(0, self.n_train, size=(self.n_train,))
-            test = rng.randint(0, self.n_test, size=(self.n_test,))
+            train = rng.randint(0, self.train_size,
+                                size=(self.train_size,))
+            test = rng.randint(0, self.test_size,
+                                size=(self.test_size,))
             yield ind_train[train], ind_test[test]
 
     def __repr__(self):
-        return ('%s(%d, n_bootstraps=%d, n_train=%d, n_test=%d, '
+        return ('%s(%d, n_bootstraps=%d, train_size=%d, test_size=%d, '
                 'random_state=%d)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_bootstraps,
-                    self.n_train,
-                    self.n_test,
+                    self.train_size,
+                    self.test_size,
                     self.random_state,
                 ))
 
@@ -746,12 +763,14 @@ class ShuffleSplit(object):
         if test_fraction is not None:
             warnings.warn(
                 "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead")
+                "removal in 0.12, use test_size instead",
+                DeprecationWarning, stacklevel=2)
             test_size = test_fraction
         if train_fraction is not None:
             warnings.warn(
                 "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead")
+                "removal in 0.12, use train_size instead",
+                DeprecationWarning, stacklevel=2)
             train_size = train_fraction
 
         self.test_size = test_size
@@ -1259,16 +1278,18 @@ def train_test_split(*arrays, **options):
     test_fraction = options.pop('test_fraction', None)
     if test_fraction is not None:
         warnings.warn(
-            "test_fraction is deprecated in 0.11 and scheduled for "
-            "removal in 0.12, use test_size instead")
+                "test_fraction is deprecated in 0.11 and scheduled for "
+                "removal in 0.12, use test_size instead",
+                DeprecationWarning, stacklevel=2)
     else:
         test_fraction = 0.25
 
     train_fraction = options.pop('train_fraction', None)
     if train_fraction is not None:
         warnings.warn(
-            "train_fraction is deprecated in 0.11 and scheduled for "
-            "removal in 0.12, use train_size instead")
+                "train_fraction is deprecated in 0.11 and scheduled for "
+                "removal in 0.12, use train_size instead",
+                DeprecationWarning, stacklevel=2)
 
     test_size = options.pop('test_size', test_fraction)
     train_size = options.pop('train_size', train_fraction)
