@@ -489,7 +489,7 @@ def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
         ##    or np.any(np.isnan(intercept)) or np.any(np.isinf(intercept)):
         ##     raise ValueError("floating-point under-/overflow occured.")
 
-    if w.wscale != 1.0:
+    if w.w_scale != 1.0:
         w.reset_scale()
 
     free(p)
@@ -518,7 +518,7 @@ cdef void l1penalty(WeightVector w, double *q,
     cdef int idx = 0
     cdef Py_ssize_t n_features = w.n_features
     cdef Py_ssize_t K = w.K
-    cdef double wscale = w.wscale
+    cdef double w_scale = w.w_scale
     cdef double *w_data_ptr = w.w_data_ptr
     cdef double *w_data_ptr_k = w_data_ptr
     cdef double *q_k = q
@@ -531,10 +531,10 @@ cdef void l1penalty(WeightVector w, double *q,
             z = w_data_ptr_k[idx]
             if w_data_ptr_k[idx] > 0.0:
                 w_data_ptr_k[idx] = max(
-                    0.0, w_data_ptr_k[idx] - ((u + q_k[idx]) / wscale))
+                    0.0, w_data_ptr_k[idx] - ((u + q_k[idx]) / w_scale))
 
             elif w_data_ptr_k[idx] < 0.0:
                 w_data_ptr_k[idx] = min(
-                    0.0, w_data_ptr_k[idx] + ((u - q_k[idx]) / wscale))
+                    0.0, w_data_ptr_k[idx] + ((u - q_k[idx]) / w_scale))
 
-            q_k[idx] += (wscale * (w_data_ptr_k[idx] - z))
+            q_k[idx] += (w_scale * (w_data_ptr_k[idx] - z))
