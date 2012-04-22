@@ -460,7 +460,7 @@ def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
             elif learning_rate == EXPONENTIAL:
-                eta = eta0 * pow(power_t, t / (n_samples * n_iter))
+                eta = eta0 * pow(power_t, -t / (n_samples * n_iter))
 
             sumloss += loss.weight_update(w, x_data_ptr, x_ind_ptr, xnnz, y,
                                           sample_weight, class_weight_data_ptr,
