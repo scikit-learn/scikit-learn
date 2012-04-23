@@ -145,9 +145,9 @@ estimator during the construction and exposes an estimator API::
     ...                    n_jobs=-1)
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
-    >>> clf.best_score
+    >>> clf.best_score_
     0.98699897502292733
-    >>> clf.best_estimator.gamma
+    >>> clf.best_estimator_.gamma
     9.9999999999999995e-07
 
     >>> # Prediction performance on test set is not as good as on train set
