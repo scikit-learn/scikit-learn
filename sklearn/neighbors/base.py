@@ -41,6 +41,23 @@ def _check_weights(weights):
                          "'distance', or a callable function")
 
 
+def _dist_to_weight(dist):
+    """ Calculates weights from distances. Replaces line
+    "weights = 1. / dist", which gives warning div by zeros,
+    if one sample in dist is zero.
+
+    Takes dist matrix, which can be multidimensional.
+    Returns weights matrix of same dimension."""
+
+    # Dist could be multidimensional, flatten it so it's values
+    # can be looped.
+    dist_values = dist.ravel()
+    retval = np.zeros(len(dist_values))
+    for i, d in enumerate(dist_values):
+        retval[i] = (1.0 / d) if (d != 0.0) else np.inf
+    return retval.reshape(dist.shape)
+
+
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
@@ -53,7 +70,7 @@ def _get_weights(dist, weights):
         if weights in (None, 'uniform'):
             return None
         elif weights == 'distance':
-            return [1. / d for d in dist]
+            return [_dist_to_weight(d) for d in dist]
         elif callable(weights):
             return [weights(d) for d in dist]
         else:
@@ -63,7 +80,7 @@ def _get_weights(dist, weights):
         if weights in (None, 'uniform'):
             return None
         elif weights == 'distance':
-            return 1. / dist
+            return _dist_to_weight(dist)
         elif callable(weights):
             return weights(dist)
         else:
