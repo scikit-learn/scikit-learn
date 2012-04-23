@@ -1017,7 +1017,8 @@ class GMMHMM(_BaseHMM):
 
         allobs = np.concatenate(obs, 0)
         for g in self.gmms:
-            g.fit(allobs, n_iter=0, init_params=params)
+            g.set_params(init_params=params, n_iter=0)
+            g.fit(allobs)
 
     def _initialize_sufficient_statistics(self):
         stats = super(GMMHMM, self)._initialize_sufficient_statistics()
