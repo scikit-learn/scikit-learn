@@ -11,6 +11,7 @@ from .murmurhash import murmurhash3_32
 # Make sure that DeprecationWarning get printed
 warnings.simplefilter("always", DeprecationWarning)
 
+
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 

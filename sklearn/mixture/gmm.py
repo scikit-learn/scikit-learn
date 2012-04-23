@@ -196,8 +196,9 @@ class GMM(BaseEstimator):
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, init_params='wmc', min_covar=0.001, n_components=2,
-      n_init=1, n_iter=100, params='wmc', random_state=None, thresh=0.01)
+    GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+            n_components=2, n_init=1, n_iter=100, params='wmc',
+            random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -213,8 +214,9 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, init_params='wmc', min_covar=0.001, n_components=2,
-      n_init=1, n_iter=100, params='wmc', random_state=None, thresh=0.01)
+    GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+            n_components=2, n_init=1, n_iter=100, params='wmc',
+            random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
@@ -435,15 +437,15 @@ class GMM(BaseEstimator):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when creating the 
-        GMM object. Likewise, if you would like just to do an 
+        argument init_params to the empty string '' when creating the
+        GMM object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.       
+            corresponds to a single data point.
         """
         ## initialization step
         X = np.asarray(X)
@@ -454,13 +456,13 @@ class GMM(BaseEstimator):
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
         if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is deprecated"
-                    "Set it on initialization instead.",
+            warnings.warn("Setting parameters in the 'fit' method is"
+                    "deprecated. Set it on initialization instead.",
                     DeprecationWarning)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:
-                self.n_iter =  kwargs['n_iter']
+                self.n_iter = kwargs['n_iter']
             if 'n_init' in kwargs:
                 if kwargs['n_init'] < 1:
                     raise ValueError('GMM estimation requires at least one run')
@@ -470,7 +472,6 @@ class GMM(BaseEstimator):
                 self.params = kwargs['params']
             if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
-            
 
         max_log_prob = - np.infty
 

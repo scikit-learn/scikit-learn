@@ -228,7 +228,7 @@ class GMMTester():
         X = rng.randn(100, self.n_features)
         X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-3, n_iter=5, 
+                       random_state=rng, min_covar=1e-3, n_iter=5,
                        init_params=params)
         g.fit(X)
         trainll = g.score(X)
@@ -241,7 +241,7 @@ class GMMTester():
         X = rng.randn(100, 1)
         #X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-7, n_iter=5, 
+                       random_state=rng, min_covar=1e-7, n_iter=5,
                        init_params=params)
         g.fit(X)
         trainll = g.score(X)

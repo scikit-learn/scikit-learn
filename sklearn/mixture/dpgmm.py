@@ -17,7 +17,6 @@ from scipy.spatial.distance import cdist
 
 from ..utils import check_random_state
 from ..utils.extmath import norm
-from ..utils import deprecated
 from .. import cluster
 from .gmm import GMM
 
@@ -203,7 +202,7 @@ class DPGMM(GMM):
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state,
                                     thresh=thresh, min_covar=min_covar,
-                                    n_iter=n_iter, params=params, 
+                                    n_iter=n_iter, params=params,
                                     init_params=init_params)
 
     def _get_precisions(self):
@@ -480,7 +479,7 @@ class DPGMM(GMM):
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
         argument init_params to the empty string '' when when creating
-        the object. Likewise, if you would like just to do an 
+        the object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 
         Parameters
@@ -491,15 +490,15 @@ class DPGMM(GMM):
         """
         self.random_state = check_random_state(self.random_state)
         if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is deprecated"
-                     "Set it on initialization instead.",
+            warnings.warn("Setting parameters in the 'fit' method is"
+                    "deprecated. Set it on initialization instead.",
                      DeprecationWarning)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:
-                self.n_iter =  kwargs['n_iter']
+                self.n_iter = kwargs['n_iter']
             if 'params' in kwargs:
-                self.params = kwargs['params']            
+                self.params = kwargs['params']
             if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
 
