@@ -175,10 +175,10 @@ def test_shuffle_split_warnings():
         cval.train_test_split(range(3), train_fraction=0.1)
 
     assert_equal(len(warn_queue), 4)
-    assert_equal(warn_queue[0].message.message, expected_message[0])
-    assert_equal(warn_queue[1].message.message, expected_message[1])
-    assert_equal(warn_queue[2].message.message, expected_message[0])
-    assert_equal(warn_queue[3].message.message, expected_message[1])
+    assert_equal(str(warn_queue[0].message), expected_message[0])
+    assert_equal(str(warn_queue[1].message), expected_message[1])
+    assert_equal(str(warn_queue[2].message), expected_message[0])
+    assert_equal(str(warn_queue[3].message), expected_message[1])
 
 
 def test_train_test_split():
@@ -323,10 +323,10 @@ def test_bootstrap_errors():
 
 
 def test_shufflesplit_errors():
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=2.0)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=1.0)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=0.1,
-            train_fraction=0.95)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=2.0)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=1.0)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=0.1,
+            train_size=0.95)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=11)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8,

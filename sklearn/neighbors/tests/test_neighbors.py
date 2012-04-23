@@ -57,7 +57,7 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
             print algorithm, estimator, len(warn_queue)
 
             assert_equal(len(warn_queue), 1)
-            assert_equal(warn_queue[0].message.message, expected_message)
+            assert_equal(str(warn_queue[0].message), expected_message)
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
