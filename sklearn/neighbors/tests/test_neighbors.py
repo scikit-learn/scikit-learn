@@ -304,7 +304,7 @@ def test_neighbors_iris():
 
     for algorithm in ALGORITHMS:
         clf = neighbors.KNeighborsClassifier(n_neighbors=1,
-                                             algorithm=algorithm)
+                algorithm=algorithm, warn_on_equidistant=False)
         clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
@@ -312,8 +312,8 @@ def test_neighbors_iris():
         clf.fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
-        rgs = neighbors.KNeighborsRegressor(n_neighbors=5,
-                                            algorithm=algorithm)
+        rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm,
+                warn_on_equidistant=False)
         rgs.fit(iris.data, iris.target)
         assert np.mean(
             rgs.predict(iris.data).round() == iris.target) > 0.95
