@@ -334,6 +334,32 @@ def load_diabetes():
     return Bunch(data=data, target=target)
 
 
+def load_cities():
+    """Load and return the travelling distances between major
+    cities in france.
+
+    ==============    ==================
+    Samples total     17 cities
+    Dimensionality
+    Features          real, 0 < x < 1300
+    Targets           3D positions
+    ==============
+
+    Returns
+    -------
+    data: Bunch
+        Dictionary-like object, the interesting attributes are: 'data', the
+        distance matrix to learn and 'header', labels for the 14 cities.
+    """
+    base_dir = join(dirname(__file__), 'data/')
+    # Read data
+    data = np.loadtxt(base_dir + 'france_distances.csv',
+                      skiprows=1) 
+    with open(base_dir + 'france_distances.csv') as f:
+        header = f.readline().split(',')
+    return Bunch(data=data, header=header)
+
+
 def load_linnerud():
     """Load and return the linnerud dataset (multivariate regression).
 

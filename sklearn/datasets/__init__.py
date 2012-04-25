@@ -10,6 +10,7 @@ from .base import load_files
 from .base import load_iris
 from .base import load_linnerud
 from .base import load_boston
+from .base import load_cities
 from .base import get_data_home
 from .base import clear_data_home
 from .base import load_sample_images

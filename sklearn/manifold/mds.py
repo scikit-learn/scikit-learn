@@ -184,16 +184,25 @@ class MDS(BaseEstimator):
 
     Parameters
     ----------
-
     Notes
     -----
     """
-    def __init__(self, p=2, init=None, max_iter=300, eps=1e-3):
+    # TODO
+    def __init__(self, p=2, metric=True, init=None, max_iter=300, eps=1e-3):
         self.p = p
         self.init = init
         self.max_iter = max_iter
         self.eps = eps
 
-    def fit():
+    def fit(self, X, y=None):
         """
         """
+        self.X = smacof(X, metric=self.metric, p=self.p, init=self.init,
+                        max_iter=self.max_iter, verbose=self.verbose,
+                        eps=self.eps)
+        return self
+
+    def predict(self, X):
+        """
+        """
+        # TODO
