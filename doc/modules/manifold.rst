@@ -344,6 +344,42 @@ The overall complexity of standard LTSA is
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
 
+Multi-dimensional Scaling (MDS)
+===============================
+
+Multidimensional scaling is a technique used for analysis similarity or
+dissimilarity data. MDS attempts to model similarity or dissimilarity data as
+distances in a geometric spaces. The data can be ratings of similarity between
+objects, interaction frequencies of molecules, or trade indices between
+countries.
+
+There exists two types of MDS algorithm: metric and non metric. In Metric MDS,
+the distances between two points are set to be as closed as possible as the
+similarity or dissimilarity data. In non metric, the algorithms will try to
+preserve the order of the distances, and hence seek for a monotonic
+relationship between the distances in the embedded space and the
+similarities/dissimilarities.
+
+.. figure:: ../auto_examples/manifold/images/plot_mds.png
+   :target: ../auto_examples/manifold/plot_mds.html
+   :align: center
+   :scale: 50
+  
+
+.. topic:: References:
+
+  * `"Modern Multidimensional Scaling - Theory and Applications"
+    <http://www.springer.com/statistics/social+sciences+%26+law/book/978-0-387-25150-9>`_
+    Borg, I.; Groenen P. Springer Series in Statistics (1997)
+
+  * `"Nonmetric multidimensional scaling: a numerical method"
+    <http://www.springerlink.com/content/tj18655313945114/>`_
+    Kruskal, J. Psychometrika, 29 (1964)
+
+  * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
+    <http://www.springerlink.com/content/010q1x323915712x/>`_
+    Kruskal, J. Psychometrika, 29, (1964)
+
 Tips on practical use
 =====================
 
