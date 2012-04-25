@@ -1,6 +1,6 @@
 """
 ==============================
-Wikipedia princial eigenvector
+Wikipedia principal eigenvector
 ==============================
 
 A classical way to assert the relative importance of vertices in a
