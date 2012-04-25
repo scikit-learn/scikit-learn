@@ -245,13 +245,18 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
-        for i, pl in enumerate(pred_labels):
-            # Check that all have at least 1 neighbor
-            if len(pl) < 1:
-                if self.outlier_label:
-                    pred_labels[i] = np.array([self.outlier_label])
-                    neigh_dist[i] = np.array([1e-6])
-                else:
+        if self.outlier_label:
+            for i, pl in enumerate(pred_labels):
+                outlier_label = np.array((self.outlier_label, ))
+                small_value = np.array((1e-6, ))
+                # Check that all have at least 1 neighbor
+                if len(pl) < 1:
+                    pred_labels[i] = outlier_label
+                    neigh_dist[i] = small_value
+        else:
+            for pl in pred_labels:
+                # Check that all have at least 1 neighbor
+                if len(pl) < 1:
                     raise ValueError('no neighbors found for a test sample, '
                                      'you can try using larger radius, '
                                      'give a label for outliers, '
