@@ -4,8 +4,13 @@ Non-metric Multdimensional Scaling
 
 import numpy as np
 
+import warnings
+
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
+from ..utils import check_random_state
+from ..externals.joblib import Parallel
+from ..externals.joblib import delayed
 
 
 # XXX FIXME: should we use proximities or similarities ??
@@ -218,11 +223,19 @@ def smacof(similarities, metric=True, p=2, init=None, n_init=8, n_jobs=1,
     X: ndarray (n, p)
         coordinates of the n points in a p-space
     """
-    best_pos, best_stress = None, None
+
+    random_state = check_random_state(random_state)
 
     if hasattr(init, '__array__'):
-        # TODO
         init = np.asarray(init).copy()
+        if not n_init == 1:
+            warnings.warn(
+                'Explicit initial positions passed: '
+                'performing only one init of the MDS instead of %d'
+                % n_init)
+            n_init = 1
+
+    best_pos, best_stress = None, None
 
     if n_jobs == 1:
         for it in range(n_init):
@@ -233,8 +246,18 @@ def smacof(similarities, metric=True, p=2, init=None, n_init=8, n_jobs=1,
                 best_stress = stress
                 best_pos = pos.copy()
     else:
-        # TODD
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
+        results = Parallel(n_jobs=n_jobs, verbose=0)(
+            delayed(_smacof_single)(
+                        similarities, metric=metric, p=p,
+                        init=init, max_iter=max_iter,
+                        verbose=verbose, eps=eps,
+                        rendom_state=seed)
+                for seed in seeds)
+        positions, stress = zip(results)
+        best = np.argmin(stress)
+        best_stress = stress[best]
+        best_pos = positions[best]
     return best_pos, best_stress
 
 
