@@ -136,6 +136,8 @@ def test_minibatch_update_consistency():
 
 
 def _check_fitted_model(km):
+    # check that the number of clusters centers and distinct labels match
+    # the expectation
     centers = km.cluster_centers_
     assert_equal(centers.shape, (n_clusters, n_features))
 
@@ -220,6 +222,11 @@ def test_mb_k_means_plus_plus_init_sparse_matrix():
     _check_fitted_model(mb_k_means)
 
 
+def test_minibatch_init_with_large_k():
+    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, k=20)
+    assert_raises(ValueError, mb_k_means.fit, X)
+
+
 def test_minibatch_k_means_random_init_dense_array():
     # increase n_init to make random init stable enough
     mb_k_means = MiniBatchKMeans(init="random", k=n_clusters,
@@ -269,8 +276,8 @@ def test_mini_batch_k_means_random_init_partial_fit():
 
 def test_minibatch_default_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), k=n_clusters,
-                                 random_state=42).fit(X)
-    assert_equal(mb_k_means.init_size, 3 * mb_k_means.batch_size)
+                                 batch_size=10, random_state=42).fit(X)
+    assert_equal(mb_k_means.init_size_, 3 * mb_k_means.batch_size)
     _check_fitted_model(mb_k_means)
 
 
@@ -278,11 +285,17 @@ def test_minibatch_set_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), k=n_clusters,
                                  init_size=666, random_state=42).fit(X)
     assert_equal(mb_k_means.init_size, 666)
+    assert_equal(mb_k_means.init_size_, n_samples)
     _check_fitted_model(mb_k_means)
 
 
 def test_k_means_invalid_init():
     k_means = KMeans(init="invalid", n_init=1, k=n_clusters)
+    assert_raises(ValueError, k_means.fit, X)
+
+
+def test_mini_match_k_means_invalid_init():
+    k_means = MiniBatchKMeans(init="invalid", n_init=1, k=n_clusters)
     assert_raises(ValueError, k_means.fit, X)
 
 
@@ -319,7 +332,9 @@ def test_k_means_non_collapsed():
 
 
 def test_predict():
-    k_means = KMeans(k=n_clusters, random_state=42).fit(X)
+    k_means = KMeans(k=n_clusters, random_state=42)
+
+    k_means.fit(X)
 
     # sanity check: predict centroid labels
     pred = k_means.predict(k_means.cluster_centers_)
@@ -327,7 +342,11 @@ def test_predict():
 
     # sanity check: re-predict labeling for training set samples
     pred = k_means.predict(X)
-    assert_array_equal(k_means.predict(X), k_means.labels_)
+    assert_array_equal(pred, k_means.labels_)
+
+    # re-predict labels for training set using fit_predict
+    pred = k_means.fit_predict(X)
+    assert_array_equal(pred, k_means.labels_)
 
 
 def test_score():

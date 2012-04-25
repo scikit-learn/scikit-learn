@@ -764,6 +764,7 @@ class PLSSVD(BaseEstimator):
     def __init__(self, n_components=2, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
+        self.copy = copy
 
     def fit(self, X, Y):
         # copy since this will contains the centered data

@@ -537,6 +537,7 @@ def cross_validation(
     free(problem.x)
     return target
 
+
 def set_verbosity_wrap(int verbosity):
     """
     Control verbosity of libsvm library

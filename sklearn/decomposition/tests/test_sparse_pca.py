@@ -86,11 +86,12 @@ def test_fit_transform():
 
 def test_transform_nan():
     """
-    Test that SparsePCA won't return NaN when there is 0 feature in all samples.
+    Test that SparsePCA won't return NaN when there is 0 feature in all
+    samples.
     """
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    Y[:,0] = 0
+    Y[:, 0] = 0
     estimator = SparsePCA(n_components=8)
     assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
 

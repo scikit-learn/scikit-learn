@@ -16,6 +16,7 @@ import numpy as np
 import  scipy as sp
 from . import MinCovDet
 from ..base import ClassifierMixin
+from ..utils import deprecated
 
 
 class OutlierDetectionMixin(ClassifierMixin):
@@ -102,7 +103,7 @@ class OutlierDetectionMixin(ClassifierMixin):
         return is_inlier
 
 
-class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
+class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Attributes
@@ -118,7 +119,7 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
         Estimated robust covariance matrix
 
     `precision_`: array-like, shape (n_features, n_features)
-        Estimated pseudo inverse matrix. 
+        Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
     `support_`: array-like, shape (n_samples,)
@@ -179,3 +180,9 @@ class EllipticEnvelop(OutlierDetectionMixin, MinCovDet):
             values, 100. * (1. - self.contamination))
 
         return self
+
+
+# Deprecated classes
+@deprecated("Use EllipticEnvelope instead")
+class EllipticEnvelop(EllipticEnvelope):
+    pass

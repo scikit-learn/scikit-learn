@@ -1,4 +1,7 @@
 import warnings
+
+from nose.tools import assert_equal
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
@@ -19,6 +22,7 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
+P = (1, 2, 3, 4, np.inf)
 
 
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
@@ -36,11 +40,6 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     y = np.zeros(X.shape[0])
 
-    # change warnings.warn to catch the message
-    warn_queue = []
-    warnings_warn = warnings.warn
-    warnings.warn = lambda msg: warn_queue.append(msg)
-
     expected_message = ("kneighbors: neighbor k+1 and neighbor k "
                         "have the same distance: results will be "
                         "dependent on data order.")
@@ -51,16 +50,14 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     for algorithm in algorithms:
         for estimator in estimators:
-            neigh = estimator(n_neighbors=k, algorithm=algorithm)
-            neigh.fit(X, y)
-            neigh.predict(q)
+            with warnings.catch_warnings(record=True) as warn_queue:
+                neigh = estimator(n_neighbors=k, algorithm=algorithm)
+                neigh.fit(X, y)
+                neigh.predict(q)
+            print algorithm, estimator, len(warn_queue)
 
-            assert len(warn_queue) == 1
-            assert warn_queue[0] == expected_message
-            warn_queue = []
-
-    # restore default behavior
-    warnings.warn = warnings_warn
+            assert_equal(len(warn_queue), 1)
+            assert_equal(str(warn_queue[0].message), expected_message)
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
@@ -73,21 +70,24 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
     test = rng.rand(n_query_pts, n_features)
 
-    results_nodist = []
-    results = []
+    for p in P:
+        results_nodist = []
+        results = []
 
-    for algorithm in ALGORITHMS:
-        neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
-                                           algorithm=algorithm)
-        neigh.fit(X)
+        for algorithm in ALGORITHMS:
+            neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                               algorithm=algorithm,
+                                               p=p)
+            neigh.fit(X)
 
-        results_nodist.append(neigh.kneighbors(test, return_distance=False))
-        results.append(neigh.kneighbors(test, return_distance=True))
+            results_nodist.append(neigh.kneighbors(test,
+                return_distance=False))
+            results.append(neigh.kneighbors(test, return_distance=True))
 
-    for i in range(len(results) - 1):
-        assert_array_almost_equal(results_nodist[i], results[i][1])
-        assert_array_almost_equal(results[i][0], results[i + 1][0])
-        assert_array_almost_equal(results[i][1], results[i + 1][1])
+        for i in range(len(results) - 1):
+            assert_array_almost_equal(results_nodist[i], results[i][1])
+            assert_array_almost_equal(results[i][0], results[i + 1][0])
+            assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
 def test_unsupervised_inputs():
@@ -119,32 +119,35 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
 
     test = rng.rand(n_query_pts, n_features)
 
-    results = []
+    for p in P:
+        results = []
 
-    for algorithm in ALGORITHMS:
-        neigh = neighbors.NearestNeighbors(radius=radius,
-                                           algorithm=algorithm)
-        neigh.fit(X)
+        for algorithm in ALGORITHMS:
+            neigh = neighbors.NearestNeighbors(radius=radius,
+                                               algorithm=algorithm,
+                                               p=p)
+            neigh.fit(X)
 
-        ind1 = neigh.radius_neighbors(test, return_distance=False)
+            ind1 = neigh.radius_neighbors(test, return_distance=False)
 
-        # sort the results: this is not done automatically for
-        # radius searches
-        dist, ind = neigh.radius_neighbors(test, return_distance=True)
-        for (d, i, i1) in zip(dist, ind, ind1):
-            j = d.argsort()
-            d[:] = d[j]
-            i[:] = i[j]
-        results.append((dist, ind))
+            # sort the results: this is not done automatically for
+            # radius searches
+            dist, ind = neigh.radius_neighbors(test, return_distance=True)
+            for (d, i, i1) in zip(dist, ind, ind1):
+                j = d.argsort()
+                d[:] = d[j]
+                i[:] = i[j]
+                i1[:] = i1[j]
+            results.append((dist, ind))
 
-        assert_array_almost_equal(np.concatenate(list(ind)),
-                                  np.concatenate(list(ind1)))
+            assert_array_almost_equal(np.concatenate(list(ind)),
+                                      np.concatenate(list(ind1)))
 
-    for i in range(len(results) - 1):
-        assert_array_almost_equal(np.concatenate(list(results[i][0])),
-                                  np.concatenate(list(results[i + 1][0]))),
-        assert_array_almost_equal(np.concatenate(list(results[i][1])),
-                                  np.concatenate(list(results[i + 1][1])))
+        for i in range(len(results) - 1):
+            assert_array_almost_equal(np.concatenate(list(results[i][0])),
+                                      np.concatenate(list(results[i + 1][0]))),
+            assert_array_almost_equal(np.concatenate(list(results[i][1])),
+                                      np.concatenate(list(results[i + 1][1])))
 
 
 def test_kneighbors_classifier(n_samples=40,
@@ -301,7 +304,7 @@ def test_neighbors_iris():
 
     for algorithm in ALGORITHMS:
         clf = neighbors.KNeighborsClassifier(n_neighbors=1,
-                                             algorithm=algorithm)
+                algorithm=algorithm, warn_on_equidistant=False)
         clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
@@ -309,8 +312,8 @@ def test_neighbors_iris():
         clf.fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
-        rgs = neighbors.KNeighborsRegressor(n_neighbors=5,
-                                            algorithm=algorithm)
+        rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm,
+                warn_on_equidistant=False)
         rgs.fit(iris.data, iris.target)
         assert np.mean(
             rgs.predict(iris.data).round() == iris.target) > 0.95

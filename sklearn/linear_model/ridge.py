@@ -573,15 +573,15 @@ class RidgeCV(LinearModel):
     `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
-    gcv_mode: {None, 'auto', 'svd', eigen'}, optional
-        Flag indicating which strategy to use when performing Generalized
-        Cross-Validation. Options are::
+    gcv_mode : {None, 'auto', 'svd', eigen'}, optional
+        Flag indicating which strategy to use when performing
+        Generalized Cross-Validation. Options are::
 
             'auto' : use svd if n_samples > n_features, otherwise use eigen
-            'svd' : force computation via svd of X
+            'svd' : force computation via singular value decomposition of X
             'eigen' : force computation via eigendecomposition of X^T X
 
-        The 'auto' mode is the default and is intended to pick the cheaper
+        The 'auto' mode is the default and is intended to pick the cheaper \
         option of the two depending upon the shape of the training data.
 
     See also

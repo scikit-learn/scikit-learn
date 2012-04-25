@@ -168,7 +168,7 @@ class OneClassSVM(SparseBaseLibSVM):
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
                                           coef0, tol, 0.0, nu, 0.0, shrinking,
                                           probability, cache_size, scale_C,
-                                          verbose)
+                                          None, verbose)
 
     def fit(self, X, sample_weight=None):
         super(OneClassSVM, self).fit(

@@ -124,6 +124,16 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start("optimal")
 
+    def test_multiple_fit(self):
+        """Test multiple calls of fit w/ different shaped inputs."""
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        clf.fit(X, Y)
+        coef = clf.coef_
+
+        clf.fit(X[:, :-1], Y)
+        assert_true(True)
+
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
@@ -313,8 +323,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         X = [[1, 0], [0, 1]]
         y = [0, 1]
-        clf_weighted = self.factory(alpha=0.1, n_iter=1000, class_weight=
-                {0: 0.5, 1: 0.5})
+        clf_weighted = self.factory(alpha=0.1, n_iter=1000,
+                class_weight={0: 0.5, 1: 0.5})
         clf_weighted.fit(X, y)
 
         # should be similar up to some epsilon due to learning rate schedule

@@ -75,6 +75,11 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         of the number of samples. To match liblinear commandline one should use
         scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
+    verbose : int, default: 0
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in liblinear that, if enabled, may not work
+        properly in a multithreaded context.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 \
@@ -143,6 +148,13 @@ class SVC(BaseLibSVM, ClassifierMixin):
     to scale to dataset with more than a couple of 10000 samples.
 
     The multiclass support is handled according to a one-vs-one scheme.
+
+    For details on the precise mathematical formulation of the provided
+    kernel functions and how `gamma`, `coef0` and `degree` affect each,
+    see the corresponding section in the narrative documentation:
+    :ref:`svm_kernels`.
+
+    .. The narrative documentation is available at http://scikit-learn.org/
 
     Parameters
     ----------

@@ -14,7 +14,7 @@ Changelog
 
    - Merged dense and sparse implementations of :ref:`sgd` module and
      exposed utility extension types for sequential
-     datasets :ref:`seq_dataset` and weight vectors :ref:`weight_vector`
+     datasets `seq_dataset` and weight vectors `weight_vector`
      by `Peter Prettenhofer`_.
 
    - Added `partial_fit` (support for online/minibatch learning) and
@@ -76,12 +76,21 @@ Changelog
 
    - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
      a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
-     by `Yannick Schwartz`_.
+     by `Yannick Schwartz`.
 
+   - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
+      ``shrink_threshold`` parameter, which implements shrunken centroid
+      classification, by `Robert Layton`_.
+
+   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for 
+     nearest neighbors searches. The metric can be specified by argument ``p``.
 
 API changes summary
 -------------------
 
+   - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
+     instead.
+  
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -89,7 +98,11 @@ API changes summary
 
    - Sparse classes in the :ref:`sgd` module are now deprecated.
 
-   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
+   - In :class:`mixture.GMM`, :class:`mixture.DPGMM` and :class:`mixture.VBGMM`,
+     parameters must be passed to an object when initialising it and not through
+     ``fit``. Now ``fit`` will only accept the data as an input parameter.
+
+    - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
      `sample` and `score` or `predict` should be used instead.
 
    - attribute `_scores` and `_pvalues` in univariate feature selection
@@ -149,6 +162,23 @@ API changes summary
    - Beam pruning option in :class:`_BaseHMM` module is removed since it is
      difficult to be Cythonized. If you are interested, you can look in the
      history codes by git.
+
+   - The SVMlight format loader now supports files with both zero-based and
+     one-based column indices, since both occur "in the wild".
+
+   - Arguments in class :class:`ShuffleSplit` are now consistent with
+     :class:`StratifiedShuffleSplit`. Arguments ``test_fraction`` and
+     ``train_fraction`` are deprecated and renamed to ``test_size`` and
+     ``train_size`` and can accept both ``float`` and ``int``.
+
+   - Arguments in class :class:`Bootstrap` are now consistent with
+     :class:`StratifiedShuffleSplit`. Arguments ``n_test`` and
+     ``n_train`` are deprecated and renamed to ``test_size`` and
+     ``train_size`` and can accept both ``float`` and ``int``.
+
+   - Argument ``p`` added to classes in :ref:`neighbors` to specify an 
+     arbitrary Minkowski metric for nearest neighbors searches.
+
 
 .. _changes_0_10:
 
@@ -804,7 +834,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`example_applications_plot_face_recognition.py`,
+    :ref:`example_applications_face_recognition.py`,
     :ref:`example_applications_plot_species_distribution_modeling.py`,
     :ref:`example_applications_svm_gui.py`,
     :ref:`example_applications_wikipedia_principal_eigenvector.py` and
@@ -1086,3 +1116,5 @@ of commits):
 .. _Robert Layton: http://www.twitter.com/robertlayton
 
 .. _Scott White: http://twitter.com/scottblanc
+
+.. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler

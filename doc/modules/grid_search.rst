@@ -133,3 +133,5 @@ This is currently implemented in the following classes:
     ensemble.RandomForestRegressor
     ensemble.ExtraTreesClassifier
     ensemble.ExtraTreesRegressor
+    ensemble.GradientBoostingClassifier
+    ensemble.GradientBoostingRegressor

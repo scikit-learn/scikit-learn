@@ -309,6 +309,7 @@ def test_dense_sparse():
         if ret_dense != None and ret_sparse != None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
+
 def test_class_weights():
     """
     Test class weights.

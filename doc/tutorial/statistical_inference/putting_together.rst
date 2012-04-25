@@ -32,14 +32,12 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-.. literalinclude:: ../../auto_examples/applications/plot_face_recognition.py
+.. literalinclude:: ../../auto_examples/applications/face_recognition.py
 
-.. |prediction| image:: ../../auto_examples/applications/images/plot_face_recognition_1.png
-   :target: ../../auto_examples/applications/plot_face_recognition.html
+.. |prediction| image:: ../../images/plot_face_recognition_1.png
    :scale: 50
-
-.. |eigenfaces| image:: ../../auto_examples/applications/images/plot_face_recognition_2.png
-   :target: ../../auto_examples/applications/plot_face_recognition.html
+ 
+.. |eigenfaces| image:: ../../images/plot_face_recognition_2.png
    :scale: 50
 
 .. list-table::

@@ -70,7 +70,7 @@ Functions
    :template: class.rst
 
    covariance.EmpiricalCovariance
-   covariance.EllipticEnvelop
+   covariance.EllipticEnvelope
    covariance.GraphLasso
    covariance.GraphLassoCV
    covariance.LedoitWolf
@@ -178,6 +178,7 @@ Samples generator
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
+   datasets.make_hastie_10_2
    datasets.make_low_rank_matrix
    datasets.make_moons
    datasets.make_multilabel_classification
@@ -782,6 +783,7 @@ Pairwise metrics
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
    neighbors.BallTree
+   neighbors.NearestCentroid
 
 .. autosummary::
    :toctree: generated/

@@ -137,7 +137,7 @@ two classes, only one model is trained::
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=None, class_weight=None, dual=True, fit_intercept=True,
     intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-    scale_C=True, tol=0.0001)
+    scale_C=True, tol=0.0001, verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -396,10 +396,10 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma <x, x'> + r)^d`. `d` is specified by
     keyword ``degree``, `r` by ``coef0``.
 
-  * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
+  * rbf (:math:`\exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
     specified by keyword ``gamma``.
 
-  * sigmoid (:math:`tanh(<x_i,x_j> + r)`), where `r` is specified by
+  * sigmoid (:math:`\tanh(<x_i,x_j> + r)`), where `r` is specified by
     ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::

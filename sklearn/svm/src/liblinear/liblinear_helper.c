@@ -388,3 +388,21 @@ int copy_label(char *data, struct model *model_, int nr_class)
     memcpy(data, model_->label, nr_class * sizeof(int));
     return 0;
 }
+
+
+/* rely on built-in facility to control verbose output */
+static void print_null(const char *s) {}
+
+static void print_string_stdout(const char *s)
+{
+    fputs(s ,stdout);
+    fflush(stdout);
+}
+
+/* provide convenience wrapper */
+void set_verbosity(int verbosity_flag){
+    if (verbosity_flag)
+        set_print_string_function(&print_string_stdout);
+    else
+        set_print_string_function(&print_null);
+}

@@ -25,7 +25,7 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-def _load_svmlight_file(f, n_features, dtype, bint multilabel):
+def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef Py_ssize_t hash_idx
@@ -63,12 +63,11 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
 
         for i in xrange(1, len(line_parts)):
             idx, value = line_parts[i].split(COLON, 1)
-            # Real programmers count from zero.
             idx = int(idx)
-            if idx <= 0:
+            if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
                         "invalid index %d in SVMlight/LibSVM data file" % idx)
-            indices.append(idx - 1)
+            indices.append(idx)
             data.append(dtype(value))
 
     indptr.append(len(data))
@@ -76,14 +75,8 @@ def _load_svmlight_file(f, n_features, dtype, bint multilabel):
     indptr = indptr.get()
     data = data.get()
     indices = indices.get()
+
     if not multilabel:
         labels = labels.get()
 
-    if n_features is not None:
-        shape = (indptr.shape[0] - 1, n_features)
-    else:
-        shape = None    # inferred
-
-    X = sp.csr_matrix((data, indices, indptr), shape)
-
-    return X, labels
+    return data, indices, indptr, labels

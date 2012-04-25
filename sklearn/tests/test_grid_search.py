@@ -52,6 +52,14 @@ def test_grid_search():
     grid_search.score(X, y)
 
 
+def test_no_refit():
+    """Test that grid search can be used for model selection only"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
+    grid_search.fit(X, y)
+    assert_true(hasattr(grid_search, "best_params_"))
+
+
 def test_grid_search_error():
     """Test that grid search will capture errors on data with different
     length"""
@@ -60,6 +68,34 @@ def test_grid_search_error():
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     assert_raises(ValueError, cv.fit, X_[:180], y_)
+
+
+def test_grid_search_one_grid_point():
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+    param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
+
+    clf = SVC()
+    cv = GridSearchCV(clf, param_dict)
+    cv.fit(X_, y_)
+
+    clf = SVC(C=1.0, kernel="rbf", gamma=0.1)
+    clf.fit(X_, y_)
+
+    assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
+
+
+def test_grid_search_bad_param_grid():
+    param_dict = {"C": 1.0}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": []}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": np.ones(6).reshape(3, 2)}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
 def test_grid_search_sparse():

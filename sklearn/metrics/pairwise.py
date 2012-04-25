@@ -452,8 +452,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
         a metric listed in pairwise.pairwise_distance_functions.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
+        If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
@@ -484,8 +483,6 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     """
     if metric == "precomputed":
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X is not square!")
         return X
     elif metric in pairwise_distance_functions:
         func = pairwise_distance_functions[metric]
@@ -598,8 +595,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
         in pairwise.pairwise_kernel_functions.
-        If metric is "precomputed", X is assumed to be a kernel matrix and
-        must be square.
+        If metric is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating

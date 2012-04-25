@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
 from nose.tools import assert_raises, assert_true
 
-from sklearn import svm, linear_model, datasets, metrics
+from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
 
@@ -645,6 +645,30 @@ def test_inheritance():
     clf.fit(iris.data, iris.target)
     clf.predict(iris.data[-1])
     clf.decision_function(iris.data[-1])
+
+
+def test_linearsvc_verbose():
+    # stdout: redirect
+    import os
+    stdout = os.dup(1)  # save original stdout
+    os.dup2(os.pipe()[1], 1)  # replace it
+
+    # actual call
+    clf = svm.LinearSVC(verbose=1)
+    clf.fit(X, Y)
+
+    # stdout: restore
+    os.dup2(stdout, 1)  # restore original stdout
+
+
+def test_svc_clone_with_callable_kernel():
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True)
+    b = base.clone(a)
+
+    b.fit(X, Y)
+    b.predict(X)
+    b.predict_proba(X)
+    b.decision_function(X)
 
 
 if __name__ == '__main__':
