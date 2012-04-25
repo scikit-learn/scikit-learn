@@ -26,7 +26,7 @@ def test_smacof():
                   [.451, .252],
                   [.016, -.238],
                   [-.200, .524]])
-    X = mds.smacof(sim, init=Z, p=2, max_iter=1)
+    X, _ = mds.smacof(sim, init=Z, p=2, max_iter=1)
     X_true = np.array([[-1.415, -2.471],
                        [1.633, 1.107],
                        [.249, -.067],
@@ -60,3 +60,12 @@ def test_smacof_error():
                   [.016, -.238],
                   [-.200, .524]])
     assert_raises(ValueError, mds.smacof, sim, init=Z)
+
+
+def test_MDS():
+    sim = np.array([[0, 5, 3, 4],
+                    [5, 0, 2, 2],
+                    [3, 2, 0, 1],
+                    [4, 2, 1, 0]])
+    mds_clf = mds.MDS(metric=False, n_jobs=3)
+    mds_clf.fit(sim)
