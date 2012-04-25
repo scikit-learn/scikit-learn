@@ -32,11 +32,9 @@ def _weight_func(dist):
 
     # Dist could be multidimensional, flatten it so all values
     # can be looped
-    dist_values = dist.ravel()
-    retval = np.zeros(len(dist_values))
-    for i, d in enumerate(dist_values):
-        retval[i] = (d ** -2) if (d != 0.0) else np.inf
-    return retval.reshape(dist.shape)
+    with np.errstate(divide='ignore'):
+        retval = 1./dist
+    return retval**2
 
 
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
