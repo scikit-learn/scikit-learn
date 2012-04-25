@@ -3,6 +3,9 @@
 Multi-dimensional scaling - Reconstructing the map of France
 ===============================================================================
 
+The dataset consists of kilometers one has to travel to go from one city in
+france to another. The goal is to reconstruct the map of France using these
+distances.
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
@@ -21,7 +24,7 @@ cities_dataset = load_cities()
 similarities = cities_dataset.data
 
 mds = manifold.MDS(p=2, max_iter=3000, eps=1e-9)
-pos = mds.fit(similarities).X
+pos = mds.fit(similarities).positions_
 
 fig = plt.figure(1)
 ax = plt.axes([0., 0., 1., 1.])

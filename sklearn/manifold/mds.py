@@ -220,7 +220,7 @@ def smacof(similarities, metric=True, p=2, init=None, n_init=8, n_jobs=1,
 
     Returns
     -------
-    X: ndarray (n, p)
+    X, stress: ndarray (n, p)
         coordinates of the n points in a p-space
     """
 
@@ -267,10 +267,53 @@ class MDS(BaseEstimator):
 
     Parameters
     ----------
+    similarities: symmetric ndarray, shape [n * n]
+        similarities between the points
+
+    metric: boolean, optional, default: True
+        compute metric or nonmetric SMACOF algorithm
+
+    p: int, optional, default: 2
+        number of dimension in which to immerse the similarities
+        overridden if initial array is provided.
+
+    init: {None or ndarray}
+        if None, randomly chooses the initial configuration
+        if ndarray, initialize the SMACOF algorithm with this array
+
+    n_init: int, optional, default: 8
+        Number of time the smacof algorithm will be run with different
+        initialisation. The final results will be the best output of the
+        n_init consecutive runs in terms of stress.
+
+    max_iter: int, optional, default: 300
+        Maximum number of iterations of the SMACOF algorithm for a single run
+
+    verbose: int, optional, default: 0
+        level of verbosity
+
+    eps: float, optional, default: 1e-6
+        relative tolerance w.r.t stress to declare converge
+
+    Attributes
+    ----------
+    positions_: array-like, shape [p, n_samples]
+        Stores the position of the dataset in the embedding space
+
+    stress_: float
+
     Notes
     -----
+    “Modern Multidimensional Scaling - Theory and Applications” Borg, I.; Groenen
+    P. Springer Series in Statistics (1997)
+
+    “Nonmetric multidimensional scaling: a numerical method” Kruskal, J.
+    Psychometrika, 29 (1964)
+
+    “Multidimensional scaling by optimizing goodness of fit to a nonmetric
+    hypothesis” Kruskal, J. Psychometrika, 29, (1964)
+
     """
-    # TODO
     def __init__(self, p=2, metric=True, init=None, n_init=8,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1):
         self.p = p
@@ -284,16 +327,17 @@ class MDS(BaseEstimator):
 
     def fit(self, X, y=None):
         """
+        Computes the position of the points in the embedding space
+
+        Parameters
+        ----------
+        X: array, shape=[n_samples, n_samples], symetric
+            Proximity matrice
         """
-        self.X, self.stress = smacof(X, metric=self.metric, p=self.p,
+        self.positions_, self.stress_ = smacof(X, metric=self.metric, p=self.p,
                                      init=self.init,
                                      n_init=self.n_init,
                                      max_iter=self.max_iter,
                                      verbose=self.verbose,
                                      eps=self.eps)
         return self
-
-    def predict(self, X):
-        """
-        """
-        # TODO
