@@ -705,6 +705,11 @@ class KMeans(BaseEstimator):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
+        if not X.dtype.kind is 'f':
+            warnings.warn("Got data type %s, converted to float "
+                    "to avoid overflows" % X.dtype)
+            X = X.astype(np.float)
+
         return X
 
     def _check_fitted(self):

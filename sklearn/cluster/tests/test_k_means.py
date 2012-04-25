@@ -1,6 +1,7 @@
 """Testing for K-means"""
 
 import numpy as np
+import warnings
 from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
@@ -37,6 +38,15 @@ def test_square_norms():
     x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
     assert_array_almost_equal(x_squared_norms,
                               x_squared_norms_from_csr, 5)
+
+
+def test_kmeans_dtype():
+    X = np.random.normal(size=(40, 2))
+    X = (X * 10).astype(np.uint8)
+    km = KMeans(n_init=1).fit(X)
+    with warnings.catch_warnings(record=True) as w:
+        assert_array_equal(km.labels_, km.predict(X))
+        assert_equal(len(w), 1)
 
 
 def test_labels_assignement_and_inertia():
