@@ -2,13 +2,13 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 
 from nose.tools import assert_raises
-from sklearn.manifold import nmds
+from sklearn.manifold import mds
 
 
 def test_pav():
     distances = np.array([10., 8, 11, 5, 13, 11, 9, 14, 6, 16])
     similarities = np.arange(10)
-    distances_fit = nmds.PAV(distances, similarities)
+    distances_fit = mds.PAV(distances, similarities)
 
     assert_array_almost_equal(distances_fit,
                        np.array([8.5, 8.5, 8.5, 8.5, 10.6, 10.6, 10.6, 10.6,
@@ -26,7 +26,7 @@ def test_smacof():
                   [.451, .252],
                   [.016, -.238],
                   [-.200, .524]])
-    X = nmds.smacof(sim, init=Z, p=2, max_iter=1)
+    X = mds.smacof(sim, init=Z, p=2, max_iter=1)
     X_true = np.array([[-1.415, -2.471],
                        [1.633, 1.107],
                        [.249, -.067],
@@ -41,14 +41,14 @@ def test_smacof_error():
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
 
-    assert_raises(ValueError, nmds.smacof, sim)
+    assert_raises(ValueError, mds.smacof, sim)
 
     # Not squared similarity matrix:
     sim = np.array([[0, 5, 9, 4],
                     [5, 0, 2, 2],
                     [4, 2, 1, 0]])
 
-    assert_raises(ValueError, nmds.smacof, sim)
+    assert_raises(ValueError, mds.smacof, sim)
 
     # init not None and not correct format:
     sim = np.array([[0, 5, 3, 4],
@@ -59,4 +59,4 @@ def test_smacof_error():
     Z = np.array([[-.266, -.539],
                   [.016, -.238],
                   [-.200, .524]])
-    assert_raises(ValueError, nmds.smacof, sim, init=Z)
+    assert_raises(ValueError, mds.smacof, sim, init=Z)
