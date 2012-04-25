@@ -833,22 +833,24 @@ def r2_score(y_true, y_pred):
 
 
 def zero_one_score(y_true, y_pred):
-    """Zero-One classification score
+    """Zero-one classification score (accuracy)
 
     Positive integer (number of good classifications).
     The best performance is 1.
 
-    Return the percentage of good predictions.
+    Return the fraction of correct predictions in y_pred.
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like, shape = n_samples
+        Gold standard labels.
 
-    y_pred : array-like
+    y_pred : array-like, shape = n_samples
+        Predicted labels, as returned by a classifier.
 
     Returns
     -------
-    score : integer
+    score : float
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -874,7 +876,7 @@ def zero_one(y_true, y_pred):
 
     Returns
     -------
-    loss : integer
+    loss : float
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
