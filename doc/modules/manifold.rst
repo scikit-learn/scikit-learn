@@ -363,7 +363,7 @@ similarities/dissimilarities.
 .. figure:: ../auto_examples/manifold/images/plot_mds.png
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
-   :scale: 50
+   :scale: 40
   
 
 .. topic:: References:
