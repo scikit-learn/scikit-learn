@@ -23,7 +23,7 @@ from sklearn.datasets import load_cities
 cities_dataset = load_cities()
 similarities = cities_dataset.data
 
-mds = manifold.MDS(p=2, max_iter=3000, eps=1e-9)
+mds = manifold.MDS(out_dim=2, max_iter=3000, eps=1e-9)
 pos = mds.fit(similarities).positions_
 
 fig = plt.figure(1)
