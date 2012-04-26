@@ -35,7 +35,7 @@ def pool_adjacent_violators(distances, similarities):
     """
     # First approach for ties: ignore them. The multidimensional scaling won't
     # enforce that points with equal similarity be at equal distance.
-    indxs = np.lexsort((similarities, distances))
+    indxs = np.lexsort((distances, similarities))
 
     new_blocks = range(len(indxs))
 
@@ -71,7 +71,7 @@ def pool_adjacent_violators(distances, similarities):
 
 
 def _smacof_single(similarities, metric=True, out_dim=2, init=None,
-           max_iter=300, verbose=0, eps=1e-3):
+           max_iter=300, verbose=0, eps=1e-3, random_state=None):
     """
     Computes multidimensional scaling using SMACOF algorithm
 
@@ -100,6 +100,11 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
     eps: float, optional, default: 1e-6
         relative tolerance w.r.t stress to declare converge
 
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
     Returns
     -------
     X: ndarray (n_samples, out_dim), float
@@ -109,9 +114,9 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
-
     """
     n_samples = similarities.shape[0]
+    random_state = check_random_state(random_state)
 
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" % \
@@ -124,7 +129,8 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
-        X = np.random.random(size=(n_samples, out_dim))
+        X = random_state.rand(n_samples * out_dim)
+        X = X.reshape((n_samples, out_dim))
     else:
         # overrides the parameter p
         out_dim = init.shape[1]
@@ -211,6 +217,11 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
     eps: float, optional, default: 1e-6
         relative tolerance w.r.t stress to declare converge
 
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
     Returns
     -------
     X: ndarray (n_samples,out_dim)
@@ -239,7 +250,8 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
             pos, stress = _smacof_single(similarities, metric=metric,
                                         out_dim=out_dim,
                                         init=init, max_iter=max_iter,
-                                        verbose=verbose, eps=eps)
+                                        verbose=verbose, eps=eps,
+                                        random_state=random_state)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -250,7 +262,7 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
                         similarities, metric=metric, out_dim=out_dim,
                         init=init, max_iter=max_iter,
                         verbose=verbose, eps=eps,
-                        rendom_state=seed)
+                        random_state=seed)
                 for seed in seeds)
         positions, stress = zip(results)
         best = np.argmin(stress)
@@ -298,14 +310,14 @@ class MDS(BaseEstimator):
 
     Notes
     -----
-    “Modern Multidimensional Scaling - Theory and Applications” Borg, I.;
+    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
     Groenen P. Springer Series in Statistics (1997)
 
-    “Nonmetric multidimensional scaling: a numerical method” Kruskal, J.
+    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
     Psychometrika, 29 (1964)
 
-    “Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis” Kruskal, J. Psychometrika, 29, (1964)
+    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
     def __init__(self, out_dim=2, metric=True, n_init=8,
