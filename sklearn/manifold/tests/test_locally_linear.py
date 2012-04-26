@@ -42,6 +42,7 @@ def test_lle_simple_grid():
     rng = np.random.RandomState(0)
     # grid of equidistant points in 2D, out_dim = n_dim
     X = np.array(list(product(range(5), repeat=2)))
+    X = X + 1e-10 * np.random.uniform(size=X.shape)
     out_dim = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
     tol = .1
@@ -72,6 +73,7 @@ def test_lle_manifold():
     # similar test on a slightly more complex manifold
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
+    X = X + 1e-10 * np.random.uniform(size=X.shape)
     out_dim = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
                                           random_state=0)
@@ -96,21 +98,22 @@ def test_lle_manifold():
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
     from sklearn import pipeline, datasets
-    iris = datasets.load_iris()
+    X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
         [('filter', manifold.LocallyLinearEmbedding()),
          ('clf', neighbors.KNeighborsClassifier())])
-    clf.fit(iris.data, iris.target)
-    assert_lower(.7, clf.score(iris.data, iris.target))
+    clf.fit(X, y)
+    assert_lower(.9, clf.score(X, y))
 
 
 # Test the error raised when the weight matrix is singular
 def test_singular_matrix():
+    import warnings
     from nose.tools import assert_raises
     M = np.ones((10, 3))
-
-    assert_raises(ValueError, manifold.locally_linear_embedding,
-                  M, 2, 1, method='standard', eigen_solver='arpack')
+    with warnings.catch_warnings(record=True):
+        assert_raises(ValueError, manifold.locally_linear_embedding,
+                      M, 2, 1, method='standard', eigen_solver='arpack')
 
 
 if __name__ == '__main__':

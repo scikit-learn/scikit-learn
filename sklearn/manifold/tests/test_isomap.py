@@ -111,12 +111,12 @@ def test_transform():
 
 def test_pipeline():
     # check that Isomap works fine as a transformer in a Pipeline
-    iris = datasets.load_iris()
+    X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
         [('isomap', manifold.Isomap()),
-         ('neighbors_clf', neighbors.KNeighborsClassifier())])
-    clf.fit(iris.data, iris.target)
-    assert_lower(.7, clf.score(iris.data, iris.target))
+         ('clf', neighbors.KNeighborsClassifier())])
+    clf.fit(X, y)
+    assert_lower(.9, clf.score(X, y))
 
 
 if __name__ == '__main__':
