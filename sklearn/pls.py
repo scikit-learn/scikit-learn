@@ -610,7 +610,7 @@ class PLSCanonical(_PLS):
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
     PLSCanonical(copy=True, inner_loop_algorithm='nipals', max_iter=500,
-       n_components=2, scale=True, tol=1e-06)
+           n_components=2, scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
