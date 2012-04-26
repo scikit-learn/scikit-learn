@@ -1,7 +1,7 @@
 """
-===============================================================================
-Multi-dimensional scaling - Reconstructing the map of the USA
-===============================================================================
+=========================
+Multi-dimensional scaling
+=========================
 
 """
 
@@ -15,35 +15,50 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
 from sklearn import manifold
-from sklearn.datasets import load_cities
 from sklearn.metrics import euclidean_distances
+from sklearn.decomposition import PCA
 
-cities_dataset = load_cities()
-similarities = cities_dataset.data[:10, :10] * 1e-5
+n_samples = 20
+X_true = np.random.randint(0, 20, 2 * n_samples)
+X_true = X_true.reshape((n_samples, 2))
+# Center the data
+X_true -= X_true.mean()
 
-old_stress, best_pos = None, None
-for n in range(10):
-    mds = manifold.MDS(out_dim=2, n_init=6, max_iter=3000, n_jobs=2,
-                    verbose=1, eps=1e-9)
-    pos = mds.fit(similarities).positions_
-    mds = manifold.MDS(out_dim=2, metric=False, n_init=1, max_iter=3000, n_jobs=2,
-                    verbose=1, eps=1e-19)
-    pos = mds.fit(similarities, init=pos).positions_
-    stress = mds.stress_
+similarities = euclidean_distances(X_true)
 
-    if old_stress is None or old_stress > stress:
-        old_stress = stress
-        best_pos = pos.copy()
+# Add noise to the similarities
+noise = np.random.rand(n_samples, n_samples)
+noise += noise.T
+noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
+similarities += noise
 
+mds = manifold.MDS(out_dim=2, max_iter=3000, n_jobs=2,
+                   eps=1e-9)
+pos = mds.fit(similarities).positions_
 
+nmds = manifold.MDS(out_dim=2, metric=False,
+                    max_iter=3000, n_jobs=2,
+                    eps=1e-9)
+npos = mds.fit(similarities).positions_
+
+# Rotate the data
+clf = PCA(n_components=3)
+X_true = clf.fit_transform(X_true)
+
+pos = clf.fit_transform(pos)
+
+npos = clf.fit_transform(pos)
 
 fig = plt.figure(1)
-distances = euclidean_distances(pos)
-plt.scatter(distances, similarities, cmap=plt.cm.hot_r)
-
-fig = plt.figure(2)
 ax = plt.axes([0., 0., 1., 1.])
-plt.scatter(pos[:, 0], pos[:, 1])
+
+plt.scatter(X_true[:, 0] + 0.2, X_true[:, 1] + 0.2, c='r', s=10)
+plt.scatter(pos[:, 0] + 0.2, pos[:, 1] + 0.2, s=10, c='g')
+plt.scatter(pos[:, 0] - 0.2, pos[:, 1] - 0.2, s=10, c='b')
+plt.legend(('True position', 'MDS', 'NMDS'))
+
+similarities = similarities.max() / similarities * 100
+similarities[np.isinf(similarities)] = 0
 
 # Plot the edges
 start_idx, end_idx = np.where(pos)
@@ -59,30 +74,4 @@ lc.set_array(similarities.flatten())
 lc.set_linewidths(0.5 * np.ones(len(segments)))
 ax.add_collection(lc)
 
-for index, (label, (x, y)) in enumerate(zip(cities_dataset.header, pos)):
-    dx = x - pos[:, 0]
-    dx[index] = 1
-    dy = y - pos[:, 1]
-    dy[index] = 1
-    this_dx = dx[np.argmin(np.abs(dy))]
-    this_dy = dy[np.argmin(np.abs(dx))]
-    if this_dx > 0:
-        horizontalalignment = 'left'
-        x = x + .002
-    else:
-        horizontalalignment = 'right'
-        x = x - .002
-    if this_dy > 0:
-        verticalalignment = 'bottom'
-        y = y + .002
-    else:
-        verticalalignment = 'top'
-        y = y - .002
-    plt.text(x, y, label, size=10,
-            horizontalalignment=horizontalalignment,
-            verticalalignment=verticalalignment,
-            bbox=dict(facecolor='w',
-                      alpha=.6))
-
-plt.title("Map of the US inferred from travel distances")
 plt.show()
