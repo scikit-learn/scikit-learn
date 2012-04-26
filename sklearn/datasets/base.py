@@ -338,6 +338,10 @@ def load_cities():
     """Load and return the travelling distances between major
     cities in france.
 
+    There are 17 french cities. The dataset is composed of a symetric matrice,
+    containing the distances to travel the fastest from one city to another.
+    The distances and the routes where evaluated through Google Maps.
+
     ==============    ==================
     Samples total     17 cities
     Dimensionality
@@ -354,7 +358,7 @@ def load_cities():
     base_dir = join(dirname(__file__), 'data/')
     # Read data
     data = np.loadtxt(base_dir + 'france_distances.csv',
-                      skiprows=1) 
+                      skiprows=1)
     with open(base_dir + 'france_distances.csv') as f:
         header = f.readline().split(',')
     return Bunch(data=data, header=header)
