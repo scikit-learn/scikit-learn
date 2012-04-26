@@ -1,11 +1,8 @@
 """
 ===============================================================================
-Multi-dimensional scaling - Reconstructing the map of France
+Multi-dimensional scaling - Reconstructing the map of the USA
 ===============================================================================
 
-The dataset consists of kilometers one has to travel to go from one city in
-france to another. The goal is to reconstruct the map of France using these
-distances.
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
@@ -19,19 +16,34 @@ from matplotlib.collections import LineCollection
 
 from sklearn import manifold
 from sklearn.datasets import load_cities
+from sklearn.metrics import euclidean_distances
 
 cities_dataset = load_cities()
-similarities = cities_dataset.data
+similarities = cities_dataset.data[:10, :10] * 1e-5
 
-mds = manifold.MDS(out_dim=2, max_iter=3000, eps=1e-9)
-pos = mds.fit(similarities).positions_
+old_stress, best_pos = None, None
+for n in range(10):
+    mds = manifold.MDS(out_dim=2, n_init=6, max_iter=3000, n_jobs=2,
+                    verbose=1, eps=1e-9)
+    pos = mds.fit(similarities).positions_
+    mds = manifold.MDS(out_dim=2, metric=False, n_init=1, max_iter=3000, n_jobs=2,
+                    verbose=1, eps=1e-19)
+    pos = mds.fit(similarities, init=pos).positions_
+    stress = mds.stress_
+
+    if old_stress is None or old_stress > stress:
+        old_stress = stress
+        best_pos = pos.copy()
+
+
 
 fig = plt.figure(1)
+distances = euclidean_distances(pos)
+plt.scatter(distances, similarities, cmap=plt.cm.hot_r)
+
+fig = plt.figure(2)
 ax = plt.axes([0., 0., 1., 1.])
 plt.scatter(pos[:, 0], pos[:, 1])
-
-similarities = 10 * similarities.max() / similarities
-similarities[np.isinf(similarities)] = 0
 
 # Plot the edges
 start_idx, end_idx = np.where(pos)
@@ -48,7 +60,6 @@ lc.set_linewidths(0.5 * np.ones(len(segments)))
 ax.add_collection(lc)
 
 for index, (label, (x, y)) in enumerate(zip(cities_dataset.header, pos)):
-
     dx = x - pos[:, 0]
     dx[index] = 1
     dy = y - pos[:, 1]
@@ -73,5 +84,5 @@ for index, (label, (x, y)) in enumerate(zip(cities_dataset.header, pos)):
             bbox=dict(facecolor='w',
                       alpha=.6))
 
-plt.title("Map of France inferred from travel distances")
+plt.title("Map of the US inferred from travel distances")
 plt.show()
