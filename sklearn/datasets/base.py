@@ -335,31 +335,37 @@ def load_diabetes():
 
 
 def load_cities():
-    """Load and return the travelling distances between major
-    cities in france.
+    """
+    Mileage data for US cities from the Stanford Graph Base
 
-    There are 17 french cities. The dataset is composed of a symetric matrice,
-    containing the distances to travel the fastest from one city to another.
-    The distances and the routes where evaluated through Google Maps.
+    Revised mileage data for highways in the United States and Canada, 1949
 
     ==============    ==================
-    Samples total     17 cities
+    Samples total     128 cities
     Dimensionality
-    Features          real, 0 < x < 1300
-    Targets           3D positions
+    Features
+    Targets           Coordinates
     ==============
 
     Returns
     -------
     data: Bunch
         Dictionary-like object, the interesting attributes are: 'data', the
-        distance matrix to learn and 'header', labels for the 14 cities.
+        distance matrix to learn and 'header', labels for the 128 cities.
+
+     Notes
+    ------
+
+    [1] Donald E. Knuth,
+        "The Stanford GraphBase: A Platform for Combinatorial Computing",
+        ACM Press, New York, 1993.
+    [2] http://www-cs-faculty.stanford.edu/~knuth/sgb.html
     """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
-    data = np.loadtxt(base_dir + 'france_distances.csv',
+    data = np.loadtxt(base_dir + 'knuth_miles.csv',
                       skiprows=1)
-    with open(base_dir + 'france_distances.csv') as f:
+    with open(base_dir + 'knuth_miles.csv') as f:
         header = f.readline().split(',')
     return Bunch(data=data, header=header)
 
