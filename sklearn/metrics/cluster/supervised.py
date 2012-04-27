@@ -303,9 +303,9 @@ def homogeneity_score(labels_true, labels_pred):
     References
     ----------
 
-    .. [1] Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
-        entropy-based external cluster evaluation measure`, 2007
-        http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    * Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
+      entropy-based external cluster evaluation measure`, 2007
+      http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
@@ -370,9 +370,9 @@ def completeness_score(labels_true, labels_pred):
     References
     ----------
 
-    .. [1] Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
-        entropy-based external cluster evaluation measure`, 2007
-        http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    * Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
+      entropy-based external cluster evaluation measure`, 2007
+      http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
@@ -500,9 +500,11 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     of the same data. Where P(i) is the probability of a random sample occuring
     in cluster U_i and P'(j) is the probability of a random sample occuring in
     cluster V_j, the Mutual information  between clusterings U and V is given
-    as::
+    as:
 
-        MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log \frac{P(i,j)}{P(i)P'(j)}
+    .. math::
+
+        MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log\\frac{P(i,j)}{P(i)P'(j)}
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -533,7 +535,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     See also
     --------
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_mutual_info_score: Adjusted against chance Mutual Information
+    normalized_mutual_info_score: Normalized Mutual Information
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -611,12 +614,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     References
     ----------
-    .. [1] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+    .. [3] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
        Clusterings Comparison: Variants, Properties, Normalization and
        Correction for Chance}, JMLR
        http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
 
-    .. [3] `Wikipedia entry for the Adjusted Mutual Information
+    .. [4] `Wikipedia entry for the Adjusted Mutual Information
        <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
