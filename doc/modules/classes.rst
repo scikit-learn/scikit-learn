@@ -656,6 +656,7 @@ See the :ref:`clustering` section of the user guide for further details.
    metrics.completeness_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
+   metrics.mutual_info_score
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
    metrics.v_measure_score
