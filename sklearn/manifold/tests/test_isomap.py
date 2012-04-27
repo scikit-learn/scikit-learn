@@ -111,6 +111,8 @@ def test_transform():
 
 def test_pipeline():
     # check that Isomap works fine as a transformer in a Pipeline
+    # only checks that no error is raised.
+    # TODO check that it actually does something useful
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
         [('isomap', manifold.Isomap()),

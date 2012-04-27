@@ -97,6 +97,8 @@ def test_lle_manifold():
 
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
+    # only checks that no error is raised.
+    # TODO check that it actually does something useful
     from sklearn import pipeline, datasets
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
