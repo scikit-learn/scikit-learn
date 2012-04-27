@@ -559,17 +559,19 @@ by defining the adjusted Rand index as follows:
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
-Adjusted Mutual Information
----------------------------
+Mutual Information based scores
+-------------------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Given the knowledge of the ground truth class assignments ``labels_true``
-and our clustering algorithm assignments of the same samples
-``labels_pred``, the **Adjusted Mutual Information** is a function that 
-measures the **agreement** of the two assignements, ignoring permutations
-and **with chance normalization**::
+Given the knowledge of the ground truth class assignments ``labels_true`` and
+our clustering algorithm assignments of the same samples ``labels_pred``, the
+**Mutual Information** is a function that measures the **agreement** of the two
+assignements, ignoring permutations.  Two different normalized versions of this
+measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
+Mutual Information(AMI)**. NMI is often used in the literature while AMI was
+proposed more recently and is normalized against chance::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
@@ -585,9 +587,9 @@ the same score::
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
   0.22504...
 
-Furthermore, :func:`adjusted_mutual_info_score` is **symmetric**: swapping the
-argument does not change the score. It can thus be used as a **consensus
-measure**::
+All, :func:`mutual_info_score`, :func:`adjusted_mutual_info_score` and
+:func:`normalized_mutual_info_score` are symmetric: swapping the argument does
+not change the score. Thus they can be used as a **consensus measure**::
 
   >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
   0.22504...
@@ -597,6 +599,14 @@ Perfect labeling is scored 1.0::
   >>> labels_pred = labels_true[:]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)
   1.0
+
+  >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)
+  1.0
+
+This is not true for ``mutual_info_score``, which is therefore harder to judge::
+
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.69...
 
 Bad (e.g. independent labelings) have non-positive scores::
 
@@ -628,11 +638,12 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **AMI requires the knowlege of the ground truth
-  classes** while almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
+- Contrary to inertia, **MI-based measures require the knowlege
+  of the ground truth classes** while almost never available in practice or
+  requires manual assignment by human annotators (as in the supervised learning
+  setting).
 
-  However AMI can also be useful in purely unsupervised setting as a
+  However MI-based measures can also be useful in purely unsupervised setting as a
   building block for a Consensus Index that can be used for clustering
   model selection.
 
@@ -668,9 +679,14 @@ calculated by:
 Where P(i, j) is the number of instances with label :math:`R_i` 
 and also with label :math:`C_j`.
 
-This value of the mutual information is not adjusted cfor chance and will tend
-to increase as the number of different labels (clusters) increases, regardless
-of the actual amount of "mutual information" between the label assignments.
+The normalized mutual information is defined as
+
+.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\sqrt{H(U)H(V)}}
+
+This value of the mutual information and also the normalized variant is not
+adjusted for chance and will tend to increase as the number of different labels
+(clusters) increases, regardless of the actual amount of "mutual information"
+between the label assignments.
 
 The expected value for the mutual information can be calculated using the
 following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
@@ -690,6 +706,10 @@ calculated using a similar form to that of the adjusted Rand index:
 
 .. topic:: References
 
+ * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles – a
+   knowledge reuse framework for combining multiple partitions". Journal of
+   Machine Learning Research 3: 583–617. doi:10.1162/153244303321897735
+
  * Vinh, Epps, and Bailey, (2009). "Information theoretic measures 
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
@@ -699,6 +719,9 @@ calculated using a similar form to that of the adjusted Rand index:
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance}, JMLR
    http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
+
+ * `Wikipedia entry for the (normalized) Mutual Information
+   <http://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
