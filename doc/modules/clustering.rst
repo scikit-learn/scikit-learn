@@ -571,7 +571,7 @@ our clustering algorithm assignments of the same samples ``labels_pred``, the
 assignements, ignoring permutations.  Two different normalized versions of this
 measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
 Mutual Information(AMI)**. NMI is often used in the literature while AMI was
-proposed more recently and is normalized against chance::
+proposed more recently and is **normalized against chance**::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
@@ -646,6 +646,8 @@ Drawbacks
   However MI-based measures can also be useful in purely unsupervised setting as a
   building block for a Consensus Index that can be used for clustering
   model selection.
+
+- NMI and MI are not adjusted against chance.
 
 
 .. topic:: Examples:
