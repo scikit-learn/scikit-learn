@@ -1045,7 +1045,7 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
             return SpLuInv(OP.tocsc()).matvec
 
 
-def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
+def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
          ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
          Minv=None, OPinv=None, OPpart=None):
     """
@@ -1261,7 +1261,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     return params.extract(return_eigenvectors)
 
 
-def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
+def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
           ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
           Minv=None, OPinv=None, mode='normal'):
     """
@@ -1537,7 +1537,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     return params.extract(return_eigenvectors)
 
 
-def svds(A, k=6, ncv=None, tol=0):
+def _svds(A, k=6, ncv=None, tol=0):
     """Compute k singular values/vectors for a sparse matrix using ARPACK.
 
     Parameters
@@ -1596,3 +1596,19 @@ def svds(A, k=6, ncv=None, tol=0):
         vh = herm(X.dot(u) / s)
 
     return u, s, vh
+
+# check if backport is actually needed:
+try:
+    from scipy.sparse.linalg import eigs
+except ImportError:
+    eigs = _eigs
+
+try:
+    from scipy.sparse.linalg import eigsh
+except ImportError:
+    eigsh = _eigsh
+
+try:
+    from scipy.sparse.linalg import svds
+except ImportError:
+    svds = _svds
