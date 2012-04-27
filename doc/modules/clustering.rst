@@ -535,7 +535,7 @@ define :math:`a` and :math:`b` as:
 
 The raw (unadjusted) Rand index is then given by:
 
-.. math:: RI = \frac{a + b}{C_2^{n_{samples}}}
+.. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
 
 Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
 in the dataset (without ordering).
@@ -544,10 +544,10 @@ However the RI score does not guarantee that random label assignements
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
-To counter this effect we can discount the expected RI of random labelings
-by defining the adjusted Rand index as follows:
+To counter this effect we can discount the expected RI :math:`E[\text{RI}]` of
+random labelings by defining the adjusted Rand index as follows:
 
-.. math:: ARI = \frac{RI - Expected\_RI}{max(RI) - Expected\_RI}
+.. math:: \text{ARI} = \frac{\text{RI} - E[\text{RI}]}{\max(\text{RI}) - E[\text{RI}]}
 
 .. topic:: References
 
@@ -662,19 +662,19 @@ Assume two label assignments (of the same data), :math:`U` with :math:`R`
 classes and :math:`V` with :math:`C` classes. The entropy of either is the
 amount of uncertaintly for an array, and can be calculated as:
 
-.. math:: H(U) = \sum_{i=1}^{|R|}P(i)log(P(i))
+.. math:: H(U) = \sum_{i=1}^{|R|}P(i)\log(P(i))
 
 Where P(i) is the number of instances in U that are in class :math:`R_i`.
 Likewise, for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|C|}P'(j)log(P'(j))
+.. math:: H(V) = \sum_{j=1}^{|C|}P'(j)\log(P'(j))
 
 Where P'(j) is the number of instances in V that are in class :math:`C_j`.
 
-The (non-adjusted) mutual information between :math:`U` and :math:`V` is
+The mutual information between :math:`U` and :math:`V` is
 calculated by:
 
-.. math:: MI(U, V) = \sum_{i=1}^{|R|}\sum_{j=1}^{|C|}P(i, j)log(\frac{P(i,j)}{P(i)P'(j)})
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|R|}\sum_{j=1}^{|C|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
 
 Where P(i, j) is the number of instances with label :math:`R_i` 
 and also with label :math:`C_j`.
@@ -694,15 +694,15 @@ following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
 :math:`b_j` is the number of instances with label :math:`V_j`.
 
 
-.. math:: E\{MI(U,V)\}=\sum_{i=1}^R \sum_{j=1}^C \sum_{n_{ij}=(a_i+b_j-N)^+
-   }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log ( \frac{ N.n_{ij}}{a_i b_j})
+.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^R \sum_{j=1}^C \sum_{n_{ij}=(a_i+b_j-N)^+
+   }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
    \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
    (N-a_i-b_j+n_{ij})!}
 
 Using the expected value, the adjusted mutual information can then be 
 calculated using a similar form to that of the adjusted Rand index:
 
-.. math:: AMI = \frac{MI - Expected\_MI}{max(H(U), H(V)) - Expected\_MI}
+.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\max(H(U), H(V)) - E[\text{MI}]}
 
 .. topic:: References
 
@@ -850,11 +850,11 @@ where :math:`H(C|K)` is the **conditional entropy of the classes given
 the cluster assignments** and is given by:
 
 .. math:: H(C|K) = - \sum_{c=1}^{|C|} \sum_{k=1}^{|K|} \frac{n_{c,k}}{n}
-          \cdot log(\frac{n_{c,k}}{n_k})
+          \cdot \log\left(\frac{n_{c,k}}{n_k}\right)
 
 and :math:`H(C)` is the **entropy of the classes** and is given by:
 
-.. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot log(\frac{n_c}{n})
+.. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot \log\left(\frac{n_c}{n}\right)
 
 with :math:`n` the total number of samples, :math:`n_c` and :math:`n_k`
 the number of samples respectively belonging to class :math:`c` and
