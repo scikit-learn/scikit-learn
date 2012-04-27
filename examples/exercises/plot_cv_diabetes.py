@@ -34,17 +34,15 @@ pl.figure(1, figsize=(2.5, 2))
 pl.clf()
 pl.axes([.1, .25, .8, .7])
 pl.semilogx(alphas, scores)
-pl.semilogx(alphas, np.array(scores) + np.array(scores_std)/20, 'b--')
-pl.semilogx(alphas, np.array(scores) - np.array(scores_std)/20, 'b--')
+pl.semilogx(alphas, np.array(scores) + np.array(scores_std) / 20, 'b--')
+pl.semilogx(alphas, np.array(scores) - np.array(scores_std) / 20, 'b--')
 pl.yticks(())
 pl.ylabel('CV score')
 pl.xlabel('alpha')
 pl.axhline(np.max(scores), linestyle='--', color='.5')
-pl.text(2e-4, np.max(scores)+1e-4, '.489')
+pl.text(2e-4, np.max(scores) + 1e-4, '.489')
 
-################################################################################
+##############################################################################
 # Bonus: how much can you trust the selection of alpha?
-from scikits.learn import cross_val
 k_fold = cross_validation.KFold(len(X), 3)
 print [lasso.fit(X[train], y[train]).alpha for train, _ in k_fold]
-

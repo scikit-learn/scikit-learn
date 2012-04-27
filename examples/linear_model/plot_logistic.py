@@ -7,7 +7,7 @@
 Logit function
 =========================================================
 Show in the plot is how the logistic regression would, in this
-synthetic dataset, classify values as either 0 or 1, 
+synthetic dataset, classify values as either 0 or 1,
 i.e. class one or two, using the logit-curve.
 
 """
@@ -20,7 +20,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from scikits.learn import linear_model
+from sklearn import linear_model
 
 # this is our test set, it's just a straight line with some
 # gaussian noise
@@ -29,8 +29,8 @@ n_samples = 100
 np.random.seed(0)
 X = np.random.normal(size=n_samples)
 y = (X > 0).astype(np.float)
-X[X>0] *= 4
-X += .3*np.random.normal(size=n_samples)
+X[X > 0] *= 4
+X += .3 * np.random.normal(size=n_samples)
 
 X = X[:, np.newaxis]
 # run the classifier
@@ -42,14 +42,16 @@ pl.figure(1, figsize=(4, 3))
 pl.clf()
 pl.scatter(X.ravel(), y, color='black', zorder=20)
 X_test = np.linspace(-5, 10, 300)
+
+
 def model(x):
-    return 1/(1+np.exp(-x))
-loss = model(X_test*clf.coef_ + clf.intercept_).ravel()
+    return 1 / (1 + np.exp(-x))
+loss = model(X_test * clf.coef_ + clf.intercept_).ravel()
 pl.plot(X_test, loss, color='blue', linewidth=3)
 
 ols = linear_model.LinearRegression()
 ols.fit(X, y)
-pl.plot(X_test, ols.coef_*X_test + ols.intercept_, linewidth=1)
+pl.plot(X_test, ols.coef_ * X_test + ols.intercept_, linewidth=1)
 pl.axhline(.5, color='.5')
 
 pl.ylabel('y')
