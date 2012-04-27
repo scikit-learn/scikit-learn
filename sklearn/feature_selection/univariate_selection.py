@@ -372,7 +372,7 @@ class SelectFdr(_AbstractUnivariateFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
-    discorvery rate.
+    discovery rate.
 
     Parameters
     ===========
