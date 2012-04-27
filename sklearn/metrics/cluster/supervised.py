@@ -673,8 +673,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_information_score: Adjusted Mutual Information (recent
-       modification of NMI)
+    adjusted_mutual_information_score: Adjusted Mutual Information (adjusted
+        against chance)
 
     Examples
     --------
@@ -711,7 +711,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
-    nmi = mi / np.sqrt(h_true * h_pred)
+    nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
     return nmi
 
 
