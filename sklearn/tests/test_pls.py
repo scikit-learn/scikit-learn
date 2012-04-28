@@ -15,8 +15,7 @@ def test_pls():
     # ------------------------------
     pls_bynipals = pls.PLSCanonical(n_components=X.shape[1])
     pls_bynipals.fit(X, Y)
-    pls_bysvd = pls.PLSCanonical(inner_loop_algorithm="svd",
-        n_components=X.shape[1])
+    pls_bysvd = pls.PLSCanonical(algorithm="svd", n_components=X.shape[1])
     pls_bysvd.fit(X, Y)
     # check equalities of loading (up to the sign of the second column)
     assert_array_almost_equal(

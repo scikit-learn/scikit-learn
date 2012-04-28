@@ -15,7 +15,6 @@ from scipy import linalg
 
 def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     norm_y_weights=False):
-    global s
     """Inner loop of the iterative NIPALS algorithm. Provides an alternative
     to the svd(X'Y); returns the first left and rigth singular vectors of X'Y.
     See PLS for the meaning of the parameters.
@@ -139,7 +138,7 @@ class _PLS(BaseEstimator):
 
     norm_y_weights: boolean, normalize Y weights to one? (default False)
 
-    inner_loop_algorithm : string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
@@ -202,14 +201,14 @@ class _PLS(BaseEstimator):
     """
 
     def __init__(self, n_components=2, scale=True, deflation_mode="regression",
-                 mode="A", inner_loop_algorithm="nipals", norm_y_weights=False,
+                 mode="A", algorithm="nipals", norm_y_weights=False,
                  max_iter=500, tol=1e-06, copy=True):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
         self.norm_y_weights = norm_y_weights
         self.scale = scale
-        self.inner_loop_algorithm = inner_loop_algorithm
+        self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol = tol
         self.copy = copy
@@ -236,7 +235,10 @@ class _PLS(BaseEstimator):
                 'has %s' % (X.shape[0], Y.shape[0]))
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
-        if self.inner_loop_algorithm == "svd" and self.mode == "B":
+        if self.algorithm not in ("svd", "nipals"):
+            raise ValueError("Got algorithm %s when only 'svd' "
+                             "and 'nipals' are known" % self.algorithm)
+        if self.algorithm == "svd" and self.mode == "B":
             raise ValueError('Incompatible configuration: mode B is not '
                              'implemented with svd algorithm')
         if not self.deflation_mode in ["canonical", "regression"]:
@@ -259,16 +261,13 @@ class _PLS(BaseEstimator):
         for k in xrange(self.n_components):
             #1) weights estimation (inner loop)
             # -----------------------------------
-            if self.inner_loop_algorithm == "nipals":
+            if self.algorithm == "nipals":
                 x_weights, y_weights = _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode,
                         max_iter=self.max_iter, tol=self.tol,
                         norm_y_weights=self.norm_y_weights)
-            elif self.inner_loop_algorithm == "svd":
+            elif self.algorithm == "svd":
                 x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
-            else:
-                raise ValueError("Got algorithm %s when only 'svd' "
-                                 "and 'nipals' are known" % self.algorithm)
             # compute scores
             x_scores = np.dot(Xk, x_weights)
             if self.norm_y_weights:
@@ -407,7 +406,7 @@ class PLSRegression(_PLS):
     PLSRegression implements the PLS 2 blocks regression known as PLS2 or PLS1
     in case of one dimensional response.
     This class inherits from _PLS with mode="A", deflation_mode="regression",
-    norm_y_weights=False and inner_loop_algorithm="nipals".
+    norm_y_weights=False and algorithm="nipals".
 
     Parameters
     ----------
@@ -521,8 +520,8 @@ class PLSCanonical(_PLS):
     algorithm [Tenenhaus 1998] p.204, refered as PLS-C2A in [Wegelin 2000].
 
     This class inherits from PLS with mode="A" and deflation_mode="canonical",
-    norm_y_weights=True and inner_loop_algorithm="nipals", but svd should
-    provide similar results up to numerical errors.
+    norm_y_weights=True and algorithm="nipals", but svd should provide similar
+    results up to numerical errors.
 
     Parameters
     ----------
@@ -538,7 +537,7 @@ class PLSCanonical(_PLS):
 
     scale : boolean, scale data? (default True)
 
-    inner_loop_algorithm : string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
@@ -609,7 +608,7 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSCanonical(copy=True, inner_loop_algorithm='nipals', max_iter=500,
+    PLSCanonical(copy=True, algorithm='nipals', max_iter=500,
            n_components=2, scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
@@ -629,13 +628,11 @@ class PLSCanonical(_PLS):
     PLSSVD
     """
 
-    def __init__(self, n_components=2, scale=True,
-                 inner_loop_algorithm="nipals",
+    def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         _PLS.__init__(self, n_components=n_components, scale=scale,
                         deflation_mode="canonical", mode="A",
-                        norm_y_weights=True,
-                        inner_loop_algorithm=inner_loop_algorithm,
+                        norm_y_weights=True, algorithm=algorithm,
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
@@ -741,8 +738,7 @@ class CCA(_PLS):
                  max_iter=500, tol=1e-06, copy=True):
         _PLS.__init__(self, n_components=n_components, scale=scale,
                         deflation_mode="canonical", mode="B",
-                        norm_y_weights=True,
-                        inner_loop_algorithm="nipals",
+                        norm_y_weights=True, algorithm="nipals",
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
