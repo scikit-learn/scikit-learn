@@ -10,6 +10,8 @@ import numpy as np
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
+from ..metrics import euclidean_distances
+from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
 
@@ -236,12 +238,36 @@ class SpectralClustering(BaseEstimator):
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
+    When calling ``fit``, an affinity matrix is constructed using either the
+    Gaussian kernel::
+
+            np.exp(-gamma * X ** 2)
+
+    or a k-nearest neighbors matrix.
+
+    Alternatively, using ``fit_pairwise``, a user-provided affinity
+    matrix can be used.
+
     Parameters
     -----------
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
+<<<<<<< HEAD
     mode : {None, 'arpack' or 'amg'}
+=======
+    affinity: string, 'nearest_neighbors' or 'gaussian'
+
+    gamma: float
+        Scaling factor of Gaussian affinity kernel. Ignored for
+        ``affinity='nearest_neighbors'``.
+
+    n_neighbors: integer
+        Number of neighbors to use when constructing the affinity matrix using
+        the nearest neighbors method. Ignored for ``affinity='gaussian'``.
+
+    mode: {None, 'arpack' or 'amg'}
+>>>>>>> ENH "fit_pairwise" for spectral clustering.
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
@@ -256,11 +282,15 @@ class SpectralClustering(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+
     Attributes
     ----------
 
     `labels_` :
         Labels of each point
+    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
+        Affinity matrix used for clustering. Available only if
+        after calling ``fit``.
 
     References
     ----------
@@ -274,8 +304,8 @@ class SpectralClustering(BaseEstimator):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
-            k=None):
+    def __init__(self, n_cluster=8, mode=None, random_state=None, n_init=10,
+            gamma=1., affinity='gaussian', n_neighbors=10, k=None):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
@@ -283,12 +313,41 @@ class SpectralClustering(BaseEstimator):
         self.mode = mode
         self.random_state = random_state
         self.n_init = n_init
+        self.gamma = gamma
+        self.affinity = affinity
+        self.n_neighbors = n_neighbors
 
     def fit(self, X):
+        """Creates an affinity matrix for X using the gaussian kernel,
+        then applies spectral clustering to this affinity matrix.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+        """
+        warnings.warn("The spectral clustering API has changed. ``fit``"
+                "now constructs an affinity matrix from data. To use "
+                "a custom affinity matrix, use ``fit_pairwise``.")
+
+        if self.affinity == 'gaussian':
+            self.affinity_matrix_ = np.exp(- self.gamma *
+                    euclidean_distances(X, X) ** 2)
+
+        elif self.affinity == 'nearest_neighbors':
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+        else:
+            raise ValueError("Invalid 'affinity'. Expecte 'gaussian' or "
+                "'nearest_neighbors', got '%s'." % self.affinity_matrix)
+
+        self.fit_pairwise(self.affinity_matrix_)
+        return self
+
+    def fit_pairwise(self, X):
         """Compute the spectral clustering from the affinity matrix
 
         Parameters
-        -----------
+        ----------
         X: array-like or sparse matrix, shape: (n_samples, n_samples)
             An affinity matrix describing the pairwise similarity of the
             data. If can also be an adjacency matrix of the graph to embed.
@@ -297,7 +356,7 @@ class SpectralClustering(BaseEstimator):
             whereas high values mean that elements are strongly similar.
 
         Notes
-        ------
+        -----
         If you have an affinity matrix, such as a distance matrix,
         for which 0 means identical elements, and high values means
         very dissimilar elements, it can be transformed in a

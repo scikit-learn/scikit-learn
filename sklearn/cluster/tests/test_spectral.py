@@ -22,7 +22,8 @@ def test_spectral_clustering():
                  ])
 
     for mat in (S, sparse.csr_matrix(S)):
-        model = SpectralClustering(random_state=0, n_clusters=2).fit(mat)
+        model = SpectralClustering(random_state=0, n_clusters=2,
+                affinity='precomputed').fit(mat)
         labels = model.labels_
         if labels[0] == 0:
             labels = 1 - labels
@@ -55,7 +56,8 @@ def test_spectral_clustering_sparse():
 
     S = sparse.coo_matrix(S)
 
-    labels = SpectralClustering(random_state=0, n_clusters=2).fit(S).labels_
+    labels = SpectralClustering(random_state=0, n_clusters=2,
+            affinity='precomputed').fit(S).labels_
     if labels[0] == 0:
         labels = 1 - labels
 

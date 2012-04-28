@@ -72,7 +72,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=2)
     ward_five = cluster.Ward(n_clusters=2, connectivity=connectivity)
-    spectral = cluster.SpectralClustering(n_clusters=2, mode='arpack')
+    spectral = cluster.SpectralClustering(n_clusters=2, mode='arpack',
+            affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=.2)
     affinity_propagation = cluster.AffinityPropagation(damping=.9)
 
@@ -80,9 +81,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
                       ward_five, dbscan]:
         # predict cluster memberships
         t0 = time.time()
-        if algorithm == spectral:
-            algorithm.fit(connectivity)
-        elif algorithm == affinity_propagation:
+        if algorithm == affinity_propagation:
             # Set a low preference to avoid creating too many
             # clusters. This parameter is hard to set in practice
             algorithm.fit(-distances, p=-50 * distances.max())
