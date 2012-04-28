@@ -239,9 +239,9 @@ class SpectralClustering(BaseEstimator):
     used to find normalized graph cuts.
 
     When calling ``fit``, an affinity matrix is constructed using either the
-    Gaussian kernel::
+    Gaussian kernel of the euclidean distanced ``d(X, X)``::
 
-            np.exp(-gamma * X ** 2)
+            np.exp(-gamma * d(X,X) ** 2)
 
     or a k-nearest neighbors matrix.
 
@@ -325,13 +325,14 @@ class SpectralClustering(BaseEstimator):
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features)
         """
-        warnings.warn("The spectral clustering API has changed. ``fit``"
-                "now constructs an affinity matrix from data. To use "
-                "a custom affinity matrix, use ``fit_pairwise``.")
+        if X.shape[0] == X.shape[1]:
+            warnings.warn("The spectral clustering API has changed. ``fit``"
+                    "now constructs an affinity matrix from data. To use "
+                    "a custom affinity matrix, use ``fit_pairwise``.")
 
         if self.affinity == 'gaussian':
             self.affinity_matrix_ = np.exp(- self.gamma *
-                    euclidean_distances(X, X) ** 2)
+                    euclidean_distances(X, squared=True))
 
         elif self.affinity == 'nearest_neighbors':
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
