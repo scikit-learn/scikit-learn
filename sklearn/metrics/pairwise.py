@@ -425,7 +425,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
       'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-      'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeucludean', 'yule']
+      'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics.
 
