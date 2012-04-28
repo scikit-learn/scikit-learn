@@ -31,8 +31,8 @@ def test_affinity_propagation():
 
     assert_equal(n_clusters, n_clusters_)
 
-    af = AffinityPropagation()
-    labels = af.fit(S, p).labels_
+    af = AffinityPropagation(p=p)
+    labels = af.fit_pairwise(S).labels_
     cluster_centers_indices = af.cluster_centers_indices_
 
     n_clusters_ = len(cluster_centers_indices)
