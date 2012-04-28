@@ -85,7 +85,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
         elif algorithm == affinity_propagation:
             # Set a low preference to avoid creating too many
             # clusters. This parameter is hard to set in practice
-            algorithm.fit(-distances, p=-50*distances.max())
+            algorithm.fit(-distances, p=-50 * distances.max())
         else:
             algorithm.fit(X)
         t1 = time.time()

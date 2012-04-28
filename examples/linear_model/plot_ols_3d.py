@@ -21,7 +21,6 @@ print __doc__
 
 import pylab as pl
 import numpy as np
-import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn import datasets, linear_model
@@ -30,12 +29,13 @@ diabetes = datasets.load_diabetes()
 indices = (0, 1)
 
 X_train = diabetes.data[:-20, indices]
-X_test  = diabetes.data[-20:, indices]
+X_test = diabetes.data[-20:, indices]
 y_train = diabetes.target[:-20]
-y_test  = diabetes.target[-20:]
+y_test = diabetes.target[-20:]
 
 ols = linear_model.LinearRegression()
 ols.fit(X_train, y_train)
+
 
 ###############################################################################
 # Plot the figure
@@ -43,10 +43,9 @@ def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = pl.figure(fig_num, figsize=(4, 3))
     pl.clf()
     ax = Axes3D(fig, elev=elev, azim=azim)
-    n = 100
 
     ax.scatter(X_train[:, 0], X_train[:, 1], y_train, c='k', marker='+')
-    ax.plot_surface(np.array([[-.1, -.1], [.15, .15]]), 
+    ax.plot_surface(np.array([[-.1, -.1], [.15, .15]]),
                     np.array([[-.1, .15], [-.1, .15]]),
                     clf.predict(np.array([[-.1, -.1, .15, .15],
                                           [-.1, .15, -.1, .15]]).T

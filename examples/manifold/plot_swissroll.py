@@ -13,8 +13,10 @@ with locally linear embedding
 print __doc__
 
 import pylab as pl
+
 # This import is needed to modify the way figure behaves
 from mpl_toolkits.mplot3d import Axes3D
+Axes3D
 
 #----------------------------------------------------------------------
 # Locally linear embedding of the swiss roll

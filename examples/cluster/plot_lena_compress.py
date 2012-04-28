@@ -32,7 +32,7 @@ except AttributeError:
     # Newer versions of scipy have lena in misc
     from scipy import misc
     lena = misc.lena()
-X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
+X = lena.reshape((-1, 1))  # We need an (n_sample, n_feature) array
 k_means = cluster.KMeans(k=n_clusters, n_init=4)
 k_means.fit(X)
 values = k_means.cluster_centers_.squeeze()
@@ -47,19 +47,19 @@ vmax = lena.max()
 
 # original lena
 pl.figure(1, figsize=(3, 2.2))
-pl.imshow(lena , cmap=pl.cm.gray, vmin=vmin, vmax=256)
+pl.imshow(lena, cmap=pl.cm.gray, vmin=vmin, vmax=256)
 
 # compressed lena
 pl.figure(2, figsize=(3, 2.2))
 pl.imshow(lena_compressed, cmap=pl.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins lena
-regular_values = np.linspace(0, 256, n_clusters+1)
+regular_values = np.linspace(0, 256, n_clusters + 1)
 regular_labels = np.searchsorted(regular_values, lena) - 1
-regular_values = .5*(regular_values[1:] + regular_values[:-1]) #mean
+regular_values = .5 * (regular_values[1:] + regular_values[:-1])  # mean
 regular_lena = np.choose(regular_labels.ravel(), regular_values)
 regular_lena.shape = lena.shape
-pl.figure(3, figsize=(3,2.2))
+pl.figure(3, figsize=(3, 2.2))
 pl.imshow(regular_lena, cmap=pl.cm.gray, vmin=vmin, vmax=vmax)
 
 # histogram
@@ -71,10 +71,9 @@ pl.yticks(())
 pl.xticks(regular_values)
 values = np.sort(values)
 for center_1, center_2 in zip(values[:-1], values[1:]):
-    pl.axvline(.5*(center_1+center_2), color='b')
+    pl.axvline(.5 * (center_1 + center_2), color='b')
 
 for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
-    pl.axvline(.5*(center_1+center_2), color='b', linestyle='--')
+    pl.axvline(.5 * (center_1 + center_2), color='b', linestyle='--')
 
 pl.show()
-

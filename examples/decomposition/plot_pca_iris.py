@@ -38,12 +38,10 @@ pca = decomposition.PCA(n_components=3)
 pca.fit(X)
 X = pca.transform(X)
 
-for name, label in [('Setosa', 0),
-                    ('Versicolour', 1),
-                    ('Virginica', 2)]:
-    ax.text3D(X[y==label, 0].mean(), 
-              X[y==label, 1].mean()+1.5, 
-              X[y==label, 2].mean(), name,
+for name, label in [('Setosa', 0), ('Versicolour', 1), ('Virginica', 2)]:
+    ax.text3D(X[y == label, 0].mean(),
+              X[y == label, 1].mean() + 1.5,
+              X[y == label, 2].mean(), name,
               horizontalalignment='center',
               bbox=dict(alpha=.5, edgecolor='w', facecolor='w'),
              )
@@ -52,7 +50,7 @@ y = np.choose(y, [1, 2, 0]).astype(np.float)
 ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y)
 
 x_surf = [X[:, 0].min(), X[:, 0].max(),
-          X[:, 0].min(), X[:, 0].max(),]
+          X[:, 0].min(), X[:, 0].max()]
 y_surf = [X[:, 0].max(), X[:, 0].max(),
           X[:, 0].min(), X[:, 0].min()]
 x_surf = np.array(x_surf)
@@ -62,13 +60,8 @@ v0 /= v0[-1]
 v1 = pca.transform(pca.components_[1])
 v1 /= v1[-1]
 
-#ax.plot_surface(x_surf, y_surf,
-
-
-
-
 ax.w_xaxis.set_ticklabels([])
 ax.w_yaxis.set_ticklabels([])
 ax.w_zaxis.set_ticklabels([])
 
-
+pl.show()
