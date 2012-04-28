@@ -8,9 +8,11 @@ clustering.
 # License: BSD
 
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator
 from ..utils import as_float_array
+from ..metrics import euclidean_distances
 
 
 def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
@@ -192,6 +194,9 @@ class AffinityPropagation(BaseEstimator):
     `labels_` : array, [n_samples]
         Labels of each point
 
+    `affinity_matrix_` : array-like, [n_samples, n_samples]
+        Stores the affinity matrix used in ``fit``.
+
     Notes
     -----
     See examples/plot_affinity_propagation.py for an example.
@@ -206,13 +211,26 @@ class AffinityPropagation(BaseEstimator):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True):
+    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True, p=None):
         self.damping = damping
         self.max_iter = max_iter
         self.convit = convit
         self.copy = copy
+        self.p = p
 
-    def fit(self, S, p=None):
+    def fit(self, X):
+        """ Create affinity matrix from negative euclidean distances, then
+        apply affinity propagation clustering. """
+
+        if X.shape[0] == X.shape[1]:
+            warnings.warn("The API of AffinityPropagation has changed."
+                    "Now ``fit`` constructs an affinity matrix from the data."
+                    "To use a custom affinity matrix, use ``fit_pairwise``.")
+        self.affinity_matrix_ = -euclidean_distances(X, squared=True)
+        self.fit_pairwise(self.affinity_matrix_)
+        return self
+
+    def fit_pairwise(self, S):
         """Compute affinity propagation clustering.
 
         Parameters
@@ -237,7 +255,7 @@ class AffinityPropagation(BaseEstimator):
 
         """
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(S,
-                                p, max_iter=self.max_iter, convit=self.convit,
+                self.p, max_iter=self.max_iter, convit=self.convit,
                                 damping=self.damping,
                 copy=self.copy)
         return self

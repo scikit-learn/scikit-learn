@@ -66,6 +66,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     connectivity = 0.5 * (connectivity + connectivity.T)
 
     # Compute distances
+    #distances = np.exp(-euclidean_distances(X))
     distances = euclidean_distances(X)
 
     # create clustering estimators
@@ -75,18 +76,13 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     spectral = cluster.SpectralClustering(n_clusters=2, mode='arpack',
             affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=.2)
-    affinity_propagation = cluster.AffinityPropagation(damping=.9)
+    affinity_propagation = cluster.AffinityPropagation(damping=.9, p=-200)
 
     for algorithm in [two_means, affinity_propagation, ms, spectral,
                       ward_five, dbscan]:
         # predict cluster memberships
         t0 = time.time()
-        if algorithm == affinity_propagation:
-            # Set a low preference to avoid creating too many
-            # clusters. This parameter is hard to set in practice
-            algorithm.fit(-distances, p=-50 * distances.max())
-        else:
-            algorithm.fit(X)
+        algorithm.fit(X)
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
             y_pred = algorithm.labels_.astype(np.int)
