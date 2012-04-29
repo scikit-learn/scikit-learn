@@ -56,7 +56,8 @@ def plot_figs(fig_num, elev, azim):
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=elev, azim=azim)
 
     pl.set_cmap(pl.cm.hot_r)
-
+    ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+',
+            alpha=.4)
     Y = np.c_[a, b, c]
     U, pca_score, V = np.linalg.svd(Y, full_matrices=False)
     x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()
