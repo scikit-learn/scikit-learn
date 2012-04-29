@@ -106,8 +106,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                   "coef0": self.coef0}
         if self.kernel == "precomputed":
             warnings.warn("Using `kernel='precomputed'` and `fit` is "
-                    "deprecated. Use `fit_pairwise` instead.",
-                    DeprecationWarning)
+                " deprecated and will be removed in 0.13. Use "
+                "`fit_pairwise` instead.", DeprecationWarning)
         try:
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)

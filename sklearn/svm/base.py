@@ -142,7 +142,8 @@ class BaseLibSVM(BaseEstimator):
         """
         if self.kernel == "precomputed":
             warnings.warn("Using `kernel='precomputed'` and `fit` is "
-                    "deprecated. Use `fit_pairwise` instead.",
+                    "deprecated and will be removed in 0.13. "
+                    "Use `fit_pairwise` instead.",
                     DeprecationWarning)
             self._precomputed = True
         else:
