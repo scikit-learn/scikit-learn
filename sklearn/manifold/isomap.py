@@ -118,7 +118,7 @@ class Isomap(BaseEstimator):
         G = self.dist_matrix_ ** 2
         G *= -0.5
 
-        self.embedding_ = self.kernel_pca_.fit_transform(G)
+        self.embedding_ = self.kernel_pca_.fit_transform_pairwise(G)
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.
@@ -210,4 +210,4 @@ class Isomap(BaseEstimator):
         G_X **= 2
         G_X *= -0.5
 
-        return self.kernel_pca_.transform(G_X)
+        return self.kernel_pca_.transform_pairwise(G_X)
