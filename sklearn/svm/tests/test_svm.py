@@ -91,10 +91,10 @@ def test_precomputed():
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
-    clf.fit(K, Y)
+    clf.fit_pairwise(K, Y)
     # Gram matrix for test data (rectangular matrix)
     KT = np.dot(T, np.array(X).T)
-    pred = clf.predict(KT)
+    pred = clf.predict_pairwise(KT)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.support_, [1, 3])
@@ -109,7 +109,7 @@ def test_precomputed():
         for j in clf.support_:
             KT[i, j] = np.dot(T[i], X[j])
 
-    pred = clf.predict(KT)
+    pred = clf.predict_pairwise(KT)
     assert_array_equal(pred, true_result)
 
     # same as before, but using a callable function instead of the kernel
@@ -118,6 +118,8 @@ def test_precomputed():
     kfunc = lambda x, y: np.dot(x, y.T)
     clf = svm.SVC(kernel=kfunc)
     clf.fit(X, Y)
+    print(np.array(X).shape)
+    print(np.array(T).shape)
     pred = clf.predict(T)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
@@ -130,9 +132,9 @@ def test_precomputed():
     clf = svm.SVC(kernel='precomputed')
     clf2 = svm.SVC(kernel='linear')
     K = np.dot(iris.data, iris.data.T)
-    clf.fit(K, iris.target)
+    clf.fit_pairwise(K, iris.target)
     clf2.fit(iris.data, iris.target)
-    pred = clf.predict(K)
+    pred = clf.predict_pairwise(K)
     assert_array_almost_equal(clf.support_, clf2.support_)
     assert_array_almost_equal(clf.dual_coef_, clf2.dual_coef_)
     assert_array_almost_equal(clf.intercept_, clf2.intercept_)
@@ -145,7 +147,7 @@ def test_precomputed():
         for j in clf.support_:
             K[i, j] = np.dot(iris.data[i], iris.data[j])
 
-    pred = clf.predict(K)
+    pred = clf.predict_pairwise(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
     clf = svm.SVC(kernel=kfunc)
@@ -370,15 +372,13 @@ def test_bad_input():
         assert_array_equal(clf.predict(T), true_result)
 
     # error for precomputed kernelsx
-    clf = svm.SVC(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
+    clf = svm.SVC()
+    assert_raises(ValueError, clf.fit_pairwise, X, Y)
 
     Xt = np.array(X).T
-    clf = svm.SVC(kernel='precomputed')
-    clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
+    clf.fit_pairwise(np.dot(X, Xt), Y)
+    assert_raises(ValueError, clf.predict_pairwise, X)
 
-    clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
