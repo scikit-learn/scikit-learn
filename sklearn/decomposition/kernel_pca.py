@@ -227,6 +227,28 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         return X_transformed
 
+    def fit_transform_pairwise(self, K, y=None):
+        """Fit the model from data in X and transform X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new: array-like, shape (n_samples, n_components)
+        """
+        self.fit_pairwise(K)
+
+        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
+
+        if self.fit_inverse_transform:
+            self._fit_inverse_transform(X_transformed, K)
+
+        return X_transformed
+
     def transform(self, X):
         """Transform X.
 

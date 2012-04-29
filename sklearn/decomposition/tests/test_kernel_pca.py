@@ -105,8 +105,17 @@ def test_kernel_pca_precomputed():
                 fit_pairwise(np.dot(X_fit,
                     X_fit.T)).transform_pairwise(np.dot(X_pred, X_fit.T))
 
+        X_kpca_train = KernelPCA(4, eigen_solver=eigen_solver).\
+                fit_transform_pairwise(np.dot(X_fit, X_fit.T))
+        X_kpca_train2 = KernelPCA(4, eigen_solver=eigen_solver).\
+                fit_pairwise(np.dot(X_fit,
+                    X_fit.T)).transform_pairwise(np.dot(X_fit, X_fit.T))
+
         assert_array_almost_equal(np.abs(X_kpca),
                                   np.abs(X_kpca2))
+
+        assert_array_almost_equal(np.abs(X_kpca_train),
+                                  np.abs(X_kpca_train2))
 
 
 def test_kernel_pca_invalid_kernel():
