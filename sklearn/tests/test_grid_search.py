@@ -151,9 +151,9 @@ def test_grid_search_precomputed_kernel():
     K_train = np.dot(X_[:180], X_[:180].T)
     y_train = y_[:180]
 
-    clf = SVC(kernel='precomputed')
+    clf = SVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    cv.fit(K_train, y_train)
+    cv.fit_pairwise(K_train, y_train)
 
     assert_true(cv.best_score_ >= 0)
 
@@ -161,7 +161,7 @@ def test_grid_search_precomputed_kernel():
     K_test = np.dot(X_[180:], X_[:180].T)
     y_test = y_[180:]
 
-    y_pred = cv.predict(K_test)
+    y_pred = cv.predict_pairwise(K_test)
 
     assert_true(np.mean(y_pred == y_test) >= 0)
 
@@ -171,9 +171,9 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     training kernel matrix"""
     K_train = np.zeros((10, 20))
     y_train = np.ones((10, ))
-    clf = SVC(kernel='precomputed')
+    clf = SVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, K_train, y_train)
+    assert_raises(ValueError, cv.fit_pairwise, K_train, y_train)
 
 
 def test_grid_search_precomputed_kernel_error_kernel_function():

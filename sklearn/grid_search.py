@@ -10,6 +10,7 @@ of an estimator.
 import copy
 from itertools import product
 import time
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -67,11 +68,12 @@ class IterGrid(object):
 
 
 def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
-                   score_func, verbose, **fit_params):
+                   score_func, verbose, pairwise=False, **fit_params):
     """Run fit on one set of parameters
 
     Returns the score and the instance of the classifier
     """
+    print("pairwise", pairwise)
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
@@ -101,6 +103,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                 "Cannot use a custom kernel function. "
                 "Precompute the kernel matrix instead.")
         if getattr(base_clf, 'kernel', '') == 'precomputed':
+            warnings.warn("Using precomputed kernels and 'fit' is "
+                "deprecated and will be removed in .13. Use "
+                "'fit_pairwise' instead.")
+            pairwise = True
+        if pairwise:
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")
@@ -116,7 +123,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         y_test = None
         y_train = None
 
-    clf.fit(X_train, y_train, **fit_params)
+    if pairwise:
+        clf.fit_pairwise(X_train, y_train, **fit_params)
+    else:
+        clf.fit(X_train, y_train, **fit_params)
 
     if loss_func is not None:
         y_pred = clf.predict(X_test)
@@ -339,8 +349,30 @@ class GridSearchCV(BaseEstimator):
     def _set_methods(self):
         if hasattr(self._best_estimator_, 'predict'):
             self.predict = self._best_estimator_.predict
+        if hasattr(self._best_estimator_, 'predict_pairwise'):
+            self.predict_pairwise = self._best_estimator_.predict_pairwise
         if hasattr(self._best_estimator_, 'predict_proba'):
             self.predict_proba = self._best_estimator_.predict_proba
+
+    def fit_pairwise(self, P, y=None):
+        """Run fit with all sets of parameters,
+        using a precomputed similarity/dissimilarity
+        function of the data.
+
+        Returns the best classifier.
+
+        Parameters
+        ----------
+
+        P: array, [n_samples, n_samples]
+            Pairwise function of training data.
+
+        y: array-like, shape = [n_samples], optional
+            Target vector relative to X for classification;
+            None for unsupervised learning.
+        """
+
+        self._fit(P, y, pairwise=True)
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
@@ -360,6 +392,9 @@ class GridSearchCV(BaseEstimator):
 
         """
         self._set_params(**params)
+        return self._fit(X, y)
+
+    def _fit(self, X, y, pairwise=False):
         estimator = self.estimator
         cv = self.cv
 
@@ -384,7 +419,10 @@ class GridSearchCV(BaseEstimator):
         if _has_one_grid_point(self.param_grid):
             params = iter(grid).next()
             base_clf.set_params(**params)
-            base_clf.fit(X, y)
+            if pairwise:
+                base_clf.fit_pairwise(X, y)
+            else:
+                base_clf.fit(X, y)
             self._best_estimator_ = base_clf
             self._set_methods()
             return self
@@ -394,7 +432,7 @@ class GridSearchCV(BaseEstimator):
                 pre_dispatch=pre_dispatch)(
             delayed(fit_grid_point)(
                 X, y, base_clf, clf_params, train, test, self.loss_func,
-                self.score_func, self.verbose, **self.fit_params)
+                self.score_func, self.verbose, pairwise, **self.fit_params)
                     for clf_params in grid for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
@@ -439,7 +477,10 @@ class GridSearchCV(BaseEstimator):
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
             best_estimator = clone(base_clf).set_params(**best_params)
-            best_estimator.fit(X, y, **self.fit_params)
+            if pairwise:
+                best_estimator.fit_pairwise(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, y, **self.fit_params)
             self._best_estimator_ = best_estimator
             self._set_methods()
 
