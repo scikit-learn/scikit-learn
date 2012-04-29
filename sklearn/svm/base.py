@@ -168,9 +168,6 @@ class BaseLibSVM(BaseEstimator):
         y = np.asarray(y, dtype=np.float64, order='C')
         sample_weight = np.asarray([] if sample_weight is None
                                       else sample_weight, dtype=np.float64)
-        print("start dense_fit", X.shape)
-        print("kernel", self.kernel)
-        print("precomputed", self._precomputed)
         if hasattr(self.kernel, '__call__'):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
