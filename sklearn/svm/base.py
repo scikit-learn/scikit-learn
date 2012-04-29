@@ -196,7 +196,6 @@ class BaseLibSVM(BaseEstimator):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
-        print("end dense fit", X.shape)
 
         libsvm.set_verbosity_wrap(self.verbose)
 
