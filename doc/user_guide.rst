@@ -22,4 +22,5 @@
    model_selection.rst
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
+   estimator_summary.rst
    Reference <modules/classes.rst>
