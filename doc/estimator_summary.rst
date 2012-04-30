@@ -15,12 +15,12 @@ Estimator                     Dense  Sparse  Multi-class  Multi-task
 :class:`.GaussianNB`          Yes    Yes     Built-in     No
 :class:`.LogisticRegression`  Yes    Yes     One-Vs-Rest  No
 :class:`.MultinomialNB`       Yes    Yes     Built-in     No
-:class:`.NuSVC`               Yes    Yes     One-VS-One   No
+:class:`.NuSVC`               Yes    Yes     One-Vs-One   No
 :class:`.Perceptron`          Yes    Yes     One-Vs-Rest  No
 :class:`.RidgeClassifier`     Yes    Yes     One-Vs-Rest  No
 :class:`.RidgeClassifierCV`   Yes    Yes     One-Vs-Rest  No
-:class:`.SGDClassifier`       Yes    Yes     One-VS-Rest  No
-:class:`.SVC`                 Yes    Yes     One-VS-One   No
+:class:`.SGDClassifier`       Yes    Yes     One-Vs-Rest  No
+:class:`.SVC`                 Yes    Yes     One-Vs-One   No
 ============================  =====  ======  ===========  ==========
 
 Regression
