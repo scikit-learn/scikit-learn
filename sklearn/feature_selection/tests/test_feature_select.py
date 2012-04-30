@@ -2,11 +2,10 @@
 Todo: cross-check the F-value with stats model
 """
 
-from sklearn.feature_selection.univariate_selection import (f_classif,
-                                    f_regression, f_oneway,
-                                    SelectPercentile, SelectKBest,
-                                    SelectFpr, SelectFdr, SelectFwe,
-                                    GenericUnivariateSelect)
+from sklearn.feature_selection import (f_classif, f_oneway, f_regression,
+                                       SelectPercentile, SelectKBest,
+                                       SelectFpr, SelectFdr, SelectFwe,
+                                       GenericUnivariateSelect)
 from nose.tools import assert_true
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
