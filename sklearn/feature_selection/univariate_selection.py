@@ -317,16 +317,21 @@ class SelectPercentile(_AbstractUnivariateFilter):
 
 
 class SelectKBest(_AbstractUnivariateFilter):
-    """Filter: Select the k lowest p-values
+    """Filter: Select the k lowest p-values.
 
     Parameters
-    ===========
+    ----------
     score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     k: int, optional
-        Number of top feature to select.
+        Number of top features to select.
+
+    Notes
+    -----
+    Ties between features with equal p-values will be broken in an unspecified
+    way.
 
     """
 
@@ -339,8 +344,13 @@ class SelectKBest(_AbstractUnivariateFilter):
         if k > len(self.pvalues_):
             raise ValueError("cannot select %d features among %d"
                              % (k, len(self.pvalues_)))
-        alpha = np.sort(self.pvalues_)[k - 1]
-        return (self.pvalues_ <= alpha)
+
+        # XXX This should be refactored; we're getting an array of indices
+        # from argsort, which we transform to a mask, which we probably
+        # transform back to indices later.
+        mask = np.zeros(self.pvalues_.shape, dtype=bool)
+        mask[np.argsort(self.pvalues_)[:k]] = 1
+        return mask
 
 
 class SelectFpr(_AbstractUnivariateFilter):

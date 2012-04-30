@@ -2,11 +2,11 @@
 Todo: cross-check the F-value with stats model
 """
 
-from sklearn.feature_selection import (f_classif, f_oneway, f_regression,
+from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
                                        SelectPercentile, SelectKBest,
                                        SelectFpr, SelectFdr, SelectFwe,
                                        GenericUnivariateSelect)
-from nose.tools import assert_true
+from nose.tools import assert_equal, assert_true
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy import stats
@@ -338,3 +338,18 @@ def test_select_fwe_regression():
     gtruth[:5] = 1
     assert(support[:5] == 1).all()
     assert(np.sum(support[5:] == 1) < 2)
+
+
+def test_selectkbest_tiebreaking():
+    """Test whether SelectKBest actually selects k features in case of ties.
+
+    Prior to 0.11, SelectKBest would return more features than requested.
+    """
+    X = [[1, 0, 0], [0, 1, 1]]
+    y = [0, 1]
+
+    X1 = SelectKBest(chi2, k=1).fit_transform(X, y)
+    assert_equal(X1.shape[1], 1)
+
+    X2 = SelectKBest(chi2, k=2).fit_transform(X, y)
+    assert_equal(X2.shape[1], 2)
