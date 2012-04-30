@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import array2d, safe_asarray, deprecated, as_float_array
+from ..utils import array2d, atleast2d_or_csr, deprecated, as_float_array
 from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
@@ -145,7 +145,7 @@ def chi2(X, y):
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = safe_asarray(X)
+    X = atleast2d_or_csr(X)
     Y = LabelBinarizer().fit_transform(y)
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
@@ -266,7 +266,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         Transform a new matrix using the selected features
         """
-        return safe_asarray(X)[:, self.get_support(indices=issparse(X))]
+        return atleast2d_or_csr(X)[:, self.get_support(indices=issparse(X))]
 
     def inverse_transform(self, X):
         """
