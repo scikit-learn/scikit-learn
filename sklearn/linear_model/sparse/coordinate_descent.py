@@ -40,7 +40,7 @@ class ElasticNet(LinearModel):
     while alpha corresponds to the lambda parameter in glmnet.
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
-                 normalize=False, max_iter=1000, tol=1e-4):
+                 normalize=False, max_iter=1000, tol=1e-4, positive = False):
         if fit_intercept:
             raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
@@ -50,6 +50,7 @@ class ElasticNet(LinearModel):
         self.intercept_ = 0.0
         self.max_iter = max_iter
         self.tol = tol
+        self.positive = positive
         self._set_coef(None)
 
     def _set_coef(self, coef_):
@@ -89,7 +90,7 @@ class ElasticNet(LinearModel):
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
                     self.coef_, alpha, beta, X_data, X.indices, X.indptr, y,
-                    self.max_iter, self.tol)
+                    self.max_iter, self.tol, self.positive)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
@@ -136,7 +137,7 @@ class Lasso(ElasticNet):
 
     """
     def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
-                 max_iter=1000, tol=1e-4):
+                 max_iter=1000, tol=1e-4, positive = False):
         super(Lasso, self).__init__(
             alpha=alpha, rho=1.0, fit_intercept=fit_intercept,
-            normalize=normalize, max_iter=max_iter, tol=tol)
+            normalize=normalize, max_iter=max_iter, tol=tol, positive = positive)

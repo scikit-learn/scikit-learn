@@ -38,7 +38,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[INTEGER, ndim=1] X_indices,
                             np.ndarray[INTEGER, ndim=1] X_indptr,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol):
+                            int max_iter, double tol, bint positive = False):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -103,8 +103,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                 tmp += R[X_indices[jj]] * X_data[jj]
 
-            w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                    / (norm_cols_X[ii] + beta)
+            if positive and tmp < 0.0 :
+                w[ii] = 0.0
+            else :
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                        / (norm_cols_X[ii] + beta)
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
@@ -130,7 +133,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
 
-            dual_norm_XtA = linalg.norm(X_T_R - beta * w, np.inf)
+            XtA = X_T_R - beta * w
+            if positive:
+                dual_norm_XtA = np.max(XtA)
+            else:
+                dual_norm_XtA = linalg.norm(XtA, np.inf)
+
             # TODO: use squared L2 norm directly
             R_norm = linalg.norm(R)
             w_norm = linalg.norm(w, 2)
