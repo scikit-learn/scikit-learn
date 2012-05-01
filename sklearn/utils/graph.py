@@ -110,35 +110,51 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
     return lap
 
 
-def _graph_laplacian_dense(graph, normed=False, return_diag=False):
+def _graph_laplacian_dense(graph, normalize=None):
     n_nodes = graph.shape[0]
-    lap = -graph.copy()
-    lap.flat[::n_nodes + 1] = 0
-    w = -lap.sum(axis=0)
-    if normed:
-        w = np.sqrt(w)
-        w_zeros = w == 0
-        w[w_zeros] = 1
-        lap /= w
-        lap /= w[:, np.newaxis]
-        lap.flat[::n_nodes + 1] = 1 - w_zeros
-    else:
-        lap.flat[::n_nodes + 1] = w
-    if return_diag:
-        return lap, w
-    return lap
+    L = -graph.copy()
+    d = -lap.sum(axis=0)  # Compute the degrees of each node
+    L.flat[::n_nodes + 1] += d
+    if normalize == 'sym':
+        Dinv = np.diag(1/d)
+        L = np.dot(np.sqrt(Dinv), np.dot(L, np.sqrt(Dinv)))
+    elif normalize == 'rw':
+        Dinv = np.diag(1/d)
+        L = np.dot(Dinv, L)
+    elif not normalize is None:
+        raise ValueError('normalize must be one of None, "sym", "rw"')
+    return L
 
 
-def graph_laplacian(graph, normed=False, return_diag=False):
+def graph_laplacian(graph, normalize=None):
     """ Return the Laplacian of the given graph.
+
+    Parameters
+    ----------
+    graph: [n, n]
+        sparse or dense array representing a similarity matrix (symmetric,
+        s_ij >=0)
+    normalize: (None, 'sym', 'rw')
+        return the normalized graph Laplacian
+        None: $L = D - S$
+        'sym': $L_{sym} = D^{-1/2}S*D^{-1/2}$
+        'rw': $L_{rw} = D^{-1}*S$
+
+    Returns
+    -------
+    laplacian: [n, n]
+        Laplacian of the input similarity matrix
+
+    Reference
+    ---------
+    .. [1]: Von Luxberg (2007). Stat Comput (2007) 17: 395–416
+           http://dx.doi.org/10.1007/s11222-007-9033-z
     """
-    if normed and (np.issubdtype(graph.dtype, np.int)
-                    or np.issubdtype(graph.dtype, np.uint)):
+    if normalize is None and (np.issubdtype(graph.dtype, np.int)
+                              or np.issubdtype(graph.dtype, np.uint)):
         graph = graph.astype(np.float)
     if sparse.isspmatrix(graph):
-        return _graph_laplacian_sparse(graph, normed=normed,
-                                       return_diag=return_diag)
+        return _graph_laplacian_sparse(graph, normalize=normalize)
     else:
         # We have a numpy array
-        return _graph_laplacian_dense(graph, normed=normed,
-                                       return_diag=return_diag)
+        return _graph_laplacian_dense(graph, normalize=normalize)
