@@ -53,6 +53,8 @@ from scipy.sparse import identity, isspmatrix, isspmatrix_csr
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.sputils import isdense
 from scipy.sparse.linalg import gmres, splu
+import scipy
+from distutils.version import StrictVersion
 
 
 _type_conv = {'f': 's', 'd': 'd', 'F': 'c', 'D': 'z'}
@@ -1598,17 +1600,7 @@ def _svds(A, k=6, ncv=None, tol=0):
     return u, s, vh
 
 # check if backport is actually needed:
-try:
-    from scipy.sparse.linalg import eigs
-except ImportError:
-    eigs = _eigs
-
-try:
-    from scipy.sparse.linalg import eigsh
-except ImportError:
-    eigsh = _eigsh
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    svds = _svds
+if scipy.version.version >= StrictVersion('0.10'):
+    from scipy.sparse.linalg import eigs, eigsh, svds
+else:
+    eigs, eigsh, svds = _eigs, _eigsh, _svds
