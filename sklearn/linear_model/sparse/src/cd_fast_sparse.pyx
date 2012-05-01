@@ -38,7 +38,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[INTEGER, ndim=1] X_indices,
                             np.ndarray[INTEGER, ndim=1] X_indptr,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bint positive = False):
+                            int max_iter, double tol, bint positive=False):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
