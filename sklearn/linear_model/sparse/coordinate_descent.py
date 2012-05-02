@@ -114,7 +114,7 @@ class ElasticNet(LinearModel):
                     self.coef_, alpha, beta, X_data, X.indices, X.indptr, y, X_mean/X_std,
                     self.max_iter, self.tol, self.positive)
 
-        # update self.coef and self.sparse_coef_ consistently
+        # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
         self._set_intercept(X_mean,y_mean,X_std)
 
