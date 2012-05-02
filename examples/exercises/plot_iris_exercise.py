@@ -18,7 +18,7 @@ X = iris.data
 y = iris.target
 
 X = X[y != 0, :2]
-y = y[y != 0, :2]
+y = y[y != 0]
 
 n_sample = len(X)
 
@@ -31,8 +31,6 @@ X_train = X[:.9 * n_sample]
 y_train = y[:.9 * n_sample]
 X_test = X[.9 * n_sample:]
 y_test = y[.9 * n_sample:]
-
-h = .02  # step size in the mesh
 
 # fit the model
 for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
@@ -51,8 +49,6 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
     pl.axis('tight')
     x_min = X[:, 0].min()
     x_max = X[:, 0].max()
-    y_min = X[:, 1].min()
-    y_max = X[:, 1].max()
     y_min = X[:, 1].min()
     y_max = X[:, 1].max()
 
