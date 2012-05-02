@@ -16,7 +16,7 @@ Supervised learning: predicting an output variable from high-dimensional observa
    All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_ 
    in the `scikit-learn` implement a `fit(X, y)`
    method to fit the model, and a `predict(X)` method that, given
-   unlabeled observations `X`, returns predicts the corresponding labels
+   unlabeled observations `X`, returns the predicted labels
    `y`.
 
 .. topic:: Vocabulary: classification and regression
@@ -145,7 +145,7 @@ Linear model: from regression to sparsity
         >>> diabetes_y_train = diabetes.target[:-20]
         >>> diabetes_y_test  = diabetes.target[-20:]
     
-    The task at hand is to predict disease prediction from physiological
+    The task at hand is to predict disease progression from physiological
     variables. 
 
 Linear regression
@@ -217,7 +217,7 @@ induces high variance:
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(X, y)
+    ...    regr.fit(this_X, y)
     ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
     ...    pl.scatter(this_X, y, s=3)  # doctest: +SKIP
 
@@ -318,14 +318,12 @@ application of Occam's razor: `prefer simpler models`.
 
 :: 
 
-    >>> regr = linear_model.Lasso(alpha=.1)
-    >>> print [regr.set_params(alpha=alpha
+    >>> regr = linear_model.Lasso()
+    >>> scores = [regr.set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train
     ...             ).score(diabetes_X_test, diabetes_y_test) 
-    ...        for alpha in alphas] # doctest: +ELLIPSIS
-    [0.5851191069162..., 0.5852471364906..., 0.5857189539179..., 0.5873009485452..., 0.5887622418309..., 0.582845002968...]
-    
-    >>> best_alpha = alphas[4]
+    ...        for alpha in alphas]
+    >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
@@ -389,7 +387,8 @@ This is known as :class:`LogisticRegression`.
 .. topic:: Shrinkage and sparsity with logistic regression
 
    The `C` parameter controls the amount of regularization in the
-   :class:`LogisticRegression` object, the bigger `C`, the less regularization.
+   :class:`LogisticRegression` object: a large value for `C` results in
+   less regularization.
    `penalty="l2"` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while 
    `penalty="l1"` gives :ref:`sparsity`.
 
@@ -415,11 +414,11 @@ Linear SVMs
 
 :ref:`svm` belong to the discrimant model family: they try to find a combination of 
 samples to build a plane maximizing the margin between the two classes.
-Regularization is set by the `C` parameter: the small the choice of `C`,
-means a stronger regularization, which means the margin will be caluculated using many,
-to all the observations around the separation line; a larger choice of `C` 
-will thus have the margins computed on the observations that are close to 
-the separating line.
+Regularization is set by the `C` parameter: a small value for `C` means the margin
+is calculated using many or all of the observations around the separating line
+(more regularization);
+a large value for `C` means the margin is calculated on observations close to
+the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
