@@ -149,7 +149,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0,
+    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, learning_rate='optimal', loss='hinge',
             n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
             shuffle=False, verbose=0, warm_start=False)
@@ -162,14 +162,16 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     """
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
-                eta0=0.0, power_t=0.5, class_weight=None, warm_start=False):
+                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=0.1, n_jobs=1, seed=0,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False):
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                             alpha=alpha, rho=rho,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
-                                            verbose=verbose, seed=seed,
+                                            verbose=verbose, epsilon=epsilon,
+                                            seed=seed,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
                                             warm_start=warm_start)
@@ -189,6 +191,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             "perceptron": Hinge(0.0),
             "log": Log(),
             "modified_huber": ModifiedHuber(),
+            "squared_loss": SquaredLoss(),
+            "huber": Huber(self.epsilon),
         }
         try:
             self.loss_function = loss_functions[loss]

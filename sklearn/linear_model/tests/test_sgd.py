@@ -483,6 +483,17 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_regression_losses(self):
+        clf = self.factory(alpha=0.01, loss="huber")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
+        clf = self.factory(alpha=0.01, learning_rate="constant", eta0=0.01,
+                           loss="squared_loss")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
