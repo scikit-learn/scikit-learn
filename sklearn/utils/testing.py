@@ -22,6 +22,11 @@ except ImportError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 
+def assert_lower(a, b):
+    message = "%r is not lower than %r" % (a, b)
+    assert a < b, message
+
+
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set in the cache_path.
 
