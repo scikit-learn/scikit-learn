@@ -144,10 +144,22 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict(Xt)
 
     def predict_proba(self, X):
+        """Applies transforms to the data, and the predict_proba method of the
+        final estimator. Valid only if the final estimator implements
+        predict_proba."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
+
+    def decision_function(self, X):
+        """Applies transforms to the data, and the decision_function method of
+        the final estimator. Valid only if the final estimator implements
+        decision_function."""
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].decision_function(Xt)
 
     def predict_log_proba(self, X):
         Xt = X

@@ -157,6 +157,7 @@ def test_pipeline_methods_randomized_pca_svm():
     pipe.predict(X)
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
+    pipe.decision_function(X)
     pipe.score(X, y)
 
 
@@ -173,4 +174,5 @@ def test_pipeline_methods_scaler_svm():
     pipe.predict(X)
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
+    pipe.decision_function(X)
     pipe.score(X, y)
