@@ -484,6 +484,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         self._test_partial_fit_equal_fit("invscaling")
 
     def test_regression_losses(self):
+        clf = self.factory(alpha=0.01, learning_rate="constant",
+                           eta0=0.1, loss="epsilon_insensitive")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
         clf = self.factory(alpha=0.01, loss="huber")
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
@@ -554,6 +559,32 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
             + np.random.randn(n_samples, 1).ravel()
 
         clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_true(score > 0.5)
+
+    def test_sgd_epsilon_insensitive(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
+                           alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_true(score > 0.99)
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() \
+            + np.random.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
+                           alpha=0.1, n_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)

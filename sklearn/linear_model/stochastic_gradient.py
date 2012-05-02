@@ -21,7 +21,12 @@ from ..utils import deprecated
 
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
+from .sgd_fast import Hinge
+from .sgd_fast import Log
+from .sgd_fast import ModifiedHuber
+from .sgd_fast import SquaredLoss
+from .sgd_fast import Huber
+from .sgd_fast import EpsilonInsensitive
 
 
 def _make_dataset(X, y_i, sample_weight):
@@ -193,6 +198,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             "modified_huber": ModifiedHuber(),
             "squared_loss": SquaredLoss(),
             "huber": Huber(self.epsilon),
+            "epsilon_insensitive": EpsilonInsensitive(self.epsilon),
         }
         try:
             self.loss_function = loss_functions[loss]
@@ -630,6 +636,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         loss_functions = {
             "squared_loss": SquaredLoss(),
             "huber": Huber(self.epsilon),
+            "epsilon_insensitive": EpsilonInsensitive(self.epsilon),
         }
         try:
             self.loss_function = loss_functions[loss]
