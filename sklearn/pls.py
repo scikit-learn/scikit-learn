@@ -608,8 +608,9 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSCanonical(copy=True, algorithm='nipals', max_iter=500,
-           n_components=2, scale=True, tol=1e-06)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
+                 scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
