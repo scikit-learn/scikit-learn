@@ -551,7 +551,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     verbose: integer, optional
         The verbosity level.
 
-    p : float
+    epsilon: float
         Epsilon in the epsilon-insensitive huber loss function;
         only if `loss=='huber'`.
 
@@ -589,8 +589,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
-           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
+    SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
+           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=None,
            penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
            verbose=0, warm_start=False)
 
@@ -601,14 +601,22 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, p=0.1, seed=0, learning_rate="invscaling",
+                 verbose=0, epsilon=0.1, p=None, seed=0, learning_rate="invscaling",
                  eta0=0.01, power_t=0.25, warm_start=False):
-        self.p = float(p)
+
+        if p is not None:
+            warnings.warn("Using 'p' is deprecated and will be removed in "
+                          "scikit-learn 0.12, use epsilon instead.",
+                           DeprecationWarning)
+            self.p = float(p)
+            epsilon = p
+
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                            alpha=alpha, rho=rho,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
-                                           verbose=verbose, seed=seed,
+                                           verbose=verbose, epsilon=epsilon,
+                                           seed=seed,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
@@ -617,7 +625,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         """Get concrete LossFunction"""
         loss_functions = {
             "squared_loss": SquaredLoss(),
-            "huber": Huber(self.p),
+            "huber": Huber(self.epsilon),
         }
         try:
             self.loss_function = loss_functions[loss]

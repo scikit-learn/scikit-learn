@@ -515,9 +515,9 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         clf = self.factory(loss='squared_loss')
         assert_true(isinstance(clf.loss_function, linear_model.SquaredLoss))
 
-        clf = self.factory(loss='huber', p=0.5)
+        clf = self.factory(loss='huber', epsilon=0.5)
         assert_true(isinstance(clf.loss_function, linear_model.Huber))
-        assert_equal(clf.p, 0.5)
+        assert_equal(clf.epsilon, 0.5)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -556,7 +556,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
-        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, n_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -566,7 +566,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         y = 0.5 * X.ravel() \
             + np.random.randn(n_samples, 1).ravel()
 
-        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, n_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
