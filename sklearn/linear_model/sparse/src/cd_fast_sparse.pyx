@@ -46,7 +46,7 @@ def sparse_std(unsigned int n_samples,
     cdef double diff
     cdef double X_std_ii
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_std = np.zeros(n_features,np.float64)
+    cdef np.ndarray[DOUBLE, ndim=1] X_std = np.zeros(n_features,DOUBLE)
 
     if X_mean is None :
         X_mean = np.zeros(n_features,np.float64)
