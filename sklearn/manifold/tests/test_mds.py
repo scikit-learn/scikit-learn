@@ -26,7 +26,7 @@ def test_smacof():
                   [.451, .252],
                   [.016, -.238],
                   [-.200, .524]])
-    X, _ = mds.smacof(sim, init=Z, out_dim=2, max_iter=1)
+    X, _ = mds.smacof(sim, init=Z, n_components=2, max_iter=1)
     X_true = np.array([[-1.415, -2.471],
                        [1.633, 1.107],
                        [.249, -.067],
