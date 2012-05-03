@@ -13,8 +13,10 @@ cdef extern from "math.h":
     double fabs(double f)
     double sqrt(double f)
 
+
 cdef inline double fmax(double x, double y):
-    if x > y: return x
+    if x > y:
+        return x
     return y
 
 cdef inline double fsign(double f):
@@ -28,10 +30,10 @@ cdef inline double fsign(double f):
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-
 def sparse_std(unsigned int n_samples,
                unsigned int n_features,
                np.ndarray[DOUBLE, ndim=1] X_data,
@@ -46,29 +48,30 @@ def sparse_std(unsigned int n_samples,
     cdef double diff
     cdef double X_std_ii
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_std = np.zeros(n_features,DOUBLE)
+    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, DOUBLE)
 
-    if X_mean is None :
-        X_mean = np.zeros(n_features,np.float64)
-        
+    if X_mean is None:
+        X_mean = np.zeros(n_features, np.float64)
+
         for ii in xrange(n_features):
             # Computes the mean
             X_sum_ii = 0.0
             for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                 X_sum_ii += X_data[jj]
             X_mean[ii] = X_sum_ii / n_samples
-                    
+
     for ii in xrange(n_features):
         X_mean_ii = X_mean[ii]
         X_sum_ii = 0.0
         nnz_ii = 0
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
             diff = X_data[jj] - X_mean_ii
-            X_sum_ii += diff*diff
+            X_sum_ii += diff * diff
             nnz_ii += 1
 
         X_std[ii] = (X_sum_ii + (n_samples - nnz_ii) * X_mean_ii * X_mean_ii)
     return np.sqrt(X_std)
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -83,6 +86,7 @@ def sparse_normalize(np.ndarray[DOUBLE, ndim=1] X_data,
         # Computes the mean
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
             X_data[jj] /= X_std[ii]
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -111,13 +115,15 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     # compute norms of the columns of X
     cdef unsigned int ii
-    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = np.zeros(n_features,
+    cdef np.ndarray[DOUBLE, ndim = 1] norm_cols_X = np.zeros(n_features,
                                                            np.float64)
     for ii in xrange(n_features):
-        norm_cols_X[ii] = ((X_data[X_indptr[ii]:X_indptr[ii + 1]] - X_mean[ii])** 2).sum() + (n_samples - X_indptr[ii+1]+X_indptr[ii]) * X_mean[ii]**2
+        norm_cols_X[ii] = ((X_data[X_indptr[ii]:X_indptr[ii + 1]] - \
+        X_mean[ii]) ** 2).sum() + \
+        (n_samples - X_indptr[ii + 1] + X_indptr[ii]) * X_mean[ii] ** 2
 
     # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=1] R
+    cdef np.ndarray[DOUBLE, ndim = 1] R
 
     cdef double tmp
     cdef double w_ii
@@ -128,7 +134,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int jj
     cdef unsigned int n_iter
-    
+
     # initialize the residuals
     R = y.copy()
 
@@ -145,12 +151,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         w_max = 0.0
         d_w_max = 0.0
 
-        for ii in xrange(n_features): # Loop over coordinates
-        
+        for ii in xrange(n_features):  # Loop over coordinates
+
             if norm_cols_X[ii] == 0.0:
                 continue
 
-            w_ii = w[ii] # Store previous value
+            w_ii = w[ii]  # Store previous value
 
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
@@ -164,9 +170,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 tmp += R[X_indices[jj]] * X_data[jj]
             tmp -= R.sum() * X_mean[ii]
 
-            if positive and tmp < 0.0 :
+            if positive and tmp < 0.0:
                 w[ii] = 0.0
-            else :
+            else:
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                         / (norm_cols_X[ii] + beta)
 
@@ -174,7 +180,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # R -=  w[ii] * X[:,ii] # Update residual
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
-                R += X_mean[ii]*w[ii]
+                R += X_mean[ii] * w[ii]
 
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
@@ -206,7 +212,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             R_norm = linalg.norm(R)
             w_norm = linalg.norm(w, 2)
             if (dual_norm_XtA > alpha):
-                const =  alpha / dual_norm_XtA
+                const = alpha / dual_norm_XtA
                 A_norm = R_norm * const
                 gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
             else:
@@ -221,4 +227,3 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 break
 
     return w, gap, tol
-
