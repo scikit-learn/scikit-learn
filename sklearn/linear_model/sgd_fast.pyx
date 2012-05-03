@@ -240,8 +240,7 @@ cdef class Huber(Regression):
 cdef class EpsilonInsensitive(Regression):
     """Epsilon-Insensitive loss (used by SVR).
 
-    loss = 0                  if |p - y| < epsilon
-           |p - y| - epsilon  otherwise
+    loss = max(0, |y - p| - epsilon)
     """
 
     cdef double epsilon
@@ -254,9 +253,9 @@ cdef class EpsilonInsensitive(Regression):
         return ret if ret > 0 else 0
 
     cpdef double dloss(self, double p, double y):
-        if p - y < self.epsilon:
+        if y - p > self.epsilon:
             return -1
-        elif y - p < self.epsilon:
+        elif p - y > self.epsilon:
             return 1
         else:
             return 0
