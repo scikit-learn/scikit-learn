@@ -325,6 +325,17 @@ class MDS(BaseEstimator):
     eps: float, optional, default: 1e-6
         relative tolerance w.r.t stress to declare converge
 
+    n_jobs: int, optional, default: 1
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
+
     Attributes
     ----------
     positions_: array-like, shape [n_components, n_samples]
