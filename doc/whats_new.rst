@@ -180,6 +180,7 @@ API changes summary
    - Argument ``p`` added to classes in :ref:`neighbors` to specify an
      arbitrary Minkowski metric for nearest neighbors searches.
 
+   - Argument ``p`` in :class:`SGDRegressor` was renamed to ``epsilon``.
 
 .. _changes_0_10:
 
