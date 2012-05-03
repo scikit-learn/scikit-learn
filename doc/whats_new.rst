@@ -17,8 +17,9 @@ Changelog
      datasets `seq_dataset` and weight vectors `weight_vector`
      by `Peter Prettenhofer`_.
 
-   - Added `partial_fit` (support for online/minibatch learning) and
-     warm_start to the :ref:`sgd` module by `Mathieu Blondel`_.
+   - Added `partial_fit` (support for online/minibatch learning),
+     warm_start, `Perceptron` and the `epsilon-insensitive loss` to
+     the :ref:`sgd` module by `Mathieu Blondel`_.
 
    - Dense and sparse implementations of :ref:`svm` classes and
      :class:`linear_model.LogisticRegression` merged by `Lars Buitinck`_.
@@ -82,7 +83,7 @@ Changelog
       ``shrink_threshold`` parameter, which implements shrunken centroid
       classification, by `Robert Layton`_.
 
-   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for 
+   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
      nearest neighbors searches. The metric can be specified by argument ``p``.
 
 API changes summary
@@ -90,7 +91,7 @@ API changes summary
 
    - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
      instead.
-  
+
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -176,7 +177,7 @@ API changes summary
      ``n_train`` are deprecated and renamed to ``test_size`` and
      ``train_size`` and can accept both ``float`` and ``int``.
 
-   - Argument ``p`` added to classes in :ref:`neighbors` to specify an 
+   - Argument ``p`` added to classes in :ref:`neighbors` to specify an
      arbitrary Minkowski metric for nearest neighbors searches.
 
 
