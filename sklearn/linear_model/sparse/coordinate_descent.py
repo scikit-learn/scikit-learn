@@ -10,22 +10,26 @@ import numpy as np
 import scipy.sparse as sp
 
 from ...utils.extmath import safe_sparse_dot
+from ...utils.sparsefuncs import mean_variance_axis0
 from ..base import LinearModel
 from . import cd_fast_sparse
 
+
 def center_data(X, y, fit_intercept, normalize=False):
     """
-    Compute informations needed to center data to have mean zero along 
+    Compute informations needed to center data to have mean zero along
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X_data = np.array(X.data,np.float64)
+
     if fit_intercept:
-        X_mean = np.ravel(X.mean(axis=0))
+        X = sp.csr_matrix(X)
+        X_mean, X_std = mean_variance_axis0(X)
         if normalize:
-            X_std = cd_fast_sparse.sparse_std(X.shape[0],X.shape[1],X_data,X.indices,X.indptr,X_mean)
+            X_std = X_std / np.sqrt(X.shape[0] - 1)  # in base.center_data
+                  # data are normalized to unit norm not unit variance
             X_std[X_std == 0] = 1
-            cd_fast_sparse.sparse_normalize(X_data,X.indices,X.indptr,X_std)
+            inplace_csr_column_scale(X)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)
@@ -34,7 +38,11 @@ def center_data(X, y, fit_intercept, normalize=False):
         X_mean = np.zeros(X.shape[1])
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
+
+    X = sp.csc_matrix(X)
+    X_data = np.array(X.data, np.float64)
     return X_data, y, X_mean, y_mean, X_std
+
 
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
@@ -63,8 +71,6 @@ class ElasticNet(LinearModel):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
                  normalize=False, max_iter=1000, tol=1e-4, positive=False):
-        #~ if fit_intercept:
-            #~ raise NotImplementedError("fit_intercept=True is not implemented")
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
@@ -106,17 +112,20 @@ class ElasticNet(LinearModel):
 
         alpha = self.alpha * self.rho * n_samples
         beta = self.alpha * (1.0 - self.rho) * n_samples
-        X_data,y,X_mean,y_mean,X_std = center_data(X,y,self.fit_intercept,self.normalize)
+        X_data, y, X_mean, y_mean, X_std = center_data(X, y,
+                                                       self.fit_intercept,
+                                                       self.normalize)
 
         # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
-                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, y, X_mean/X_std,
+                    self.coef_, alpha, beta, X_data, X.indices,
+                    X.indptr, y, X_mean / X_std,
                     self.max_iter, self.tol, self.positive)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
-        self._set_intercept(X_mean,y_mean,X_std)
+        self._set_intercept(X_mean, y_mean, X_std)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
@@ -163,4 +172,5 @@ class Lasso(ElasticNet):
                  max_iter=1000, tol=1e-4, positive=False):
         super(Lasso, self).__init__(
             alpha=alpha, rho=1.0, fit_intercept=fit_intercept,
-            normalize=normalize, max_iter=max_iter, tol=tol, positive = positive)
+            normalize=normalize, max_iter=max_iter,
+            tol=tol, positive=positive)
