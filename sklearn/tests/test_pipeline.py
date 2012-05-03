@@ -1,6 +1,7 @@
 """
 Test the pipeline module.
 """
+import numpy as np
 
 from nose.tools import assert_raises, assert_equal, assert_false, assert_true
 
@@ -144,33 +145,32 @@ def test_pipeline_methods_pca_svm():
     pipe.score(X, y)
 
 
-def test_pipeline_methods_randomized_pca_svm():
-    """Test the various methods of the pipeline (randomized pca + svm)."""
+def test_pipeline_methods_preprocessing_svm():
+    """Test the various methods of the pipeline (preprocessing + svm)."""
     iris = load_iris()
     X = iris.data
     y = iris.target
-    # Test with PCA + SVC
-    clf = SVC(probability=True)
-    pca = RandomizedPCA(n_components=2, whiten=True)
-    pipe = Pipeline([('pca', pca), ('svc', clf)])
-    pipe.fit(X, y)
-    pipe.predict(X)
-    pipe.predict_proba(X)
-    pipe.predict_log_proba(X)
-    pipe.score(X, y)
-
-
-def test_pipeline_methods_scaler_svm():
-    """Test the various methods of the pipeline (scaler + svm)."""
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
-    # Test with Scaler + SVC
-    clf = SVC(probability=True)
+    n_samples = X.shape[0]
+    n_classes = len(np.unique(y))
     scaler = Scaler()
-    pipe = Pipeline([('scaler', scaler), ('svc', clf)])
-    pipe.fit(X, y)
-    pipe.predict(X)
-    pipe.predict_proba(X)
-    pipe.predict_log_proba(X)
-    pipe.score(X, y)
+    pca = RandomizedPCA(n_components=2, whiten=True)
+    clf = SVC(probability=True)
+
+    for preprocessing in [scaler, pca]:
+        pipe = Pipeline([('scaler', scaler), ('svc', clf)])
+        pipe.fit(X, y)
+
+        # check shapes of various prediction functions
+        predict = pipe.predict(X)
+        assert_equal(predict.shape, (n_samples,))
+
+        proba = pipe.predict_proba(X)
+        assert_equal(proba.shape, (n_samples, n_classes))
+
+        log_proba = pipe.predict_log_proba(X)
+        assert_equal(log_proba.shape, (n_samples, n_classes))
+
+        decision_function = pipe.decision_function(X)
+        assert_equal(decision_function.shape, (n_samples, n_classes))
+
+        pipe.score(X, y)
