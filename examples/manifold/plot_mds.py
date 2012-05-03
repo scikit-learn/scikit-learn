@@ -32,17 +32,17 @@ noise += noise.T
 noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
 similarities += noise
 
-mds = manifold.MDS(out_dim=2, max_iter=3000, n_jobs=2,
+mds = manifold.MDS(n_components=2, max_iter=3000, n_jobs=2,
                    eps=1e-9)
 pos = mds.fit(similarities).positions_
 
-nmds = manifold.MDS(out_dim=2, metric=False,
+nmds = manifold.MDS(n_components=2, metric=False,
                     max_iter=3000, n_jobs=2,
                     eps=1e-9)
 npos = mds.fit(similarities).positions_
 
 # Rotate the data
-clf = PCA(n_components=3)
+clf = PCA(n_components=2)
 X_true = clf.fit_transform(X_true)
 
 pos = clf.fit_transform(pos)

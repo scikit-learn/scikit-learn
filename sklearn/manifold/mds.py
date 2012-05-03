@@ -70,7 +70,7 @@ def pool_adjacent_violators(distances, similarities):
     return distances
 
 
-def _smacof_single(similarities, metric=True, out_dim=2, init=None,
+def _smacof_single(similarities, metric=True, n_components=2, init=None,
            max_iter=300, verbose=0, eps=1e-3, random_state=None):
     """
     Computes multidimensional scaling using SMACOF algorithm
@@ -83,9 +83,9 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
     metric: boolean, optional, default: True
         compute metric or nonmetric SMACOF algorithm
 
-    out_dim: int, optional, default: 2
+    n_components: int, optional, default: 2
         number of dimension in which to immerse the similarities
-        overridden if initial array is provided.
+        overwritten if initial array is provided.
 
     init: {None or ndarray}
         if None, randomly chooses the initial configuration
@@ -107,8 +107,8 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
 
     Returns
     -------
-    X: ndarray (n_samples, out_dim), float
-               coordinates of the n_samples points in a out_dim-space
+    X: ndarray (n_samples, n_components), float
+               coordinates of the n_samples points in a n_components-space
 
     stress_: float
         The final value of the stress (sum of squared distance of the
@@ -129,14 +129,14 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
-        X = random_state.rand(n_samples * out_dim)
-        X = X.reshape((n_samples, out_dim))
+        X = random_state.rand(n_samples * n_components)
+        X = X.reshape((n_samples, n_components))
     else:
         # overrides the parameter p
-        out_dim = init.shape[1]
+        n_components = init.shape[1]
         if n_samples != init.shape[0]:
             raise ValueError("init matrix should be of shape (%d, %d)" % \
-                                 (n_samples, out_dim))
+                                 (n_samples, n_components))
         X = init
 
     old_stress = None
@@ -182,10 +182,26 @@ def _smacof_single(similarities, metric=True, out_dim=2, init=None,
     return X, stress
 
 
-def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
-           max_iter=300, verbose=0, eps=1e-3, random_state=None):
+def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
+           n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None):
     """
     Computes multidimensional scaling using SMACOF algorithm
+
+    The SMACOF algorithm is a multidimensional scaling algorithm: it minimizes
+    a objective function, the *stress*, using a majorization technique. The
+    Stress Majorization, also known as the Guttman Transform, guarantees a
+    monotone convergence of Stress, and is more powerful than traditional
+    technics such as gradient descent.
+
+    The SMACOF algorithm for metric MDS can summarized by the following steps:
+
+    1. Set an initial start configuration, randomly or not.
+    2. Compute the stress
+    3. Compute the Guttman Transform
+    4. Iterate 2 and 3 until convergence.
+
+    The nonmetric algorithm adds a monotonic regression steps before computing
+    the stress.
 
     Parameters
     ----------
@@ -195,11 +211,11 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
     metric: boolean, optional, default: True
         compute metric or nonmetric SMACOF algorithm
 
-    out_dim: int, optional, default: 2
+    n_components: int, optional, default: 2
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
-    init: {None or ndarray of shape (n_samples, out_dim)}
+    init: {None or ndarray of shape (n_samples, n_components)}
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
 
@@ -207,6 +223,17 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
         Number of time the smacof algorithm will be run with different
         initialisation. The final results will be the best output of the
         n_init consecutive runs in terms of stress.
+
+    n_jobs: int, optional, default: 1
+
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
 
     max_iter: int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run
@@ -224,8 +251,8 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
 
     Returns
     -------
-    X: ndarray (n_samples,out_dim)
-        Coordinates of the n_samples points in a out_dim-space
+    X: ndarray (n_samples,n_components)
+        Coordinates of the n_samples points in a n_components-space
 
     stress: float
         The final value of the stress (sum of squared distance of the
@@ -248,7 +275,7 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
     if n_jobs == 1:
         for it in range(n_init):
             pos, stress = _smacof_single(similarities, metric=metric,
-                                        out_dim=out_dim,
+                                        n_components=n_components,
                                         init=init, max_iter=max_iter,
                                         verbose=verbose, eps=eps,
                                         random_state=random_state)
@@ -259,7 +286,7 @@ def smacof(similarities, metric=True, out_dim=2, init=None, n_init=8, n_jobs=1,
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
             delayed(_smacof_single)(
-                        similarities, metric=metric, out_dim=out_dim,
+                        similarities, metric=metric, n_components=n_components,
                         init=init, max_iter=max_iter,
                         verbose=verbose, eps=eps,
                         random_state=seed)
@@ -280,7 +307,7 @@ class MDS(BaseEstimator):
     metric: boolean, optional, default: True
         compute metric or nonmetric SMACOF algorithm
 
-    out_dim: int, optional, default: 2
+    n_components: int, optional, default: 2
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
@@ -300,7 +327,7 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    positions_: array-like, shape [out_dim, n_samples]
+    positions_: array-like, shape [n_components, n_samples]
         Stores the position of the dataset in the embedding space
 
     stress_: float
@@ -320,9 +347,9 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
-    def __init__(self, out_dim=2, metric=True, n_init=8,
+    def __init__(self, n_components=2, metric=True, n_init=8,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1):
-        self.out_dim = out_dim
+        self.n_components = n_components
         self.metric = metric
         self.n_init = n_init
         self.max_iter = max_iter
@@ -344,7 +371,7 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array
         """
         self.positions_, self.stress_ = smacof(X, metric=self.metric,
-                                     out_dim=self.out_dim,
+                                     n_components=self.n_components,
                                      init=init,
                                      n_init=self.n_init,
                                      max_iter=self.max_iter,
