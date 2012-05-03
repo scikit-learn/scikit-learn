@@ -48,7 +48,7 @@ def sparse_std(unsigned int n_samples,
     cdef double diff
     cdef double X_std_ii
 
-    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, DOUBLE)
+    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, np.float64)
 
     if X_mean is None:
         X_mean = np.zeros(n_features, np.float64)
@@ -82,6 +82,9 @@ def sparse_normalize(np.ndarray[DOUBLE, ndim=1] X_data,
                     np.ndarray[DOUBLE, ndim=1] X_std):
 
     cdef unsigned int n_features = X_std.shape[0]
+    cdef unsigned int ii
+    cdef unsigned int jj
+
     for ii in xrange(n_features):
         # Computes the mean
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
