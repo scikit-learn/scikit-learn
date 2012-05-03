@@ -104,9 +104,9 @@ parameters if an example violates the margin constraint, which makes
 training very efficient.  Log loss, on the other hand, provides
 probability estimates.
 
-In the case of binary classification and `loss="log"` you get a
-probability estimate P(y=C|x) using `predict_proba`, where `C` is the
-largest class label::
+In the case of binary classification and `loss="log"` or
+`loss="modified_huber"` you get a probability estimate P(y=C|x) using
+`predict_proba`, where `C` is the largest class label::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
