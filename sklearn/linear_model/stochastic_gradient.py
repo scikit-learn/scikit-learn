@@ -427,11 +427,19 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         if len(self.classes_) != 2:
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
-        elif not isinstance(self.loss_function, Log):
-            raise NotImplementedError("predict_(log_)proba only supported when"
-                                      " loss='log' (%s given)" % self.loss)
 
-        return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+        if self.loss == "log":
+            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+        elif self.loss == "modified_huber":
+            ret = np.minimum(1, np.maximum(-1, self.decision_function(X)))
+            ret += 1
+            ret /= 2
+            return ret
+        else:
+            raise NotImplementedError("predict_(log_)proba only supported when"
+                                      " loss='log' or loss='modified_huber' "
+                                      "(%s given)" % self.loss)
+
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):

@@ -262,18 +262,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
     def test_sgd_proba(self):
-        """Check SGD.predict_proba for log loss only"""
+        """Check SGD.predict_proba"""
 
         # hinge loss does not allow for conditional prob estimate
         clf = self.factory(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
         assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
 
-        # log loss implements the logistic regression prob estimate
-        clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
-        p = clf.predict_proba([3, 2])
-        assert_true(p > 0.5)
-        p = clf.predict_proba([-1, -1])
-        assert_true(p < 0.5)
+        # the log and modified_huber losses can output "probability" estimates
+        for loss in ("log", "modified_huber"):
+            clf = self.factory(loss=loss, alpha=0.01, n_iter=10).fit(X, Y)
+            p = clf.predict_proba([3, 2])
+            assert_true(p > 0.5)
+            p = clf.predict_proba([-1, -1])
+            assert_true(p < 0.5)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
