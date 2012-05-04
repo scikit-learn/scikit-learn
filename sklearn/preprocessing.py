@@ -110,11 +110,11 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             X, axis, with_mean=with_mean, with_std=with_std)
         if copy:
             X = X.copy()
-        Xr = np.rollaxis(X, axis)
+        X = np.rollaxis(X, axis)
         if with_mean:
-            Xr -= mean_
+            X -= mean_
         if with_std:
-            Xr /= std_
+            X /= std_
     return X
 
 
