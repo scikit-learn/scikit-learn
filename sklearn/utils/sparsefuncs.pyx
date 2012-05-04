@@ -69,61 +69,6 @@ def mean_variance_axis0(X):
 
     return means, variances
 
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def csc_mean_variance_axis0(X):
-    """Compute mean and variance along axis 0 on a CSR matrix
-
-    Parameters
-    ----------
-    X: CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
-
-    Returns
-    -------
-
-    means: float array with shape (n_features,)
-        Feature-wise means
-
-    variances: float array with shape (n_features,)
-        Feature-wise variances
-
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef double diff
-
-    # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.asarray(X.mean(axis=0))[0]
-
-    # variances[j] contains the variance of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
-
-    # counts[j] contains the number of samples where feature j is non-zero
-    counts = np.zeros_like(means)
-
-    for i in xrange(n_features):
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            diff = X_data[j] - means[i]
-            variances[i] += diff * diff
-            counts[i] += 1
-
-    nz = n_samples - counts
-    variances += nz * means ** 2
-    variances /= n_samples
-
-    return means, variances
-    
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)

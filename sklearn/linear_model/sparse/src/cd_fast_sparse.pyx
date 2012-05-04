@@ -139,6 +139,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int jj
     cdef unsigned int n_iter
+    cdef bint center = (X_mean!=0).any()
 
     # initialize the residuals
     R = y.copy()
@@ -147,7 +148,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         # sparse X column / dense w dot product
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
             R[X_indices[jj]] -= X_data[jj] * w[ii]
-        R += X_mean[ii] * w[ii]
+        if center:
+            R += X_mean[ii] * w[ii]
 
     tol = tol * linalg.norm(y) ** 2
 
