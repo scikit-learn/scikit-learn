@@ -1023,6 +1023,9 @@ class MiniBatchKMeans(KMeans):
               tol=tol, n_init=n_init)
 
         self.max_no_improvement = max_no_improvement
+        if batch_size < k:
+            warnings.warn(
+                "batch_size is lower than the number of clusters")
         if chunk_size is not None:
             warnings.warn(
                 "chunk_size is deprecated in 0.10, use batch_size instead")
