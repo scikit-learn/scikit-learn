@@ -8,7 +8,6 @@ from nose.tools import assert_raises
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
-from sklearn.cross_validation import cross_val_score
 from sklearn.utils.testing import assert_lower
 
 
