@@ -10,6 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ...utils.extmath import safe_sparse_dot
+from ...utils.sparsefuncs import csc_mean_variance_axis0, inplace_csc_column_scale
 from ..base import LinearModel
 from . import cd_fast_sparse
 
@@ -22,14 +23,14 @@ def center_data(X, y, fit_intercept, normalize=False):
     """
     X_data = np.array(X.data, np.float64)
     if fit_intercept:
-        X_mean = np.ravel(X.mean(axis=0))
+        X = sp.csc_matrix(X,copy = True)
+        X_mean, X_std = csc_mean_variance_axis0(X)
         if normalize:
             X_std = cd_fast_sparse.sparse_std(
                 X.shape[0], X.shape[1],
                 X_data, X.indices, X.indptr, X_mean)
             X_std[X_std == 0] = 1
-            cd_fast_sparse.sparse_normalize(
-                        X_data, X.indices, X.indptr, X_std)
+            inplace_csc_column_scale(X)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)
@@ -38,6 +39,8 @@ def center_data(X, y, fit_intercept, normalize=False):
         X_mean = np.zeros(X.shape[1])
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
+
+    X_data = np.array(X.data, np.float64)
     return X_data, y, X_mean, y_mean, X_std
 
 
