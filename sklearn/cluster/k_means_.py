@@ -1074,9 +1074,9 @@ class MiniBatchKMeans(KMeans):
             init_size = 3 * self.batch_size
         if init_size > n_samples:
             init_size = n_samples
-        if init_size < k:
-            warnings.warn(
-                "init_size is lower than the number of clusters")
+        if init_size < self.k:
+            raise ValueError(
+                "init_size is smaller than the number of clusters.")
         self.init_size_ = init_size
 
         validation_indices = self.random_state.random_integers(
