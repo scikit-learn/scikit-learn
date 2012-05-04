@@ -3,7 +3,8 @@ import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
 
 from sklearn.datasets import make_classification
-from sklearn.utils.sparsefuncs import mean_variance_axis0, csc_mean_variance_axis0
+from sklearn.utils.sparsefuncs import mean_variance_axis0, \
+                                        csc_mean_variance_axis0
 
 
 def test_mean_variance_axis0():
