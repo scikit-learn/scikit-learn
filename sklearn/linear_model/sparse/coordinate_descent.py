@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ...utils.extmath import safe_sparse_dot
-from ...utils.sparsefuncs import mean_variance_axis0
+from ...utils.sparsefuncs import csc_mean_variance_axis0, inplace_csc_column_scale
 from ..base import LinearModel
 from . import cd_fast_sparse
 
@@ -23,13 +23,13 @@ def center_data(X, y, fit_intercept, normalize=False):
     """
 
     if fit_intercept:
-        X = sp.csr_matrix(X)
-        X_mean, X_std = mean_variance_axis0(X)
+        X = sp.csc_matrix(X,copy = True)
+        X_mean, X_std = csc_mean_variance_axis0(X)
         if normalize:
             X_std = X_std / np.sqrt(X.shape[0] - 1)  # in base.center_data
                   # data are normalized to unit norm not unit variance
             X_std[X_std == 0] = 1
-            inplace_csr_column_scale(X)
+            inplace_csc_column_scale(X)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)
@@ -39,7 +39,6 @@ def center_data(X, y, fit_intercept, normalize=False):
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
 
-    X = sp.csc_matrix(X)
     X_data = np.array(X.data, np.float64)
     return X_data, y, X_mean, y_mean, X_std
 
