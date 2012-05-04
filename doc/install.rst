@@ -188,6 +188,13 @@ by typing the following command::
 
     sudo port install py26-scikits-learn
 
+or::
+
+    sudo port install py27-scikits-learn
+
+depending on the version of Python you want to use.
+
+
 NetBSD
 ------
 
