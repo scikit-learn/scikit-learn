@@ -171,7 +171,7 @@ def inplace_csr_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def csc_mean_variance_axis0(X):
-    """Compute mean and variance along axis 0 on a CSR matrix
+    """Compute mean and variance along axis 0 on a CSC matrix
 
     Parameters
     ----------
