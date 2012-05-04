@@ -129,7 +129,7 @@ def test_nested_circles():
 
     # Project the circles data into the first 2 components of a RBF Kernel
     # PCA model.
-    # Not that the gamma value is data dependent. If this test breaks
+    # Note that the gamma value is data dependent. If this test breaks
     # and the gamma value has to be updated, the Kernel PCA example will
     # have to be updated too.
     kpca = KernelPCA(kernel="rbf", n_components=2,
