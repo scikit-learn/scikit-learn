@@ -132,8 +132,6 @@ class DBSCAN(BaseEstimator):
         must be square.
     random_state : numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
-    verbose : boolean, optional
-        The verbosity level
 
     Attributes
     ----------
@@ -160,13 +158,11 @@ class DBSCAN(BaseEstimator):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 verbose=False, random_state=None):
+            random_state=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
-        self.verbose = verbose
         self.random_state = check_random_state(random_state)
-        self.verbose = verbose
 
     def fit(self, X, **params):
         """Perform DBSCAN clustering from vector array or distance matrix.
