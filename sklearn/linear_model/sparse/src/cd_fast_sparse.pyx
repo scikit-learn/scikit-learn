@@ -133,6 +133,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_max
     cdef double w_max
     cdef double d_w_ii
+    cdef double X_mean_ii
+    cdef double R_sum
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef unsigned int jj
@@ -160,18 +162,26 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 continue
 
             w_ii = w[ii]  # Store previous value
-
+            X_mean_ii = X_mean[ii]
+            
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     R[X_indices[jj]] += X_data[jj] * w_ii
-                R -= X_mean[ii] * w[ii]
+                if center:
+                    for jj in xrange(n_samples):
+                        R[jj] -= X_mean_ii * w[ii]
 
             # tmp = (X[:,ii] * R).sum()
             tmp = 0.0
             for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                 tmp += R[X_indices[jj]] * X_data[jj]
-            tmp -= R.sum() * X_mean[ii]
+                
+            if center:
+                R_sum = 0.0
+                for jj in xrange(n_samples):
+                    R_sum += R[jj]
+                tmp -= R_sum * X_mean_ii
 
             if positive and tmp < 0.0:
                 w[ii] = 0.0
@@ -183,7 +193,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # R -=  w[ii] * X[:,ii] # Update residual
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
-                R += X_mean[ii] * w[ii]
+
+                if center:
+                    for jj in xrange(n_samples):
+                        R[jj] += X_mean_ii * w[ii]
 
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
