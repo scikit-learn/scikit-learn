@@ -23,7 +23,8 @@ def center_data(X, y, fit_intercept, normalize=False):
     """
     X_data = np.array(X.data, np.float64)
     if fit_intercept:
-        X = sp.csc_matrix(X,copy = True)
+        X = sp.csc_matrix(X,copy = normalize)  # copy if 'normalize' is 
+                      # True or X is not a csc matrix
         X_mean, X_std = csc_mean_variance_axis0(X)
         if normalize:
             X_std = cd_fast_sparse.sparse_std(
