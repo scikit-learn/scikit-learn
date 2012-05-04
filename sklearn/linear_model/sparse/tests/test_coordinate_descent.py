@@ -107,7 +107,8 @@ def test_enet_toy_explicit_sparse_input():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def make_sparse_data(n_samples, n_features, n_informative, seed=42, positive = False):
+def make_sparse_data(n_samples, n_features, n_informative, seed=42,
+                     positive=False):
     random_state = np.random.RandomState(seed)
 
     # build an ill-posed linear regression problem with many noisy features and
@@ -116,7 +117,8 @@ def make_sparse_data(n_samples, n_features, n_informative, seed=42, positive = F
     # generate a ground truth model
     w = random_state.randn(n_features)
     w[n_informative:] = 0.0  # only the top features are impacting the model
-    if positive: w = np.abs(w)
+    if positive:
+        w = np.abs(w)
 
     X = random_state.randn(n_samples, n_features)
     rnd = random_state.uniform(size=(n_samples, n_features))
@@ -127,17 +129,18 @@ def make_sparse_data(n_samples, n_features, n_informative, seed=42, positive = F
     return X, y
 
 
-def _test_sparse_enet_not_as_toy_dataset(alpha,fit_intercept,positive):
+def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     n_samples, n_features, max_iter = 100, 100, 1000
     n_informative = 10
 
-    X, y = make_sparse_data(n_samples, n_features, n_informative, positive = positive)
+    X, y = make_sparse_data(n_samples, n_features, n_informative,
+                            positive=positive)
 
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
     s_clf = SparseENet(alpha=alpha, rho=0.8, fit_intercept=fit_intercept,
-                       max_iter=max_iter, tol=1e-7, positive = positive)
+                       max_iter=max_iter, tol=1e-7, positive=positive)
     s_clf.fit(X_train, y_train)
 
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
@@ -145,7 +148,7 @@ def _test_sparse_enet_not_as_toy_dataset(alpha,fit_intercept,positive):
 
     # check the convergence is the same as the dense version
     d_clf = DenseENet(alpha=alpha, rho=0.8, fit_intercept=fit_intercept,
-                      max_iter=max_iter, tol=1e-7, positive = positive)
+                      max_iter=max_iter, tol=1e-7, positive=positive)
     d_clf.fit(X_train, y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
@@ -155,12 +158,18 @@ def _test_sparse_enet_not_as_toy_dataset(alpha,fit_intercept,positive):
 
     # check that the coefs are sparse
     assert_less(np.sum(s_clf.coef_ != 0.0), 2 * n_informative)
-    
+
+
 def test_sparse_enet_not_as_toy_dataset():
-    _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=False, positive=False)
-    _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=True, positive=False)
-    _test_sparse_enet_not_as_toy_dataset(alpha=1e-3, fit_intercept=False, positive=True)
-    _test_sparse_enet_not_as_toy_dataset(alpha=1e-3, fit_intercept=True, positive=True)
+    _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=False,
+                                         positive=False)
+    _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=True,
+                                         positive=False)
+    _test_sparse_enet_not_as_toy_dataset(alpha=1e-3, fit_intercept=False,
+                                         positive=True)
+    _test_sparse_enet_not_as_toy_dataset(alpha=1e-3, fit_intercept=True,
+                                         positive=True)
+
 
 
 def test_sparse_lasso_not_as_toy_dataset():
