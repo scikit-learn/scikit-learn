@@ -15,7 +15,7 @@ from ..utils import check_random_state
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
-           random_state=None, verbose=False):
+           random_state=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Parameters
@@ -39,8 +39,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
         must be square.
     random_state: numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
-    verbose: boolean, optional
-        The verbosity level
 
     Returns
     -------
