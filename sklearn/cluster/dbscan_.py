@@ -7,6 +7,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD
 
+import warnings
 import numpy as np
 
 from ..base import BaseEstimator
@@ -176,8 +177,10 @@ class DBSCAN(BaseEstimator):
         params: dict
             Overwrite keywords from __init__.
         """
-
-        self.set_params(**params)
+        if params:
+            warnings.warn('Passing parameters to fit methods is '
+                        'depreciated', stacklevel=2)
+            self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
                                                          **self.get_params())
         self.components_ = X[self.core_sample_indices_].copy()
