@@ -129,7 +129,7 @@ class CommonTest(object):
         clf = self.factory(alpha=0.01, n_iter=5,
                            shuffle=False)
         clf.fit(X, Y)
-        coef = clf.coef_
+        assert_true(hasattr(clf, "coef_"))
 
         clf.fit(X[:, :-1], Y)
         assert_true(True)
