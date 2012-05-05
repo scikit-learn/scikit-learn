@@ -523,7 +523,7 @@ class OrthogonalMatchingPursuit(LinearModel):
             warnings.warn('Mean subtraction (fit_intercept) and '
                  'normalization cannot be applied on precomputed Gram '
                  'and Xy matrices. Your precomputed values are ignored '
-                 'and recomputed. To avoid this, do the scaling yourself'
+                 'and recomputed. To avoid this, do the scaling yourself '
                  'and call with fit_intercept and normalize set to False.',
                  RuntimeWarning, stacklevel=2)
             Gram, Xy = None, None
