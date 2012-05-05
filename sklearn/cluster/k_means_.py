@@ -548,8 +548,11 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if init_size is not None and init_size < n_samples:
         if init_size < k:
-            raise ValueError(
-                "init_size=%d should be larger than k=%d" % (init_size, k))
+            warnings.warn(
+                "init_size=%d should be larger than k=%d. "
+                "Setting it to 3*k" % (init_size, k),
+                RuntimeWarning, stacklevel=2)
+            init_size = 3 * k
         init_indices = random_state.random_integers(
                 0, n_samples - 1, init_size)
         X = X[init_indices]
@@ -707,7 +710,8 @@ class KMeans(BaseEstimator):
                                  n_features, expected_n_features))
         if not X.dtype.kind is 'f':
             warnings.warn("Got data type %s, converted to float "
-                    "to avoid overflows" % X.dtype)
+                    "to avoid overflows" % X.dtype,
+                    RuntimeWarning, stacklevel=2)
             X = X.astype(np.float)
 
         return X
@@ -1025,7 +1029,8 @@ class MiniBatchKMeans(KMeans):
         self.max_no_improvement = max_no_improvement
         if chunk_size is not None:
             warnings.warn(
-                "chunk_size is deprecated in 0.10, use batch_size instead")
+                "chunk_size is deprecated in 0.10, use batch_size instead",
+                PendingDeprecationWarning, stacklevel=2)
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels

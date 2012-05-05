@@ -234,7 +234,12 @@ def test_mb_k_means_plus_plus_init_sparse_matrix():
 
 def test_minibatch_init_with_large_k():
     mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, k=20)
-    assert_raises(ValueError, mb_k_means.fit, X)
+    # Check that a warning is raised, as the number clusters is larger
+    # than the init_size
+    with warnings.catch_warnings(record=True) as warn_queue:
+        mb_k_means.fit(X)
+
+    assert_equal(len(warn_queue), 1)
 
 
 def test_minibatch_k_means_random_init_dense_array():
