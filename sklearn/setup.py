@@ -1,3 +1,4 @@
+import os
 from os.path import join
 import warnings
 
@@ -6,6 +7,10 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, BlasNotFoundError
     import numpy
+
+    libraries = []
+    if os.name == 'posix':
+        libraries.append('m')
 
     config = Configuration('sklearn', parent_package, top_path)
 
@@ -48,6 +53,7 @@ def configuration(parent_package='', top_path=None):
         '_hmmc',
         sources=['_hmmc.c'],
         include_dirs=[numpy.get_include()],
+        libraries=libraries,
     )
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
