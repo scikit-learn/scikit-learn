@@ -40,7 +40,7 @@ def test_rfecv():
     y = iris.target
 
     # Test using the score function
-    rfecv = RFECV(estimator=SVC(kernel="linear", C=100), step=1, cv=3)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
 
@@ -48,7 +48,7 @@ def test_rfecv():
     assert_array_almost_equal(X_r[:10], iris.data[:10])
 
     # Test using a customized loss function
-    rfecv = RFECV(estimator=SVC(kernel="linear", C=100), step=1, cv=3,
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
             loss_func=zero_one)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
