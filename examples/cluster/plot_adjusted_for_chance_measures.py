@@ -60,7 +60,6 @@ score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
     metrics.adjusted_mutual_info_score,
-    metrics.normalized_mutual_info_score,
     metrics.mutual_info_score,
 ]
 
