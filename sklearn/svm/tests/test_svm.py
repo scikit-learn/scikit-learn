@@ -30,7 +30,7 @@ def test_libsvm_parameters():
     """
     Test parameters on classes that make use of libsvm.
     """
-    clf = svm.SVC(kernel='linear', C=len(X)).fit(X, Y)
+    clf = svm.SVC(kernel='linear').fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))

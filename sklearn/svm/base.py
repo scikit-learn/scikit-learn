@@ -700,7 +700,7 @@ class BaseLibLinear(BaseEstimator):
 
         C = self.C
         if C is None:
-            C = X.shape[0]
+            C = 1
 
         liblinear.set_verbosity_wrap(self.verbose)
 
