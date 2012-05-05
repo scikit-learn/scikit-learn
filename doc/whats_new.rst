@@ -118,10 +118,6 @@ API changes summary
      consistent with the Olivetti faces dataset. Use ``images`` and
      ``pairs`` attribute to access the natural images shapes instead.
 
-   - Setting scale_C=True by default in SVM and LogisticRegression
-     models. This allows to have a regularization parameter independent
-     of the number of samples. The scale_C parameter will disappear in v0.12.
-
    - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.

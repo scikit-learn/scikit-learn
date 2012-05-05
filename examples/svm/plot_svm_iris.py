@@ -30,7 +30,7 @@ Y = iris.target
 
 h = .02  # step size in the mesh
 
-clf = svm.SVC(C=20, kernel='linear')
+clf = svm.SVC(C=1.0, kernel='linear')
 
 # we create an instance of SVM Classifier and fit the data.
 clf.fit(X, Y)

@@ -12,8 +12,8 @@ iris = load_iris()
 
 
 def test_transform_linear_model():
-    for clf in (LogisticRegression(C=0.1 * len(iris.data)),
-                LinearSVC(C=0.01 * len(iris.data), dual=False),
+    for clf in (LogisticRegression(C=0.1),
+                LinearSVC(C=0.01, dual=False),
                 SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, seed=0)):
         for func in (np.array, sp.csr_matrix):
             X = func(iris.data)

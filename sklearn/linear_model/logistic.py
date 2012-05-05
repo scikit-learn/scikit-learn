@@ -49,11 +49,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     tol: float, optional
         tolerance for stopping criteria
 
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match liblinear commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
-
     Attributes
     ----------
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -65,9 +60,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     `intercept_` : array, shape = [n_classes-1]
         intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
-
-    `scaled_C_` : float
-        The C value passed to liblinear.
 
     See also
     --------
@@ -91,14 +83,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=None,
-                 fit_intercept=True, intercept_scaling=1,
-                 scale_C=True, class_weight=None):
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+            fit_intercept=True, intercept_scaling=1, class_weight=None):
 
-        super(LogisticRegression, self).__init__(penalty=penalty,
-            dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            scale_C=scale_C, class_weight=class_weight)
+        super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,
+                loss='lr', tol=tol, C=C, fit_intercept=fit_intercept,
+                intercept_scaling=intercept_scaling, class_weight=class_weight)
 
     def predict_proba(self, X):
         """Probability estimates.

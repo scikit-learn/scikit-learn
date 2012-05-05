@@ -60,7 +60,7 @@ class Pipeline(BaseEstimator):
     >>> # You can set the parameters using the names issued
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svn
-    >>> anova_svm.set_params(anova__k=10, svc__C=10.).fit(X, y)
+    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                                              # doctest: +ELLIPSIS
     Pipeline(steps=[...])
 

@@ -23,7 +23,7 @@ h = .02  # step size in the mesh
 
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-C = 100  # SVM regularization parameter
+C = 1.0  # SVM regularization parameter
 svc = svm.SVC(kernel='linear', C=C).fit(X, Y)
 rbf_svc = svm.SVC(kernel='rbf', gamma=0.7, C=C).fit(X, Y)
 poly_svc = svm.SVC(kernel='poly', degree=3, C=C).fit(X, Y)
