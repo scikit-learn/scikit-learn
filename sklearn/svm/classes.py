@@ -70,11 +70,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
         automatically adjust weights inversely proportional to
         class frequencies.
 
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match liblinear commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
-
     verbose : int, default: 0
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
@@ -92,9 +87,6 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
-
-    `scaled_C_` : float
-        The C value passed to liblinear.
 
     Notes
     -----
@@ -199,11 +191,6 @@ class SVC(BaseLibSVM, ClassifierMixin):
         automatically adjust weights inversely proportional to
         class frequencies.
 
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match libsvm commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
-
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
@@ -237,9 +224,6 @@ class SVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    `scaled_C_` : float
-        The C value passed to libsvm.
-
     Examples
     --------
     >>> import numpy as np
@@ -249,8 +233,8 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-            gamma=0.5, kernel='rbf', probability=False, scale_C=True,
-            shrinking=True, tol=0.001, verbose=False)
+            gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+            tol=0.001, verbose=False)
     >>> print clf.predict([[-0.8, -1]])
     [ 1.]
 
@@ -268,12 +252,12 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     def __init__(self, C=None, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=True, class_weight=None,
+                 tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
-                C, 0., 0., shrinking, probability, cache_size, scale_C,
-                "auto", class_weight, verbose)
+                C, 0., 0., shrinking, probability, cache_size, "auto",
+                class_weight, verbose)
 
 
 class NuSVC(BaseLibSVM, ClassifierMixin):
@@ -362,9 +346,6 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    `scaled_C_` : float
-        The C value passed to libsvm.
-
     Examples
     --------
     >>> import numpy as np
@@ -394,7 +375,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                 tol, 0., nu, 0., shrinking, probability, cache_size,
-                True, "auto", None, verbose)
+                "auto", None, verbose)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -446,11 +427,6 @@ class SVR(BaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match libsvm commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
-
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
@@ -477,9 +453,6 @@ class SVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    `scaled_C_` : float
-        The C value passed to libsvm.
-
     Examples
     --------
     >>> from sklearn.svm import SVR
@@ -491,7 +464,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, scale_C=True, shrinking=True, tol=0.001,
+      kernel='rbf', probability=False, shrinking=True, tol=0.001,
       verbose=False)
 
     See also
@@ -501,14 +474,13 @@ class SVR(BaseLibSVM, RegressorMixin):
         using a parameter to control the number of support vectors.
 
     """
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, C=None, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200, scale_C=True,
-                 verbose=False):
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
+            C=None, epsilon=0.1, shrinking=True, probability=False,
+            cache_size=200, verbose=False):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                 tol, C, 0., epsilon, shrinking, probability, cache_size,
-                scale_C, "auto", None, verbose)
+                "auto", None, verbose)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -561,11 +533,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match libsvm commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
-
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
@@ -592,9 +559,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     `intercept_` : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
-    `scaled_C_` : float
-        The C value passed to libsvm.
-
     Examples
     --------
     >>> from sklearn.svm import NuSVR
@@ -606,7 +570,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
-       nu=0.1, probability=False, scale_C=True, shrinking=True, tol=0.001,
+       nu=0.1, probability=False, shrinking=True, tol=0.001,
        verbose=False)
 
     See also
@@ -622,10 +586,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     def __init__(self, nu=0.5, C=None, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
-                 scale_C=True, verbose=False):
+                 verbose=False):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
-                tol, C, nu, 0., shrinking, probability, cache_size, scale_C,
+                tol, C, nu, 0., shrinking, probability, cache_size,
                 "auto", None, verbose)
 
 
@@ -669,11 +633,6 @@ class OneClassSVM(BaseLibSVM):
     cache_size: float, optional
         Specify the size of the kernel cache (in MB)
 
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match libsvm commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
-
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
@@ -700,16 +659,13 @@ class OneClassSVM(BaseLibSVM):
     `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
 
-    `scaled_C_` : float
-        The C value passed to libsvm.
-
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
                  nu=0.5, shrinking=True, cache_size=200, verbose=False):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
                 coef0, tol, 0., nu, 0., shrinking, False, cache_size,
-                True, "auto", None, verbose)
+                "auto", None, verbose)
 
     def fit(self, X, sample_weight=None, **params):
         """
