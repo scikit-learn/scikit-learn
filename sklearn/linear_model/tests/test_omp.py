@@ -107,7 +107,7 @@ def test_perfect_signal_recovery():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
-def test_estimator_shapes():
+def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
     assert_equal(omp.coef_.shape, (n_features,))
@@ -119,15 +119,41 @@ def test_estimator_shapes():
     assert_equal(omp.intercept_.shape, (n_targets,))
     assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
+    omp.set_params(fit_intercept=False, normalize=False)
+
     omp.fit(X, y[:, 0], Gram=G, Xy=Xy[:, 0])
     assert_equal(omp.coef_.shape, (n_features,))
-    assert_equal(omp.intercept_.shape, ())
+    assert_equal(omp.intercept_, 0)
     assert_true(count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
     omp.fit(X, y, Gram=G, Xy=Xy)
     assert_equal(omp.coef_.shape, (n_targets, n_features))
-    assert_equal(omp.intercept_.shape, (n_targets,))
+    assert_equal(omp.intercept_, 0)
     assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
+
+
+def test_scaling_with_gram():
+    check_warnings()  # Skip if unsupported Python version
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        # Use only 1 nonzero coef to be faster and to avoid warnings
+        omp1 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                         fit_intercept=False, normalize=False)
+        omp2 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                         fit_intercept=True, normalize=False)
+        omp3 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                         fit_intercept=False, normalize=True)
+        omp1.fit(X, y, Gram=G)
+        omp1.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 0)
+        omp2.fit(X, y, Gram=G)
+        assert_true(len(w) == 1)
+        omp2.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 2)
+        omp3.fit(X, y, Gram=G)
+        assert_true(len(w) == 3)
+        omp3.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 4)
 
 
 def test_identical_regressors():
@@ -159,9 +185,12 @@ def test_swapped_regressors():
 
 
 def test_no_atoms():
+    check_warnings()  # Skip if unsupported Python version
     y_empty = np.zeros_like(y)
     Xy_empty = np.dot(X.T, y_empty)
-    gamma_empty = orthogonal_mp(X, y_empty, 1)
-    gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        gamma_empty = orthogonal_mp(X, y_empty, 1)
+        gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
     assert_equal(np.all(gamma_empty == 0), True)
     assert_equal(np.all(gamma_empty_gram == 0), True)
