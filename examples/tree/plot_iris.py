@@ -23,8 +23,6 @@ n_classes = 3
 plot_colors = "bry"
 plot_step = 0.02
 
-pl.set_cmap(pl.cm.Paired)
-
 # Load data
 iris = load_iris()
 
@@ -60,6 +58,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
     cs = pl.contourf(xx, yy, Z)
+    pl.set_cmap(pl.cm.Paired)
 
     pl.xlabel(iris.feature_names[pair[0]])
     pl.ylabel(iris.feature_names[pair[1]])

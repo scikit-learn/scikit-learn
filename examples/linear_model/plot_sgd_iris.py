@@ -44,15 +44,13 @@ y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                      np.arange(y_min, y_max, h))
 
-pl.set_cmap(pl.cm.Paired)
-
 # Plot the decision boundary. For that, we will asign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.set_cmap(pl.cm.Paired)
 cs = pl.contourf(xx, yy, Z)
+pl.set_cmap(pl.cm.Paired)
 pl.axis('tight')
 
 # Plot also the training points

@@ -49,7 +49,6 @@ for name, est in estimators.iteritems():
     fig = pl.figure(fignum, figsize=(4, 3))
     pl.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
-    pl.set_cmap(pl.cm.spectral)
 
     pl.cla()
     est.fit(X)
@@ -69,7 +68,6 @@ for name, est in estimators.iteritems():
 fig = pl.figure(fignum, figsize=(4, 3))
 pl.clf()
 ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
-pl.set_cmap(pl.cm.spectral)
 
 pl.cla()
 

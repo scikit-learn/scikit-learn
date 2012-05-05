@@ -51,8 +51,8 @@ for name, clf in classifiers.iteritems():
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     pl.figure(fignum, figsize=(4, 3))
-    pl.set_cmap(pl.cm.Paired)
     pl.pcolormesh(xx, yy, Z)
+    pl.set_cmap(pl.cm.Paired)
 
     # Plot also the training points
     pl.scatter(X[:, 0], X[:, 1], c=Y)

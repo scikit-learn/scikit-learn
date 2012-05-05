@@ -29,7 +29,6 @@ n_classes = 3
 n_estimators = 30
 plot_colors = "bry"
 plot_step = 0.02
-pl.set_cmap(pl.cm.Paired)
 
 # Load data
 iris = load_iris()
@@ -78,6 +77,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
                 Z = Z.reshape(xx.shape)
                 cs = pl.contourf(xx, yy, Z, alpha=0.1)
 
+        pl.set_cmap(pl.cm.Paired)
         #pl.xlabel("%s / %s" % (iris.feature_names[pair[0]],
         #                       model.__class__.__name__))
         #pl.ylabel(iris.feature_names[pair[1]])

@@ -41,8 +41,8 @@ Z = Z.reshape(xx.shape)
 samples_weights = pl.contour(xx, yy, Z, levels=[0], linestyles=['dashed'])
 
 pl.legend([no_weights.collections[0], samples_weights.collections[0]],
-          ["no weights", "with weights"],
-          loc="lower left")
+    ["no weights", "with weights"], loc="lower left")
 
-pl.axis('off')
+pl.xticks(())
+pl.yticks(())
 pl.show()
