@@ -409,7 +409,9 @@ def completeness_score(labels_true, labels_pred):
 
 
 def v_measure_score(labels_true, labels_pred):
-    """V-Measure cluster labeling given a ground truth
+    """V-Measure cluster labeling given a ground truth.
+
+    This score is identical to normalized_mutual_info_score.
 
     The V-Measure is the hormonic mean between homogeneity and completeness::
 

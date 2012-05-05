@@ -766,7 +766,10 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
 
-All three metrics can be computed at once using
+The V-measure is actually equivalent to the normalized mutual information (NMI)
+discussed above [B2011]_.
+
+Homogeneity, completensess and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
@@ -873,9 +876,13 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- * `V-Measure: A conditional entropy-based external cluster evaluation
+ .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
+
+ .. [B2011] `Identication and Characterization of Events in Social Media
+   <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+   Becker, PhD Thesis. 
 
 .. _silhouette_coefficient:
 
