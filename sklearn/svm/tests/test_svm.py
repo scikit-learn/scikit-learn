@@ -267,7 +267,7 @@ def test_decision_function():
 
     """
     # multi class:
-    clf = svm.SVC(kernel='linear').fit(iris.data, iris.target)
+    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
 
     dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
