@@ -38,8 +38,7 @@ pl.figure(1, figsize=(4, 3))
 pl.clf()
 
 # Plot also the training points
-pl.scatter(X[:, 0], X[:, 1], c=Y)
-pl.set_cmap(pl.cm.Paired)
+pl.scatter(X[:, 0], X[:, 1], c=Y, cm=pl.cm.Paired)
 pl.xlabel('Sepal length')
 pl.ylabel('Sepal width')
 

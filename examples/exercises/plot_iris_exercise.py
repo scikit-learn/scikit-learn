@@ -39,8 +39,7 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
 
     pl.figure(fig_num)
     pl.clf()
-    pl.scatter(X[:, 0], X[:, 1], c=y, zorder=10)
-    pl.set_cmap(pl.cm.Paired)
+    pl.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=pl.cm.Paired)
 
     # Circle out the test data
     pl.scatter(X_test[:, 0], X_test[:, 1],
@@ -57,7 +56,7 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
 
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
-    pl.pcolormesh(XX, YY, Z > 0)
+    pl.pcolormesh(XX, YY, Z > 0, cmap=pl.cm.Paired)
     pl.contour(XX, YY, Z, colors=['k', 'k', 'k'],
               linestyles=['--', '-', '--'],
               levels=[-.5, 0, .5])
