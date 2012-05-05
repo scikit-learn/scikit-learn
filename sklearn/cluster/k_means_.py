@@ -1106,7 +1106,7 @@ class MiniBatchKMeans(KMeans):
                 cluster_centers, counts, old_center_buffer, False,
                 distances=distances)
 
-            # Keep only the best cluster centers across independant inits on
+            # Keep only the best cluster centers across independent inits on
             # the common validation set
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)

@@ -22,7 +22,7 @@ def test_mcd():
 
     """
     ### Small data set
-    # test without outliers (random independant normal data)
+    # test without outliers (random independent normal data)
     launch_mcd_on_dataset(100, 5, 0, 0.01, 0.1, 80)
     # test with a contaminated data set (medium contamination)
     launch_mcd_on_dataset(100, 5, 20, 0.01, 0.01, 70)
