@@ -257,7 +257,7 @@ class GridSearchCV(BaseEstimator):
     GridSearchCV(cv=None,
         estimator=SVC(C=None, cache_size=..., coef0=..., degree=...,
             gamma=..., kernel='rbf', probability=False,
-            scale_C=True, shrinking=True, tol=...),
+            shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,
             param_grid=...,
             ...)
