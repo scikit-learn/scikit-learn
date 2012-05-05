@@ -247,7 +247,7 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
             warnings.warn(
                 'Explicit initial center position passed: '
                 'performing only one init in the k-means instead of %d'
-                % n_init)
+                % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
 
     # precompute squared norms of data points
