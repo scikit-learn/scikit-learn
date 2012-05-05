@@ -84,8 +84,8 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.5, kernel='rbf', probability=False, scale_C=True, shrinking=True,
-    tol=0.001, verbose=False)
+    gamma=0.5, kernel='rbf', probability=False, shrinking=True, tol=0.001,
+    verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -123,7 +123,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=1.0, kernel='rbf', probability=False, scale_C=True, shrinking=True,
+    gamma=1.0, kernel='rbf', probability=False, shrinking=True,
     tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -137,7 +137,7 @@ two classes, only one model is trained::
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=None, class_weight=None, dual=True, fit_intercept=True,
     intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-    scale_C=True, tol=0.0001, verbose=0)
+    tol=0.0001, verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -270,8 +270,8 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=None, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, scale_C=True,
-    shrinking=True, tol=0.001, verbose=False)
+    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+    tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -468,8 +468,8 @@ vectors and the test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='precomputed', probability=False, scale_C=True,
-    shrinking=True, tol=0.001, verbose=False)
+    gamma=0.0, kernel='precomputed', probability=False, shrinking=True,
+    tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([ 0.,  1.])
@@ -532,16 +532,9 @@ The decision function is:
 
 .. note::
 
-    In practice to have :math:`C` independent of the number of samples :math:`n`,
-    :math:`C` is scaled by :math:`n` (Replace :math:`C` by :math:`\frac{C}{n}` in the
-    equations above). It corresponds to the scale_C parameter which is True
-    by default in all estimators since version 0.11.
-
-.. note::
-
     While SVM models derived from libsvm and liblinear use *C* as regularization
     parameter, most other estimators use *alpha*. The relation between both is
-    :math:`C = \frac{1}{alpha}`.
+    :math:`C = \frac{n_samples}{alpha}`.
 
 .. TODO multiclass case ?/
 

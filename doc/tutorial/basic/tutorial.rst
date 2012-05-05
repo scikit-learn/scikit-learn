@@ -167,8 +167,8 @@ one::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.001, kernel='rbf', probability=False, scale_C=True,
-    shrinking=True, tol=0.001, verbose=False)
+  gamma=0.001, kernel='rbf', probability=False shrinking=True, tol=0.001,
+  verbose=False)
 
 Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the `digits` dataset,
@@ -205,8 +205,8 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)
   SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.25, kernel='rbf', probability=False, scale_C=True,
-    shrinking=True, tol=0.001, verbose=False)
+  gamma=0.25, kernel='rbf', probability=False, shrinking=True, tol=0.001,
+  verbose=False)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)
