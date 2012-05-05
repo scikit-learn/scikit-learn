@@ -156,12 +156,12 @@ def test_SVR():
 
     diabetes = datasets.load_diabetes()
     n_samples = len(diabetes.data)
-    for clf in (svm.NuSVR(kernel='linear', nu=.4, C=n_samples),
-                svm.NuSVR(kernel='linear', nu=.4, C=10. * n_samples),
-                svm.SVR(kernel='linear', C=10. * n_samples),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=n_samples),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10. * n_samples),
-                svm.sparse.SVR(kernel='linear', C=10. * n_samples)):
+    for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
+                svm.NuSVR(kernel='linear', nu=.4, C=10.),
+                svm.SVR(kernel='linear', C=10.),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=1.0),
+                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
+                svm.sparse.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert_true(clf.score(diabetes.data, diabetes.target) > 0.02)
 
@@ -225,7 +225,7 @@ def test_tweak_params():
     The success of this test ensures that the mapping between libsvm and
     the python classifier is complete.
     """
-    clf = svm.SVC(kernel='linear', C=len(X))
+    clf = svm.SVC(kernel='linear', C=1.0)
     clf.fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[.25, -.25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
@@ -241,9 +241,9 @@ def test_probability():
     """
 
     for clf in (
-        svm.SVC(probability=True, C=len(X)),
+        svm.SVC(probability=True, C=1.0),
         svm.NuSVC(probability=True),
-        svm.sparse.SVC(probability=True, C=len(X)),
+        svm.sparse.SVC(probability=True, C=1.0),
         svm.sparse.NuSVC(probability=True)):
 
         clf.fit(iris.data, iris.target)

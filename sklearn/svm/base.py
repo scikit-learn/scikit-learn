@@ -172,15 +172,6 @@ class BaseLibSVM(BaseEstimator):
             self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
-        # set default parameters
-        C = self.C
-        if C is None:
-            C = 1
-
-        epsilon = self.epsilon
-        if epsilon is None:
-            epsilon = 0.1
-
         libsvm.set_verbosity_wrap(self.verbose)
 
         kernel = self.kernel
@@ -195,10 +186,10 @@ class BaseLibSVM(BaseEstimator):
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=self.class_weight_,
             class_weight_label=self.class_weight_label_,
-            kernel=kernel, C=C, nu=self.nu,
+            kernel=kernel, C=self.C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
+            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
@@ -345,10 +336,6 @@ class BaseLibSVM(BaseEstimator):
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))
 
-        epsilon = self.epsilon
-        if epsilon == None:
-            epsilon = 0.1
-
         C = 0.0  # C is not useful here
 
         svm_type = LIBSVM_IMPL.index(self.impl)
@@ -365,7 +352,7 @@ class BaseLibSVM(BaseEstimator):
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
+            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
@@ -431,10 +418,6 @@ class BaseLibSVM(BaseEstimator):
     def _dense_predict_proba(self, X):
         X = self._compute_kernel(X)
 
-        epsilon = self.epsilon
-        if epsilon == None:
-            epsilon = 0.1
-
         C = 0.0  # C is not useful here
 
         kernel = self.kernel
@@ -449,7 +432,7 @@ class BaseLibSVM(BaseEstimator):
             svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
+            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
 
         return pprob
 
@@ -530,10 +513,6 @@ class BaseLibSVM(BaseEstimator):
 
         C = 0.0  # C is not useful here
 
-        epsilon = self.epsilon
-        if epsilon == None:
-            epsilon = 0.1
-
         kernel = self.kernel
         if hasattr(kernel, '__call__'):
             kernel = 'precomputed'
@@ -546,7 +525,7 @@ class BaseLibSVM(BaseEstimator):
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=epsilon)
+            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
@@ -608,7 +587,7 @@ class BaseLibLinear(BaseEstimator):
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
         }
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=None,
+    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
             class_weight=None, verbose=0):
         self.penalty = penalty
@@ -698,10 +677,6 @@ class BaseLibLinear(BaseEstimator):
                              "X has %s samples, but y has %s." % \
                              (X.shape[0], y.shape[0]))
 
-        C = self.C
-        if C is None:
-            C = 1
-
         liblinear.set_verbosity_wrap(self.verbose)
 
         if self._sparse:
@@ -712,7 +687,7 @@ class BaseLibLinear(BaseEstimator):
         if self.verbose:
             print '[LibLinear]',
         self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
-                                            self.tol, self._get_bias(), C,
+                                            self.tol, self._get_bias(), self.C,
                                             self.class_weight_label_,
                                             self.class_weight_)
 
