@@ -40,7 +40,7 @@ data for testing (evaluating) our classifier::
   >>> X_test.shape, y_test.shape
   ((60, 4), (60,))
 
-  >>> clf = svm.SVC(kernel='linear', C=100).fit(X_train, y_train)
+  >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
   0.96...
 
@@ -68,12 +68,12 @@ linear kernel Support Vector Machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
-  >>> clf = svm.SVC(kernel='linear', C=100)
+  >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
   >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.  ...])
+  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
@@ -89,7 +89,7 @@ scoring function, e.g. from the metrics module::
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
   ...     score_func=metrics.f1_score)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
+  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
 
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
@@ -107,7 +107,7 @@ validation iterator instead, for instance::
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  1.        ,  1.        ])
+  array([ 0.97...,  0.97...,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 
