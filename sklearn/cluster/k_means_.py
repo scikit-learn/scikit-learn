@@ -537,7 +537,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     init_size : int, optional
         Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accurracy).
+        initialization (sometimes at the expense of accurracy): the
+        only algorithm is initialized by running a batch KMeans on a
+        random subset of the data. This needs to be larger than k.
 
     Returns
     -------
@@ -973,8 +975,10 @@ class MiniBatchKMeans(KMeans):
         Size of the mini batches.
 
     init_size: int, optional, default: 3 * batch_size
-        Size of the random sample of the dataset passed to init method
-        when calling fit.
+        Number of samples to randomly sample for speeding up the
+        initialization (sometimes at the expense of accurracy): the
+        only algorithm is initialized by running a batch KMeans on a
+        random subset of the data. This needs to be larger than k.
 
     init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'k-means++':
