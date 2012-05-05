@@ -776,8 +776,7 @@ def expected_mutual_information(contingency, n_samples):
 
 def entropy(labels):
     """Calculates the entropy for a labeling."""
-    pi = np.array([np.sum(labels == i) for i in np.unique(labels)],
-                  dtype='float')
+    pi = np.bincount(labels).astype(np.float)
     pi = pi[pi > 0]
     pi /= np.sum(pi)
     return -np.sum(pi * np.log(pi))
