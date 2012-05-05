@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..utils import check_random_state
-from ..utils.extmath import norm
+from ..utils.extmath import norm, logsumexp
 from .. import cluster
 from .gmm import GMM
 
@@ -38,7 +38,7 @@ def log_normalize(v, axis=0):
     v = np.rollaxis(v, axis)
     v = v.copy()
     v -= v.max(axis=0)
-    out = np.log(np.sum(np.exp(v), axis=0))
+    out = logsumexp(v)
     v = np.exp(v - out)
     v += np.finfo(np.float32).eps
     v /= np.sum(v, axis=0)
