@@ -75,8 +75,7 @@ for name, penality in (('unreg', 1), ('reg', 0.05)):
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
     pl.figure(fignum, figsize=(4, 3))
-    pl.pcolormesh(XX, YY, Z)
-    pl.set_cmap(pl.cm.Paired)
+    pl.pcolormesh(XX, YY, Z, cm=pl.cm.Paired)
 
     pl.xlim(x_min, x_max)
     pl.ylim(y_min, y_max)

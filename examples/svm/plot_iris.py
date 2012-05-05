@@ -50,12 +50,11 @@ for i, clf in enumerate((svc, rbf_svc, poly_svc, lin_svc)):
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.contourf(xx, yy, Z)
-    pl.set_cmap(pl.cm.Paired)
+    pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=Y)
+    pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
 
     pl.title(titles[i])
 

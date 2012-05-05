@@ -43,11 +43,10 @@ Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()])
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
 pl.figure(1, figsize=(4, 3))
-pl.pcolormesh(xx, yy, Z)
-pl.set_cmap(pl.cm.Paired)
+pl.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
 
 # Plot also the training points
-pl.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k')
+pl.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=pl.cm.Paired)
 pl.xlabel('Sepal length')
 pl.ylabel('Sepal width')
 

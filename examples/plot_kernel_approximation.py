@@ -165,12 +165,11 @@ for i, clf in enumerate((kernel_svm, approx_kernel_svm)):
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
-    pl.contourf(multiples, multiples, Z)
-    pl.set_cmap(pl.cm.Paired)
+    pl.contourf(multiples, multiples, Z, cmap=pl.cm.Paired)
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=targets_train)
+    pl.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=pl.cm.Paired)
 
     pl.title(titles[i])
 pl.show()

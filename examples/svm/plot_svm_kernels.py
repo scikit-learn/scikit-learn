@@ -71,8 +71,7 @@ for kernel in ('linear', 'poly', 'rbf'):
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
     pl.figure(fignum, figsize=(4, 3))
-    pl.pcolormesh(XX, YY, Z > 0)
-    pl.set_cmap(pl.cm.Paired)
+    pl.pcolormesh(XX, YY, Z > 0, cmap=pl.cm.Paired)
     pl.contour(XX, YY, Z, colors=['k', 'k', 'k'],
               linestyles=['--', '-', '--'],
               levels=[-.5, 0, .5])

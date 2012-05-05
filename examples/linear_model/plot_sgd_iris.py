@@ -49,14 +49,14 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-cs = pl.contourf(xx, yy, Z)
-pl.set_cmap(pl.cm.Paired)
+cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
 pl.axis('tight')
 
 # Plot also the training points
 for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
-    pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
+    pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
+            cmap=pl.cm.Paired)
 pl.title("Decision surface of multi-class SGD")
 pl.axis('tight')
 

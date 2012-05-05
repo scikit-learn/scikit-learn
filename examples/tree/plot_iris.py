@@ -57,8 +57,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
 
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-    cs = pl.contourf(xx, yy, Z)
-    pl.set_cmap(pl.cm.Paired)
+    cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
 
     pl.xlabel(iris.feature_names[pair[0]])
     pl.ylabel(iris.feature_names[pair[1]])
@@ -67,7 +66,8 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     # Plot the training points
     for i, color in zip(xrange(n_classes), plot_colors):
         idx = np.where(y == i)
-        pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i])
+        pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
+                cmap=pl.cm.Paired)
 
     pl.axis("tight")
 
