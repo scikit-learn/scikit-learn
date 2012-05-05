@@ -1,7 +1,7 @@
 """
-==============================
+===============================
 Wikipedia principal eigenvector
-==============================
+===============================
 
 A classical way to assert the relative importance of vertices in a
 graph is to compute the principal eigenvector of the adjacency matrix
