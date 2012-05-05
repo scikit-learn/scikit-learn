@@ -35,8 +35,7 @@ for (i, j), val in np.ndenumerate(X1):
 levels = [-1.0, 0.0, 1.0]
 linestyles = ['dashed', 'solid', 'dashed']
 colors = 'k'
-pl.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles,
-        cmap=pl.cm.Paired)
+pl.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
 pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
 
 pl.axis('tight')
