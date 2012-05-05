@@ -25,7 +25,7 @@ X = np.r_[1.5 * np.random.randn(n_samples_1, 2),
 y = [0] * (n_samples_1) + [1] * (n_samples_2)
 
 # fit the model and get the separating hyperplane
-clf = svm.SVC(kernel='linear', C=100)
+clf = svm.SVC(kernel='linear', C=1.0)
 clf.fit(X, y)
 
 w = clf.coef_[0]
