@@ -766,8 +766,8 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
 
-The V-measure is actually equivalent to the normalized mutual information (NMI)
-discussed above [B2011]_.
+The V-measure is actually equivalent to the mutual information (NMI)
+discussed above normalized by the sum of the label entropies [B2011]_.
 
 Homogeneity, completensess and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
