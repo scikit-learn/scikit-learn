@@ -83,7 +83,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=None,
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
             fit_intercept=True, intercept_scaling=1, class_weight=None):
 
         super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,

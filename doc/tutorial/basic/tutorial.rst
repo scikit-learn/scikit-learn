@@ -204,7 +204,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)
-  SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
   gamma=0.25, kernel='rbf', probability=False, shrinking=True, tol=0.001,
   verbose=False)
 
