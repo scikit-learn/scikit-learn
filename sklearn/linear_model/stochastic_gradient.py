@@ -197,9 +197,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     def _set_class_weight(self, class_weight, classes, y):
         """Estimate class weights for unbalanced datasets."""
-        if class_weight is None:
-            # keep the old class_weight if none provided
-            class_weight = self.class_weight
         if class_weight is None or len(class_weight) == 0:
             # uniform class weights
             weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
