@@ -8,9 +8,44 @@
 Changelog
 ---------
 
+New features
+.............
+
    - Gradient boosted regression trees (:ref:`gradient_boosting`)
      for classification and regression by `Peter Prettenhofer`_
      and `Scott White`_ .
+
+   - Simple dict-based feature loader with support for categorical variables
+     (:class:`feature_extraction.DictVectorizer`) by `Lars Buitinck`_.
+
+   - Added Matthews correlation coefficient (:func:`metrics.matthews_corrcoef`)
+     and added macro and micro average options to
+     :func:`metrics.precision_score`, :func:`metrics.recall_score` and
+     :func:`metrics.f1_score` by `Satrajit Ghosh`_.
+
+   - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
+     by `Andreas Müller`_.
+
+   - :ref:`randomized_l1`: Randomized sparse linear models for feature
+     selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
+
+   - :ref:`label_propagation` for semi-supervised learning, by Clay
+     Woolam. **Note** the semi-supervised API is still work in progress,
+     and may change.
+
+   - Added BIC/AIC model selection to classical :ref:`gmm` and unified
+     the API with the remainder of scikit-learn, by `Bertrand Thirion`_
+
+   - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
+     a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
+     by `Yannick Schwartz`.
+
+   - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
+     ``shrink_threshold`` parameter, which implements **shrunken centroid
+     classification**, by `Robert Layton`_.
+
+Improvements and refactorings
+..............................
 
    - Merged dense and sparse implementations of :ref:`sgd` module and
      exposed utility extension types for sequential
@@ -26,30 +61,9 @@ Changelog
    - Regressors can now be used as base estimator in the :ref:`multiclass`
      module by `Mathieu Blondel`_.
 
-   - Simple dict-based feature loader with support for categorical variables
-     (:class:`feature_extraction.DictVectorizer`) by `Lars Buitinck`_.
-
-   - Added Matthews correlation coefficient (:func:`metrics.matthews_corrcoef`)
-     and added macro and micro average options to
-     :func:`metrics.precision_score`, :func:`metrics.recall_score` and
-     :func:`metrics.f1_score` by `Satrajit Ghosh`_.
-
    - Added n_jobs option to :func:`metrics.pairwise.pairwise_distances`
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
-
-   - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
-     by `Andreas Müller`_.
-
-   - :ref:`randomized_l1`: Randomized sparse linear models for feature
-     selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
-
-   - :ref:`label_propagation` for semi-supervised learning, by Clay
-     Woolam. **Note** the semi-supervised API is still work in progress,
-     and may change.
-
-   - Added BIC/AIC model selection to classical :ref:`gmm` and unified
-     the API with the remainder of scikit-learn, by `Bertrand Thirion`_
 
    - :ref:`k_means` can now be run in parallel, using the `n_jobs` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
@@ -73,14 +87,6 @@ Changelog
    - Beam pruning option in :class:`_BaseHMM` module has been removed since it
      is difficult to cythonize. If you are interested in contributing a cython
      version, you can use the python version in the git history as a reference.
-
-   - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
-     a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
-     by `Yannick Schwartz`.
-
-   - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
-      ``shrink_threshold`` parameter, which implements shrunken centroid
-      classification, by `Robert Layton`_.
 
    - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for 
      nearest neighbors searches. The metric can be specified by argument ``p``.
