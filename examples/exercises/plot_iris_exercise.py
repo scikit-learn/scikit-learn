@@ -34,13 +34,13 @@ y_test = y[.9 * n_sample:]
 
 # fit the model
 for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
-    pl.set_cmap(pl.cm.Paired)
     clf = svm.SVC(kernel=kernel, gamma=10)
     clf.fit(X_train, y_train)
 
     pl.figure(fig_num)
     pl.clf()
     pl.scatter(X[:, 0], X[:, 1], c=y, zorder=10)
+    pl.set_cmap(pl.cm.Paired)
 
     # Circle out the test data
     pl.scatter(X_test[:, 0], X_test[:, 1],
@@ -63,3 +63,4 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
               levels=[-.5, 0, .5])
 
     pl.title(kernel)
+pl.show()

@@ -55,14 +55,13 @@ for name, penality in (('unreg', 1), ('reg', 0.05)):
     # plot the line, the points, and the nearest vectors to the plane
     pl.figure(fignum, figsize=(4, 3))
     pl.clf()
-    pl.set_cmap(pl.cm.Paired)
     pl.plot(xx, yy, 'k-')
     pl.plot(xx, yy_down, 'k--')
     pl.plot(xx, yy_up, 'k--')
 
     pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
             s=80, facecolors='none', zorder=10)
-    pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10)
+    pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=pl.cm.Paired)
 
     pl.axis('tight')
     x_min = -4.8
@@ -76,8 +75,8 @@ for name, penality in (('unreg', 1), ('reg', 0.05)):
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
     pl.figure(fignum, figsize=(4, 3))
-    pl.set_cmap(pl.cm.Paired)
     pl.pcolormesh(XX, YY, Z)
+    pl.set_cmap(pl.cm.Paired)
 
     pl.xlim(x_min, x_max)
     pl.ylim(y_min, y_max)

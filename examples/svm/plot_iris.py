@@ -42,8 +42,6 @@ titles = ['SVC with linear kernel',
           'LinearSVC (linear kernel)']
 
 
-pl.set_cmap(pl.cm.Paired)
-
 for i, clf in enumerate((svc, rbf_svc, poly_svc, lin_svc)):
     # Plot the decision boundary. For that, we will asign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
@@ -52,8 +50,8 @@ for i, clf in enumerate((svc, rbf_svc, poly_svc, lin_svc)):
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.set_cmap(pl.cm.Paired)
     pl.contourf(xx, yy, Z)
+    pl.set_cmap(pl.cm.Paired)
     pl.axis('off')
 
     # Plot also the training points

@@ -54,11 +54,10 @@ for kernel in ('linear', 'poly', 'rbf'):
     # plot the line, the points, and the nearest vectors to the plane
     pl.figure(fignum, figsize=(4, 3))
     pl.clf()
-    pl.set_cmap(pl.cm.Paired)
 
     pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
             s=80, facecolors='none', zorder=10)
-    pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10)
+    pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=pl.cm.Paired)
 
     pl.axis('tight')
     x_min = -3
@@ -72,8 +71,8 @@ for kernel in ('linear', 'poly', 'rbf'):
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
     pl.figure(fignum, figsize=(4, 3))
-    pl.set_cmap(pl.cm.Paired)
     pl.pcolormesh(XX, YY, Z > 0)
+    pl.set_cmap(pl.cm.Paired)
     pl.contour(XX, YY, Z, colors=['k', 'k', 'k'],
               linestyles=['--', '-', '--'],
               levels=[-.5, 0, .5])
