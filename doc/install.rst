@@ -183,8 +183,9 @@ version.
 Macports
 --------
 
-The macport's package is named py26-sklearn and can be installed
-by typing the following command::
+The macport's package is named `py26-sklearn` or `py27-sklearn` depending
+on the version of Python. It can be installed by typing the following
+command::
 
     sudo port install py26-scikits-learn
 
