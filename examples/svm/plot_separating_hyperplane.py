@@ -19,7 +19,7 @@ X = np.r_[np.random.randn(20, 2) - [2, 2], np.random.randn(20, 2) + [2, 2]]
 Y = [0] * 20 + [1] * 20
 
 # fit the model
-clf = svm.SVC(kernel='linear', C=1.0)
+clf = svm.SVC(kernel='linear')
 clf.fit(X, Y)
 
 # get the separating hyperplane
