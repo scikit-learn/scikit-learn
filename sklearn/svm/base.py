@@ -75,15 +75,11 @@ class BaseLibSVM(BaseEstimator):
 
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 scale_C, sparse, class_weight, verbose):
+                 sparse, class_weight, verbose):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
-        if not scale_C:
-            warnings.warn('SVM: scale_C will disappear and be assumed to be '
-                          'True in scikit-learn 0.12', FutureWarning,
-                          stacklevel=2)
 
         self.impl = impl
         self.kernel = kernel
@@ -97,7 +93,6 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
-        self.scale_C = scale_C
         self.sparse = sparse
         self.class_weight = class_weight
         self.verbose = verbose
@@ -180,11 +175,7 @@ class BaseLibSVM(BaseEstimator):
         # set default parameters
         C = self.C
         if C is None:
-            C = X.shape[0]
-        if getattr(self, 'scale_C', False):
-            C = C / float(X.shape[0])
-
-        self.scaled_C_ = C
+            C = 1
 
         epsilon = self.epsilon
         if epsilon is None:
@@ -286,11 +277,7 @@ class BaseLibSVM(BaseEstimator):
 
         C = self.C
         if C is None:
-            C = X.shape[0]
-        if self.scale_C:
-            C = C / float(X.shape[0])
-
-        self.scaled_C_ = C
+            C = 1
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
@@ -623,7 +610,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=None,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-            scale_C=True, class_weight=None, verbose=0):
+            class_weight=None, verbose=0):
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -632,14 +619,8 @@ class BaseLibLinear(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
-        self.scale_C = scale_C
         self.class_weight = class_weight
         self.verbose = verbose
-
-        if not scale_C:
-            warnings.warn('SVM: scale_C will disappear and be assumed to be '
-                          'True in scikit-learn 0.12', FutureWarning,
-                          stacklevel=2)
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -720,10 +701,6 @@ class BaseLibLinear(BaseEstimator):
         C = self.C
         if C is None:
             C = X.shape[0]
-        if self.scale_C:
-            C = C / float(X.shape[0])
-
-        self.scaled_C_ = C
 
         liblinear.set_verbosity_wrap(self.verbose)
 

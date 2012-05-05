@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import linalg
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
 from numpy.testing import assert_array_almost_equal, \
@@ -142,9 +141,9 @@ def test_weight():
                                  weights=[0.833, 0.167], random_state=0)
 
     X_ = sparse.csr_matrix(X_)
-    for clf in (linear_model.LogisticRegression(C=180),
-                svm.LinearSVC(C=len(X)),
-                svm.SVC(C=len(X))):
+    for clf in (linear_model.LogisticRegression(),
+                svm.LinearSVC(),
+                svm.SVC()):
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
@@ -201,32 +200,6 @@ def test_sparse_realdata():
 
     assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
-
-
-def test_sparse_scale_C():
-    """Check that sparse LibSVM/LibLinear works ok with scaling of C"""
-
-    params = dict(kernel='linear', C=0.1)
-    classes = [(svm.SVC, params),
-               (svm.SVR, params),
-               (svm.NuSVR, params),
-               (svm.LinearSVC, {}),
-               (linear_model.LogisticRegression, {})
-              ]
-
-    for cls, params in classes:
-        clf = cls(scale_C=True, **params).fit(X, Y)
-        clf_no_scale = cls(scale_C=False, **params).fit(X, Y)
-        sp_clf = cls(scale_C=True, **params).fit(X_sp, Y)
-
-        sp_clf_coef_ = sp_clf.coef_
-        if sparse.issparse(sp_clf_coef_):
-            sp_clf_coef_ = sp_clf_coef_.todense()
-        assert_array_almost_equal(clf.coef_, sp_clf_coef_, 5)
-
-        error_with_scale = linalg.norm(clf_no_scale.coef_
-                           - sp_clf_coef_) / linalg.norm(clf_no_scale.coef_)
-        assert_true(error_with_scale > 1e-3)
 
 
 def test_sparse_svc_clone_with_callable_kernel():
