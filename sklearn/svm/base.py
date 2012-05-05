@@ -266,10 +266,6 @@ class BaseLibSVM(BaseEstimator):
             # if custom gamma is not provided ...
             self.gamma = 1.0 / X.shape[1]
 
-        C = self.C
-        if C is None:
-            C = 1
-
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
@@ -277,7 +273,7 @@ class BaseLibSVM(BaseEstimator):
             libsvm_sparse.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                  kernel_type, self.degree, self.gamma, self.coef0, self.tol,
-                 C, self.class_weight_label_, self.class_weight_,
+                 self.C, self.class_weight_label_, self.class_weight_,
                  sample_weight, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
 
