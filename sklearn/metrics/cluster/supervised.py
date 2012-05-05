@@ -508,6 +508,9 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
         MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log\\frac{P(i,j)}{P(i)P'(j)}
 
+    This is equal to the Kullback-Leibler divergence of the joint distribution
+    with the product distribution of the marginals.
+
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
     score value in any way.
