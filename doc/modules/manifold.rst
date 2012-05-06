@@ -363,7 +363,7 @@ similarities/dissimilarities.
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
 the similarities chosen in some optimal ways.
-The stress is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)}`
+The stress is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 
 Metric MDS
 ----------
@@ -373,7 +373,7 @@ The simplest metric MDS model, called absolute MDS, disparities are defined by
 should then correspond exactly to the distance between point :math:`i` and
 :math:`j` in the embedding point.
 
-Most commonly, disparities are set to :math:`\hat{d}_ij = b S_{ij}`.
+Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
 
 Nonmetric MDS
 -------------
@@ -382,9 +382,9 @@ Non metric MDS focuses on the ordination of the data. If :math:`S_{ij} <
 S_{kl}`, then the embedding should enforce :math:`d_{ij} < d_{jk}`. A simple
 algorithm to enforce that is to use a monotonic regression is computed of
 :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}` in
-the same order as `S_{ij}`.
+the same order as :math:`S_{ij}`.
 A trivial solution to this problem is to set all the points on the origin. In
-order to avoid that, the disparities :math:`\hat{d}_ij` are normalized.
+order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 
 
 .. figure:: ../auto_examples/manifold/images/plot_mds.png
