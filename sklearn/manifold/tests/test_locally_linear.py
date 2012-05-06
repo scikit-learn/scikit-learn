@@ -5,7 +5,7 @@ from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
-from sklearn.utils.testing import assert_lower
+from sklearn.utils.testing import assert_less
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -26,7 +26,7 @@ def test_barycenter_kneighbors_graph():
     # check that columns sum to one
     assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
     pred = np.dot(A.todense(), X)
-    assert_true(np.linalg.norm(pred - X) / X.shape[0] < 1)
+    assert_less(np.linalg.norm(pred - X) / X.shape[0], 1)
 
 
 #----------------------------------------------------------------------
@@ -43,7 +43,7 @@ def test_lle_simple_grid():
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X, 'fro')
-    assert_lower(reconstruction_error, tol)
+    assert_less(reconstruction_error, tol)
 
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
@@ -53,14 +53,14 @@ def test_lle_simple_grid():
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         # FIXME: ARPACK fails this test ...
         if solver != 'arpack':
-            assert_lower(reconstruction_error, tol)
+            assert_less(reconstruction_error, tol)
             assert_almost_equal(clf.reconstruction_error_,
                                 reconstruction_error, decimal=4)
 
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape) / 100
     X_reembedded = clf.transform(X + noise)
-    assert_lower(np.linalg.norm(X_reembedded - clf.embedding_), tol)
+    assert_less(np.linalg.norm(X_reembedded - clf.embedding_), tol)
 
 
 def test_lle_manifold():
@@ -75,7 +75,7 @@ def test_lle_manifold():
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X)
-    assert_lower(reconstruction_error, tol)
+    assert_less(reconstruction_error, tol)
 
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
@@ -84,9 +84,9 @@ def test_lle_manifold():
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         details = "solver: " + solver
-        assert_lower(reconstruction_error, tol, details=details)
-        assert_lower(np.abs(clf.reconstruction_error_ - reconstruction_error),
-                     tol * reconstruction_error, details=details)
+        assert_less(reconstruction_error, tol, msg=details)
+        assert_less(np.abs(clf.reconstruction_error_ - reconstruction_error),
+                     tol * reconstruction_error, msg=details)
 
 
 def test_pipeline():
@@ -99,7 +99,7 @@ def test_pipeline():
         [('filter', manifold.LocallyLinearEmbedding()),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
-    assert_lower(.9, clf.score(X, y))
+    assert_less(.9, clf.score(X, y))
 
 
 # Test the error raised when the weight matrix is singular

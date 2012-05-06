@@ -5,6 +5,7 @@ from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
                           assert_equal, assert_array_equal
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
+from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import Ridge
@@ -51,10 +52,10 @@ def test_ridge():
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert_equal(ridge.coef_.shape, (X.shape[1], ))
-    assert_true(ridge.score(X, y) > 0.5)
+    assert_greater(ridge.score(X, y), 0.5)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert_true(ridge.score(X, y) > 0.5)
+    assert_greater(ridge.score(X, y), 0.5)
 
     # With more features than samples
     n_samples, n_features = 5, 10
@@ -62,10 +63,10 @@ def test_ridge():
     X = np.random.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
-    assert_true(ridge.score(X, y) > .9)
+    assert_greater(ridge.score(X, y), .9)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert_true(ridge.score(X, y) > 0.9)
+    assert_greater(ridge.score(X, y), 0.9)
 
 
 def test_ridge_shapes():

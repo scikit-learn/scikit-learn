@@ -12,6 +12,8 @@ from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
 from nose import SkipTest
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_greater
+
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
 from sklearn.linear_model import LassoLarsCV
@@ -168,7 +170,7 @@ def test_lasso_path():
                             significant=2)
 
     # test set
-    assert_true(clf.score(X_test, y_test) > 0.99)
+    assert_greater(clf.score(X_test, y_test), 0.99)
 
 
 def test_enet_path():
@@ -192,7 +194,7 @@ def test_enet_path():
     assert_equal(clf.rho_, 0.95)
 
     # test set
-    assert_true(clf.score(X_test, y_test) > 0.99)
+    assert_greater(clf.score(X_test, y_test), 0.99)
 
 
 def test_path_parameters():
@@ -238,7 +240,7 @@ def test_lasso_alpha_warning():
         clf = Lasso(alpha=0)
         clf.fit(X, Y)
 
-        assert_true(len(w) > 0)  # warnings should be raised
+        assert_greater(len(w), 0)  # warnings should be raised
 
 
 def test_lasso_positive_constraint():

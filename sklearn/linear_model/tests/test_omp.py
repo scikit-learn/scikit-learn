@@ -8,6 +8,8 @@ import numpy as np
 from nose.tools import assert_raises, assert_true
 from numpy.testing import assert_equal, assert_array_almost_equal
 
+from sklearn.utils.testing import assert_greater
+
 from sklearn.linear_model import orthogonal_mp, orthogonal_mp_gram, \
                                  OrthogonalMatchingPursuit
 from sklearn.utils.fixes import count_nonzero
@@ -73,7 +75,7 @@ def test_unreachable_accuracy():
             orthogonal_mp(X, y, tol=0, precompute_gram=True),
             orthogonal_mp(X, y, precompute_gram=True,
                           n_nonzero_coefs=n_features))
-        assert_true(len(w) > 0)  # warnings should be raised
+        assert_greater(len(w), 0)  # warnings should be raised
 
 
 def test_bad_input():

@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
 
+from ..utils.testing import assert_greater, assert_less
 from ..base import BaseEstimator
 from ..datasets import make_regression
 from ..datasets import load_iris
@@ -251,7 +252,7 @@ def test_permutation_score():
     score, scores, pvalue = cval.permutation_test_score(
         svm, X, y, zero_one_score, cv)
 
-    assert_true(score > 0.9)
+    assert_greater(score, 0.9)
     np.testing.assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
@@ -276,8 +277,8 @@ def test_permutation_score():
     score, scores, pvalue = cval.permutation_test_score(svm, X, y,
             zero_one_score, cv)
 
-    assert_true(score < 0.5)
-    assert_true(pvalue > 0.4)
+    assert_less(score, 0.5)
+    assert_greater(pvalue, 0.4)
 
 
 def test_cross_val_generator_with_mask():

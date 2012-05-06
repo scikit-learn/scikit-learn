@@ -3,6 +3,8 @@ import scipy.sparse as sp
 
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less
+
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
@@ -23,7 +25,7 @@ def test_transform_linear_model():
             if isinstance(clf, SGDClassifier):
                 assert_true(X_new.shape[1] <= X.shape[1])
             else:
-                assert_true(X_new.shape[1] < X.shape[1])
+                assert_less(X_new.shape[1], X.shape[1])
             clf.set_params(penalty="l2")
             clf.fit(X_new, iris.target)
             pred = clf.predict(X_new)

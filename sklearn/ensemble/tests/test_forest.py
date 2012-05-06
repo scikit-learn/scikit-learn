@@ -12,6 +12,8 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_almost_equal
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less, assert_greater
+
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
@@ -175,7 +177,7 @@ def test_importances():
     assert_equal(n_important, 3)
 
     X_new = clf.transform(X, threshold="mean")
-    assert_true(0 < X_new.shape[1] < X.shape[1])
+    assert_less(0 < X_new.shape[1], X.shape[1])
 
     clf = RandomForestClassifier(n_estimators=10)
     clf.fit(X, y)
@@ -200,8 +202,8 @@ def test_oob_score_regression():
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
                            boston.target[n_samples / 2:])
-    assert_true(test_score > clf.oob_score_)
-    assert_true(clf.oob_score_ > .8)
+    assert_greater(test_score, clf.oob_score_)
+    assert_greater(clf.oob_score_, .8)
 
 
 def test_gridsearch():

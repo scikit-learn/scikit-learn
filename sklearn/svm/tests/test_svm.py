@@ -12,6 +12,7 @@ from nose.tools import assert_raises, assert_true
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_greater, assert_less
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -47,23 +48,23 @@ def test_libsvm_iris():
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
-        assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.9)
+        assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
 
     assert_array_equal(clf.label_, np.sort(clf.label_))
 
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
     pred = svm.libsvm.predict(iris.data, *model)
-    assert_true(np.mean(pred == iris.target) > .95)
+    assert_greater(np.mean(pred == iris.target), .95)
 
     model = svm.libsvm.fit(iris.data,
             iris.target.astype(np.float64), kernel='linear')
     pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
-    assert_true(np.mean(pred == iris.target) > .95)
+    assert_greater(np.mean(pred == iris.target), .95)
 
     pred = svm.libsvm.cross_validation(iris.data,
             iris.target.astype(np.float64), 5, kernel='linear')
-    assert_true(np.mean(pred == iris.target) > .95)
+    assert_greater(np.mean(pred == iris.target), .95)
 
 
 def test_single_sample_1d():
@@ -156,7 +157,6 @@ def test_SVR():
     """
 
     diabetes = datasets.load_diabetes()
-    n_samples = len(diabetes.data)
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
                 svm.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.SVR(kernel='linear', C=10.),
@@ -164,7 +164,7 @@ def test_SVR():
                 svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.sparse.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
-        assert_true(clf.score(diabetes.data, diabetes.target) > 0.02)
+        assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
 
 
 def test_oneclass():
@@ -206,9 +206,9 @@ def test_oneclass_decision_function():
 
     # predict things
     y_pred_test = clf.predict(X_test)
-    assert_true(np.mean(y_pred_test == 1) > .9)
+    assert_greater(np.mean(y_pred_test == 1), .9)
     y_pred_outliers = clf.predict(X_outliers)
-    assert_true(np.mean(y_pred_outliers == -1) > .9)
+    assert_greater(np.mean(y_pred_outliers == -1), .9)
     dec_func_test = clf.decision_function(X_test)
     assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
     dec_func_outliers = clf.decision_function(X_outliers)
@@ -458,7 +458,7 @@ def test_linearsvc_iris():
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
     clf = svm.LinearSVC().fit(iris.data, iris.target)
-    assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.8)
+    assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.8)
 
     dec = clf.decision_function(iris.data)
     pred = np.argmax(dec, 1)
@@ -490,7 +490,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     clf.intercept_scaling = 100
     clf.fit(X, y)
     intercept1 = clf.intercept_
-    assert_true(intercept1 < -1)
+    assert_less(intercept1, -1)
 
     # when intercept_scaling is sufficiently high, the intercept value
     # doesn't depend on intercept_scaling value

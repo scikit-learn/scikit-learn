@@ -7,6 +7,7 @@ from nose.tools import assert_almost_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
 
+from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
@@ -15,7 +16,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
-from  sklearn import svm
+from sklearn import svm
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -99,7 +100,7 @@ def test_ovr_fit_predict_svc():
     ovr = OneVsRestClassifier(svm.SVC())
     ovr.fit(iris.data, iris.target)
     assert_equal(len(ovr.estimators_), 3)
-    assert_true(ovr.score(iris.data, iris.target) > .9)
+    assert_greater(ovr.score(iris.data, iris.target), .9)
 
 
 def test_ovr_multilabel_dataset():

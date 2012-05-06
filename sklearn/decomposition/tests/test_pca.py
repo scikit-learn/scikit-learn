@@ -5,6 +5,8 @@ from nose.tools import assert_equal
 from scipy.sparse import csr_matrix
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
+from sklearn.utils.testing import assert_less, assert_greater
+
 from ... import datasets
 from .. import PCA
 from .. import ProbabilisticPCA
@@ -234,7 +236,7 @@ def test_infer_dim_1():
     for k in range(p):
         ll.append(_assess_dimension_(spect, k, n, p))
     ll = np.array(ll)
-    assert_true(ll[1] > ll.max() - .01 * n)
+    assert_greater(ll[1], ll.max() - .01 * n)
 
 
 def test_infer_dim_2():
@@ -250,7 +252,7 @@ def test_infer_dim_2():
     pca = PCA(n_components=p)
     pca.fit(X)
     spect = pca.explained_variance_
-    assert_true(_infer_dimension_(spect, n, p) > 1)
+    assert_greater(_infer_dimension_(spect, n, p), 1)
 
 
 def test_infer_dim_3():
@@ -265,7 +267,7 @@ def test_infer_dim_3():
     pca = PCA(n_components=p)
     pca.fit(X)
     spect = pca.explained_variance_
-    assert_true(_infer_dimension_(spect, n, p) > 2)
+    assert_greater(_infer_dimension_(spect, n, p), 2)
 
 
 def test_infer_dim_by_explained_variance():
@@ -306,7 +308,7 @@ def test_probabilistic_pca_2():
     ppca.fit(X)
     ll1 = ppca.score(X)
     ll2 = ppca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
-    assert_true(ll1.mean() > ll2.mean())
+    assert_greater(ll1.mean(), ll2.mean())
 
 
 def test_probabilistic_pca_3():
@@ -321,7 +323,7 @@ def test_probabilistic_pca_3():
     ll1 = ppca.score(X)
     ppca.fit(X, homoscedastic=False)
     ll2 = ppca.score(X)
-    assert_true(ll1.mean() < ll2.mean())
+    assert_less(ll1.mean(), ll2.mean())
 
 
 def test_probabilistic_pca_4():

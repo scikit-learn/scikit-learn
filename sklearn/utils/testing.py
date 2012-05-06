@@ -22,11 +22,23 @@ except ImportError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 
-def assert_lower(a, b, details=None):
-    message = "%r is not lower than %r" % (a, b)
-    if details is not None:
-        message += ": " + details
-    assert a < b, message
+try:
+    from nose.tools import assert_less
+except ImportError:
+    def assert_less(a, b, msg=None):
+        message = "%r is not lower than %r" % (a, b)
+        if details is not None:
+            message += ": " + details
+        assert a < b, message
+
+try:
+    from nose.tools import assert_greater
+except ImportError:
+    def assert_greater(a, b, msg=None):
+        message = "%r is not lower than %r" % (a, b)
+        if details is not None:
+            message += ": " + details
+        assert a < b, message
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):

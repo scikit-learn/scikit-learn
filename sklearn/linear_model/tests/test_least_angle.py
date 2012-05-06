@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less, assert_greater
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()
@@ -85,7 +86,7 @@ def test_collinearity():
     _, _, coef_path_ = linear_model.lars_path(X, y, alpha_min=0.01)
     assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
-    assert_true((residual ** 2).sum() < 1.)  # just make sure it's bounded
+    assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
 
 
 def test_singular_matrix():
@@ -113,7 +114,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)
-        assert_true(error < 0.01)
+        assert_less(error, 0.01)
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2):
@@ -121,7 +122,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
         err = np.linalg.norm(clf1.coef_ - clf2.coef_)
-        assert_true(err < 1e-3)
+        assert_less(err, 1e-3)
 
     # same test, with normalized data
     X = diabetes.data
@@ -134,7 +135,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = np.linalg.norm(c - lasso_cd.coef_)
-        assert_true(error < 0.01)
+        assert_less(error, 0.01)
 
 
 def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
@@ -151,7 +152,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
-        assert_true(error < 0.01)
+        assert_less(error, 0.01)
 
     alphas_min = [10, 0.9, 1e-4]
     # same test, with normalization
@@ -163,7 +164,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
-        assert_true(error < 0.01)
+        assert_less(error, 0.01)
 
 
 def test_lars_add_features():
@@ -219,9 +220,9 @@ def test_lasso_lars_ic():
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
     nonzero_aic = np.where(lars_aic.coef_)[0]
-    assert_true(lars_bic.alpha_ > lars_aic.alpha_)
-    assert_true(len(nonzero_bic) < len(nonzero_aic))
-    assert_true(np.max(nonzero_bic) < diabetes.data.shape[1])
+    assert_greater(lars_bic.alpha_, lars_aic.alpha_)
+    assert_less(len(nonzero_bic), len(nonzero_aic))
+    assert_less(np.max(nonzero_bic), diabetes.data.shape[1])
 
 
 if __name__ == '__main__':
