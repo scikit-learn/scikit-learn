@@ -17,11 +17,11 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 
 from sklearn.cross_validation import KFold
 
+rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
-
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
 ind = np.arange(X_diabetes.shape[0])
-np.random.shuffle(ind)
+rng.shuffle(ind)
 ind = ind[:200]
 X_diabetes, y_diabetes = X_diabetes[ind], y_diabetes[ind]
 
@@ -29,8 +29,6 @@ iris = datasets.load_iris()
 
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
-
-np.random.seed(0)
 
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
@@ -46,8 +44,8 @@ def test_ridge():
 
     # With more samples than features
     n_samples, n_features = 6, 5
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
 
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
@@ -59,8 +57,8 @@ def test_ridge():
 
     # With more features than samples
     n_samples, n_features = 5, 10
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert_greater(ridge.score(X, y), .9)
@@ -73,8 +71,8 @@ def test_ridge_shapes():
     """Test shape of coef_ and intercept_
     """
     n_samples, n_features = 5, 10
-    X = np.random.randn(n_samples, n_features)
-    y = np.random.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
     Y1 = y[:, np.newaxis]
     Y = np.c_[y, 1 + y]
 
@@ -97,8 +95,8 @@ def test_ridge_intercept():
     """Test intercept with multiple targets GH issue #708
     """
     n_samples, n_features = 5, 10
-    X = np.random.randn(n_samples, n_features)
-    y = np.random.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
     Y = np.c_[y, 1. + y]
 
     ridge = Ridge()
@@ -140,9 +138,8 @@ def test_ridge_vs_lstsq():
 
     # we need more samples than features
     n_samples, n_features = 5, 4
-    np.random.seed(0)
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
 
     ridge = Ridge(alpha=0., fit_intercept=False)
     ols = LinearRegression(fit_intercept=False)

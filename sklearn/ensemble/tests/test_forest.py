@@ -30,15 +30,15 @@ true_result = [-1, 1, 1]
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
-np.random.seed([1])
-perm = np.random.permutation(iris.target.size)
+rng = np.random.RandomState(0)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 # also load the boston dataset
 # and randomly permute it
 boston = datasets.load_boston()
-perm = np.random.permutation(boston.target.size)
+perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 

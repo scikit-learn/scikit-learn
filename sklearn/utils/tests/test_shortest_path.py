@@ -30,14 +30,14 @@ def floyd_warshall_slow(graph, directed=False):
 
 def generate_graph(N=20):
     #sparse grid of distances
-    dist_matrix = np.random.random((N, N))
+    rng = np.random.RandomState(0)
+    dist_matrix = rng.random_sample((N, N))
 
     #make symmetric: distances are not direction-dependent
     dist_matrix += dist_matrix.T
 
     #make graph sparse
-    i = (np.random.randint(N, size=N * N / 2),
-         np.random.randint(N, size=N * N / 2))
+    i = (rng.randint(N, size=N * N / 2), rng.randint(N, size=N * N / 2))
     dist_matrix[i] = 0
 
     #set diagonal to zero

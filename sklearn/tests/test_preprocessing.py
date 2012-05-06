@@ -21,8 +21,6 @@ from sklearn.preprocessing import scale
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
 
-np.random.seed(0)
-
 iris = datasets.load_iris()
 
 
@@ -440,7 +438,8 @@ def test_label_binarizer_multilabel_unlabeled():
 
 def test_center_kernel():
     """Test that KernelCenterer is equivalent to Scaler in feature space"""
-    X_fit = np.random.random((5, 4))
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
     scaler = Scaler(with_std=False)
     scaler.fit(X_fit)
     X_fit_centered = scaler.transform(X_fit)
@@ -453,7 +452,7 @@ def test_center_kernel():
     assert_array_almost_equal(K_fit_centered, K_fit_centered2)
 
     # center predict time matrix
-    X_pred = np.random.random((2, 4))
+    X_pred = rng.random_sample((2, 4))
     K_pred = np.dot(X_pred, X_fit.T)
     X_pred_centered = scaler.transform(X_pred)
     K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
@@ -462,7 +461,8 @@ def test_center_kernel():
 
 
 def test_fit_transform():
-    X = np.random.random((5, 4))
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
     for obj in ((Scaler(), Normalizer(), Binarizer())):
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)

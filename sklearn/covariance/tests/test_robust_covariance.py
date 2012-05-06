@@ -72,8 +72,8 @@ def test_outlier_detection():
     """
 
     """
-    np.random.RandomState(0)
-    X = np.random.randn(100, 10)
+    rnd = np.random.RandomState(0)
+    X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
     clf.fit(X)
     y_pred = clf.predict(X)

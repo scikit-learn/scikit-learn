@@ -65,14 +65,14 @@ def test_lle_simple_grid():
 
 
 def test_lle_manifold():
+    rng = np.random.RandomState(0)
     # similar test on a slightly more complex manifold
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
-    X = X + 1e-10 * np.random.uniform(size=X.shape)
+    X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
-            n_components=n_components,
-                                          random_state=0)
+            n_components=n_components, random_state=0)
     tol = 1.5
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()

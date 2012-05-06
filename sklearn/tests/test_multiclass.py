@@ -20,7 +20,8 @@ from sklearn import svm
 from sklearn import datasets
 
 iris = datasets.load_iris()
-perm = np.random.permutation(iris.target.size)
+rng = np.random.RandomState(0)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
