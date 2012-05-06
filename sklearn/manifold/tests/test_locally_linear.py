@@ -36,7 +36,7 @@ def test_lle_simple_grid():
     rng = np.random.RandomState(0)
     # grid of equidistant points in 2D, out_dim = n_dim
     X = np.array(list(product(range(5), repeat=2)))
-    X = X + 1e-10 * np.random.uniform(size=X.shape)
+    X = X + 1e-10 * rng.uniform(size=X.shape)
     out_dim = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
     tol = .1
