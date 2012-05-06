@@ -25,6 +25,20 @@ ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
 
 
+def _weight_func(dist):
+    """ Weight function to replace lambda d: d ** -2.
+    The lambda function is not valid because:
+    if d==0 then 0^-2 is not valid. """
+
+    # Dist could be multidimensional, flatten it so all values
+    # can be looped
+    dist_values = dist.ravel()
+    retval = np.zeros(len(dist_values))
+    for i, d in enumerate(dist_values):
+        retval[i] = (d ** -2) if (d != 0.0) else np.inf
+    return retval.reshape(dist.shape)
+
+
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     """test the production of a warning if equidistant points are discarded"""
     X = np.random.random(size=(n_samples, n_features))
@@ -159,7 +173,7 @@ def test_kneighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -182,7 +196,7 @@ def test_radius_neighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -193,6 +207,76 @@ def test_radius_neighbors_classifier(n_samples=40,
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_array_equal(y_pred, y[:n_test_pts])
+
+
+def test_radius_neighbors_classifier_when_no_neighbors():
+    """ Test radius-based classifier when no neighbors found.
+    In this case it should rise an informative exception """
+
+    X = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1, 2])
+    radius = 0.1
+
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      weights=weights,
+                                                      algorithm=algorithm)
+            clf.fit(X, y)
+            clf.predict(z1)
+            assert_raises(ValueError, clf.predict, z2)
+
+
+def test_radius_neighbors_classifier_outlier_labeling():
+    """ Test radius-based classifier when no neighbors found and outliers
+    are labeled. """
+
+    X = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1, 2])
+    radius = 0.1
+
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
+    correct_labels1 = np.array([1, 2])
+    correct_labels2 = np.array([1, -1])
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      weights=weights,
+                                                      algorithm=algorithm,
+                                                      outlier_label=-1)
+            clf.fit(X, y)
+            assert_array_equal(correct_labels1, clf.predict(z1))
+            assert_array_equal(correct_labels2, clf.predict(z2))
+
+
+def test_radius_neighbors_classifier_zero_distance():
+    """ Test radius-based classifier, when distance to a sample is zero. """
+
+    X = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1, 2])
+    radius = 0.1
+
+    z1 = np.array([[1.01, 1.01], [2.0, 2.0]])
+    correct_labels1 = np.array([1, 2])
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      weights=weights,
+                                                      algorithm=algorithm)
+            clf.fit(X, y)
+            assert_array_equal(correct_labels1, clf.predict(z1))
 
 
 def test_kneighbors_classifier_sparse(n_samples=40,
@@ -232,7 +316,7 @@ def test_kneighbors_regressor(n_samples=40,
 
     y_target = y[:n_test_pts]
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -258,7 +342,7 @@ def test_radius_neighbors_regressor(n_samples=40,
 
     y_target = y[:n_test_pts]
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
