@@ -14,7 +14,7 @@ and classification. :class:`Pipeline` serves two purposes here:
     **Convenience**: You only have to call ``fit`` and ``predict`` once on your 
     data to fit a whole sequence of estimators.
     
-    **Joint parameter selection**: You can :ref:`grid_search <grid search>`
+    **Joint parameter selection**: You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
 
 For estimators to be usable within a pipeline, all except the last one need to have

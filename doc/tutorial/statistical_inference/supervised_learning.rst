@@ -334,6 +334,7 @@ application of Occam's razor: `prefer simpler models`.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 
 .. topic:: **Different algorithms for a same problem**
+
     Different algorithms can be used to solve the same mathematical
     problem. For instance the `Lasso` object in the `scikit-learn`
     solves the lasso regression using a 
