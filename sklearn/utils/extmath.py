@@ -164,8 +164,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     computations. It is particularly fast on large matrices on which
     you wish to extract only a small number of components.
 
-    **References**:
-
+    References
+    ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
       Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
@@ -189,7 +189,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    from scipy import linalg
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
     U = np.dot(Q, Uhat)
@@ -205,7 +204,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
             "use randomized_svd instead")
 def fast_svd(M, k, p=10, n_iterations=0, transpose='auto', random_state=0):
     return randomized_svd(M, k, n_oversamples=p, n_iterations=n_iterations,
-                          transpose='auto', random_state=random_state)
+                          transpose=transpose, random_state=random_state)
 
 
 def logsumexp(arr, axis=0):

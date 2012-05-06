@@ -46,7 +46,7 @@ import scipy.sparse as sp
 import pylab as pl
 
 from sklearn.datasets import load_mlcomp
-from sklearn.feature_extraction.text import Vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
@@ -66,7 +66,7 @@ print "%d categories" % len(news_train.target_names)
 
 print "Extracting features from the dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = Vectorizer()
+vectorizer = TfidfVectorizer(charset='latin1')
 X_train = vectorizer.fit_transform((open(f).read()
                                     for f in news_train.filenames))
 print "done in %fs" % (time() - t0)

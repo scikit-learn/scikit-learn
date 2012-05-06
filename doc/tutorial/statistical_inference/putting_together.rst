@@ -3,7 +3,6 @@ Putting it all together
 =========================
 
 ..  Imports
-    >>> import pylab as pl
     >>> import numpy as np
 
 Pipelining
@@ -12,44 +11,15 @@ Pipelining
 We have seen that some estimators can transform data, and some estimators
 can predict variables. We can create combined estimators:
 
-.. image:: pca_digits_spectrum.png
+.. image:: ../../auto_examples/images/plot_digits_pipe_1.png
+   :target: ../../auto_examples/plot_digits_pipe.html
    :scale: 65
    :align: right
 
-::
+.. literalinclude:: ../../auto_examples/plot_digits_pipe.py
+    :lines: 24-67
 
-    >>> from scikits.learn import linear_model, decomposition, datasets
 
-    >>> logistic = linear_model.LogisticRegression()
-    >>> pca = decomposition.PCA()
-    >>> from scikits.learn.pipeline import Pipeline
-    >>> pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
-
-    >>> digits = datasets.load_digits()
-    >>> X_digits = digits.data
-    >>> y_digits = digits.target
-    >>> pca.fit(X_digits, y_digits)
-    PCA(copy=True, n_components=None, whiten=False)
-    >>> pl.plot(pca.explained_variance_) # doctest: +ELLIPSIS
-    [<matplotlib.lines.Line2D object at ...>]
-
-Parameters of pipelines can be set using '__' separated parameter names::
-
-    >>> pipe._set_params(pca__n_components=30)
-    Pipeline(steps=[('pca', PCA(copy=True, n_components=30, whiten=False)), ('logistic', LogisticRegression(C=1.0, dual=False, fit_intercept=True, intercept_scaling=1,
-              penalty='l2', tol=0.0001))])
-    >>> pca.n_components
-    30
-
-    >>> from scikits.learn.grid_search import GridSearchCV
-    >>> n_components = [10, 15, 20, 30, 40, 50, 64]
-    >>> Cs = np.logspace(-4, 4, 16)
-    >>> estimator = GridSearchCV(pipe,
-    ...                          dict(pca__n_components=n_components,
-    ...                               logistic__C=Cs),
-    ...                          n_jobs=-1)
-    >>> estimator.fit(X_digits, y_digits) # doctest: +ELLIPSIS
-    GridSearchCV(cv=None,...
 
 
 Face recognition with eigenfaces
@@ -62,12 +32,12 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-.. literalinclude:: ../examples/plot_face_recognition.py
+.. literalinclude:: ../../auto_examples/applications/face_recognition.py
 
-.. |prediction| image:: plot_face_recognition_1.png
+.. |prediction| image:: ../../images/plot_face_recognition_1.png
    :scale: 50
-
-.. |eigenfaces| image:: plot_face_recognition_2.png
+ 
+.. |eigenfaces| image:: ../../images/plot_face_recognition_2.png
    :scale: 50
 
 .. list-table::
@@ -98,13 +68,13 @@ Expected results for the top 5 most represented people in the dataset::
         avg / total       0.86      0.84      0.85       282
 
 
-Open problem: stock market structure
+Open problem: Stock Market Structure
 =====================================
 
 Can we predict the variation in stock prices for Google?
 
-.. literalinclude:: ../examples/plot_stock_market.py
-    :lines: 1-167
+:ref:`stock_market`
+
 
 
 

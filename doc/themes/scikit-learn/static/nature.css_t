@@ -27,9 +27,8 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 0 0 15px 15px;
-    -moz-border-radius: 0 15px 0 15px;
-    margin-top: 0px;
+    border-radius: 0px 0px 15px 15px;
+    -moz-border-radius: 0px 0px 15px 15px;
 }
 
 ul.horizontal, ul.horizontal li {
@@ -129,7 +128,7 @@ div.content-wrapper {
 }
 
 div.content {
-    margin-left: 200px;
+    margin-left: 210px;
     padding-bottom: 10px;
 }
 
@@ -222,16 +221,17 @@ div.sphinxsidebar ul ul ul {
 }
 
 div.sphinxsidebar {
-    width: 200px;
+    width: 210px;
     float: left;
     margin-left: 0;
+    margin-right: 0;
     background-color: inherit;
     border-top-left-radius: 15px;
     -moz-border-radius:15px;
     border-top-width: 0;
     border-left-width: 0;
     border-bottom-width: 0;
-    margin-top: 5px;
+    margin-top: 0;
 }
 
 div.sphinxsidebar h3 {
@@ -246,6 +246,37 @@ div.sphinxsidebar ul {
 div.sphinxsidebar {
     font-size: 80%;
     line-height: 1.5em;
+}
+
+div.sphinxsidebarwrapper {
+    padding: 0 0 0 0;
+    width: 199px;
+}
+
+{% if theme_collapsiblesidebar|tobool %}
+/* for collapsible sidebar */
+div#sidebarbutton {
+    background-color: #F0F0F0;
+}
+{% endif %}
+
+div.buttonPrevious, div.buttonNext {
+    display: block;
+    background-color: #A7D6E2;
+    color: black;
+    padding: 7px 10px 5px 10px;
+    position: fixed;
+    bottom: 0;
+}
+
+div.buttonPrevious {
+    border-top-right-radius: .8em;		
+    right: 1; 
+}
+
+div.buttonNext {
+    border-top-left-radius: .8em;		
+    right: 0; 
 }
 
 
@@ -298,6 +329,12 @@ div.body h2,
 div.body h3 {
     text-align: left;
 }
+
+div.bodywrapper {
+    margin: 0 0 0 0;
+    
+}
+
 
 div.bodywrapper h1 {
     margin: 0 -10px 0 -10px;
@@ -370,6 +407,11 @@ div.admonition {
 div.warning {
     background-color: #ffe4e4;
     border: 1px solid #f66;
+}
+
+div.green {
+    background-color: #e4ffe4;
+    border: 1px solid #6f6;
 }
 
 p.admonition-title {
@@ -512,4 +554,17 @@ div.warning-wrapper {
 }
 div.warning-wrapper p {
     margin: 0;
+}
+
+/* ------- Fix maximum size of thumbnails in example gallery -------------- */
+div#examples.section .figure img {
+    max-width: 160px;
+    max-height: 160px;
+    display: block;
+    margin: auto;
+}
+
+/* ------- Zoom plots to make them fit in layout -------------------------- */
+div.body img {
+    max-width:805px;
 }

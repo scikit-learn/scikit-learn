@@ -1,13 +1,15 @@
 """
 Test the fastica algorithm.
 """
-
+import warnings
 import numpy as np
 from numpy.testing import assert_almost_equal
 from nose.tools import assert_true
 
 from scipy import stats
 import itertools
+
+from sklearn.utils.testing import assert_less
 
 from .. import FastICA, fastica, PCA
 from ..fastica_ import _gs_decorrelation
@@ -38,18 +40,18 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert_true((w ** 2).sum() < 1.e-10)
+    assert_less((w ** 2).sum(), 1.e-10)
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
-    assert_true((tmp[:5] ** 2).sum() < 1.e-10)
+    assert_less((tmp[:5] ** 2).sum(), 1.e-10)
 
 
 def test_fastica(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
     """
     # scipy.stats uses the global RNG:
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
@@ -65,7 +67,7 @@ def test_fastica(add_noise=False):
     m = np.dot(mixing, s)
 
     if add_noise:
-        m += 0.1 * np.random.randn(2, 1000)
+        m += 0.1 * rng.randn(2, 1000)
 
     center_and_norm(m)
 
@@ -112,6 +114,13 @@ def test_fastica_nowhiten():
     ica = FastICA(whiten=False)
     ica.fit(m)
     ica.get_mixing_matrix()
+
+    # test for issue #697
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        ica = FastICA(n_components=1, whiten=False)
+        ica.fit(m)  # should raise warning
+        assert_true(len(w) == 1)  # 1 warning should be raised
 
 
 def test_non_square_fastica(add_noise=False):

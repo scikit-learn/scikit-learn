@@ -1,10 +1,8 @@
-==========================================================================
-Scikit-learn tutorial: statistical-learning for sientific data processing
-==========================================================================
+.. _stat_learn_tut_index:
 
-**Online version:** http://gaelvaroquaux.github.com/scikit-learn-tutorial/
-
-**Zip file for off-line browsing:** https://github.com/GaelVaroquaux/scikit-learn-tutorial/zipball/gh-pages
+==========================================================================
+Statistical-learning for scientific data processing tutorial
+==========================================================================
 
 .. topic:: Statistical learning 
 
@@ -20,15 +18,13 @@ Scikit-learn tutorial: statistical-learning for sientific data processing
     <http://en.wikipedia.org/wiki/Statistical_inference>`_:
     drawing conclusions on the data at hand.
 
-    ``scikits.learn`` is a Python module integrating classic machine
+    ``sklearn`` is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
     packages (`numpy <http://www.scipy.org>`_, `scipy
     <http://www.scipy.org>`_, `matplotlib
     <http://matplotlib.sourceforge.net/>`_).
 
-.. include:: big_toc_css.rst
-
-.. note:: This document is meant to be used with **scikit-learn version 0.7+**.
+.. include:: ../../includes/big_toc_css.rst
 
 .. warning::
 
@@ -43,7 +39,6 @@ Scikit-learn tutorial: statistical-learning for sientific data processing
 
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
    settings

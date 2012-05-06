@@ -114,12 +114,20 @@ def generate_example_rst(app):
         os.makedirs(root_dir)
 
     # we create an index.rst with all examples
-    fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
+    fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')  
+    #Note: The sidebar button has been removed from the examples page for now
+    #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
 
 .. raw:: html
-
+    
+    
     <style type="text/css">
+    
+    div#sidebarbutton {
+        display: none;
+    }
+
     .figure {
         float: left;
         margin: 10px;

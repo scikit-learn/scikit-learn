@@ -7,6 +7,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD
 
+import warnings
 import numpy as np
 
 from ..base import BaseEstimator
@@ -15,7 +16,7 @@ from ..utils import check_random_state
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
-           random_state=None, verbose=False):
+           random_state=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Parameters
@@ -39,8 +40,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
         must be square.
     random_state: numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
-    verbose: boolean, optional
-        The verbosity level
 
     Returns
     -------
@@ -54,7 +53,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     -----
     See examples/plot_dbscan.py for an example.
 
-    **References**:
+    References
+    ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
@@ -133,8 +133,6 @@ class DBSCAN(BaseEstimator):
         must be square.
     random_state : numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
-    verbose : boolean, optional
-        The verbosity level
 
     Attributes
     ----------
@@ -152,7 +150,8 @@ class DBSCAN(BaseEstimator):
     -----
     See examples/plot_dbscan.py for an example.
 
-    **References**:
+    References
+    ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
@@ -160,13 +159,11 @@ class DBSCAN(BaseEstimator):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 verbose=False, random_state=None):
+            random_state=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
-        self.verbose = verbose
         self.random_state = check_random_state(random_state)
-        self.verbose = verbose
 
     def fit(self, X, **params):
         """Perform DBSCAN clustering from vector array or distance matrix.
@@ -180,8 +177,10 @@ class DBSCAN(BaseEstimator):
         params: dict
             Overwrite keywords from __init__.
         """
-
-        self.set_params(**params)
+        if params:
+            warnings.warn('Passing parameters to fit methods is '
+                        'depreciated', stacklevel=2)
+            self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
                                                          **self.get_params())
         self.components_ = X[self.core_sample_indices_].copy()

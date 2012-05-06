@@ -11,10 +11,10 @@ sparse data linear_model.sparse.Lasso improves the speed.
 print __doc__
 
 from time import time
-import numpy as np
 from scipy import sparse
 from scipy import linalg
 
+from sklearn.datasets.samples_generator import make_regression
 from sklearn.linear_model.sparse import Lasso as SparseLasso
 from sklearn.linear_model import Lasso as DenseLasso
 
@@ -23,10 +23,7 @@ from sklearn.linear_model import Lasso as DenseLasso
 # The two Lasso implementations on Dense data
 print "--- Dense matrices"
 
-n_samples, n_features = 200, 10000
-np.random.seed(0)
-y = np.random.randn(n_samples)
-X = np.random.randn(n_samples, n_features)
+X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 
 alpha = 1
 sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False, max_iter=1000)
@@ -55,8 +52,8 @@ Xs = Xs.tocsc()
 print "Matrix density : %s %%" % (Xs.nnz / float(X.size) * 100)
 
 alpha = 0.1
-sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False, max_iter=1000)
-dense_lasso = DenseLasso(alpha=alpha, fit_intercept=False, max_iter=1000)
+sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False, max_iter=10000)
+dense_lasso = DenseLasso(alpha=alpha, fit_intercept=False, max_iter=10000)
 
 t0 = time()
 sparse_lasso.fit(Xs, y)

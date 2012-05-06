@@ -10,12 +10,13 @@ Dirichlet Process Gaussian Mixture Models"""
 #
 
 import numpy as np
+import warnings
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..utils import check_random_state
-from ..utils.extmath import norm
+from ..utils.extmath import norm, logsumexp
 from .. import cluster
 from .gmm import GMM
 
@@ -37,7 +38,7 @@ def log_normalize(v, axis=0):
     v = np.rollaxis(v, axis)
     v = v.copy()
     v -= v.max(axis=0)
-    out = np.log(np.sum(np.exp(v), axis=0))
+    out = logsumexp(v)
     v = np.exp(v - out)
     v += np.finfo(np.float32).eps
     v /= np.sum(v, axis=0)
@@ -146,6 +147,16 @@ class DPGMM(GMM):
 
     thresh : float, optional
         Convergence threshold.
+    n_iter : int, optional
+        Maximum number of iterations to perform before convergence.
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+    init_params : string, optional
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
     Attributes
     ----------
@@ -185,12 +196,14 @@ class DPGMM(GMM):
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None):
+                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
         self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state,
-                                    thresh=thresh, min_covar=min_covar)
+                                    thresh=thresh, min_covar=min_covar,
+                                    n_iter=n_iter, params=params,
+                                    init_params=init_params)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -456,7 +469,7 @@ class DPGMM(GMM):
 
         return c + self._logprior(z)
 
-    def fit(self, X, n_iter=10, params='wmc', init_params='wmc'):
+    def fit(self, X, **kwargs):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -465,27 +478,29 @@ class DPGMM(GMM):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string ''. Likewise, if you
-        would like just to do an initialization, call this method with
-        n_iter=0.
+        argument init_params to the empty string '' when when creating
+        the object. Likewise, if you would like just to do an
+        initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        n_iter : int, optional
-             Maximum number of iterations to perform before convergence.
-        params : string, optional
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        init_params : string, optional
-            Controls which parameters are updated in the initialization
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
         """
         self.random_state = check_random_state(self.random_state)
+        if kwargs:
+            warnings.warn("Setting parameters in the 'fit' method is"
+                    "deprecated. Set it on initialization instead.",
+                     DeprecationWarning)
+            # initialisations for in case the user still adds parameters to fit
+            # so things don't break
+            if 'n_iter' in kwargs:
+                self.n_iter = kwargs['n_iter']
+            if 'params' in kwargs:
+                self.params = kwargs['params']
+            if 'init_params' in kwargs:
+                self.init_params = kwargs['init_params']
 
         ## initialization step
         X = np.asarray(X)
@@ -499,18 +514,18 @@ class DPGMM(GMM):
         self._initial_bound = - 0.5 * n_features * np.log(2 * np.pi)
         self._initial_bound -= np.log(2 * np.pi * np.e)
 
-        if (init_params != '') or not hasattr(self, 'gamma_'):
+        if (self.init_params != '') or not hasattr(self, 'gamma_'):
             self._initialize_gamma()
 
-        if 'm' in init_params or not hasattr(self, 'means_'):
+        if 'm' in self.init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
                 k=self.n_components,
                 random_state=self.random_state).fit(X).cluster_centers_[::-1]
 
-        if 'w' in init_params or not hasattr(self, 'weights_'):
+        if 'w' in self.init_params or not hasattr(self, 'weights_'):
             self.weights_ = np.tile(1.0 / self.n_components, self.n_components)
 
-        if 'c' in init_params or not hasattr(self, 'precs_'):
+        if 'c' in self.init_params or not hasattr(self, 'precs_'):
             if self._covariance_type == 'spherical':
                 self.dof_ = np.ones(self.n_components)
                 self.scale_ = np.ones(self.n_components)
@@ -553,7 +568,7 @@ class DPGMM(GMM):
         logprob = []
         # reset self.converged_ to False
         self.converged_ = False
-        for i in xrange(n_iter):
+        for i in xrange(self.n_iter):
             # Expectation step
             curr_logprob, z = self.eval(X)
             logprob.append(curr_logprob.sum() + self._logprior(z))
@@ -564,7 +579,7 @@ class DPGMM(GMM):
                 break
 
             # Maximization step
-            self._do_mstep(X, z, params)
+            self._do_mstep(X, z, self.params)
 
         return self
 
@@ -638,10 +653,11 @@ class VBGMM(DPGMM):
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None):
+                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
-            thresh=thresh, verbose=verbose, min_covar=min_covar)
+            thresh=thresh, verbose=verbose, min_covar=min_covar,
+            n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
 
     def eval(self, X):

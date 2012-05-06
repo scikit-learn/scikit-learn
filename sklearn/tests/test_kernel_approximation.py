@@ -7,8 +7,9 @@ from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.metrics.pairwise import rbf_kernel
 
 # generate data
-X = np.random.uniform(size=(300, 50))
-Y = np.random.uniform(size=(300, 50))
+rng = np.random.RandomState(0)
+X = rng.random_sample(size=(300, 50))
+Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 

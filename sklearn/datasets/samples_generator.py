@@ -11,6 +11,7 @@ import numpy as np
 from scipy import linalg
 
 from ..utils import array2d, check_random_state
+from ..utils import shuffle as util_shuffle
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -99,7 +100,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     The algorithm is adapted from Guyon [1] and was designed to generate
     the "Madelon" dataset.
 
-    **References**:
+    References
+    ----------
 
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
@@ -216,10 +218,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Randomly permute samples and features
     if shuffle:
-        indices = range(n_samples)
-        generator.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        X, y = util_shuffle(X, y, random_state=generator)
 
         indices = range(n_features)
         generator.shuffle(indices)
@@ -324,6 +323,46 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     return np.array(X, dtype=np.float64), Y
 
 
+def make_hastie_10_2(n_samples=12000, random_state=None):
+    """Generates data for binary classification used in
+    Hastie et al. 2009, Example 10.2.
+
+    The ten features are standard independent Gaussian and
+    the target ``y`` is defined by::
+
+      y[i] = 1 if np.sum(X[i] > 9.34 else -1
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=12000)
+        The number of samples.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 10]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    **References**:
+
+    .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
+    Learning Ed. 2", Springer, 2009.
+    """
+    rs = check_random_state(random_state)
+    shape = (n_samples, 10)
+    X = rs.normal(size=shape).reshape(shape)
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
+    y[y == 0.0] = -1.0
+    return X, y
+
+
 def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
                     effective_rank=None, tail_strength=0.5, noise=0.0,
                     shuffle=True, coef=False, random_state=None):
@@ -422,10 +461,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
 
     # Randomly permute samples and features
     if shuffle:
-        indices = range(n_samples)
-        generator.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        X, y = util_shuffle(X, y, random_state=generator)
 
         indices = range(n_features)
         generator.shuffle(indices)
@@ -437,6 +473,98 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
 
     else:
         return X, y
+
+
+def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
+        factor=.8):
+    """Make a large circle containing a smaller circle in 2di
+
+    A simple toy dataset to visualize clustering and classification
+    algorithms.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The total number of points generated.
+
+    shuffle: bool, optional (default=True)
+        Whether to shuffle the samples.
+
+    noise : double or None (default=None)
+        Standard deviation of Gaussian noise added to the data.
+
+    factor : double < 1 (default=.8)
+        Scale factor between inner and outer circle.
+    """
+
+    if factor > 1 or factor < 0:
+        raise ValueError("'factor' has to be between 0 and 1.")
+
+    n_samples_out = int(n_samples / float(1 + factor))
+    n_samples_in = n_samples - n_samples_out
+
+    generator = check_random_state(random_state)
+
+    # so as not to have the first point = last point, we add one and then
+    # remove it.
+    n_samples_out, n_samples_in = n_samples_out + 1, n_samples_in + 1
+    outer_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
+    outer_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
+    inner_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
+    inner_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
+
+    X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
+           np.append(outer_circ_y, inner_circ_y))).T
+    y = np.hstack([np.zeros(n_samples_out - 1), np.ones(n_samples_in - 1)])
+    if shuffle:
+        X, y = util_shuffle(X, y, random_state=generator)
+
+    if not noise is None:
+        X += generator.normal(scale=noise, size=X.shape)
+
+    return X, y.astype(np.int)
+
+
+def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
+    """Make two interleaving half circles
+
+    A simple toy dataset to visualize clustering and classification
+    algorithms.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=100)
+        The total number of points generated.
+
+    shuffle : bool, optional (default=True)
+        Whether to shuffle the samples.
+
+    noise : double or None (default=None)
+        Standard deviation of Gaussian noise added to the data.
+
+    """
+
+    n_samples_out = n_samples / 2
+    n_samples_in = n_samples - n_samples_out
+
+    generator = check_random_state(random_state)
+
+    outer_circ_x = np.cos(np.linspace(0, np.pi, n_samples_out))
+    outer_circ_y = np.sin(np.linspace(0, np.pi, n_samples_out))
+    inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))
+    inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5
+
+    X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
+           np.append(outer_circ_y, inner_circ_y))).T
+    y = np.hstack([np.zeros(n_samples_in), np.ones(n_samples_out)])
+
+    if shuffle:
+        X, y = util_shuffle(X, y, random_state=generator)
+
+    if not noise is None:
+        X += generator.normal(scale=noise, size=X.shape)
+
+    return X, y.astype(np.int)
 
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
@@ -533,7 +661,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     [0, 1]. The output `y` is created according to the formula::
 
         y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-               + 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
++ 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
 
     Out of the `n_features` features, only 5 are actually used to compute
     `y`. The remaining features are independent of `y`.
@@ -565,9 +693,8 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -602,10 +729,8 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
     The output `y` is created according to the formula::
 
-        y(X) = (X[:, 0] ** 2 \
-                   + (X[:, 1] * X[:, 2] \
-                         - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
-               + noise * N(0, 1).
+        y(X) = (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] \
+ - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 + noise * N(0, 1).
 
     Parameters
     ----------
@@ -629,9 +754,8 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -670,10 +794,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     The output `y` is created according to the formula::
 
-        y(X) = arctan((X[:, 1] * X[:, 2] \
-                          - 1 / (X[:, 1] * X[:, 3])) \
-                      / X[:, 0]) \
-               + noise * N(0, 1).
+        y(X) = arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) \
+/ X[:, 0]) + noise * N(0, 1).
 
     Parameters
     ----------
@@ -697,9 +819,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
@@ -882,9 +1003,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
@@ -1014,7 +1134,8 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     -----
     The algorithm is from Marsland [1].
 
-    **References**:
+    References
+    ----------
 
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
            Chapter 10, 2009.

@@ -1,8 +1,8 @@
 .. _grid_search:
 
-===========
-Grid Search
-===========
+==========================================
+Grid Search: setting estimator parameters
+==========================================
 
 .. currentmodule:: sklearn
 
@@ -133,3 +133,5 @@ This is currently implemented in the following classes:
     ensemble.RandomForestRegressor
     ensemble.ExtraTreesClassifier
     ensemble.ExtraTreesRegressor
+    ensemble.GradientBoostingClassifier
+    ensemble.GradientBoostingRegressor

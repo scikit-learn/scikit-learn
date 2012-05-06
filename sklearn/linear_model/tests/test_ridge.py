@@ -2,9 +2,10 @@ import numpy as np
 import scipy.sparse as sp
 from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-                          assert_equal
+                          assert_equal, assert_array_equal
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
+from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import Ridge
@@ -16,11 +17,11 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 
 from sklearn.cross_validation import KFold
 
+rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
-
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
 ind = np.arange(X_diabetes.shape[0])
-np.random.shuffle(ind)
+rng.shuffle(ind)
 ind = ind[:200]
 X_diabetes, y_diabetes = X_diabetes[ind], y_diabetes[ind]
 
@@ -28,8 +29,6 @@ iris = datasets.load_iris()
 
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
-
-np.random.seed(0)
 
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
@@ -45,27 +44,69 @@ def test_ridge():
 
     # With more samples than features
     n_samples, n_features = 6, 5
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
 
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
     assert_equal(ridge.coef_.shape, (X.shape[1], ))
-    assert_true(ridge.score(X, y) > 0.5)
+    assert_greater(ridge.score(X, y), 0.5)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert_true(ridge.score(X, y) > 0.5)
+    assert_greater(ridge.score(X, y), 0.5)
 
     # With more features than samples
     n_samples, n_features = 5, 10
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
     ridge = Ridge(alpha=alpha)
     ridge.fit(X, y)
-    assert_true(ridge.score(X, y) > .9)
+    assert_greater(ridge.score(X, y), .9)
 
     ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert_true(ridge.score(X, y) > 0.9)
+    assert_greater(ridge.score(X, y), 0.9)
+
+
+def test_ridge_shapes():
+    """Test shape of coef_ and intercept_
+    """
+    n_samples, n_features = 5, 10
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    Y1 = y[:, np.newaxis]
+    Y = np.c_[y, 1 + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (n_features,))
+    assert_equal(ridge.intercept_.shape, ())
+
+    ridge.fit(X, Y1)
+    assert_equal(ridge.coef_.shape, (1, n_features))
+    assert_equal(ridge.intercept_.shape, (1, ))
+
+    ridge.fit(X, Y)
+    assert_equal(ridge.coef_.shape, (2, n_features))
+    assert_equal(ridge.intercept_.shape, (2, ))
+
+
+def test_ridge_intercept():
+    """Test intercept with multiple targets GH issue #708
+    """
+    n_samples, n_features = 5, 10
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    Y = np.c_[y, 1. + y]
+
+    ridge = Ridge()
+
+    ridge.fit(X, y)
+    intercept = ridge.intercept_
+
+    ridge.fit(X, Y)
+    assert_almost_equal(ridge.intercept_[0], intercept)
+    assert_almost_equal(ridge.intercept_[1], intercept + 1.)
 
 
 def test_toy_ridge_object():
@@ -97,9 +138,8 @@ def test_ridge_vs_lstsq():
 
     # we need more samples than features
     n_samples, n_features = 5, 4
-    np.random.seed(0)
-    y = np.random.randn(n_samples)
-    X = np.random.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
 
     ridge = Ridge(alpha=0., fit_intercept=False)
     ols = LinearRegression(fit_intercept=False)
@@ -266,3 +306,42 @@ def test_dense_sparse():
         # test that the outputs are the same
         if ret_dense != None and ret_sparse != None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+
+
+def test_class_weights():
+    """
+    Test class weights.
+    """
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    clf = RidgeClassifier(class_weight=None)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+
+    # we give a small weights to class 1
+    clf = RidgeClassifier(class_weight={1: 0.001})
+    clf.fit(X, y)
+
+    # now the hyperplane should rotate clock-wise and
+    # the prediction on this point should shift
+    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+
+
+def test_class_weights_cv():
+    """
+    Test class weights for cross validated ridge classifier.
+    """
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    clf = RidgeClassifierCV(class_weight=None, alphas=[.01, .1, 1])
+    clf.fit(X, y)
+
+    # we give a small weights to class 1
+    clf = RidgeClassifierCV(class_weight={1: 0.001}, alphas=[.01, .1, 1, 10])
+    clf.fit(X, y)
+
+    assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))

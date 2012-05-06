@@ -27,9 +27,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         implemented for l2 penalty. Prefer dual=False when
         n_samples > n_features.
 
-    C : float
+    C : float or None, optional (default=None)
         Specifies the strength of the regularization. The smaller it is
-        the bigger in the regularization.
+        the bigger in the regularization. If None then C is set to n_samples.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -48,11 +48,6 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     tol: float, optional
         tolerance for stopping criteria
-
-    scale_C : bool, default: True
-        Scale C with number of samples. It makes the setting of C independent
-        of the number of samples. To match liblinear commandline one should use
-        scale_C=False. WARNING: scale_C will disappear in version 0.12.
 
     Attributes
     ----------
@@ -89,13 +84,11 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1,
-                 scale_C=True, class_weight=None):
+            fit_intercept=True, intercept_scaling=1, class_weight=None):
 
-        super(LogisticRegression, self).__init__(penalty=penalty,
-            dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            scale_C=scale_C, class_weight=class_weight)
+        super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,
+                loss='lr', tol=tol, C=C, fit_intercept=fit_intercept,
+                intercept_scaling=intercept_scaling, class_weight=class_weight)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -115,10 +108,13 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
             order.
         """
         X = self._validate_for_predict(X)
+
+        C = 0.0  # C is not useful here
+
         prob_wrap = (csr_predict_prob_wrap if self._sparse else
                 predict_prob_wrap)
         probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
-                           self.tol, self.C, self.class_weight_label_,
+                           self.tol, C, self.class_weight_label_,
                            self.class_weight_, self.label_, self._get_bias())
         return probas[:, np.argsort(self.label_)]
 

@@ -268,8 +268,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     -----
     See examples/linear_model/plot_sparse_recovery.py for an example.
 
-    **References**:
-
+    References
+    ----------
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
     Journal of the Royal Statistical Society: Series B
@@ -334,7 +334,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     for this_C, this_scores in zip(C, scores.T):
         # XXX : would be great to do it with a warm_start ...
         clf = LogisticRegression(C=this_C, tol=tol, penalty='l1', dual=False,
-                    fit_intercept=fit_intercept, scale_C=True)
+                fit_intercept=fit_intercept)
         clf.fit(X, y)
         this_scores[:] = np.any(
                     np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
@@ -425,8 +425,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     -----
     See examples/linear_model/plot_randomized_lasso.py for an example.
 
-    **References**:
-
+    References
+    ----------
     Stability selection
     Nicolai Meinshausen, Peter Buhlmann
     Journal of the Royal Statistical Society: Series B

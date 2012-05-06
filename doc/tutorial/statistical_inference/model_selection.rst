@@ -1,3 +1,5 @@
+.. _model_selection_tut:
+
 ============================================================
 Model selection: choosing estimators and their parameters
 ============================================================
@@ -11,13 +13,13 @@ better**.
 
 ::
 
-    >>> from scikits.learn import datasets, svm
+    >>> from sklearn import datasets, svm
     >>> digits = datasets.load_digits()
     >>> X_digits = digits.data
     >>> y_digits = digits.target
-    >>> svc = svm.SVC()
+    >>> svc = svm.SVC(C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
-    0.41999999999999998
+    0.97999999999999998
 
 To get a better measure of prediction accuracy (which we can use as a
 proxy for goodness of fit of the model), we can successively split the
@@ -37,57 +39,63 @@ data in *folds* that we use for training and testing::
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
     >>> print scores
-    [0.41068447412353926, 0.41569282136894825, 0.42737896494156929]
+    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
+.. currentmodule:: sklearn.cross_validation
 
-This is called a **K-Fold cross-validation**.
+This is called a :class:`KFold` cross validation
+
+.. _cv_generators_tut:
 
 Cross-validation generators
 =============================
 
+
+
 The code above to split data in train and test sets is tedious to write.
-The `scikits.learn` exposes cross-validation generators to generate list
+The `sklearn` exposes cross-validation generators to generate list
 of indices for this purpose::
 
-    >>> from scikits.learn import cross_val
-    >>> k_fold = cross_val.KFold(n=6, k=3, indices=True)
+    >>> from sklearn import cross_validation
+    >>> k_fold = cross_validation.KFold(n=6, k=3, indices=True)
     >>> for train_indices, test_indices in k_fold:
     ...      print 'Train: %s | test: %s' % (train_indices, test_indices)
     Train: [2 3 4 5] | test: [0 1]
     Train: [0 1 4 5] | test: [2 3]
     Train: [0 1 2 3] | test: [4 5]
 
-The cross-validation can then be implemented easily:: 
+The cross-validation can then be implemented easily::
 
-    >>> kfold = cross_val.KFold(len(X_digits), k=3)
+    >>> kfold = cross_validation.KFold(len(X_digits), k=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in kfold]
-    [0.41068447412353926, 0.41569282136894825, 0.42737896494156929]
+    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
-To compute the `score` method of an estimator, the scikits.learn exposes
+To compute the `score` method of an estimator, the sklearn exposes
 a helper function::
 
-    >>> cross_val.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
-    array([ 0.41068447,  0.41569282,  0.42737896])
+    >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
+    array([ 0.93489149,  0.95659432,  0.93989983])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
 
    **Cross-validation generators**
 
+
 .. list-table::
 
-   * 
+   *
 
-    - `KFold(n, k)`
+    - :class:`KFold` **(n, k)**
 
-    - `StratifiedKFold(y, k)`
+    - :class:`StratifiedKFold` **(y, k)**
 
-    - `LeaveOneOut(n)`
+    - :class:`LeaveOneOut` **(n)**
 
-    - `LeaveOneLabelOut(labels)`
+    - :class:`LeaveOneLabelOut` **(labels)**
 
-   * 
+   *
 
     - Split it K folds, train on K-1, test on left-out
 
@@ -97,19 +105,26 @@ of the computer.
 
     - Takes a label array to group observations
 
-.. image:: cv_digits.png
-   :scale: 54
+.. currentmodule:: sklearn.svm
+
+.. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
+   :target: ../../auto_examples/exercises/plot_cv_digits.html
+   :align: right
+   :scale: 100
 
 .. topic:: **Exercise**
    :class: green
 
-   On the digits dataset, plot the cross-validation score of a SVC
-   estimator with an RBF kernel as a function of gamma (use a logarithmic
-   grid of points, from `1e-6` to `1e-1`).
+   On the digits dataset, plot the cross-validation score of a :class:`SVC`
+   estimator with an RBF kernel as a function of parameter `C` (use a
+   logarithmic grid of points, from `1` to `10`).
 
-   .. toctree::
+   .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
+       :lines: 13-23
 
-      digits_cv_excercice.rst
+   Solution: :download:`../../auto_examples/exercises/plot_cv_digits.py`
+
+
 
 Grid-search and cross-validated estimators
 ============================================
@@ -117,28 +132,30 @@ Grid-search and cross-validated estimators
 Grid-search
 -------------
 
-The scikits.learn provides an object that, given data, computes the score
+.. currentmodule:: sklearn.grid_search
+
+The sklearn provides an object that, given data, computes the score
 during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
 
-    >>> from scikits.learn.grid_search import GridSearchCV
+    >>> from sklearn.grid_search import GridSearchCV
     >>> gammas = np.logspace(-6, -1, 10)
-    >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas), 
+    >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas),
     ...                    n_jobs=-1)
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
-    >>> clf.best_score
-    0.98899798001594419
-    >>> clf.best_estimator.gamma
-    0.00059948425031894088
+    >>> clf.best_score_
+    0.988991985997974
+    >>> clf.best_estimator_.gamma
+    9.9999999999999995e-07
 
     >>> # Prediction performance on test set is not as good as on train set
     >>> clf.score(X_digits[1000:], y_digits[1000:])
-    0.96110414052697613
+    0.94228356336260977
 
 
-By default the `GridSearchCV` uses a 3-fold cross-validation. However, if
+By default the :class:`GridSearchCV` uses a 3-fold cross-validation. However, if
 it detects that a classifier is passed, rather than a regressor, it uses
 a stratified 3-fold.
 
@@ -146,11 +163,11 @@ a stratified 3-fold.
 
     ::
 
-        >>> cross_val.cross_val_score(clf, X_digits, y_digits)
-        array([ 0.9933222 ,  0.98330551,  0.98831386])
+        >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
+	array([ 0.97996661,  0.98163606,  0.98330551])
 
     Two cross-validation loops are performed in parallel: one by the
-    GridSearchCV estimator to set `gamma`, the other one by
+    :class:`GridSearchCV` estimator to set `gamma`, the other one by
     `cross_val_score` to measure the prediction performance of the
     estimator. The resulting scores are unbiased estimates of the
     prediction score on new data.
@@ -160,15 +177,17 @@ a stratified 3-fold.
     You cannot nest objects with parallel computing (n_jobs different
     than 1).
 
+.. _cv_estimators_tut:
+
 Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
 algorithm-by-algorithm basis. This is why, for certain estimators, the
-scikits.learn exposes "CV" estimators, that set their parameter
+sklearn exposes :ref:`cross_validation` estimators, that set their parameter
 automatically by cross-validation::
 
-    >>> from scikits.learn import linear_model, datasets
+    >>> from sklearn import linear_model, datasets
     >>> lasso = linear_model.LassoCV()
     >>> diabetes = datasets.load_diabetes()
     >>> X_diabetes = diabetes.data
@@ -179,8 +198,8 @@ automatically by cross-validation::
         n_alphas=100, normalize=False, precompute='auto', tol=0.0001,
         verbose=False)
     >>> # The estimator chose automatically its lambda:
-    >>> lasso.alpha
-    0.013180196198701137
+    >>> lasso.alpha # doctest: +ELLIPSIS
+    0.01318...
 
 These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
@@ -193,6 +212,9 @@ appended to their name.
 
    **Bonus**: How much can you trust the selection of alpha?
 
-   .. toctree::
+   .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
+       :lines: 11-23
 
-      diabetes_cv_excercice
+   Solution: :download:`../../auto_examples/exercises/plot_cv_diabetes.py`
+
+

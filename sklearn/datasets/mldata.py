@@ -6,6 +6,7 @@
 import os
 from os.path import join, exists
 import re
+import scipy as sp
 from scipy import io
 from shutil import copyfileobj
 import urllib2
@@ -184,6 +185,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     if transpose_data:
         dataset['data'] = dataset['data'].T
     if 'target' in dataset:
-        dataset['target'] = dataset['target'].squeeze()
+        if not sp.sparse.issparse(dataset['target']):
+            dataset['target'] = dataset['target'].squeeze()
 
     return Bunch(**dataset)

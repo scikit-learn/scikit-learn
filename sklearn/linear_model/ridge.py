@@ -66,9 +66,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     solver : {'auto', 'dense_cholesky', 'sparse_cg'}, optional
         Solver to use in the computational routines. 'delse_cholesky'
         will use the standard scipy.linalg.solve function, 'sparse_cg'
-        will use the a conjugate gradient solver as found in
+        will use the conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
-        appropiate depending on the matrix X.
+        appropriate depending on the matrix X.
 
     tol: float
         Precision of the solution.
@@ -203,10 +203,10 @@ class Ridge(LinearModel):
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
             routines. 'delse_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the a
+            scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropiate depending on the matrix X.
+            appropriate depending on the matrix X.
 
         Returns
         -------
@@ -250,6 +250,12 @@ class RidgeClassifier(Ridge):
     tol: float
         Precision of the solution.
 
+    class_weight : dict, optional
+        Weights associated with classes in the form
+        {class_label : weight}. If not given, all classes are
+        supposed to have weight one.
+
+
     Attributes
     ----------
 
@@ -266,6 +272,12 @@ class RidgeClassifier(Ridge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+            copy_X=True, tol=1e-3, class_weight=None):
+        super(RidgeClassifier, self).__init__(alpha=alpha,
+                fit_intercept=fit_intercept, normalize=normalize,
+                copy_X=copy_X, tol=tol)
+        self.class_weight = class_weight
 
     def fit(self, X, y, solver='auto'):
         """Fit Ridge regression model.
@@ -281,18 +293,24 @@ class RidgeClassifier(Ridge):
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
             routines. 'delse_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the a
+            scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropiate depending on the matrix X.
+            appropriate depending on the matrix X.
 
         Returns
         -------
         self : returns an instance of self.
         """
+        if self.class_weight is None:
+            class_weight = {}
+        else:
+            class_weight = self.class_weight
+
+        sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
-        Ridge.fit(self, X, Y, solver=solver)
+        Ridge.fit(self, X, Y, solver=solver, sample_weight=sample_weight_classes)
         return self
 
     def decision_function(self, X):
@@ -346,7 +364,8 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
-    **References**:
+    References
+    ----------
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
@@ -548,25 +567,33 @@ class RidgeCV(LinearModel):
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-    gcv_mode: {None, 'auto', 'svd', eigen'}, optional
-        Flag indicating which strategy to use when performing Generalized
-        Cross-Validation. Options are::
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features] or [n_classes, n_features]
+        Weight vector(s).
+
+    gcv_mode : {None, 'auto', 'svd', eigen'}, optional
+        Flag indicating which strategy to use when performing
+        Generalized Cross-Validation. Options are::
 
             'auto' : use svd if n_samples > n_features, otherwise use eigen
-            'svd' : force computation via svd of X
+            'svd' : force computation via singular value decomposition of X
             'eigen' : force computation via eigendecomposition of X^T X
 
-        The 'auto' mode is the default and is intended to pick the cheaper
+        The 'auto' mode is the default and is intended to pick the cheaper \
         option of the two depending upon the shape of the training data.
 
     See also
     --------
-    Ridge, RidgeClassifierCV
+    Ridge: Ridge regression
+    RidgeClassifier: Ridge classifier
+    RidgeCV: Ridge regression with built-in cross validation
     """
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                   normalize=False, score_func=None, loss_func=None, cv=None,
-                   gcv_mode=None):
+            normalize=False, score_func=None, loss_func=None, cv=None,
+            gcv_mode=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -595,8 +622,7 @@ class RidgeCV(LinearModel):
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                                  self.score_func, self.loss_func,
-                                  gcv_mode=self.gcv_mode)
+                    self.score_func, self.loss_func, gcv_mode=self.gcv_mode)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.best_alpha = estimator.best_alpha
         else:
@@ -618,6 +644,67 @@ class RidgeCV(LinearModel):
 
 
 class RidgeClassifierCV(RidgeCV):
+    """Ridge classifier with built-in cross-validation.
+
+    By default, it performs Generalized Cross-Validation, which is a form of
+    efficient Leave-One-Out cross-validation. Currently, only the n_features >
+    n_samples case is handled efficiently.
+
+    Parameters
+    ----------
+    alphas: numpy array of shape [n_alpha]
+        Array of alpha values to try.
+        Small positive values of alpha improve the conditioning of the
+        problem and reduce the variance of the estimates.
+        Alpha corresponds to (2*C)^-1 in other linear models such as
+        LogisticRegression or LinearSVC.
+
+    fit_intercept : boolean
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    score_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediction (big is good)
+        if None is passed, the score of the estimator is maximized
+
+    loss_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediction (small is good)
+        if None is passed, the score of the estimator is maximized
+
+    cv : cross-validation generator, optional
+        If None, Generalized Cross-Validation (efficient Leave-One-Out)
+        will be used.
+
+    class_weight : dict, optional
+        Weights associated with classes in the form
+        {class_label : weight}. If not given, all classes are
+        supposed to have weight one.
+
+    See also
+    --------
+    Ridge: Ridge regression
+    RidgeClassifier: Ridge classifier
+    RidgeCV: Ridge regression with built-in cross validation
+
+    Notes
+    -----
+    For multi-class classification, n_class classifiers are trained in
+    a one-versus-all approach. Concretely, this is implemented by taking
+    advantage of the multi-variate response support in Ridge.
+    """
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+            normalize=False, score_func=None, loss_func=None, cv=None,
+            class_weight=None):
+        super(RidgeClassifierCV, self).__init__(alphas=alphas,
+                fit_intercept=fit_intercept, normalize=normalize,
+                score_func=score_func, loss_func=loss_func, cv=cv)
+        self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
         """Fit the ridge classifier.
@@ -644,13 +731,21 @@ class RidgeClassifierCV(RidgeCV):
         self : object
             Returns self.
         """
-        if class_weight is None:
-            class_weight = {}
-        sample_weight2 = np.array([class_weight.get(k, 1.0) for k in y])
+        if class_weight != None:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                    "Using it in the 'fit' method is deprecated.",
+                    DeprecationWarning)
+            self.class_weight_ = class_weight
+        else:
+            self.class_weight_ = self.class_weight
+
+        if self.class_weight_ is None:
+            self.class_weight_ = {}
+
+        sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
-        RidgeCV.fit(self, X, Y,
-                    sample_weight=sample_weight * sample_weight2)
+        RidgeCV.fit(self, X, Y, sample_weight=sample_weight * sample_weight2)
         return self
 
     def decision_function(self, X):

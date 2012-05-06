@@ -53,11 +53,11 @@ def make_prediction(dataset=None, binary=False):
     half = int(n_samples / 2)
 
     # add noisy features to make the problem harder and avoid perfect results
-    np.random.seed(0)
-    X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
+    rng = np.random.RandomState(0)
+    X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel='linear', probability=True, scale_C=True)
+    clf = svm.SVC(kernel='linear', probability=True)
     probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -132,6 +132,20 @@ def test_auc():
     x = [0, 0.5, 1]
     y = [0, 0.5, 1]
     assert_array_almost_equal(auc(x, y), 0.5)
+
+
+def test_auc_duplicate_values():
+    """Test Area Under Curve (AUC) computation with duplicate values
+
+    auc() was previously sorting the x and y arrays according to the indices
+    from numpy.argsort(x), which was reordering the tied 0's in this example
+    and resulting in an incorrect area computation. This test detects the
+    error.
+    """
+    x = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.5, 1.]
+    y = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+         1., 1., 1., 1., 1., 1., 1., 1.]
+    assert_array_almost_equal(auc(x, y), 1.)
 
 
 def test_precision_recall_f1_score_binary():

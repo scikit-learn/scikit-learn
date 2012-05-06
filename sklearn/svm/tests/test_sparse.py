@@ -1,7 +1,6 @@
 import numpy as np
-from scipy import linalg
 from scipy import sparse
-from sklearn import datasets, svm, linear_model
+from sklearn import datasets, svm, linear_model, base
 from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
@@ -27,14 +26,15 @@ true_result2 = [1, 2, 3]
 
 iris = datasets.load_iris()
 # permute
-perm = np.random.permutation(iris.target.size)
+rng = np.random.RandomState(0)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 # sparsify
 iris.data = sparse.csr_matrix(iris.data)
 
 
-def test_SVC():
+def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
@@ -63,7 +63,7 @@ def test_SVC():
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
 
 
-def test_SVC_iris():
+def test_svc_iris():
     """Test the sparse SVC with the iris dataset"""
     for k in ('linear', 'poly', 'rbf'):
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
@@ -97,7 +97,7 @@ def test_error():
     assert_array_equal(clf.predict(T), true_result)
 
 
-def test_LinearSVC():
+def test_linearsvc():
     """
     Similar to test_SVC
     """
@@ -116,7 +116,7 @@ def test_LinearSVC():
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
 
 
-def test_LinearSVC_iris():
+def test_linearsvc_iris():
     """Test the sparse LinearSVC with the iris dataset"""
 
     sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
@@ -142,9 +142,9 @@ def test_weight():
                                  weights=[0.833, 0.167], random_state=0)
 
     X_ = sparse.csr_matrix(X_)
-    for clf in (linear_model.LogisticRegression(C=180),
-                svm.LinearSVC(C=len(X)),
-                svm.SVC(C=len(X))):
+    for clf in (linear_model.LogisticRegression(),
+                svm.LinearSVC(),
+                svm.SVC()):
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
@@ -203,30 +203,14 @@ def test_sparse_realdata():
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
 
 
-def test_sparse_scale_C():
-    """Check that sparse LibSVM/LibLinear works ok with scaling of C"""
+def test_sparse_svc_clone_with_callable_kernel():
+    a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    b = base.clone(a)
 
-    params = dict(kernel='linear', C=0.1)
-    classes = [(svm.SVC, params),
-               (svm.SVR, params),
-               (svm.NuSVR, params),
-               (svm.LinearSVC, {}),
-               (linear_model.LogisticRegression, {})
-              ]
-
-    for cls, params in classes:
-        clf = cls(scale_C=True, **params).fit(X, Y)
-        clf_no_scale = cls(scale_C=False, **params).fit(X, Y)
-        sp_clf = cls(scale_C=True, **params).fit(X_sp, Y)
-
-        sp_clf_coef_ = sp_clf.coef_
-        if sparse.issparse(sp_clf_coef_):
-            sp_clf_coef_ = sp_clf_coef_.todense()
-        assert_array_almost_equal(clf.coef_, sp_clf_coef_, 5)
-
-        error_with_scale = linalg.norm(clf_no_scale.coef_
-                           - sp_clf_coef_) / linalg.norm(clf_no_scale.coef_)
-        assert_true(error_with_scale > 1e-3)
+    b.fit(X_sp, Y)
+    b.predict(X_sp)
+    b.predict_proba(X_sp)
+    # b.decision_function(X_sp)  # XXX : should be supported
 
 
 if __name__ == '__main__':

@@ -9,15 +9,42 @@ from StringIO import StringIO
 import scipy as sp
 
 
-def assert_in(obj, in_=None, out_=None):
-    """Checks that all names in `in_` as in `obj`, but no name
-    in `out_` is."""
-    if in_ is not None:
-        for name in in_:
-            assert name in obj
-    if out_ is not None:
-        for name in out_:
-            assert name not in obj
+try:
+    from nose.tools import assert_in, assert_not_in
+except ImportError:
+    # Nose < 1.0.0
+    from nose.tools import assert_true, assert_false
+
+    def assert_in(x, container):
+        assert_true(x in container, msg="%r in %r" % (x, container))
+
+    def assert_not_in(x, container):
+        assert_false(x in container, msg="%r in %r" % (x, container))
+
+
+def _assert_less(a, b, msg=None):
+    message = "%r is not lower than %r" % (a, b)
+    if msg is not None:
+        message += ": " + msg
+    assert a < b, message
+
+
+def _assert_greater(a, b, msg=None):
+    message = "%r is not greater than %r" % (a, b)
+    if msg is not None:
+        message += ": " + msg
+    assert a > b, message
+
+
+try:
+    from nose.tools import assert_less
+except ImportError:
+    assert_less = _assert_less
+
+try:
+    from nose.tools import assert_greater
+except ImportError:
+    assert_greater = _assert_greater
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):

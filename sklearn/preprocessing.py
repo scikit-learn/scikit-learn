@@ -110,6 +110,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             X, axis, with_mean=with_mean, with_std=with_std)
         if copy:
             X = X.copy()
+        # Xr is a view on the original array that enables easy use of
+        # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
         if with_mean:
             Xr -= mean_

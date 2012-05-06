@@ -77,7 +77,7 @@ Since the kernel is additive, it is possible to treat all components
 the Fourier transform in regular intervals, instead of approximating
 using Monte Carlo sampling.
 
-The class :class:`AdditiveChi2Kernel` implements this component wise
+The class :class:`AdditiveChi2Sampler` implements this component wise
 deterministic sampling. Each component is sampled `n` times, yielding
 `2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).

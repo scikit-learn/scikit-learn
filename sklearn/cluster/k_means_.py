@@ -23,7 +23,6 @@ from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
-from ..utils import safe_asarray
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -248,7 +247,7 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
             warnings.warn(
                 'Explicit initial center position passed: '
                 'performing only one init in the k-means instead of %d'
-                % n_init)
+                % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
 
     # precompute squared norms of data points
@@ -538,7 +537,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     init_size : int, optional
         Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accurracy).
+        initialization (sometimes at the expense of accurracy): the
+        only algorithm is initialized by running a batch KMeans on a
+        random subset of the data. This needs to be larger than k.
 
     Returns
     -------
@@ -548,11 +549,20 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     n_samples = X.shape[0]
 
     if init_size is not None and init_size < n_samples:
+        if init_size < k:
+            warnings.warn(
+                "init_size=%d should be larger than k=%d. "
+                "Setting it to 3*k" % (init_size, k),
+                RuntimeWarning, stacklevel=2)
+            init_size = 3 * k
         init_indices = random_state.random_integers(
                 0, n_samples - 1, init_size)
         X = X[init_indices]
         x_squared_norms = x_squared_norms[init_indices]
         n_samples = X.shape[0]
+    elif n_samples < k:
+            raise ValueError(
+                "n_samples=%d should be larger than k=%d" % (init_size, k))
 
     if init == 'k-means++':
         centers = k_init(X, k,
@@ -568,7 +578,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     else:
         raise ValueError("the init parameter for the k-means should "
             "be 'k-means++' or 'random' or an ndarray, "
-            "'%s' (type '%s') was passed.")
+            "'%s' (type '%s') was passed." % (init, type(init)))
 
     if sp.issparse(centers):
         centers = centers.toarray()
@@ -686,11 +696,10 @@ class KMeans(BaseEstimator):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        X = safe_asarray(X, dtype=np.float64)
+        X = atleast2d_or_csr(X, dtype=np.float64)
         if X.shape[0] < self.k:
             raise ValueError("n_samples=%d should be >= k=%d" % (
                 X.shape[0], self.k))
-        X = as_float_array(X, copy=False)
         return X
 
     def _check_test_data(self, X):
@@ -701,6 +710,12 @@ class KMeans(BaseEstimator):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
+        if not X.dtype.kind is 'f':
+            warnings.warn("Got data type %s, converted to float "
+                    "to avoid overflows" % X.dtype,
+                    RuntimeWarning, stacklevel=2)
+            X = X.astype(np.float)
+
         return X
 
     def _check_fitted(self):
@@ -719,6 +734,14 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
             n_jobs=self.n_jobs)
         return self
+
+    def fit_predict(self, X):
+        """Compute cluster centers and predict cluster index for each sample.
+
+        Convenience method; equivalent to calling fit(X) followed by
+        predict(X).
+        """
+        return self.fit(X).labels_
 
     def transform(self, X, y=None):
         """Transform the data to a cluster-distance space
@@ -952,8 +975,10 @@ class MiniBatchKMeans(KMeans):
         Size of the mini batches.
 
     init_size: int, optional, default: 3 * batch_size
-        Size of the random sample of the dataset passed to init method
-        when calling fit.
+        Number of samples to randomly sample for speeding up the
+        initialization (sometimes at the expense of accurracy): the
+        only algorithm is initialized by running a batch KMeans on a
+        random subset of the data. This needs to be larger than k.
 
     init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'k-means++':
@@ -1008,11 +1033,12 @@ class MiniBatchKMeans(KMeans):
         self.max_no_improvement = max_no_improvement
         if chunk_size is not None:
             warnings.warn(
-                "chunk_size is deprecated in 0.10, use batch_size instead")
+                "chunk_size is deprecated in 0.10, use batch_size instead",
+                PendingDeprecationWarning, stacklevel=2)
             batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
-        self.init_size = 3 * batch_size if init_size is None else init_size
+        self.init_size = init_size
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -1053,8 +1079,11 @@ class MiniBatchKMeans(KMeans):
         n_iterations = int(self.max_iter * n_batches)
 
         init_size = self.init_size
+        if init_size is None:
+            init_size = 3 * self.batch_size
         if init_size > n_samples:
             init_size = n_samples
+        self.init_size_ = init_size
 
         validation_indices = self.random_state.random_integers(
                 0, n_samples - 1, init_size)
@@ -1086,7 +1115,7 @@ class MiniBatchKMeans(KMeans):
                 cluster_centers, counts, old_center_buffer, False,
                 distances=distances)
 
-            # Keep only the best cluster centers across independant inits on
+            # Keep only the best cluster centers across independent inits on
             # the common validation set
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)

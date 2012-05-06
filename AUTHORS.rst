@@ -50,8 +50,7 @@ People
 
   * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
 
-  * `Alexandre Gramfort
-    <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
+  * `Alexandre Gramfort <http://alexandre.gramfort.net>`_
 
   * `Olivier Grisel <http://twitter.com/ogrisel>`_
 

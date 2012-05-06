@@ -18,13 +18,13 @@ import scipy.sparse as sp
 from scipy import linalg
 import scipy.sparse.linalg as sp_linalg
 
+from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, as_float_array, safe_asarray
-from ..utils import atleast2d_or_csr, check_arrays
+from ..utils.fixes import lsqr
 
-from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 
 ###
 ### TODO: intercept for all models
@@ -55,12 +55,12 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])
-        y_mean = y.mean()
+        y_mean = y.mean(axis=0)
         y = y - y_mean
     else:
         X_mean = np.zeros(X.shape[1])
         X_std = np.ones(X.shape[1])
-        y_mean = 0.
+        y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
     return X, y, X_mean, y_mean, X_std
 
 
@@ -141,7 +141,7 @@ class LinearRegression(LinearModel):
         self.normalize = normalize
         self.copy_X = copy_X
 
-    def fit(self, X, y):
+    def fit(self, X, y, n_jobs=1):
         """
         Fit linear model.
 
@@ -149,8 +149,12 @@ class LinearRegression(LinearModel):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples, n_responses]
             Target values
+        n_jobs : The number of jobs to use for the computation.
+            If -1 all CPUs are used. This will only provide speedup for
+            n_response > 1 and sufficient large problems
+
         Returns
         -------
         self : returns an instance of self.
@@ -162,17 +166,20 @@ class LinearRegression(LinearModel):
                 self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
-            if hasattr(sp_linalg, 'lsqr'):
-                out = sp_linalg.lsqr(X, y)
+            if y.ndim < 2:
+                out = lsqr(X, y)
                 self.coef_ = out[0]
                 self.residues_ = out[3]
             else:
-                # DEPENDENCY: scipy 0.7
-                self.coef_ = sp_linalg.spsolve(X, y)
-                self.residues_ = y - safe_sparse_dot(X, self.coef_)
+                # sparse_lstsq cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs)(delayed(lsqr)
+                        (X, y[:, j].ravel()) for j in range(y.shape[1]))
+                self.coef_ = np.vstack(out[0] for out in outs)
+                self.residues_ = np.vstack(out[3] for out in outs)
         else:
             self.coef_, self.residues_, self.rank_, self.singular_ = \
                     linalg.lstsq(X, y)
+            self.coef_ = self.coef_.T
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self

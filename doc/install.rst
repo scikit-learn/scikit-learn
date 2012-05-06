@@ -183,10 +183,18 @@ version.
 Macports
 --------
 
-The macport's package is named py26-sklearn and can be installed
-by typing the following command::
+The macport's package is named `py26-sklearn` or `py27-sklearn` depending
+on the version of Python. It can be installed by typing the following
+command::
 
     sudo port install py26-scikits-learn
+
+or::
+
+    sudo port install py27-scikits-learn
+
+depending on the version of Python you want to use.
+
 
 NetBSD
 ------
@@ -213,7 +221,7 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    python -c "import sklearn; sklearn.test()"
+    nosetests sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with the a text similar to::
@@ -224,6 +232,13 @@ eventually should finish with the a text similar to::
 otherwise please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists`.
+
+.. note:: **Testing under Windows**
+
+   Testing under Windows should be performed with the follow command::
+
+    python -c "import sklearn; sklearn.test()"
+
 
 scikit-learn can also be tested without having the package
 installed. For this you must compile the sources inplace from the

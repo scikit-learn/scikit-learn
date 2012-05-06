@@ -84,8 +84,8 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.5, kernel='rbf', probability=False, scale_C=True, shrinking=True,
-    tol=0.001)
+    gamma=0.5, kernel='rbf', probability=False, shrinking=True, tol=0.001,
+    verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -123,8 +123,8 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=1.0, kernel='rbf', probability=False, scale_C=True, shrinking=True,
-    tol=0.001)
+    gamma=1.0, kernel='rbf', probability=False, shrinking=True,
+    tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -136,14 +136,21 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-    intercept_scaling=1, loss='l2', multi_class=False, penalty='l2',
-    scale_C=True, tol=0.0001)
+    intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
+    tol=0.0001, verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+Note that the :class:`LinearSVC` also implements an alternative multi-class
+strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
+using the option "multi_class='crammer_singer'". This method is consistent,
+which is not true for one-vs-rest classification.
+In practice, on-vs-rest classification is usually preferred, since the results
+are mostly similar, but the runtime is significantly less.
 
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
@@ -263,8 +270,8 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, scale_C=True,
-    shrinking=True, tol=0.001)
+    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+    tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -386,13 +393,14 @@ The *kernel function* can be any of the following:
 
   * linear: :math:`<x_i, x_j'>`.
 
-  * polynomial: :math:`(\gamma <x, x'> + r)^d`. d is specified by
-    keyword `degree`.
+  * polynomial: :math:`(\gamma <x, x'> + r)^d`. `d` is specified by
+    keyword ``degree``, `r` by ``coef0``.
 
-  * rbf (:math:`exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
-    specified by keyword gamma.
+  * rbf (:math:`\exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
+    specified by keyword ``gamma``.
 
-  * sigmoid (:math:`tanh(<x_i,x_j> + r)`).
+  * sigmoid (:math:`\tanh(<x_i,x_j> + r)`), where `r` is specified by
+    ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
 
@@ -460,8 +468,8 @@ vectors and the test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='precomputed', probability=False, scale_C=True,
-    shrinking=True, tol=0.001)
+    gamma=0.0, kernel='precomputed', probability=False, shrinking=True,
+    tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([ 0.,  1.])
@@ -524,16 +532,9 @@ The decision function is:
 
 .. note::
 
-    In practice to have :math:`C` independent of the number of samples :math:`n`,
-    :math:`C` is scaled by :math:`n` (Replace :math:`C` by :math:`\frac{C}{n}` in the
-    equations above). It corresponds to the scale_C parameter which is True
-    by default in all estimators since version 0.11.
-
-.. note::
-
     While SVM models derived from libsvm and liblinear use *C* as regularization
     parameter, most other estimators use *alpha*. The relation between both is
-    :math:`C = \frac{1}{alpha}`.
+    :math:`C = \frac{n_samples}{alpha}`.
 
 .. TODO multiclass case ?/
 

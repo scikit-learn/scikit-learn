@@ -16,7 +16,7 @@ these arrays is the **samples** axis, while the second is the
 
     ::
 
-        >>> from scikits.learn import datasets
+        >>> from sklearn import datasets
         >>> iris = datasets.load_iris()
         >>> data = iris.data
         >>> data.shape
@@ -24,15 +24,15 @@ these arrays is the **samples** axis, while the second is the
 
     It is made of 150 observations of irises, each described by 4
     features: their sepal and petal length and width, as detailed in
-    `iris.DESCR.
+    `iris.DESCR`.
 
 When the data is not intially in the `(n_samples, n_features)` shape, it
 needs to be preprocessed to be used by the scikit.
 
 .. topic:: An example of reshaping data: the digits dataset 
 
-    .. image:: ../../auto_examples/tutorial/images/plot_digits_first_image_1.png
-        :target: ../../auto_examples/tutorial/plot_digits_first_image.html
+    .. image:: ../../auto_examples/images/datasets/plot_digits_last_image_1.png
+        :target: ../../auto_examples/plot_digits_last_image.html
         :align: right
         :scale: 60
 
@@ -42,8 +42,8 @@ needs to be preprocessed to be used by the scikit.
         >>> digits = datasets.load_digits()
         >>> digits.images.shape
         (1797, 8, 8)
-        >>> import pylab as pl
-        >>> pl.imshow(digits.images[0], cmap=pl.cm.gray_r) #doctest: +ELLIPSIS
+        >>> import pylab as pl #doctest: +SKIP
+        >>> pl.imshow(digits.images[-1], cmap=pl.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
 
     To use this dataset with the scikit, we transform each 8x8 image in a
@@ -57,7 +57,7 @@ Estimators objects
 
 .. Some code to make the doctests run
 
-   >>> from scikits.learn.base import BaseEstimator
+   >>> from sklearn.base import BaseEstimator
    >>> class Estimator(BaseEstimator):
    ...      def __init__(self, param1=0, param2=0):
    ...          self.param1 = param1

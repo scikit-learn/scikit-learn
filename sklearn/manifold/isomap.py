@@ -4,6 +4,7 @@
 # License: BSD, (C) 2011
 
 import numpy as np
+import warnings
 from ..base import BaseEstimator
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.graph import graph_shortest_path
@@ -21,7 +22,7 @@ class Isomap(BaseEstimator):
     n_neighbors : integer
         number of neighbors to consider for each point.
 
-    out_dim : integer
+    n_components : integer
         number of coordinates for the manifold
 
     eigen_solver : ['auto'|'arpack'|'dense']
@@ -53,7 +54,7 @@ class Isomap(BaseEstimator):
 
     Attributes
     ----------
-    `embedding_` : array-like, shape (n_samples, out_dim)
+    `embedding_` : array-like, shape (n_samples, n_components)
         Stores the embedding vectors
 
     `kernel_pca_` : `KernelPCA` object used to implement the embedding
@@ -68,20 +69,24 @@ class Isomap(BaseEstimator):
     `dist_matrix_` : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
         framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
-    def __init__(self, n_neighbors=5, out_dim=2,
-                 eigen_solver='auto', tol=0,
-                 max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto'):
-        self.n_neighbors = n_neighbors
+    def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
+            tol=0, max_iter=None, path_method='auto',
+            neighbors_algorithm='auto', out_dim=None):
+
+        if out_dim:
+            warnings.warn("Parameter ``out_dim`` was renamed to "
+                "``n_components`` and is now deprecated.", DeprecationWarning,
+                stacklevel=2)
         self.out_dim = out_dim
+        self.n_neighbors = n_neighbors
+        self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
         self.max_iter = max_iter
@@ -91,9 +96,15 @@ class Isomap(BaseEstimator):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
+        if self.out_dim:
+            warnings.warn("Parameter ``out_dim`` was renamed to "
+                "``n_components`` and is now deprecated.", DeprecationWarning,
+                stacklevel=3)
+            self.n_components = self.out_dim
+            self.out_dim = None
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
-        self.kernel_pca_ = KernelPCA(n_components=self.out_dim,
+        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter)
@@ -161,7 +172,7 @@ class Isomap(BaseEstimator):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, out_dim)
+        X_new: array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
         return self.embedding_
@@ -183,7 +194,7 @@ class Isomap(BaseEstimator):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, out_dim)
+        X_new: array-like, shape (n_samples, n_components)
         """
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
