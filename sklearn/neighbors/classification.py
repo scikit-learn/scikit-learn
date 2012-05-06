@@ -246,9 +246,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
         if self.outlier_label:
+            outlier_label = np.array((self.outlier_label, ))
+            small_value = np.array((1e-6, ))
             for i, pl in enumerate(pred_labels):
-                outlier_label = np.array((self.outlier_label, ))
-                small_value = np.array((1e-6, ))
                 # Check that all have at least 1 neighbor
                 if len(pl) < 1:
                     pred_labels[i] = outlier_label
