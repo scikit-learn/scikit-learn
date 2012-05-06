@@ -755,6 +755,11 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError(
                 "cannot use sparse input in %r trained on dense data"
                 % type(self).__name__)
+        if not self.raw_coef_.flags['F_CONTIGUOUS']:
+            warnings.warn('Coefficients are the fortran-contiguous. '
+                          'Copying them.', RuntimeWarning,
+                          stacklevel=3)
+            self.raw_coef_ = np.asfortranarray(self.raw_coef_)
         return X
 
     def _get_intercept_(self):

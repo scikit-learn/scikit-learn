@@ -3,11 +3,13 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
+import copy
+import warnings
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_raises, assert_true, assert_equal
 
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
@@ -151,7 +153,7 @@ def test_precomputed():
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
 
-def test_SVR():
+def test_svr():
     """
     Test Support Vector Regression
     """
@@ -596,6 +598,15 @@ def test_linearsvc_verbose():
 
     # stdout: restore
     os.dup2(stdout, 1)  # restore original stdout
+
+
+def test_linearsvc_deepcopy():
+    rng = check_random_state(0)
+    clf = svm.LinearSVC()
+    clf.fit(rng.rand(10, 2), rng.randint(0, 2, size=10))
+    with warnings.catch_warnings(record=True) as warn_queue:
+        copy.deepcopy(clf).predict(rng.rand(2))
+    assert_equal(len(warn_queue), 1)
 
 
 def test_svc_clone_with_callable_kernel():
