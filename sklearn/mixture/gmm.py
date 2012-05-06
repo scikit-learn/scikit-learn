@@ -154,7 +154,7 @@ class GMM(BaseEstimator):
     Attributes
     ----------
     `weights_` : array, shape (`n_components`,)
-        Mixing weights for each mixture component.
+        This attribute stores the mixing weights for each mixture component.
 
     `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
