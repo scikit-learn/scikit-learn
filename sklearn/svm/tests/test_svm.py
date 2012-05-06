@@ -381,7 +381,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.predict, Xt)
 
 
-def test_LinearSVC_parameters():
+def test_linearsvc_parameters():
     """
     Test possible parameter combinations in LinearSVC
     """
@@ -403,7 +403,7 @@ def test_LinearSVC_parameters():
                 svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
 
 
-def test_LinearSVC():
+def test_linearsvc():
     """
     Test basic routines using LinearSVC
     """
@@ -433,7 +433,7 @@ def test_LinearSVC():
     assert_array_equal(res, true_result)
 
 
-def test_LinearSVC_crammer_singer():
+def test_linearsvc_crammer_singer():
     """Test LinearSVC with crammer_singer multi-class svm"""
     ovr_clf = svm.LinearSVC().fit(iris.data, iris.target)
     cs_clf = svm.LinearSVC(multi_class='crammer_singer')
@@ -453,7 +453,7 @@ def test_LinearSVC_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
-def test_LinearSVC_iris():
+def test_linearsvc_iris():
     """
     Test that LinearSVC gives plausible predictions on the iris dataset
     """
