@@ -10,7 +10,7 @@ from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import array2d
+from ..utils import array2d, check_random_state
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -163,6 +163,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
+    random_state: integer or numpy.RandomState, optional
+        The generator used to shuffle the sequence of coordinates of theta in
+        the Welch optimizer. If an integer is given, it fixes the seed.
+        Defaults to the global numpy random number generator.
+
     Examples
     --------
     >>> import numpy as np
@@ -212,7 +217,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                  storage_mode='full', verbose=False, theta0=1e-1,
                  thetaL=None, thetaU=None, optimizer='fmin_cobyla',
                  random_start=1, normalize=True,
-                 nugget=10. * MACHINE_EPSILON):
+                 nugget=10. * MACHINE_EPSILON, random_state=None):
 
         self.regr = regr
         self.corr = corr
@@ -226,6 +231,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.nugget = nugget
         self.optimizer = optimizer
         self.random_start = random_start
+        self.random_state = random_state
 
         # Run input checks
         self._check_params()
@@ -250,6 +256,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A fitted Gaussian Process model object awaiting data to perform
             predictions.
         """
+        self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
         X = array2d(np.asarray(X))
@@ -748,7 +755,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Iterate over all dimensions of theta allowing for anisotropy
             if verbose:
                 print("Now improving allowing for anisotropy...")
-            for i in np.random.permutation(range(theta0.size)):
+            for i in self.random_state.shuffle(range(theta0.size)):
                 if verbose:
                     print "Proceeding along dimension %d..." % (i + 1)
                 self.theta0 = array2d(theta_iso)
