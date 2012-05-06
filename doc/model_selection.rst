@@ -9,3 +9,4 @@ Model Selection
 
     modules/cross_validation
     modules/grid_search
+    modules/pipeline
