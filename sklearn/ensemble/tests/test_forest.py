@@ -188,7 +188,7 @@ def test_oob_score_classification():
     """Check that oob prediction is as acurate as
     usual prediction on the training set.
     Not really a good test that prediction is independent."""
-    clf = RandomForestClassifier(oob_score=True)
+    clf = RandomForestClassifier(oob_score=True, random_state=rng)
     clf.fit(X, y)
     training_score = clf.score(X, y)
     assert_almost_equal(training_score, clf.oob_score_)
@@ -197,7 +197,8 @@ def test_oob_score_classification():
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
-    clf = RandomForestRegressor(n_estimators=50, oob_score=True)
+    clf = RandomForestRegressor(n_estimators=50, oob_score=True,
+            random_state=rng)
     n_samples = boston.data.shape[0]
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
