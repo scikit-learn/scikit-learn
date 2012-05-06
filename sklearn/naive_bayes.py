@@ -266,7 +266,9 @@ class BaseDiscreteNB(BaseNB):
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
             y_freq = Y.sum(axis=0)
-            self.class_log_prior_ = np.log(y_freq) - np.log(y_freq.sum())
+            eps = np.finfo(1.).eps
+            self.class_log_prior_ = (np.log(y_freq + eps)
+                                    - np.log(y_freq.sum() + eps))
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
