@@ -8,7 +8,7 @@ from nose.tools import assert_raises
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
-from sklearn.utils.testing import assert_lower
+from sklearn.utils.testing import assert_less
 
 
 def test_kernel_pca():
@@ -124,7 +124,7 @@ def test_nested_circles():
 
     # 2D nested circles are not linearly separable
     train_score = Perceptron().fit(X, y).score(X, y)
-    assert_lower(train_score, 0.8)
+    assert_less(train_score, 0.8)
 
     # Project the circles data into the first 2 components of a RBF Kernel
     # PCA model.

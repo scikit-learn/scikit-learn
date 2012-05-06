@@ -9,6 +9,8 @@ from nose.tools import assert_true
 from scipy import stats
 import itertools
 
+from sklearn.utils.testing import assert_less
+
 from .. import FastICA, fastica, PCA
 from ..fastica_ import _gs_decorrelation
 
@@ -38,11 +40,11 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert_true((w ** 2).sum() < 1.e-10)
+    assert_less((w ** 2).sum(), 1.e-10)
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
-    assert_true((tmp[:5] ** 2).sum() < 1.e-10)
+    assert_less((tmp[:5] ** 2).sum(), 1.e-10)
 
 
 def test_fastica(add_noise=False):

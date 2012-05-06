@@ -9,7 +9,7 @@ from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
-from sklearn.utils.testing import assert_lower
+from sklearn.utils.testing import assert_less
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
@@ -100,7 +100,7 @@ def test_transform():
     X_iso2 = iso.transform(X + noise)
 
     # Make sure the rms error on re-embedding is comparable to noise_scale
-    assert_true(np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale)
+    assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
 
 
 def test_pipeline():
@@ -112,7 +112,7 @@ def test_pipeline():
         [('isomap', manifold.Isomap()),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
-    assert_lower(.9, clf.score(X, y))
+    assert_less(.9, clf.score(X, y))
 
 
 if __name__ == '__main__':

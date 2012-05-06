@@ -7,6 +7,7 @@ from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import linear_model, datasets, metrics
 from sklearn import preprocessing
 from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.utils.testing import assert_greater, assert_less
 
 import unittest
 from nose.tools import raises
@@ -271,9 +272,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # log loss implements the logistic regression prob estimate
         clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
         p = clf.predict_proba([3, 2])
-        assert_true(p > 0.5)
+        assert_greater(p, 0.5)
         p = clf.predict_proba([-1, -1])
-        assert_true(p < 0.5)
+        assert_less(p, 0.5)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
@@ -377,19 +378,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_true(metrics.f1_score(y, y_pred) < 0.96)
+        assert_less(metrics.f1_score(y, y_pred), 0.96)
 
         # fit a model with auto class_weight enabled
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_true(metrics.f1_score(y, y_pred) > 0.96)
+        assert_greater(metrics.f1_score(y, y_pred), 0.96)
 
         # fit another using a fit parameter override
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_true(metrics.f1_score(y, y_pred) > 0.96)
+        assert_greater(metrics.f1_score(y, y_pred), 0.96)
 
     def test_sample_weights(self):
         """Test weights on individual samples"""
@@ -536,7 +537,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.99)
+        assert_greater(score, 0.99)
 
         # simple linear function with noise
         y = 0.5 * X.ravel() \
@@ -546,7 +547,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.5)
+        assert_greater(score, 0.5)
 
     def test_sgd_huber_fit(self):
         xmin, xmax = -5, 5
@@ -560,7 +561,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.99)
+        assert_greater(score, 0.99)
 
         # simple linear function with noise
         y = 0.5 * X.ravel() \
@@ -570,7 +571,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.5)
+        assert_greater(score, 0.5)
 
     def test_elasticnet_convergence(self):
         """Check that the SGD ouput is consistent with coordinate descent"""

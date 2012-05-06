@@ -3,6 +3,8 @@ from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less
+
 from .. import make_classification
 from .. import make_multilabel_classification
 from .. import make_hastie_10_2
@@ -119,7 +121,7 @@ def test_make_low_rank_matrix():
 
     from numpy.linalg import svd
     u, s, v = svd(X)
-    assert_true(sum(s) - 5 < 0.1, "X rank is not approximately 5")
+    assert_less(sum(s) - 5, 0.1, "X rank is not approximately 5")
 
 
 def test_make_sparse_coded_signal():
