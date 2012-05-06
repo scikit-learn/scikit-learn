@@ -21,7 +21,8 @@ true_result = [1, 2, 2]
 
 # also load the iris dataset
 iris = datasets.load_iris()
-perm = np.random.permutation(iris.target.size)
+rng = check_random_state(42)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
@@ -187,7 +188,7 @@ def test_oneclass_decision_function():
     Test OneClassSVM decision function
     """
     clf = svm.OneClassSVM()
-    rnd = check_random_state(0)
+    rnd = check_random_state(2)
 
     # Generate train data
     X = 0.3 * rnd.randn(100, 2)
@@ -197,7 +198,7 @@ def test_oneclass_decision_function():
     X = 0.3 * rnd.randn(20, 2)
     X_test = np.r_[X + 2, X - 2]
     # Generate some abnormal novel observations
-    X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
+    X_outliers = rnd.uniform(low=-4, high=4, size=(20, 2))
 
     # fit the model
     clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
