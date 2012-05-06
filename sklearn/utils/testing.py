@@ -27,8 +27,8 @@ try:
 except ImportError:
     def assert_less(a, b, msg=None):
         message = "%r is not lower than %r" % (a, b)
-        if details is not None:
-            message += ": " + details
+        if msg is not None:
+            message += ": " + msg
         assert a < b, message
 
 try:
@@ -36,8 +36,8 @@ try:
 except ImportError:
     def assert_greater(a, b, msg=None):
         message = "%r is not lower than %r" % (a, b)
-        if details is not None:
-            message += ": " + details
+        if msg is not None:
+            message += ": " + msg
         assert a < b, message
 
 
