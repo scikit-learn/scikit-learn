@@ -39,8 +39,8 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
    
-    .. image:: ../../auto_examples/images/datasets/plot_iris_dataset_1.png
-        :target: ../../auto_examples/plot_iris_dataset.html
+    .. image:: ../../auto_examples/datasets/images/plot_iris_dataset_1.png
+        :target: ../../auto_examples/datasets/plot_iris_dataset.html
         :align: right
 	:scale: 65
 
@@ -546,8 +546,8 @@ creating an decision energy by positioning *kernels* on observations:
    `svm_gui.py`; add data points of both classes with right and left button, 
    fit the model and change parameters and data.
 
-.. image:: ../../auto_examples/images/datasets/plot_iris_dataset_1.png
-    :target: ../../auto_examples/plot_iris_dataset.html
+.. image:: ../../auto_examples/datasets/images/plot_iris_dataset_1.png
+    :target: ../../auto_examples/datasets/plot_iris_dataset.html
     :align: right
     :scale: 70
 
