@@ -43,7 +43,8 @@ def test_square_norms():
 
 
 def test_kmeans_dtype():
-    X = np.random.normal(size=(40, 2))
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(40, 2))
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
     with warnings.catch_warnings(record=True) as w:

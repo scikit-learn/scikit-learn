@@ -11,9 +11,10 @@ from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
 
+rng = np.random.RandomState(0)
 # load and shuffle iris dataset
 iris = datasets.load_iris()
-perm = np.random.permutation(iris.target.size)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
@@ -39,8 +40,8 @@ def _weight_func(dist):
 
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     """test the production of a warning if equidistant points are discarded"""
-    X = np.random.random(size=(n_samples, n_features))
-    q = np.random.random(size=n_features)
+    X = rng.random_sample(size=(n_samples, n_features))
+    q = rng.random_sample(size=n_features)
 
     neigh = neighbors.NearestNeighbors(n_neighbors=k)
     neigh.fit(X[:-1])
@@ -75,8 +76,6 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                  n_query_pts=2, n_neighbors=5,
                                  random_state=0):
     """Test unsupervised neighbors methods"""
-    rng = np.random.RandomState(random_state)
-
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
@@ -103,7 +102,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
 def test_unsupervised_inputs():
     """test the types of valid input into NearestNeighbors"""
-    X = np.random.random((10, 3))
+    X = rng.random_sample((10, 3))
 
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
@@ -462,7 +461,7 @@ def test_neighbors_badargs():
                   neighbors.NearestNeighbors,
                   algorithm='blah')
 
-    X = np.random.random((10, 2))
+    X = rng.random_sample((10, 2))
 
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.RadiusNeighborsClassifier,

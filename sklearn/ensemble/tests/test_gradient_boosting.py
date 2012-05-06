@@ -20,17 +20,18 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
+rng = np.random.RandomState(0)
 # also load the boston dataset
 # and randomly permute it
 boston = datasets.load_boston()
-perm = np.random.permutation(boston.target.size)
+perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
-perm = np.random.permutation(iris.target.size)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
@@ -248,7 +249,7 @@ def test_check_inputs_predict():
     assert_raises(ValueError, clf.predict, x)
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
-    clf.fit(X, np.random.rand(len(X)))
+    clf.fit(X, rng.rand(len(X)))
 
     x = np.array([1.0, 2.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
@@ -312,6 +313,6 @@ def test_degenerate_targets():
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
     clf.fit(X, np.ones(len(X)))
-    clf.predict(np.random.rand(2))
+    clf.predict(rng.rand(2))
     assert_array_equal(np.ones((1,), dtype=np.float64),
-                       clf.predict(np.random.rand(2)))
+                       clf.predict(rng.rand(2)))

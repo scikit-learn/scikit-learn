@@ -26,7 +26,8 @@ true_result2 = [1, 2, 3]
 
 iris = datasets.load_iris()
 # permute
-perm = np.random.permutation(iris.target.size)
+rng = np.random.RandomState(0)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 # sparsify

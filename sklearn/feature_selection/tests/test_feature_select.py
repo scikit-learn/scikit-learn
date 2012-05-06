@@ -19,8 +19,9 @@ from sklearn.datasets.samples_generator import make_classification, \
 
 def test_f_oneway_vs_scipy_stats():
     """Test that our f_oneway gives the same result as scipy.stats"""
-    X1 = np.random.randn(10, 3)
-    X2 = 1 + np.random.randn(10, 3)
+    rng = np.random.RandomState(0)
+    X1 = rng.randn(10, 3)
+    X2 = 1 + rng.randn(10, 3)
     f, pv = stats.f_oneway(X1, X2)
     f2, pv2 = f_oneway(X1, X2)
     assert_true(np.allclose(f, f2))
@@ -67,8 +68,8 @@ def test_f_regression_input_dtype():
     Test whether f_regression returns the same value
     for any numeric data_type
     """
-
-    X = np.random.rand(10, 20)
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 20)
     y = np.arange(10).astype(np.int)
 
     F1, pv1 = f_regression(X, y)

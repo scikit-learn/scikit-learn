@@ -279,9 +279,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_sgd_l1(self):
         """Test L1 regularization"""
         n = len(X4)
-        np.random.seed(13)
+        rng = np.random.RandomState(13)
         idx = np.arange(n)
-        np.random.shuffle(idx)
+        rng.shuffle(idx)
 
         X = X4[idx, :]
         Y = Y4[idx, :]
@@ -350,8 +350,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         X, y = iris.data, iris.target
         X = preprocessing.scale(X)
         idx = np.arange(X.shape[0])
-        np.random.seed(13)
-        np.random.shuffle(idx)
+        rng = np.random.RandomState(0)
+        rng.shuffle(idx)
         X = X[idx]
         y = y[idx]
         clf = self.factory(alpha=0.0001, n_iter=1000,
@@ -528,6 +528,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     def test_sgd_least_squares_fit(self):
         xmin, xmax = -5, 5
         n_samples = 100
+        rng = np.random.RandomState(0)
         X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
         # simple linear function without noise
@@ -540,8 +541,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         assert_greater(score, 0.99)
 
         # simple linear function with noise
-        y = 0.5 * X.ravel() \
-            + np.random.randn(n_samples, 1).ravel()
+        y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
         clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
                            fit_intercept=False)
@@ -552,6 +552,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     def test_sgd_huber_fit(self):
         xmin, xmax = -5, 5
         n_samples = 100
+        rng = np.random.RandomState(0)
         X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
         # simple linear function without noise
@@ -564,8 +565,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         assert_greater(score, 0.99)
 
         # simple linear function with noise
-        y = 0.5 * X.ravel() \
-            + np.random.randn(n_samples, 1).ravel()
+        y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
         clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
                            fit_intercept=False)
@@ -577,11 +577,11 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         """Check that the SGD ouput is consistent with coordinate descent"""
 
         n_samples, n_features = 1000, 5
-        np.random.seed(0)
+        rng = np.random.RandomState(0)
         X = np.random.randn(n_samples, n_features)
         # ground_truth linear model that generate y from X and to which the
         # models should converge if the regularizer would be set to 0.0
-        ground_truth_coef = np.random.randn(n_features)
+        ground_truth_coef = rng.randn(n_features)
         y = np.dot(X, ground_truth_coef)
 
         # XXX: alpha = 0.1 seems to cause convergence problems
