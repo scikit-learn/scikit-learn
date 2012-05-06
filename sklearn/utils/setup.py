@@ -23,7 +23,8 @@ def configuration(parent_package='', top_path=None):
          sources=['arraybuilder.c'])
 
     config.add_extension('sparsefuncs',
-         sources=['sparsefuncs.c'])
+         sources=['sparsefuncs.c'],
+         libraries=['m'])
 
     config.add_extension('arrayfuncs',
          sources=['arrayfuncs.c'],
@@ -51,7 +52,8 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('weight_vector',
          sources=['weight_vector.c'],
-         include_dirs=[numpy.get_include()])
+         include_dirs=[numpy.get_include()],
+         libraries=['m'])
 
     return config
 
