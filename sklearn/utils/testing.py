@@ -28,8 +28,9 @@ def _assert_less(a, b, msg=None):
         message += ": " + msg
     assert a < b, message
 
+
 def _assert_greater(a, b, msg=None):
-    message = "%r is not lower than %r" % (a, b)
+    message = "%r is not greater than %r" % (a, b)
     if msg is not None:
         message += ": " + msg
     assert a > b, message
