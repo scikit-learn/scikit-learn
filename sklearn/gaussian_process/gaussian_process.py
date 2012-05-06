@@ -755,7 +755,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Iterate over all dimensions of theta allowing for anisotropy
             if verbose:
                 print("Now improving allowing for anisotropy...")
-            for i in self.random_state.shuffle(range(theta0.size)):
+            for i in self.random_state.permutation(theta0.size):
                 if verbose:
                     print "Proceeding along dimension %d..." % (i + 1)
                 self.theta0 = array2d(theta_iso)
