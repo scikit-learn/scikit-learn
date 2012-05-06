@@ -221,7 +221,7 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    nosetests sklearn
+    nosetests sklearn --exe
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with the a text similar to::
