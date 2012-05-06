@@ -39,7 +39,7 @@ try:
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)
 
-    test = NoseTester().test
+    test = NoseTester(raise_warnings="release").test
     del nosetester
 except:
     pass
