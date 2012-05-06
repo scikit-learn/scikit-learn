@@ -34,7 +34,7 @@ iris.target = iris.target[perm]
 iris.data = sparse.csr_matrix(iris.data)
 
 
-def test_SVC():
+def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
 
     clf = svm.SVC(kernel='linear').fit(X, Y)
@@ -63,7 +63,7 @@ def test_SVC():
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
 
 
-def test_SVC_iris():
+def test_svc_iris():
     """Test the sparse SVC with the iris dataset"""
     for k in ('linear', 'poly', 'rbf'):
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
@@ -97,7 +97,7 @@ def test_error():
     assert_array_equal(clf.predict(T), true_result)
 
 
-def test_LinearSVC():
+def test_linearsvc():
     """
     Similar to test_SVC
     """
@@ -116,7 +116,7 @@ def test_LinearSVC():
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
 
 
-def test_LinearSVC_iris():
+def test_linearsvc_iris():
     """Test the sparse LinearSVC with the iris dataset"""
 
     sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
