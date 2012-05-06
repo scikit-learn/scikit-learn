@@ -8,7 +8,7 @@
 Changelog
 ---------
 
-New features
+Highlights
 .............
 
    - Gradient boosted regression trees (:ref:`gradient_boosting`)
@@ -44,8 +44,8 @@ New features
      ``shrink_threshold`` parameter, which implements **shrunken centroid
      classification**, by `Robert Layton`_.
 
-Improvements and refactorings
-..............................
+Other changes
+..............
 
    - Merged dense and sparse implementations of :ref:`sgd` module and
      exposed utility extension types for sequential
