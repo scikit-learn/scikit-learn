@@ -5,15 +5,9 @@ from nose.tools import assert_true
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
+from sklearn.utils.testing import assert_lower
 
 eigen_solvers = ['dense', 'arpack']
-
-
-def assert_lower(a, b, details=None):
-    message = "%r is not lower than %r" % (a, b)
-    if details is not None:
-        message += ": " + details
-    assert a < b, message
 
 
 #----------------------------------------------------------------------

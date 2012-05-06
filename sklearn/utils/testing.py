@@ -22,8 +22,10 @@ except ImportError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 
-def assert_lower(a, b):
+def assert_lower(a, b, details=None):
     message = "%r is not lower than %r" % (a, b)
+    if details is not None:
+        message += ": " + details
     assert a < b, message
 
 

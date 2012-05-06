@@ -9,16 +9,10 @@ from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
+from sklearn.utils.testing import assert_lower
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
-
-
-def assert_lower(a, b, details=None):
-    message = "%r is not lower than %r" % (a, b)
-    if details is not None:
-        message += ": " + details
-    assert a < b, message
 
 
 def test_isomap_simple_grid():
