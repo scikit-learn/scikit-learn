@@ -108,7 +108,7 @@ API changes summary
      parameters must be passed to an object when initialising it and not through
      ``fit``. Now ``fit`` will only accept the data as an input parameter.
 
-    - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
+   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
      `sample` and `score` or `predict` should be used instead.
 
    - attribute `_scores` and `_pvalues` in univariate feature selection
@@ -903,7 +903,7 @@ Changelog
 ---------
 
 New classes
-~~~~~~~~~~~~
+-----------
 
     - Support for sparse matrices in some classifiers of modules
       ``svm`` and ``linear_model`` (see :class:`svm.sparse.SVC`,
@@ -935,7 +935,7 @@ New classes
 
 
 Documentation
-~~~~~~~~~~~~~
+-------------
 
     - Improved documentation for many modules, now separating
       narrative documentation from the class reference. As an example,
@@ -945,7 +945,7 @@ Documentation
       <http://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
-~~~~~
+-----
 
     - API changes: adhere variable names to PEP-8, give more
       meaningful names.
@@ -957,7 +957,7 @@ Fixes
       sphinx docs.
 
 Examples
-~~~~~~~~
+--------
 
     - new examples using some of the mlcomp datasets:
       :ref:`example_mlcomp_sparse_document_classification.py`,
@@ -969,20 +969,20 @@ Examples
 
 
 External dependencies
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
     - Joblib is now a dependencie of this package, although it is
       shipped with (sklearn.externals.joblib).
 
 Removed modules
-~~~~~~~~~~~~~~~
+---------------
 
     - Module ann (Artificial Neural Networks) has been removed from
       the distribution. Users wanting this sort of algorithms should
       take a look into pybrain.
 
 Misc
-~~~~
+----
 
     - New sphinx theme for the web page.
 

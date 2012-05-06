@@ -467,13 +467,13 @@ class PLSRegression(_PLS):
     Notes
     -----
     For each component k, find weights u, v that optimizes:
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = 1``
+    ``max corr(Xk u, Yk v) * var(Xk u) var(Yk u)``, such that ``|u| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
 
-    The residual matrix of X (Xk+1) block is obtained by the deflation on the
-    current X score: x_score.
+    The residual matrix of X (Xk+1) block is obtained by the deflation on
+    the current X score: x_score.
 
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
     current X score. This performs the PLS regression known as PLS2. This
@@ -481,6 +481,7 @@ class PLSRegression(_PLS):
 
     This implementation provides the same results that 3 PLS packages
     provided in the R language (R-project):
+
         - "mixOmics" with function pls(X, Y, mode = "regression")
         - "plspm " with function plsreg2(X, Y)
         - "pls" with function oscorespls.fit(X, Y)
@@ -492,7 +493,9 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True, tol=1e-06)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
+            tol=1e-06)
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -596,10 +599,10 @@ class PLSCanonical(_PLS):
 
     This implementation provides the same results that the "plspm" package
     provided in the R language (R-project), using the function plsca(X, Y).
-    Results are equal or colinear with the function pls(..., mode = "canonical")
-    of the "mixOmics" package. The difference relies in the fact that mixOmics
-    implmentation does not exactly implement the Wold algorithm since it does
-    not normalize y_weights to one.
+    Results are equal or colinear with the function
+    ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
+    relies in the fact that mixOmics implmentation does not exactly implement
+    the Wold algorithm since it does not normalize y_weights to one.
 
     Examples
     --------

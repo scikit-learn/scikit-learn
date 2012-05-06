@@ -564,6 +564,21 @@ class LocallyLinearEmbedding(BaseEstimator):
     `nbrs_` : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
+
+    References
+    ----------
+
+    .. [1] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).`
+    .. [2] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+        linear embedding techniques for high-dimensional data.
+        Proc Natl Acad Sci U S A.  100:5591 (2003).`
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.`
+        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+    .. [4] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+        dimensionality reduction via tangent space alignment.
+        Journal of Shanghai Univ.  8:406 (2004)`
     """
 
     def __init__(self, n_neighbors=5, out_dim=2, reg=1E-3,
