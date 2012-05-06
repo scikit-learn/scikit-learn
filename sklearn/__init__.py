@@ -39,7 +39,11 @@ try:
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)
 
-    test = NoseTester(raise_warnings="release").test
+    try:
+        test = NoseTester(raise_warnings="release").test
+    except TypeError:
+        # Older versions of numpy do not have a raise_warnings argument
+        test = NoseTester().test
     del nosetester
 except:
     pass
