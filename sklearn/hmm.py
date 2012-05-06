@@ -135,7 +135,7 @@ class _BaseHMM(BaseEstimator):
             self._algorithm = algorithm
         else:
             self._algorithm = "viterbi"
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def eval(self, obs):
         """Compute the log probability under the model and compute posteriors
@@ -898,6 +898,7 @@ class MultinomialHMM(_BaseHMM):
 
     def _init(self, obs, params='ste'):
         super(MultinomialHMM, self)._init(obs, params=params)
+        self.random_state = check_random_state(self.random_state)
 
         if 'e' in params:
             emissionprob = normalize(self.random_state.rand(self.n_components,
