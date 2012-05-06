@@ -272,10 +272,11 @@ def locally_linear_embedding(
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
-    if not out_dim is None:
+    if out_dim:
         warnings.warn("Parameter ``out_dim`` was renamed to ``n_components`` "
-                "and is now deprecated.", DeprecationWarning)
-        n_components = n_components
+                "and is now deprecated.", DeprecationWarning,
+                stacklevel=2)
+        n_components = out_dim
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
     nbrs.fit(X)
@@ -594,10 +595,11 @@ class LocallyLinearEmbedding(BaseEstimator):
             hessian_tol=1E-4, modified_tol=1E-12, neighbors_algorithm='auto',
             random_state=None, out_dim=None):
 
-        if not out_dim is None:
+        if out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning)
-            n_components = n_components
+                "``n_components`` and is now deprecated.", DeprecationWarning,
+                stacklevel=2)
+        self.out_dim = out_dim
 
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -613,6 +615,13 @@ class LocallyLinearEmbedding(BaseEstimator):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
+        if self.out_dim:
+            warnings.warn("Parameter ``out_dim`` was renamed to "
+                "``n_components`` and is now deprecated.", DeprecationWarning,
+                stacklevel=3)
+            self.n_components = self.out_dim
+            self.out_dim = None
+
         self.random_state = check_random_state(self.random_state)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \

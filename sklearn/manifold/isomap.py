@@ -80,10 +80,11 @@ class Isomap(BaseEstimator):
             tol=0, max_iter=None, path_method='auto',
             neighbors_algorithm='auto', out_dim=None):
 
-        if not out_dim is None:
+        if out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning)
-            n_components = n_components
+                "``n_components`` and is now deprecated.", DeprecationWarning,
+                stacklevel=2)
+        self.out_dim = out_dim
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
@@ -95,6 +96,12 @@ class Isomap(BaseEstimator):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
+        if self.out_dim:
+            warnings.warn("Parameter ``out_dim`` was renamed to "
+                "``n_components`` and is now deprecated.", DeprecationWarning,
+                stacklevel=3)
+            self.n_components = self.out_dim
+            self.out_dim = None
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,

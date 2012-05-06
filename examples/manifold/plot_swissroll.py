@@ -25,7 +25,8 @@ from sklearn import manifold, datasets
 X, color = datasets.samples_generator.make_swiss_roll(n_samples=1500)
 
 print "Computing LLE embedding"
-X_r, err = manifold.locally_linear_embedding(X, n_neighbors=12, out_dim=2)
+X_r, err = manifold.locally_linear_embedding(X, n_neighbors=12,
+                                             n_components=2)
 print "Done. Reconstruction error: %g" % err
 
 #----------------------------------------------------------------------
