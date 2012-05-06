@@ -45,20 +45,19 @@ The estimators of the pipeline are stored as a list in the ``steps`` attribute::
 
 and as a ``dict`` in ``named_steps``::
     >>> clf.named_steps['reduce_dim']
-    ('reduce_dim', PCA(copy=True, n_components=None, whiten=False))
+    PCA(copy=True, n_components=None, whiten=False)
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
-    >>> clf.set_params(svm__C=10)
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
-        whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', probability=False,
-        shrinking=True, tol=0.001, verbose=False))])
+    >>> clf.set_params(svm__C=10) # NORMALIZE_WHITESPACE
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None, whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+      kernel='rbf', probability=False, shrinking=True, tol=0.001,
+      verbose=False))])
 
 This is particularly important for doing grid searches::
     >>> from sklearn.grid_search import GridSearchCV
-    >>> params = dict(reduce_dim__n_components=[2, 5, 10], \
-            svm__C=[0.1, 10, 100])
+    >>> params = dict(reduce_dim__n_components=[2, 5, 10],
+    ...               svm__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)
     
 
