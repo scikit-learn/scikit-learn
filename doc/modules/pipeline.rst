@@ -1,8 +1,8 @@
 .. _pipeline:
 
-========
-Pipeline
-========
+==============================
+Pipeline: chaining estimators
+==============================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -11,11 +11,11 @@ into one. This is useful as there is often a fixed sequence
 of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves two purposes here:
 
-    Convenience: You only have to call ``fit`` and ``predict`` once on your data to
-        fit a whole sequence of estimators.
+    **Convenience**: You only have to call ``fit`` and ``predict`` once on your 
+    data to fit a whole sequence of estimators.
     
-    Joint parameter selection: You can :ref:`grid_search` over parameters of all
-        estimators in the pipeline at once.
+    **Joint parameter selection**: You can :ref:`grid_search <grid search>`
+    over parameters of all estimators in the pipeline at once.
 
 For estimators to be usable within a pipeline, all except the last one need to have
 a ``transform`` function. Otherwise, the dataset can not be passed through this

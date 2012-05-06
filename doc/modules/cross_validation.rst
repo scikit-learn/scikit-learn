@@ -1,8 +1,8 @@
 .. _cross_validation:
 
-================
-Cross-Validation
-================
+===================================================
+Cross-Validation: evaluating estimator performance
+===================================================
 
 .. currentmodule:: sklearn.cross_validation
 
