@@ -21,7 +21,7 @@ def test_isomap_simple_grid():
     Npts = N_per_side ** 2
     n_neighbors = Npts - 1
 
-    # grid of equidistant points in 2D, out_dim = n_dim
+    # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(N_per_side), repeat=2)))
 
     # distances from each point to all others
@@ -30,7 +30,7 @@ def test_isomap_simple_grid():
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf = manifold.Isomap(n_neighbors=n_neighbors, out_dim=2,
+            clf = manifold.Isomap(n_neighbors=n_neighbors, n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
@@ -47,7 +47,7 @@ def test_isomap_reconstruction_error():
     Npts = N_per_side ** 2
     n_neighbors = Npts - 1
 
-    # grid of equidistant points in 2D, out_dim = n_dim
+    # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(N_per_side), repeat=2)))
 
     # add noise in a third dimension
@@ -64,7 +64,7 @@ def test_isomap_reconstruction_error():
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf = manifold.Isomap(n_neighbors=n_neighbors, out_dim=2,
+            clf = manifold.Isomap(n_neighbors=n_neighbors, n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
