@@ -185,7 +185,7 @@ for i in range(n_labels + 1):
 # initiated with random vectors that we don't control). In addition, we
 # use a large number of neighbors to capture the large-scale structure.
 node_position_model = manifold.LocallyLinearEmbedding(
-    out_dim=2, eigen_solver='dense', n_neighbors=6)
+    n_components=2, eigen_solver='dense', n_neighbors=6)
 
 embedding = node_position_model.fit_transform(X.T).T
 

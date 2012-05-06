@@ -28,7 +28,7 @@ Axes3D
 n_points = 1000
 X, color = datasets.samples_generator.make_s_curve(n_points)
 n_neighbors = 10
-out_dim = 2
+n_components = 2
 
 fig = pl.figure(figsize=(12, 8))
 pl.suptitle("Manifold Learning with %i points, %i neighbors"
@@ -48,7 +48,7 @@ labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 for i, method in enumerate(methods):
     t0 = time()
-    Y = manifold.LocallyLinearEmbedding(n_neighbors, out_dim,
+    Y = manifold.LocallyLinearEmbedding(n_neighbors, n_components,
                                         eigen_solver='auto',
                                         method=method).fit_transform(X)
     t1 = time()
@@ -62,7 +62,7 @@ for i, method in enumerate(methods):
     pl.axis('tight')
 
 t0 = time()
-Y = manifold.Isomap(n_neighbors, out_dim).fit_transform(X)
+Y = manifold.Isomap(n_neighbors, n_components).fit_transform(X)
 t1 = time()
 print "Isomap: %.2g sec" % (t1 - t0)
 ax = fig.add_subplot(236)

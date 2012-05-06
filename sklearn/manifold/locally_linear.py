@@ -5,6 +5,7 @@
 # License: BSD, (C) INRIA 2011
 
 import numpy as np
+import warnings
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator
@@ -177,10 +178,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
 
 def locally_linear_embedding(
-    X, n_neighbors, out_dim, reg=1e-3, eigen_solver='auto',
+    X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
     tol=1e-6, max_iter=100, method='standard',
     hessian_tol=1E-4, modified_tol=1E-12,
-    random_state=None):
+    random_state=None, out_dim=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Parameters
@@ -193,7 +194,7 @@ def locally_linear_embedding(
     n_neighbors : integer
         number of neighbors to consider for each point.
 
-    out_dim : integer
+    n_components : integer
         number of coordinates for the manifold.
 
     reg : float
@@ -223,7 +224,7 @@ def locally_linear_embedding(
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]_
         hessian  : use the Hessian eigenmap method.  This method requires
-                   n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
+                   n_neighbors > n_components * (1 + (n_components + 1) / 2.
                    see reference [2]_
         modified : use the modified locally linear embedding algorithm.
                    see reference [3]_
@@ -243,7 +244,7 @@ def locally_linear_embedding(
 
     Returns
     -------
-    Y : array-like, shape [n_samples, out_dim]
+    Y : array-like, shape [n_samples, n_components]
         Embedding vectors.
 
     squared_error : float
@@ -271,13 +272,18 @@ def locally_linear_embedding(
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
+    if not out_dim is None:
+        warnings.warn("Parameter ``out_dim`` was renamed to ``n_components`` "
+                "and is now deprecated.", DeprecationWarning)
+        n_components = n_components
+
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
     nbrs.fit(X)
     X = nbrs._fit_X
 
     N, d_in = X.shape
 
-    if out_dim > d_in:
+    if n_components > d_in:
         raise ValueError("output dimension must be less than or equal "
                          "to input dimension")
     if n_neighbors >= N:
@@ -302,17 +308,17 @@ def locally_linear_embedding(
             M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
-        dp = out_dim * (out_dim + 1) / 2
+        dp = n_components * (n_components + 1) / 2
 
-        if n_neighbors <= out_dim + dp:
+        if n_neighbors <= n_components + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
-                             "greater than [out_dim * (out_dim + 3) / 2]")
+                    "greater than [n_components * (n_components + 3) / 2]")
 
         neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
-        Yi = np.empty((n_neighbors, 1 + out_dim + dp), dtype=np.float)
+        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float)
         Yi[:, 0] = 1
 
         M = np.zeros((N, N), dtype=np.float)
@@ -330,16 +336,17 @@ def locally_linear_embedding(
                 Ci = np.dot(Gi, Gi.T)
                 U = eigh(Ci)[1][:, ::-1]
 
-            Yi[:, 1:1 + out_dim] = U[:, :out_dim]
+            Yi[:, 1:1 + n_components] = U[:, :n_components]
 
-            j = 1 + out_dim
-            for k in range(out_dim):
-                Yi[:, j:j + out_dim - k] = U[:, k:k + 1] * U[:, k:out_dim]
-                j += out_dim - k
+            j = 1 + n_components
+            for k in range(n_components):
+                Yi[:, j:j + n_components - k] = \
+                        U[:, k:k + 1] * U[:, k:n_components]
+                j += n_components - k
 
             Q, R = qr(Yi)
 
-            w = Q[:, out_dim + 1:]
+            w = Q[:, n_components + 1:]
             S = w.sum(0)
 
             S[np.where(abs(S) < hessian_tol)] = 1
@@ -352,8 +359,9 @@ def locally_linear_embedding(
             M = csr_matrix(M)
 
     elif method == 'modified':
-        if n_neighbors < out_dim:
-            raise ValueError("modified LLE requires n_neighbors >= out_dim")
+        if n_neighbors < n_components:
+            raise ValueError("modified LLE requires "
+                "n_neighbors >= n_components")
 
         neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
                                     return_distance=False)
@@ -399,7 +407,7 @@ def locally_linear_embedding(
 
         #calculate eta: the median of the ratio of small to large eigenvalues
         # across the points.  This is used to determine s_i, below
-        rho = evals[:, out_dim:].sum(1) / evals[:, :out_dim].sum(1)
+        rho = evals[:, n_components:].sum(1) / evals[:, :n_components].sum(1)
         eta = np.median(rho)
 
         #find s_i, the size of the "almost null space" for each point:
@@ -470,15 +478,15 @@ def locally_linear_embedding(
             Xi = X[neighbors[i]]
             Xi -= Xi.mean(0)
 
-            # compute out_dim largest eigenvalues of Xi * Xi^T
+            # compute n_components largest eigenvalues of Xi * Xi^T
             if use_svd:
                 v = svd(Xi, full_matrices=True)[0]
             else:
                 Ci = np.dot(Xi, Xi.T)
                 v = eigh(Ci)[1][:, ::-1]
 
-            Gi = np.zeros((n_neighbors, out_dim + 1))
-            Gi[:, 1:] = v[:, :out_dim]
+            Gi = np.zeros((n_neighbors, n_components + 1))
+            Gi[:, 1:] = v[:, :n_components]
             Gi[:, 0] = 1. / np.sqrt(n_neighbors)
 
             GiGiT = np.dot(Gi, Gi.T)
@@ -487,7 +495,7 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] -= GiGiT
             M[neighbors[i], neighbors[i]] += 1
 
-    return null_space(M, out_dim, k_skip=1, eigen_solver=eigen_solver,
+    return null_space(M, n_components, k_skip=1, eigen_solver=eigen_solver,
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
@@ -499,7 +507,7 @@ class LocallyLinearEmbedding(BaseEstimator):
     n_neighbors : integer
         number of neighbors to consider for each point.
 
-    out_dim : integer
+    n_components : integer
         number of coordinates for the manifold
 
     reg : float
@@ -530,7 +538,7 @@ class LocallyLinearEmbedding(BaseEstimator):
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]
         hessian  : use the Hessian eigenmap method.  This method requires
-                   n_neighbors > out_dim * (1 + (out_dim + 1) / 2.
+                   n_neighbors > n_components * (1 + (n_components + 1) / 2.
                    see reference [2]
         modified : use the modified locally linear embedding algorithm.
                    see reference [3]
@@ -555,7 +563,7 @@ class LocallyLinearEmbedding(BaseEstimator):
 
     Attributes
     ----------
-    `embedding_vectors_` : array-like, shape [out_dim, n_samples]
+    `embedding_vectors_` : array-like, shape [n_components, n_samples]
         Stores the embedding vectors
 
     `reconstruction_error_` : float
@@ -581,12 +589,18 @@ class LocallyLinearEmbedding(BaseEstimator):
         Journal of Shanghai Univ.  8:406 (2004)`
     """
 
-    def __init__(self, n_neighbors=5, out_dim=2, reg=1E-3,
-                 eigen_solver='auto', tol=1E-6, max_iter=100,
-                 method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None):
+    def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
+            eigen_solver='auto', tol=1E-6, max_iter=100, method='standard',
+            hessian_tol=1E-4, modified_tol=1E-12, neighbors_algorithm='auto',
+            random_state=None, out_dim=None):
+
+        if not out_dim is None:
+            warnings.warn("Parameter ``out_dim`` was renamed to "
+                "``n_components`` and is now deprecated.", DeprecationWarning)
+            n_components = n_components
+
         self.n_neighbors = n_neighbors
-        self.out_dim = out_dim
+        self.n_components = n_components
         self.reg = reg
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -603,7 +617,7 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                self.nbrs_, self.n_neighbors, self.out_dim,
+                self.nbrs_, self.n_neighbors, self.n_components,
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
@@ -634,7 +648,7 @@ class LocallyLinearEmbedding(BaseEstimator):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, out_dim)
+        X_new: array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
         return self.embedding_
@@ -649,7 +663,7 @@ class LocallyLinearEmbedding(BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape = [n_samples, out_dim]
+        X_new : array, shape = [n_samples, n_components]
 
         Notes
         -----
@@ -661,7 +675,7 @@ class LocallyLinearEmbedding(BaseEstimator):
                                     return_distance=False)
         weights = barycenter_weights(X, self.nbrs_._fit_X[ind],
                                      reg=self.reg)
-        X_new = np.empty((X.shape[0], self.out_dim))
+        X_new = np.empty((X.shape[0], self.n_components))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new

@@ -34,11 +34,12 @@ def test_barycenter_kneighbors_graph():
 
 def test_lle_simple_grid():
     rng = np.random.RandomState(0)
-    # grid of equidistant points in 2D, out_dim = n_dim
+    # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(5), repeat=2)))
     X = X + 1e-10 * rng.uniform(size=X.shape)
-    out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim)
+    n_components = 2
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
+            n_components=n_components)
     tol = .1
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
@@ -48,7 +49,7 @@ def test_lle_simple_grid():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == out_dim)
+        assert_true(clf.embedding_.shape[1] == n_components)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         # FIXME: ARPACK fails this test ...
@@ -68,8 +69,9 @@ def test_lle_manifold():
     X = np.array(list(product(range(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     X = X + 1e-10 * np.random.uniform(size=X.shape)
-    out_dim = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5, out_dim=out_dim,
+    n_components = 2
+    clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
+            n_components=n_components,
                                           random_state=0)
     tol = 1.5
 
@@ -80,7 +82,7 @@ def test_lle_manifold():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == out_dim)
+        assert_true(clf.embedding_.shape[1] == n_components)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
         details = "solver: " + solver
