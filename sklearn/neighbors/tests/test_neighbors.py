@@ -54,7 +54,6 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
                 neigh = estimator(n_neighbors=k, algorithm=algorithm)
                 neigh.fit(X, y)
                 neigh.predict(q)
-            print algorithm, estimator, len(warn_queue)
 
             assert_equal(len(warn_queue), 1)
             assert_equal(str(warn_queue[0].message), expected_message)
