@@ -1,5 +1,15 @@
 .. currentmodule:: sklearn
 
+
+.. _changes_0_12:
+
+0.12
+====
+
+Changelog
+---------
+
+
 .. _changes_0_11:
 
 0.11
