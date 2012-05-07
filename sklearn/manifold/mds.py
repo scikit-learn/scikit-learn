@@ -389,3 +389,27 @@ class MDS(BaseEstimator):
                                      verbose=self.verbose,
                                      eps=self.eps)
         return self
+
+    def fit_transform(self, X, init=None, y=None):
+        """
+        Fit the data from X, and returns the embedded coordinates
+
+        Parameters
+        ----------
+        X: array, shape=[n_samples, n_samples], symetric
+            Proximity matrice
+
+        init: {None or ndarray, shape (n_samples,)}
+            if None, randomly chooses the initial configuration
+            if ndarray, initialize the SMACOF algorithm with this array
+
+        """
+        self.positions_, self.stress_ = smacof(X, metric=self.metric,
+                                     n_components=self.n_components,
+                                     init=init,
+                                     n_init=self.n_init,
+                                     max_iter=self.max_iter,
+                                     verbose=self.verbose,
+                                     eps=self.eps)
+
+        return self.positions_
