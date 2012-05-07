@@ -325,8 +325,10 @@ def test_memory_numpy():
                             verbose=0)
         memory.clear(warn=False)
         cached_n = memory.cache(n)
+
+        rnd = np.random.RandomState(0)
         for i in range(3):
-            a = np.random.random((10, 10))
+            a = rnd.random_sample((10, 10))
             for _ in range(3):
                 yield nose.tools.assert_true, np.all(cached_n(a) == a)
                 yield nose.tools.assert_equal, len(accumulator), i + 1
