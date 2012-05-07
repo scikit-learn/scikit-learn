@@ -283,6 +283,23 @@ matrix from a list of multi-class labels::
     >>> clf.classes_
     array([1, 2, 3])
 
+Label normalization
+-------------------
+
+:class:`LabelNormalizer` is a utility class to help normalize the encoding used by labels::
+
+    >>> clf = preprocessing.LabelNormalizer()
+    >>> clf.fit([1, 2, 2, 6])
+    LabelNormalizer()
+    >>> clf.classes_
+    array([1, 2, 6])
+    >>> clf.transform([1, 1, 2, 6])
+    array([0, 0, 1, 2])
+    >>> clf.inverse_transform([0, 0, 1, 2])
+    array([1, 1, 2, 6])
+
+
+.. TODO
 
   Kernel centering
   ================
