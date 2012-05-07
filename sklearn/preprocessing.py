@@ -508,6 +508,7 @@ def _is_multilabel(y):
            isinstance(y[0], list) or \
            _is_label_indicator_matrix(y)
 
+
 class LabelNormalizer(BaseEstimator, TransformerMixin):
     """Normalize labels.
 
