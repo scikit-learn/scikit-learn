@@ -5,7 +5,9 @@
 
 cimport numpy as np
 import numpy as np
+import scipy.sparse as sp
 cimport cython
+
 
 cdef extern from "math.h":
     double fabs(double f)
@@ -13,11 +15,10 @@ cdef extern from "math.h":
 
 ctypedef np.float64_t DOUBLE
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def mean_variance_axis0(X):
+def csr_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR matrix
 
     Parameters
@@ -249,3 +250,28 @@ def inplace_csc_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
     for i in xrange(n_features):
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             X_data[j] *= scale[i]
+
+def mean_variance_axis0(X):
+    """Compute mean and variance along axis 0 on a CSR or CSC matrix
+
+    Parameters
+    ----------
+    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    means: float array with shape (n_features,)
+        Feature-wise means
+
+    variances: float array with shape (n_features,)
+        Feature-wise variances
+
+    """ 
+    if isinstance(X, sp.csr_matrix):
+        return csr_mean_variance_axis0(X)
+    elif isinstance(X, sp.csc_matrix):
+        return csc_mean_variance_axis0(X)
+    else:
+        raise TypeError("Unsupported matrix type. Expected a CSR or CSC sparse matrix.")
