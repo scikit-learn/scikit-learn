@@ -78,7 +78,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int jj
     cdef unsigned int n_iter
-    cdef bint center = (X_mean!=0).any()
+    cdef bint center = (X_mean != 0).any()
 
     # initialize the residuals
     R = y.copy()
@@ -87,6 +87,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         # sparse X column / dense w dot product
         for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
             R[X_indices[jj]] -= X_data[jj] * w[ii]
+
         if center:
             R += X_mean[ii] * w[ii]
 
@@ -117,7 +118,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             tmp = 0.0
             for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                 tmp += R[X_indices[jj]] * X_data[jj]
-                
+
             if center:
                 R_sum = 0.0
                 for jj in xrange(n_samples):
@@ -134,6 +135,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # R -=  w[ii] * X[:,ii] # Update residual
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
+                if center:
+                    for jj in xrange(n_samples):
+                        R[jj] += X_mean_ii * w[ii]
 
                 if center:
                     for jj in xrange(n_samples):
@@ -157,7 +161,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             for ii in xrange(n_features):
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
-                X_T_R[ii] -= X_mean[ii] * R.sum()
+            if center:
+                X_T_R -= X_mean * R.sum()
 
             XtA = X_T_R - beta * w
             if positive:

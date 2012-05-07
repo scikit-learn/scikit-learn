@@ -22,15 +22,14 @@ def center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X_data = np.array(X.data, np.float64)
+
     if fit_intercept:
         X = sp.csc_matrix(X, copy=normalize)  # copy if 'normalize' is
                       # True or X is not a csc matrix
         X_mean, X_std = csc_mean_variance_axis0(X)
         if normalize:
-            X_std = cd_fast_sparse.sparse_std(
-                X.shape[0], X.shape[1],
-                X_data, X.indices, X.indptr, X_mean)
+            X_std = X_std / np.sqrt(X.shape[0] - 1)  # in base.center_data
+                  # data are normalized to unit norm not unit variance
             X_std[X_std == 0] = 1
             inplace_csc_column_scale(X)
         else:
