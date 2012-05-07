@@ -257,12 +257,31 @@ to be used when the transformer API is not necessary.
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
 
-.. TODO
+Label preprocessing
+===================
 
-  Label binarization
-  ------------------
+Label binarization
+------------------
 
-  Please @mblondel or someone else write me!
+:class:`LabelBinarizer` is a utility class to help create a label indicator
+matrix from a list of multi-class labels::
+
+    >>> clf = preprocessing.LabelBinarizer()
+    >>> clf.fit([1, 2, 6, 4, 2])
+    LabelBinarizer(neg_label=0, pos_label=1)
+    >>> clf.classes_
+    array([1, 2, 4, 6])
+    >>> clf.transform([1, 6])
+    array([[ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.]])
+
+:class:`LabelBinarizer` also supports multiple labels per instance::
+
+    >>> clf.fit_transform([(1, 2), (3,)])
+    array([[ 1.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+    >>> clf.classes_
+    array([1, 2, 3])
 
 
   Kernel centering
