@@ -40,7 +40,7 @@ Highlights
      a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
      by `Yannick Schwartz`.
 
-   - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
+   - :class:`sklearn.neighbors.NearestCentroid` classifier added, along with a
      ``shrink_threshold`` parameter, which implements **shrunken centroid
      classification**, by `Robert Layton`_.
 
