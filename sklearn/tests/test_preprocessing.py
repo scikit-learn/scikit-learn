@@ -13,6 +13,7 @@ from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelNormalizer
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import Scaler
@@ -411,6 +412,25 @@ def test_label_binarizer_errors():
 
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
+
+
+def test_label_normalizer():
+    """Test LabelNormalizer's transform and inverse_transform methods"""
+    ln = LabelNormalizer()
+    ln.fit([1, 1, 4, 5, -1, 0])
+    assert_array_equal(ln.classes_, [-1, 0, 1, 4, 5])
+    assert_array_equal(ln.transform([0, 1, 4, 4, 5, -1, -1]),
+                       [1, 2, 3, 3, 4, 0, 0])
+    assert_array_equal(ln.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
+                       [0, 1, 4, 4, 5, -1, -1])
+    assert_raises(ValueError, ln.transform, [0, 6])
+
+
+def test_label_normalizer_errors():
+    """Check that invalid arguments yield ValueError"""
+    ln = LabelNormalizer()
+    assert_raises(ValueError, ln.transform, [])
+    assert_raises(ValueError, ln.inverse_transform, [])
 
 
 def test_label_binarizer_iris():
