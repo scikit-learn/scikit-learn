@@ -508,6 +508,99 @@ def _is_multilabel(y):
            isinstance(y[0], list) or \
            _is_label_indicator_matrix(y)
 
+class LabelNormalizer(BaseEstimator, TransformerMixin):
+    """Normalize labels.
+
+    Make sure that labels are encoded by 0, ..., n_classes-1.
+
+    Attributes
+    ----------
+    `classes_`: array of shape [n_class]
+        Holds the label for each class.
+
+    Examples
+    --------
+    >>> from sklearn import preprocessing
+    >>> clf = preprocessing.LabelNormalizer()
+    >>> clf.fit([1, 2, 2, 6])
+    LabelNormalizer()
+    >>> clf.classes_
+    array([1, 2, 6])
+    >>> clf.transform([1, 1, 2, 6])
+    array([0, 0, 1, 2])
+    >>> clf.inverse_transform([0, 0, 1, 2])
+    array([1, 1, 2, 6])
+
+    """
+
+    def _check_fitted(self):
+        if not hasattr(self, "classes_"):
+            raise ValueError("LabelNormalizer was not fitted yet.")
+
+    def fit(self, y):
+        """Fit label normalizer
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.classes_ = np.unique(y)
+        return self
+
+    def transform(self, y):
+        """Transform labels to normalized encoding.
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+        """
+        self._check_fitted()
+
+        classes = np.unique(y)
+        if len(np.intersect1d(classes, self.classes_)) < len(classes):
+            raise ValueError("y contains new labels...")
+
+        y = np.asarray(y)
+        y_new = np.zeros_like(y)
+
+        for i, k in enumerate(self.classes_[1:]):
+            y_new[y == k] = i + 1
+
+        return y_new
+
+
+    def inverse_transform(self, y):
+        """Transform labels back to original encoding.
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+        """
+        self._check_fitted()
+
+        y = np.asarray(y)
+        y_new = np.zeros_like(y)
+
+        for i, k in enumerate(self.classes_):
+            y_new[y == i] = k
+
+        return y_new
+
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
