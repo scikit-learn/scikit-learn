@@ -49,7 +49,6 @@ pl.ylabel('explained_variance_')
 
 ###############################################################################
 # Prediction
-scores = cross_validation.cross_val_score(pipe, X_digits, y_digits, n_jobs=-1)
 
 from sklearn.grid_search import GridSearchCV
 
