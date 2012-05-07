@@ -139,10 +139,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     for jj in xrange(n_samples):
                         R[jj] += X_mean_ii * w[ii]
 
-                if center:
-                    for jj in xrange(n_samples):
-                        R[jj] += X_mean_ii * w[ii]
-
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
