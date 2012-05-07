@@ -26,7 +26,7 @@ scores_std = list()
 
 for alpha in alphas:
     lasso.alpha = alpha
-    this_scores = cross_validation.cross_val_score(lasso, X, y, n_jobs=-1)
+    this_scores = cross_validation.cross_val_score(lasso, X, y, n_jobs=1)
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
