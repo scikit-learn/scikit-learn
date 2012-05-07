@@ -266,21 +266,21 @@ Label binarization
 :class:`LabelBinarizer` is a utility class to help create a label indicator
 matrix from a list of multi-class labels::
 
-    >>> clf = preprocessing.LabelBinarizer()
-    >>> clf.fit([1, 2, 6, 4, 2])
+    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb.fit([1, 2, 6, 4, 2])
     LabelBinarizer(neg_label=0, pos_label=1)
-    >>> clf.classes_
+    >>> lb.classes_
     array([1, 2, 4, 6])
-    >>> clf.transform([1, 6])
+    >>> lb.transform([1, 6])
     array([[ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.]])
 
 :class:`LabelBinarizer` also supports multiple labels per instance::
 
-    >>> clf.fit_transform([(1, 2), (3,)])
+    >>> lb.fit_transform([(1, 2), (3,)])
     array([[ 1.,  1.,  0.],
            [ 0.,  0.,  1.]])
-    >>> clf.classes_
+    >>> lb.classes_
     array([1, 2, 3])
 
 Label normalization
@@ -288,14 +288,14 @@ Label normalization
 
 :class:`LabelNormalizer` is a utility class to help normalize the encoding used by labels::
 
-    >>> clf = preprocessing.LabelNormalizer()
-    >>> clf.fit([1, 2, 2, 6])
+    >>> ln = preprocessing.LabelNormalizer()
+    >>> ln.fit([1, 2, 2, 6])
     LabelNormalizer()
-    >>> clf.classes_
+    >>> ln.classes_
     array([1, 2, 6])
-    >>> clf.transform([1, 1, 2, 6])
+    >>> ln.transform([1, 1, 2, 6])
     array([0, 0, 1, 2])
-    >>> clf.inverse_transform([0, 0, 1, 2])
+    >>> ln.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
 
 
