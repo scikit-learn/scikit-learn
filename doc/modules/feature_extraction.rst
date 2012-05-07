@@ -11,6 +11,13 @@ The :mod:`sklearn.feature_extraction` module can be used to extract
 features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
+.. note::
+
+   Feature extraction is very different from :ref:`feature_selection`:
+   the former consists in transforming arbitrary data, such as text or
+   images, into numerical features usable for machine learning. The later
+   is a machine learning technique applied on these features.
+
 .. _dict_feature_extraction:
 
 Loading features from dicts
