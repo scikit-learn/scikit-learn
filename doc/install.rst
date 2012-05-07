@@ -233,12 +233,14 @@ otherwise please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists`.
 
-.. note:: **Testing under Windows**
+.. note:: **Alternative testing method**
 
-   Testing under Windows should be performed with the follow command::
+   If for some reason the recommended method is failing for you, please try
+   the alternate method::
 
     python -c "import sklearn; sklearn.test()"
 
+   This method might display doctest failures because of nosetests issues.
 
 scikit-learn can also be tested without having the package
 installed. For this you must compile the sources inplace from the
@@ -246,14 +248,14 @@ source directory::
 
     python setup.py build_ext --inplace
 
-Test can now be run using nosetest::
+Test can now be run using nosetests::
 
     nosetests sklearn/
 
-If you are running the development version, this is automated in the
-commands `make in` and `make test`.
+This is automated in the commands::
 
-.. warning::
+    make in
 
-   Because nosetest does not play well with multiprocessing on
-   windows, this last approach is not recommended on such system.
+and::
+
+    make test
