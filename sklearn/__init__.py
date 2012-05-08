@@ -57,3 +57,20 @@ __all__ = ['cross_validation', 'cluster', 'covariance',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
 __version__ = '0.12-git'
+
+def setup_module(module):
+    """Fixture for the tests to assure globally controllable seeding of RNGs
+    """
+
+    import os
+    import numpy as np
+    import random
+
+    # It could have been provided in the environment
+    _random_seed = os.environ.get('SKLEARN_SEED', None)
+    if _random_seed is None:
+        _random_seed = np.random.uniform()*(2**31-1)
+    _random_seed = int(_random_seed)
+    print "I: Seeding RNGs with %r" % _random_seed
+    np.random.seed(_random_seed)
+    random.seed(_random_seed)
