@@ -1,3 +1,9 @@
+scikit-learn (0.11.0-1) unstable; urgency=low
+
+  * Fresh upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 May 2012 22:40:04 -0400
+
 scikit-learn (0.10.0-1) unstable; urgency=low
 
   * Snapshot of upstream release branch
