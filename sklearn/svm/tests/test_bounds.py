@@ -1,4 +1,5 @@
 import nose
+from nose.tools import assert_true
 
 import numpy as np
 from scipy import sparse as sp
@@ -6,9 +7,6 @@ from scipy import sparse as sp
 from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
-from sklearn.svm.sparse import LinearSVC as SparseSVC
-from sklearn.linear_model.sparse.logistic import LogisticRegression as \
-                                                       SparseLogRegression
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
@@ -41,24 +39,22 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        ('log', False): LogisticRegression(penalty='l1'),
-        ('log', True):  SparseLogRegression(penalty='l1'),
-        ('l2', False):  LinearSVC(loss='l2', penalty='l1', dual=False),
-        ('l2', True):   SparseSVC(loss='l2', penalty='l1', dual=False),
-    }[loss, sp.issparse(X)]
+        'log':  LogisticRegression(penalty='l1'),
+        'l2':  LinearSVC(loss='l2', penalty='l1', dual=False),
+    }[loss]
 
     clf.fit_intercept = fit_intercept
     clf.intercept_scaling = intercept_scaling
 
     clf.C = min_c
     clf.fit(X, y)
-    assert (np.asarray(clf.coef_) == 0).all()
-    assert (np.asarray(clf.intercept_) == 0).all()
+    assert_true((np.asarray(clf.coef_) == 0).all())
+    assert_true((np.asarray(clf.intercept_) == 0).all())
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert (np.asarray(clf.coef_) != 0).any() or \
-           (np.asarray(clf.intercept_) != 0).any()
+    assert_true((np.asarray(clf.coef_) != 0).any() or \
+                (np.asarray(clf.intercept_) != 0).any())
 
 
 @nose.tools.raises(ValueError)

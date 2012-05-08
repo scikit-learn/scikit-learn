@@ -32,7 +32,7 @@ lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
 graph = image.img_to_graph(lena)
 
 # Take a decreasing function of the gradient: an exponential
-# The smaller beta is, the more independant the segmentation is of the
+# The smaller beta is, the more independent the segmentation is of the
 # actual image. For beta=1, the segmentation is close to a voronoi
 beta = 5
 eps = 1e-6

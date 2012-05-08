@@ -17,11 +17,22 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     """
     Linear Discriminant Analysis (LDA)
 
+    A classifier with a linear decision boundary, generated
+    by fitting class conditional densities to the data
+    and using Bayes' rule.
+
+    The model fits a Gaussian density to each class, assuming that
+    all classes share the same covariance matrix.
+
+    The fitted model can also be used to reduce the dimensionality
+    of the input, by projecting it to the most discriminative
+    directions.
+
     Parameters
     ----------
 
     n_components: int
-        Number of components (< n_classes - 1)
+        Number of components (< n_classes - 1) for dimensionality reduction
 
     priors : array, optional, shape = [n_classes]
         Priors on classes
@@ -51,7 +62,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     See also
     --------
-    QDA
+    sklearn.qda.QDA: Quadratic discriminant analysis
 
     """
 
@@ -147,7 +158,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         if rank < n_features:
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
-        scaling = (scaling * V.T[:, :rank].T).T / S[:rank]
+        scaling = (scaling * V[:rank]).T / S[:rank]
 
         ## ----------------------------
         ## 3) Between variance scaling

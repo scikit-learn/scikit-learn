@@ -39,7 +39,11 @@ try:
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)
 
-    test = NoseTester().test
+    try:
+        test = NoseTester(raise_warnings="release").test
+    except TypeError:
+        # Older versions of numpy do not have a raise_warnings argument
+        test = NoseTester().test
     del nosetester
 except:
     pass
@@ -47,9 +51,9 @@ except:
 
 __all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
            'datasets', 'decomposition', 'feature_extraction',
-           'feature_selection',
+           'feature_selection', 'semi_supervised',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.10'
+__version__ = '0.11'

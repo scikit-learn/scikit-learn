@@ -109,7 +109,7 @@ plot_embedding(X_lda,
 # Isomap projection of the digits dataset
 print "Computing Isomap embedding"
 t0 = time()
-X_iso = manifold.Isomap(n_neighbors, out_dim=2).fit_transform(X)
+X_iso = manifold.Isomap(n_neighbors, n_components=2).fit_transform(X)
 print "Done."
 plot_embedding(X_iso,
     "Isomap projection of the digits (time %.2fs)" %
@@ -119,7 +119,7 @@ plot_embedding(X_iso,
 #----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 print "Computing LLE embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
                                       method='standard')
 t0 = time()
 X_lle = clf.fit_transform(X)
@@ -132,7 +132,7 @@ plot_embedding(X_lle,
 #----------------------------------------------------------------------
 # Modified Locally linear embedding of the digits dataset
 print "Computing modified LLE embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
                                       method='modified')
 t0 = time()
 X_mlle = clf.fit_transform(X)
@@ -145,7 +145,7 @@ plot_embedding(X_mlle,
 #----------------------------------------------------------------------
 # HLLE embedding of the digits dataset
 print "Computing Hessian LLE embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
                                       method='hessian')
 t0 = time()
 X_hlle = clf.fit_transform(X)
@@ -158,7 +158,7 @@ plot_embedding(X_hlle,
 #----------------------------------------------------------------------
 # LTSA embedding of the digits dataset
 print "Computing LTSA embedding"
-clf = manifold.LocallyLinearEmbedding(n_neighbors, out_dim=2,
+clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
                                       method='ltsa')
 t0 = time()
 X_ltsa = clf.fit_transform(X)

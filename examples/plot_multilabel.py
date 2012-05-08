@@ -22,7 +22,8 @@ The classification is performed by projecting to the first two principal
 components found by PCA and CCA for visualisation purposes, followed by using
 the :class:`sklearn.multiclass.OneVsRestClassifier` metaclassifier using two
 SVCs with linear kernels to learn a discriminative model for each class.
-Note that PCA is an unsupervised algorithm, while CCA is supervised.
+Note that PCA is used to perform an unsupervised dimensionality reduction,
+while CCA is used to perform a supervised one.
 """
 print __doc__
 

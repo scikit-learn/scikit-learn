@@ -25,8 +25,11 @@ from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
+from .samples_generator import make_hastie_10_2
 from .samples_generator import make_regression
 from .samples_generator import make_blobs
+from .samples_generator import make_moons
+from .samples_generator import make_circles
 from .samples_generator import make_friedman1
 from .samples_generator import make_friedman2
 from .samples_generator import make_friedman3

@@ -3,8 +3,11 @@ from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less
+
 from .. import make_classification
 from .. import make_multilabel_classification
+from .. import make_hastie_10_2
 from .. import make_regression
 from .. import make_blobs
 from .. import make_friedman1
@@ -43,6 +46,13 @@ def test_make_multilabel_classification():
             assert_equal(max([max(y) for y in Y]), 2)
         assert_equal(min([len(y) for y in Y]), min_length)
         assert_true(max([len(y) for y in Y]) <= 3)
+
+
+def test_make_hastie_10_2():
+    X, y = make_hastie_10_2(n_samples=100, random_state=0)
+    assert_equal(X.shape, (100, 10), "X shape mismatch")
+    assert_equal(y.shape, (100,), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (2,), "Unexpected number of classes")
 
 
 def test_make_regression():
@@ -111,7 +121,7 @@ def test_make_low_rank_matrix():
 
     from numpy.linalg import svd
     u, s, v = svd(X)
-    assert_true(sum(s) - 5 < 0.1, "X rank is not approximately 5")
+    assert_less(sum(s) - 5, 0.1, "X rank is not approximately 5")
 
 
 def test_make_sparse_coded_signal():

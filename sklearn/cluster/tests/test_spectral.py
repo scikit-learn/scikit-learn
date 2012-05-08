@@ -7,6 +7,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from scipy import sparse
 
+from sklearn.utils.testing import assert_greater
 from .. import SpectralClustering
 
 
@@ -54,8 +55,8 @@ def test_spectral_clustering_sparse():
 
     S = sparse.coo_matrix(S)
 
-    labels = SpectralClustering(random_state=0).fit(S, k=2).labels_
+    labels = SpectralClustering(random_state=0, k=2).fit(S).labels_
     if labels[0] == 0:
         labels = 1 - labels
 
-    assert np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]) > .9
+    assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .9)

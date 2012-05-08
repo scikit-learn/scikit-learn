@@ -3,6 +3,8 @@ from .. import nmf
 from nose.tools import assert_true, assert_false, raises
 from numpy.testing import assert_array_almost_equal
 
+from sklearn.utils.testing import assert_greater
+
 random_state = np.random.mtrand.RandomState(0)
 
 
@@ -69,8 +71,8 @@ def test_projgrad_nmf_fit_nn_output():
 
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
-    assert nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
-      random_state.randn(6, 5))).reconstruction_err_ < 0.05
+    assert_true(nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
+      random_state.randn(6, 5))).reconstruction_err_ < 0.05)
 
 
 @raises(ValueError)
@@ -119,20 +121,20 @@ def test_projgrad_nmf_sparseness():
                   sparseness='data').fit(A).data_sparseness_
     comp_sp = nmf.ProjectedGradientNMF(n_components=5,
                   sparseness='components').fit(A).comp_sparseness_
-    assert_true(data_sp > m.data_sparseness_ and comp_sp > m.comp_sparseness_)
+    assert_greater(data_sp, m.data_sparseness_)
+    assert_greater(comp_sp, m.comp_sparseness_)
 
 
 def test_sparse_input():
     """Test that sparse matrices are accepted as input"""
     from scipy.sparse import csr_matrix
 
-    A = np.arange(100).reshape(10, 10)
-    A[np.where(A % 2 == 0)] = 0
+    A = np.abs(random_state.randn(10, 10))
+    A[:, 2 * np.arange(5)] = 0
     T1 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
 
     A = csr_matrix(A)
     T2 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
-
     assert_array_almost_equal(T1, T2)
 
 

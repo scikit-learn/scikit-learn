@@ -7,7 +7,7 @@ that adds to libsvm some capabilities, like index of support vectors
 and efficient representation of dense matrices.
 
 These are low-level routines, but can be used for flexibility or
-performance reasons. See scikits.learn.svm for a higher-level API.
+performance reasons. See sklearn.svm for a higher-level API.
 
 Low-level memory management is done in libsvm_helper.c. If we happen
 to run out of memory a MemoryError will be raised. In practice this is
@@ -339,7 +339,7 @@ def predict_proba(
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
 
-    See scikits.learn.svm.predict for a complete list of parameters.
+    See sklearn.svm.predict for a complete list of parameters.
 
     Parameters
     ----------
@@ -536,6 +536,7 @@ def cross_validation(
 
     free(problem.x)
     return target
+
 
 def set_verbosity_wrap(int verbosity):
     """

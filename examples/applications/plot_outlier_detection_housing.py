@@ -51,7 +51,7 @@ print __doc__
 # License: BSD
 
 import numpy as np
-from sklearn.covariance import EllipticEnvelop
+from sklearn.covariance import EllipticEnvelope
 from sklearn.svm import OneClassSVM
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
@@ -63,10 +63,10 @@ X2 = load_boston()['data'][:, [5, 12]]  # "banana"-shaped
 
 # Define "classifiers" to be used
 classifiers = {
-    "Empirical Covariance": EllipticEnvelop(support_fraction=1.,
+    "Empirical Covariance": EllipticEnvelope(support_fraction=1.,
                                             contamination=0.261),
     "Robust Covariance (Minimum Covariance Determinant)":
-        EllipticEnvelop(contamination=0.261),
+        EllipticEnvelope(contamination=0.261),
     "OCSVM": OneClassSVM(nu=0.261, gamma=0.05)}
 colors = ['m', 'g', 'b']
 legend1 = {}

@@ -368,6 +368,8 @@ cdef void decrease_val(FibonacciHeap* heap,
     if node.parent and (node.parent.val >= newval):
         remove(node)
         insert_node(heap, node)
+    elif heap.min_node.val > node.val:
+        heap.min_node = node
 
 
 cdef void link(FibonacciHeap* heap, FibonacciNode* node):

@@ -36,14 +36,13 @@ b = clf.support_vectors_[-1]
 yy_up = a * xx + (b[1] - a * b[0])
 
 # plot the line, the points, and the nearest vectors to the plane
-pl.set_cmap(pl.cm.Paired)
 pl.plot(xx, yy, 'k-')
 pl.plot(xx, yy_down, 'k--')
 pl.plot(xx, yy_up, 'k--')
 
 pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
            s=80, facecolors='none')
-pl.scatter(X[:, 0], X[:, 1], c=Y)
+pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
 
 pl.axis('tight')
 pl.show()

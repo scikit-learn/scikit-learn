@@ -36,6 +36,27 @@ except AttributeError:
                     self[x] += 1
 
 
+def lsqr(X, y, tol=1e-3):
+    import scipy.sparse.linalg as sp_linalg
+    from ..utils.extmath import safe_sparse_dot
+
+    if hasattr(sp_linalg, 'lsqr'):
+        # scipy 0.8 or greater
+        return sp_linalg.lsqr(X, y)
+    else:
+        n_samples, n_features = X.shape
+        if n_samples > n_features:
+            coef, _ = sp_linalg.cg(safe_sparse_dot(X.T, X),
+                                   safe_sparse_dot(X.T, y),
+                                   tol=tol)
+        else:
+            coef, _ = sp_linalg.cg(safe_sparse_dot(X, X.T), y, tol=tol)
+            coef = safe_sparse_dot(X.T, coef)
+
+        residues = y - safe_sparse_dot(X, coef)
+        return coef, None, None, residues
+
+
 def _unique(ar, return_index=False, return_inverse=False):
     """A replacement for the np.unique that appeared in numpy 1.4.
 
@@ -152,3 +173,20 @@ try:
 except ImportError:
     def count_nonzero(X):
         return len(np.flatnonzero(X))
+
+try:
+    # check whether np.dot supports the out argument
+    np.dot(np.zeros(1), np.zeros(1), out=np.empty(1))
+
+    # this is ok, just use the existing implementation
+    dot_out = np.dot
+
+except (TypeError, ValueError):
+    # old version of np.dot that does not accept the third argument, define a
+    # pure python workaround:
+    def dot_out(a, b, out=None):
+        if out is not None:
+            out[:] = np.dot(a, b)
+            return out
+        else:
+            return np.dot(a, b)

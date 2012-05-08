@@ -67,9 +67,7 @@ TEST_FOLDER = "20news-bydate-test"
 
 
 def download_20newsgroups(target_dir, cache_path):
-    """ Download the 20Newsgroups data and convert is in a zipped pickle
-        storage.
-    """
+    """Download the 20 newsgroups data and stored it as a zipped pickle."""
     archive_path = os.path.join(target_dir, ARCHIVE_NAME)
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
@@ -88,8 +86,8 @@ def download_20newsgroups(target_dir, cache_path):
 
     # Store a zipped pickle
     cache = dict(
-            train=load_files(train_path),
-            test=load_files(test_path)
+            train=load_files(train_path, charset='latin1'),
+            test=load_files(test_path, charset='latin1')
         )
     open(cache_path, 'wb').write(pickle.dumps(cache).encode('zip'))
     shutil.rmtree(target_dir)
@@ -153,13 +151,16 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     elif subset == 'all':
         data_lst = list()
         target = list()
+        filenames = list()
         for subset in ('train', 'test'):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
+            filenames.extend(data.filenames)
 
         data.data = data_lst
         data.target = np.array(target)
+        data.filenames = np.array(filenames)
         data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
@@ -171,6 +172,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         labels.sort()
         labels, categories = zip(*labels)
         mask = in1d(data.target, labels)
+        data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
         data.target = np.searchsorted(labels, data.target)
@@ -184,6 +186,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         random_state = check_random_state(random_state)
         indices = np.arange(data.target.shape[0])
         random_state.shuffle(indices)
+        data.filenames = data.filenames[indices]
         data.target = data.target[indices]
         # Use an object array to shuffle: avoids memory copy
         data_lst = np.array(data.data, dtype=object)
@@ -194,7 +197,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", data_home=None):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors
+    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more

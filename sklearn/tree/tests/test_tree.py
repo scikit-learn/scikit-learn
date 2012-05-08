@@ -8,6 +8,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
+from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
@@ -64,7 +65,7 @@ def test_regression_toy():
 
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
-    clf = tree.DecisionTreeClassifier(max_depth=3, min_split=1)
+    clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
     from StringIO import StringIO
 
@@ -74,11 +75,11 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"X[0] <= 0.0\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
-    "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
+    "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -93,11 +94,11 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"feature1 <= 0.0\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
-    "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
+    "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -156,7 +157,8 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities using DecisionTreeClassifier."""
-    clf = tree.DecisionTreeClassifier()
+    clf = tree.DecisionTreeClassifier(max_depth=1, max_features=1,
+            random_state=42)
     clf.fit(iris.data, iris.target)
 
     prob_predict = clf.predict_proba(iris.data)
@@ -223,12 +225,16 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
 
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+    assert_true(clf.feature_importances_ is None)
+
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
     assert_raises(ValueError,
-                  tree.DecisionTreeClassifier(min_split=-1).fit,
+                  tree.DecisionTreeClassifier(min_samples_leaf=-1).fit,
                   X, y)
 
     assert_raises(ValueError,
@@ -257,7 +263,6 @@ def test_error():
     # predict before fitting
     clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict, T)
-
     # predict on vector with different dims
     clf.fit(X, y)
     t = np.asarray(T)
@@ -296,6 +301,23 @@ def test_error():
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
+
+
+def test_min_samples_leaf():
+    """Test if leaves contain more than leaf_count training examples"""
+    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
+        clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
+
+        # apply tree
+        out = np.empty((iris.data.shape[0], ), dtype=np.int32)
+        X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+        tree._tree._apply_tree(X, clf.tree_.children, clf.tree_.feature,
+                clf.tree_.threshold, out)
+        # count node occurences
+        node_counts = np.bincount(out)
+        # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]
+        assert np.min(leaf_count) >= 5
 
 
 def test_pickle():
