@@ -1,4 +1,4 @@
-Format: http://www.debian.org/doc/copyright-format/1.0
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: scikit-learn
 Upstream-Contact: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 Source: http://github.com/scikit-learn/scikit-learn
