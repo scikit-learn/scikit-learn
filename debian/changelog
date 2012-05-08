@@ -1,6 +1,8 @@
 scikit-learn (0.11.0-1) unstable; urgency=low
 
   * Fresh upstream release
+  * Adjusted patches/deb_use_system_joblib to avoid submodule
+    import
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 May 2012 22:40:04 -0400
 
