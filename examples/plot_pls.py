@@ -58,23 +58,23 @@ X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 
 # Scatter plot of scores
 # ~~~~~~~~~~~~~~~~~~~~~~
-# 1) on diagonal plot X vs Y scores on each components
+# 1) On diagonal plot X vs Y scores on each components
 pl.subplot(221)
 pl.plot(X_train_r[:, 0], Y_train_r[:, 0], "ob", label="train")
 pl.plot(X_test_r[:, 0], Y_test_r[:, 0], "or", label="test")
-pl.xlabel("y")
-pl.ylabel("x")
-pl.title('Comp. 1, corr = %.2f' %
-         np.corrcoef(X_test_r[:, 0], X_test_r[:, 0])[0, 1])
+pl.xlabel("x scores")
+pl.ylabel("y scores")
+pl.title('Comp. 1: X vs Y (test corr = %.2f)' %
+         np.corrcoef(X_test_r[:, 0], Y_test_r[:, 0])[0, 1])
 pl.legend()
 
 pl.subplot(224)
 pl.plot(X_train_r[:, 1], Y_train_r[:, 1], "ob", label="train")
 pl.plot(X_test_r[:, 1], Y_test_r[:, 1], "or", label="test")
-pl.xlabel("y")
-pl.ylabel("x")
-pl.title('Comp. 2, corr = %.2f' %
-         np.corrcoef(X_test_r[:, 1], X_test_r[:, 1])[0, 1])
+pl.xlabel("x scores")
+pl.ylabel("y scores")
+pl.title('Comp. 2: X vs Y (test corr = %.2f)' %
+         np.corrcoef(X_test_r[:, 1], Y_test_r[:, 1])[0, 1])
 pl.legend()
 
 # 2) Off diagonal plot components 1 vs 2 for X and Y
@@ -83,7 +83,8 @@ pl.plot(X_train_r[:, 0], X_train_r[:, 1], "*b", label="train")
 pl.plot(X_test_r[:, 0], X_test_r[:, 1], "*r", label="test")
 pl.xlabel("X comp. 1")
 pl.ylabel("X comp. 2")
-pl.title('X, corr = %.2f' % np.corrcoef(X_test_r[:, 0], X_test_r[:, 1])[0, 1])
+pl.title('X comp. 1 vs X comp. 2 (test corr = %.2f)' % \
+    np.corrcoef(X_test_r[:, 0], X_test_r[:, 1])[0, 1])
 pl.legend()
 
 pl.subplot(223)
@@ -91,7 +92,8 @@ pl.plot(Y_train_r[:, 0], Y_train_r[:, 1], "*b", label="train")
 pl.plot(Y_test_r[:, 0], Y_test_r[:, 1], "*r", label="test")
 pl.xlabel("Y comp. 1")
 pl.ylabel("Y comp. 2")
-pl.title('Y, corr = %.2f' % np.corrcoef(Y_test_r[:, 0], Y_test_r[:, 1])[0, 1])
+pl.title('Y comp. 1 vs Y comp. 2 , (test corr = %.2f)' % \
+    np.corrcoef(Y_test_r[:, 0], Y_test_r[:, 1])[0, 1])
 pl.legend()
 pl.show()
 

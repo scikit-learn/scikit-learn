@@ -7,6 +7,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_equal
 
 from nose import SkipTest
+from nose.tools import assert_true, assert_false
 
 from .. import SparsePCA, MiniBatchSparsePCA
 from ...utils import check_random_state
@@ -74,13 +75,25 @@ def test_fit_transform():
         spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
                          random_state=0).fit(Y)
         U2 = spca.transform(Y)
-    assert not np.all(spca_lars.components_ == 0)
+    assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,
                            alpha=alpha)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+
+
+def test_transform_nan():
+    """
+    Test that SparsePCA won't return NaN when there is 0 feature in all
+    samples.
+    """
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    Y[:, 0] = 0
+    estimator = SparsePCA(n_components=8)
+    assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
 
 
 def test_fit_transform_tall():
@@ -139,7 +152,7 @@ def test_mini_batch_fit_transform():
     else:  # we can efficiently use parallelism
         U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                 random_state=0).fit(Y).transform(Y)
-    assert not np.all(spca_lars.components_ == 0)
+    assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd', alpha=alpha,

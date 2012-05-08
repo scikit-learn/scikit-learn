@@ -16,11 +16,11 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import randomized_svd
 
 
-def _assess_dimension_(spectrum, rank, n_samples, dim):
-    """Compute the likelihood of a rank rank dataset
+def _assess_dimension_(spectrum, rank, n_samples, n_features):
+    """Compute the likelihood of a rank ``rank`` dataset
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
-    dimf) having spectrum spectrum.
+    dimf) having spectrum ``spectrum``.
 
     Parameters
     ----------
@@ -43,32 +43,32 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
     This implements the method of `Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
-    if rank > dim:
-        raise ValueError("the dimension cannot exceed dim")
+    if rank > len(spectrum):
+        raise ValueError("the tested rank cannot exceed the rank of the dataset")
     from scipy.special import gammaln
 
     pu = -rank * np.log(2)
     for i in range(rank):
-        pu += gammaln((dim - i) / 2) - np.log(np.pi) * (dim - i) / 2
+        pu += gammaln((n_features - i) / 2) - np.log(np.pi) * (n_features - i) / 2
 
     pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2
 
-    if rank == dim:
+    if rank == n_features:
         pv = 0
         v = 1
     else:
-        v = np.sum(spectrum[rank:dim]) / (dim - rank)
-        pv = -np.log(v) * n_samples * (dim - rank) / 2
+        v = np.sum(spectrum[rank:]) / (n_features - rank)
+        pv = -np.log(v) * n_samples * (n_features - rank) / 2
 
-    m = dim * rank - rank * (rank + 1) / 2
+    m = n_features * rank - rank * (rank + 1) / 2
     pp = np.log(2 * np.pi) * (m + rank + 1) / 2
 
     pa = 0
     spectrum_ = spectrum.copy()
-    spectrum_[rank:dim] = v
+    spectrum_[rank:n_features] = v
     for i in range(rank):
-        for j in range(i + 1, dim):
+        for j in range(i + 1, len(spectrum)):
             pa += (np.log((spectrum[i] - spectrum[j])
                           * (1. / spectrum_[j] - 1. / spectrum_[i]))
                    + np.log(n_samples))
@@ -78,14 +78,14 @@ def _assess_dimension_(spectrum, rank, n_samples, dim):
     return ll
 
 
-def _infer_dimension_(spectrum, n, p):
-    """This method infers the dimension of a dataset of shape (n, p)
+def _infer_dimension_(spectrum, n_samples, n_features):
+    """This method infers the dimension of a dataset of shape (n_samples, n_features)
 
     The dataset is described by its spectrum `spectrum`.
     """
     ll = []
-    for rank in range(min(n, p, len(spectrum))):
-        ll.append(_assess_dimension_(spectrum, rank, n, p))
+    for rank in range(len(spectrum)):
+        ll.append(_assess_dimension_(spectrum, rank, n_samples, n_features))
     ll = np.array(ll)
     return ll.argmax()
 
@@ -236,8 +236,11 @@ class PCA(BaseEstimator, TransformerMixin):
             self.components_ = V
 
         if self.n_components == 'mle':
+            if n_samples < n_features:
+                raise ValueError("n_components='mle' is only supported "
+                "if n_samples >= n_features")
             self.n_components = _infer_dimension_(self.explained_variance_,
-                                            n_samples, X.shape[1])
+                                            n_samples, n_features)
 
         elif (self.n_components is not None
               and 0 < self.n_components
@@ -414,12 +417,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     PCA
     ProbabilisticPCA
 
-    Notes
-    -------
-    **References**:
+    References
+    ----------
 
-    .. [Halko2009] `Finding structure with randomness: Stochastic algorithms for
-      constructing approximate matrix decompositions Halko, et al., 2009
+    .. [Halko2009] `Finding structure with randomness: Stochastic algorithms
+      for constructing approximate matrix decompositions Halko, et al., 2009
       (arXiv:909)`
 
     .. [MRT] `A randomized algorithm for the decomposition of matrices

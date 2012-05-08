@@ -10,6 +10,8 @@ Generalized Linear Model for a complete discussion.
 # License: BSD Style.
 
 from math import log
+import sys
+
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
@@ -58,6 +60,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
+
+    copy_X: bool
+        If False, X is overwritten.
+
+    copy_Gram: bool
+        If False, Gram is overwritten.
 
     Returns
     --------
@@ -123,7 +131,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Cov = Xy.copy()
 
     if verbose:
-        print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
+        if verbose > 1:
+            print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
+        else:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+
+    tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
 
     while True:
         if Cov.size:
@@ -190,10 +204,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             active.append(indices[n_active])
             n_active += 1
 
-            if verbose:
+            if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
-
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
@@ -215,8 +228,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T,
                                  least_squares)
 
-        g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir))
-        g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir))
+        g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
+        g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
         gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z
@@ -291,7 +304,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
-            if verbose:
+            if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp))
 
@@ -425,7 +438,7 @@ class Lars(LinearModel):
         self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
                   Gram=Gram, copy_X=self.copy_X,
                   copy_Gram=False, alpha_min=alpha,
-                  method=self.method, verbose=self.verbose,
+                  method=self.method, verbose=max(0, self.verbose - 1),
                   max_iter=max_iter, eps=self.eps)
 
         self.coef_ = self.coef_path_[:, -1]
@@ -615,7 +628,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     alphas, active, coefs = lars_path(X_train, y_train, Gram=Gram,
                             copy_X=False, copy_Gram=False,
-                            method=method, verbose=verbose,
+                            method=method, verbose=max(0, verbose - 1),
                             max_iter=max_iter, eps=eps)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
@@ -655,6 +668,10 @@ class LarsCV(LARS):
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
+    max_n_alphas : integer, optional
+        The maximum number of points on the path used to compute the
+        residuals in the cross-validation
+
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If '-1', use
         all the CPUs
@@ -684,8 +701,9 @@ class LarsCV(LARS):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None, n_jobs=1,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 normalize=True, precompute='auto', cv=None,
+                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 copy_X=True):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
@@ -693,6 +711,7 @@ class LarsCV(LARS):
         self.precompute = precompute
         self.copy_X = copy_X
         self.cv = cv
+        self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
         self.eps = eps
 
@@ -730,14 +749,24 @@ class LarsCV(LARS):
                             eps=self.eps)
                     for train, test in cv)
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
-        all_alphas.sort()
+        # Unique also sorts
+        all_alphas = np.unique(all_alphas)
+        # Take at most max_n_alphas values
+        stride = int(max(1, int(len(all_alphas) / float(self.max_n_alphas))))
+        all_alphas = all_alphas[::stride]
 
         mse_path = np.empty((len(all_alphas), len(cv_paths)))
         for index, (alphas, active, coefs, residues) in enumerate(cv_paths):
-            this_residues = interpolate.interp1d(alphas[::-1],
-                                                 residues[::-1],
-                                                 bounds_error=False,
-                                                 fill_value=residues.max(),
+            alphas = alphas[::-1]
+            residues = residues[::-1]
+            if alphas[0] != 0:
+                alphas = np.r_[0, alphas]
+                residues = np.r_[residues[0, np.newaxis], residues]
+            if alphas[-1] != all_alphas[-1]:
+                alphas = np.r_[alphas, all_alphas[-1]]
+                residues = np.r_[residues, residues[-1, np.newaxis]]
+            this_residues = interpolate.interp1d(alphas,
+                                                 residues,
                                                  axis=0)(all_alphas)
             this_residues **= 2
             mse_path[:, index] = np.mean(this_residues, axis=-1)
@@ -790,6 +819,10 @@ class LassoLarsCV(LarsCV):
     cv : crossvalidation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
+
+    max_n_alphas : integer, optional
+        The maximum number of points on the path used to compute the
+        residuals in the cross-validation
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If '-1', use
@@ -993,7 +1026,7 @@ class LassoLarsIC(LassoLars):
 
         df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom
         for k, coef in enumerate(coef_path_.T):
-            mask = coef != 0
+            mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):
                 continue
             # get the number of degrees of freedom equal to:

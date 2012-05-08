@@ -20,7 +20,6 @@ full covariance matrices effectively even when there are less examples
 per cluster than there are dimensions in the data, due to
 regularization properties of the inference algorithm.
 """
-
 import itertools
 
 import numpy as np
@@ -40,11 +39,11 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
 # Fit a mixture of gaussians with EM using five components
-gmm = mixture.GMM(n_components=5, cvtype='full')
+gmm = mixture.GMM(n_components=5, covariance_type='full')
 gmm.fit(X)
 
 # Fit a dirichlet process mixture of gaussians using five components
-dpgmm = mixture.DPGMM(n_components=5, cvtype='full')
+dpgmm = mixture.DPGMM(n_components=5, covariance_type='full')
 dpgmm.fit(X)
 
 color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
@@ -53,8 +52,8 @@ for i, (clf, title) in enumerate([(gmm, 'GMM'),
                                   (dpgmm, 'Dirichlet Process GMM')]):
     splot = pl.subplot(2, 1, 1 + i)
     Y_ = clf.predict(X)
-    for i, (mean, covar, color) in enumerate(zip(clf.means, clf.covars,
-                                                 color_iter)):
+    for i, (mean, covar, color) in enumerate(zip(
+            clf.means_, clf._get_covars(), color_iter)):
         v, w = linalg.eigh(covar)
         u = w[0] / linalg.norm(w[0])
         # as the DP will not use every component it has access to

@@ -1,5 +1,4 @@
 from os.path import join
-import sys
 import numpy
 
 import warnings
@@ -7,8 +6,7 @@ import warnings
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, get_standard_file, \
-         BlasNotFoundError
+    from numpy.distutils.system_info import get_info, BlasNotFoundError
 
     config = Configuration('svm', parent_package, top_path)
 
@@ -69,6 +67,15 @@ def configuration(parent_package='', top_path=None):
     ## end liblinear module
 
     # this should go *after* libsvm-skl
+    libsvm_sparse_sources = ['libsvm_sparse.c']
+    config.add_extension('libsvm_sparse', libraries=['libsvm-skl'],
+                         sources=libsvm_sparse_sources,
+                         include_dirs=[numpy.get_include(),
+                                       join("src", "libsvm")],
+                         depends=[join("src", "libsvm", "svm.h"),
+                                  join("src", "libsvm",
+                                       "libsvm_sparse_helper.c")])
+
     config.add_subpackage('sparse')
 
     return config

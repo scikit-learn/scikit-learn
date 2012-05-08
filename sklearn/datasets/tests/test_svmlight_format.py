@@ -86,6 +86,27 @@ def test_load_invalid_file():
 
 
 @raises(ValueError)
+def test_load_zero_based():
+    f = BytesIO("-1 4:1.\n1 0:1\n")
+    load_svmlight_file(f, zero_based=False)
+
+
+def test_load_zero_based_auto():
+    data1 = "-1 1:1 2:2 3:3\n"
+    data2 = "-1 0:0 1:1\n"
+
+    f1 = BytesIO(data1)
+    X, y = load_svmlight_file(f1, zero_based="auto")
+    assert_equal(X.shape, (1, 3))
+
+    f1 = BytesIO(data1)
+    f2 = BytesIO(data2)
+    X1, y1, X2, y2 = load_svmlight_files([f1, f2], zero_based="auto")
+    assert_equal(X1.shape, (1, 4))
+    assert_equal(X2.shape, (1, 4))
+
+
+@raises(ValueError)
 def test_load_invalid_file2():
     load_svmlight_files([datafile, invalidfile, datafile])
 
@@ -107,9 +128,10 @@ def test_dump():
     Xd = Xs.toarray()
 
     for X in (Xs, Xd):
-        f = BytesIO()
-        dump_svmlight_file(X, y, f)
-        f.seek(0)
-        X2, y2 = load_svmlight_file(f)
-        assert_array_equal(Xd, X2.toarray())
-        assert_array_equal(y, y2)
+        for zero_based in (True, False):
+            f = BytesIO()
+            dump_svmlight_file(X, y, f, zero_based=zero_based)
+            f.seek(0)
+            X2, y2 = load_svmlight_file(f, zero_based=zero_based)
+            assert_array_equal(Xd, X2.toarray())
+            assert_array_equal(y, y2)

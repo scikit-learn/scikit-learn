@@ -5,17 +5,17 @@ specifically to work with sparse matrices.
 
 import numpy as np
 from numpy.testing import assert_equal
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 
 from .. import SelectKBest, chi2
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
 # feature 2 is a bit informative for class 2.
-X = ([[2, 1, 2],
-      [9, 1, 1],
-      [6, 1, 2],
-      [0, 1, 2]])
+X = [[2, 1, 2],
+     [9, 1, 1],
+     [6, 1, 2],
+     [0, 1, 2]]
 y = [0, 1, 2, 2]
 
 
@@ -45,3 +45,13 @@ def test_chi2():
     Xtrans = Xtrans.toarray()
     Xtrans2 = mkchi2(k=2).fit_transform(Xsp, y).toarray()
     assert_equal(Xtrans, Xtrans2)
+
+
+def test_chi2_coo():
+    """Check that chi2 works with a COO matrix
+
+    (as returned by CountVectorizer, DictVectorizer)
+    """
+    Xcoo = coo_matrix(X)
+    mkchi2(k=2).fit_transform(Xcoo, y)
+    # if we got here without an exception, we're safe

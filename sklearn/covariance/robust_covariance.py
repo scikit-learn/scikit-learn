@@ -62,9 +62,8 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
       A mask for the `n_support` observations whose scatter matrix has
       minimum determinant
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
        Estimator, 1999, American Statistical Association and the American
@@ -198,9 +197,8 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     best_supports: array-like, shape (select, n_samples)
       The `select` best supports found in the data set (`X`)
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
        Estimator, 1999, American Statistical Association and the American
        Society for Quality, TECHNOMETRICS
@@ -282,7 +280,8 @@ def fast_mcd(X, support_fraction=None,
     the correction and reweighting steps described in [Rouseeuw1999],
     see the MinCovDet object.
 
-    **References**:
+    References
+    ----------
 
     .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance
        Determinant Estimator, 1999, American Statistical Association
@@ -468,10 +467,8 @@ class MinCovDet(EmpiricalCovariance):
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
-    Notes
-    -----
-
-    **References**:
+    References
+    ----------
 
     .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
        J. Am Stat Ass, 79:871, 1984.`

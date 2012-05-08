@@ -1,8 +1,9 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
+import os
+from os.path import join
 
 import numpy
-from os.path import join
 
 
 def configuration(parent_package='', top_path=None):
@@ -16,13 +17,17 @@ def configuration(parent_package='', top_path=None):
         blas_info.pop('libraries', None)
     else:
         cblas_libs = blas_info.pop('libraries', [])
+    libraries = []
+    if os.name == 'posix':
+        cblas_libs.append('m')
+        libraries.append('m')
 
     config = Configuration('cluster', parent_package, top_path)
-    config.add_extension(
-        '_inertia',
-        sources=['_inertia.c'],
-        include_dirs=[numpy.get_include()],
-    )
+    config.add_extension('_hierarchical',
+                         sources=['_hierarchical.c'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
     config.add_extension(
         '_k_means',
         libraries=cblas_libs,

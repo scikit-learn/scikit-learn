@@ -212,7 +212,7 @@ vectors in each neighborhood.  This is the essence of *modified locally
 linear embedding* (MLLE).  MLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
-It requires ``n_neighbors > out_dim``.
+It requires ``n_neighbors > n_components``.
 
 .. figure:: ../auto_examples/manifold/images/plot_lle_digits_7.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -262,7 +262,7 @@ improvements which make its cost comparable to that of other LLE variants
 for small output dimension.  HLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
-It requires ``n_neighbors > out_dim * (out_dim + 3) / 2``.
+It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
 .. figure:: ../auto_examples/manifold/images/plot_lle_digits_8.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -355,7 +355,7 @@ Tips on practical use
 * The reconstruction error computed by each routine can be used to choose
   the optimal output dimension.  For a :math:`d`-dimensional manifold embedded
   in a :math:`D`-dimensional parameter space, the reconstruction error will
-  decrease as ``out_dim`` is increased until ``out_dim == d``.
+  decrease as ``n_components`` is increased until ``n_components == d``.
 
 * Note that noisy data can "short-circuit" the manifold, in essence acting
   as a bridge between parts of the manifold that would otherwise be

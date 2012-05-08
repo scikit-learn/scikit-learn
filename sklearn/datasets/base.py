@@ -64,7 +64,8 @@ def clear_data_home(data_home=None):
 
 
 def load_files(container_path, description=None, categories=None,
-               load_content=True, shuffle=True, random_state=0):
+               load_content=True, shuffle=True, charset=None,
+               charse_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -114,6 +115,18 @@ def load_files(container_path, description=None, categories=None,
         true a 'data' attribute containing the text information is present
         in the data structure returned. If not, a filenames attribute
         gives the path to the files.
+
+    charset : string or None (default is None)
+        If None, do not try to decode the content of the files (e.g. for
+        images or other non-text content).
+        If not None, charset to use to decode text files if load_content is
+        True.
+
+    charset_error: {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
 
     shuffle : bool, optional (default=True)
         Whether or not to shuffle the data: might be important for models that
@@ -166,6 +179,8 @@ def load_files(container_path, description=None, categories=None,
 
     if load_content:
         data = [open(filename).read() for filename in filenames]
+        if charset is not None:
+            data = [d.decode(charset, charse_error) for d in data]
         return Bunch(data=data,
                      filenames=filenames,
                      target_names=target_names,
@@ -415,7 +430,7 @@ def load_sample_images():
 
     Examples
     --------
-    To load the data and visualize the images::
+    To load the data and visualize the images:
 
     >>> from sklearn.datasets import load_sample_images
     >>> dataset = load_sample_images()     #doctest: +SKIP
@@ -467,17 +482,17 @@ def load_sample_image(image_name):
     Examples
     ---------
 
-    # >>> from sklearn.datasets import load_sample_image
-    # >>> china = load_sample_image('china.jpg')
-    # >>> china.dtype
-    # dtype('uint8')
-    # >>> china.shape
-    # (427, 640, 3)
-    # >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
-    # >>> flower.dtype
-    # dtype('uint8')
-    # >>> flower.shape
-    # (427, 640, 3)
+    >>> from sklearn.datasets import load_sample_image
+    >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
+    >>> china.dtype                              # doctest: +SKIP
+    dtype('uint8')
+    >>> china.shape                              # doctest: +SKIP
+    (427, 640, 3)
+    >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
+    >>> flower.dtype                             # doctest: +SKIP
+    dtype('uint8')
+    >>> flower.shape                             # doctest: +SKIP
+    (427, 640, 3)
     """
     images = load_sample_images()
     index = None

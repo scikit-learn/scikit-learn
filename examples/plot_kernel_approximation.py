@@ -155,8 +155,6 @@ titles = ['SVC with rbf kernel',
           'SVC (linear kernel) with rbf feature map\n n_components=100']
 
 pl.figure(figsize=(12, 5))
-pl.set_cmap(pl.cm.Paired)
-
 
 # predict and plot
 for i, clf in enumerate((kernel_svm, approx_kernel_svm)):
@@ -167,12 +165,11 @@ for i, clf in enumerate((kernel_svm, approx_kernel_svm)):
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
-    pl.set_cmap(pl.cm.Paired)
-    pl.contourf(multiples, multiples, Z)
+    pl.contourf(multiples, multiples, Z, cmap=pl.cm.Paired)
     pl.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=targets_train)
+    pl.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=pl.cm.Paired)
 
     pl.title(titles[i])
 pl.show()
