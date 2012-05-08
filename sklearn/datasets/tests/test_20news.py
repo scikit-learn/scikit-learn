@@ -27,6 +27,10 @@ def test_20news():
     # Assert that we have only 0 and 1 as labels
     assert_equal(np.unique(data2cats.target).tolist(), [0, 1])
 
+    # Check that the number of filenames is consistent with data/target
+    assert_equal(len(data2cats.filenames), len(data2cats.target))
+    assert_equal(len(data2cats.filenames), len(data2cats.data))
+
     # Check that the first entry of the reduced dataset corresponds to
     # the first entry of the corresponding category in the full dataset
     entry1 = data2cats.data[0]

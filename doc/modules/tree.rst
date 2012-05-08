@@ -177,6 +177,8 @@ instead of integer values::
 
  * :ref:`example_tree_plot_tree_regression.py`
 
+.. _tree_complexity:
+
 Complexity
 ==========
 
@@ -199,14 +201,13 @@ relevant samples, and retaining a running label count, we reduce the complexity
 at each node to :math:`O(n_{features}log(n_{samples}))`, which results in a
 total cost of :math:`O(n_{features}n_{samples}log(n_{samples}))`.
 
-This implementation also offers a parameter `min_density` to control the trade-
-off  between memory usage and speed within the tree construction process. A
-sample mask is used to mask data points that are inactive at a given node, which
-avoids the copying of data (important for large datasets or training trees
-within an ensemble). Density is defined as the ratio of 'active' data samples to
-total samples at a given node.  The minimum density parameter specifies the
-level below which fancy indexing (and therefore data copied) and the sample mask
-reset.
+This implementation also offers a parameter `min_density` to control an
+optimization heuristic. A sample mask is used to mask data points that are
+inactive at a given node, which avoids the copying of data (important for large
+datasets or training trees within an ensemble). Density is defined as the ratio
+of 'active' data samples to total samples at a given node.  The minimum density
+parameter specifies the level below which fancy indexing (and therefore data
+copied) and the sample mask reset.
 If `min_density` is 1, then fancy indexing is always used for data partitioning
 during the tree building phase. In this case, the size of memory (as a
 proportion of the input data :math:`a`) required at a node of depth :math:`n`
@@ -219,14 +220,14 @@ a`. In practise it usually requires 3 to 4 times :math:`a`.
 Setting `min_density` to 0 will always use the sample mask to select the subset
 of samples at each node.  This results in little to no additional memory being
 allocated, making it appropriate for massive datasets or within ensemble
-learners, but at the expense of being slower when training deep trees. The
-default value for `min_density` is 0.1 which strikes a balance between
-potentially excessive allocation of temporary memory and the long training
-times.
+learners. The default value for `min_density` is 0.1 which empirically
+leads to fast training for many problems.
+Typically high values of ``min_density`` will lead to excessive reallocation,
+slowing down the algorithm significantly.
+
 
 Tips on practical use
 =====================
-
   * Decision trees tend to overfit on data with a large number of features.
     Getting the right ratio of samples to number of features is important, since
     a tree with few samples in high dimensional space is very likely to overfit.
@@ -243,13 +244,20 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_split`` to control the number of samples at a leaf node.  A very
-    small number will usually mean the tree will overfit, whereas a large number
-    will prevent the tree from learning the data.  Try ``min_split=5`` as an
-    initial value.
+  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
+    samples at a leaf node.  A very small number will usually mean the tree
+    will overfit, whereas a large number will prevent the tree from learning
+    the data.  Try ``min_samples_leaf=5`` as an initial value.
+    The main difference between the two is that ``min_samples_leaf`` guarantees
+    a minimum number of samples in a leaf, while ``min_samples_split`` can
+    create arbitrary small leaves, though ``min_samples_split`` is more common
+    in the literature.
 
   * Balance your dataset before training to prevent the tree from creating
     a tree biased toward the classes that are dominant.
+
+  * All decision trees use Fortran ordered ``np.float32`` arrays internally.
+    If training data is not in this format, a copy of the dataset will be made.
 
 .. _tree_algorithms:
 

@@ -130,10 +130,12 @@ def test_value_error():
     nose.tools.assert_raises(ValueError, numpy_pickle.dump, 'foo',
                              dict())
 
+
 @with_numpy
 def test_numpy_persistence():
     filename = env['filename']
-    a = np.random.random((10, 2))
+    rnd = np.random.RandomState(0)
+    a = rnd.random_sample((10, 2))
     for compress, cache_size in ((0, 0), (1, 0), (1, 10)):
         # We use 'a.T' to have a non C-contiguous array.
         for index, obj in enumerate(((a,), (a.T,), (a, a), [a, a, a])):
@@ -169,7 +171,8 @@ def test_numpy_persistence():
                                           compress=compress,
                                           cache_size=cache_size)
             obj_ = numpy_pickle.load(this_filename)
-            if type(obj) is not np.memmap:
+            if (type(obj) is not np.memmap
+                        and hasattr(obj, '__array_prepare__')):
                 # We don't reconstruct memmaps
                 nose.tools.assert_true(isinstance(obj_, type(obj)))
 
@@ -181,7 +184,8 @@ def test_numpy_persistence():
 
 @with_numpy
 def test_memmap_persistence():
-    a = np.random.random(10)
+    rnd = np.random.RandomState(0)
+    a = rnd.random_sample(10)
     filename = env['filename'] + str(random.randint(0, 1000))
     numpy_pickle.dump(a, filename)
     b = numpy_pickle.load(filename, mmap_mode='r')
@@ -193,7 +197,8 @@ def test_memmap_persistence():
 def test_masked_array_persistence():
     # The special-case picker fails, because saving masked_array
     # not implemented, but it just delegates to the standard pickler.
-    a = np.random.random(10)
+    rnd = np.random.RandomState(0)
+    a = rnd.random_sample(10)
     a = np.ma.masked_greater(a, 0.5)
     filename = env['filename'] + str(random.randint(0, 1000))
     numpy_pickle.dump(a, filename)
@@ -208,3 +213,26 @@ def test_z_file():
     numpy_pickle.write_zfile(file(filename, 'wb'), data)
     data_read = numpy_pickle.read_zfile(file(filename, 'rb'))
     nose.tools.assert_equal(data, data_read)
+
+################################################################################
+# Test dumping array subclasses
+if np is not None:
+
+    class SubArray(np.ndarray):
+
+        def __reduce__(self):
+            return (_load_sub_array, (np.asarray(self), ))
+
+
+    def _load_sub_array(arr):
+        d = SubArray(arr.shape)
+        d[:] = arr
+        return d
+
+@with_numpy
+def test_numpy_subclass():
+    filename = env['filename']
+    a = SubArray((10,))
+    numpy_pickle.dump(a, filename)
+    c = numpy_pickle.load(filename)
+    nose.tools.assert_true(isinstance(c, SubArray))

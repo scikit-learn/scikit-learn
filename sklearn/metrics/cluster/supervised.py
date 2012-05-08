@@ -147,9 +147,8 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
     .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985`
@@ -159,7 +158,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     See also
     --------
-    - adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -229,9 +228,9 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
 
     See also
     --------
-    - homogeneity_score
-    - completeness_score
-    - v_measure_score
+    homogeneity_score
+    completeness_score
+    v_measure_score
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
@@ -301,18 +300,17 @@ def homogeneity_score(labels_true, labels_pred):
     homogeneity: float
        score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
-    `V-Measure: A conditional entropy-based external cluster evaluation measure
-        Andrew Rosenberg and Julia Hirschberg, 2007`
+    .. [1] Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
+        entropy-based external cluster evaluation measure`, 2007
         http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
-    - completeness_score
-    - v_measure_score
+    completeness_score
+    v_measure_score
 
     Examples
     --------
@@ -324,7 +322,7 @@ def homogeneity_score(labels_true, labels_pred):
       1.0
 
     Non-pefect labelings that futher split classes into more clusters can be
-    perfectly homogeneous:
+    perfectly homogeneous::
 
       >>> homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2])
       1.0
@@ -369,18 +367,17 @@ def completeness_score(labels_true, labels_pred):
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
-    `V-Measure: A conditional entropy-based external cluster evaluation measure
-        Andrew Rosenberg and Julia Hirschberg, 2007`
+    .. [1] Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
+        entropy-based external cluster evaluation measure`, 2007
         http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
-    - homogeneity_score
-    - v_measure_score
+    homogeneity_score
+    v_measure_score
 
     Examples
     --------
@@ -392,7 +389,7 @@ def completeness_score(labels_true, labels_pred):
       1.0
 
     Non-pefect labelings that assign all classes members to the same clusters
-    are still complete:
+    are still complete::
 
       >>> completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
       1.0
@@ -414,9 +411,9 @@ def completeness_score(labels_true, labels_pred):
 def v_measure_score(labels_true, labels_pred):
     """V-Measure cluster labeling given a ground truth
 
-    The V-Measure is the hormonic mean between homogeneity and completeness:
+    The V-Measure is the hormonic mean between homogeneity and completeness::
 
-      v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
+        v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -440,18 +437,17 @@ def v_measure_score(labels_true, labels_pred):
     completeness: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
 
-    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster evaluation measure
-        Andrew Rosenberg and Julia Hirschberg, 2007`
+    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster
+        evaluation measure Andrew Rosenberg and Julia Hirschberg, 2007`
         http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
 
     See also
     --------
-    - homogeneity_score
-    - completeness_score
+    homogeneity_score
+    completeness_score
 
     Examples
     --------
@@ -498,7 +494,7 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Adjusted Mutual Information between two clusterings
+    """Mutual Information between two clusterings
 
     The Mutual Information is a measure of the similarity between two labels
     of the same data. Where P(i) is the probability of a random sample occuring
@@ -537,7 +533,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     See also
     --------
-    - adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_mutual_info_score: Adjusted Mutual Information
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -592,8 +588,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     See also
     --------
-    - adjusted_rand_score: Adjusted Rand Index
-    - mutual_information_score: Mutual Information (not adjusted for chance)
+    adjusted_rand_score: Adjusted Rand Index
+    mutual_information_score: Mutual Information (not adjusted for chance)
 
     Examples
     --------

@@ -53,6 +53,8 @@ from scipy.sparse import identity, isspmatrix, isspmatrix_csr
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.sputils import isdense
 from scipy.sparse.linalg import gmres, splu
+import scipy
+from distutils.version import LooseVersion
 
 
 _type_conv = {'f': 's', 'd': 'd', 'F': 'c', 'D': 'z'}
@@ -1045,7 +1047,7 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
             return SpLuInv(OP.tocsc()).matvec
 
 
-def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
+def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
          ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
          Minv=None, OPinv=None, OPpart=None):
     """
@@ -1172,8 +1174,8 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     ZNEUPD, functions which use the Implicitly Restarted Arnoldi Method to
     find the eigenvalues and eigenvectors [2]_.
 
-    **References**:
-
+    References
+    ----------
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted
@@ -1261,7 +1263,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     return params.extract(return_eigenvectors)
 
 
-def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
+def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
           ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
           Minv=None, OPinv=None, mode='normal'):
     """
@@ -1410,9 +1412,8 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vecs.shape
     (13, 6)
 
-    Notes
-    -----
-    **References**:
+    References
+    ----------
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted
@@ -1538,7 +1539,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     return params.extract(return_eigenvectors)
 
 
-def svds(A, k=6, ncv=None, tol=0):
+def _svds(A, k=6, ncv=None, tol=0):
     """Compute k singular values/vectors for a sparse matrix using ARPACK.
 
     Parameters
@@ -1597,3 +1598,9 @@ def svds(A, k=6, ncv=None, tol=0):
         vh = herm(X.dot(u) / s)
 
     return u, s, vh
+
+# check if backport is actually needed:
+if scipy.version.version >= LooseVersion('0.10'):
+    from scipy.sparse.linalg import eigs, eigsh, svds
+else:
+    eigs, eigsh, svds = _eigs, _eigsh, _svds

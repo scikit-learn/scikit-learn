@@ -8,6 +8,8 @@ from scipy import linalg
 from numpy.testing import assert_equal
 from numpy.testing import assert_almost_equal
 
+from sklearn.utils.testing import assert_greater
+
 from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
@@ -70,7 +72,7 @@ def test_randomized_svd_low_rank_with_noise():
     _, sa, _ = randomized_svd(X, k, n_iterations=0)
 
     # the approximation does not tolerate the noise:
-    assert np.abs(s[:k] - sa).max() > 0.05
+    assert_greater(np.abs(s[:k] - sa).max(), 0.05)
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
@@ -101,7 +103,7 @@ def test_randomized_svd_infinite_rank():
     _, sa, _ = randomized_svd(X, k, n_iterations=0)
 
     # the approximation does not tolerate the noise:
-    assert np.abs(s[:k] - sa).max() > 0.1
+    assert_greater(np.abs(s[:k] - sa).max(), 0.1)
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method

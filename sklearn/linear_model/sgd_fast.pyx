@@ -7,6 +7,7 @@
 #
 # License: BSD Style.
 
+
 import numpy as np
 import sys
 from time import time
@@ -14,7 +15,22 @@ from time import time
 cimport numpy as np
 cimport cython
 
+from sklearn.utils.weight_vector cimport WeightVector
+from sklearn.utils.seq_dataset cimport SequentialDataset
+
+
+cdef extern from "math.h":
+    cdef extern double exp(double x)
+    cdef extern double log(double x)
+    cdef extern double sqrt(double x)
+    cdef extern double pow(double x, double y)
+
+ctypedef np.float64_t DOUBLE
+ctypedef np.int32_t INTEGER
+
+
 # Penalty constans
+DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
@@ -51,7 +67,7 @@ cdef class LossFunction:
     cpdef double dloss(self, double p, double y):
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
-        
+
         Parameters
         ----------
         p : double
@@ -117,21 +133,35 @@ cdef class ModifiedHuber(Classification):
 
 
 cdef class Hinge(Classification):
-    """SVM loss for binary classification tasks with y in {-1,1}"""
+    """Hinge loss for binary classification tasks with y in {-1,1}
+
+    Parameters
+    ----------
+
+    threshold : float > 0.0
+        Margin threshold. When threshold=1.0, one gets the loss used by SVM.
+        When threshold=0.0, one gets the loss used by the Perceptron.
+    """
+
+    cdef double threshold
+
+    def __init__(self, double threshold=1.0):
+        self.threshold = threshold
+
     cpdef double loss(self, double p, double y):
         cdef double z = p * y
-        if z < 1.0:
-            return (1 - z)
+        if z <= self.threshold:
+            return (self.threshold - z)
         return 0.0
 
     cpdef double dloss(self, double p, double y):
         cdef double z = p * y
-        if z < 1.0:
+        if z <= self.threshold:
             return -y
         return 0.0
 
     def __reduce__(self):
-        return Hinge, ()
+        return Hinge, (self.threshold,)
 
 
 cdef class Log(Classification):
@@ -180,7 +210,9 @@ cdef class Huber(Regression):
     http://en.wikipedia.org/wiki/Huber_Loss_Function
     """
 
-    def __init__(self, c):
+    cdef double c
+
+    def __init__(self, double c):
         self.c = c
 
     cpdef double loss(self, double p, double y):
@@ -192,7 +224,7 @@ cdef class Huber(Regression):
             return self.c * abs_r - (0.5 * self.c * self.c)
 
     cpdef double dloss(self, double p, double y):
-        cdef double r = p - y  # FIXME y - p
+        cdef double r = p - y
         cdef double abs_r = abs(r)
         if abs_r <= self.c:
             return r
@@ -205,44 +237,37 @@ cdef class Huber(Regression):
         return Huber, (self.c,)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
+def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-              np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+              SequentialDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               double weight_pos, double weight_neg,
-              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
               int learning_rate, double eta0,
-              double power_t):
-    """Cython impl. of SGD for generic loss functions and penalties
-
-    This implementation assumes X represented as a dense array of floats.
+              double power_t,
+              double t=1.0,
+              double intercept_decay=1.0):
+    """Plain SGD for generic loss functions and penalties.
 
     Parameters
     ----------
-    w : ndarray[double, ndim=1]
+    weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
     intercept : double
-        The initial intercept
+        The initial intercept.
     loss : LossFunction
-        A concrete LossFunction object.
+        A concrete ``LossFunction`` object.
     penalty_type : int
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
         The regularization parameter.
     rho : float
         The elastic net hyperparameter.
-    X : ndarray[double, ndim=2]
-        The dataset as a dense numpy array.
-    Y : ndarray[double, ndim=1]
-        The labels.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
     n_iter : int
         The number of iterations (epochs).
     fit_intercept : int
@@ -258,8 +283,6 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     seed : int
         The seed of the pseudo random number generator to use when
         shuffling the data
-    sample_weight : array, shape = [n_samples]
-        The importance weight of each sample.
     learning_rate : int
         The learning rate:
         (1) constant, eta = eta0
@@ -269,10 +292,14 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
         The initial learning rate.
     power_t : double
         The exponent for inverse scaling learning rate.
+    t : double
+        Initial state of the learning rate. This value is equal to the
+        iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
 
     Returns
     -------
-    w : array, shape [n_features]
+    weights : array, shape=[n_features]
         The fitted weight vector.
     intercept : float
         The fitted intercept term.
@@ -280,46 +307,33 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     """
 
     # get the data information into easy vars
-    cdef unsigned int n_samples = Y.shape[0]
-    cdef unsigned int n_features = w.shape[0]
+    cdef Py_ssize_t n_samples = dataset.n_samples
+    cdef Py_ssize_t n_features = weights.shape[0]
 
-    # Array stride to get to next sample
-    cdef int stride = X.strides[0] / X.strides[1]
+    cdef WeightVector w = WeightVector(weights)
 
-    cdef double *w_data_ptr = <double *>w.data
-    cdef double *X_data_ptr = <double *>X.data
-    cdef double *Y_data_ptr = <double *>Y.data
-
-    cdef double *sample_weight_data = <double *>sample_weight.data
-
-    # Use index array for fast shuffling
-    cdef np.ndarray[np.int32_t, ndim=1,
-                    mode="c"] index = np.arange(n_samples,
-                                                dtype=np.int32)
-    cdef int *index_data_ptr = <int *>index.data
+    cdef DOUBLE *x_data_ptr = NULL
+    cdef INTEGER *x_ind_ptr = NULL
 
     # helper variable
-    cdef unsigned int offset = 0
-    cdef double wscale = 1.0
+    cdef int xnnz
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
-    cdef double wnorm = 0.0
-    cdef double t = 0.0
-    cdef double y = 0.0
+    cdef DOUBLE y = 0.0
+    cdef DOUBLE sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
-    cdef int sample_idx = 0
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] q = None
-    cdef double *q_data_ptr = NULL
-    if penalty_type != L2:
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
+    cdef DOUBLE *q_data_ptr = NULL
+    if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <double *> q.data
+        q_data_ptr = <DOUBLE *> q.data
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -327,77 +341,63 @@ def plain_sgd(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     elif penalty_type == L1:
         rho = 0.0
 
-    cdef double typw = sqrt(1.0 / sqrt(alpha))
-
-    if learning_rate == OPTIMAL:
-        # computing eta0, the initial learning rate
-        eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
-    else:
-        eta = eta0
-
-    if learning_rate == OPTIMAL:
-        # initialize t such that eta at first example equals eta0
-        t = 1.0 / (eta0 * alpha)
-    else:
-        t = 1.0
+    eta = eta0
 
     t_start = time()
-    for epoch in xrange(n_iter):
+    for epoch in range(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
-            np.random.RandomState(seed).shuffle(index)
-        for i in xrange(n_samples):
-            sample_idx = index_data_ptr[i]
+            dataset.shuffle(seed)
+        for i in range(n_samples):
+            dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
+                         &sample_weight)
 
-            # row offset in elem
-            offset = sample_idx * stride
-            y = Y_data_ptr[sample_idx]
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
-                ) + intercept
-            sumloss += loss.loss(p, y)
-            if y > 0:
+            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+
+            if verbose > 0:
+                sumloss += loss.loss(p, y)
+
+            if y > 0.0:
                 class_weight = weight_pos
             else:
                 class_weight = weight_neg
-            update = eta * loss.dloss(p, y) * class_weight * \
-                sample_weight_data[sample_idx]
+
+            update = eta * loss.dloss(p, y) * class_weight * sample_weight
             if update != 0.0:
-                add(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
                 if fit_intercept == 1:
-                    intercept -= update
-            if penalty_type != L1:
-                wscale *= (1.0 - (rho * eta * alpha))
-                if wscale < 1e-9:
-                    w *= wscale
-                    wscale = 1.0
+                    intercept -= update * intercept_decay
+            if penalty_type >= L2:
+                w.scale(1.0 - (rho * eta * alpha))
+
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w_data_ptr, wscale, q_data_ptr, n_features, u)
+                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
             t += 1
             count += 1
 
         # report epoch information
         if verbose > 0:
-            wnorm = sqrt(np.dot(w, w) * wscale * wscale)
             print("Norm: %.2f, NNZs: %d, "\
-            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm,
-                                                    w.nonzero()[0].shape[0],
+            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
+                                                    weights.nonzero()[0].shape[0],
                                                     intercept, count,
                                                     sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
+        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
             raise ValueError("floating-point under-/overflow occured.")
 
-    w *= wscale
-    return w, intercept
+    w.reset_wscale()
+
+    return weights, intercept
 
 
 cdef inline double max(double a, double b):
@@ -408,50 +408,27 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef double dot(double *w_data_ptr, double *X_data_ptr,
-                unsigned int offset, unsigned int n_features):
-    cdef double sum = 0.0
-    cdef int j
-    for j in xrange(n_features):
-        sum += w_data_ptr[j] * X_data_ptr[offset + j]
-    return sum
-
-
-cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
-                unsigned int offset, unsigned int n_features, double c):
-    """Scales example x by constant c and adds it to the weight vector w"""
-    cdef unsigned j
-    cdef double val
-    cdef double innerprod = 0.0
-    cdef double xsqnorm = 0.0
-    for j in xrange(n_features):
-        val = X_data_ptr[offset + j]
-        innerprod += (w_data_ptr[j] * val)
-        xsqnorm += (val * val)
-        w_data_ptr[j] += val * (c / wscale)
-
-    # TODO this is needed for PEGASOS only
-    return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
-
-
-cdef void l1penalty(double *w_data_ptr, double wscale, double *q_data_ptr,
-                    unsigned int n_features, double u):
+cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
+                    INTEGER *x_ind_ptr, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
-
-    FIXME: apply penalty over all features or only non-zero?
-    Empirical results look better this way...
     """
     cdef double z = 0.0
-    cdef unsigned j = 0
-    for j in xrange(n_features):
-        z = w_data_ptr[j]
-        if (wscale * w_data_ptr[j]) > 0.0:
-            w_data_ptr[j] = max(0.0, w_data_ptr[j] - ((u + q_data_ptr[j])
-                                                        / wscale))
-        elif (wscale * w_data_ptr[j]) < 0.0:
-            w_data_ptr[j] = min(0.0, w_data_ptr[j] + ((u - q_data_ptr[j])
-                                                        / wscale))
-        q_data_ptr[j] += (wscale * (w_data_ptr[j] - z))
+    cdef int j = 0
+    cdef int idx = 0
+    cdef double wscale = w.wscale
+    cdef double* w_data_ptr = w.w_data_ptr
+    for j in range(xnnz):
+        idx = x_ind_ptr[j]
+        z = w_data_ptr[idx]
+        if (wscale * w_data_ptr[idx]) > 0.0:
+            w_data_ptr[idx] = max(
+                0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
+
+        elif (wscale * w_data_ptr[idx]) < 0.0:
+            w_data_ptr[idx] = min(
+                0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
+
+        q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))

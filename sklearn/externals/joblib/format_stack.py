@@ -24,7 +24,6 @@ import keyword
 import linecache
 import os
 import pydoc
-import string
 import sys
 import time
 import tokenize
@@ -280,7 +279,7 @@ def format_records(records):   # , print_globals=False):
         except (IndexError, UnicodeDecodeError):
             # signals exit of tokenizer
             pass
-        except tokenize.TokenError,msg:
+        except tokenize.TokenError, msg:
             _m = ("An unexpected error occurred while tokenizing input\n"
                   "The following traceback may be corrupted or invalid\n"
                   "The error message is: %s\n" % msg)

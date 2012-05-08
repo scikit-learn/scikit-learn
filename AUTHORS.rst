@@ -50,8 +50,7 @@ People
 
   * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
 
-  * `Alexandre Gramfort
-    <http://www-sop.inria.fr/members/Alexandre.Gramfort/index.fr.html>`_
+  * `Alexandre Gramfort <http://alexandre.gramfort.net>`_
 
   * `Olivier Grisel <http://twitter.com/ogrisel>`_
 
@@ -98,6 +97,8 @@ People
   * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
 
   * `Andreas Müller <http://www.ais.uni-bonn.de/~amueller/>`_
+
+  * `Satra Ghosh <www.mit.edu/~satra>`_
 
 
 If I forgot anyone, do not hesitate to send me an email to

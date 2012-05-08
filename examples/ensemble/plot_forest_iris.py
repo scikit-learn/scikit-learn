@@ -29,7 +29,6 @@ n_classes = 3
 n_estimators = 30
 plot_colors = "bry"
 plot_step = 0.02
-pl.set_cmap(pl.cm.Paired)
 
 # Load data
 iris = load_iris()
@@ -71,22 +70,20 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         if isinstance(model, DecisionTreeClassifier):
             Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
-            cs = pl.contourf(xx, yy, Z)
+            cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
         else:
             for tree in model.estimators_:
                 Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
-                cs = pl.contourf(xx, yy, Z, alpha=0.1)
+                cs = pl.contourf(xx, yy, Z, alpha=0.1, cmap=pl.cm.Paired)
 
-        #pl.xlabel("%s / %s" % (iris.feature_names[pair[0]],
-        #                       model.__class__.__name__))
-        #pl.ylabel(iris.feature_names[pair[1]])
         pl.axis("tight")
 
         # Plot the training points
         for i, c in zip(xrange(n_classes), plot_colors):
             idx = np.where(y == i)
-            pl.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i])
+            pl.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i],
+                    cmap=pl.cm.Paired)
 
         pl.axis("tight")
 

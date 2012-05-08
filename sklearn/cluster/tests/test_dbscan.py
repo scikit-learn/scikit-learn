@@ -32,8 +32,8 @@ def test_dbscan_similarity():
 
     assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN(metric="precomputed")
-    labels = db.fit(D, eps=eps, min_samples=min_samples).labels_
+    db = DBSCAN(metric="precomputed", eps=eps, min_samples=min_samples)
+    labels = db.fit(D).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)
@@ -55,8 +55,8 @@ def test_dbscan_feature():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN(metric=metric)
-    labels = db.fit(X, eps=eps, min_samples=min_samples).labels_
+    db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
+    labels = db.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)
@@ -79,8 +79,8 @@ def test_dbscan_callable():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN(metric=metric)
-    labels = db.fit(X, eps=eps, min_samples=min_samples).labels_
+    db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
+    labels = db.fit(X).labels_
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)

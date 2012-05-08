@@ -8,11 +8,13 @@ from sklearn import neighbors
 # Note: simple tests of BallTree.query() and BallTree.query_radius()
 # are contained within the tests of test_neighbors.py
 
+rng = np.random.RandomState(0)
+
 
 def test_warning_flag(n_samples=100, n_features=3, k=3):
     """test that discarding identical distances triggers warning flag"""
-    X = np.random.random(size=(n_samples, n_features))
-    q = np.random.random(size=n_features)
+    X = rng.random_sample(size=(n_samples, n_features))
+    q = rng.random_sample(size=n_features)
     bt = neighbors.BallTree(X[:-1], leaf_size=5)
     dist, ind = bt.query(q, k=k)
 
@@ -38,7 +40,7 @@ def test_warning_flag(n_samples=100, n_features=3, k=3):
 
 
 def test_ball_tree_query_radius(n_samples=100, n_features=10):
-    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
 
     eps = 1E-15  # roundoff error can cause test to fail
@@ -56,7 +58,7 @@ def test_ball_tree_query_radius(n_samples=100, n_features=10):
 
 
 def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
-    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
 
     eps = 1E-15  # roundoff error can cause test to fail
@@ -76,7 +78,7 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
 
 def test_ball_tree_pickle():
     import pickle
-    X = np.random.random(size=(10, 3))
+    X = rng.random_sample(size=(10, 3))
     bt1 = neighbors.BallTree(X, leaf_size=1)
     ind1, dist1 = bt1.query(X)
     for protocol in (0, 1, 2):
@@ -88,7 +90,7 @@ def test_ball_tree_pickle():
 
 
 def test_ball_tree_p_distance():
-    X = np.random.random(size=(100, 5))
+    X = rng.random_sample(size=(100, 5))
 
     for p in (1, 2, 3, 4, np.inf):
         bt = neighbors.BallTree(X, leaf_size=10, p=p)

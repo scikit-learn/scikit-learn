@@ -30,6 +30,79 @@ data can be found in the `labels_` attribute.
     and :class:`SpectralClustering` can work with arbitrary objects, as
     long as a similarity measure exists for such objects.
 
+Overview of clustering methods
+===============================
+
+.. figure:: ../auto_examples/cluster/images/plot_cluster_comparison_1.png
+   :target: ../auto_examples/cluster/plot_cluster_comparison.html
+   :align: center
+   :scale: 50
+
+   A comparison of the clustering algorithms in scikit-learn
+
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 15 19 25 20
+
+   * - Method name
+     - Parameters
+     - Scalability
+     - Usecase
+     - Geometry (metric used)
+
+   * - :ref:`K-Means <k_means>`
+     - number of clusters
+     - Very large `n_samples`, medium `n_clusters` with
+       :ref:`MiniBatch code <mini_batch_kmeans>`
+     - General-purpose, even cluster size, flat geometry, not too many clusters 
+     - Distances between points 
+
+   * - :ref:`Affinity propagation <affinity_propagation>`
+     - damping, sample preference 
+     - Not scalable with n_samples
+     - Many clusters, uneven cluster size, non-flat geometry
+     - Graph distance (e.g. nearest-neighbor graph)
+
+   * - :ref:`Mean-shift <mean_shift>`
+     - bandwidth 
+     - Not scalable with n_samples
+     - Many clusters, uneven cluster size, non-flat geometry
+     - Distances between points 
+
+   * - :ref:`Spectral clustering <spectral_clustering>`
+     - number of clusters
+     - Medium `n_samples`, small `n_clusters`
+     - Few clusters, even cluster size, non-flat geometry
+     - Graph distance (e.g. nearest-neighbor graph)
+
+   * - :ref:`Hierarchical clustering <hierarchical_clustering>`
+     - number of clusters
+     - Large `n_samples` and `n_clusters`
+     - Many clusters, possibly connectivity constraints
+     - Distances between points 
+
+   * - :ref:`DBSCAN <dbscan>`
+     - neighborhood size
+     - Very large `n_samples`, medium `n_clusters`
+     - Non-flat geometry, uneven cluster sizes
+     - Distances between nearest points 
+
+   * - :ref:`Gaussian mixtures <mixture>`
+     - many
+     - Not scalable
+     - Flat geometry, good for density estimation
+     - Mahalanobis distances to  centers
+
+Non-flat geometry clustering is useful when the clusters have a specific
+shape, i.e. a non-flat manifold, and the standard euclidean distance is
+not the right metric. This case arises in the two top rows of the figure
+above.
+
+Gaussian mixture models, useful for clustering, are described in
+:ref:`another chapter of the documentation <mixture>` dedicated to
+mixture models. KMeans can be seen as a special case of Gaussian mixture
+model with equal covariance per component.
 
 .. _k_means:
 
@@ -51,6 +124,12 @@ to the mean of each segment. The algorithm then repeats this until a stopping
 criteria is fulfilled. Usually, as in this implementation, the algorithm
 stops when the relative increment in the results between iterations is less than
 the given tolerance value.
+
+A parameter can be given to allow K-means to be run in parallel, called
+`n_jobs`. Giving this parameter a positive value uses that many processors 
+(default=1). A value of -1 uses all processors, with -2 using one less, and so 
+on. Parallelization generally speeds up computation at the cost of memory (in
+this case, multiple copies of centroids need to be stored, one for each job).
 
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
@@ -118,13 +197,16 @@ will have difficulties scaling to thousands of samples.
    Financial time series to find groups of companies
 
 
+.. _mean_shift:
+
 Mean Shift
 ==========
 
 :class:`MeanShift` clusters data by estimating *blobs* in a smooth
 density of points matrix. This algorithm automatically sets its numbers
 of cluster. It will have difficulties scaling to thousands of samples.
-
+The utility function :func:`estimate_bandwidth` can be used to guess
+the optimal bandwidth for :class:`MeanShift` from the data.
 
 .. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
@@ -242,11 +324,11 @@ roll.
 
 .. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-        :scale: 50
+        :scale: 49
 
 .. centered:: |unstructured| |structured|
 
@@ -290,7 +372,9 @@ if it has more than min_points points which are of a similarity greater than
 the given threshold eps. This is shown in the figure below, where the color
 indicates cluster membership and large circles indicate core points found by
 the algorithm. Moreover, the algorithm can detect outliers, indicated by black
-points below.
+points below. The outliers are defined as points which do not belong to
+any current cluster and do not have enough close neighbours to start a
+new cluster.
 
 .. |dbscan_results| image:: ../auto_examples/cluster/images/plot_dbscan_1.png
         :target: ../auto_examples/cluster/plot_dbscan.html
@@ -354,8 +438,8 @@ Drawbacks
   is known).
 
 
-Ajusted Rand index
-------------------
+Adjusted Rand index
+-------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -475,8 +559,8 @@ by defining the adjusted Rand index as follows:
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
-Ajusted Mutual Information
---------------------------
+Adjusted Mutual Information
+---------------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -814,7 +898,7 @@ cluster analysis.
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
-  0.5525...
+  0.55...
 
 .. topic:: References
 

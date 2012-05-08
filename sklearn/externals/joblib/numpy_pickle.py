@@ -16,6 +16,7 @@ import warnings
 if sys.version_info[0] >= 3:
     from io import BytesIO
     from pickle import _Unpickler as Unpickler
+
     def asbytes(s):
         if isinstance(s, bytes):
             return s
@@ -29,11 +30,12 @@ else:
     from pickle import Unpickler
     asbytes = str
 
-_MEGA = 2**20
-_MAX_LEN = len(hex(2**64))
+_MEGA = 2 ** 20
+_MAX_LEN = len(hex(2 ** 64))
 
 # To detect file types
 _ZFILE_PREFIX = asbytes('ZF')
+
 
 ###############################################################################
 # Compressed file with Zlib
@@ -74,7 +76,7 @@ def write_zfile(file_handle, data, compress=1):
     """Write the data in the given file as a Z-file.
 
     Z-files are raw data compressed with zlib used internally by joblib
-    for persistence. Backward compatibility is not garantied. Do not
+    for persistence. Backward compatibility is not guarantied. Do not
     use for external purposes.
     """
     file_handle.write(_ZFILE_PREFIX)
@@ -93,7 +95,7 @@ def write_zfile(file_handle, data, compress=1):
 class NDArrayWrapper(object):
     """ An object to be persisted instead of numpy arrays.
 
-        The only thing this object does, is to carrus the filename in wich
+        The only thing this object does, is to carry the filename in which
         the array has been persisted, and the array subclass.
     """
     def __init__(self, filename, subclass):
@@ -111,9 +113,11 @@ class NDArrayWrapper(object):
         else:
             # Numpy does not have mmap_mode before 1.3
             array = unpickler.np.load(filename)
-        # Reconstruct subclasses
-        if not self.subclass in (unpickler.np.ndarray,
-                                 unpickler.np.memmap):
+        # Reconstruct subclasses. This does not work with old
+        # versions of numpy
+        if (hasattr(array, '__array_prepare__')
+                and not self.subclass in (unpickler.np.ndarray,
+                                      unpickler.np.memmap)):
             # We need to reconstruct another subclass
             new_array = unpickler.np.core.multiarray._reconstruct(
                     self.subclass, (0,), 'b')
@@ -202,11 +206,13 @@ class NumpyPickler(pickle.Pickler):
             # numerics in a z-file
             _, init_args, state = array.__reduce__()
             # the last entry of 'state' is the data itself
-            write_zfile(open(filename, 'w'), state[-1],
-                             compress=self.compress)
+            zfile = open(filename, 'wb')
+            write_zfile(zfile, state[-1],
+                                compress=self.compress)
+            zfile.close()
             state = state[:-1]
             container = ZNDArrayWrapper(os.path.basename(filename),
-                                        init_args, state)
+                                            init_args, state)
         return container, filename
 
     def save(self, obj):
@@ -241,9 +247,10 @@ class NumpyPickler(pickle.Pickler):
 
     def close(self):
         if self.compress:
-            write_zfile(open(self._filename, 'wb'),
+            zfile = open(self._filename, 'wb')
+            write_zfile(zfile,
                         self.file.getvalue(), self.compress)
-        # The file handes are closed in the dump function
+            zfile.close()
 
 
 class NumpyUnpickler(Unpickler):
@@ -392,8 +399,8 @@ def load(filename, mmap_mode=None):
     file was saved with compression, the arrays cannot be memmaped.
     """
     file_handle = open(filename, 'rb')
-    # We are careful to open the file hanlde early and keep it open to 
-    # avoid race-conditions on renames. That said, if data are stored in 
+    # We are careful to open the file hanlde early and keep it open to
+    # avoid race-conditions on renames. That said, if data are stored in
     # companion files, moving the directory will create a race when
     # joblib tries to access the companion files.
     if _read_magic(file_handle) == _ZFILE_PREFIX:
@@ -413,5 +420,3 @@ def load(filename, mmap_mode=None):
         if hasattr(unpickler, 'file_handle'):
             unpickler.file_handle.close()
     return obj
-
-

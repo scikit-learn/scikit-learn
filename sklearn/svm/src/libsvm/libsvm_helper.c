@@ -84,7 +84,7 @@ void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, i
  */
 void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
 {
-    if (problem == NULL) return NULL;
+    if (problem == NULL) return;
     problem->l = (int) dims[0]; /* number of samples */
     problem->y = (double *) Y;
     problem->x = dense_to_libsvm((double *) X, dims); /* implicit call to malloc */

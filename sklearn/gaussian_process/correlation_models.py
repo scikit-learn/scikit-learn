@@ -190,9 +190,9 @@ def cubic(theta, d):
     Cubic correlation model::
 
         theta, dx --> r(theta, dx) =
-              n
-            prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
-            j = 1
+          n
+        prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
+        j = 1
 
     Parameters
     ----------

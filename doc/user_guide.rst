@@ -16,7 +16,7 @@
    :numbered:
 
    install
-   tutorial
+   tutorial/index.rst
    supervised_learning.rst
    unsupervised_learning.rst
    model_selection.rst

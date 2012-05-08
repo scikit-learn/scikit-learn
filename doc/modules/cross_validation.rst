@@ -1,25 +1,57 @@
 .. _cross_validation:
 
-================
-Cross-Validation
-================
+===================================================
+Cross-Validation: evaluating estimator performance
+===================================================
 
 .. currentmodule:: sklearn.cross_validation
 
 Learning the parameters of a prediction function and testing it on the
-same data yields a methodological bias. To **avoid over-fitting**, we
-have to define two different sets : a *learning set* :math:`X^l, y^l`
-which is used for learning the prediction function (also called *training
-set*), and a *test set* :math:`X^t, y^t` which is used for testing the
-prediction function.  However, by defining these two sets, we drastically
-reduce the number of samples which can be used for learning the model,
-and the results can depend on a particular couple of *learning set*
-and *test set*.
+same data is a methodological mistake: a model that would just repeat
+the labels of the samples that it has just seen would have a perfect
+score but would fail to predict anything useful on yet-unseen data.
+
+To **avoid over-fitting**, we have to define two different sets :
+a **training set** ``X_train, y_train`` which is used for learning
+the parameters of a predictive model, and a **testing set** ``X_test,
+y_test`` which is used for evaluating the fitted predictive model.
+
+In scikit-learn such a random split can be quickly computed with the
+:func:`train_test_split` helper function. Let load the iris data set to
+fit a linear Support Vector Machine model on it::
+
+  >>> import numpy as np
+  >>> from sklearn import cross_validation
+  >>> from sklearn import datasets
+  >>> from sklearn import svm
+
+  >>> iris = datasets.load_iris()
+  >>> iris.data.shape, iris.target.shape
+  ((150, 4), (150,))
+
+We can now quickly sample a training set while holding out 40% of the
+data for testing (evaluating) our classifier::
+
+  >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
+  ...     iris.data, iris.target, test_size=0.4, random_state=0)
+
+  >>> X_train.shape, y_train.shape
+  ((90, 4), (90,))
+  >>> X_test.shape, y_test.shape
+  ((60, 4), (60,))
+
+  >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
+  0.96...
+
+However, by defining these two sets, we drastically reduce the number
+of samples which can be used for learning the model, and the results can
+depend on a particular random choice for the pair of (train, test) sets.
 
 A solution is to **split the whole data several consecutive times in
-different learning set and test set**, and to return the averaged value of
+different train set and test set**, and to return the averaged value of
 the prediction scores obtained with the different sets. Such a procedure
-is called *cross-validation*. This approach can be **computationally
+is called **cross-validation**. This approach can be **computationally
 expensive, but does not waste too much data** (as it is the case when
 fixing an arbitrary test set), which is a major advantage in problem
 such as inverse inference where the number of samples is very small.
@@ -36,18 +68,12 @@ linear kernel Support Vector Machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
-  >>> from sklearn import datasets
-  >>> from sklearn import svm
-  >>> from sklearn import cross_validation
-
-  >>> iris = datasets.load_iris()
-  >>> clf = svm.SVC(kernel='linear')
-
+  >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
   >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.  ...])
+  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
@@ -63,7 +89,7 @@ scoring function, e.g. from the metrics module::
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
   ...     score_func=metrics.f1_score)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
+  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
 
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
@@ -77,7 +103,7 @@ validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]
   >>> cv = cross_validation.ShuffleSplit(n_samples, n_iterations=3,
-  ...     test_fraction=0.3, random_state=0)
+  ...     test_size=0.3, random_state=0)
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
@@ -313,12 +339,12 @@ generator.
 
 Here is a usage example::
 
-  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_fraction=0.25,
+  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_size=0.25,
   ...     random_state=0)
   >>> len(ss)
   3
   >>> print ss                                            # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=True, ...)
+  ShuffleSplit(5, n_iterations=3, test_size=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index
@@ -330,6 +356,12 @@ Here is a usage example::
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
 the proportion of samples in on each side of the train / test split.
+
+See also
+--------
+:class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
+stratified splits, *i.e* which creates splits by preserving the same
+percentage for each target class as in the complete set.
 
 .. _Bootstrap:
 
@@ -358,7 +390,7 @@ smaller than the total dataset if it is very large.
   >>> len(bs)
   3
   >>> print bs
-  Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+  Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
 
   >>> for train_index, test_index in bs:
   ...    print train_index, test_index
