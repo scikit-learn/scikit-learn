@@ -104,21 +104,21 @@ def test_fastica(add_noise=False):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    ica = FastICA(fun=nl, algorithm=algo)
+    ica = FastICA(fun=nl, algorithm=algo, random_state=0)
     ica.fit(m)
     ica.get_mixing_matrix()
 
 
 def test_fastica_nowhiten():
     m = [[0, 1], [1, 0]]
-    ica = FastICA(whiten=False)
+    ica = FastICA(whiten=False, random_state=0)
     ica.fit(m)
     ica.get_mixing_matrix()
 
     # test for issue #697
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        ica = FastICA(n_components=1, whiten=False)
+        ica = FastICA(n_components=1, whiten=False, random_state=0)
         ica.fit(m)  # should raise warning
         assert_true(len(w) == 1)  # 1 warning should be raised
 
@@ -146,7 +146,7 @@ def test_non_square_fastica(add_noise=False):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(m.T, n_components=2)
+    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng)
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
