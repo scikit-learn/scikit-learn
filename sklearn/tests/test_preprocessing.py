@@ -13,7 +13,7 @@ from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.preprocessing import LabelNormalizer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import Scaler
@@ -414,36 +414,36 @@ def test_label_binarizer_errors():
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
 
 
-def test_label_normalizer():
-    """Test LabelNormalizer's transform and inverse_transform methods"""
-    ln = LabelNormalizer()
-    ln.fit([1, 1, 4, 5, -1, 0])
-    assert_array_equal(ln.classes_, [-1, 0, 1, 4, 5])
-    assert_array_equal(ln.transform([0, 1, 4, 4, 5, -1, -1]),
+def test_label_encoder():
+    """Test LabelEncoder's transform and inverse_transform methods"""
+    le = LabelEncoder()
+    le.fit([1, 1, 4, 5, -1, 0])
+    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
+    assert_array_equal(le.transform([0, 1, 4, 4, 5, -1, -1]),
                        [1, 2, 3, 3, 4, 0, 0])
-    assert_array_equal(ln.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
+    assert_array_equal(le.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
                        [0, 1, 4, 4, 5, -1, -1])
-    assert_raises(ValueError, ln.transform, [0, 6])
+    assert_raises(ValueError, le.transform, [0, 6])
 
 
-def test_label_normalizer_string_labels():
-    """Test LabelNormalizer's transform and inverse_transform methods with
+def test_label_encoder_string_labels():
+    """Test LabelEncoder's transform and inverse_transform methods with
     non-numeric labels"""
-    ln = LabelNormalizer()
-    ln.fit(["paris", "paris", "tokyo", "amsterdam"])
-    assert_array_equal(ln.classes_, ["amsterdam", "paris", "tokyo"])
-    assert_array_equal(ln.transform(["tokyo", "tokyo", "paris"]),
+    le = LabelEncoder()
+    le.fit(["paris", "paris", "tokyo", "amsterdam"])
+    assert_array_equal(le.classes_, ["amsterdam", "paris", "tokyo"])
+    assert_array_equal(le.transform(["tokyo", "tokyo", "paris"]),
                        [2, 2, 1])
-    assert_array_equal(ln.inverse_transform([2, 2, 1]),
+    assert_array_equal(le.inverse_transform([2, 2, 1]),
                        ["tokyo", "tokyo", "paris"])
-    assert_raises(ValueError, ln.transform, ["london"])
+    assert_raises(ValueError, le.transform, ["london"])
 
 
-def test_label_normalizer_errors():
+def test_label_encoder_errors():
     """Check that invalid arguments yield ValueError"""
-    ln = LabelNormalizer()
-    assert_raises(ValueError, ln.transform, [])
-    assert_raises(ValueError, ln.inverse_transform, [])
+    le = LabelEncoder()
+    assert_raises(ValueError, le.transform, [])
+    assert_raises(ValueError, le.inverse_transform, [])
 
 
 def test_label_binarizer_iris():
