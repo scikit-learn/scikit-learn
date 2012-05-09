@@ -288,6 +288,7 @@ Label encoding
 
 :class:`LabelEncoder` is a utility class to help normalize the encoding used by labels::
 
+    >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
     LabelEncoder()
@@ -297,6 +298,19 @@ Label encoding
     array([0, 0, 1, 2])
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
+
+It can also be used to transform non-numerical labels (as long as they are
+hashable and comparable) to numerical labels::
+
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
+    LabelEncoder()
+    >>> list(le.classes_)
+    ['amsterdam', 'paris', 'tokyo']
+    >>> le.transform(["tokyo", "tokyo", "paris"])
+    array([2, 2, 1])
+    >>> list(le.inverse_transform([2, 2, 1]))
+    ['tokyo', 'tokyo', 'paris']
 
 
 .. TODO

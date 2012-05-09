@@ -519,6 +519,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    `LabelEncoder` can be used to normalize labels.
+
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
@@ -529,6 +531,19 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     array([0, 0, 1, 2])
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
+
+    It can also be used to transform non-numerical labels (as long as they are
+    hashable and comparable) to numerical labels.
+
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
+    LabelEncoder()
+    >>> list(le.classes_)
+    ['amsterdam', 'paris', 'tokyo']
+    >>> le.transform(["tokyo", "tokyo", "paris"])
+    array([2, 2, 1])
+    >>> list(le.inverse_transform([2, 2, 1]))
+    ['tokyo', 'tokyo', 'paris']
 
     """
 
@@ -577,7 +592,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             y_new[y == k] = i + 1
 
         return y_new.astype(int)
-
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
