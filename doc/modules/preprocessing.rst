@@ -286,7 +286,10 @@ matrix from a list of multi-class labels::
 Label encoding
 --------------
 
-:class:`LabelEncoder` is a utility class to help normalize the encoding used by labels::
+:class:`LabelEncoder` is a utility class to help normalize labels such that
+they contain only values between 0 and n_classes-1. This is sometimes useful
+for writing efficient Cython routines. :class:`LabelEncoder` can be used as
+follows::
 
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
