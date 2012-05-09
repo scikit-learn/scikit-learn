@@ -60,6 +60,7 @@ Main features
    inputs and  outputs: Python functions. Joblib can save their
    computation to disk and rerun it only if necessary::
 
+      >>> import numpy as np
       >>> from sklearn.externals.joblib import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
       >>> import numpy as np
@@ -101,7 +102,7 @@ Main features
 
 """
 
-__version__ = '0.6.3'
+__version__ = '0.6.4'
 
 
 from .memory import Memory

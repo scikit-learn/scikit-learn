@@ -22,63 +22,63 @@
 .. only:: html
 
     .. |banner1| image:: auto_examples/svm/images/plot_oneclass_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/svm/plot_oneclass.html
 
     .. |banner2| image:: auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
-       :height: 140
+       :height: 139
        :target: auto_examples/cluster/plot_ward_structured_vs_unstructured.html
 
     .. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/gaussian_process/plot_gp_regression.html
 
     .. |banner4| image:: auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/cluster/plot_lena_ward_segmentation.html
 
     .. |banner5| image:: auto_examples/svm/images/plot_svm_nonlinear_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/svm/plot_svm_nonlinear.html
 
     .. |banner6| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/applications/plot_species_distribution_modeling.html
 
     .. |banner7| image:: auto_examples/gaussian_process/images/plot_gp_probabilistic_classification_after_regression_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/gaussian_process/plot_gp_probabilistic_classification_after_regression.html
 
     .. |banner8| image:: auto_examples/ensemble/images/plot_forest_importances_faces_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/ensemble/plot_forest_importances_faces.html
 
     .. |banner9| image:: auto_examples/svm/images/plot_weighted_samples_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/svm/plot_weighted_samples.html
 
     .. |banner10| image:: auto_examples/linear_model/images/plot_sgd_weighted_samples_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/linear_model/plot_sgd_weighted_samples.html
 
     .. |banner11| image:: auto_examples/cluster/images/plot_kmeans_digits_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/cluster/plot_kmeans_digits.html
 
     .. |banner12| image:: auto_examples/decomposition/images/plot_faces_decomposition_2.png
-       :height: 140
+       :height: 139
        :target: auto_examples/decomposition/plot_faces_decomposition.html
 
     .. |banner13| image:: auto_examples/decomposition/images/plot_faces_decomposition_3.png
-       :height: 140
+       :height: 139
        :target: auto_examples/decomposition/plot_faces_decomposition.html
 
     .. |banner14| image:: auto_examples/images/plot_lda_qda_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/plot_lda_vs_qda.html
 
     .. |banner15| image:: auto_examples/cluster/images/plot_cluster_comparison_1.png
-       :height: 140
+       :height: 139
        :target: auto_examples/cluster/plot_cluster_comparison.html
 
     .. |center-div| raw:: html

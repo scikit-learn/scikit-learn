@@ -6,6 +6,6 @@ their collection scan.
 """
 
 import os
-if os.name.startswith('win'):
+if os.name.startswith('win') or os.name.startswith('nt'):
     # During the tests, under Windows, we don't want any multiprocessing
-    os.environ['JOBLIB_MULTIPROCESSING'] = 0
+    os.environ['JOBLIB_MULTIPROCESSING'] = '0'
