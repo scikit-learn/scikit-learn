@@ -7,3 +7,6 @@
 ATM Debian carries stable upstream release 3.8.3, while scikits.learn
 uses 3.9.25 (current development upstream release is 3.9.32,
 see #609287)
+
+* provide .doc-base file
+* provide -dbg package
