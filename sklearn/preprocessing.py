@@ -568,8 +568,9 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         classes = np.unique(y)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            raise ValueError("y contains new labels...")
+        intersect = np.intersect1d(classes, self.classes_)
+        if len(intersect) < len(classes):
+            raise ValueError("y contains new labels: %s" % str(intersect))
 
         y = np.asarray(y)
         y_new = np.zeros_like(y)
