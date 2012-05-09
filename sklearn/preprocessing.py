@@ -543,7 +543,7 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
+        y : array-like of shape [n_samples]
             Target values.
 
         Returns
@@ -558,12 +558,12 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
+        y : array-like of shape [n_samples]
             Target values.
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : array-like of shape [n_samples]
         """
         self._check_fitted()
 
