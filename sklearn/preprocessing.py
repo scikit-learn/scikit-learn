@@ -509,10 +509,8 @@ def _is_multilabel(y):
            _is_label_indicator_matrix(y)
 
 
-class LabelNormalizer(BaseEstimator, TransformerMixin):
-    """Normalize labels.
-
-    Make sure that labels are encoded by 0, ..., n_classes-1.
+class LabelEncoder(BaseEstimator, TransformerMixin):
+    """Encode labels with value between 0 and n_classes-1.
 
     Attributes
     ----------
@@ -522,14 +520,14 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn import preprocessing
-    >>> ln = preprocessing.LabelNormalizer()
-    >>> ln.fit([1, 2, 2, 6])
-    LabelNormalizer()
-    >>> ln.classes_
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit([1, 2, 2, 6])
+    LabelEncoder()
+    >>> le.classes_
     array([1, 2, 6])
-    >>> ln.transform([1, 1, 2, 6])
+    >>> le.transform([1, 1, 2, 6])
     array([0, 0, 1, 2])
-    >>> ln.inverse_transform([0, 0, 1, 2])
+    >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
 
     """
@@ -578,7 +576,7 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
         for i, k in enumerate(self.classes_[1:]):
             y_new[y == k] = i + 1
 
-        return y_new.astype(np.int32)
+        return y_new.astype(int)
 
 
     def inverse_transform(self, y):

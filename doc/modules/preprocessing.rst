@@ -283,19 +283,19 @@ matrix from a list of multi-class labels::
     >>> lb.classes_
     array([1, 2, 3])
 
-Label normalization
--------------------
+Label encoding
+--------------
 
-:class:`LabelNormalizer` is a utility class to help normalize the encoding used by labels::
+:class:`LabelEncoder` is a utility class to help normalize the encoding used by labels::
 
-    >>> ln = preprocessing.LabelNormalizer()
-    >>> ln.fit([1, 2, 2, 6])
-    LabelNormalizer()
-    >>> ln.classes_
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit([1, 2, 2, 6])
+    LabelEncoder()
+    >>> le.classes_
     array([1, 2, 6])
-    >>> ln.transform([1, 1, 2, 6])
+    >>> le.transform([1, 1, 2, 6])
     array([0, 0, 1, 2])
-    >>> ln.inverse_transform([0, 0, 1, 2])
+    >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
 
 
