@@ -426,6 +426,19 @@ def test_label_normalizer():
     assert_raises(ValueError, ln.transform, [0, 6])
 
 
+def test_label_normalizer_string_labels():
+    """Test LabelNormalizer's transform and inverse_transform methods with
+    non-numeric labels"""
+    ln = LabelNormalizer()
+    ln.fit(["paris", "paris", "tokyo", "amsterdam"])
+    assert_array_equal(ln.classes_, ["amsterdam", "paris", "tokyo"])
+    assert_array_equal(ln.transform(["tokyo", "tokyo", "paris"]),
+                       [2, 2, 1])
+    assert_array_equal(ln.inverse_transform([2, 2, 1]),
+                       ["tokyo", "tokyo", "paris"])
+    assert_raises(ValueError, ln.transform, ["london"])
+
+
 def test_label_normalizer_errors():
     """Check that invalid arguments yield ValueError"""
     ln = LabelNormalizer()
