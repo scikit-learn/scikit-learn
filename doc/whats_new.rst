@@ -9,6 +9,8 @@
 Changelog
 ---------
 
+   - Add :class:`preprocessing.LabelBinarizer`, a simple utility class to
+     normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
 .. _changes_0_11:
 
@@ -98,7 +100,7 @@ Other changes
      is difficult to cythonize. If you are interested in contributing a cython
      version, you can use the python version in the git history as a reference.
 
-   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for 
+   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
      nearest neighbors searches. The metric can be specified by argument ``p``.
 
 API changes summary
@@ -106,7 +108,7 @@ API changes summary
 
    - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
      instead.
-  
+
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -188,7 +190,7 @@ API changes summary
      ``n_train`` are deprecated and renamed to ``test_size`` and
      ``train_size`` and can accept both ``float`` and ``int``.
 
-   - Argument ``p`` added to classes in :ref:`neighbors` to specify an 
+   - Argument ``p`` added to classes in :ref:`neighbors` to specify an
      arbitrary Minkowski metric for nearest neighbors searches.
 
 
