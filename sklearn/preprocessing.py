@@ -578,7 +578,7 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
         for i, k in enumerate(self.classes_[1:]):
             y_new[y == k] = i + 1
 
-        return y_new
+        return y_new.astype(np.int32)
 
 
     def inverse_transform(self, y):
@@ -596,7 +596,7 @@ class LabelNormalizer(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         y = np.asarray(y)
-        y_new = np.zeros_like(y)
+        y_new = np.zeros(len(y), dtype=self.classes_.dtype)
 
         for i, k in enumerate(self.classes_):
             y_new[y == i] = k
