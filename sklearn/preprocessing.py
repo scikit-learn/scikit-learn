@@ -581,17 +581,17 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         classes = np.unique(y)
-        intersect = np.intersect1d(classes, self.classes_)
-        if len(intersect) < len(classes):
-            raise ValueError("y contains new labels: %s" % str(intersect))
+        if len(np.intersect1d(classes, self.classes_)) < len(classes):
+            diff = np.setdiff1d(classes, self.classes_)
+            raise ValueError("y contains new labels: %s" % str(diff))
 
         y = np.asarray(y)
-        y_new = np.zeros_like(y)
+        y_new = np.zeros(len(y), dtype=int)
 
         for i, k in enumerate(self.classes_[1:]):
             y_new[y == k] = i + 1
 
-        return y_new.astype(int)
+        return y_new
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
