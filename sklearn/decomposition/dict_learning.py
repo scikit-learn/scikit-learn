@@ -274,6 +274,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   init=init, max_iter=max_iter)
     code = np.empty((n_samples, n_atoms))
     slices = list(gen_even_slices(n_samples, n_jobs))
+    if cov is None:
+        # We cannot keep cov to None: it needs to be slicable
+        class StupidSliceable(object):
+            def __getitem__(self, anything):
+                return None
+        cov = StupidSliceable()
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(sparse_encode)(X[this_slice], dictionary, gram,
                                        cov[:, this_slice], algorithm,
@@ -452,8 +458,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     if n_jobs == -1:
         n_jobs = cpu_count()
 
-    # Init U and V with SVD of Y
-    if code_init is not None and code_init is not None:
+    # Init the code and the dictionary with SVD of Y
+    if code_init is not None and dict_init is not None:
         code = np.array(code_init, order='F')
         # Don't copy V, it will happen below
         dictionary = dict_init
