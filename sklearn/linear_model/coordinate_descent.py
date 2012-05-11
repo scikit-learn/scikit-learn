@@ -258,9 +258,9 @@ class Lasso(ElasticNet):
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute='auto', tol=0.0001,
        warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [ 0.85  0.  ]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     0.15
 
     See also

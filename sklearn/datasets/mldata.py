@@ -82,13 +82,13 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     >>> iris = fetch_mldata('iris')
     >>> iris.target[0]
     1
-    >>> print iris.data[0]
+    >>> print(iris.data[0])
     [-0.555556  0.25     -0.864407 -0.916667]
 
     Load the 'leukemia' dataset from mldata.org, which respects the
     sklearn axes convention:
     >>> leuk = fetch_mldata('leukemia', transpose_data=False)
-    >>> print leuk.data.shape[0]
+    >>> print(leuk.data.shape[0])
     7129
 
     Load an alternative 'iris' dataset, which has different names for the

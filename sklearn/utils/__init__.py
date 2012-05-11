@@ -159,8 +159,8 @@ def resample(*arrays, **options):
              [ 2.,  1.],
              [ 1.,  0.]])
 
-      >>> X_sparse                            # doctest: +NORMALIZE_WHITESPACE
-      <3x2 sparse matrix of type '<type 'numpy.float64'>'
+      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 4 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
@@ -260,8 +260,8 @@ def shuffle(*arrays, **options):
              [ 2.,  1.],
              [ 1.,  0.]])
 
-      >>> X_sparse                            # doctest: +NORMALIZE_WHITESPACE
-      <3x2 sparse matrix of type '<type 'numpy.float64'>'
+      >>> X_sparse                    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 3 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
