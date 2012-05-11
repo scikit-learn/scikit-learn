@@ -92,7 +92,7 @@ cdef class LossFunction:
 
         cdef double update = 0.0
         cdef double class_weight = class_weights[0]
-        p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
+        w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
 
         if y > 0.0:
             class_weight = class_weights[1]
@@ -231,18 +231,22 @@ cdef class MultinomialLog(Log):
         cdef double update = 0.0
         cdef int k
         cdef int K = w.K
+        cdef int true_k = <int>y
         cdef double p_sum = 0.0
 
+        w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
         for k in range(K):
-            p[k] = exp(w.dot(x_data_ptr, x_ind_ptr, xnnz, k))
+            p[k] = exp(p[k])
             p_sum += p[k]
 
-        w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, eta)
         for k in range(K):
             update = -1.0 * eta * (p[k] / p_sum)
-            w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
+            if k == true_k:
+                update += eta
+            if update > 10e-7:
+                w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
 
-        return log(p[<int>y] / p_sum)
+        return log(p[true_k] / p_sum)
 
     def __reduce__(self):
         return MultinomialLog, ()
@@ -263,7 +267,8 @@ cdef class Perceptron(Classification):
                               double *p, double eta):
 
         cdef int k
-        cdef int z
+        cdef int true_k
+        cdef int pred_k
         cdef double max_p = 0.0
         cdef int K = w.K
         cdef double update = 0.0
@@ -274,7 +279,7 @@ cdef class Perceptron(Classification):
             if y > 0.0:
                 class_weight = class_weights[1]
 
-            p[0] = w.dot(x_data_ptr, x_ind_ptr, xnnz, 0)
+            w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
 
             if p[0] * y <= 0.0:
                 update = eta * -y * class_weight * sample_weight
@@ -284,18 +289,20 @@ cdef class Perceptron(Classification):
 
         else:
             # multiclass case; assume y in [0, K-1]
-            class_weight = class_weights[<int>y]
+            true_k = <int>y
+            class_weight = class_weights[true_k]
 
+            w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
             for k in range(K):
-                p[k] = w.dot(x_data_ptr, x_ind_ptr, xnnz, k)
+                p[k] = 1.0 / K
                 if p[k] >= max_p:
-                    z = k
+                    pred_k = k
                     max_p = p[k]
 
-            if z != <int>y:
+            if pred_k != true_k:
                 update = eta * class_weight * sample_weight
-                w.add(x_data_ptr, x_ind_ptr, xnnz, <int>y, update)
-                w.add(x_data_ptr, x_ind_ptr, xnnz, z, -update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, true_k, update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, pred_k, -update)
 
         if update != 0.0:
             return 1.0

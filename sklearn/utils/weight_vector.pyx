@@ -53,14 +53,14 @@ cdef class WeightVector(object):
         Scaling factor for the update of the intercept term.
     """
 
-    def __cinit__(self, np.ndarray[np.float64_t, ndim=2, mode='c'] w,
+    def __cinit__(self, np.ndarray[np.float64_t, ndim=2] w,
                   np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
                   int fit_intercept, double intercept_decay):
         self.w = w
         self.w_data_ptr = <np.float64_t *>w.data
         self.w_scale = 1.0
-        self.n_features = w.shape[1]
-        self.K = w.shape[0]
+        self.n_features = w.shape[0]
+        self.K = w.shape[1]
         self.sq_norm = np.dot(w.ravel(), w.ravel())
         self.intercept = intercept
         self.intercept_data_ptr = <np.float64_t *>intercept.data
@@ -88,19 +88,20 @@ cdef class WeightVector(object):
         """
         cdef int j
         cdef int idx
+        cdef Py_ssize_t K = self.K
         cdef double val
         cdef double innerprod = 0.0
         cdef double xsqnorm = 0.0
-        cdef int class_offset = 0
-        if k > 0:
-            class_offset = k * self.n_features
 
         # the next two lines save a factor of 2!
         cdef double w_scale = self.w_scale
-        cdef np.float64_t* w_data_ptr = self.w_data_ptr + class_offset
+        cdef np.float64_t* w_data_ptr = self.w_data_ptr
 
         for j in range(xnnz):
-            idx = x_ind_ptr[j]
+            if K > 1:
+                idx = (x_ind_ptr[j] * K + k)
+            else:
+                idx = x_ind_ptr[j]
             val = x_data_ptr[j]
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
@@ -111,7 +112,7 @@ cdef class WeightVector(object):
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * w_scale * c)
 
-    cdef double dot(self, DTYPE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz, int k):
+    cdef void dot(self, DTYPE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz, double *out):
         """Computes the dot product of a sample x and the weight vector.
 
         Parameters
@@ -122,29 +123,32 @@ cdef class WeightVector(object):
             The array which holds the feature indices of ``x``.
         xnnz : int
             The number of non-zero features of ``x``.
-        k : int
-            The class indices to compute the offset in the vector.
-
-        Returns
-        -------
-        innerprod : double
-            The inner product of ``x`` and ``w``.
+        out : double*
+            An array of length ``K`` in which the results are stored.
         """
         cdef int j
         cdef int idx
-        cdef double innerprod = 0.0
+        cdef int k
+        cdef DTYPE val
         cdef int class_offset = 0
-        if k > 0:
-            class_offset = k * self.n_features
-        cdef np.float64_t* w_data_ptr = self.w_data_ptr + class_offset
+        cdef np.float64_t* w_data_ptr # = self.w_data_ptr
+        cdef Py_ssize_t K = self.K
+        cdef Py_ssize_t n_features = self.n_features
+        cdef double w_scale = self.w_scale
+
+        for k in range(K):
+            out[k] = 0.0
+
         for j in range(xnnz):
             idx = x_ind_ptr[j]
-            innerprod += w_data_ptr[idx] * x_data_ptr[j]
-        innerprod *= self.w_scale
+            val = x_data_ptr[j]
+            w_data_ptr = self.w_data_ptr + (idx * K)
+            for k in range(K):
+                out[k] += w_data_ptr[k] * val
 
-        # add intercept
-        innerprod += self.intercept_data_ptr[k]
-        return innerprod
+        for k in range(K):
+            out[k] *= w_scale
+            out[k] += self.intercept_data_ptr[k]
 
     cdef void scale(self, double c):
         """Scales the weight vector by a constant ``c``.

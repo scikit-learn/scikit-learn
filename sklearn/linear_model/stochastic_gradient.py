@@ -42,7 +42,9 @@ def _make_weight_vector(est, coef=None, intercept=None, intercept_decay=1.0):
         coef = est.coef_
     if intercept is None:
         intercept = est.intercept_
-    weight_vector = WeightVector(coef, intercept,
+    # FIXME coef must be fortran style
+    ##assert coef.flags.f_contiguous
+    weight_vector = WeightVector(coef.T, intercept,
                                  est.fit_intercept,
                                  intercept_decay)
     return weight_vector
@@ -281,9 +283,15 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self._set_class_weight(self.class_weight, self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
+        # use fortran-layout for true multi-class
+        coef_order = 'C'
+        if n_classes > 2 and self.multi_class != 'ovr':
+            coef_order = 'F'
+
         if self.coef_ is None:
             self._allocate_parameter_mem(n_classes, n_features,
-                                         coef_init, intercept_init)
+                                         coef_init, intercept_init,
+                                         order=coef_order)
 
         # delegate to concrete training procedure
         if n_classes > 2:
@@ -508,7 +516,7 @@ def _prepare_fit_binary(est, y, i):
         coef = est.coef_.ravel()
         intercept = est.intercept_[0]
     else:
-        coef = est.coef_[i]
+        coef = est.coef_[i].reshape((1, est.coef_.shape[1]))
         intercept = est.intercept_[i]
 
     return y_i, coef, np.atleast_1d(intercept)
@@ -521,8 +529,9 @@ def _fit_binary(est, i, X, y, n_iter, class_weight,
     The i'th class is considered the "positive" class.
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+
     # coef should be at least 2d
-    coef = coef.reshape((1, coef.shape[0]))
+    assert len(coef.shape) == 2
     return _fit(est, X, y_i, sample_weight, coef=coef, intercept=intercept)
 
 
@@ -544,6 +553,8 @@ def _fit(est, X, y, sample_weight, coef=None, intercept=None):
               est.learning_rate_code, est.eta0,
               est.power_t, est.t_)
     coef, intercept = weight_vector.to_array()
+    coef = coef.T
+    assert coef.shape[1] == X.shape[1]
     return coef, intercept
 
 

@@ -291,18 +291,18 @@ class BaseSGD(BaseEstimator):
         self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
-                                intercept_init=None):
-        """Allocate mem for parameters; initialize if provided."""
+                                intercept_init=None, order='C'):
+        """Allocate mem for parameters; initialize if provided. """
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asarray(coef_init, order="C")
+                coef_init = np.asarray(coef_init, order=order)
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
-                                      dtype=np.float64, order="C")
+                                      dtype=np.float64, order=order)
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
