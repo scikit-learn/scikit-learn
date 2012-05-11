@@ -101,8 +101,8 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
 
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
-training very efficient.  Log loss, on the other hand, provides
-probability estimates.
+training very efficient and may result in sparser models, even when L2 penalty
+is used.
 
 In the case of binary classification and `loss="log"` or
 `loss="modified_huber"` you get a probability estimate P(y=C|x) using

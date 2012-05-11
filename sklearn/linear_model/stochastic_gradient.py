@@ -420,6 +420,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         array, shape = [n_samples] if n_classes == 2 else [n_samples,
         n_classes]
             Contains the membership probabilities of the positive class.
+
+        References
+        ----------
+
+        The justification for the formula in the loss="modified_huber"
+        case is in the appendix B in:
+        http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
         if len(self.classes_) != 2:
             raise NotImplementedError("predict_(log_)proba only supported"
