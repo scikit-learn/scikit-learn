@@ -15,7 +15,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
 
-def pool_adjacent_violators(distances, similarities):
+def pool_adjacent_violators(distances, similarities, max_iter=300,
+                            verbose=0):
     """
     Pool adjancent violators
 
@@ -29,6 +30,12 @@ def pool_adjacent_violators(distances, similarities):
     similarities: ndarray, shape (n, 1)
         array on which to fit
 
+    max_iter: int, optional, default:300
+        Set the maximum number of iteration
+
+    verbose: int, optional, default: 0
+        set the level of verbosity
+
     Returns
     -------
     distances: ndarray, shape (n, 1)
@@ -41,7 +48,7 @@ def pool_adjacent_violators(distances, similarities):
 
     block = []
     sort = True
-    while sort:
+    for it in range(max_iter):
         sort = False
         blocks = new_blocks[:]
         new_blocks = []
@@ -66,6 +73,10 @@ def pool_adjacent_violators(distances, similarities):
             new_blocks.append(block[0])
         else:
             new_blocks.append(len(similarities) - 1)
+        if not sort:
+            if verbose:
+                print "Breaking at iteration %d" % it
+            break
 
     return distances
 
