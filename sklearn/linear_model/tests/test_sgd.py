@@ -269,14 +269,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
         assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
 
-<<<<<<< HEAD
-        # log loss implements the logistic regression prob estimate
-        clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
-        p = clf.predict_proba([3, 2])
-        assert_greater(p, 0.5)
-        p = clf.predict_proba([-1, -1])
-        assert_less(p, 0.5)
-=======
         # the log and modified_huber losses can output "probability" estimates
         for loss in ("log", "modified_huber"):
             clf = self.factory(loss=loss, alpha=0.01, n_iter=10).fit(X, Y)
@@ -284,7 +276,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             assert_true(p > 0.5)
             p = clf.predict_proba([-1, -1])
             assert_true(p < 0.5)
->>>>>>> e1fbe359cb41ef776bca6df78f0c51e8b3997029
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
