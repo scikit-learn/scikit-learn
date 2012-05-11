@@ -249,7 +249,8 @@ class BaseSGD(BaseEstimator):
             self.t_ = 1.0 / (eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
-        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
+        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3,
+                               "exponential": 4}
         try:
             self.learning_rate_code = learning_rate_codes[learning_rate]
         except KeyError:
@@ -290,41 +291,39 @@ class BaseSGD(BaseEstimator):
         self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
-                                intercept_init=None):
-        """Allocate mem for parameters; initialize if provided."""
+                                intercept_init=None, order='C'):
+        """Allocate mem for parameters; initialize if provided. """
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
-                coef_init = np.asarray(coef_init, order="C")
+                coef_init = np.asarray(coef_init, order=order)
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
-                                      dtype=np.float64, order="C")
+                                      dtype=np.float64, order=order)
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init, order="C")
+                intercept_init = np.asarray(intercept_init)
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init " \
                                      "does not match dataset.")
                 self.intercept_ = intercept_init
             else:
-                self.intercept_ = np.zeros(n_classes, dtype=np.float64,
-                                           order="C")
+                self.intercept_ = np.zeros(n_classes, dtype=np.float64)
         else:
             # allocate coef_ for binary problem
             if coef_init is not None:
-                coef_init = np.asarray(coef_init, dtype=np.float64,
-                                       order="C")
+                coef_init = np.asarray(coef_init, dtype=np.float64)
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
                     raise ValueError("Provided coef_init does not " \
                                      "match dataset.")
                 self.coef_ = coef_init
             else:
-                self.coef_ = np.zeros(n_features, dtype=np.float64, order="C")
+                self.coef_ = np.zeros(n_features, dtype=np.float64)
 
             # allocate intercept_ for binary problem
             if intercept_init is not None:
@@ -334,7 +333,7 @@ class BaseSGD(BaseEstimator):
                                  "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
             else:
-                self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
+                self.intercept_ = np.zeros(1, dtype=np.float64)
 
     def _check_fit_data(self, X, y):
         n_samples, _ = X.shape

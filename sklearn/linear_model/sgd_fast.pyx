@@ -15,6 +15,8 @@ from time import time
 cimport numpy as np
 cimport cython
 
+from libc.stdlib cimport free, malloc
+
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
@@ -39,6 +41,7 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
+DEF EXPONENTIAL = 4
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -81,6 +84,25 @@ cdef class LossFunction:
         """
         raise NotImplementedError()
 
+    cdef double weight_update(self, WeightVector w,
+                              DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
+                              int xnnz, double y, double sample_weight,
+                              double *class_weights, double *p,
+                              double eta):
+
+        cdef double update = 0.0
+        cdef double class_weight = class_weights[0]
+        w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
+
+        if y > 0.0:
+            class_weight = class_weights[1]
+
+        update = eta * self.dloss(p[0], y) * class_weight * sample_weight
+        if update != 0.0:
+            w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
+
+        return self.loss(p[0], y)
+
 
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
@@ -94,6 +116,16 @@ cdef class Regression(LossFunction):
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification"""
+
+    cpdef double loss(self, double p, double y):
+        raise NotImplementedError()
+
+    cpdef double dloss(self, double p, double y):
+        raise NotImplementedError()
+
+
+cdef class MulticlassClassification(Classification):
+    """Base class for loss functions for multi-class classification"""
 
     cpdef double loss(self, double p, double y):
         raise NotImplementedError()
@@ -189,6 +221,98 @@ cdef class Log(Classification):
         return Log, ()
 
 
+cdef class MultinomialLog(Log):
+    """Multinomial logistic regression loss for y in [0, K-1]"""
+
+    cdef double weight_update(self, WeightVector w, DOUBLE *x_data_ptr,
+                              INTEGER *x_ind_ptr, int xnnz, double y,
+                              double sample_weight, double *class_weights,
+                              double *p, double eta):
+        cdef double update = 0.0
+        cdef int k
+        cdef int K = w.K
+        cdef int true_k = <int>y
+        cdef double p_sum = 0.0
+
+        w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
+        for k in range(K):
+            p[k] = exp(p[k])
+            p_sum += p[k]
+
+        for k in range(K):
+            update = -1.0 * eta * (p[k] / p_sum)
+            if k == true_k:
+                update += eta
+            if update > 10e-7:
+                w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
+
+        return log(p[true_k] / p_sum)
+
+    def __reduce__(self):
+        return MultinomialLog, ()
+
+
+cdef class Perceptron(Classification):
+    """Perceptron loss"""
+
+    cpdef double loss(self, double p, double y):
+        raise NotImplementedError()
+
+    cpdef double dloss(self, double p, double y):
+        raise NotImplementedError()
+
+    cdef double weight_update(self, WeightVector w, DOUBLE *x_data_ptr,
+                              INTEGER *x_ind_ptr, int xnnz, double y,
+                              double sample_weight, double *class_weights,
+                              double *p, double eta):
+
+        cdef int k
+        cdef int true_k
+        cdef int pred_k
+        cdef double max_p = 0.0
+        cdef int K = w.K
+        cdef double update = 0.0
+        cdef double class_weight = class_weights[0]
+
+        if K == 1:
+            # binary case; assume y in {-1, 1}
+            if y > 0.0:
+                class_weight = class_weights[1]
+
+            w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
+
+            if p[0] * y <= 0.0:
+                update = eta * -y * class_weight * sample_weight
+
+            if update != 0.0:
+                w.add(x_data_ptr, x_ind_ptr, xnnz, 0, -update)
+
+        else:
+            # multiclass case; assume y in [0, K-1]
+            true_k = <int>y
+            class_weight = class_weights[true_k]
+
+            w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
+            for k in range(K):
+                p[k] = 1.0 / K
+                if p[k] >= max_p:
+                    pred_k = k
+                    max_p = p[k]
+
+            if pred_k != true_k:
+                update = eta * class_weight * sample_weight
+                w.add(x_data_ptr, x_ind_ptr, xnnz, true_k, update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, pred_k, -update)
+
+        if update != 0.0:
+            return 1.0
+        else:
+            return 0.0
+
+    def __reduce__(self):
+        return Perceptron, ()
+
+
 cdef class SquaredLoss(Regression):
     """Squared loss traditional used in linear regression."""
     cpdef double loss(self, double p, double y):
@@ -237,27 +361,18 @@ cdef class Huber(Regression):
         return Huber, (self.c,)
 
 
-def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
-              double intercept,
-              LossFunction loss,
-              int penalty_type,
-              double alpha, double rho,
-              SequentialDataset dataset,
-              int n_iter, int fit_intercept,
-              int verbose, int shuffle, int seed,
-              double weight_pos, double weight_neg,
-              int learning_rate, double eta0,
-              double power_t,
-              double t=1.0,
-              double intercept_decay=1.0):
+def plain_sgd(WeightVector w, LossFunction loss, int penalty_type,
+              double alpha, double rho, SequentialDataset dataset,
+              int n_iter,  int verbose, int shuffle, int seed,
+              np.ndarray[double, ndim=1, mode='c'] class_weight,
+              int learning_rate, double eta0, double power_t,
+              double t=1.0):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
     ----------
-    weights : ndarray[double, ndim=1]
-        The allocated coef_ vector.
-    intercept : double
-        The initial intercept.
+    w : WeightVector
+        The model parameters
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
@@ -270,16 +385,12 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         A concrete ``SequentialDataset`` object.
     n_iter : int
         The number of iterations (epochs).
-    fit_intercept : int
-        Whether or not to fit the intercept (1 or 0).
     verbose : int
         Print verbose output; 0 for quite.
     shuffle : int
         Whether to shuffle the training data before each epoch.
-    weight_pos : float
-        The weight of the positive class.
-    weight_neg : float
-        The weight of the negative class.
+    class_weight : ndarray[double, ndim=1], shape=(n_classes,)
+        The class weights.
     seed : int
         The seed of the pseudo random number generator to use when
         shuffling the data
@@ -296,52 +407,50 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
-
-    Returns
-    -------
-    weights : array, shape=[n_features]
-        The fitted weight vector.
-    intercept : float
-        The fitted intercept term.
-
     """
-
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
-    cdef Py_ssize_t n_features = weights.shape[0]
+    cdef Py_ssize_t n_features = w.n_features
 
-    cdef WeightVector w = WeightVector(weights)
+    # ``K==1`` for both regression and binary classification;
+    # ``K==n_classes`` for multi-class classification.
+    cdef int K = w.K
 
     cdef DOUBLE *x_data_ptr = NULL
     cdef INTEGER *x_ind_ptr = NULL
 
+    cdef double *class_weight_data_ptr = <double *>class_weight.data
+
     # helper variable
     cdef int xnnz
-    cdef double eta = 0.0
-    cdef double p = 0.0
-    cdef double update = 0.0
+    cdef double eta = eta0
     cdef double sumloss = 0.0
-    cdef DOUBLE y = 0.0
-    cdef DOUBLE sample_weight
-    cdef double class_weight = 1.0
+    cdef double y = 0.0
+    cdef double sample_weight
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
 
-    # q vector is only used for L1 regularization
-    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
-    cdef DOUBLE *q_data_ptr = NULL
+    # predictions array
+    cdef double *p = NULL
+    p = <double *> malloc(K * sizeof(double))
+    for i in range(K):
+        p[i] = 0.0
+
+    # q array is only used for L1 regularization
+    # it stores the cumulative L1 penalty for each feature
+    cdef double *q = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
-        q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <DOUBLE *> q.data
+        q = <double *> malloc(K * n_features * sizeof(double))
+        for i in range(K * n_features):
+            q[i] = 0.0
+    # total cumulative L1 penalty
     cdef double u = 0.0
 
     if penalty_type == L2:
         rho = 1.0
     elif penalty_type == L1:
         rho = 0.0
-
-    eta = eta0
 
     t_start = time()
     for epoch in range(n_iter):
@@ -357,47 +466,37 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+            elif learning_rate == EXPONENTIAL:
+                eta = eta0 * pow(power_t, -t / (n_samples * n_iter))
 
-            if verbose > 0:
-                sumloss += loss.loss(p, y)
+            sumloss += loss.weight_update(w, x_data_ptr, x_ind_ptr, xnnz, y,
+                                          sample_weight, class_weight_data_ptr,
+                                          p, eta)
 
-            if y > 0.0:
-                class_weight = weight_pos
-            else:
-                class_weight = weight_neg
-
-            update = eta * loss.dloss(p, y) * class_weight * sample_weight
-            if update != 0.0:
-                w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
-                if fit_intercept == 1:
-                    intercept -= update * intercept_decay
             if penalty_type >= L2:
                 w.scale(1.0 - (rho * eta * alpha))
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+                l1penalty(w, q, x_ind_ptr, xnnz, u)
             t += 1
             count += 1
 
         # report epoch information
         if verbose > 0:
             print("Norm: %.2f, NNZs: %d, "\
-            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
-                                                    weights.nonzero()[0].shape[0],
-                                                    intercept, count,
-                                                    sumloss / count))
+            "T: %d, Avg. loss: %.6f" % (w.norm(),
+                                        w.w.nonzero()[0].shape[0],
+                                        count,
+                                        sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
-        # floating-point under-/overflow check.
-        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
-           or np.isnan(intercept) or np.isinf(intercept):
-            raise ValueError("floating-point under-/overflow occured.")
+    if w.w_scale != 1.0:
+        w.reset_scale()
 
-    w.reset_wscale()
-
-    return weights, intercept
+    free(p)
+    if q != NULL:
+        free(q)
 
 
 cdef inline double max(double a, double b):
@@ -408,7 +507,7 @@ cdef inline double min(double a, double b):
     return a if a <= b else b
 
 
-cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
+cdef void l1penalty(WeightVector w, double *q,
                     INTEGER *x_ind_ptr, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
@@ -417,18 +516,27 @@ cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
     """
     cdef double z = 0.0
     cdef int j = 0
+    cdef int k = 0
     cdef int idx = 0
-    cdef double wscale = w.wscale
-    cdef double* w_data_ptr = w.w_data_ptr
-    for j in range(xnnz):
-        idx = x_ind_ptr[j]
-        z = w_data_ptr[idx]
-        if (wscale * w_data_ptr[idx]) > 0.0:
-            w_data_ptr[idx] = max(
-                0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
+    cdef Py_ssize_t n_features = w.n_features
+    cdef Py_ssize_t K = w.K
+    cdef double w_scale = w.w_scale
+    cdef double *w_data_ptr = w.w_data_ptr
+    cdef double *w_data_ptr_k = w_data_ptr
+    cdef double *q_k = q
 
-        elif (wscale * w_data_ptr[idx]) < 0.0:
-            w_data_ptr[idx] = min(
-                0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
+    for k in range(K):
+        w_data_ptr_k = w_data_ptr + (k * n_features)
+        q_k = q + (k * n_features)
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            z = w_data_ptr_k[idx]
+            if w_data_ptr_k[idx] > 0.0:
+                w_data_ptr_k[idx] = max(
+                    0.0, w_data_ptr_k[idx] - ((u + q_k[idx]) / w_scale))
 
-        q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
+            elif w_data_ptr_k[idx] < 0.0:
+                w_data_ptr_k[idx] = min(
+                    0.0, w_data_ptr_k[idx] + ((u - q_k[idx]) / w_scale))
+
+            q_k[idx] += (w_scale * (w_data_ptr_k[idx] - z))

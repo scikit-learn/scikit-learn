@@ -83,7 +83,7 @@ categories = [
     'sci.space',
 ]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
+categories = None
 
 print "Loading 20 newsgroups dataset for categories:"
 print categories if categories else "all"
@@ -185,16 +185,24 @@ def benchmark(clf):
     clf_descr = str(clf).split('(')[0]
     return clf_descr, score, train_time, test_time
 
+import IPython
+IPython.embed()
 
 results = []
-for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+for clf, name in (#(RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+                  (Perceptron(n_iter=50, multi_class='ovr'), "Perceptron"),
                   (Perceptron(n_iter=50), "Perceptron"),
-                  (KNeighborsClassifier(n_neighbors=10), "kNN")):
+                  #(KNeighborsClassifier(n_neighbors=10), "kNN"),
+                  (SGDClassifier(alpha=.0001, learning_rate='constant',
+                                 eta0=0.1,
+                                 n_iter=50, loss='log',
+                                 multi_class='multinomial'),
+                   'MaxEnt')):
     print 80 * '='
     print name
     results.append(benchmark(clf))
 
-for penalty in ["l2", "l1"]:
+for penalty in ["l2"]:
     print 80 * '='
     print "%s penalty" % penalty.upper()
     # Train Liblinear model
@@ -205,11 +213,11 @@ for penalty in ["l2", "l1"]:
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
                                           penalty=penalty)))
 
-# Train SGD with Elastic Net penalty
-print 80 * '='
-print "Elastic-Net penalty"
-results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                      penalty="elasticnet")))
+## # Train SGD with Elastic Net penalty
+## print 80 * '='
+## print "Elastic-Net penalty"
+## results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
+##                                       penalty="elasticnet")))
 
 # Train NearestCentroid without threshold
 print 80 * '='
@@ -237,9 +245,9 @@ class L1LinearSVC(LinearSVC):
         X = self.transformer_.transform(X)
         return LinearSVC.predict(self, X)
 
-print 80 * '='
-print "LinearSVC with L1-based feature selection"
-results.append(benchmark(L1LinearSVC()))
+## print 80 * '='
+## print "LinearSVC with L1-based feature selection"
+## results.append(benchmark(L1LinearSVC()))
 
 
 # make some plots
