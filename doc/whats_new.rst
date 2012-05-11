@@ -1186,3 +1186,4 @@ of commits):
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
 
 .. _David Marek: http://http://www.davidmarek.cz/
+
