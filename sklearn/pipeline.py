@@ -60,7 +60,7 @@ class Pipeline(BaseEstimator):
     >>> # You can set the parameters using the names issued
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svn
-    >>> anova_svm.set_params(anova__k=10, svc__C=10.).fit(X, y)
+    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                                              # doctest: +ELLIPSIS
     Pipeline(steps=[...])
 
@@ -144,10 +144,22 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict(Xt)
 
     def predict_proba(self, X):
+        """Applies transforms to the data, and the predict_proba method of the
+        final estimator. Valid only if the final estimator implements
+        predict_proba."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
+
+    def decision_function(self, X):
+        """Applies transforms to the data, and the decision_function method of
+        the final estimator. Valid only if the final estimator implements
+        decision_function."""
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].decision_function(Xt)
 
     def predict_log_proba(self, X):
         Xt = X

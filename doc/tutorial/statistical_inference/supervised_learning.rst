@@ -16,7 +16,7 @@ Supervised learning: predicting an output variable from high-dimensional observa
    All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_ 
    in the `scikit-learn` implement a `fit(X, y)`
    method to fit the model, and a `predict(X)` method that, given
-   unlabeled observations `X`, returns predicts the corresponding labels
+   unlabeled observations `X`, returns the predicted labels
    `y`.
 
 .. topic:: Vocabulary: classification and regression
@@ -39,8 +39,8 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
    
-    .. image:: ../../auto_examples/images/plot_iris_dataset_1.png
-        :target: ../../auto_examples/plot_iris_dataset.html
+    .. image:: ../../auto_examples/datasets/images/plot_iris_dataset_1.png
+        :target: ../../auto_examples/datasets/plot_iris_dataset.html
         :align: right
 	:scale: 65
 
@@ -145,7 +145,7 @@ Linear model: from regression to sparsity
         >>> diabetes_y_train = diabetes.target[:-20]
         >>> diabetes_y_test  = diabetes.target[-20:]
     
-    The task at hand is to predict disease prediction from physiological
+    The task at hand is to predict disease progression from physiological
     variables. 
 
 Linear regression
@@ -217,7 +217,7 @@ induces high variance:
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(X, y)
+    ...    regr.fit(this_X, y)
     ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
     ...    pl.scatter(this_X, y, s=3)  # doctest: +SKIP
 
@@ -253,7 +253,7 @@ We can choose `alpha` to minimize left out error, this time using the
 diabetes dataset, rather than our synthetic data:: 
 
     >>> alphas = np.logspace(-4, -1, 6)
-    >>> print [regr._set_params(alpha=alpha 
+    >>> print [regr.set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train,
     ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas] # doctest: +ELLIPSIS
     [0.5851110683883..., 0.5852073015444..., 0.5854677540698..., 0.5855512036503..., 0.5830717085554..., 0.57058999437...]
@@ -318,14 +318,12 @@ application of Occam's razor: `prefer simpler models`.
 
 :: 
 
-    >>> regr = linear_model.Lasso(alpha=.1)
-    >>> print [regr._set_params(alpha=alpha
+    >>> regr = linear_model.Lasso()
+    >>> scores = [regr.set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train
     ...             ).score(diabetes_X_test, diabetes_y_test) 
-    ...        for alpha in alphas] # doctest: +ELLIPSIS
-    [0.5851191069162..., 0.5852471364906..., 0.5857189539179..., 0.5873009485452..., 0.5887622418309..., 0.582845002968...]
-    
-    >>> best_alpha = alphas[4]
+    ...        for alpha in alphas]
+    >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
@@ -336,6 +334,7 @@ application of Occam's razor: `prefer simpler models`.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 
 .. topic:: **Different algorithms for a same problem**
+
     Different algorithms can be used to solve the same mathematical
     problem. For instance the `Lasso` object in the `scikit-learn`
     solves the lasso regression using a 
@@ -372,7 +371,7 @@ function, or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, penalty='l2',
-              scale_C=True, tol=0.0001)
+              tol=0.0001)
 
 This is known as :class:`LogisticRegression`.
 
@@ -389,7 +388,8 @@ This is known as :class:`LogisticRegression`.
 .. topic:: Shrinkage and sparsity with logistic regression
 
    The `C` parameter controls the amount of regularization in the
-   :class:`LogisticRegression` object, the bigger `C`, the less regularization.
+   :class:`LogisticRegression` object: a large value for `C` results in
+   less regularization.
    `penalty="l2"` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while 
    `penalty="l1"` gives :ref:`sparsity`.
 
@@ -415,11 +415,11 @@ Linear SVMs
 
 :ref:`svm` belong to the discrimant model family: they try to find a combination of 
 samples to build a plane maximizing the margin between the two classes.
-Regularization is set by the `C` parameter: the small the choice of `C`,
-means a stronger regularization, which means the margin will be caluculated using many,
-to all the observations around the separation line; a larger choice of `C` 
-will thus have the margins computed on the observations that are close to 
-the separating line.
+Regularization is set by the `C` parameter: a small value for `C` means the margin
+is calculated using many or all of the observations around the separating line
+(more regularization);
+a large value for `C` means the margin is calculated on observations close to
+the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
@@ -451,9 +451,9 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)
-    SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='linear', probability=False, scale_C=True, shrinking=True,
-      tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+      kernel='linear', probability=False, shrinking=True, tol=0.001,
+      verbose=False)
 
 
 .. warning:: **Normalizing data**
@@ -547,8 +547,8 @@ creating an decision energy by positioning *kernels* on observations:
    `svm_gui.py`; add data points of both classes with right and left button, 
    fit the model and change parameters and data.
 
-.. image:: ../../auto_examples/images/plot_iris_dataset_1.png
-    :target: ../../auto_examples/plot_iris_dataset.html
+.. image:: ../../auto_examples/datasets/images/plot_iris_dataset_1.png
+    :target: ../../auto_examples/datasets/plot_iris_dataset.html
     :align: right
     :scale: 70
 

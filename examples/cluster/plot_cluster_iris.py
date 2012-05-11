@@ -49,7 +49,6 @@ for name, est in estimators.iteritems():
     fig = pl.figure(fignum, figsize=(4, 3))
     pl.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
-    pl.set_cmap(pl.cm.spectral)
 
     pl.cla()
     est.fit(X)
@@ -69,16 +68,15 @@ for name, est in estimators.iteritems():
 fig = pl.figure(fignum, figsize=(4, 3))
 pl.clf()
 ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
-pl.set_cmap(pl.cm.spectral)
 
 pl.cla()
 
 for name, label in [('Setosa', 0),
                     ('Versicolour', 1),
                     ('Virginica', 2)]:
-    ax.text3D(X[y==label, 3].mean(), 
-              X[y==label, 0].mean()+1.5, 
-              X[y==label, 2].mean(), name,
+    ax.text3D(X[y == label, 3].mean(),
+              X[y == label, 0].mean() + 1.5,
+              X[y == label, 2].mean(), name,
               horizontalalignment='center',
               bbox=dict(alpha=.5, edgecolor='w', facecolor='w'),
              )
@@ -92,6 +90,4 @@ ax.w_zaxis.set_ticklabels([])
 ax.set_xlabel('Petal width')
 ax.set_ylabel('Sepal length')
 ax.set_zlabel('Petal length')
-#pl.savefig('cluster_iris_truth.png')
-
-
+pl.show()

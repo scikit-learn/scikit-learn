@@ -3,7 +3,9 @@ import scipy.sparse as sp
 
 from numpy.testing import assert_array_equal
 import nose
-from nose.tools import assert_raises, raises, assert_true
+from nose.tools import assert_raises, raises
+
+from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model import logistic
 from sklearn import datasets
@@ -67,15 +69,16 @@ def test_predict_iris():
                                                             iris.target)
 
     pred = clf.predict(iris.data)
-    assert_true(np.mean(pred == iris.target) > .95)
+    assert_greater(np.mean(pred == iris.target), .95)
 
     pred = clf.predict_proba(iris.data).argmax(axis=1)
-    assert_true(np.mean(pred == iris.target) > .95)
+    assert_greater(np.mean(pred == iris.target), .95)
 
 
 def test_inconsistent_input():
     """Test that an exception is raised on inconsistent input"""
-    X_ = np.random.random((5, 10))
+    rng = np.random.RandomState(0)
+    X_ = rng.random_sample((5, 10))
     y_ = np.ones(X_.shape[0])
 
     clf = logistic.LogisticRegression()
@@ -85,9 +88,8 @@ def test_inconsistent_input():
     assert_raises(ValueError, clf.fit, X, y_wrong)
 
     # Wrong dimensions for test data
-    assert_raises(ValueError,
-                  clf.fit(X_, y_).predict,
-                  np.random.random((3, 12)))
+    assert_raises(ValueError, clf.fit(X_, y_).predict,
+            rng.random_sample((3, 12)))
 
 
 @raises(ValueError)

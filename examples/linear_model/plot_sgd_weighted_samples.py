@@ -22,25 +22,27 @@ sample_weight[:10] *= 10
 
 # plot the weighted data points
 xx, yy = np.meshgrid(np.linspace(-4, 5, 500), np.linspace(-4, 5, 500))
-pl.set_cmap(pl.cm.bone)
-pl.scatter(X[:, 0], X[:, 1], c=y, s=sample_weight, alpha=0.9)
+pl.figure()
+pl.scatter(X[:, 0], X[:, 1], c=y, s=sample_weight, alpha=0.9,
+           cmap=pl.cm.bone)
 
 ## fit the unweighted model
 clf = linear_model.SGDClassifier(alpha=0.01, n_iter=100)
 clf.fit(X, y)
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
-pl.contour(xx, yy, Z, levels=[0], linestyles=['solid'])
+no_weights = pl.contour(xx, yy, Z, levels=[0], linestyles=['solid'])
 
 ## fit the weighted model
 clf = linear_model.SGDClassifier(alpha=0.01, n_iter=100)
 clf.fit(X, y, sample_weight=sample_weight)
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
-pl.contour(xx, yy, Z, levels=[0], linestyles=['dashed'])
+samples_weights = pl.contour(xx, yy, Z, levels=[0], linestyles=['dashed'])
 
-pl.legend(["no weights", "with weights"],
-          loc="lower left")
+pl.legend([no_weights.collections[0], samples_weights.collections[0]],
+    ["no weights", "with weights"], loc="lower left")
 
-pl.axis('off')
+pl.xticks(())
+pl.yticks(())
 pl.show()

@@ -58,8 +58,6 @@ titles = ['Label Spreading 30% data',
 
 color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
 
-pl.set_cmap(pl.cm.Paired)
-
 for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
     # Plot the decision boundary. For that, we will asign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
@@ -68,13 +66,12 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.set_cmap(pl.cm.Paired)
-    pl.contourf(xx, yy, Z)
+    pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
     pl.axis('off')
 
     # Plot also the training points
     colors = [color_map[y] for y in y_train]
-    pl.scatter(X[:, 0], X[:, 1], c=colors)
+    pl.scatter(X[:, 0], X[:, 1], c=colors, cmap=pl.cm.Paired)
 
     pl.title(titles[i])
 

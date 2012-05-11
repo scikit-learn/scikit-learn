@@ -1,11 +1,13 @@
 """Test the cross_validation module"""
 
+import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
 
+from ..utils.testing import assert_greater, assert_less
 from ..base import BaseEstimator
 from ..datasets import make_regression
 from ..datasets import load_iris
@@ -91,6 +93,20 @@ def test_shuffle_kfold():
         assert_array_equal(all_folds, ind)
 
 
+def test_shuffle_split():
+    ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
+    ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
+    ss3 = cval.ShuffleSplit(10, test_size=np.int32(2), random_state=0)
+    ss4 = cval.ShuffleSplit(10, test_size=long(2), random_state=0)
+    for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
+        assert_array_equal(t1[0], t2[0])
+        assert_array_equal(t2[0], t3[0])
+        assert_array_equal(t3[0], t4[0])
+        assert_array_equal(t1[1], t2[1])
+        assert_array_equal(t2[1], t3[1])
+        assert_array_equal(t3[1], t4[1])
+
+
 def test_stratified_shuffle_split():
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
     # Check that error is raised if there is a class with only one sample
@@ -133,12 +149,37 @@ def test_cross_val_score():
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
     assert_raises(ValueError, cval.train_test_split, range(3),
-            train_fraction=1.1)
+            train_size=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3),
-            test_fraction=0.6, train_fraction=0.6)
+            test_size=0.6, train_size=0.6)
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size=np.float32(0.6), train_size=np.float32(0.6))
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size="wrong_type")
+    assert_raises(ValueError, cval.train_test_split, range(3),
+            test_size=2, train_size=4)
     assert_raises(TypeError, cval.train_test_split, range(3),
             some_argument=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3), range(42))
+
+
+def test_shuffle_split_warnings():
+    expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
+                        "for removal in 0.12, use test_size instead",
+                        "train_fraction is deprecated in 0.11 and scheduled "
+                        "for removal in 0.12, use train_size instead")
+
+    with warnings.catch_warnings(record=True) as warn_queue:
+        cval.ShuffleSplit(10, 3, test_fraction=0.1)
+        cval.ShuffleSplit(10, 3, train_fraction=0.1)
+        cval.train_test_split(range(3), test_fraction=0.1)
+        cval.train_test_split(range(3), train_fraction=0.1)
+
+    assert_equal(len(warn_queue), 4)
+    assert_equal(str(warn_queue[0].message), expected_message[0])
+    assert_equal(str(warn_queue[1].message), expected_message[1])
+    assert_equal(str(warn_queue[2].message), expected_message[0])
+    assert_equal(str(warn_queue[3].message), expected_message[1])
 
 
 def test_train_test_split():
@@ -155,7 +196,7 @@ def test_train_test_split():
 
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear', C=len(iris.data) * 4 // 5)
+    clf = SVC(kernel='linear')
 
     # Default score (should be the accuracy score)
     scores = cval.cross_val_score(clf, iris.data, iris.target, cv=5)
@@ -205,13 +246,13 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear', C=len(X))
+    svm = SVC(kernel='linear')
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
         svm, X, y, zero_one_score, cv)
 
-    assert_true(score > 0.9)
+    assert_greater(score, 0.9)
     np.testing.assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
@@ -221,7 +262,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SparseSVC(kernel='linear', C=len(X))
+    svm_sparse = SparseSVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, zero_one_score, cv_sparse,
@@ -236,8 +277,8 @@ def test_permutation_score():
     score, scores, pvalue = cval.permutation_test_score(svm, X, y,
             zero_one_score, cv)
 
-    assert_true(score < 0.5)
-    assert_true(pvalue > 0.4)
+    assert_less(score, 0.5)
+    assert_greater(pvalue, 0.4)
 
 
 def test_cross_val_generator_with_mask():
@@ -276,17 +317,21 @@ def test_cross_val_generator_with_indices():
 
 
 def test_bootstrap_errors():
-    assert_raises(ValueError, cval.Bootstrap, 10, n_train=100)
-    assert_raises(ValueError, cval.Bootstrap, 10, n_test=100)
-    assert_raises(ValueError, cval.Bootstrap, 10, n_train=1.1)
-    assert_raises(ValueError, cval.Bootstrap, 10, n_test=1.1)
+    assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
+    assert_raises(ValueError, cval.Bootstrap, 10, test_size=100)
+    assert_raises(ValueError, cval.Bootstrap, 10, train_size=1.1)
+    assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
 
 
 def test_shufflesplit_errors():
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=2.0)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=1.0)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_fraction=0.1,
-            train_fraction=0.95)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=2.0)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=1.0)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=0.1,
+            train_size=0.95)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=11)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8,
+            train_size=3)
 
 
 def test_shufflesplit_reproducible():

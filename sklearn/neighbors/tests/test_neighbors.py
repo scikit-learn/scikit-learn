@@ -1,4 +1,7 @@
 import warnings
+
+from nose.tools import assert_equal
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
@@ -8,9 +11,10 @@ from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
 
+rng = np.random.RandomState(0)
 # load and shuffle iris dataset
 iris = datasets.load_iris()
-perm = np.random.permutation(iris.target.size)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
@@ -22,10 +26,22 @@ ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
 
 
+def _weight_func(dist):
+    """ Weight function to replace lambda d: d ** -2.
+    The lambda function is not valid because:
+    if d==0 then 0^-2 is not valid. """
+
+    # Dist could be multidimensional, flatten it so all values
+    # can be looped
+    with np.errstate(divide='ignore'):
+        retval = 1./dist
+    return retval**2
+
+
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
     """test the production of a warning if equidistant points are discarded"""
-    X = np.random.random(size=(n_samples, n_features))
-    q = np.random.random(size=n_features)
+    X = rng.random_sample(size=(n_samples, n_features))
+    q = rng.random_sample(size=n_features)
 
     neigh = neighbors.NearestNeighbors(n_neighbors=k)
     neigh.fit(X[:-1])
@@ -37,11 +53,6 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     y = np.zeros(X.shape[0])
 
-    # change warnings.warn to catch the message
-    warn_queue = []
-    warnings_warn = warnings.warn
-    warnings.warn = lambda msg: warn_queue.append(msg)
-
     expected_message = ("kneighbors: neighbor k+1 and neighbor k "
                         "have the same distance: results will be "
                         "dependent on data order.")
@@ -52,24 +63,19 @@ def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
 
     for algorithm in algorithms:
         for estimator in estimators:
-            neigh = estimator(n_neighbors=k, algorithm=algorithm)
-            neigh.fit(X, y)
-            neigh.predict(q)
+            with warnings.catch_warnings(record=True) as warn_queue:
+                neigh = estimator(n_neighbors=k, algorithm=algorithm)
+                neigh.fit(X, y)
+                neigh.predict(q)
 
-            assert len(warn_queue) == 1
-            assert warn_queue[0] == expected_message
-            warn_queue = []
-
-    # restore default behavior
-    warnings.warn = warnings_warn
+            assert_equal(len(warn_queue), 1)
+            assert_equal(str(warn_queue[0].message), expected_message)
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                  n_query_pts=2, n_neighbors=5,
                                  random_state=0):
     """Test unsupervised neighbors methods"""
-    rng = np.random.RandomState(random_state)
-
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
@@ -96,7 +102,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
 def test_unsupervised_inputs():
     """test the types of valid input into NearestNeighbors"""
-    X = np.random.random((10, 3))
+    X = rng.random_sample((10, 3))
 
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
@@ -164,7 +170,7 @@ def test_kneighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -187,7 +193,7 @@ def test_radius_neighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -198,6 +204,76 @@ def test_radius_neighbors_classifier(n_samples=40,
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_array_equal(y_pred, y[:n_test_pts])
+
+
+def test_radius_neighbors_classifier_when_no_neighbors():
+    """ Test radius-based classifier when no neighbors found.
+    In this case it should rise an informative exception """
+
+    X = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1, 2])
+    radius = 0.1
+
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      weights=weights,
+                                                      algorithm=algorithm)
+            clf.fit(X, y)
+            clf.predict(z1)
+            assert_raises(ValueError, clf.predict, z2)
+
+
+def test_radius_neighbors_classifier_outlier_labeling():
+    """ Test radius-based classifier when no neighbors found and outliers
+    are labeled. """
+
+    X = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1, 2])
+    radius = 0.1
+
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
+    correct_labels1 = np.array([1, 2])
+    correct_labels2 = np.array([1, -1])
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      weights=weights,
+                                                      algorithm=algorithm,
+                                                      outlier_label=-1)
+            clf.fit(X, y)
+            assert_array_equal(correct_labels1, clf.predict(z1))
+            assert_array_equal(correct_labels2, clf.predict(z2))
+
+
+def test_radius_neighbors_classifier_zero_distance():
+    """ Test radius-based classifier, when distance to a sample is zero. """
+
+    X = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1, 2])
+    radius = 0.1
+
+    z1 = np.array([[1.01, 1.01], [2.0, 2.0]])
+    correct_labels1 = np.array([1, 2])
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
+                                                      weights=weights,
+                                                      algorithm=algorithm)
+            clf.fit(X, y)
+            assert_array_equal(correct_labels1, clf.predict(z1))
 
 
 def test_kneighbors_classifier_sparse(n_samples=40,
@@ -237,7 +313,7 @@ def test_kneighbors_regressor(n_samples=40,
 
     y_target = y[:n_test_pts]
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -263,7 +339,7 @@ def test_radius_neighbors_regressor(n_samples=40,
 
     y_target = y[:n_test_pts]
 
-    weight_func = lambda d: d ** -2
+    weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
         for weights in ['uniform', 'distance', weight_func]:
@@ -308,7 +384,7 @@ def test_neighbors_iris():
 
     for algorithm in ALGORITHMS:
         clf = neighbors.KNeighborsClassifier(n_neighbors=1,
-                                             algorithm=algorithm)
+                algorithm=algorithm, warn_on_equidistant=False)
         clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
@@ -316,8 +392,8 @@ def test_neighbors_iris():
         clf.fit(iris.data, iris.target)
         assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
-        rgs = neighbors.KNeighborsRegressor(n_neighbors=5,
-                                            algorithm=algorithm)
+        rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm,
+                warn_on_equidistant=False)
         rgs.fit(iris.data, iris.target)
         assert np.mean(
             rgs.predict(iris.data).round() == iris.target) > 0.95
@@ -385,7 +461,7 @@ def test_neighbors_badargs():
                   neighbors.NearestNeighbors,
                   algorithm='blah')
 
-    X = np.random.random((10, 2))
+    X = rng.random_sample((10, 2))
 
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.RadiusNeighborsClassifier,

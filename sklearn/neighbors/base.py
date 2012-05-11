@@ -17,10 +17,17 @@ from ..metrics import pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr
 
 
+class NeighborsWarning(UserWarning):
+    pass
+
+# Make sure that NeighborsWarning are displayed more than once
+warnings.simplefilter("always", NeighborsWarning)
+
+
 def warn_equidistant():
     msg = ("kneighbors: neighbor k+1 and neighbor k have the same "
            "distance: results will be dependent on data order.")
-    warnings.warn(msg)
+    warnings.warn(msg, NeighborsWarning, stacklevel=3)
 
 
 def _check_weights(weights):
@@ -37,31 +44,29 @@ def _check_weights(weights):
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
-    ``weights`` can be either a string or an executable.
+    Parameters
+    ===========
+    dist: ndarray
+        The input distances
+    weights: {'uniform', 'distance' or a callable}
+        The kind of weighting used
 
-    returns ``weights_arr``, an array of the same size as ``dist``
-    if ``weights == 'uniform'``, then returns None
+    Returns
+    ========
+    weights_arr: array of the same shape as ``dist``
+        if ``weights == 'uniform'``, then returns None
     """
-    if dist.dtype == np.dtype(object):
-        if weights in (None, 'uniform'):
-            return None
-        elif weights == 'distance':
-            return [1. / d for d in dist]
-        elif callable(weights):
-            return [weights(d) for d in dist]
-        else:
-            raise ValueError("weights not recognized: should be 'uniform', "
-                             "'distance', or a callable function")
+    if weights in (None, 'uniform'):
+        return None
+    elif weights == 'distance':
+        with np.errstate(divide='ignore'):
+            dist = 1./dist
+        return dist
+    elif callable(weights):
+        return weights(dist)
     else:
-        if weights in (None, 'uniform'):
-            return None
-        elif weights == 'distance':
-            return 1. / dist
-        elif callable(weights):
-            return weights(dist)
-        else:
-            raise ValueError("weights not recognized: should be 'uniform', "
-                             "'distance', or a callable function")
+        raise ValueError("weights not recognized: should be 'uniform', "
+                            "'distance', or a callable function")
 
 
 class NeighborsBase(BaseEstimator):

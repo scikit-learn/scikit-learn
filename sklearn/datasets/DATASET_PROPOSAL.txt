@@ -132,6 +132,6 @@ Note
 ----
 
 Although the datasets package emerged from the learn package, I try to keep it
-independant from everything else, that is once we agree on the remaining
+independent from everything else, that is once we agree on the remaining
 problems and where the package should go, it can easily be put elsewhere
 without too much trouble.

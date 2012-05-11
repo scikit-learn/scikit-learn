@@ -17,8 +17,6 @@ from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
 from ..pairwise import _parallel_pairwise
 
-np.random.seed(0)
-
 
 def test_pairwise_distances():
     """ Test the pairwise_distance helper function. """

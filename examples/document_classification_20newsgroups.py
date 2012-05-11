@@ -107,7 +107,8 @@ y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words='english')
+vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
+                             stop_words='english')
 X_train = vectorizer.fit_transform(data_train.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
@@ -197,7 +198,7 @@ for penalty in ["l2", "l1"]:
     print 80 * '='
     print "%s penalty" % penalty.upper()
     # Train Liblinear model
-    results.append(benchmark(LinearSVC(loss='l2', penalty=penalty, C=1000,
+    results.append(benchmark(LinearSVC(loss='l2', penalty=penalty,
                                             dual=False, tol=1e-3)))
 
     # Train SGD model
@@ -227,7 +228,7 @@ class L1LinearSVC(LinearSVC):
     def fit(self, X, y):
         # The smaller C, the stronger the regularization.
         # The more regularization, the more sparsity.
-        self.transformer_ = LinearSVC(C=1000, penalty="l1",
+        self.transformer_ = LinearSVC(penalty="l1",
                                       dual=False, tol=1e-3)
         X = self.transformer_.fit_transform(X, y)
         return LinearSVC.fit(self, X, y)
@@ -238,7 +239,7 @@ class L1LinearSVC(LinearSVC):
 
 print 80 * '='
 print "LinearSVC with L1-based feature selection"
-results.append(benchmark(L1LinearSVC(C=1000)))
+results.append(benchmark(L1LinearSVC()))
 
 
 # make some plots

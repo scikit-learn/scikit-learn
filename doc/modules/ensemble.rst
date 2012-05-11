@@ -202,7 +202,7 @@ for both classification and regression via gradient boosted regression
 trees.
 
 Classification
-==============
+---------------
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
 classification via the deviance loss function (``loss='deviance'``).
@@ -226,15 +226,17 @@ parameter ``n_estimators``; The maximum depth of each tree is controlled via
 ``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
-.. note: Classification with more than 2 classes requires the induction
-         of ``n_classes`` regression trees at each at each iteration,
-         thus, the total number of induced trees equals
-         ``n_classes * n_estimators``. For datasets with a large number
-         of classes we strongly recommend to use
-         :class:`RandomForestClassifier` as an alternative to GBRT.
+.. note:: 
+   
+   Classification with more than 2 classes requires the induction
+   of ``n_classes`` regression trees at each at each iteration,
+   thus, the total number of induced trees equals
+   ``n_classes * n_estimators``. For datasets with a large number
+   of classes we strongly recommend to use
+   :class:`RandomForestClassifier` as an alternative to GBRT.
 
 Regression
-==========
+----------
 
 :class:`GradientBoostingRegressor` supports a number of different loss
 functions for regression which can be specified via the argument
@@ -272,7 +274,7 @@ property.
 
 
 Mathematical formulation
-========================
+-------------------------
 
 GBRT considers additive models of the following form:
 
@@ -332,7 +334,7 @@ only differ in the concrete loss function used.
 
 
 Loss Functions
---------------
+...............
 
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
@@ -361,12 +363,12 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
 
 Regularization
-==============
+----------------
 
 .. _gradient_boosting_shrinkage:
 
 Shrinkage
----------
+..........
 
 [F2001]_ proposed a simple regularization strategy that scales
 the contribution of each weak learner by a factor :math:`\nu`:
@@ -390,7 +392,7 @@ stopping. For a more detailed discussion of the interaction between
 ``learn_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
------------
+............
 
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration

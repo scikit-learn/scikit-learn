@@ -137,6 +137,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sys.stdout.write('.')
             sys.stdout.flush()
 
+    tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
+
     while True:
         if Cov.size:
             C_idx = np.argmax(np.abs(Cov))
@@ -226,8 +228,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T,
                                  least_squares)
 
-        g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir))
-        g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir))
+        g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
+        g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
         gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z

@@ -11,6 +11,13 @@ The :mod:`sklearn.feature_extraction` module can be used to extract
 features in a format supported by machine learning algorithms from datasets
 consisting of formats such as text and image.
 
+.. note::
+
+   Feature extraction is very different from :ref:`feature_selection`:
+   the former consists in transforming arbitrary data, such as text or
+   images, into numerical features usable for machine learning. The later
+   is a machine learning technique applied on these features.
+
 .. _dict_feature_extraction:
 
 Loading features from dicts
@@ -483,3 +490,37 @@ implemented as an estimator, so it can be used in pipelines. See::
     >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
+
+Connectivity graph of an image
+-------------------------------
+
+Several estimators in the scikit-learn can use connectivity information between
+features or samples. For instance Ward clustering
+(:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
+of an image, thus forming contiguous patches:
+
+.. figure:: ../auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
+   :target: ../auto_examples/cluster/plot_lena_ward_segmentation.html
+   :align: center
+   :scale: 40
+
+For this purpose, the estimators use a 'connectivity' matrix, giving
+which samples are connected.
+
+The function :func:`img_to_graph` returns such a matrix from a 2D or 3D
+image. Similarly, :func:`grid_to_graph` build a connectivity matrix for
+images given the shape of these image.
+
+These matrices can be used to impose connectivity in estimators that use
+connectivity information, such as Ward clustering
+(:ref:`hierarchical_clustering`), but also to build precomputed kernels,
+or similarity matrices.
+
+.. note:: **Examples**
+
+   * :ref:`example_cluster_plot_lena_ward_segmentation.py`
+
+   * :ref:`example_cluster_plot_segmentation_toy.py`
+
+   * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+

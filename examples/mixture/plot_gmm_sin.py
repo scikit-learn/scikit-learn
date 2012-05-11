@@ -41,15 +41,17 @@ color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
 
 
 for i, (clf, title) in enumerate([
-        (mixture.GMM(n_components=10, covariance_type='full'), \
+        (mixture.GMM(n_components=10, covariance_type='full', n_iter=100), \
              "Expectation-maximization"),
-        (mixture.DPGMM(n_components=10, covariance_type='full', alpha=0.01),
+        (mixture.DPGMM(n_components=10, covariance_type='full',
+                       alpha=0.01, n_iter=100),
          "Dirichlet Process,alpha=0.01"),
-        (mixture.DPGMM(n_components=10, covariance_type='diag', alpha=100.),
+        (mixture.DPGMM(n_components=10, covariance_type='diag',
+                       alpha=100., n_iter=100),
          "Dirichlet Process,alpha=100.")
         ]):
 
-    clf.fit(X, n_iter=100)
+    clf.fit(X)
     splot = pl.subplot(3, 1, 1 + i)
     Y_ = clf.predict(X)
     for i, (mean, covar, color) in enumerate(zip(

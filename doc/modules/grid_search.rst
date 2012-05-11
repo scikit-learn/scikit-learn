@@ -1,8 +1,8 @@
 .. _grid_search:
 
-===========
-Grid Search
-===========
+==========================================
+Grid Search: setting estimator parameters
+==========================================
 
 .. currentmodule:: sklearn
 

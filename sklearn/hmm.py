@@ -898,10 +898,11 @@ class MultinomialHMM(_BaseHMM):
 
     def _init(self, obs, params='ste'):
         super(MultinomialHMM, self)._init(obs, params=params)
+        self.random_state = check_random_state(self.random_state)
 
         if 'e' in params:
-            emissionprob = normalize(np.random.rand(self.n_components,
-                                                    self.n_symbols), 1)
+            emissionprob = normalize(self.random_state.rand(self.n_components,
+                self.n_symbols), 1)
             self.emissionprob_ = emissionprob
 
     def _initialize_sufficient_statistics(self):
@@ -952,11 +953,13 @@ class GMMHMM(_BaseHMM):
     >>> GMMHMM(n_components=2, n_mix=10, covariance_type='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     GMMHMM(algorithm='viterbi', covariance_type='diag', covars_prior=0.01,
-        gmms=[GMM(covariance_type=None, min_covar=0.001, n_components=10,
-        random_state=None, thresh=0.01), GMM(covariance_type=None,
-        min_covar=0.001, n_components=10, random_state=None, thresh=0.01)],
-        n_components=2, n_mix=10, random_state=None, startprob=None,
-        startprob_prior=1.0, transmat=None, transmat_prior=1.0)
+        gmms=[GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+        n_components=10, n_init=1, n_iter=100, params='wmc', random_state=None,
+        thresh=0.01), GMM(covariance_type=None, init_params='wmc',
+        min_covar=0.001, n_components=10, n_init=1, n_iter=100, params='wmc',
+        random_state=None, thresh=0.01)], n_components=2, n_mix=10,
+        random_state=None, startprob=None, startprob_prior=1.0, transmat=None,
+        transmat_prior=1.0)
 
     See Also
     --------
@@ -1015,7 +1018,8 @@ class GMMHMM(_BaseHMM):
 
         allobs = np.concatenate(obs, 0)
         for g in self.gmms:
-            g.fit(allobs, n_iter=0, init_params=params)
+            g.set_params(init_params=params, n_iter=0)
+            g.fit(allobs)
 
     def _initialize_sufficient_statistics(self):
         stats = super(GMMHMM, self)._initialize_sufficient_statistics()

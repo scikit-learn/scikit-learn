@@ -6,6 +6,7 @@ recursive feature elimination algorithm.
 
 from .univariate_selection import chi2
 from .univariate_selection import f_classif
+from .univariate_selection import f_oneway
 from .univariate_selection import f_regression
 from .univariate_selection import SelectPercentile
 from .univariate_selection import SelectKBest

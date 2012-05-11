@@ -110,6 +110,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             X, axis, with_mean=with_mean, with_std=with_std)
         if copy:
             X = X.copy()
+        # Xr is a view on the original array that enables easy use of
+        # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
         if with_mean:
             Xr -= mean_
@@ -507,6 +509,113 @@ def _is_multilabel(y):
            _is_label_indicator_matrix(y)
 
 
+class LabelEncoder(BaseEstimator, TransformerMixin):
+    """Encode labels with value between 0 and n_classes-1.
+
+    Attributes
+    ----------
+    `classes_`: array of shape [n_class]
+        Holds the label for each class.
+
+    Examples
+    --------
+    `LabelEncoder` can be used to normalize labels.
+
+    >>> from sklearn import preprocessing
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit([1, 2, 2, 6])
+    LabelEncoder()
+    >>> le.classes_
+    array([1, 2, 6])
+    >>> le.transform([1, 1, 2, 6])
+    array([0, 0, 1, 2])
+    >>> le.inverse_transform([0, 0, 1, 2])
+    array([1, 1, 2, 6])
+
+    It can also be used to transform non-numerical labels (as long as they are
+    hashable and comparable) to numerical labels.
+
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
+    LabelEncoder()
+    >>> list(le.classes_)
+    ['amsterdam', 'paris', 'tokyo']
+    >>> le.transform(["tokyo", "tokyo", "paris"])
+    array([2, 2, 1])
+    >>> list(le.inverse_transform([2, 2, 1]))
+    ['tokyo', 'tokyo', 'paris']
+
+    """
+
+    def _check_fitted(self):
+        if not hasattr(self, "classes_"):
+            raise ValueError("LabelNormalizer was not fitted yet.")
+
+    def fit(self, y):
+        """Fit label normalizer
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.classes_ = np.unique(y)
+        return self
+
+    def transform(self, y):
+        """Transform labels to normalized encoding.
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : array-like of shape [n_samples]
+        """
+        self._check_fitted()
+
+        classes = np.unique(y)
+        if len(np.intersect1d(classes, self.classes_)) < len(classes):
+            diff = np.setdiff1d(classes, self.classes_)
+            raise ValueError("y contains new labels: %s" % str(diff))
+
+        y = np.asarray(y)
+        y_new = np.zeros(len(y), dtype=int)
+
+        for i, k in enumerate(self.classes_[1:]):
+            y_new[y == k] = i + 1
+
+        return y_new
+
+    def inverse_transform(self, y):
+        """Transform labels back to original encoding.
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+        """
+        self._check_fitted()
+
+        y = np.asarray(y)
+        y_new = np.zeros(len(y), dtype=self.classes_.dtype)
+
+        for i, k in enumerate(self.classes_):
+            y_new[y == i] = k
+
+        return y_new
+
+
 class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
 
@@ -542,19 +651,19 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn import preprocessing
-    >>> clf = preprocessing.LabelBinarizer()
-    >>> clf.fit([1, 2, 6, 4, 2])
+    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb.fit([1, 2, 6, 4, 2])
     LabelBinarizer(neg_label=0, pos_label=1)
-    >>> clf.classes_
+    >>> lb.classes_
     array([1, 2, 4, 6])
-    >>> clf.transform([1, 6])
+    >>> lb.transform([1, 6])
     array([[ 1.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  1.]])
 
-    >>> clf.fit_transform([(1, 2), (3,)])
+    >>> lb.fit_transform([(1, 2), (3,)])
     array([[ 1.,  1.,  0.],
            [ 0.,  0.,  1.]])
-    >>> clf.classes_
+    >>> lb.classes_
     array([1, 2, 3])
     """
 

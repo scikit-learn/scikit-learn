@@ -7,6 +7,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from sklearn.utils.testing import assert_less, assert_greater
+
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -269,10 +271,10 @@ def test_sublinear_tf():
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
     tfidf = tr.fit_transform(X).toarray()
     assert_equal(tfidf[0], 1)
-    assert_true(tfidf[1] > tfidf[0])
-    assert_true(tfidf[2] > tfidf[1])
-    assert_true(tfidf[1] < 2)
-    assert_true(tfidf[2] < 3)
+    assert_greater(tfidf[1], tfidf[0])
+    assert_greater(tfidf[2], tfidf[1])
+    assert_less(tfidf[1], 2)
+    assert_less(tfidf[2], 3)
 
 
 def test_vectorizer():

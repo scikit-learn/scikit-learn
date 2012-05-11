@@ -183,10 +183,18 @@ version.
 Macports
 --------
 
-The macport's package is named py26-sklearn and can be installed
-by typing the following command::
+The macport's package is named `py26-sklearn` or `py27-sklearn` depending
+on the version of Python. It can be installed by typing the following
+command::
 
     sudo port install py26-scikits-learn
+
+or::
+
+    sudo port install py27-scikits-learn
+
+depending on the version of Python you want to use.
+
 
 NetBSD
 ------
@@ -213,7 +221,7 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    python -c "import sklearn; sklearn.test()"
+    nosetests sklearn --exe
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with the a text similar to::
@@ -225,20 +233,29 @@ otherwise please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists`.
 
+.. note:: **Alternative testing method**
+
+   If for some reason the recommended method is failing for you, please try
+   the alternate method::
+
+    python -c "import sklearn; sklearn.test()"
+
+   This method might display doctest failures because of nosetests issues.
+
 scikit-learn can also be tested without having the package
 installed. For this you must compile the sources inplace from the
 source directory::
 
     python setup.py build_ext --inplace
 
-Test can now be run using nosetest::
+Test can now be run using nosetests::
 
     nosetests sklearn/
 
-If you are running the development version, this is automated in the
-commands `make in` and `make test`.
+This is automated in the commands::
 
-.. warning::
+    make in
 
-   Because nosetest does not play well with multiprocessing on
-   windows, this last approach is not recommended on such system.
+and::
+
+    make test

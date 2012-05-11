@@ -7,11 +7,11 @@
 Tutorials: From the bottom up with scikit-learn
 =======================================================================
 
-.. topic:: Beginner Tutorial
+.. topic:: Quick start
 
     In this section, we introduce the `machine learning 
     <http://en.wikipedia.org/wiki/Machine_learning>`_
-    vocabulary that we use through-out `sklearn` and give a 
+    vocabulary that we use through-out `scikit-learn` and give a 
     simple learning example.
 
 
@@ -29,6 +29,9 @@ Tutorials: From the bottom up with scikit-learn
 
 .. toctree::
    :maxdepth: 2
-   
 
    statistical_inference/index.rst
+
+.. note:: **Videos**
+
+    Videos with tutorials can also be found in the :ref:`videos` section.

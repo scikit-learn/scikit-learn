@@ -19,7 +19,7 @@ better**.
     >>> y_digits = digits.target
     >>> svc = svm.SVC(C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
-    0.95999999999999996
+    0.97999999999999998
 
 To get a better measure of prediction accuracy (which we can use as a
 proxy for goodness of fit of the model), we can successively split the
@@ -39,7 +39,7 @@ data in *folds* that we use for training and testing::
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
     >>> print scores
-    [0.94156928213689484, 0.96661101836393992, 0.93322203672787984]
+    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
 .. currentmodule:: sklearn.cross_validation
 
@@ -69,13 +69,13 @@ The cross-validation can then be implemented easily::
     >>> kfold = cross_validation.KFold(len(X_digits), k=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in kfold]
-    [0.94156928213689484, 0.96661101836393992, 0.93322203672787984]
+    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
 To compute the `score` method of an estimator, the sklearn exposes
 a helper function::
 
     >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
-    array([ 0.94156928,  0.96661102,  0.93322204])
+    array([ 0.93489149,  0.95659432,  0.93989983])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
@@ -145,14 +145,14 @@ estimator during the construction and exposes an estimator API::
     ...                    n_jobs=-1)
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
-    >>> clf.best_score
-    0.98699897502292733
-    >>> clf.best_estimator.gamma
+    >>> clf.best_score_
+    0.988991985997974
+    >>> clf.best_estimator_.gamma
     9.9999999999999995e-07
 
     >>> # Prediction performance on test set is not as good as on train set
     >>> clf.score(X_digits[1000:], y_digits[1000:])
-    0.94353826850690092
+    0.94228356336260977
 
 
 By default the :class:`GridSearchCV` uses a 3-fold cross-validation. However, if
@@ -164,7 +164,7 @@ a stratified 3-fold.
     ::
 
         >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
-	array([ 0.98497496,  0.97829716,  0.97996661])
+	array([ 0.97996661,  0.98163606,  0.98330551])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set `gamma`, the other one by

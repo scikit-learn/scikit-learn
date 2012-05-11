@@ -22,7 +22,7 @@ def test_mcd():
 
     """
     ### Small data set
-    # test without outliers (random independant normal data)
+    # test without outliers (random independent normal data)
     launch_mcd_on_dataset(100, 5, 0, 0.01, 0.1, 80)
     # test with a contaminated data set (medium contamination)
     launch_mcd_on_dataset(100, 5, 20, 0.01, 0.01, 70)
@@ -72,8 +72,8 @@ def test_outlier_detection():
     """
 
     """
-    np.random.RandomState(0)
-    X = np.random.randn(100, 10)
+    rnd = np.random.RandomState(0)
+    X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
     clf.fit(X)
     y_pred = clf.predict(X)

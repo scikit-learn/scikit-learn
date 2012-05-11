@@ -55,8 +55,8 @@ def test_grid_search():
 def test_no_refit():
     """Test that grid search can be used for model selection only"""
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
-    grid_search.fit(X, y, refit=False)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
+    grid_search.fit(X, y)
     assert_true(hasattr(grid_search, "best_params_"))
 
 

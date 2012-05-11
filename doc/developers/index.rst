@@ -241,7 +241,7 @@ Other ways to contribute
 ========================
 
 Code is not the only way to contribute to scikit-learn. For instance,
-documentation is also a very important part of the project and ofter
+documentation is also a very important part of the project and often
 doesn't get as much attention as it deserves. If you find a typo in
 the documentation, or have made improvements, do not hesitate to send
 an email to the mailing list or submit a GitHub pull request. Full

@@ -65,8 +65,9 @@ y_test = iris.target[test_index]
 n_classes = len(np.unique(y_train))
 
 # Try GMMs using different types of covariances.
-classifiers = dict((x, GMM(n_components=n_classes, covariance_type=x))
-                    for x in ['spherical', 'diag', 'tied', 'full'])
+classifiers = dict((covar_type, GMM(n_components=n_classes,
+                    covariance_type=covar_type, init_params='wc', n_iter=20))
+                    for covar_type in ['spherical', 'diag', 'tied', 'full'])
 
 n_classifiers = len(classifiers)
 
@@ -82,7 +83,7 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
                                   for i in xrange(n_classes)])
 
     # Train the other parameters using the EM algorithm.
-    classifier.fit(X_train, init_params='wc', n_iter=20)
+    classifier.fit(X_train)
 
     h = pl.subplot(2, n_classifiers / 2, index + 1)
     make_ellipses(classifier, h)

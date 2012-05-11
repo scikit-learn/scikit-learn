@@ -5,8 +5,8 @@
 =========================================================
 Feature agglomeration
 =========================================================
-These images how similiar features are merged together using 
-feautre agglomeration.
+These images how similiar features are merged together using
+feature agglomeration.
 
 
 """
@@ -40,14 +40,14 @@ pl.figure(1, figsize=(4, 3.5))
 pl.clf()
 pl.subplots_adjust(left=.01, right=.99, bottom=.01, top=.91)
 for i in range(4):
-    pl.subplot(3, 4, i+1)
+    pl.subplot(3, 4, i + 1)
     pl.imshow(images[i], cmap=pl.cm.gray,
                 vmax=16, interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
     if i == 1:
         pl.title('Original data')
-    pl.subplot(3, 4, 4+i+1)
+    pl.subplot(3, 4, 4 + i + 1)
     pl.imshow(images_restored[i],
                 cmap=pl.cm.gray, vmax=16, interpolation='nearest')
     if i == 1:
@@ -61,5 +61,3 @@ pl.imshow(np.reshape(agglo.labels_, images[0].shape),
 pl.xticks(())
 pl.yticks(())
 pl.title('Labels')
-
-
