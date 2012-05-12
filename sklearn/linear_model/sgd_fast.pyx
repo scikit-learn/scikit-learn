@@ -221,6 +221,7 @@ cdef class Log(Classification):
         return Log, ()
 
 
+@cython.final
 cdef class MultinomialLog(Log):
     """Multinomial logistic regression loss for y in [0, K-1]"""
 
@@ -243,8 +244,7 @@ cdef class MultinomialLog(Log):
             update = -1.0 * eta * (p[k] / p_sum)
             if k == true_k:
                 update += eta
-            if update > 10e-7:
-                w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
+            w.add(x_data_ptr, x_ind_ptr, xnnz, k, update)
 
         return log(p[true_k] / p_sum)
 
@@ -252,6 +252,7 @@ cdef class MultinomialLog(Log):
         return MultinomialLog, ()
 
 
+@cython.final
 cdef class Perceptron(Classification):
     """Perceptron loss"""
 
@@ -294,7 +295,6 @@ cdef class Perceptron(Classification):
 
             w.dot(x_data_ptr, x_ind_ptr, xnnz, p)
             for k in range(K):
-                p[k] = 1.0 / K
                 if p[k] >= max_p:
                     pred_k = k
                     max_p = p[k]

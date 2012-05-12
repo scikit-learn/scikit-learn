@@ -15,6 +15,7 @@ cimport numpy as np
 cimport cython
 
 
+@cython.final
 cdef class WeightVector(object):
     """Parameter vector for a generalized linear model.
 
