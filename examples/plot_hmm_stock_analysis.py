@@ -29,7 +29,7 @@ if len(quotes) == 0:
 # unpack quotes
 dates = np.array([q[0] for q in quotes], dtype=int)
 close_v = np.array([q[2] for q in quotes])
-volume = np.array([q[2] for q in quotes])[1:]
+volume = np.array([q[5] for q in quotes])[1:]
 
 # take diff of close value
 # this makes len(diff) = len(close_t) - 1
