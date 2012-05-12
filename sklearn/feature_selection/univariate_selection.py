@@ -80,7 +80,7 @@ def f_oneway(*args):
     square_of_sums_alldata = reduce(lambda x, y: x + y, sums_args) ** 2
     square_of_sums_args = [s ** 2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
-    ssbn = 0
+    ssbn = 0.
     for k, _ in enumerate(args):
         ssbn += square_of_sums_args[k] / n_samples_per_class[k]
     ssbn -= square_of_sums_alldata / float(n_samples)

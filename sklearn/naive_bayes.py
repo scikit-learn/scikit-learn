@@ -128,7 +128,7 @@ class GaussianNB(BaseNB):
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
     GaussianNB()
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
 
@@ -345,7 +345,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
     MultinomialNB(alpha=1.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     Notes
@@ -402,7 +402,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
     BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     References

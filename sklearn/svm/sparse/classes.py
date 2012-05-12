@@ -26,7 +26,7 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
             gamma=0.5, kernel='rbf', probability=False, shrinking=True,
             tol=0.001, verbose=False)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
     """
 
@@ -62,7 +62,7 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.5,
             kernel='rbf', nu=0.5, probability=False, shrinking=True, tol=0.001,
             verbose=False)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
     """
 

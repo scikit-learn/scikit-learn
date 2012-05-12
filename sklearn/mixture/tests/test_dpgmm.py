@@ -32,18 +32,22 @@ class DPGMMTester(GMMTester):
 
 class TestDPGMMWithSphericalCovars(unittest.TestCase, DPGMMTester):
     covariance_type = 'spherical'
+    setUp = GMMTester._setUp
 
 
 class TestDPGMMWithDiagCovars(unittest.TestCase, DPGMMTester):
     covariance_type = 'diag'
+    setUp = GMMTester._setUp
 
 
 class TestDPGMMWithTiedCovars(unittest.TestCase, DPGMMTester):
     covariance_type = 'tied'
+    setUp = GMMTester._setUp
 
 
 class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
     covariance_type = 'full'
+    setUp = GMMTester._setUp
 
 
 class VBGMMTester(GMMTester):
@@ -57,18 +61,22 @@ class VBGMMTester(GMMTester):
 
 class TestVBGMMWithSphericalCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'spherical'
+    setUp = GMMTester._setUp
 
 
 class TestVBGMMWithDiagCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'diag'
+    setUp = GMMTester._setUp
 
 
 class TestVBGMMWithTiedCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'tied'
+    setUp = GMMTester._setUp
 
 
 class TestVBGMMWithFullCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'full'
+    setUp = GMMTester._setUp
 
 
 if __name__ == '__main__':

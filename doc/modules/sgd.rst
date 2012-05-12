@@ -62,10 +62,11 @@ for the training samples::
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0, fit_intercept=True,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, rho=0.85, seed=0, shuffle=False,
-           verbose=0, warm_start=False)
+    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
+           fit_intercept=True, learning_rate='optimal', loss='hinge', n_iter=5,
+           n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
+           shuffle=False, verbose=0, warm_start=False)
+
 
 After being fitted, the model can then be used to predict new values::
 
@@ -94,18 +95,19 @@ To get the signed distance to the hyperplane use `decision_function`::
 The concrete loss function can be set via the `loss`
 parameter. :class:`SGDClassifier` supports the following loss functions:
 
-  * `loss="hinge"`: (soft-margin) linear Support Vector Machine.
-  * `loss="modified_huber"`: smoothed hinge loss.
-  * `loss="log"`: Logistic Regression
+  * `loss="hinge"`: (soft-margin) linear Support Vector Machine,
+  * `loss="modified_huber"`: smoothed hinge loss,
+  * `loss="log"`: Logistic Regression,
+  * and all regression losses below.
 
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
-training very efficient.  Log loss, on the other hand, provides
-probability estimates.
+training very efficient and may result in sparser models, even when L2 penalty
+is used.
 
-In the case of binary classification and `loss="log"` you get a
-probability estimate P(y=C|x) using `predict_proba`, where `C` is the
-largest class label::
+In the case of binary classification and `loss="log"` or
+`loss="modified_huber"` you get a probability estimate P(y=C|x) using
+`predict_proba`, where `C` is the largest class label::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
@@ -174,12 +176,14 @@ samples (> 10.000), for other problems we recommend :class:`Ridge`,
 The concrete loss function can be set via the `loss`
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  * `loss="squared_loss"`: Ordinary least squares.
-  * `loss="huber"`: Huber loss for robust regression.
+  * `loss="squared_loss"`: Ordinary least squares,
+  * `loss="huber"`: Huber loss for robust regression,
+  * `loss="epsilon_insensitive"`: linear Support Vector Regression.
 
-The Huber loss function is an epsilon insensitive loss function for
+The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
-specified via the parameter `epsilon`.
+specified via the parameter `epsilon`. This parameter depends on the
+scale of the target variables.
 
 .. topic:: Examples:
 
@@ -281,6 +285,7 @@ Different choices for :math:`L` entail different classifiers such as
    - Hinge: (soft-margin) Support Vector Machines.
    - Log:   Logistic Regression.
    - Least-Squares: Ridge Regression.
+   - Epsilon-Insensitive: (soft-margin) Support Vector Regression.
 
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
