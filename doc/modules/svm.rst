@@ -476,6 +476,27 @@ vectors and the test vectors must be provided.
 
 .. _svm_mathematical_formulation:
 
+Parameters of the RBF Kernel
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When training an SVM with the *Radial Basis Function* (RBF) kernel,
+two parameters must be considered: `C` and `gamma`.  The parameter `C`,
+common to all SVM kernels, trades off misclassification of training
+examples against simplicity of the decision surface. A low `C` makes
+the decision surface smooth, while a high `C` aims at classifying all
+training examples correctly.  `gamma` defines how much influence a
+single training example has.  The larger `gamma` is, the closer other
+examples must be to be affected.
+
+Proper choice of `C` and `gamma` is critical to the SVM's performance.
+One is advised to use :class:`GridSearchCV` with `C` and `gamma` spaced
+exponentially far apart to choose good values.
+
+.. topic:: Examples:
+
+ * :ref:`example_svm_plot_rbf_parameters.py`
+
+
 Mathematical formulation
 ========================
 
