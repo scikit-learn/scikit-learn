@@ -85,7 +85,7 @@ for C in C_2d_range:
 # visualization
 #
 # draw visualization of parameter effects
-pl.figure(0, figsize=(8, 6))
+pl.figure(figsize=(8, 6))
 xx, yy = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-5, 5, 200))
 for (k, (C, gamma, clf)) in enumerate(classifiers):
     # evaluate decision function in a grid
@@ -112,7 +112,7 @@ scores = [x[1] for x in score_dict]
 scores = np.array(scores).reshape(len(C_range), len(gamma_range))
 
 # draw heatmap of accuracy as a function of gamma and C
-pl.figure(1, figsize=(8, 6))
+pl.figure(figsize=(8, 6))
 pl.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
 pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
 pl.xlabel('gamma')
