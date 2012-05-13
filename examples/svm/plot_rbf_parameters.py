@@ -4,11 +4,7 @@ RBF SVM parameters
 ==================
 
 This example illustrates the effect of the parameters `gamma`
-and `C` of the rbf kernel SVM.  It draws two plots, the first being
-a heatmap of accuracy during cross validation over parameters
-enumerated by grid search, and the latter being a visualization of
-the decision function as a function of the feature vector in 2D
-for a variety of parameter settings.
+and `C` of the rbf kernel SVM.
 
 Intuitively, the `gamma` parameter defines how far the influence
 of a single training example reaches, with low values meaning 'far'
@@ -17,10 +13,14 @@ The `C` parameter trades off misclassification of training examples
 against simplicity of the decision surface. A low C makes
 the decision surface smooth, while a high C aims at classifying
 all training examples correctly.
+
+Two plots are generated.  The first is a visualization of the
+decision function for a variety of parameter values, and the second
+is a heatmap of the classifier's cross-validation accuracy as
+a function of `C` and `gamma`.
 '''
 print __doc__
 
-import matplotlib.gridspec as gridspec
 import numpy as np
 import pylab as pl
 
@@ -85,19 +85,15 @@ for C in C_2d_range:
 # visualization
 #
 # draw visualization of parameter effects
-pl.figure(0, figsize=(16, 6))
+pl.figure(0, figsize=(8, 6))
 xx, yy = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-5, 5, 200))
-gs2 = gridspec.GridSpec(3, 3)
-gs2.update(left=0.5, right=0.95, bottom=0.05, top=0.95)
 for (k, (C, gamma, clf)) in enumerate(classifiers):
     # evaluate decision function in a grid
     Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
 
     # visualize decision function for these parameters
-    row = k / 3
-    col = k % 3
-    pl.subplot(gs2[row, col])
+    pl.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
     pl.title("gamma {}, C {}".format(gamma, C), size='medium')
 
     # visualize parameter's effect on decision function
@@ -116,9 +112,8 @@ scores = [x[1] for x in score_dict]
 scores = np.array(scores).reshape(len(C_range), len(gamma_range))
 
 # draw heatmap of accuracy as a function of gamma and C
-gs = gridspec.GridSpec(1, 1)
-gs.update(left=0.05, right=0.45, bottom=0.15, top=0.95)
-pl.subplot(gs[0, 0])
+pl.figure(1, figsize=(8, 6))
+pl.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
 pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
 pl.xlabel('gamma')
 pl.ylabel('C')
