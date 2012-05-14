@@ -18,6 +18,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
+# load and shuffle digits
+digits = datasets.load_digits()
+perm = rng.permutation(digits.target.size)
+digits.data = digits.data[perm]
+digits.target = digits.target[perm]
+
 SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
                 lil_matrix)
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
@@ -397,6 +403,29 @@ def test_neighbors_iris():
         rgs.fit(iris.data, iris.target)
         assert np.mean(
             rgs.predict(iris.data).round() == iris.target) > 0.95
+
+
+def test_neighbors_digits():
+    """Sanity check on the digits dataset
+
+    the 'brute' algorithm has been observed to fail if the input
+    dtype is uint8 due to overflow in distance calculations.
+    """
+
+    X = digits.data.astype('uint8')
+    Y = digits.target
+    (n_samples, n_features) = X.shape
+    train_test_boundary = int(n_samples * 0.8)
+    train = np.arange(0, train_test_boundary)
+    test = np.arange(train_test_boundary, n_samples)
+    (X_train, Y_train, X_test, Y_test) = X[train], Y[train], X[test], Y[test]
+
+    clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute',
+        warn_on_equidistant=False)
+    score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
+    score_float = clf.fit(X_train.astype(float), Y_train).score(
+        X_test.astype(float), Y_test)
+    assert score_uint8 == score_float
 
 
 def test_kneighbors_graph():
