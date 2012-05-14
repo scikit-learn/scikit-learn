@@ -474,8 +474,6 @@ vectors and the test vectors must be provided.
     >>> clf.predict(gram)
     array([ 0.,  1.])
 
-.. _svm_mathematical_formulation:
-
 Parameters of the RBF Kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -496,6 +494,7 @@ exponentially far apart to choose good values.
 
  * :ref:`example_svm_plot_rbf_parameters.py`
 
+.. _svm_mathematical_formulation:
 
 Mathematical formulation
 ========================
