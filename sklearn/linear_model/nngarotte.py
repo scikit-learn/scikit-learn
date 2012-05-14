@@ -1,5 +1,7 @@
 """
-Non-Negative Garotte implementation with the Scikit-learn
+Non-Negative Garotte 
+
+Explain it here
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -11,11 +13,10 @@ Non-Negative Garotte implementation with the Scikit-learn
 #imports
 import numpy as np
 
-
+#USE RELATIVE INPUTS INSTEAD.. TODO
 from sklearn.linear_model.base import LinearModel
 from sklearn.linear_model import LinearRegression, Lasso, lasso_path
 
-#global functions--------------------------------------------------------
 def non_negative_garotte(X, y, alpha, tol=0.001):
     """
     TODO - non_negative_garotte docstring
@@ -46,6 +47,7 @@ def non_negative_garotte_path(X, y, alpha):
     """
 
     # Obtain the ordinary least squares coefficients from our data
+    # TODO do it with RIDGE and alpha_ridge=0.0
     coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
 
     X = X * coef_ols[np.newaxis, :]
@@ -63,8 +65,6 @@ def non_negative_garotte_path(X, y, alpha):
     rss = np.sum((y - np.dot(X, coef)) ** 2)
     
     return coef_path, shrink_coef, rss
-
-#classes---------------------------------------------------------------------
 
 class NonNegativeGarrote(LinearModel):
     """NonNegativeGarrote - TODO description
@@ -92,7 +92,7 @@ class NonNegativeGarrote(LinearModel):
 
 
     NOTES:
-    good default value for alpha?
+    alpha will be cross-validated
     """
     def __init__(self, alpha=0.35, fit_intercept=True, tol=1e-4, normalize=False,
                  copy_X=True):
@@ -131,7 +131,8 @@ class NonNegativeGarrote(LinearModel):
 # with a synthetic dataset. Will make a proper example of this later
 # This obtains the same figures as `figure 1` in 
 # http://www2.isye.gatech.edu/statistics/papers/05-25.pdf , page 11
-
+#
+#TO BE MOVED INTO AN EXAMPLE SOON
 if __name__ == '__main__':
     import pylab as pl
     from sklearn.utils import check_random_state
