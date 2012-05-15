@@ -60,7 +60,7 @@ def _get_weights(dist, weights):
         return None
     elif weights == 'distance':
         with np.errstate(divide='ignore'):
-            dist = 1./dist
+            dist = 1. / dist
         return dist
     elif callable(weights):
         return weights(dist)
@@ -131,7 +131,7 @@ class NeighborsBase(BaseEstimator):
 
         if self._fit_method == 'auto':
             # BallTree outperforms the others in nearly any circumstance.
-            if self.n_neighbors is None : 
+            if self.n_neighbors is None:
                 self._fit_method = 'ball_tree'
             elif self.n_neighbors < self._fit_X.shape[0] // 2:
                 self._fit_method = 'ball_tree'
