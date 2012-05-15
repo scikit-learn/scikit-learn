@@ -12,6 +12,7 @@ make it more stable, this module will be removed in version 0.11.
 """
 
 import string
+import warnings
 
 import numpy as np
 
@@ -110,9 +111,18 @@ class _BaseHMM(BaseEstimator):
     # the emission distribution parameters to expose them publically.
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
-            startprob_prior=None, transmat_prior=None,
-            algorithm="viterbi", random_state=None):
+                 startprob_prior=None, transmat_prior=None,
+                 algorithm="viterbi", random_state=None,
+                 n_iter=10, thresh=1e-2, params=string.ascii_letters,
+                 init_params=string.ascii_letters):
+
         self.n_components = n_components
+        self.n_iter = n_iter
+        self.thresh = thresh
+        self.params = params
+        self.init_params = init_params
+        
+        # This decision logic must be removed
 
         if startprob is None:
             startprob = np.tile(1.0 / n_components, n_components)
@@ -372,9 +382,12 @@ class _BaseHMM(BaseEstimator):
     def rvs(self, n=1, random_state=None):
         return self.sample(n, random_state)
 
-    def fit(self, obs, n_iter=10, thresh=1e-2, params=string.ascii_letters,
-            init_params=string.ascii_letters, **kwargs):
+    def fit(self, obs, **kwargs):
         """Estimate model parameters.
+
+        OLD-PARAMS
+        n_iter=10, thresh=1e-2, params=string.ascii_letters,
+            init_params=string.ascii_letters,
 
         An initialization step is performed before entering the EM
         algorithm. If you want to avoid this step, set the keyword
@@ -413,10 +426,27 @@ class _BaseHMM(BaseEstimator):
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
         """
-        self._init(obs, init_params)
+        
+        if kwargs:
+            warnings.warn("Setting parameters in the 'fit' method is"
+                    "deprecated. Set it on initialization instead.",
+                    DeprecationWarning)
+            # initialisations for in case the user still adds parameters to fit
+            # so things don't break
+            if 'n_iter' in kwargs:
+                self.n_iter = kwargs['n_iter']
+            if 'thresh' in kwargs:
+                self.thresh = kwargs['thresh']
+            if 'params' in kwargs:
+                self.params = kwargs['params']
+            if 'init_params' in kwargs:
+                self.init_params = kwargs['init_params']
+        
+        
+        self._init(obs, self.init_params)
 
         logprob = []
-        for i in xrange(n_iter):
+        for i in xrange(self.n_iter):
             # Expectation step
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
@@ -429,15 +459,15 @@ class _BaseHMM(BaseEstimator):
                 curr_logprob += lpr
                 self._accumulate_sufficient_statistics(
                     stats, seq, framelogprob, posteriors, fwdlattice,
-                    bwdlattice, params)
+                    bwdlattice, self.params)
             logprob.append(curr_logprob)
 
             # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < thresh:
+            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
                 break
 
             # Maximization step
-            self._do_mstep(stats, params)
+            self._do_mstep(stats, self.params)
 
         return self
 
