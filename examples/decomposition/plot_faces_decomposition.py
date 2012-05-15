@@ -93,8 +93,8 @@ estimators = [
      True, False),
 
     ('Cluster centers - MiniBatchKMeans',
-     MiniBatchKMeans(k=n_components, tol=1e-3, batch_size=20, max_iter=50,
-                     random_state=rng),
+     MiniBatchKMeans(n_cluster=n_components, tol=1e-3, batch_size=20,
+         max_iter=50, random_state=rng),
      True, False)
 ]
 
