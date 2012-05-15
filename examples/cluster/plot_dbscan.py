@@ -28,7 +28,7 @@ S = 1 - (D / np.max(D))
 
 ##############################################################################
 # Compute DBSCAN
-db = DBSCAN().fit(S, eps=0.95, min_samples=10)
+db = DBSCAN(eps=0.95, min_samples=10).fit(S)
 core_samples = db.core_sample_indices_
 labels = db.labels_
 
