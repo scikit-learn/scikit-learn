@@ -87,11 +87,8 @@ for factory, init, params in cases:
     for run_id in range(n_runs):
         X, y = make_data(run_id, n_samples_per_center, grid_size, scale)
         for i, n_init in enumerate(n_init_range):
-            km = factory(k=n_clusters,
-                         init=init,
-                         random_state=run_id,
-                         n_init=n_init,
-                         **params).fit(X)
+            km = factory(n_clusters=n_clusters, init=init, random_state=run_id,
+                    n_init=n_init, **params).fit(X)
             inertia[i, run_id] = km.inertia_
     p = pl.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
     plots.append(p[0])
@@ -105,7 +102,7 @@ pl.title("Mean inertia for various k-means init across %d runs" % n_runs)
 # Part 2: Qualitative visual inspection of the convergence
 
 X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
-km = MiniBatchKMeans(k=n_clusters, init='random', n_init=1,
+km = MiniBatchKMeans(n_clusters=n_clusters, init='random', n_init=1,
                      random_state=random_state).fit(X)
 
 fig = pl.figure()
