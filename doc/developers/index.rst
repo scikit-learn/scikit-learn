@@ -75,29 +75,24 @@ repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub:
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
- 4. Work on this copy, on your computer, using Git to do the version
-    control::
-
-        $ git add modified_files
-        $ git commit
-        $ git push origin master
-
-    and so on.
-
-If your changes are not just trivial fixes, it is better to directly
-work in a branch with the name of the feature you are working on. In
-this case, replace step 4 with step 5:
-
-  5. Create a branch to host your changes and publish it on your public
-     repo::
+ 4. Create a branch to hold your changes::
 
         $ git checkout -b my-feature
+
+    and start making changes. Never work in the ``master`` branch!
+
+ 5. Work on this copy, on your computer, using Git to do the version
+    control. When you're done editing, do::
+
         $ git add modified_files
         $ git commit
-        $ git push origin my-feature
 
-When you are ready, and you have pushed your changes to your GitHub repo, go
-the web page of the repo, and click on 'Pull request' to send us a pull
+    to record your changes in Git, then push them to GitHub with::
+
+        $ git push -u origin my-feature
+
+Finally, go to the web page of the your fork of the scikit-learn repo,
+and click 'Pull request' to send your changes to the maintainers for review.
 request. This will send an email to the committers, but might also send an
 email to the mailing list in order to get more visibility.
 
@@ -109,8 +104,7 @@ email to the mailing list in order to get more visibility.
   to use instead of ``origin``. If we choose the name ``upstream`` for it, the
   command will be::
 
-        $ git remote add upstream git@github.com:scikit-learn/scikit-learn.git
-
+        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 (If any of the above seems like magic to you, then look up the
 `Git documentation <http://git-scm.com/documentation>`_ on the web.)
