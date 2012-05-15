@@ -444,7 +444,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                                       " loss='log' or loss='modified_huber' "
                                       "(%s given)" % self.loss)
 
-
     def _fit_binary(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
             X = _tocsr(X)
@@ -622,9 +621,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1, p=None, seed=0, learning_rate="invscaling",
-                 eta0=0.01, power_t=0.25, warm_start=False):
+            rho=0.85, fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+            epsilon=0.1, p=None, seed=0, learning_rate="invscaling", eta0=0.01,
+            power_t=0.25, warm_start=False):
 
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "

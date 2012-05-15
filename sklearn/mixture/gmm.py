@@ -508,7 +508,8 @@ class GMM(BaseEstimator):
                     break
 
                 # Maximization step
-                self._do_mstep(X, responsibilities, self.params, self.min_covar)
+                self._do_mstep(X, responsibilities, self.params,
+                        self.min_covar)
 
             # if the results are better, keep it
             if self.n_iter:
