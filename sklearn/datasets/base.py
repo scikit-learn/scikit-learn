@@ -20,6 +20,7 @@ from os import listdir
 from os import makedirs
 
 import numpy as np
+import scipy.io as io
 
 from ..utils import check_random_state
 
@@ -503,3 +504,31 @@ def load_sample_image(image_name):
     if index is None:
         raise AttributeError("Cannot find sample image: %s" % image_name)
     return images.images[index]
+
+def load_kalman_data():
+    module_path = dirname(__file__)
+    data = io.loadmat(join(module_path, 'data', 'kf_vars.mat'))
+    descr = open(join(module_path, 'descr', 'kf.rst')).read()
+
+    Z = data['y'].T
+    X = data['x'].T
+    A = data['A']
+    b = data['b'].T
+    C = data['C']
+    d = data['d'][:,0]
+    Q_0 = 10.0*np.eye(5)
+    R_0 = 10.0*np.eye(2)
+    Q = data['Q']
+    R = data['R']
+    x_0 = data['x0'][:,0]
+    V_0 = data['P_0']
+    X_filt = data['xfilt'].T
+    V_filt = data['Vfilt'][0]
+    ll = data['ll'][0]
+    X_smooth = data['xsmooth'].T
+    V_smooth = data['Vsmooth'][0]
+    T = Z.shape[0]
+
+    return Bunch(T=T, data=Z, target=X, A=A, b=b, C=C, d=d, Q_0=Q_0, R_0=R_0,
+        Q=Q, R=R, x_0=x_0, V_0=V_0, X_filt=X_filt, V_filt=V_filt, ll=ll,
+        X_smooth=X_smooth, V_smooth=V_smooth, DESCR=descr)
