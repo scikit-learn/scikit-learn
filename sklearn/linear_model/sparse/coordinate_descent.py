@@ -1,5 +1,6 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Alexis Mignon <alexis.mignon@gmail.com>
 #
 # License: BSD Style.
 """Implementation of coordinate descent for the Elastic Net with sparse data.
@@ -10,8 +11,40 @@ import numpy as np
 import scipy.sparse as sp
 
 from ...utils.extmath import safe_sparse_dot
+from ...utils.sparsefuncs import csc_mean_variance_axis0, \
+                                inplace_csc_column_scale
 from ..base import LinearModel
 from . import cd_fast_sparse
+
+
+def center_data(X, y, fit_intercept, normalize=False):
+    """
+    Compute informations needed to center data to have mean zero along
+    axis 0. Be aware that X will not be centered since it would break
+    the sparsity, but will be normalized if asked so.
+    """
+    X_data = np.array(X.data, np.float64)
+    if fit_intercept:
+        X = sp.csc_matrix(X, copy=normalize)  # copy if 'normalize' is
+                      # True or X is not a csc matrix
+        X_mean, X_std = csc_mean_variance_axis0(X)
+        if normalize:
+            X_std = cd_fast_sparse.sparse_std(
+                X.shape[0], X.shape[1],
+                X_data, X.indices, X.indptr, X_mean)
+            X_std[X_std == 0] = 1
+            inplace_csc_column_scale(X)
+        else:
+            X_std = np.ones(X.shape[1])
+        y_mean = y.mean(axis=0)
+        y = y - y_mean
+    else:
+        X_mean = np.zeros(X.shape[1])
+        X_std = np.ones(X.shape[1])
+        y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
+
+    X_data = np.array(X.data, np.float64)
+    return X_data, y, X_mean, y_mean, X_std
 
 
 class ElasticNet(LinearModel):
@@ -40,9 +73,7 @@ class ElasticNet(LinearModel):
     while alpha corresponds to the lambda parameter in glmnet.
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
-                 normalize=False, max_iter=1000, tol=1e-4):
-        if fit_intercept:
-            raise NotImplementedError("fit_intercept=True is not implemented")
+                 normalize=False, max_iter=1000, tol=1e-4, positive=False):
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
@@ -50,6 +81,7 @@ class ElasticNet(LinearModel):
         self.intercept_ = 0.0
         self.max_iter = max_iter
         self.tol = tol
+        self.positive = positive
         self._set_coef(None)
 
     def _set_coef(self, coef_):
@@ -83,22 +115,23 @@ class ElasticNet(LinearModel):
 
         alpha = self.alpha * self.rho * n_samples
         beta = self.alpha * (1.0 - self.rho) * n_samples
-        X_data = np.array(X.data, np.float64)
+        X_data, y, X_mean, y_mean, X_std = center_data(X, y,
+                                                       self.fit_intercept,
+                                                       self.normalize)
 
-        # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
-                    self.coef_, alpha, beta, X_data, X.indices, X.indptr, y,
-                    self.max_iter, self.tol)
+                    self.coef_, alpha, beta, X_data, X.indices,
+                    X.indptr, y, X_mean / X_std,
+                    self.max_iter, self.tol, self.positive)
 
         # update self.coef_ and self.sparse_coef_ consistently
         self._set_coef(coef_)
+        self._set_intercept(X_mean, y_mean, X_std)
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
                                 'to increase the number of iterations')
-
-        # XXX TODO: implement intercept_ fitting
 
         # return self for chaining fit and predict calls
         return self
@@ -136,7 +169,8 @@ class Lasso(ElasticNet):
 
     """
     def __init__(self, alpha=1.0, fit_intercept=False, normalize=False,
-                 max_iter=1000, tol=1e-4):
+                 max_iter=1000, tol=1e-4, positive=False):
         super(Lasso, self).__init__(
             alpha=alpha, rho=1.0, fit_intercept=fit_intercept,
-            normalize=normalize, max_iter=max_iter, tol=tol)
+            normalize=normalize, max_iter=max_iter,
+            tol=tol, positive=positive)
