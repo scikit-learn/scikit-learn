@@ -41,7 +41,7 @@ graph.data = np.exp(-beta * graph.data / lena.std()) + eps
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed)
 N_REGIONS = 11
-labels = spectral_clustering(graph, n_cluster=N_REGIONS)
+labels = spectral_clustering(graph, n_clusters=N_REGIONS)
 labels = labels.reshape(lena.shape)
 
 ###############################################################################
