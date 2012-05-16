@@ -1,5 +1,6 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Alexix Mignon <alexis.mignon@gmail.com>
 #
 # License: BSD Style.
 """Implementation of coordinate descent for the Elastic Net with sparse data.

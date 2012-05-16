@@ -1,6 +1,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Alexix Mignon <alexis.mignon@gmail.com>
 #
 # License: BSD Style.
 
