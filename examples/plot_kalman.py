@@ -19,6 +19,7 @@ The Kalman Filter and Smoother are two methods for estimating the
 hidden state x_t given observations y_t.  The EM algorithm, in
 addition, allows one to estimate Q and R in an iterative fashion.
 '''
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_kalman_data
 from sklearn.kalman import KalmanFilter
@@ -34,6 +35,16 @@ kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
 (Q, R, ll) = kf.em(Z=data.data, n_iter=10)
 kf.Q = Q
 kf.R = R
+
+# Estimate the state without using an observations.  This will let us see how
+# good we could do if we ran blind.
+n_dim_state = data.A.shape[0]
+T = data.data.shape[0]
+x_blind = np.zeros( (T+1, n_dim_state) )
+for t in range(T):
+  if t == 0:
+    x_blind[t] = data.x_0
+  x_blind[t+1] = data.A.dot(x_blind[t]) + data.b[t]
 
 # Estimate the hidden states using observations up to and including
 # time t for t in [0...T].  This method outputs the mean and covariance
@@ -53,11 +64,12 @@ kf.R = R
 # 5 dimensions.
 plt.figure()
 plt.hold(True)
-lines_true = plt.plot(data.target, linestyle='-', label='true state')
-lines_filt = plt.plot(x_filt, linestyle='--', color='g', label='filtered state')
-lines_smooth = plt.plot(x_smooth, linestyle='-.', color='r', label='smoothed state')
-plt.legend((lines_true[0], lines_filt[0], lines_smooth[0]),
-            ('true state', 'filtered state', 'smoothed state'))
+lines_true = plt.plot(data.target, linestyle='-', color='b')
+lines_blind = plt.plot(x_blind, linestyle=':', color='m')
+lines_filt = plt.plot(x_filt, linestyle='--', color='g')
+lines_smooth = plt.plot(x_smooth, linestyle='-.', color='r')
+plt.legend((lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
+            ('true', 'blind', 'filtered', 'smoothed'))
 plt.xlabel('time')
 plt.ylabel('state')
 
