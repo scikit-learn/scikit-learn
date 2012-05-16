@@ -25,6 +25,16 @@ the EM algorithm,
 
 Observations are assumed to be sampled at times [1...T] while
 states are sampled from times [0...T]
+
+References
+==========
+  * Abbeel, Pieter. "Maximum Likelihood, EM".
+      http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/
+  * Yu, Byron M. and Shenoy, Krishna V. and Sahani, Maneesh. "Derivation of
+      Kalman Filtering and Smoothing Equations".
+      http://www.ece.cmu.edu/~byronyu/papers/derive_ks.pdf
+  * Welling, Max. "The Kalman Filter".
+      http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
 '''
 import numpy as np
 
@@ -330,14 +340,14 @@ class KalmanFilter(object):
         rng : numpy random state
             random number generator
         '''
-        self.A = np.asarray(A)
-        self.C = np.asarray(C)
-        self.Q = np.asarray(Q)
-        self.R = np.asarray(R)
-        self.b = np.asarray(b)
-        self.d = np.asarray(d)
-        self.x_0 = np.asarray(x_0)
-        self.V_0 = np.asarray(V_0)
+        self.A = np.atleast_2d(A)
+        self.C = np.atleast_2d(C)
+        self.Q = np.atleast_2d(Q)
+        self.R = np.atleast_2d(R)
+        self.b = np.atleast_1d(b)
+        self.d = np.atleast_1d(d)
+        self.x_0 = np.atleast_1d(x_0)
+        self.V_0 = np.atleast_2d(V_0)
         self.rng = rng
 
     def sample(self, T, x_0=None):
