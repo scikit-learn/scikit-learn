@@ -118,7 +118,6 @@ class ElasticNet(LinearModel):
                                                        self.fit_intercept,
                                                        self.normalize)
 
-        # TODO: add support for non centered data
         coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
                     self.coef_, alpha, beta, X_data, X.indices,
@@ -132,8 +131,6 @@ class ElasticNet(LinearModel):
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
                                 'to increase the number of iterations')
-
-        # XXX TODO: implement intercept_ fitting
 
         # return self for chaining fit and predict calls
         return self

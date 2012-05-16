@@ -155,6 +155,7 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     assert_greater(d_clf.score(X_test, y_test), 0.85)
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
+    assert_almost_equal(s_clf.intercept_, d_clf.intercept_, 5)
 
     # check that the coefs are sparse
     assert_less(np.sum(s_clf.coef_ != 0.0), 2 * n_informative)
