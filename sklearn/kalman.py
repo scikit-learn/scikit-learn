@@ -4,34 +4,34 @@ Inference for Linear-Gaussian Systems
 =====================================
 
 This module implements the Kalman Filter, Kalman Smoother, and
-EM Algorithm for Linear-Gaussian state space models.    In other
+EM Algorithm for Linear-Gaussian state space models.  In other
 words, assuming that
 
 .. math::
 
-    x_{t+1}   &= A_t * x_t + b_t + e_t^1        \\
-    y_{t}     &= C_t * x_t + d_t + e_t^2        \\
-    e_t^1     &~ MultivariateNormal(0, Q)       \\
-    e_t^2     &~ MultivariateNormal(0, R)       \\
-    x_0       &~ MultivariateNormal(x_0, V_0)
+    x_{t+1}   &= A_t x_t + b_t + e_t^1        \\
+    z_{t}     &= C_t x_t + d_t + e_t^2        \\
+    e_t^1     &\sim \text{MultivariateNormal}(0, Q)       \\
+    e_t^2     &\sim \text{MultivariateNormal}(0, R)       \\
+    x_0       &\sim \text{MultivariateNormal}(\mu_0, \Sigma_0)
 
 then the Kalman Filter calculates exactly,
 
 .. math::
 
-    P(x_t | y_{1:t})
+    P(x_t | z_{1:t})
 
 the Kalman Smoother,
 
 .. math::
 
-    P(x_t | y_{1:T})
+    P(x_t | z_{1:T})
 
-the EM algorithm,
+the EM algorithm, for :math:`\theta = (A,C,Q,R,\mu_0,\Sigma_0)`,
 
 .. math::
 
-    argmax_{Q,R} P(y_{1:T}; Q, R)
+    \arg\max_{\theta} P(z_{1:T}; \theta)
 
 Observations are assumed to be sampled at times [1...T] while
 states are sampled from times [0...T]
@@ -39,16 +39,18 @@ states are sampled from times [0...T]
 References
 ==========
   * Abbeel, Pieter. "Maximum Likelihood, EM".
-      http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/
+    http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/
   * Yu, Byron M. and Shenoy, Krishna V. and Sahani, Maneesh. "Derivation of
-      Kalman Filtering and Smoothing Equations".
-      http://www.ece.cmu.edu/~byronyu/papers/derive_ks.pdf
+    Kalman Filtering and Smoothing Equations".
+    http://www.ece.cmu.edu/~byronyu/papers/derive_ks.pdf
   * Ghahramani, Zoubin and Hinton, Geoffrey E. "Parameter Estimation for Linear
-      Dynamical Systems." http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
+    Dynamical Systems." http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
   * Welling, Max. "The Kalman Filter".
-      http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
+    http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
 """
 import numpy as np
+
+from sklearn.utils import array2d
 
 
 def _last_dims(X, t, ndims=2):
@@ -443,8 +445,6 @@ def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
     return x0_x0 - np.outer(mu_0, x0) - np.outer(x0, mu_0) \
         + np.outer(mu_0, mu_0)
 
-    
-
 
 class KalmanFilter(object):
     """
@@ -471,8 +471,8 @@ class KalmanFilter(object):
 
         \max_{\theta} P(z_{1:T}; \theta)
 
-    If we define :math:`L(x_{1:t},\theta)` = log P(z_{1:T}, x_{1:T}; \theta), then
-    the EM algorithm works by iteratively finding,
+    If we define :math:`L(x_{1:t},\theta) = \log P(z_{1:T}, x_{1:T}; \theta)`,
+    then the EM algorithm works by iteratively finding,
 
     .. math::
 
@@ -483,7 +483,7 @@ class KalmanFilter(object):
     .. math::
 
         \theta_{i+1} = \arg\max_{\theta}
-            E_{x_{1:T}} [ L(x_{1:t}, \theta); z_{1:T], \theta_i ]
+            E_{x_{1:T}} [ L(x_{1:t}, \theta)| z_{1:T], \theta_i ]
 
     Parameters
     ==========
@@ -513,14 +513,14 @@ class KalmanFilter(object):
     def __init__(self, A, C, Q, R, b, d, x_0, V_0, random_state=None,
                  em_vars='all'):
         """Initialize Kalman Filter"""
-        self.A = np.atleast_2d(A)
-        self.C = np.atleast_2d(C)
-        self.Q = np.atleast_2d(Q)
-        self.R = np.atleast_2d(R)
-        self.b = np.atleast_1d(b)
-        self.d = np.atleast_1d(d)
-        self.x_0 = np.atleast_1d(x_0)
-        self.V_0 = np.atleast_2d(V_0)
+        self.A = array2d(A)
+        self.C = array2d(C)
+        self.Q = array2d(Q)
+        self.R = array2d(R)
+        self.b = np.asarray(np.atleast_1d(b))
+        self.d = np.asarray(np.atleast_1d(d))
+        self.x_0 = np.asarray(np.atleast_1d(x_0))
+        self.V_0 = array2d(V_0)
         self.random_state = random_state
         self.em_vars = em_vars
 
@@ -787,6 +787,7 @@ class KalmanFilter(object):
         """Apply the EM algorithm.  See :func:`KalmanFilter.em` for details."""
         self.em(Z, n_iter=n_iter, em_vars=em_vars)
         return self
+
 
     def predict(self, Z):
         """Apply the Kalman Smoother.  See :func:`KalmanFilter.smooth` for details."""
