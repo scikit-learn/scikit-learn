@@ -37,8 +37,6 @@ def _fit_binary(estimator, X, y):
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
     if hasattr(estimator, "decision_function"):
-        print X.shape
-        print estimator.decision_function(X).shape
         return np.ravel(estimator.decision_function(X))
     else:
         # probabilities of the positive class
