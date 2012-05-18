@@ -178,7 +178,9 @@ def _filter_update(A, C, Q, R, b, d, mu_old, sigma_old, z):
 
 
 def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
-    """Apply the Kalman Filter"""
+    """Apply the Kalman Filter.  See :func:`KalmanFilter.filter` for
+    details.
+    """
     T = Z.shape[0] - 1
     n_dim_state = len(mu_0)
     n_dim_obs = Z.shape[1]
@@ -249,7 +251,9 @@ def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev, sigma_rev)
 
 
 def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
-    """Kalman Smoother"""
+    """Apply the Kalman Smoother.  See :func:`KalmanFilter.smooth` for
+    details.
+    """
     T, n_dim_state = mu_filt.shape
     T -= 1    # mu_filt is actually T+1 in length
 
