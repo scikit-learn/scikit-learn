@@ -283,7 +283,7 @@ def _smooth_pair(sigma_smooth, L):
 
 
 def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, L, given={}):
-    """Estimate Q and R given smoothed estimates for states
+    """Estimate Linear-Gaussian model parameters.
 
     Parameters
     ==========
@@ -332,7 +332,9 @@ def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, L, given={}):
 
 
 def _em_C(Z, d, mu_smooth, sigma_smooth):
-    """
+    """Maximize expected log likelihood of observations with respect to the
+    observation matrix C.
+
     .. math::
 
         C &= ( \sum_{t=1}^{T} (y_t - d_t) \E[x_t] )
@@ -351,7 +353,9 @@ def _em_C(Z, d, mu_smooth, sigma_smooth):
 
 
 def _em_R(Z, d, C, mu_smooth, sigma_smooth):
-    """
+    """Maximize expected log likelihood of observations with respect to the
+    observation covariance matrix R.
+
     .. math::
 
         R &= \frac{1}{T} \sum_{t=1}^T
@@ -372,7 +376,9 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
 
 
 def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
-    """
+    """Maximize expected log likelihood of observations with respect to the
+    transition matrix A.
+
     .. math::
 
         A &= ( \sum_{t=1}^{T} \E[x_t x_{t-1}^{T}] - b_{t-1} \E[x_{t-1}]^T )
@@ -383,7 +389,8 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     res1 = np.zeros((n_dim_state, n_dim_state))
     res2 = np.zeros((n_dim_state, n_dim_state))
     for t in range(1, T + 1):
-        res1 += sigma_smooth[t - 1] + np.outer(mu_smooth[t - 1], mu_smooth[t - 1])
+        res1 += sigma_smooth[t - 1] \
+            + np.outer(mu_smooth[t - 1], mu_smooth[t - 1])
         res2 += sigma_pair_smooth[t] \
             + np.outer(mu_smooth[t], mu_smooth[t - 1]) \
             - np.outer(_last_dims(b, t - 1, ndims=1), mu_smooth[t - 1])
@@ -391,7 +398,9 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
 
 def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
-    """
+    """Maximize expected log likelihood of observations with respect to the
+    transition covariance matrix Q.
+
     .. math::
 
         Q &= \frac{1}{T} \sum_{t=0}^{T-1}
@@ -414,13 +423,18 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
 
 def _em_mu_0(mu_smooth):
+    """Maximize expected log likelihood of observations with respect to the
+    initial state distribution mean mu_0.
+    """
+
     return mu_smooth[0]
 
 
 def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
-    x0_x0 = sigma_smooth[0] + np.outer(mu_smooth[0], mu_smooth[0])
-    x0 = mu_smooth[0]
-    return x0_x0 - np.outer(mu_0, x0) - np.outer(x0, mu_0) + np.outer(mu_0, mu_0)
+    """Maximize expected log likelihood of observations with respect to the
+    covariance of the initial state distribution sigma_0
+    """
+    return sigma_smooth[0]
 
 
 class KalmanFilter(object):
@@ -461,36 +475,35 @@ class KalmanFilter(object):
 
         \theta_{i+1} = \arg\max_{\theta}
             E_{x_{1:T}} [ L(x_{1:t}, \theta); z_{1:T], \theta_i ]
-    """
-    def __init__(self, A, C, Q, R, b, d, x_0, V_0,
-        rng=np.random.RandomState(0), em_vars='all'):
-        """Initialize Kalman Filter
 
-        Parameters
-        ==========
-        A : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
-            state transition matrix
-        C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
-            observation matrix
-        Q : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
-            state transition covariance matrix
-        R : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
-            observation covariance matrix
-        b : [T, n_dim_state] or [n_dim_state] array-like
-            state offset
-        d : [T, n_dim_obs] or [n_dim_obs] array-like
-            observation offset
-        x_0 : [n_dim_state] array-like
-            mean of initial state distribution
-        V_0 : [n_dim_state, n_dim_state] array-like
-            covariance of initial state distribution
-        rng : optional, numpy random state
-            random number generator used in sampling
-        em_vars : optional, subset of ['A', 'C', 'Q', 'R', 'x_0', 'V_0'] or 'all'
-            if `em_vars` is an iterable of strings only variables in `em_vars`
-            will be estimated using EM.  if `em_vars` == 'all', then all
-            variables will be estimated.
-        """
+    Parameters
+    ==========
+    A : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+        state transition matrix
+    C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
+        observation matrix
+    Q : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+        state transition covariance matrix
+    R : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
+        observation covariance matrix
+    b : [T, n_dim_state] or [n_dim_state] array-like
+        state offset
+    d : [T, n_dim_obs] or [n_dim_obs] array-like
+        observation offset
+    x_0 : [n_dim_state] array-like
+        mean of initial state distribution
+    V_0 : [n_dim_state, n_dim_state] array-like
+        covariance of initial state distribution
+    rng : optional, numpy random state
+        random number generator used in sampling
+    em_vars : optional, subset of ['A', 'C', 'Q', 'R', 'x_0', 'V_0'] or 'all'
+        if `em_vars` is an iterable of strings only variables in `em_vars`
+        will be estimated using EM.  if `em_vars` == 'all', then all
+        variables will be estimated.
+    """
+    def __init__(self, A, C, Q, R, b, d, x_0, V_0, random_state=None,
+                 em_vars='all'):
+        """Initialize Kalman Filter"""
         self.A = np.atleast_2d(A)
         self.C = np.atleast_2d(C)
         self.Q = np.atleast_2d(Q)
@@ -499,7 +512,7 @@ class KalmanFilter(object):
         self.d = np.atleast_1d(d)
         self.x_0 = np.atleast_1d(x_0)
         self.V_0 = np.atleast_2d(V_0)
-        self.rng = rng
+        self.random_state = random_state
         self.em_vars = em_vars
 
         # TODO make this automatic
@@ -509,6 +522,7 @@ class KalmanFilter(object):
             self.C = _pad(self.C)
         if len(self.d.shape) > 1:
             self.d = _pad(self.d)
+
 
     def sample(self, T, x_0=None):
         """Sample a trajectory of `T` timesteps in length.
@@ -533,6 +547,11 @@ class KalmanFilter(object):
         if x_0 is None:
             x_0 = self.x_0
 
+        if self.random_state is None:
+            rng = np.random.RandomState()
+        else:
+            rng = self.random_state
+
         for t in range(T + 1):
             if t == 0:
                 x[t] = x_0
@@ -544,12 +563,13 @@ class KalmanFilter(object):
                 Q_t = _last_dims(self.Q, t)
                 R_t = _last_dims(self.R, t)
                 x[t] = A_t.dot(x[t - 1]) + b_t \
-                    + self.rng.multivariate_normal(np.zeros(n_dim_state),
+                    + rng.multivariate_normal(np.zeros(n_dim_state),
                         Q_t.newbyteorder('='))
                 Z[t] = C_t.dot(x[t]) + d_t \
-                    + self.rng.multivariate_normal(np.zeros(n_dim_obs),
+                    + rng.multivariate_normal(np.zeros(n_dim_obs),
                         R_t.newbyteorder('='))
         return (x, Z[1:])
+
 
     def filter(self, Z):
         """Apply the Kalman Filter to estimate the hidden state at time
@@ -579,6 +599,7 @@ class KalmanFilter(object):
         (_, _, _, x_filt, V_filt, ll) = _filter(self.A, self.C,
             self.Q, self.R, self.b, self.d, self.x_0, self.V_0, Z)
         return (x_filt, V_filt, ll)
+
 
     def filter_update(self, mu_filt, sigma_filt, z, b=None, d=None, t=None):
         """Perform a one-step update to estimate the state at time t+1
@@ -684,6 +705,7 @@ class KalmanFilter(object):
             self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
         return (mu_smooth, sigma_smooth, ll)
 
+
     def em(self, Z, n_iter=10, em_vars=None):
         """Apply the EM algorithm to estimate all parameters specified by
         `em_vars`.  Note that all variables estimated are assumed to be
@@ -750,3 +772,13 @@ class KalmanFilter(object):
             ll[i] = np.sum(loglik)
             #print 'likelihood @ iter={}: {}'.format(i, ll[i])
         return (self.A, self.C, self.Q, self.R, self.x_0, self.V_0, ll)
+
+
+    def fit(self, Z, n_iter=10, em_vars=None):
+        """Apply the EM algorithm.  See :func:`KalmanFilter.em` for details."""
+        self.em(Z, n_iter=n_iter, em_vars=em_vars)
+        return self
+
+    def predict(self, Z):
+        """Apply the Kalman Smoother.  See :func:`KalmanFilter.smooth` for details."""
+        return self.smooth(Z)
