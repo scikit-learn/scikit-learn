@@ -26,15 +26,13 @@ from sklearn.kalman import KalmanFilter
 
 # Load data and initialize Kalman Filter
 data = load_kalman_data()
-
 kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                  d=data.d, x_0=data.x_0, V_0=data.V_0)
+                  d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars='all')
 
 # Learn good values for the state transition covariance matrix Q and
 # observation covariance matrix R using the EM algorithm.
-(Q, R, ll) = kf.em(Z=data.data, n_iter=10)
-kf.Q = Q
-kf.R = R
+ll = kf.em(Z=data.data, n_iter=10)[-1]
+print ll
 
 # Estimate the state without using an observations.  This will let us see how
 # good we could do if we ran blind.

@@ -12,7 +12,7 @@ def test_kalman_sampling():
 
     (x, z) = kf.sample(100)
     assert x.shape == (101, data.A.shape[0])
-    assert z.shape == (100, data.C.shape[0])
+    assert z.shape == (101, data.C.shape[0])
 
 
 def test_kalman_filter():
@@ -37,6 +37,7 @@ def test_kalman_smoother():
 
 def test_kalman_em():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                      d=data.d, x_0=data.x_0, V_0=data.V_0)
-    (Q, R, ll) = kf.em(Z=data.data, n_iter=5)
+                      d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars=['Q', 'R'])
+    ll = kf.em(Z=data.data, n_iter=5)[-1]
+    
     assert np.allclose(ll, data.ll[:5])
