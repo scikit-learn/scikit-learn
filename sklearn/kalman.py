@@ -78,6 +78,18 @@ def _last_dims(X, t, ndims=2):
                          " or more are required")
 
 
+def _pad(X, n=1, dim=None):
+    """
+    Pad an array along its first axis with `n` all-zero sub-arrays if its
+    dimension isn't equal to `dim`.
+    """
+    if len(X.shape) == dim:
+        return X
+    else:
+        xs = [np.zeros( X.shape[1:] )[np.newaxis] for i in range(n)]
+        return np.vstack(xs + [X])
+
+
 def _logmvnpdf(x, mu, sigma):
     """log density of the multivariate normal distribution
 
@@ -183,9 +195,9 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
             V_filt[t] = V_pred[t] = sigma_0
         (x_pred[t + 1], V_pred[t + 1], K[t + 1],
             x_filt[t + 1], V_filt[t + 1], ll[t + 1]) = _filter_update(
-                _last_dims(A, t), _last_dims(C, t), _last_dims(Q, t),
-                _last_dims(R, t), _last_dims(b, t, ndims=1),
-                _last_dims(d, t, ndims=1), x_filt[t], V_filt[t], Z[t + 1])
+                _last_dims(A, t), _last_dims(C, t + 1), _last_dims(Q, t),
+                _last_dims(R, t + 1), _last_dims(b, t, ndims=1),
+                _last_dims(d, t + 1, ndims=1), x_filt[t], V_filt[t], Z[t + 1])
     return (x_pred, V_pred, K, x_filt, V_filt, ll)
 
 
@@ -196,7 +208,7 @@ def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev, sigma_rev)
 
     Parameters
     ==========
-    A : [n_dim_state, n_dim_state} array
+    A : [n_dim_state, n_dim_state] array
         state transition matrix from time t to t+1
     mu_for : [n_dim_state] array
         mean of filtered state at time t given observations from
@@ -258,11 +270,11 @@ def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
     return (mu_smooth, sigma_smooth, L)
 
 
-def _smooth_pair(A, C, sigma_filt, sigma_smooth, K, L):
+def _smooth_pair(sigma_smooth, L):
     """
     sigma_pair_smooth[t] = :math:`Cov(x_t, x_{t-1} | Y_{1:T})`
     """
-    T, n_dim_state, _ = sigma_filt.shape
+    T, n_dim_state, _ = sigma_smooth.shape
     T -= 1
     sigma_pair_smooth = np.zeros((T + 1, n_dim_state, n_dim_state))
     for t in range(1, T + 1):
@@ -332,7 +344,8 @@ def _em_C(Z, d, mu_smooth, sigma_smooth):
     res1 = np.zeros((n_dim_obs, n_dim_state))
     res2 = np.zeros((n_dim_state, n_dim_state))
     for t in range(1, T + 1):
-        res1 += np.outer(Z[t] - _last_dims(d, t, ndims=1), mu_smooth[t])
+        d_t = _last_dims(d, t, ndims=1)
+        res1 += np.outer(Z[t] - d_t, mu_smooth[t])
         res2 += sigma_smooth[t] + np.outer(mu_smooth[t], mu_smooth[t])
     return res1.dot(np.linalg.pinv(res2))
 
@@ -350,8 +363,11 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
     T -= 1
     res = np.zeros((n_dim_obs, n_dim_obs))
     for t in range(1, T + 1):
-        err = Z[t] - C.dot(mu_smooth[t]) - _last_dims(d, t, ndims=1)
-        res += np.outer(err, err) + C.dot(sigma_smooth[t]).dot(C.T)
+        C_t = _last_dims(C, t)
+        d_t = _last_dims(d, t, ndims=1)
+        err = Z[t] - C_t.dot(mu_smooth[t]) - d_t
+        res += np.outer(err, err) \
+            + C_t.dot(sigma_smooth[t]).dot(C_t.T)
     return (1.0 / T) * res
 
 
@@ -359,7 +375,7 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     """
     .. math::
 
-        A &= ( \sum_{t=1}^{T} \E[x_t x_{t-1}^{T}]- b_{t-1} \E[x_{t-1}]^T )
+        A &= ( \sum_{t=1}^{T} \E[x_t x_{t-1}^{T}] - b_{t-1} \E[x_{t-1}]^T )
              ( \sum_{t=1}^{T} \E[x_{t-1} x_{t-1}^T] )^{-1}
     """
     T, n_dim_state, _ = sigma_smooth.shape
@@ -387,9 +403,11 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     T -= 1
     res = np.zeros((n_dim_state, n_dim_state))
     for t in range(T):
-        err = mu_smooth[t + 1] - (A.dot(mu_smooth[t]) + _last_dims(b, t, ndims=1))
-        Vt1t_A = sigma_pair_smooth[t + 1].dot(A.T)
-        res += np.outer(err, err) + A.dot(sigma_smooth[t]).dot(A.T) \
+        A_t = _last_dims(A, t)
+        b_t = _last_dims(b, t, ndims=1)
+        err = mu_smooth[t + 1] - (A_t.dot(mu_smooth[t]) + b_t)
+        Vt1t_A = sigma_pair_smooth[t + 1].dot(A_t.T)
+        res += np.outer(err, err) + A_t.dot(sigma_smooth[t]).dot(A_t.T) \
             + sigma_smooth[t + 1] - Vt1t_A - Vt1t_A.T
 
     return (1.0 / T) * res
@@ -456,7 +474,7 @@ class KalmanFilter(object):
             observation matrix
         Q : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
             state transition covariance matrix
-        R : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+        R : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
             observation covariance matrix
         b : [T, n_dim_state] or [n_dim_state] array-like
             state offset
@@ -484,6 +502,14 @@ class KalmanFilter(object):
         self.rng = rng
         self.em_vars = em_vars
 
+        # TODO make this automatic
+        if len(self.R.shape) > 2:
+            self.R = _pad(self.R)
+        if len(self.C.shape) > 2:
+            self.C = _pad(self.C)
+        if len(self.d.shape) > 1:
+            self.d = _pad(self.d)
+
     def sample(self, T, x_0=None):
         """Sample a trajectory of `T` timesteps in length.
 
@@ -502,7 +528,7 @@ class KalmanFilter(object):
         n_dim_state = self.A.shape[-2]
         n_dim_obs = self.C.shape[-2]
         x = np.zeros((T + 1, n_dim_state))
-        z = np.zeros((T + 1, n_dim_obs))
+        Z = np.zeros((T + 1, n_dim_obs))
 
         if x_0 is None:
             x_0 = self.x_0
@@ -511,13 +537,19 @@ class KalmanFilter(object):
             if t == 0:
                 x[t] = x_0
             else:
-                x[t] = self.A.dot(x[t - 1]) + _last_dims(self.b, t, ndims=1) \
+                A_t = _last_dims(self.A, t)
+                b_t = _last_dims(self.b, t, ndims=1)
+                C_t = _last_dims(self.C, t)
+                d_t = _last_dims(self.d, t, ndims=1)
+                Q_t = _last_dims(self.Q, t)
+                R_t = _last_dims(self.R, t)
+                x[t] = A_t.dot(x[t - 1]) + b_t \
                     + self.rng.multivariate_normal(np.zeros(n_dim_state),
-                                 _last_dims(self.Q, t).newbyteorder('='))
-                z[t] = self.C.dot(x[t]) + _last_dims(self.d, t, ndims=1) \
+                        Q_t.newbyteorder('='))
+                Z[t] = C_t.dot(x[t]) + d_t \
                     + self.rng.multivariate_normal(np.zeros(n_dim_obs),
-                        _last_dims(self.R, t).newbyteorder('='))
-        return (x, z[1:])
+                        R_t.newbyteorder('='))
+        return (x, Z[1:])
 
     def filter(self, Z):
         """Apply the Kalman Filter to estimate the hidden state at time
@@ -542,9 +574,7 @@ class KalmanFilter(object):
             log likelihood of all observations
         """
         # Insert empty observation for t=0
-        Z = np.asarray(Z)
-        n_dim_obs = Z.shape[1]
-        Z = np.vstack([np.zeros(n_dim_obs), Z])
+        Z = _pad(np.asarray(Z))
 
         (_, _, _, x_filt, V_filt, ll) = _filter(self.A, self.C,
             self.Q, self.R, self.b, self.d, self.x_0, self.V_0, Z)
@@ -595,18 +625,20 @@ class KalmanFilter(object):
             if b is None:
                 b = _last_dims(self.b, t, ndims=1)
             if d is None:
-                d = _last_dims(self.d, t, ndims=1)
+                d = _last_dims(self.d, t + 1, ndims=1)
             A = _last_dims(self.A, t)
-            C = _last_dims(self.C, t)
+            C = _last_dims(self.C, t + 1)
         else:
-            if b is None and len(self.b.shape) > 1:
-                raise ValueError('b is not constant for all time, you must specify t')
-            else:
-                b = self.b
-            if d is None and len(self.d.shape) > 1:
-                raise ValueError('d is not constant for all time, you must specify t')
-            else:
-                d = self.d
+            if b is None:
+                if len(self.b.shape) > 1:
+                    raise ValueError('b is not constant for all time, you must specify t')
+                else:
+                    b = self.b
+            if d is None:
+                if len(self.d.shape) > 1:
+                    raise ValueError('d is not constant for all time, you must specify t')
+                else:
+                    d = self.d
             A = self.A
             C = self.C
             if len(A.shape) != 2:
@@ -644,9 +676,7 @@ class KalmanFilter(object):
             log likelihood of all observations
         """
         # Insert empty observation for t=0
-        Z = np.asarray(Z)
-        n_dim_obs = Z.shape[1]
-        Z = np.vstack([np.zeros(n_dim_obs), Z])
+        Z = _pad(np.asarray(Z))
 
         (mu_pred, sigma_pred, _, mu_filt, sigma_filt, ll) = _filter(
             self.A, self.C, self.Q, self.R, self.b, self.d, self.x_0, self.V_0, Z)
@@ -656,7 +686,8 @@ class KalmanFilter(object):
 
     def em(self, Z, n_iter=10, em_vars=None):
         """Apply the EM algorithm to estimate all parameters specified by
-        `em_vars`.
+        `em_vars`.  Note that all variables estimated are assumed to be
+        constant for all time.
 
         Parameters
         ==========
@@ -686,9 +717,7 @@ class KalmanFilter(object):
             log likelihood of all observations
         """
         # Insert empty observation for t=0
-        Z = np.asarray(Z)
-        n_dim_obs = Z.shape[1]
-        Z = np.vstack([np.zeros(n_dim_obs), Z])
+        Z = _pad(np.asarray(Z))
 
         # Create dictionary of variables not to perform EM on
         if em_vars is None:
@@ -715,8 +744,7 @@ class KalmanFilter(object):
                 self.A, self.C, self.Q, self.R, self.b, self.d, self.x_0, self.V_0, Z)
             (mu_smooth, sigma_smooth, L) = _smooth(
                 self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
-            sigma_pair_smooth = _smooth_pair(
-                self.A, self.C, sigma_filt, sigma_smooth, K, L)
+            sigma_pair_smooth = _smooth_pair(sigma_smooth, L)
             (self.A,  self.C, self.Q, self.R, self.x_0, self.V_0) = _em(
                 Z, self.b, self.d, mu_smooth, sigma_smooth, sigma_pair_smooth, L, given=given)
             ll[i] = np.sum(loglik)

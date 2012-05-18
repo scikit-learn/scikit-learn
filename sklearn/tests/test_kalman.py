@@ -14,6 +14,7 @@ def test_kalman_sampling():
     assert x.shape == (101, data.A.shape[0])
     assert z.shape == (100, data.C.shape[0])
 
+
 def test_kalman_filter_update():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
                       d=data.d, x_0=data.x_0, V_0=data.V_0)
@@ -27,7 +28,8 @@ def test_kalman_filter_update():
       if t == 0:
         x_filt2[0] = data.x_0
         V_filt2[0] = data.V_0
-      (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt[t], V_filt[t], data.data[t], t=t)
+      (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt[t], V_filt[t],
+          data.data[t], t=t)
     assert np.all(x_filt == x_filt2)
     assert np.all(V_filt == V_filt2)
 

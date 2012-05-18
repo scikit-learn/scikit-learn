@@ -9,15 +9,17 @@ dynamics model.  In this model, one assumes that the hidden state
 of a discrete-time system is distributed according to a Multivariate
 Gaussian distribution at time 0, then evolves like so,
 
-  x_{t+1} = A_t * x_t + b_t + e_t^1
-  y_{t}   = C_t * x_t + d_t + e_t^2
-  e_t^1   ~ MultivariateNormal(0, Q)
-  e_t^2   ~ MultivariateNormal(0, R)
-  x_0     ~ MultivariateNormal(x_0, V_0)
+.. math::
+
+  x_{t+1} &= A_t * x_t + b_t + e_t^1            \\
+  y_{t}   &= C_t * x_t + d_t + e_t^2            \\
+  e_t^1   &~ MultivariateNormal(0, Q)           \\
+  e_t^2   &~ MultivariateNormal(0, R)           \\
+  x_0     &~ MultivariateNormal(mu_0, sigma_0)
 
 The Kalman Filter and Smoother are two methods for estimating the
-hidden state x_t given observations y_t.  The EM algorithm, in
-addition, allows one to estimate Q and R in an iterative fashion.
+hidden state :math:`x_t` given observations :math:`y_t`.  The EM algorithm, in
+addition, allows one to estimate `A`, `C`, `Q`, `R`, `mu_0`, and `sigma_0`
 '''
 import numpy as np
 import matplotlib.pyplot as plt
