@@ -508,7 +508,7 @@ def _is_label_indicator_matrix(y):
 def _is_multilabel(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
-    return not isinstance(y, np.ndarray) and isinstance(y, Sequence) \
+    return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
         or _is_label_indicator_matrix(y)
 
 
