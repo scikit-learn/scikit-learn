@@ -69,7 +69,7 @@ def test_kalman_fit():
     kf.em_vars = 'all'
     T = 30
     for i in range(len(scores)):
-        scores[i] = np.sum(kf.filter(Z=data.data[0:T])[-1])
         kf.fit(Z=data.data[0:T], n_iter=1)
+        scores[i] = np.sum(kf.filter(Z=data.data[0:T])[-1])
     for i in range(len(scores)-1):
         assert scores[i] < scores[i+1]

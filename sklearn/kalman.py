@@ -351,7 +351,7 @@ def _smooth_pair(sigma_smooth, L):
     return sigma_pair_smooth
 
 
-def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, L, given={}):
+def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, given={}):
     """Estimate Linear-Gaussian model parameters by maximizing the expected log
     likelihood.
 
@@ -382,6 +382,10 @@ def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, L, given={}):
         estimated transition matrix
     C : [n_dim_obs, n_dim_state] array
         estimated observation matrix
+    b : [n_dim_state] array
+        estimated transition offset
+    d : [n_dim_obs] array
+        estimated observation offset
     Q : [n_dim_state, n_dim_state] array
         estimated covariance matrix for state transitions
     R : [n_dim_obs, n_dim_obs] array
@@ -397,8 +401,10 @@ def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, L, given={}):
     Q = given.get('Q', _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth))
     mu_0 = given.get('mu_0', _em_mu_0(mu_smooth))
     sigma_0 = given.get('sigma_0', _em_sigma_0(mu_0, mu_smooth, sigma_smooth))
+    b = given.get('b', _em_b(A, mu_smooth))
+    d = given.get('d', _em_d(C, mu_smooth, Z))
 
-    return (A, C, Q, R, mu_0, sigma_0)
+    return (A, C, b, d, Q, R, mu_0, sigma_0)
 
 
 def _em_C(Z, d, mu_smooth, sigma_smooth):
@@ -407,8 +413,8 @@ def _em_C(Z, d, mu_smooth, sigma_smooth):
 
     .. math::
 
-        C &= ( \sum_{t=1}^{T} (y_t - d_t) \E[x_t] )
-             ( \sum_{t=1}^{T} E[x_t x_t^T] )^-1
+        C &= ( \sum_{t=1}^{T} (y_t - d_t) \mathbb{E}[x_t] )
+             ( \sum_{t=1}^{T} \mathbb{E}[x_t x_t^T] )^-1
     """
     _, n_dim_state = mu_smooth.shape
     T, n_dim_obs = Z.shape
@@ -429,7 +435,8 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
     .. math::
 
         R &= \frac{1}{T} \sum_{t=1}^T
-               [y_t - C \E[x_t] - d_t] [y_t - C \E[x_t] - d_t]^T
+               [y_t - C \mathbb{E}[x_t] - d_t]
+                  [y_t - C \mathbb{E}[x_t] - d_t]^T
                + C Var(x_t) C^T
     """
     _, n_dim_state = mu_smooth.shape
@@ -451,8 +458,9 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
     .. math::
 
-        A &= ( \sum_{t=1}^{T} \E[x_t x_{t-1}^{T}] - b_{t-1} \E[x_{t-1}]^T )
-             ( \sum_{t=1}^{T} \E[x_{t-1} x_{t-1}^T] )^{-1}
+        A &= ( \sum_{t=1}^{T} \mathbb{E}[x_t x_{t-1}^{T}]
+                  - b_{t-1} \mathbb{E}[x_{t-1}]^T )
+             ( \sum_{t=1}^{T} \mathbb{E}[x_{t-1} x_{t-1}^T] )^{-1}
     """
     T, n_dim_state, _ = sigma_smooth.shape
     T -= 1
@@ -474,7 +482,8 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     .. math::
 
         Q &= \frac{1}{T} \sum_{t=0}^{T-1}
-               (\E[x_{t+1}] A \E[x_t] - b_t) (\E[x_{t+1}] A \E[x_t] - b_t)^T
+               (\mathbb{E}[x_{t+1}] A \mathbb{E}[x_t] - b_t)
+                  (\mathbb{E}[x_{t+1}] A \mathbb{E}[x_t] - b_t)^T
                + A Var(x_t) A^T + Var(x_{t+1}) - Var(x_{t+1}) L_t^T A^T
                - A_t L_t Var(x_{t+1})
     """
@@ -495,6 +504,10 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 def _em_mu_0(mu_smooth):
     """Maximize expected log likelihood of observations with respect to the
     initial state distribution mean mu_0.
+
+    .. math::
+
+        mu_0 = \mathbb{E}[x_0]
     """
 
     return mu_smooth[0]
@@ -503,11 +516,51 @@ def _em_mu_0(mu_smooth):
 def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
     """Maximize expected log likelihood of observations with respect to the
     covariance of the initial state distribution sigma_0
+
+    .. math::
+
+        \sigma_0 = \mathbb{E}[x_0, x_0^T] - mu_0 \mathbb{E}[x_0]^T
+                   - \mathbb{E}[x_0] mu_0^T + mu_0 mu_0^T
     """
     x0 = mu_smooth[0]
     x0_x0 = sigma_smooth[0] + np.outer(x0, x0)
     return x0_x0 - np.outer(mu_0, x0) - np.outer(x0, mu_0) \
         + np.outer(mu_0, mu_0)
+
+
+def _em_b(A, mu_smooth):
+    """Maximize expected log likelihood of observations with respect to the
+    state transition offset
+
+    .. math::
+
+        b = \frac{1}{T} \sum_{t=1}^{T}
+              \mathbb{E}[x_t] - A_{t-1} \mathbb{E}[x_{t-1}]
+    """
+    T, n_dim_state = mu_smooth.shape
+    T -= 1
+    b = np.zeros(n_dim_state)
+    for t in range(1, T + 1):
+        A_t1 = _last_dims(A, t-1)
+        b += mu_smooth[t] - A_t1.dot(mu_smooth[t - 1])
+    return (1.0/T)*b
+
+
+def _em_d(C, mu_smooth, Z):
+    """Maximize expected log likelihood of observations with respect to the
+    observation offset
+
+    .. math::
+
+        d = \frac{1}{T} \sum_{t=1}^{T} z_t - C_{t} \mathbb{E}[x_{t}]
+    """
+    T, n_dim_obs = Z.shape
+    T -= 1
+    d = np.zeros(n_dim_obs)
+    for t in range(1, T+1):
+        C_t = _last_dims(C, t)
+        d += Z[t] - C_t.dot(mu_smooth[t])
+    return (1.0/T)*d
 
 
 class KalmanFilter(BaseEstimator):
@@ -809,6 +862,8 @@ class KalmanFilter(BaseEstimator):
             given = {
                 'A': self.A,
                 'C': self.C,
+                'b': self.b,
+                'd': self.d,
                 'Q': self.Q,
                 'R': self.R,
                 'mu_0': self.x_0,
@@ -826,7 +881,7 @@ class KalmanFilter(BaseEstimator):
             (mu_smooth, sigma_smooth, L) = _smooth(
                 self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
             sigma_pair_smooth = _smooth_pair(sigma_smooth, L)
-            (self.A,  self.C, self.Q, self.R, self.x_0, self.V_0) = _em(
-                Z, self.b, self.d, mu_smooth, sigma_smooth, sigma_pair_smooth,
-                L, given=given)
+            (self.A,  self.C, self.b, self.d, self.Q, self.R, self.x_0,
+                self.V_0) = _em( Z, self.b, self.d, mu_smooth, sigma_smooth,
+                    sigma_pair_smooth, given=given)
         return self
