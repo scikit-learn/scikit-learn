@@ -438,7 +438,12 @@ def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
     """Maximize expected log likelihood of observations with respect to the
     covariance of the initial state distribution sigma_0
     """
-    return sigma_smooth[0]
+    x0 = mu_smooth[0]
+    x0_x0 = sigma_smooth[0] + np.outer(x0, x0)
+    return x0_x0 - np.outer(mu_0, x0) - np.outer(x0, mu_0) \
+        + np.outer(mu_0, mu_0)
+
+    
 
 
 class KalmanFilter(object):
