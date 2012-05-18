@@ -24,6 +24,10 @@ the :class:`sklearn.multiclass.OneVsRestClassifier` metaclassifier using two
 SVCs with linear kernels to learn a discriminative model for each class.
 Note that PCA is used to perform an unsupervised dimensionality reduction,
 while CCA is used to perform a supervised one.
+
+Note: in the plot, "unlabeled samples" does not mean that we don't know the
+labels (as in semi-supervised learning) but that the samples simply do *not*
+have a label.
 """
 print __doc__
 
