@@ -12,7 +12,7 @@ def test_kalman_sampling():
 
     (x, z) = kf.sample(100)
     assert x.shape == (101, data.A.shape[0])
-    assert z.shape == (101, data.C.shape[0])
+    assert z.shape == (100, data.C.shape[0])
 
 
 def test_kalman_filter():
@@ -36,8 +36,17 @@ def test_kalman_smoother():
 
 
 def test_kalman_em():
+    # check against MATLAB dataset
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
                       d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars=['Q', 'R'])
     ll = kf.em(Z=data.data, n_iter=5)[-1]
+
+    import ipdb; ipdb.set_trace()
     
     assert np.allclose(ll, data.ll[:5])
+
+    # check that EM for all parameters is working
+    kf.em_vars = 'all'
+    ll = kf.em(Z=data.data[:40], n_iter=5)[-1]
+    for i in range(len(ll)-1):
+      assert ll[i] < ll[i+1]
