@@ -14,6 +14,6 @@ Unsupervised learning
     modules/covariance
     modules/outlier_detection
     modules/hmm
-    modules/linear_gaussian
+    modules/kalman
 
 

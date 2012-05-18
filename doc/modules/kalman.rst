@@ -4,7 +4,7 @@
 Linear-Gaussian Model
 =====================
 
-.. currentmodule:: sklearn.linear_gaussian
+.. currentmodule:: sklearn.kalman
 
 `sklearn.linear_gaussian` is the continuous domain sister of the methods implemented in `sklearn.hmm`.  Like the Hidden Markov Model, The Linear-Gaussian Model is a generative probability model for explaining a sequence of measurements observed one after another.  The model assumes that there exists some unobserved "true state" of the system, and that these measurements are simply noisy version of that true state.
 
@@ -37,11 +37,13 @@ These assumptions imply that that :math:`x_t` is always a Gaussian distribution,
 
 Formally, the Linear-Gaussian Model assumes that states and measurements are generated in the following way,
 
-.. math:: x_0 \sim \text{Gaussian}(\mu_0, \Sigma_0)
-.. math:: x_{t+1} = A x_t + b_t + \epsilon_{t}^{1}
-.. math:: y_{t+1} = C x_{t+1} + d_t + \epsilon_{t}^2
-.. math:: \epsilon_t^1 \sim \text{Gaussian}(0, Q)
-.. math:: \epsilon_t^2 \sim \text{Gaussian}(0, R)
+.. math::
+
+    x_0           & \sim \text{Gaussian}(\mu_0, \Sigma_0) \\
+    x_{t+1}       & = A x_t + b_t + \epsilon_{t}^{1}      \\
+    y_{t+1}       & = C x_{t+1} + d_t + \epsilon_{t}^2    \\
+    \epsilon_t^1  & \sim \text{Gaussian}(0, Q)            \\
+    \epsilon_t^2  & \sim \text{Gaussian}(0, R)
 
 These assumptions mean that the Kalman Filter and Kalman Smoother work best if one is able to guess fairly well the vicinity of where the next state will be given the present, but cannot say *exactly* where it will be.  On the other hand, these methods will fail if there are multiple, disconnected areas where the next state could be, such as if a car turns at an intersection.
 
@@ -57,7 +59,7 @@ Usage
 
 The only class in this model is the :class:`KalmanFilter`.  It implements methods for Filtering, Smoothing, and EM all in one, as well as for sampling trajectories according to the generative model specified above.
 
-The following snippet of code shows how one may sample from the model, learn model parameters, and apply the Kalman Filter and Kalman Smoother
+The following snippet of code shows how one may sample from the model, learn model parameters, and apply the Kalman Filter and Kalman Smoother,
 
 .. literalinclude:: ../auto_examples/plot_kalman_simple.py
    :language: python
