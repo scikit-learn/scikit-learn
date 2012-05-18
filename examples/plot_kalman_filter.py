@@ -26,8 +26,8 @@ kf = KalmanFilter(A, C, Q, R, b, d, x_0, V_0,
 (x, z) = kf.sample(T=50)
 
 # estimate state with filtering and smoothing
-(x_filt, V_filt, loglik) = kf.filter(z)
-(x_smooth, V_smooth, _) = kf.smooth(z)
+x_filt = kf.filter(z)[0]
+x_smooth = kf.predict(z)
 
 # draw estimates
 plt.figure()

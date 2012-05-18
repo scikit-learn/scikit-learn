@@ -18,8 +18,7 @@ kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
                   d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars='all')
 
 # Learn good values for A, C, Q, R, x_0, and V_0 using the EM algorithm.
-ll = kf.em(Z=data.data, n_iter=10)[-1]
-print 'Likelihood per EM iteration: {}'.format(ll)
+kf = kf.fit(Z=data.data, n_iter=10)
 
 # Estimate the state without using an observations.  This will let us see how
 # good we could do if we ran blind.
@@ -43,7 +42,7 @@ for t in range(T):
 # Probabilistically, this method produces the mean and covariance
 # characterizing,
 #    P(x_t | z_{1:T})
-(x_smooth, V_smooth, _) = kf.smooth(data.data)
+x_smooth = kf.predict(data.data)
 
 # Draw the true, filtered, and smoothed state estimates for all
 # 5 dimensions.
@@ -57,11 +56,4 @@ plt.legend((lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
             ('true', 'blind', 'filtered', 'smoothed'))
 plt.xlabel('time')
 plt.ylabel('state')
-
-# Draw the log likelihood of the data as produced by the EM algorithm.
-# Notice that it is increasing in the number of iterations.
-plt.figure()
-plt.plot(ll)
-plt.xlabel('iteration number')
-plt.ylabel('log likelihood')
 plt.show()

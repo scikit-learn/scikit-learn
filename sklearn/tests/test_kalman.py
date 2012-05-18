@@ -44,26 +44,32 @@ def test_kalman_filter():
         assert np.linalg.norm(V_filt[t] - data.V_filt[t]) < 1e-5
 
 
-def test_kalman_smoother():
+def test_kalman_predict():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
                       d=data.d, x_0=data.x_0, V_0=data.V_0)
 
-    (x_smooth, V_smooth, ll) = kf.smooth(Z=data.data)
+    x_smooth = kf.predict(Z=data.data)
     for t in reversed(range(501)):
         assert np.linalg.norm(x_smooth[t] - data.X_smooth[t]) < 1e-5
-        assert np.linalg.norm(V_smooth[t] - data.V_smooth[t]) < 1e-5
 
 
-def test_kalman_em():
+def test_kalman_fit():
     # check against MATLAB dataset
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
                       d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars=['Q', 'R'])
-    ll = kf.em(Z=data.data, n_iter=5)[-1]
+    
+    scores = np.zeros(5)
+    for i in range(len(scores)):
+        scores[i] = np.sum(kf.filter(Z=data.data)[-1])
+        kf.fit(Z=data.data, n_iter=1)
 
-    assert np.allclose(ll, data.ll[:5])
+    assert np.allclose(scores, data.ll[:5])
 
     # check that EM for all parameters is working
     kf.em_vars = 'all'
-    ll = kf.em(Z=data.data[:40], n_iter=5)[-1]
-    for i in range(len(ll)-1):
-        assert ll[i] < ll[i+1]
+    T = 30
+    for i in range(len(scores)):
+        scores[i] = np.sum(kf.filter(Z=data.data[0:T])[-1])
+        kf.fit(Z=data.data[0:T], n_iter=1)
+    for i in range(len(scores)-1):
+        assert scores[i] < scores[i+1]
