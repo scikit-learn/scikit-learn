@@ -8,7 +8,7 @@ data = load_kalman_data()
 
 def test_kalman_sampling():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
-                      d=data.d, x_0=data.x_0, V_0=data.V_0)
+                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
     (x, z) = kf.sample(100)
     assert x.shape == (101, data.A.shape[0])
@@ -17,7 +17,7 @@ def test_kalman_sampling():
 
 def test_kalman_filter_update():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
-                      d=data.d, x_0=data.x_0, V_0=data.V_0)
+                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
     (x_filt, V_filt, ll) = kf.filter(Z=data.data)
 
     T = data.data.shape[0]
@@ -36,7 +36,7 @@ def test_kalman_filter_update():
 
 def test_kalman_filter():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
-                      d=data.d, x_0=data.x_0, V_0=data.V_0)
+                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
     (x_filt, V_filt, ll) = kf.filter(Z=data.data)
     for t in range(500):
@@ -46,7 +46,7 @@ def test_kalman_filter():
 
 def test_kalman_predict():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
-                      d=data.d, x_0=data.x_0, V_0=data.V_0)
+                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
     x_smooth = kf.predict(Z=data.data)
     for t in reversed(range(501)):
@@ -56,7 +56,7 @@ def test_kalman_predict():
 def test_kalman_fit():
     # check against MATLAB dataset
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                      d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars=['Q', 'R'])
+                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0, em_vars=['Q', 'R'])
     
     scores = np.zeros(5)
     for i in range(len(scores)):

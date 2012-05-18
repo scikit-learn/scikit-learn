@@ -16,7 +16,7 @@ from sklearn.kalman import KalmanFilter
 # Initialize the Kalman Filter
 data = load_kalman_data()
 kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                  d=data.d, x_0=data.x_0, V_0=data.V_0)
+                  d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
 # Estimate mean and covariance of hidden state distribution iteratively. 
 T = data.data.shape[0]

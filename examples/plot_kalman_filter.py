@@ -23,7 +23,7 @@ V_0 = [[1, 0.1], [-0.1, 1]]
 # sample from model
 kf = KalmanFilter(A, C, Q, R, b, d, x_0, V_0, 
     random_state=np.random.RandomState(0))
-(x, z) = kf.sample(T=50)
+(x, z) = kf.sample(T=50, x_0=x_0)
 
 # estimate state with filtering and smoothing
 x_filt = kf.filter(z)[0]

@@ -605,30 +605,31 @@ class KalmanFilter(BaseEstimator):
     Parameters
     ==========
     A : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
-        state transition matrix
+        state transition matrix for times [0...T-1]
     C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
-        observation matrix
+        observation matrix for times [1...T]
     Q : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
-        state transition covariance matrix
+        state transition covariance matrix for times [0...T-1]
     R : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
-        observation covariance matrix
+        observation covariance matrix for times [1...T]
     b : [T, n_dim_state] or [n_dim_state] array-like
-        state offset
+        state offsets for times [0...T-1]
     d : [T, n_dim_obs] or [n_dim_obs] array-like
-        observation offset
-    x_0 : [n_dim_state] array-like
+        observation offset for times [1...T]
+    mu_0 : [n_dim_state] array-like
         mean of initial state distribution
-    V_0 : [n_dim_state, n_dim_state] array-like
+    sigma_0 : [n_dim_state, n_dim_state] array-like
         covariance of initial state distribution
-    rng : optional, numpy random state
+    random_state : optional, numpy random state
         random number generator used in sampling
-    em_vars : optional, subset of ['A', 'C', 'Q', 'R', 'x_0', 'V_0'] or 'all'
+    em_vars : optional, subset of ['A', 'C', 'b', 'd', 'Q', 'R', 'mu_0',
+    'sigma_0'] or 'all'
         if `em_vars` is an iterable of strings only variables in `em_vars`
         will be estimated using EM.  if `em_vars` == 'all', then all
         variables will be estimated.
     """
-    def __init__(self, A, C, Q, R, b, d, x_0, V_0, random_state=None,
-                 em_vars='all'):
+    def __init__(self, A, C, Q, R, b, d, mu_0, sigma_0, random_state=None,
+            em_vars=['Q', 'R', 'mu_0', 'sigma_0']):
         """Initialize Kalman Filter"""
         self.A = array2d(A)
         self.C = array2d(C)
@@ -636,8 +637,8 @@ class KalmanFilter(BaseEstimator):
         self.R = array2d(R)
         self.b = np.asarray(np.atleast_1d(b))
         self.d = np.asarray(np.atleast_1d(d))
-        self.x_0 = np.asarray(np.atleast_1d(x_0))
-        self.V_0 = array2d(V_0)
+        self.mu_0 = np.asarray(np.atleast_1d(mu_0))
+        self.sigma_0 = array2d(sigma_0)
         self.random_state = random_state
         self.em_vars = em_vars
 
@@ -670,8 +671,9 @@ class KalmanFilter(BaseEstimator):
         x = np.zeros((T + 1, n_dim_state))
         Z = np.zeros((T + 1, n_dim_obs))
 
+        # logic for selecting initial state
         if x_0 is None:
-            x_0 = self.x_0
+            x_0 = rng.multivariate_normal(self.mu_0, self.sigma_0)
 
         # logic for instantiating rng
         if random_state is None:
@@ -730,7 +732,7 @@ class KalmanFilter(BaseEstimator):
         Z = _pad(np.asarray(Z))
 
         (_, _, _, x_filt, V_filt, ll) = _filter(self.A, self.C,
-            self.Q, self.R, self.b, self.d, self.x_0, self.V_0, Z)
+            self.Q, self.R, self.b, self.d, self.mu_0, self.sigma_0, Z)
         return (x_filt, V_filt, ll)
 
 
@@ -829,7 +831,8 @@ class KalmanFilter(BaseEstimator):
         Z = _pad(np.asarray(Z))
 
         (mu_pred, sigma_pred, _, mu_filt, sigma_filt, ll) = _filter(
-            self.A, self.C, self.Q, self.R, self.b, self.d, self.x_0, self.V_0, Z)
+            self.A, self.C, self.Q, self.R, self.b, self.d, self.mu_0,
+            self.sigma_0, Z)
         (mu_smooth, _, _) = _smooth(
             self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
         return mu_smooth
@@ -866,8 +869,8 @@ class KalmanFilter(BaseEstimator):
                 'd': self.d,
                 'Q': self.Q,
                 'R': self.R,
-                'mu_0': self.x_0,
-                'sigma_0': self.V_0
+                'mu_0': self.mu_0,
+                'sigma_0': self.sigma_0
             }
             em_vars = set(em_vars)
             for k in given.keys():
@@ -876,8 +879,8 @@ class KalmanFilter(BaseEstimator):
 
         for i in range(n_iter):
             (mu_pred, sigma_pred, K, mu_filt, sigma_filt, loglik) = _filter(
-                self.A, self.C, self.Q, self.R, self.b, self.d, self.x_0,
-                self.V_0, Z)
+                self.A, self.C, self.Q, self.R, self.b, self.d, self.mu_0,
+                self.sigma_0, Z)
             (mu_smooth, sigma_smooth, L) = _smooth(
                 self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
             sigma_pair_smooth = _smooth_pair(sigma_smooth, L)
