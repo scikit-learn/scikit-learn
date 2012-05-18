@@ -2,6 +2,8 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
+from collections import Sequence
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -504,9 +506,10 @@ def _is_label_indicator_matrix(y):
 
 
 def _is_multilabel(y):
-    return isinstance(y[0], tuple) or \
-           isinstance(y[0], list) or \
-           _is_label_indicator_matrix(y)
+    # the explicit check for ndarray is for forward compatibility; future
+    # versions of Numpy might want to register ndarray as a Sequence
+    return not isinstance(y, np.ndarray) and isinstance(y, Sequence) \
+        or _is_label_indicator_matrix(y)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
