@@ -25,11 +25,11 @@ def test_kalman_filter_update():
     x_filt2 = np.zeros((T + 1, n_dim_state))
     V_filt2 = np.zeros((T + 1, n_dim_state, n_dim_state))
     for t in range(T):
-      if t == 0:
-        x_filt2[0] = data.x_0
-        V_filt2[0] = data.V_0
-      (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt[t], V_filt[t],
-          data.data[t], t=t)
+        if t == 0:
+            x_filt2[0] = data.x_0
+            V_filt2[0] = data.V_0
+        (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt[t],
+            V_filt[t], data.data[t], t=t)
     assert np.all(x_filt == x_filt2)
     assert np.all(V_filt == V_filt2)
 
@@ -66,4 +66,4 @@ def test_kalman_em():
     kf.em_vars = 'all'
     ll = kf.em(Z=data.data[:40], n_iter=5)[-1]
     for i in range(len(ll)-1):
-      assert ll[i] < ll[i+1]
+        assert ll[i] < ll[i+1]
