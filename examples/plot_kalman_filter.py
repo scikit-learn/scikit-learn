@@ -1,10 +1,10 @@
 '''
-==================
-Plot Kalman Simple
-==================
+===========================================
+Using the Kalman Filter and Kalman Smoother
+===========================================
 
-This simple example shows how one may use the :ref:`sklearn.kalman`
-module.
+This simple example shows how one may apply the Kalman Filter and Kalman
+Smoother to some randomly generated data.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,15 +21,9 @@ x_0 = [0, 0.2]
 V_0 = [[1, 0.1], [-0.1, 1]]
 
 # sample from model
-rng = np.random.RandomState(0)
-kf = KalmanFilter(A, C, Q, R, b, d, x_0, V_0, rng)
+kf = KalmanFilter(A, C, Q, R, b, d, x_0, V_0, 
+    random_state=np.random.RandomState(0))
 (x, z) = kf.sample(T=50)
-
-# add a little noise and estimate model parameters
-kf.Q += 0.1 * rng.multivariate_normal([0, 0], np.eye(2))
-kf.R += 0.1 * rng.randn()
-ll = kf.em(z, n_iter=5)[-1]
-print 'log likelihood of observations for each EM iteration: {}'.format(ll)
 
 # estimate state with filtering and smoothing
 (x_filt, V_filt, loglik) = kf.filter(z)
@@ -42,5 +36,5 @@ lines_true = plt.plot(x, color='b')
 lines_filt = plt.plot(x_filt, color='r')
 lines_smooth = plt.plot(x_smooth, color='g')
 plt.legend((lines_true[0], lines_filt[0], lines_smooth[0]),
-            ('true', 'filt', 'smooth'))
+            (      'true',        'filt',        'smooth'))
 plt.show()

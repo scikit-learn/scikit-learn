@@ -1,28 +1,14 @@
 '''
-===========
-Plot Kalman
-===========
+=============================
+EM for Linear-Gaussian Models
+=============================
 
-This example shows how one can use the Kalman Filter, Kalman Smoother,
-and EM algorithm to estimate the hidden state of a Linear-Gaussian
-dynamics model.  In this model, one assumes that the hidden state
-of a discrete-time system is distributed according to a Multivariate
-Gaussian distribution at time 0, then evolves like so,
-
-.. math::
-
-  x_{t+1} &= A_t * x_t + b_t + e_t^1            \\
-  y_{t}   &= C_t * x_t + d_t + e_t^2            \\
-  e_t^1   &~ MultivariateNormal(0, Q)           \\
-  e_t^2   &~ MultivariateNormal(0, R)           \\
-  x_0     &~ MultivariateNormal(mu_0, sigma_0)
-
-The Kalman Filter and Smoother are two methods for estimating the
-hidden state :math:`x_t` given observations :math:`y_t`.  The EM algorithm, in
-addition, allows one to estimate `A`, `C`, `Q`, `R`, `mu_0`, and `sigma_0`
+This example shows how one may use the EM algorithm to estimate model
+parameters in a Linear-Gaussian model.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import load_kalman_data
 from sklearn.kalman import KalmanFilter
 
@@ -31,10 +17,9 @@ data = load_kalman_data()
 kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
                   d=data.d, x_0=data.x_0, V_0=data.V_0, em_vars='all')
 
-# Learn good values for the state transition covariance matrix Q and
-# observation covariance matrix R using the EM algorithm.
+# Learn good values for A, C, Q, R, x_0, and V_0 using the EM algorithm.
 ll = kf.em(Z=data.data, n_iter=10)[-1]
-print ll
+print 'Likelihood per EM iteration: {}'.format(ll)
 
 # Estimate the state without using an observations.  This will let us see how
 # good we could do if we ran blind.
