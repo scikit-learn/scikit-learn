@@ -882,7 +882,7 @@ class KalmanFilter(BaseEstimator):
             (mu_smooth, sigma_smooth, L) = _smooth(
                 self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
             sigma_pair_smooth = _smooth_pair(sigma_smooth, L)
-            (self.A,  self.C, self.b, self.d, self.Q, self.R, self.x_0,
-                self.V_0) = _em( Z, self.b, self.d, mu_smooth, sigma_smooth,
-                    sigma_pair_smooth, given=given)
+            (self.A,  self.C, self.b, self.d, self.Q, self.R, self.mu_0,
+                self.sigma_0) = _em( Z, self.b, self.d, mu_smooth,
+                    sigma_smooth, sigma_pair_smooth, given=given)
         return self
