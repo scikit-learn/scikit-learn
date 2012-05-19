@@ -51,6 +51,7 @@ References
 import numpy as np
 
 from .base import BaseEstimator
+from .mixture import log_multivariate_normal_density
 from .utils import array2d
 
 
@@ -105,11 +106,8 @@ def _logmvnpdf(x, mu, sigma):
     sigma : [n_dim, n_dim] array
         covariance of multivariate normal
     """
-    k = len(mu)
-    ll = -0.5 * (x - mu).dot(np.linalg.pinv(sigma)).dot(x - mu) + \
-        -k * 0.5 * np.log(2 * np.pi) + \
-        -0.5 * np.log(np.abs(np.linalg.det(sigma)))
-    return ll
+    return log_multivariate_normal_density(x[np.newaxis,:], mu[np.newaxis,:],
+        sigma[np.newaxis,:,:], 'full')
 
 
 def _filter_update(A, C, Q, R, b, d, mu_old, sigma_old, z):
@@ -671,10 +669,6 @@ class KalmanFilter(BaseEstimator):
         x = np.zeros((T + 1, n_dim_state))
         Z = np.zeros((T + 1, n_dim_obs))
 
-        # logic for selecting initial state
-        if x_0 is None:
-            x_0 = rng.multivariate_normal(self.mu_0, self.sigma_0)
-
         # logic for instantiating rng
         if random_state is None:
             if self.random_state is None:
@@ -683,6 +677,10 @@ class KalmanFilter(BaseEstimator):
                 rng = self.random_state
         else:
             rng = random_state
+
+        # logic for selecting initial state
+        if x_0 is None:
+            x_0 = rng.multivariate_normal(self.mu_0, self.sigma_0)
 
         # logic for generating samples
         for t in range(T + 1):
