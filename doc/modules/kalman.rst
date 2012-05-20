@@ -63,11 +63,11 @@ generated in the following way,
 
 .. math::
 
-    x_0           & \sim \text{Gaussian}(\mu_0, \Sigma_0) \\
-    x_{t+1}       & = A x_t + b_t + \epsilon_{t}^{1}      \\
-    y_{t+1}       & = C x_{t+1} + d_t + \epsilon_{t}^2    \\
-    \epsilon_t^1  & \sim \text{Gaussian}(0, Q)            \\
-    \epsilon_t^2  & \sim \text{Gaussian}(0, R)
+    x_0               & \sim \text{Gaussian}(\mu_0, \Sigma_0)       \\
+    x_{t+1}           & = A x_t + b_t + \epsilon_{t}^{1}            \\
+    y_{t+1}           & = C x_{t+1} + d_{t+1} + \epsilon_{t+1}^2    \\
+    \epsilon_t^1      & \sim \text{Gaussian}(0, Q)                  \\
+    \epsilon_{t+1}^2  & \sim \text{Gaussian}(0, R)
 
 The Gaussian distribution is characterized by its single mode and exponentially
 decreasing tails, thus implying the Kalman Filter and Kalman Smoother work best

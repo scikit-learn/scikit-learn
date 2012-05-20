@@ -49,6 +49,7 @@ References
     http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
 """
 import numpy as np
+import numpy.ma as ma
 
 from .base import BaseEstimator
 from .mixture import log_multivariate_normal_density
@@ -166,16 +167,20 @@ def _filter_update(A, C, Q, R, b, d, mu_old, sigma_old, z):
     mu_pred = A.dot(mu_old) + b
     sigma_pred = A.dot(sigma_old).dot(A.T) + Q
 
-    mu_obs = C.dot(mu_pred) + d
-    sigma_obs = C.dot(sigma_pred).dot(C.T) + R
-    ll = _logmvnpdf(z, mu_obs, sigma_obs)
+    if not np.any(ma.getmask(z)):
+        mu_obs = C.dot(mu_pred) + d
+        sigma_obs = C.dot(sigma_pred).dot(C.T) + R
+        ll = _logmvnpdf(z, mu_obs, sigma_obs)
 
-    K_new = sigma_pred.dot(C.T).dot(np.linalg.pinv(sigma_obs))
+        K_new = sigma_pred.dot(C.T).dot(np.linalg.pinv(sigma_obs))
 
-    mu_new = mu_pred + K_new.dot(z - mu_obs)
-    sigma_new = sigma_pred - K_new.dot(C).dot(sigma_pred)
+        mu_new = mu_pred + K_new.dot(z - mu_obs)
+        sigma_new = sigma_pred - K_new.dot(C).dot(sigma_pred)
 
-    return (mu_pred, sigma_pred, K_new, mu_new, sigma_new, ll)
+        return (mu_pred, sigma_pred, K_new, mu_new, sigma_new, ll)
+    else:
+        K_new = np.zeros((n_dim_state, n_dim_obs))
+        return (mu_pred, sigma_pred, K_new, mu_pred, sigma_pred, 0.0)
 
 
 def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
@@ -420,9 +425,10 @@ def _em_C(Z, d, mu_smooth, sigma_smooth):
     res1 = np.zeros((n_dim_obs, n_dim_state))
     res2 = np.zeros((n_dim_state, n_dim_state))
     for t in range(1, T + 1):
-        d_t = _last_dims(d, t, ndims=1)
-        res1 += np.outer(Z[t] - d_t, mu_smooth[t])
-        res2 += sigma_smooth[t] + np.outer(mu_smooth[t], mu_smooth[t])
+        if not np.any(ma.getmask(Z[t])):
+            d_t = _last_dims(d, t, ndims=1)
+            res1 += np.outer(Z[t] - d_t, mu_smooth[t])
+            res2 += sigma_smooth[t] + np.outer(mu_smooth[t], mu_smooth[t])
     return res1.dot(np.linalg.pinv(res2))
 
 
@@ -442,11 +448,12 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
     T -= 1
     res = np.zeros((n_dim_obs, n_dim_obs))
     for t in range(1, T + 1):
-        C_t = _last_dims(C, t)
-        d_t = _last_dims(d, t, ndims=1)
-        err = Z[t] - C_t.dot(mu_smooth[t]) - d_t
-        res += np.outer(err, err) \
-            + C_t.dot(sigma_smooth[t]).dot(C_t.T)
+        if not np.any(ma.getmask(Z[t])):
+            C_t = _last_dims(C, t)
+            d_t = _last_dims(d, t, ndims=1)
+            err = Z[t] - C_t.dot(mu_smooth[t]) - d_t
+            res += np.outer(err, err) \
+                + C_t.dot(sigma_smooth[t]).dot(C_t.T)
     return (1.0 / T) * res
 
 
@@ -480,10 +487,10 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     .. math::
 
         Q &= \frac{1}{T} \sum_{t=0}^{T-1}
-               (\mathbb{E}[x_{t+1}] A \mathbb{E}[x_t] - b_t)
-                  (\mathbb{E}[x_{t+1}] A \mathbb{E}[x_t] - b_t)^T
-               + A Var(x_t) A^T + Var(x_{t+1}) - Var(x_{t+1}) L_t^T A^T
-               - A_t L_t Var(x_{t+1})
+               (\mathbb{E}[x_{t+1}] A_t \mathbb{E}[x_t] - b_t)
+                  (\mathbb{E}[x_{t+1}] A_t \mathbb{E}[x_t] - b_t)^T
+               + A_t Var(x_t) A_t^T + Var(x_{t+1})
+               - Cov(x_{t+1}, x_t) A_t^T - A_t Cov(x_t, x_{t+1})
     """
     T, n_dim_state, _ = sigma_smooth.shape
     T -= 1
@@ -556,8 +563,9 @@ def _em_d(C, mu_smooth, Z):
     T -= 1
     d = np.zeros(n_dim_obs)
     for t in range(1, T+1):
-        C_t = _last_dims(C, t)
-        d += Z[t] - C_t.dot(mu_smooth[t])
+        if not np.any(ma.getmask(Z[t])):
+            C_t = _last_dims(C, t)
+            d += Z[t] - C_t.dot(mu_smooth[t])
     return (1.0/T)*d
 
 
@@ -606,9 +614,9 @@ class KalmanFilter(BaseEstimator):
         state transition matrix for times [0...T-1]
     C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
         observation matrix for times [1...T]
-    Q : [T, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+    Q : [n_dim_state, n_dim_state] array-like
         state transition covariance matrix for times [0...T-1]
-    R : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
+    R : [n_dim_obs, n_dim_obs] array-like
         observation covariance matrix for times [1...T]
     b : [T, n_dim_state] or [n_dim_state] array-like
         state offsets for times [0...T-1]
