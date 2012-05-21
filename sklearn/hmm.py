@@ -122,29 +122,30 @@ class _BaseHMM(BaseEstimator):
         self.params = params
         self.init_params = init_params
         
-        # This decision logic must be removed
+        # This decision logic must be moved
 
-        if startprob is None:
-            startprob = np.tile(1.0 / n_components, n_components)
+        #if startprob is None:
+        #    startprob = np.tile(1.0 / n_components, n_components)
         self.startprob_ = startprob
 
-        if startprob_prior is None:
-            startprob_prior = 1.0
+        #if startprob_prior is None:
+        #    startprob_prior = 1.0
         self.startprob_prior = startprob_prior
 
-        if transmat is None:
-            transmat = np.tile(1.0 / n_components,
-                    (n_components, n_components))
+        #if transmat is None:
+        #    transmat = np.tile(1.0 / n_components,
+        #            (n_components, n_components))
         self.transmat_ = transmat
 
-        if transmat_prior is None:
-            transmat_prior = 1.0
+        #if transmat_prior is None:
+        #    transmat_prior = 1.0
         self.transmat_prior = transmat_prior
 
-        if algorithm in decoder_algorithms:
-            self._algorithm = algorithm
-        else:
-            self._algorithm = "viterbi"
+        #if algorithm in decoder_algorithms:
+        self._algorithm = algorithm
+        #else:
+        #    self._algorithm = "viterbi"
+
         self.random_state = random_state
 
     def eval(self, obs):
@@ -442,6 +443,8 @@ class _BaseHMM(BaseEstimator):
             if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
         
+        if self.algorithm not in decoder_algorithms:
+            self._algorithm = "viterbi"
         
         self._init(obs, self.init_params)
 
@@ -487,6 +490,10 @@ class _BaseHMM(BaseEstimator):
         return np.exp(self._log_startprob)
 
     def _set_startprob(self, startprob):
+        if startprob is None:
+            startprob = np.tile(1.0 / self.n_components, self.n_components)
+        #self.startprob_ = startprob
+
         if len(startprob) != self.n_components:
             raise ValueError('startprob must have length n_components')
         if not np.allclose(np.sum(startprob), 1.0):
@@ -501,6 +508,9 @@ class _BaseHMM(BaseEstimator):
         return np.exp(self._log_transmat)
 
     def _set_transmat(self, transmat):
+        if transmat is None:
+            transmat = np.tile(1.0 / self.n_components,
+                    (self.n_components, self.n_components))
         if (np.asarray(transmat).shape
                 != (self.n_components, self.n_components)):
             raise ValueError('transmat must have shape ' +
@@ -587,6 +597,11 @@ class _BaseHMM(BaseEstimator):
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
         # p. 443 - 445
+        if self.startprob_prior is None:
+            self.startprob_prior = 1.0
+        if self.transmat_prior is None:
+            self.transmat_prior = 1.0
+
         if 's' in params:
             self.startprob_ = normalize(
                 np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20))
@@ -651,10 +666,8 @@ class GaussianHMM(_BaseHMM):
     >>> from sklearn.hmm import GaussianHMM
     >>> GaussianHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    GaussianHMM(algorithm='viterbi', covariance_type='diag', covars_prior=0.01,
-        covars_weight=1, means_prior=None, means_weight=0, n_components=2,
-        random_state=None, startprob=None, startprob_prior=1.0, transmat=None,
-        transmat_prior=1.0)
+    GaussianHMM(algorithm='viterbi', covariance_type='diag',...
+
 
     See Also
     --------
@@ -873,9 +886,7 @@ class MultinomialHMM(_BaseHMM):
     >>> from sklearn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(algorithm='viterbi', n_components=2, random_state=None,
-                   startprob=None, startprob_prior=1.0, transmat=None,
-                   transmat_prior=1.0)
+    MultinomialHMM(algorithm='viterbi', n_components=2, random_state=None,...
 
     See Also
     --------
@@ -982,14 +993,7 @@ class GMMHMM(_BaseHMM):
     >>> from sklearn.hmm import GMMHMM
     >>> GMMHMM(n_components=2, n_mix=10, covariance_type='diag')
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    GMMHMM(algorithm='viterbi', covariance_type='diag', covars_prior=0.01,
-        gmms=[GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
-        n_components=10, n_init=1, n_iter=100, params='wmc', random_state=None,
-        thresh=0.01), GMM(covariance_type=None, init_params='wmc',
-        min_covar=0.001, n_components=10, n_init=1, n_iter=100, params='wmc',
-        random_state=None, thresh=0.01)], n_components=2, n_mix=10,
-        random_state=None, startprob=None, startprob_prior=1.0, transmat=None,
-        transmat_prior=1.0)
+    GMMHMM(algorithm='viterbi', covariance_type='diag',...
 
     See Also
     --------
