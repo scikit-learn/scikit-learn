@@ -33,7 +33,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     By definition a confusion matrix cm is such that cm[i, j] is equal
     to the number of observations known to be in group i but predicted
-    to be in group j
+    to be in group j.
 
     Parameters
     ----------
@@ -42,6 +42,11 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     y_pred : array, shape = [n_samples]
         estimated targets
+
+    labels : array, shape = [n_classes]
+        lists all labels occuring in the dataset.
+        If none is given, those that apprear at least once
+        in y_true or y_pred are used.
 
     Returns
     -------
