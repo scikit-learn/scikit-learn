@@ -228,7 +228,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         return result
 
-    def mahalanobis(self, observations):
+    def mahalanobis(self, observations, assume_centered=False):
         """Computes the mahalanobis distances of given observations.
 
         The provided observations are assumed to be centered. One may want to
@@ -238,6 +238,11 @@ class EmpiricalCovariance(BaseEstimator):
         ----------
         observations: array-like, shape = [n_observations, n_features]
           The observations, the Mahalanobis distances of the which we compute.
+        assume_centered: bool,
+          Whether or not to consider the observations are centered.
+          If `assume_centered` is True (default), one may want to center them
+          using a location estimate first. Otherwise, the observations will
+          be removed their empirical mean.
 
         Returns
         -------
@@ -252,6 +257,8 @@ class EmpiricalCovariance(BaseEstimator):
             precision = linalg.pinv(self.covariance_)
 
         # compute mahalanobis distances
+        if not assume_centered:
+            observations = observations - self.location_
         mahalanobis_dist = np.sum(
             np.dot(observations, precision) * observations, 1)
 

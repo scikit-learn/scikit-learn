@@ -35,7 +35,7 @@ def test_covariance():
     assert_almost_equal(
         cov.error_norm(empirical_covariance(X), squared=False), 0)
     # Mahalanobis distances computation test
-    mahal_dist = cov.mahalanobis(X)
+    mahal_dist = cov.mahalanobis(X, assume_centered=True)
     assert(np.amax(mahal_dist) < 250)
     assert(np.amin(mahal_dist) > 50)
 
