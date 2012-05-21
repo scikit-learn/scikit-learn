@@ -74,7 +74,7 @@ def test_outlier_detection():
     y_pred = clf.predict(X)
 
     assert_array_almost_equal(
-        clf.decision_function(X, raw_mahalanobis=True),
-        clf.mahalanobis(X - clf.location_))
+        clf.decision_function(X, raw_values=True),
+        clf.mahalanobis(X))
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)

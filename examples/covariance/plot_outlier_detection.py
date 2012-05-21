@@ -35,7 +35,7 @@ from sklearn.covariance import EllipticEnvelope
 
 # Example settings
 n_samples = 200
-outliers_fraction = 0.25
+outliers_fraction = 0.1
 clusters_separation = [0, 1, 2]
 
 # define two outlier detection tools to be compared
@@ -51,7 +51,6 @@ n_inliers = int((1. - outliers_fraction) * n_samples)
 n_outliers = int(outliers_fraction * n_samples)
 ground_truth = np.ones(n_samples, dtype=int)
 ground_truth[-n_outliers:] = 0
-
 
 # Fit the problem with varying cluster separation
 for i, offset in enumerate(clusters_separation):
