@@ -101,6 +101,7 @@ def test_discretenb_pickle():
     pickle.dump(clf, store)
     clf = pickle.load(BytesIO(store.getvalue()))
 
+
 def test_input_check():
     """Test input checks"""
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:

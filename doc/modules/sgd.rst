@@ -145,6 +145,9 @@ array of shape [n_classes, n_features] and `intercept_` is a one
 dimensional array of shape [n_classes]. The i-th row of `coef_` holds
 the weight vector of the OVA classifier for the i-th class; classes are
 indexed in ascending order (see attribute `classes`).
+Note that, in principle, since they allow to create a probability model,
+`loss="log"` and `loss="modified_huber"` are more suitable for
+one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
 instances via the fit parameters `class_weight` and `sample_weight`. See

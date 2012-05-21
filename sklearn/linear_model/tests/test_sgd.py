@@ -501,7 +501,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
 
-
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 

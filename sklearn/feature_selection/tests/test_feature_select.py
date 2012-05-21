@@ -27,6 +27,7 @@ def test_f_oneway_vs_scipy_stats():
     assert_true(np.allclose(f, f2))
     assert_true(np.allclose(pv, pv2))
 
+
 def test_f_oneway_ints():
     # Smoke test f_oneway on integers: that it does raise casting errors
     # with recent numpys
