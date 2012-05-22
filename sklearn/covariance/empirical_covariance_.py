@@ -116,14 +116,18 @@ class EmpiricalCovariance(BaseEstimator):
           is computed.
 
         """
-        covariance = array2d(covariance)
-        # set covariance
-        self.covariance_ = covariance
-        # set precision
-        if self.store_precision:
-            self.precision_ = linalg.pinv(covariance)
-        else:
+        if covariance is None:
+            self.covariance_ = None
             self.precision_ = None
+        else:
+            covariance = array2d(covariance)
+            # set covariance
+            self.covariance_ = covariance
+            # set precision
+            if self.store_precision:
+                self.precision_ = linalg.pinv(covariance)
+            else:
+                self.precision_ = None
 
     def fit(self, X):
         """Fits the Maximum Likelihood Estimator covariance model

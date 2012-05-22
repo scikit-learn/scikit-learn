@@ -133,7 +133,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 ###############################################################################
 # Ledoit-Wolf estimator
 
-def ledoit_wolf(X, assume_centered=False):
+def ledoit_wolf(X, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Parameters
@@ -147,10 +147,17 @@ def ledoit_wolf(X, assume_centered=False):
       zero but is not exactly zero.
       If False, data are centered before computation.
 
+    block_size: int,
+      Size of the blocks into which the covariance matrix will be split.
+      If n_features > `block_size`, block computation will be made (so it
+      will not be made in one shot) and the shrunk covariance matrix will
+      not be returned. Otherwise, the shrunk covariance matrix will be
+      returned since it can hold in memory.
+
     Returns
     -------
     shrunk_cov: array-like, shape (n_features, n_features)
-      Shrunk covariance
+      Shrunk covariance, returned only if n_features < `block_size`.
 
     shrinkage: float
       coefficient in the convex combination used for the computation
@@ -158,7 +165,7 @@ def ledoit_wolf(X, assume_centered=False):
 
     Notes
     -----
-    The regularised (shrunk) covariance is:
+    The regularized (shrunk) covariance is:
 
     (1 - shrinkage)*cov
       + shrinkage * mu * np.identity(n_features)
@@ -185,19 +192,50 @@ def ledoit_wolf(X, assume_centered=False):
     if not assume_centered:
         X = X - X.mean(0)
 
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.trace(emp_cov) / n_features
-    delta_ = emp_cov.copy()
-    delta_.flat[::n_features + 1] -= mu
-    delta = (delta_ ** 2).sum() / n_features
+    # number of blocks to split the covariance matrix into
+    n_splits = int(n_features / block_size)
+    emp_cov_trace = np.sum(X ** 2, 0) / n_samples
+    mu = np.sum(emp_cov_trace) / n_features
     X2 = X ** 2
-    beta_ = 1. / (n_features * n_samples) \
-        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov ** 2)
-
-    beta = min(beta_, delta)
+    beta_ = 0.  # sum of the coefficients of <X2.T, X2>
+    delta_ = 0.  # sum of the *squared* coefficients of <X.T, X>
+    # starting block computation
+    for i in xrange(n_splits):
+        for j in xrange(n_splits):
+            rows = np.arange(block_size * i, block_size * (i + 1))
+            cols = np.arange(block_size * j, block_size * (j + 1))
+            beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
+            delta_ += np.sum(np.dot(X.T[rows], X[:, cols]) ** 2)
+        rows = np.arange(block_size * i, block_size * (i + 1))
+        beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits:]))
+        delta_ += np.sum(
+            np.dot(X.T[rows], X[:, block_size * n_splits:]) ** 2)
+    for j in xrange(n_splits):
+        cols = np.arange(block_size * j, block_size * (j + 1))
+        beta_ += np.sum(np.dot(X2.T[block_size * n_splits:], X2[:, cols]))
+        delta_ += np.sum(
+            np.dot(X.T[block_size * n_splits:], X[:, cols]) ** 2)
+    delta_ += np.sum(np.dot(X.T[block_size * n_splits:],
+                            X[:, block_size * n_splits:]) ** 2)
+    delta_ /= n_samples ** 2
+    beta_ += np.sum(np.dot(
+            X2.T[block_size * n_splits:], X2[:, block_size * n_splits:]))
+    # use delta_ to compute beta
+    beta = 1. / (n_features * n_samples) * (beta_ / n_samples - delta_)
+    # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
+    delta = delta_ - 2. * mu * emp_cov_trace.sum() + n_features * mu ** 2
+    delta /= n_features
+    # get final beta as the min between beta and delta
+    beta = min(beta, delta)
+    # finally get shrinkage
     shrinkage = beta / delta
-    shrunk_cov = (1. - shrinkage) * emp_cov
-    shrunk_cov.flat[::n_features + 1] += shrinkage * mu
+    # only return the shrunk covariance if it is not to big
+    if n_features > block_size:
+        shrunk_cov = None
+    else:
+        shrunk_cov = (1. - shrinkage) * empirical_covariance(
+            X, assume_centered=assume_centered)
+        shrunk_cov.flat[::n_features + 1] += shrinkage * mu
 
     return shrunk_cov, shrinkage
 
