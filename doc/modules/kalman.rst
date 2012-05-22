@@ -48,7 +48,7 @@ Linear-Gaussian model assumes that for all :math:`t = 0, \ldots, T-1`,
 * :math:`x_0` is distributed according to a Gaussian distribution
 * :math:`x_{t+1}` is a linear transformation of :math:`x_t` and additive
   Gaussian noise
-* :math:`z_{t+1}` is a linear transformation of :math:`x_{t+1}` and additive
+* :math:`z_{t}` is a linear transformation of :math:`x_{t}` and additive
   Gaussian noise
 
 These assumptions imply that that :math:`x_t` is always a Gaussian
@@ -64,10 +64,10 @@ generated in the following way,
 .. math::
 
     x_0               & \sim \text{Gaussian}(\mu_0, \Sigma_0)       \\
-    x_{t+1}           & = A x_t + b_t + \epsilon_{t}^{1}            \\
-    y_{t+1}           & = C x_{t+1} + d_{t+1} + \epsilon_{t+1}^2    \\
+    x_{t+1}           & = A x_t + b_t + \epsilon_{t+1}^{1}            \\
+    y_{t}             & = C x_{t} + d_{t} + \epsilon_{t}^2        \\
     \epsilon_t^1      & \sim \text{Gaussian}(0, Q)                  \\
-    \epsilon_{t+1}^2  & \sim \text{Gaussian}(0, R)
+    \epsilon_{t}^2    & \sim \text{Gaussian}(0, R)
 
 The Gaussian distribution is characterized by its single mode and exponentially
 decreasing tails, thus implying the Kalman Filter and Kalman Smoother work best
@@ -83,10 +83,10 @@ Both Kalman Filtering and Kalman Smoothing aim to perform the same task:
 estimate the hidden state using the measurements.  Why then should one prefer
 one over the other?  The answer is that the Filter requires lower computational
 complexity while the Smoother gives better estimates.  Mathematically, the
-Filter only uses measurements :math:`z_1, \ldots, z_t` to estimates
-:math:`x_t`, but the Smoother uses :math:`z_1, \ldots, z_t, \ldots, z_T`.  In
-fact, the output of the Kalman Filter is necessary for implementing the Kalman
-Smoother.
+Filter only uses measurements :math:`z_0, \ldots, z_t` to estimates
+:math:`x_t`, but the Smoother uses :math:`z_0, \ldots, z_t, \ldots, z_{T-1}`.
+In fact, the output of the Kalman Filter is necessary for implementing the
+Kalman Smoother.
 
 In general, the computational complexity of the Kalman Filter and the Kalman
 Smoother are both :math:`O(Td^3)` where :math:`T` is the total number of time
@@ -95,6 +95,11 @@ Smoother should be preferred.  In practice, the Smoother takes roughly twice as
 long as the Filter as it must perform two passes over the measurements.  The
 only case where the Filter is better suited is when measurements :math:`z_t`
 come in a streaming fashion and estimates for `x_t` need to be updated online.
+
+Finally, textbook examples of the Kalman Filter and Kalman Smoother often
+assume :math:`x_t` ranges from :math:`t = 0 \ldots T` while :math:`z_t` ranges
+from :math:`t = 1 \ldots T`.  This module assumes both :math:`x_t` and
+:math:`z_t` range from :math:`t = 0 \ldots T-1`.
 
 .. topic:: Examples:
 
@@ -110,20 +115,20 @@ algorithm in and of itself.  The EM algorithm seeks to maximize the likelihood
 of all measurements by estimating the unknown variables (in this case, the
 hidden states) with a fixed set of parameters, then maximizing the expected
 value of the log likelihood of all measurements with respect to the parameters,
-and repeating.  In mathematical notation, if we define :math:`\theta = (A, C,
-Q, R, \mu_0, \Sigma_0)`, then the EM Algorithm works by finding a closed form
-expression for,
+and repeating.  In mathematical notation, if we define :math:`\theta = (A, b,
+C, d, Q, R, \mu_0, \Sigma_0)`, then the EM Algorithm works by finding a closed
+form expression for,
 
 .. math::
 
-    P(x_{1:T} | \theta_{\text{old}}, z_{1:T})
+    P(x_{0:T-1} | \theta_{\text{old}}, z_{0:T-1})
 
 then uses that expression to find,
 
 .. math::
 
-    \theta_{\text{new}} = \arg\max_{\theta'} \mathbb{E}_{x_{1:T}} [
-      \log P(x_{1:T}, z_{1:T} | \theta')  | z_{1:T}, \theta_{\text{old}}
+    \theta_{\text{new}} = \arg\max_{\theta'} \mathbb{E}_{x_{0:T-1}} [
+      \log P(x_{0:T-1}, z_{0:T-1} | \theta')  | z_{0:T-1}, \theta_{\text{old}}
     ]
 
 :math:`\theta_{\text{new}}` then takes the place of :math:`\theta_{\text{old}}`
@@ -141,3 +146,17 @@ values parameters can grow extremely out of hand with insufficient data.
 .. topic:: Examples:
 
  * :ref:`example_plot_kalman_em.py`
+
+Missing Observations
+====================
+
+A real system will often get measurements at regular points in time, but there will also be times when the sensor fails.  :mod:`sklearn.kalman` offers you the ability to continue applying all of its implemented algorithms even if this is the case.  In order to use this feature, one simply needs to wrap the measurements in :mod:`numpy.ma` and mark a timestep as masked::
+
+  >>> from sklearn.datasets import load_kalman_data
+  >>> import numpy.ma as ma
+  >>> Z = load_kalman_data().data
+  >>> Z = ma.array(Z, mask=np.zeros(Z.shape))
+
+.. topic:: Examples:
+
+ * :ref:`example_plot_kalman_missing.py`
