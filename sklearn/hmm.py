@@ -2,6 +2,7 @@
 #
 # Author: Ron Weiss <ronweiss@gmail.com>
 # and Shiqiao Du <lucidfrontier.45@gmail.com>
+# API changes: Jaques Grobler <jaquesgrobler@gmail.com>
 
 """
 The :mod:`sklearn.hmm` module implements hidden Markov models.
@@ -94,6 +95,24 @@ class _BaseHMM(BaseEstimator):
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
+    n_iter : int, optional
+        Number of iterations to perform.
+
+    thresh : float, optional
+        Convergence threshold.
+
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 's' for startprob,
+        't' for transmat, 'm' for means, and 'c' for covars, etc.
+        Defaults to all parameters.
+
+    init_params : string, optional
+        Controls which parameters are initialized prior to
+        training.  Can contain any combination of 's' for
+        startprob, 't' for transmat, 'm' for means, and 'c' for
+        covars, etc.  Defaults to all parameters.
+
     See Also
     --------
     GMM : Gaussian mixture model
@@ -121,31 +140,11 @@ class _BaseHMM(BaseEstimator):
         self.thresh = thresh
         self.params = params
         self.init_params = init_params
-        
-        # This decision logic must be moved
-
-        #if startprob is None:
-        #    startprob = np.tile(1.0 / n_components, n_components)
         self.startprob_ = startprob
-
-        #if startprob_prior is None:
-        #    startprob_prior = 1.0
         self.startprob_prior = startprob_prior
-
-        #if transmat is None:
-        #    transmat = np.tile(1.0 / n_components,
-        #            (n_components, n_components))
         self.transmat_ = transmat
-
-        #if transmat_prior is None:
-        #    transmat_prior = 1.0
         self.transmat_prior = transmat_prior
-
-        #if algorithm in decoder_algorithms:
         self._algorithm = algorithm
-        #else:
-        #    self._algorithm = "viterbi"
-
         self.random_state = random_state
 
     def eval(self, obs):
@@ -385,11 +384,7 @@ class _BaseHMM(BaseEstimator):
 
     def fit(self, obs, **kwargs):
         """Estimate model parameters.
-
-        OLD-PARAMS
-        n_iter=10, thresh=1e-2, params=string.ascii_letters,
-            init_params=string.ascii_letters,
-
+        
         An initialization step is performed before entering the EM
         algorithm. If you want to avoid this step, set the keyword
         argument init_params to the empty string ''. Likewise, if you
@@ -400,24 +395,6 @@ class _BaseHMM(BaseEstimator):
         ----------
         obs : list
             List of array-like observation sequences (shape (n_i, n_features)).
-
-        n_iter : int, optional
-            Number of iterations to perform.
-
-        thresh : float, optional
-            Convergence threshold.
-
-        params : string, optional
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 's' for startprob,
-            't' for transmat, 'm' for means, and 'c' for covars, etc.
-            Defaults to all parameters.
-
-        init_params : string, optional
-            Controls which parameters are initialized prior to
-            training.  Can contain any combination of 's' for
-            startprob, 't' for transmat, 'm' for means, and 'c' for
-            covars, etc.  Defaults to all parameters.
 
         Notes
         -----
@@ -492,7 +469,6 @@ class _BaseHMM(BaseEstimator):
     def _set_startprob(self, startprob):
         if startprob is None:
             startprob = np.tile(1.0 / self.n_components, self.n_components)
-        #self.startprob_ = startprob
 
         if len(startprob) != self.n_components:
             raise ValueError('startprob must have length n_components')
@@ -511,6 +487,7 @@ class _BaseHMM(BaseEstimator):
         if transmat is None:
             transmat = np.tile(1.0 / self.n_components,
                     (self.n_components, self.n_components))
+
         if (np.asarray(transmat).shape
                 != (self.n_components, self.n_components)):
             raise ValueError('transmat must have shape ' +
@@ -661,12 +638,31 @@ class GaussianHMM(_BaseHMM):
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
+    n_iter : int, optional
+        Number of iterations to perform.
+
+    thresh : float, optional
+        Convergence threshold.
+
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 's' for startprob,
+        't' for transmat, 'm' for means, and 'c' for covars, etc.
+        Defaults to all parameters.
+
+    init_params : string, optional
+        Controls which parameters are initialized prior to
+        training.  Can contain any combination of 's' for
+        startprob, 't' for transmat, 'm' for means, and 'c' for
+        covars, etc.  Defaults to all parameters.
+
+
     Examples
     --------
     >>> from sklearn.hmm import GaussianHMM
     >>> GaussianHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    GaussianHMM(algorithm='viterbi', covariance_type='diag',...
+    GaussianHMM(algorithm='viterbi',...
 
 
     See Also
@@ -678,12 +674,18 @@ class GaussianHMM(_BaseHMM):
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  algorithm="viterbi", means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1,
-                 random_state=None):
+                 random_state=None, n_iter=10, thresh=1e-2, 
+                 params=string.ascii_letters,
+                 init_params=string.ascii_letters):
         _BaseHMM.__init__(self, n_components, startprob, transmat,
                                         startprob_prior=startprob_prior,
                                         transmat_prior=transmat_prior,
                                         algorithm=algorithm,
-                                        random_state=random_state)
+                                        random_state=random_state,
+                                        n_iter=n_iter,
+                                        thresh=thresh,
+                                        params=params,
+                                        init_params=init_params)
 
         self._covariance_type = covariance_type
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
@@ -881,12 +883,30 @@ class MultinomialHMM(_BaseHMM):
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
+    n_iter : int, optional
+        Number of iterations to perform.
+
+    thresh : float, optional
+        Convergence threshold.
+
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 's' for startprob,
+        't' for transmat, 'm' for means, and 'c' for covars, etc.
+        Defaults to all parameters.
+
+    init_params : string, optional
+        Controls which parameters are initialized prior to
+        training.  Can contain any combination of 's' for
+        startprob, 't' for transmat, 'm' for means, and 'c' for
+        covars, etc.  Defaults to all parameters.
+
     Examples
     --------
     >>> from sklearn.hmm import MultinomialHMM
     >>> MultinomialHMM(n_components=2)
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    MultinomialHMM(algorithm='viterbi', n_components=2, random_state=None,...
+    MultinomialHMM(algorithm='viterbi',...
 
     See Also
     --------
@@ -894,8 +914,10 @@ class MultinomialHMM(_BaseHMM):
     """
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
-            startprob_prior=None, transmat_prior=None,
-            algorithm="viterbi", random_state=None):
+                 startprob_prior=None, transmat_prior=None,
+                 algorithm="viterbi", random_state=None,
+                 n_iter=10, thresh=1e-2, params=string.ascii_letters,
+                 init_params=string.ascii_letters):
         """Create a hidden Markov model with multinomial emissions.
 
         Parameters
@@ -904,10 +926,14 @@ class MultinomialHMM(_BaseHMM):
             Number of states.
         """
         _BaseHMM.__init__(self, n_components, startprob, transmat,
-                                             startprob_prior=startprob_prior,
-                                             transmat_prior=transmat_prior,
-                                             algorithm=algorithm,
-                                             random_state=random_state)
+                          startprob_prior=startprob_prior,
+                          transmat_prior=transmat_prior,
+                          algorithm=algorithm,
+                          random_state=random_state,
+                          n_iter=n_iter,
+                          thresh=thresh,
+                          params=params,
+                          init_params=init_params)
 
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
@@ -988,6 +1014,24 @@ class GMMHMM(_BaseHMM):
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
+    n_iter : int, optional
+        Number of iterations to perform.
+
+    thresh : float, optional
+        Convergence threshold.
+
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 's' for startprob,
+        't' for transmat, 'm' for means, and 'c' for covars, etc.
+        Defaults to all parameters.
+
+    init_params : string, optional
+        Controls which parameters are initialized prior to
+        training.  Can contain any combination of 's' for
+        startprob, 't' for transmat, 'm' for means, and 'c' for
+        covars, etc.  Defaults to all parameters.
+
     Examples
     --------
     >>> from sklearn.hmm import GMMHMM
@@ -1001,9 +1045,11 @@ class GMMHMM(_BaseHMM):
     """
 
     def __init__(self, n_components=1, n_mix=1, startprob=None, transmat=None,
-            startprob_prior=None, transmat_prior=None, algorithm="viterbi",
-            gmms=None, covariance_type='diag', covars_prior=1e-2,
-            random_state=None):
+                 startprob_prior=None, transmat_prior=None, algorithm="viterbi",
+                 gmms=None, covariance_type='diag', covars_prior=1e-2,
+                 random_state=None, n_iter=10, thresh=1e-2, 
+                 params=string.ascii_letters,
+                 init_params=string.ascii_letters):
         """Create a hidden Markov model with GMM emissions.
 
         Parameters
@@ -1012,10 +1058,14 @@ class GMMHMM(_BaseHMM):
             Number of states.
         """
         _BaseHMM.__init__(self, n_components, startprob, transmat,
-                                     startprob_prior=startprob_prior,
-                                     transmat_prior=transmat_prior,
-                                     algorithm=algorithm,
-                                     random_state=random_state)
+                          startprob_prior=startprob_prior,
+                          transmat_prior=transmat_prior,
+                          algorithm=algorithm,
+                          random_state=random_state,
+                          n_iter=n_iter,
+                          thresh=thresh,
+                          params=params,
+                          init_params=init_params)
 
         # XXX: Hotfit for n_mix that is incompatible with the scikit's
         # BaseEstimator API
