@@ -21,14 +21,14 @@ kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
 # Estimate mean and covariance of hidden state distribution iteratively. 
 T = data.data.shape[0]
 n_dim_state = data.A.shape[0]
-x_filt = np.zeros((T + 1, n_dim_state))
-V_filt = np.zeros((T + 1, n_dim_state, n_dim_state))
-for t in range(T):
+x_filt = np.zeros((T, n_dim_state))
+V_filt = np.zeros((T, n_dim_state, n_dim_state))
+for t in range(T-1):
     if t == 0:
         x_filt[t] = data.x_0
         V_filt[t] = data.V_0
     (x_filt[t+1], V_filt[t+1], _) = kf.filter_update(
-        x_filt[t], V_filt[t], data.data[t], b = data.b[t], d = data.d
+        x_filt[t], V_filt[t], data.data[t+1], b = data.b[t], d = data.d
     )
 
 # draw estimates

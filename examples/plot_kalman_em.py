@@ -29,7 +29,7 @@ for i in range(len(ll)):
 n_dim_state = data.A.shape[0]
 T = data.data.shape[0]
 x_blind = np.zeros( (T+1, n_dim_state) )
-for t in range(T):
+for t in range(T-1):
   if t == 0:
     x_blind[t] = data.x_0
   x_blind[t+1] = data.A.dot(x_blind[t]) + data.b[t]
@@ -38,7 +38,7 @@ for t in range(T):
 # time t for t in [0...T].  This method outputs the mean and covariance
 # characterizing the Multivariate Normal distribution for
 #   P(x_t | z_{1:t})
-(x_filt, V_filt, _) = kf.filter(data.data)
+(x_filt, _, _) = kf.filter(data.data)
 
 # Estimate the hidden states using all observations.  These estimates
 # will be 'smoother' (and are to be preferred) to those produced by
@@ -57,9 +57,10 @@ lines_blind = plt.plot(x_blind, linestyle=':', color='m')
 lines_filt = plt.plot(x_filt, linestyle='--', color='g')
 lines_smooth = plt.plot(x_smooth, linestyle='-.', color='r')
 plt.legend((lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
-            ('true', 'blind', 'filtered', 'smoothed'))
+            (      'true',        'blind',    'filtered',      'smoothed'))
 plt.xlabel('time')
 plt.ylabel('state')
+plt.xlim(xmax=500)
 
 # Draw log likelihood of observations as a function of EM iteration number.
 # Notice how it is increasing (this is guaranteed by the EM algorithm)

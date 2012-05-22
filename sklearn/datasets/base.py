@@ -20,6 +20,7 @@ from os import listdir
 from os import makedirs
 
 import numpy as np
+import numpy.ma as ma
 import scipy.io as io
 
 from ..utils import check_random_state
@@ -506,11 +507,18 @@ def load_sample_image(image_name):
     return images.images[index]
 
 def load_kalman_data():
+    def pad_and_mask(X):
+        """Pad X's first index with zeros and mask it"""
+        zeros = np.zeros(X.shape[1:])[np.newaxis]
+        X = np.vstack([zeros, X])
+        mask = np.zeros(X.shape)
+        mask[0] = True
+        return ma.array(X, mask=mask)
+
     module_path = dirname(__file__)
     data = io.loadmat(join(module_path, 'data', 'kf_vars.mat'))
     descr = open(join(module_path, 'descr', 'kf.rst')).read()
-
-    Z = data['y'].T
+    Z = pad_and_mask(data['y'].T)
     X = data['x'].T
     A = data['A']
     b = data['b'].T

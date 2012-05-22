@@ -11,25 +11,28 @@ def test_kalman_sampling():
                       d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
     (x, z) = kf.sample(100)
-    assert x.shape == (101, data.A.shape[0])
+    assert x.shape == (100, data.A.shape[0])
     assert z.shape == (100, data.C.shape[0])
 
 
 def test_kalman_filter_update():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
                       d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
+
+    # use Kalman Filter
     (x_filt, V_filt, ll) = kf.filter(Z=data.data)
 
+    # use online Kalman Filter
     T = data.data.shape[0]
     n_dim_state = data.A.shape[0]
-    x_filt2 = np.zeros((T + 1, n_dim_state))
-    V_filt2 = np.zeros((T + 1, n_dim_state, n_dim_state))
-    for t in range(T):
+    x_filt2 = np.zeros((T, n_dim_state))
+    V_filt2 = np.zeros((T, n_dim_state, n_dim_state))
+    for t in range(T-1):
         if t == 0:
             x_filt2[0] = data.x_0
             V_filt2[0] = data.V_0
-        (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt[t],
-            V_filt[t], data.data[t], t=t)
+        (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt2[t],
+            V_filt2[t], data.data[t+1], t=t)
     assert np.all(x_filt == x_filt2)
     assert np.all(V_filt == V_filt2)
 
