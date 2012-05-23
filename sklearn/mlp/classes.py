@@ -2,6 +2,7 @@ from ..base import ClassifierMixin
 from .base import BaseMLP
 from ..preprocessing import LabelBinarizer
 
+
 class MLPClassifier(BaseMLP, ClassifierMixin):
     """ Multilayer Perceptron Classifier.
 

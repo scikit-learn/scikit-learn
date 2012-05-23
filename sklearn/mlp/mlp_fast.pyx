@@ -1,4 +1,7 @@
-# cython: profile=True
+# encoding: utf-8
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 import numpy as np
 cimport numpy as np
 
@@ -80,10 +83,10 @@ cdef class Tanh(OutputFunction):
             return np.tanh(x)
 
     cpdef np.ndarray doutput(self, np.ndarray x, np.ndarray out=None):
-        if out is None:
-            out = np.zeros((x.shape[0], x.shape[1]))
-        out[:] = -x * x + 1
-        return out
+        if out is not None:
+            out[:] = -x * x + 1
+        else:
+            return -x * x + 1
 
 
 cpdef forward(np.ndarray X,
@@ -178,8 +181,8 @@ cpdef sgd(np.ndarray X,
         X, y = shuffle(X, y)
 
     for i in range(max_epochs):
-        for j in range(batch_size, n_samples+1, batch_size):
-            forward(X[j-batch_size:j],
+        for j in range(batch_size, n_samples + 1, batch_size):
+            forward(X[j - batch_size:j],
                     weights_hidden,
                     bias_hidden,
                     weights_output,
@@ -189,7 +192,7 @@ cpdef sgd(np.ndarray X,
                     output,
                     hidden)
 
-            backward(y[j-batch_size:j],
+            backward(y[j - batch_size:j],
                      weights_hidden,
                      weights_output,
                      x_hidden,
@@ -203,7 +206,7 @@ cpdef sgd(np.ndarray X,
             # Update weights
             weights_output += lr / batch_size * np.dot(x_hidden.T, delta_o)
             bias_output += lr * np.mean(delta_o, axis=0)
-            weights_hidden += lr / batch_size * np.dot(X[j-batch_size:j].T, delta_h)
+            weights_hidden += lr / batch_size * np.dot(X[j - batch_size:j].T, delta_h)
             bias_hidden += lr * np.mean(delta_h, axis=0)
 
     return weights_hidden, bias_hidden, weights_output, bias_output
