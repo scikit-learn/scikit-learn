@@ -268,7 +268,7 @@ function of the gradient of the image.
     transformation to the entries of the matrix. For instance, in the
     case of a signed distance matrix, is common to apply a heat kernel::
 
-        similarity = np.exp(-distance / distance)
+        similarity = np.exp(-beta * distance / distance.std())
 
     See the examples for such an application.
 
