@@ -11,6 +11,7 @@ import itertools
 import operator
 
 import numpy as np
+import scipy.sparse as sp
 
 from .base import LinearModel
 from ..utils import as_float_array
@@ -106,6 +107,7 @@ class ElasticNet(LinearModel):
         self.tol = tol
         self.warm_start = warm_start
         self.positive = positive
+        self.sparse = "auto"
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -132,6 +134,18 @@ class ElasticNet(LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
+        if self.sparse == "auto":
+            self._sparse = sp.isspmatrix(X)
+        else:
+            self._sparse = self.sparse
+
+        fit = self._sparse_fit if self._sparse else self._dense_fit
+
+        fit(X, y, Xy, coef_init)
+        return self
+
+    def _dense_fit(self, X, y, Xy=None, coef_init=None):
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
@@ -192,6 +206,9 @@ class ElasticNet(LinearModel):
 
         # return self for chaining fit and predict calls
         return self
+
+    def _sparse_fit(self, X, y, Xy=None, coef_init=None):
+        pass
 
 
 ###############################################################################
