@@ -1,7 +1,9 @@
 import numpy as np
 
 from ..base import BaseEstimator
-from .mlp_fast import sgd, predict, SquaredLoss, Tanh
+from .mlp_fast import sgd, predict, SquaredLoss, SoftMax, CrossEntropyLoss
+from .mlp_fast import Tanh
+
 
 class BaseMLP(BaseEstimator):
 
@@ -12,25 +14,30 @@ class BaseMLP(BaseEstimator):
                  loss_function='squared',
                  output_function='tanh',
                  learning_method='backprop',
+                 shuffle_data=False,
                  verbose=0):
 
         self.n_hidden = n_hidden
         self.learning_method = learning_method
         self.lr = lr
         self.batch_size = batch_size
+        self.shuffle_data = shuffle_data
 
         if loss_function == 'squared':
             self.loss_function = SquaredLoss()
+        elif loss_function == 'cross-entropy' and output_function == 'softmax':
+            self.loss_function = CrossEntropyLoss()
         else:
             # TODO
             raise ValueError('Loss function must be one of ...')
 
         if output_function == 'tanh':
             self.output_function = Tanh()
+        elif output_function == 'softmax':
+            self.output_function = SoftMax()
         else:
             # TODO
-            raise ValueError('Ouput function must be one of ...')
-
+            raise ValueError('Output function must be one of ...')
 
     def fit(self, X, y, max_epochs, verbose=0):
 
@@ -54,10 +61,9 @@ class BaseMLP(BaseEstimator):
             n_hidden=self.n_hidden,
             max_epochs=max_epochs,
             batch_size=self.batch_size,
-            shuffle_data=True)
+            shuffle_data=self.shuffle_data)
 
         return self
-
 
     def predict(self, X):
         return predict(X,

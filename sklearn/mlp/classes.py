@@ -26,8 +26,8 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
                  n_hidden,
                  lr,
                  batch_size,
-                 loss_function='squared',
-                 output_function='tanh',
+                 loss_function='cross-entropy',
+                 output_function='softmax',
                  learning_method='backprop',
                  verbose=0):
         super(MLPClassifier, self).__init__(n_hidden,

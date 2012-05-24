@@ -64,6 +64,16 @@ cdef class SquaredLoss(LossFunction):
         return SquaredLoss, ()
 
 
+cdef class CrossEntropyLoss(LossFunction):
+    """Cross entropy loss function."""
+
+    cpdef np.ndarray loss(self, np.ndarray y, np.ndarray p):
+        return -y * np.log(p)
+
+    cpdef np.ndarray dloss(self, np.ndarray y, np.ndarray p):
+        return y - p
+
+
 cdef class OutputFunction:
     """Base class for ouput functions"""
 
@@ -89,6 +99,17 @@ cdef class Tanh(OutputFunction):
             return -x * x + 1
 
 
+cdef class SoftMax(OutputFunction):
+
+    cpdef np.ndarray output(self, np.ndarray x, np.ndarray out=None):
+        if out is not None:
+            np.exp(x, out)
+            out /= np.sum(out, axis=1)[:, np.newaxis]
+        else:
+            out = np.exp(x)
+            return out / np.sum(out, axis=1)[:, np.newaxis]
+
+
 cpdef forward(np.ndarray X,
               np.ndarray weights_hidden,
               np.ndarray bias_hidden,
@@ -108,24 +129,6 @@ cpdef forward(np.ndarray X,
     np.dot(x_hidden, weights_output, x_output)
     x_output += bias_output
     output.output(x_output, x_output)
-
-
-cpdef backward(np.ndarray y,
-               np.ndarray weights_hidden,
-               np.ndarray weights_output,
-               np.ndarray x_hidden,
-               np.ndarray x_output,
-               OutputFunction output,
-               OutputFunction hidden,
-               LossFunction loss,
-               np.ndarray delta_h,
-               np.ndarray delta_o):
-
-    # Output layer
-    delta_o[:] = loss.dloss(y, x_output) * output.doutput(x_output)
-
-    # Hidden layer
-    delta_h[:] = np.dot(delta_o, weights_output.T) * hidden.doutput(x_hidden)
 
 
 cpdef sgd(np.ndarray X,
@@ -182,6 +185,7 @@ cpdef sgd(np.ndarray X,
 
     for i in range(max_epochs):
         for j in range(batch_size, n_samples + 1, batch_size):
+
             forward(X[j - batch_size:j],
                     weights_hidden,
                     bias_hidden,
@@ -192,16 +196,16 @@ cpdef sgd(np.ndarray X,
                     output,
                     hidden)
 
-            backward(y[j - batch_size:j],
-                     weights_hidden,
-                     weights_output,
-                     x_hidden,
-                     x_output,
-                     output,
-                     hidden,
-                     loss,
-                     delta_h,
-                     delta_o)
+            # BACKWARD
+
+            # Output layer
+            if isinstance(output, SoftMax):
+                delta_o[:] = loss.dloss(y[j - batch_size:j], x_output)
+            else:
+                delta_o[:] = loss.dloss(y[j - batch_size:j], x_output) * output.doutput(x_output)
+
+            # Hidden layer
+            delta_h[:] = np.dot(delta_o, weights_output.T) * hidden.doutput(x_hidden)
 
             # Update weights
             weights_output += lr / batch_size * np.dot(x_hidden.T, delta_o)
@@ -210,6 +214,7 @@ cpdef sgd(np.ndarray X,
             bias_hidden += lr * np.mean(delta_h, axis=0)
 
     return weights_hidden, bias_hidden, weights_output, bias_output
+
 
 cpdef predict(np.ndarray X,
               np.ndarray weights_hidden,
