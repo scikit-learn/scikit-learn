@@ -170,6 +170,30 @@ def test_k_means_plus_plus_init():
     _check_fitted_model(k_means)
 
 
+def test_k_means_new_centers():
+    # Explore the part of the code where a new center is reassigned
+    X = np.array([[0, 0, 1, 1],
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0]])
+    labels = [0, 1, 2, 1, 1, 2]
+    bad_centers = np.array([[ 0,  1,  0,  0],
+                            [.2,  0, .2, .2],
+                            [ 0,  0,  0,  0]])
+
+    km = KMeans(k=3, init=bad_centers, max_iter=10, random_state=1)
+    for this_X in (X, sp.coo_matrix(X)):
+        km.fit(this_X)
+        this_labels = km.labels_
+        # Reorder the labels so that the first instance is in cluster 0,
+        # the second in cluster 1, ...
+        this_labels = np.unique(this_labels,
+                                return_index=True)[1][this_labels]
+        np.testing.assert_array_equal(this_labels, labels)
+
+
 def _get_mac_os_version():
     import platform
     mac_version, _, _ = platform.mac_ver()
