@@ -221,3 +221,17 @@ def test_pls():
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
     check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
+
+
+def test_scale():
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    # causes X[:, -1].std() to be zero
+    X[:, -1] = 1.0
+
+    for clf in [pls.PLSCanonical(), pls.PLSRegression(),
+                    pls.CCA(), pls.PLSSVD()]:
+        clf.set_params(scale=True)
+        clf.fit(X, Y)
