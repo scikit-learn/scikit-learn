@@ -24,6 +24,8 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+from scipy import stats
+
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
@@ -228,13 +230,18 @@ class LeastAbsoluteError(RegressionLossFunction):
 
 class HuberLossFunction(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
+
+    def __init__(self, *args, **kargs):
+        super(HuberLossFunction, self).__init__(*args, **kargs)
+        self.gamma = None
+
     def init_estimator(self):
         return MedianEstimator()
 
     def __call__(self, y, pred):
         pred = pred.ravel()
         diff = y - pred
-        gamma = 0.1
+        gamma = self.gamma
         gamma_mask = np.abs(diff) <= gamma
         sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
         lin_loss = np.sum(0.5 * (diff[~gamma_mask] - gamma / 2.0))
@@ -243,24 +250,26 @@ class HuberLossFunction(RegressionLossFunction):
     def negative_gradient(self, y, pred, **kargs):
         pred = pred.ravel()
         diff = y - pred
-        gamma = 0.1
+        gamma = stats.scoreatpercentile(diff, 90)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
         residual[~gamma_mask] = gamma * np.sign(diff[gamma_mask])
+        self.gamma = gamma
         return residual
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
-
-        n = terminal_regions.sum()
+        gamma = self.gamma
         diff = y.take(terminal_region, axis=0) - \
                pred.take(terminal_region, axis=0)
         median = np.median(diff)
-        out = median + np.sum(np.sign(diff - median))
-
+        diff_minus_median = diff - median
+        tree.value[leaf, 0] = median + np.mean(
+            np.sign(diff_minus_median) *
+            np.minimum(np.abs(diff_minus_median), gamma))
 
 
 class BinomialDeviance(LossFunction):
@@ -356,6 +365,7 @@ class MultinomialDeviance(LossFunction):
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
+                  'huber': HuberLossFunction,
                   'bdeviance': BinomialDeviance,
                   'mdeviance': MultinomialDeviance,
                   'deviance': None}  # for both, multinomial and binomial
@@ -522,7 +532,7 @@ class BaseGradientBoosting(BaseEnsemble):
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(tree.compute_feature_importances(method='gini')
+            stage_sum = sum(tree.compute_feature_importances(method='squared')
                             for tree in stage) / len(stage)
             total_sum += stage_sum
 
