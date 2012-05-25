@@ -186,6 +186,7 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
+    param->p = .1;  // epsilon for epsilon-SVR; TODO pass as a parameter
     param->nr_weight = (int) nr_weight;
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
