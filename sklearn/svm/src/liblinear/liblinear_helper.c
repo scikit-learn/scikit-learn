@@ -137,7 +137,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
         problem->n = (int) dims[1];
     }
 
-    problem->y = (int *) Y;
+    problem->y = (double *) Y;
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
     if (problem->x == NULL) { 
@@ -163,7 +163,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
         problem->n = (int) n_features;
     }
 
-    problem->y = (int *) Y;
+    problem->y = (double *) Y;
     problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr, bias, n_features);
     problem->bias = bias;
