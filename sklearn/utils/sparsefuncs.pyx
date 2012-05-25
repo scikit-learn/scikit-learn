@@ -268,7 +268,7 @@ def mean_variance_axis0(X):
     variances: float array with shape (n_features,)
         Feature-wise variances
 
-    """ 
+    """
     if isinstance(X, sp.csr_matrix):
         return csr_mean_variance_axis0(X)
     elif isinstance(X, sp.csc_matrix):

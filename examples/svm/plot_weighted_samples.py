@@ -31,7 +31,7 @@ Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
 # plot the line, the points, and the nearest vectors to the plane
-pl.contourf(xx, yy, Z, alpha=0.75)
+pl.contourf(xx, yy, Z, alpha=0.75, cmap=pl.cm.bone)
 pl.scatter(X[:, 0], X[:, 1], c=Y, s=sample_weight, alpha=0.9, cmap=pl.cm.bone)
 
 pl.axis('off')

@@ -234,8 +234,9 @@ def k_means(X, k, init='k-means++', precompute_distances=True,
     tol = _tolerance(X, tol)
 
     # subtract of mean of x for more accurate distance computations
-    if not sp.issparse(X):
+    if not sp.issparse(X) or hasattr(init, '__array__'):
         X_mean = X.mean(axis=0)
+    if not sp.issparse(X):
         if copy_x:
             X = X.copy()
         X -= X_mean
@@ -495,16 +496,20 @@ def _centers(X, labels, n_clusters, distances):
     centers = np.empty((n_clusters, n_features))
     far_from_centers = None
     reallocated_idx = 0
+    sparse_X = sp.issparse(X)
 
     for center_id in range(n_clusters):
         center_mask = labels == center_id
-        if sp.issparse(X):
+        if sparse_X:
             center_mask = np.arange(len(labels))[center_mask]
         if not np.any(center_mask):
             # Reassign empty cluster center to sample far from any cluster
             if far_from_centers is None:
                 far_from_centers = distances.argsort()[::-1]
-            centers[center_id] = X[far_from_centers[reallocated_idx]]
+            new_centers = X[far_from_centers[reallocated_idx]]
+            if sparse_X:
+                new_centers = new_centers.todense().ravel()
+            centers[center_id] = new_centers
             reallocated_idx += 1
         else:
             centers[center_id] = X[center_mask].mean(axis=0)
