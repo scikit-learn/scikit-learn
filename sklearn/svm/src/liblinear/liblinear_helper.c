@@ -79,11 +79,11 @@ sparse_error:
 
 
 /*
-c * Convert scipy.sparse.csr to libsvm's sparse data structure
+ * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
-		int *indices, npy_intp *shape_indptr, int *indptr, double bias,
-                int n_features)
+static struct feature_node **csr_to_sparse(double *values,
+        npy_intp *shape_indices, int *indices, npy_intp *shape_indptr,
+        int *indptr, double bias, int n_features)
 {
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
