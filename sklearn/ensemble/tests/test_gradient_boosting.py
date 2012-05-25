@@ -130,7 +130,7 @@ def test_classification_synthetic():
 def test_boston():
     """Check consistency on dataset boston house prices with least squares
     and least absolute deviation. """
-    for loss in ("ls", "lad"):
+    for loss in ("ls", "lad", "huber"):
         clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                         max_depth=4,
                                         min_samples_split=1, random_state=1)
