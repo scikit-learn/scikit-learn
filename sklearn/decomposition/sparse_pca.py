@@ -3,6 +3,7 @@
 # License: BSD
 
 import numpy as np
+import warnings
 
 from ..utils import check_random_state
 from ..linear_model import ridge_regression
@@ -176,7 +177,7 @@ class MiniBatchSparsePCA(SparsePCA):
     callback : callable,
         callable that gets invoked every five iterations
 
-    chunk_size : int,
+    batch_size : int,
         the number of features to take in each mini batch
 
     verbose :
@@ -213,14 +214,18 @@ class MiniBatchSparsePCA(SparsePCA):
     DictionaryLearning
     """
     def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
-                 callback=None, chunk_size=3, verbose=False, shuffle=True,
-                 n_jobs=1, method='lars', random_state=None):
+            callback=None, batch_size=3, chunk_size=None, verbose=False,
+            shuffle=True, n_jobs=1, method='lars', random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
         self.n_iter = n_iter
         self.callback = callback
-        self.chunk_size = chunk_size
+        if chunk_size is not None:
+            warnings.warn(
+                "chunk_size is deprecated in 0.10, use batch_size instead")
+            batch_size = chunk_size
+        self.batch_size = batch_size
         self.verbose = verbose
         self.shuffle = shuffle
         self.n_jobs = n_jobs
@@ -247,7 +252,7 @@ class MiniBatchSparsePCA(SparsePCA):
                                      n_iter=self.n_iter, return_code=True,
                                      dict_init=None, verbose=self.verbose,
                                      callback=self.callback,
-                                     chunk_size=self.chunk_size,
+                                     batch_size=self.batch_size,
                                      shuffle=self.shuffle,
                                      n_jobs=self.n_jobs, method=self.method,
                                      random_state=self.random_state)

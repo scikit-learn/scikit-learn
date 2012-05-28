@@ -131,10 +131,10 @@ API changes summary
      objects are now deprecated.
      `scores_` or `pvalues_` should be used instead.
 
-   - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
-     :class:`NuSVC`, the `class_weight` parameter is now an initialization
-     parameter, not a parameter to fit. This makes grid searches
-     over this parameter possible.
+   - In :class:`linear_model.LogisticRegression`, :class:`svm.LinearSVC`,
+     :class:`svm.SVC` and :class:`svm.NuSVC`, the `class_weight` parameter is
+     now an initialization parameter, not a parameter to fit. This makes grid
+     searches over this parameter possible.
 
    - LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
      consistent with the Olivetti faces dataset. Use ``images`` and
@@ -249,6 +249,10 @@ People
    *   1  jansoe
    *   1  Leon Palafox
 
+
+   - The ``chunk_size`` parameter in :class:`decomposition.MiniBatchSparsePCA`
+     and :class:`decomposition.MiniBatchDictionaryLearning` has been renamed
+     to `batch_size` for consistency.
 
 .. _changes_0_10:
 
