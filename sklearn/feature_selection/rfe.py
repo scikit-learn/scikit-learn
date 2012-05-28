@@ -102,7 +102,6 @@ class RFE(BaseEstimator):
         """
         # Initialization
         n_features = X.shape[1]
-
         if 0.0 < self.step < 1.0:
             step = int(self.step * n_features)
         else:
@@ -110,31 +109,45 @@ class RFE(BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
-
         # Elimination
-        while np.sum(support_) > self.n_features_to_select:
-            # Remaining features
-            features = np.arange(n_features)[support_]
+        col_selector = np.arange(n_features)
+        ranking_ = np.ones(n_features, dtype="i8")
+        support_ = np.ones(n_features, dtype=np.bool)
 
-            # Rank the remaining features
-            estimator = clone(self.estimator)
-            estimator.fit(X[:, features], y)
+        estimator = clone(self.estimator)
+        while len(col_selector) > self.n_features_to_select:
+            # Rank remaining features
+            estimator.fit(X[:, col_selector], y)
 
+            threshold = min(step, len(col_selector) - self.n_features_to_select)
             if estimator.coef_.ndim > 1:
                 ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
             else:
                 ranks = np.argsort(estimator.coef_ ** 2)
 
-            # Eliminate the worse features
-            threshold = min(step, np.sum(support_) - self.n_features_to_select)
-            support_[features[ranks][:threshold]] = False
+            # Eliminate the worst features
+            iteration_kept_cols = ranks[threshold:]
+            col_selector = col_selector[iteration_kept_cols]
+            invert_sel = np.ones(n_features, dtype=np.bool)
+            invert_sel[col_selector] = False
+            support_[invert_sel] = False
             ranking_[np.logical_not(support_)] += 1
 
+            # If estimator supports warm_start, then update coef_ accordingly,
+            # otherwise start with a fresh estimator
+            if getattr(self.estimator, "warm_start", False):
+                print estimator.coef_.shape
+                new_coefs = np.ascontiguousarray(estimator.coef_[:, iteration_kept_cols])
+                print "Original : %s, \t%s" % (str(estimator.coef_.dtype), str(estimator.coef_.shape))
+                print "New : %s, \t%s" % (str(new_coefs.dtype), str(new_coefs.shape))
+                estimator.coef_ = new_coefs
+            else:
+                if len(col_selector) > self.n_features_to_select:
+                    estimator = clone(self.estimator)
+
         # Set final attributes
-        self.estimator.fit(X[:, support_], y)
-        self.n_features_ = support_.sum()
+        self.estimator.fit(X[:, col_selector], y)
+        self.n_features_ = len(col_selector)
         self.support_ = support_
         self.ranking_ = ranking_
 
