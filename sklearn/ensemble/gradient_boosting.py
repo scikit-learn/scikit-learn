@@ -244,17 +244,17 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         gamma_mask = np.abs(diff) <= gamma
         sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
-        lin_loss = np.sum(0.5 * (diff[~gamma_mask] - gamma / 2.0))
-        return sq_loss + lin_loss
+        lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+        return (sq_loss + lin_loss) / y.shape[0]
 
     def negative_gradient(self, y, pred, **kargs):
         pred = pred.ravel()
         diff = y - pred
-        gamma = stats.scoreatpercentile(diff, 90)
+        gamma = stats.scoreatpercentile(np.abs(diff), 85)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
-        residual[~gamma_mask] = gamma * np.sign(diff[gamma_mask])
+        residual[~gamma_mask] = gamma * np.sign(diff[~gamma_mask])
         self.gamma = gamma
         return residual
 
