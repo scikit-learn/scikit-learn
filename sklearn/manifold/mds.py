@@ -184,7 +184,8 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         # Update X using the Guttman transform
         ratio = disparities / dis
         ratio[np.isinf(ratio) | np.isnan(ratio)] = 0
-        B = - ratio + np.diag(ratio.sum(axis=1))
+        B = - ratio
+        B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1. / n_samples * np.dot(B, X)
         if verbose == 2:
             print 'it: %d, stress %s' % (it, stress)
