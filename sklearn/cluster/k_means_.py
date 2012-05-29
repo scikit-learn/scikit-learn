@@ -694,12 +694,8 @@ class KMeans(BaseEstimator):
             n_clusters = init.shape[0]
             init = np.asanyarray(init, dtype=np.float64)
 
-        if not k is None:
-            n_clusters = k
-            warnings.warn("Parameter k was renamed to n_clusters",
-                    DeprecationWarning)
-
         self.n_clusters = n_clusters
+        self.k = k
         self.init = init
         self.max_iter = max_iter
         self.tol = tol
@@ -740,11 +736,19 @@ class KMeans(BaseEstimator):
 
     def fit(self, X, y=None):
         """Compute k-means"""
+
+        if not self.k is None:
+            n_clusters = self.k
+            warnings.warn("Parameter k was renamed to n_clusters",
+                    DeprecationWarning)
+        else:
+            n_clusters = self.n_clusters
+
         self.random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
-            X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
+            X, n_clusters=n_clusters, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
