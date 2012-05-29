@@ -139,7 +139,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         raise ValueError("similarities must be a square array (shape=%d)" % \
                             n_samples)
 
-    if np.any(similarities != similarities.T):
+    if np.any((similarities - similarities.T) > 100 *  np.finfo(np.float).resolution):
         raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).flatten()
@@ -364,6 +364,11 @@ class MDS(BaseEstimator):
         (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
 
     Attributes
     ----------
@@ -388,7 +393,8 @@ class MDS(BaseEstimator):
 
     """
     def __init__(self, n_components=2, metric=True, n_init=8,
-                 max_iter=300, verbose=0, eps=1e-3, n_jobs=1):
+                 max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
+                 random_state=None):
         self.n_components = n_components
         self.metric = metric
         self.n_init = n_init
@@ -396,6 +402,7 @@ class MDS(BaseEstimator):
         self.eps = eps
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.random_state = None
 
     def fit(self, X, init=None, y=None):
         """
@@ -416,7 +423,8 @@ class MDS(BaseEstimator):
                                      n_init=self.n_init,
                                      max_iter=self.max_iter,
                                      verbose=self.verbose,
-                                     eps=self.eps)
+                                     eps=self.eps,
+                                     random_state=self.random_state)
         return self
 
     def fit_transform(self, X, init=None, y=None):
