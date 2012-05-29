@@ -23,7 +23,8 @@ from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
 
 n_samples = 20
-X_true = np.random.randint(0, 20, 2 * n_samples)
+seed = np.random.RandomState(seed=3)
+X_true = seed.randint(0, 20, 2 * n_samples)
 X_true = X_true.reshape((n_samples, 2))
 # Center the data
 X_true -= X_true.mean()
@@ -37,12 +38,13 @@ noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
 similarities += noise
 
 mds = manifold.MDS(n_components=2, max_iter=3000,
-                   eps=1e-9)
+                   eps=1e-9, random_state=seed,
+                   n_jobs=1)
 pos = mds.fit(similarities).positions_
 
 nmds = manifold.MDS(n_components=2, metric=False,
                     max_iter=3000,
-                    eps=1e-9)
+                    eps=1e-9, random_state=seed, n_jobs=1)
 npos = mds.fit(similarities).positions_
 
 # Rotate the data
