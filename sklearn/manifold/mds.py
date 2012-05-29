@@ -3,6 +3,7 @@ Multi-dimensional Scaling (MDS)
 """
 
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
+# Licence: BSD
 
 import numpy as np
 
@@ -39,6 +40,11 @@ def pool_adjacent_violators(distances, similarities, max_iter=300,
     Returns
     -------
     distances: ndarray, shape (n, 1)
+
+    Notes
+    -----
+    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+    Groenen P. Springer Series in Statistics (1997)
     """
     # First approach for ties: ignore them. The multidimensional scaling won't
     # enforce that points with equal similarity be at equal distance.
@@ -268,6 +274,17 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     stress: float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
+
+    Notes
+    -----
+    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+    Groenen P. Springer Series in Statistics (1997)
+
+    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+    Psychometrika, 29 (1964)
+
+    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
 
     random_state = check_random_state(random_state)

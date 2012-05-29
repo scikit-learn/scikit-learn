@@ -32,12 +32,12 @@ noise += noise.T
 noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
 similarities += noise
 
-mds = manifold.MDS(n_components=2, max_iter=3000, n_jobs=2,
+mds = manifold.MDS(n_components=2, max_iter=3000,
                    eps=1e-9)
 pos = mds.fit(similarities).positions_
 
 nmds = manifold.MDS(n_components=2, metric=False,
-                    max_iter=3000, n_jobs=2,
+                    max_iter=3000,
                     eps=1e-9)
 npos = mds.fit(similarities).positions_
 
@@ -52,9 +52,9 @@ npos = clf.fit_transform(pos)
 fig = plt.figure(1)
 ax = plt.axes([0., 0., 1., 1.])
 
-plt.scatter(X_true[:, 0] + 0.2, X_true[:, 1] + 0.2, c='r', s=10)
+plt.scatter(X_true[:, 0], X_true[:, 1], c='r', s=10)
 plt.scatter(pos[:, 0] + 0.2, pos[:, 1] + 0.2, s=10, c='g')
-plt.scatter(pos[:, 0] - 0.2, pos[:, 1] - 0.2, s=10, c='b')
+plt.scatter(npos[:, 0] - 0.2, npos[:, 1] - 0.2, s=10, c='b')
 plt.legend(('True position', 'MDS', 'NMDS'))
 
 similarities = similarities.max() / similarities * 100
