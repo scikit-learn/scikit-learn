@@ -16,6 +16,9 @@ Changelog
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
+   - SVMlight file format loader now detects compressed (gzip/bzip2) files and
+     decompresses them on the fly.
+
 .. _changes_0_11:
 
 0.11
