@@ -231,9 +231,9 @@ class LeastAbsoluteError(RegressionLossFunction):
 class HuberLossFunction(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
 
-    def __init__(self, *args, **kargs):
-        super(HuberLossFunction, self).__init__(*args, **kargs)
-        self.gamma = None
+    def __init__(self, n_classes, alpha=0.9):
+        super(HuberLossFunction, self).__init__(n_classes)
+        self.alpha = alpha
 
     def init_estimator(self):
         return MedianEstimator()
@@ -250,7 +250,7 @@ class HuberLossFunction(RegressionLossFunction):
     def negative_gradient(self, y, pred, **kargs):
         pred = pred.ravel()
         diff = y - pred
-        gamma = stats.scoreatpercentile(np.abs(diff), 85)
+        gamma = stats.scoreatpercentile(np.abs(diff), self.alpha)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
@@ -374,7 +374,8 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
-                 min_samples_leaf, max_depth, init, subsample, random_state):
+                 min_samples_leaf, max_depth, init, subsample, random_state,
+                 alpha=0.9):
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
@@ -388,11 +389,11 @@ class BaseGradientBoosting(BaseEnsemble):
         self.loss = loss
 
         if min_samples_split <= 0:
-            raise ValueError("min_samples_split must be larger than 0.")
+            raise ValueError("min_samples_split must be larger than 0")
         self.min_samples_split = min_samples_split
 
         if min_samples_leaf <= 0:
-            raise ValueError("min_samples_leaf must be larger than 0.")
+            raise ValueError("min_samples_leaf must be larger than 0")
         self.min_samples_leaf = min_samples_leaf
 
         if subsample <= 0.0 or subsample > 1:
@@ -400,7 +401,7 @@ class BaseGradientBoosting(BaseEnsemble):
         self.subsample = subsample
 
         if max_depth <= 0:
-            raise ValueError("max_depth must be larger than 0.")
+            raise ValueError("max_depth must be larger than 0")
         self.max_depth = max_depth
 
         if init is not None:
@@ -409,6 +410,10 @@ class BaseGradientBoosting(BaseEnsemble):
         self.init = init
 
         self.random_state = check_random_state(random_state)
+
+        if not (0.0 < alpha < 1.0):
+            raise ValueError("alpha must be in (0.0, 1.0)")
+        self.alpha = alpha
 
         self.estimators_ = None
 
@@ -470,7 +475,11 @@ class BaseGradientBoosting(BaseEnsemble):
                              "number of samples.")
         self.n_features = n_features
 
-        loss = LOSS_FUNCTIONS[self.loss](self.n_classes_)
+        loss_class = LOSS_FUNCTIONS[self.loss]
+        if self.loss == 'huber':
+            loss = loss_class(self.n_classes_, self.alpha)
+        else:
+            loss = loss_class(self.n_classes_)
 
         # store loss object for future use
         self.loss_ = loss
@@ -772,6 +781,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
 
+    alpha : float (default=0.9)
+        The alpha-quantile of the huber loss function for robust regression.
+        Only if ``loss='huber'``.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -828,11 +841,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
-                 max_depth=3, init=None, random_state=None):
+                 max_depth=3, init=None, random_state=None,
+                 alpha=0.9):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, random_state)
+            min_samples_leaf, max_depth, init, subsample, random_state,
+            alpha)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
