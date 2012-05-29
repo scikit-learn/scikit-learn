@@ -387,6 +387,7 @@ class FastICA(BaseEstimator):
         """
         return linalg.pinv(self.components_)
 
+    @property
     @deprecated("Renamed to 'components_'")
     def unmixing_matrix_(self):
         return self.components_
