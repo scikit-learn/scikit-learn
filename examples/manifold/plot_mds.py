@@ -3,6 +3,10 @@
 Multi-dimensional scaling
 =========================
 
+An illustration of the metric and non-metric MDS on generated noisy data.
+
+The reconstructed points using the metric MDS and non metric MDS are slightly
+shifted to avoid overlapping..
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
@@ -52,9 +56,9 @@ npos = clf.fit_transform(pos)
 fig = plt.figure(1)
 ax = plt.axes([0., 0., 1., 1.])
 
-plt.scatter(X_true[:, 0], X_true[:, 1], c='r', s=10)
-plt.scatter(pos[:, 0] + 0.2, pos[:, 1] + 0.2, s=10, c='g')
-plt.scatter(npos[:, 0] - 0.2, npos[:, 1] - 0.2, s=10, c='b')
+plt.scatter(X_true[:, 0], X_true[:, 1], c='r', s=20)
+plt.scatter(pos[:, 0] + 0.2, pos[:, 1] + 0.2, s=20, c='g')
+plt.scatter(npos[:, 0] - 0.2, npos[:, 1] - 0.2, s=20, c='b')
 plt.legend(('True position', 'MDS', 'NMDS'))
 
 similarities = similarities.max() / similarities * 100
