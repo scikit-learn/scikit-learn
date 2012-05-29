@@ -18,6 +18,9 @@ Changelog
 
    - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
 
+   - SVMlight file format loader now detects compressed (gzip/bzip2) files and
+     decompresses them on the fly.
+
 .. _changes_0_11:
 
 0.11
