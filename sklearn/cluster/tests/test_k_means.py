@@ -179,9 +179,9 @@ def test_k_means_new_centers():
                   [0, 0, 0, 0],
                   [0, 1, 0, 0]])
     labels = [0, 1, 2, 1, 1, 2]
-    bad_centers = np.array([[ 0,  1,  0,  0],
+    bad_centers = np.array([[+0,  1,  0,  0],
                             [.2,  0, .2, .2],
-                            [ 0,  0,  0,  0]])
+                            [+0,  0,  0,  0]])
 
     km = KMeans(k=3, init=bad_centers, max_iter=10, random_state=1)
     for this_X in (X, sp.coo_matrix(X)):
