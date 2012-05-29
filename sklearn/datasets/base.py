@@ -334,42 +334,6 @@ def load_diabetes():
     return Bunch(data=data, target=target)
 
 
-def load_cities():
-    """
-    Mileage data for US cities from the Stanford Graph Base
-
-    Revised mileage data for highways in the United States and Canada, 1949
-
-    ==============    ==================
-    Samples total     128 cities
-    Dimensionality
-    Features
-    Targets           Coordinates
-    ==============
-
-    Returns
-    -------
-    data: Bunch
-        Dictionary-like object, the interesting attributes are: 'data', the
-        distance matrix to learn and 'header', labels for the 128 cities.
-
-     Notes
-    ------
-
-    [1] Donald E. Knuth,
-        "The Stanford GraphBase: A Platform for Combinatorial Computing",
-        ACM Press, New York, 1993.
-    [2] http://www-cs-faculty.stanford.edu/~knuth/sgb.html
-    """
-    base_dir = join(dirname(__file__), 'data/')
-    # Read data
-    data = np.loadtxt(base_dir + 'knuth_miles.csv',
-                      skiprows=1)
-    with open(base_dir + 'knuth_miles.csv') as f:
-        header = f.readline().split(',')
-    return Bunch(data=data, header=header)
-
-
 def load_linnerud():
     """Load and return the linnerud dataset (multivariate regression).
 
