@@ -719,7 +719,7 @@ class GaussianHMM(_BaseHMM):
 
         if 'm' in params:
             self._means_ = cluster.KMeans(
-                k=self.n_components).fit(obs[0]).cluster_centers_
+                n_clusters=self.n_components).fit(obs[0]).cluster_centers_
         if 'c' in params:
             cv = np.cov(obs[0].T)
             if not cv.shape:

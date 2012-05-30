@@ -907,7 +907,7 @@ cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
-  >>> kmeans_model = KMeans(k=3, random_state=1).fit(X)
+  >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
