@@ -21,6 +21,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
 
 from sklearn import manifold, datasets
+from sklearn.metrics import euclidean_distances
 
 # Next line to silence pyflakes. This import is needed.
 Axes3D
@@ -36,11 +37,11 @@ pl.suptitle("Manifold Learning with %i points, %i neighbors"
 
 try:
     # compatibility matplotlib < 1.0
-    ax = fig.add_subplot(231, projection='3d')
+    ax = fig.add_subplot(241, projection='3d')
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=pl.cm.Spectral)
     ax.view_init(4, -72)
 except:
-    ax = fig.add_subplot(231, projection='3d')
+    ax = fig.add_subplot(241, projection='3d')
     pl.scatter(X[:, 0], X[:, 2], c=color, cmap=pl.cm.Spectral)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
@@ -54,7 +55,7 @@ for i, method in enumerate(methods):
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
 
-    ax = fig.add_subplot(232 + i)
+    ax = fig.add_subplot(242 + i)
     pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
     pl.title("%s (%.2g sec)" % (labels[i], t1 - t0))
     ax.xaxis.set_major_formatter(NullFormatter())
@@ -65,11 +66,24 @@ t0 = time()
 Y = manifold.Isomap(n_neighbors, n_components).fit_transform(X)
 t1 = time()
 print "Isomap: %.2g sec" % (t1 - t0)
-ax = fig.add_subplot(236)
+ax = fig.add_subplot(246)
 pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.title("Isomap (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 pl.axis('tight')
+
+
+t0 = time()
+Y = manifold.MDS(n_components).fit_transform(euclidean_distances(X))
+t1 = time()
+print "MDS: %.2g sec" % (t1 - t0)
+ax = fig.add_subplot(247)
+pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
+pl.title("MDS (%.2g sec)" % (t1 - t0))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.yaxis.set_major_formatter(NullFormatter())
+pl.axis('tight')
+
 
 pl.show()
