@@ -24,7 +24,7 @@ from sklearn.decomposition import PCA
 
 n_samples = 20
 seed = np.random.RandomState(seed=3)
-X_true = seed.randint(0, 20, 2 * n_samples)
+X_true = seed.randint(0, 20, 2 * n_samples).astype(np.float)
 X_true = X_true.reshape((n_samples, 2))
 # Center the data
 X_true -= X_true.mean()
@@ -45,7 +45,7 @@ pos = mds.fit(similarities).positions_
 nmds = manifold.MDS(n_components=2, metric=False,
                     max_iter=3000,
                     eps=1e-9, random_state=seed, n_jobs=1)
-npos = mds.fit(similarities).positions_
+npos = mds.fit_transform(similarities)
 
 # Rotate the data
 clf = PCA(n_components=2)
@@ -61,7 +61,7 @@ ax = plt.axes([0., 0., 1., 1.])
 plt.scatter(X_true[:, 0], X_true[:, 1], c='r', s=20)
 plt.scatter(pos[:, 0] + 0.2, pos[:, 1] + 0.2, s=20, c='g')
 plt.scatter(npos[:, 0] - 0.2, npos[:, 1] - 0.2, s=20, c='b')
-plt.legend(('True position', 'MDS', 'NMDS'))
+plt.legend(('True position', 'MDS', 'NMDS'), loc='best')
 
 similarities = similarities.max() / similarities * 100
 similarities[np.isinf(similarities)] = 0
