@@ -740,7 +740,7 @@ class KMeans(BaseEstimator):
         if not self.k is None:
             n_clusters = self.k
             warnings.warn("Parameter k was renamed to n_clusters",
-                    DeprecationWarning)
+                    DeprecationWarning, stacklevel=2)
             self.n_clusters = n_clusters
         else:
             n_clusters = self.n_clusters

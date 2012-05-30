@@ -184,7 +184,7 @@ def test_k_means_new_centers():
                             [.2,  0, .2, .2],
                             [+0,  0,  0,  0]])
 
-    km = KMeans(k=3, init=bad_centers, max_iter=10, random_state=1)
+    km = KMeans(n_clusters=3, init=bad_centers, max_iter=10, random_state=1)
     for this_X in (X, sp.coo_matrix(X)):
         km.fit(this_X)
         this_labels = km.labels_
