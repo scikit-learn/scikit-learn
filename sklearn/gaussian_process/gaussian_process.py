@@ -173,7 +173,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     Attributes
     ----------
     `theta_`: array
-        Specified thate OR The best set of autocorrelation parameters (the
+        Specified theta OR The best set of autocorrelation parameters (the
         sought maximizer of the reduced likelihood function).
 
     `reduced_likelihood_function_value_`: array
