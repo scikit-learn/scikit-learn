@@ -718,6 +718,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             ordered by arithmetical order.
         """
         X = array2d(X, dtype=DTYPE, order='C')
+
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")

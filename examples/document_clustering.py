@@ -88,11 +88,12 @@ print
 # Do the actual clustering
 
 if opts.minibatch:
-    km = MiniBatchKMeans(k=true_k, init='k-means++', n_init=1,
+    km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
                          init_size=1000,
                          batch_size=1000, verbose=1)
 else:
-    km = KMeans(k=true_k, init='random', max_iter=100, n_init=1, verbose=1)
+    km = KMeans(n_clusters=true_k, init='random', max_iter=100, n_init=1,
+            verbose=1)
 
 print "Clustering sparse data with %s" % km
 t0 = time()
