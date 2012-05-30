@@ -717,8 +717,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE, order='C')
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
