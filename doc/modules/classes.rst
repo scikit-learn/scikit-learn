@@ -586,6 +586,7 @@ For sparse data
 
     manifold.LocallyLinearEmbedding
     manifold.Isomap
+    manifold.MDS
 
 .. autosummary::
     :toctree: generated

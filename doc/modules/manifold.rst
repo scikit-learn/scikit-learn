@@ -347,14 +347,17 @@ The overall complexity of standard LTSA is
 Multi-dimensional Scaling (MDS)
 ===============================
 
-Multidimensional scaling is a technique used for analyzing similarity or
-dissimilarity data. MDS attempts to model similarity or dissimilarity data as
+Multidimensional scaling (:class:`MDS`) is a technique used for analyzing similarity or
+dissimilarity data. :class:`MDS` attempts to model similarity or dissimilarity data as
 distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exists two types of MDS algorithm: metric and non metric. In Metric MDS,
-the distances between two points are set to be as close as possible as the
+There exists two types of MDS algorithm: metric and non metric. In the
+scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the
+input simiarity matrix arises from a metric (and thus respects the
+triangular inequality),
+the distances between output two points are then set to be as close as possible as the
 similarity or dissimilarity data. In non metric vision, the algorithms will
 try to preserve the order of the distances, and hence seek for a monotonic
 relationship between the distances in the embedded space and the
@@ -368,7 +371,7 @@ The stress is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 Metric MDS
 ----------
 
-The simplest metric MDS model, called absolute MDS, disparities are defined by
+The simplest metric :class:`MDS` model, called `absolute MDS`, disparities are defined by
 :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
 should then correspond exactly to the distance between point :math:`i` and
 :math:`j` in the embedding point.
@@ -378,7 +381,7 @@ Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
 Nonmetric MDS
 -------------
 
-Non metric MDS focuses on the ordination of the data. If :math:`S_{ij} <
+Non metric :class:`MDS` focuses on the ordination of the data. If :math:`S_{ij} <
 S_{kl}`, then the embedding should enforce :math:`d_{ij} < d_{jk}`. A simple
 algorithm to enforce that is to use a monotonic regression is computed of
 :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}` in
@@ -387,10 +390,10 @@ A trivial solution to this problem is to set all the points on the origin. In
 order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 
 
-.. figure:: ../auto_examples/manifold/images/plot_mds.png
+.. figure:: ../auto_examples/manifold/images/plot_mds_1.png
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
-   :scale: 40
+   :scale: 60
   
 
 .. topic:: References:
