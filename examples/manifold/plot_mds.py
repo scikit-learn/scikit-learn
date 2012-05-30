@@ -40,7 +40,7 @@ similarities += noise
 mds = manifold.MDS(n_components=2, max_iter=3000,
                    eps=1e-9, random_state=seed,
                    n_jobs=1)
-pos = mds.fit(similarities).positions_
+pos = mds.fit(similarities).embedding_
 
 nmds = manifold.MDS(n_components=2, metric=False,
                     max_iter=3000,

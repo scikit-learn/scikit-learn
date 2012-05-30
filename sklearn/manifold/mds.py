@@ -203,7 +203,8 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
 def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
            n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None):
     """
-    Computes multidimensional scaling using SMACOF algorithm
+    Computes multidimensional scaling using SMACOF (Scaling by Majorizing a
+    Complicated Function) algorithm
 
     The SMACOF algorithm is a multidimensional scaling algorithm: it minimizes
     a objective function, the *stress*, using a majorization technique. The
@@ -334,7 +335,8 @@ class MDS(BaseEstimator):
     Parameters
     ----------
     metric: boolean, optional, default: True
-        compute metric or nonmetric SMACOF algorithm
+        compute metric or nonmetric SMACOF (Scaling by Majorizing a
+        Complicated Function) algorithm
 
     n_components: int, optional, default: 2
         number of dimension in which to immerse the similarities
@@ -372,7 +374,7 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    positions_: array-like, shape [n_components, n_samples]
+    embedding_: array-like, shape [n_components, n_samples]
         Stores the position of the dataset in the embedding space
 
     stress_: float
@@ -417,7 +419,7 @@ class MDS(BaseEstimator):
             if None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array
         """
-        self.positions_, self.stress_ = smacof(X, metric=self.metric,
+        self.embedding_, self.stress_ = smacof(X, metric=self.metric,
                                      n_components=self.n_components,
                                      init=init,
                                      n_init=self.n_init,
@@ -441,7 +443,7 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array
 
         """
-        self.positions_, self.stress_ = smacof(X, metric=self.metric,
+        self.embedding_, self.stress_ = smacof(X, metric=self.metric,
                                      n_components=self.n_components,
                                      init=init,
                                      n_init=self.n_init,
@@ -449,4 +451,4 @@ class MDS(BaseEstimator):
                                      verbose=self.verbose,
                                      eps=self.eps)
 
-        return self.positions_
+        return self.embedding_
