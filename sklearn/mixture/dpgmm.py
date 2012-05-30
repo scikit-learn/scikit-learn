@@ -519,7 +519,7 @@ class DPGMM(GMM):
 
         if 'm' in self.init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
-                k=self.n_components,
+                n_clusters=self.n_components,
                 random_state=self.random_state).fit(X).cluster_centers_[::-1]
 
         if 'w' in self.init_params or not hasattr(self, 'weights_'):

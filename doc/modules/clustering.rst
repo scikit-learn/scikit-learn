@@ -259,6 +259,19 @@ function of the gradient of the image.
    the spectral clustering solver chooses an arbitrary one, putting 
    the first sample alone in one bin. 
 
+.. warning:: Transforming distance to well-behaved similarities
+
+    Note that if the values of your similarity matrix are not well
+    distributed, e.g. with negative values or with a distance matrix
+    rather than a similarity, the spectral problem will be singular and
+    the problem not solvable. In which case it is advised to apply a
+    transformation to the entries of the matrix. For instance, in the
+    case of a signed distance matrix, is common to apply a heat kernel::
+
+        similarity = np.exp(-beta * distance / distance.std())
+
+    See the examples for such an application.
+
 .. topic:: Examples:
 
  * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
@@ -894,7 +907,7 @@ cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
-  >>> kmeans_model = KMeans(k=3, random_state=1).fit(X)
+  >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS

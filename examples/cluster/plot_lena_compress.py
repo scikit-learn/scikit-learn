@@ -33,7 +33,7 @@ except AttributeError:
     from scipy import misc
     lena = misc.lena()
 X = lena.reshape((-1, 1))  # We need an (n_sample, n_feature) array
-k_means = cluster.KMeans(k=n_clusters, n_init=4)
+k_means = cluster.KMeans(n_clusters=n_clusters, n_init=4)
 k_means.fit(X)
 values = k_means.cluster_centers_.squeeze()
 labels = k_means.labels_
