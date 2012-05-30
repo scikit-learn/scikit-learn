@@ -251,10 +251,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    warnings.warn("Please note: the interface of sparse_encode has changed: "
-                  "It now follows the dictionary learning API and it also "
-                  "handles parallelization. Please read the docstring for "
-                  "more information.", stacklevel=2)
     if copy_gram is not None:
         warnings.warn("copy_gram in sparse_encode is deprecated: it"
             "lead to errors.", DeprecationWarning, stacklevel=2)
