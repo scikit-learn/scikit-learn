@@ -19,6 +19,7 @@ import pylab as pl
 from matplotlib import offsetbox
 from sklearn.utils.fixes import qr_economic
 from sklearn import manifold, datasets, decomposition, lda
+from sklearn.metrics import euclidean_distances
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data
@@ -35,9 +36,9 @@ def plot_embedding(X, title=None):
 
     pl.figure()
     ax = pl.subplot(111)
-    for i in range(digits.data.shape[0]):
+    for i in range(X.shape[0]):
         pl.text(X[i, 0], X[i, 1], str(digits.target[i]),
-                color=pl.cm.Set1(digits.target[i] / 10.),
+                color=pl.cm.Set1(y[i] / 10.),
                 fontdict={'weight': 'bold', 'size': 9})
 
     if hasattr(offsetbox, 'AnnotationBbox'):
@@ -165,6 +166,17 @@ X_ltsa = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 plot_embedding(X_ltsa,
     "Local Tangent Space Alignment of the digits (time %.2fs)" %
+    (time() - t0))
+
+#----------------------------------------------------------------------
+# MDS  embedding of the digits dataset
+print "Computing MDS embedding"
+clf = manifold.MDS(n_components=2, n_init=2)
+t0 = time()
+X_mds = clf.fit_transform(euclidean_distances(X))
+print "Done. Stress: %f" % clf.stress_
+plot_embedding(X_mds,
+    "MDS embedding of the digits (time %.2fs)" %
     (time() - t0))
 
 pl.show()
