@@ -35,3 +35,15 @@ Tutorials: From the bottom up with scikit-learn
 .. note:: **Videos**
 
     Videos with tutorials can also be found in the :ref:`videos` section.
+
+.. note:: **Doctest Mode**
+
+   The code-examples in the above tutorials are written in a
+   *python-console* format. If you wish to easily execute these examples
+   in **iPython**, use::
+   	
+	%doctest_mode
+
+   in the iPython-console. You can then simply copy and paste the examples 
+   directly into iPython without having to worry about removing the **>>>** 
+   manually.

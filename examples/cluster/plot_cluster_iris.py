@@ -38,9 +38,9 @@ iris = datasets.load_iris()
 X = iris.data
 y = iris.target
 
-estimators = {'k_means_iris_3': KMeans(k=3),
-              'k_means_iris_8': KMeans(k=8),
-              'k_means_iris_bad_init': KMeans(k=3, n_init=1, init='random'),
+estimators = {'k_means_iris_3': KMeans(n_clusters=3),
+              'k_means_iris_8': KMeans(n_clusters=8),
+              'k_means_iris_bad_init': KMeans(n_clusters=3, n_init=1, init='random'),
              }
 
 

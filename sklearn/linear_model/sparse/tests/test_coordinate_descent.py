@@ -172,7 +172,6 @@ def test_sparse_enet_not_as_toy_dataset():
                                          positive=True)
 
 
-
 def test_sparse_lasso_not_as_toy_dataset():
     n_samples, n_features, max_iter = 100, 100, 1000
     n_informative = 10

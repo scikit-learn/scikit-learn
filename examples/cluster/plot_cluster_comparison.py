@@ -70,9 +70,9 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
 
     # create clustering estimators
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(k=2)
+    two_means = cluster.MiniBatchKMeans(n_clusters=2)
     ward_five = cluster.Ward(n_clusters=2, connectivity=connectivity)
-    spectral = cluster.SpectralClustering(k=2, mode='arpack')
+    spectral = cluster.SpectralClustering(n_clusters=2, mode='arpack')
     dbscan = cluster.DBSCAN(eps=.2)
     affinity_propagation = cluster.AffinityPropagation(damping=.9)
 
