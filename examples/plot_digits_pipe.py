@@ -23,7 +23,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
-from sklearn import linear_model, decomposition, datasets, cross_validation
+from sklearn import linear_model, decomposition, datasets
 
 logistic = linear_model.LogisticRegression()
 

@@ -41,7 +41,6 @@ from scipy.sparse import issparse
 
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
-from ..utils import deprecated
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..externals.joblib import Parallel
@@ -184,11 +183,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         distances.flat[::distances.shape[0] + 1] = 0.0
 
     return distances if squared else np.sqrt(distances)
-
-
-@deprecated("to be deprecated in v0.11; use euclidean_distances instead")
-def euclidian_distances(*args, **kwargs):
-    return euclidean_distances(*args, **kwargs)
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
