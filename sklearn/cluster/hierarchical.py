@@ -71,25 +71,28 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
 
-    # Compute the number of nodes
-    if connectivity is not None:
-        if n_components is None:
-            n_components, labels = cs_graph_components(connectivity)
-        if n_components > 1:
-            warnings.warn("the number of connected components of the"
-            " connectivity matrix is %d > 1. Completing it to avoid"
-            " stopping the tree early."
-            % n_components)
-            if copy:
-                connectivity = connectivity.copy()
-                copy = False
-            connectivity = _fix_connectivity(X, connectivity,
-                                            n_components, labels)
-            n_components = 1
-    else:
+    if connectivity is None:
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples
+
+    # convert connectivity matrix to LIL eventually with a copy
+    if sparse.isspmatrix_lil(connectivity) and copy:
+        connectivity = connectivity.copy()
+    else:
+        connectivity = connectivity.tolil()
+
+    # Compute the number of nodes
+    if n_components is None:
+        n_components, labels = cs_graph_components(connectivity)
+    if n_components > 1:
+        warnings.warn("the number of connected components of the"
+        " connectivity matrix is %d > 1. Completing it to avoid"
+        " stopping the tree early."
+        % n_components)
+        connectivity = _fix_connectivity(X, connectivity,
+                                            n_components, labels)
+        n_components = 1
 
     n_nodes = 2 * n_samples - n_components
 
@@ -97,11 +100,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
-    # convert connectivity matrix to LIL eventually with a copy
-    if sparse.isspmatrix_lil(connectivity) and copy:
-        connectivity = connectivity.copy()
-    else:
-        connectivity = connectivity.tolil()
 
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))
