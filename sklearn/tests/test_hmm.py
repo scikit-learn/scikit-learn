@@ -182,10 +182,13 @@ class TestBaseHMM(TestCase):
 
 
 def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
-    hmm.fit(obs, n_iter=1, **kwargs)
+    hmm.n_iter = 1
+    hmm.fit(obs)
     loglikelihoods = []
     for n in xrange(n_iter):
-        hmm.fit(obs, n_iter=1, init_params='', **kwargs)
+        hmm.n_iter = 1
+        hmm.init_params = ''
+        hmm.fit(obs)
         loglikelihoods.append(sum(hmm.score(x) for x in obs))
     return loglikelihoods
 
@@ -305,7 +308,8 @@ class GaussianHMMBaseTester(object):
         train_obs = [h.sample(n=10)[0] for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0)
+        h.n_iter = 0
+        h.fit(train_obs)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)[1:]
@@ -360,7 +364,8 @@ class GaussianHMMBaseTester(object):
         train_obs = [h.sample(n=10)[0] for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs[:1], n_iter=0)
+        h.n_iter = 0
+        h.fit(train_obs[:1])
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params)[1:]
@@ -591,7 +596,8 @@ class GMMHMMBaseTester(object):
             random_state=self.prng)[0] for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0)
+        h.n_iter = 0
+        h.fit(train_obs)
         h.transmat_ = hmm.normalize(self.prng.rand(self.n_components,
                                                    self.n_components), axis=1)
         h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))
