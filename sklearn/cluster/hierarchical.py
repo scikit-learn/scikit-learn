@@ -76,15 +76,16 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples
 
-    # convert connectivity matrix to LIL eventually with a copy
+    # Compute the number of nodes
+    if n_components is None:
+        n_components, labels = cs_graph_components(connectivity)
+
+    # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
         connectivity = connectivity.copy()
     else:
         connectivity = connectivity.tolil()
 
-    # Compute the number of nodes
-    if n_components is None:
-        n_components, labels = cs_graph_components(connectivity)
     if n_components > 1:
         warnings.warn("the number of connected components of the"
         " connectivity matrix is %d > 1. Completing it to avoid"
