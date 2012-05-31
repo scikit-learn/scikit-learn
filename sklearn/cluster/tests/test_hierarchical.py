@@ -136,6 +136,21 @@ def test_connectivity_popagation():
     # IndexError
     ward.fit(X)
 
+
+def test_connectivity_fixing_bug():
+    """
+    Check non regression of a bug if a non item assignable connectivity is
+    provided with more than one component.
+    """
+    # create dummy data
+    x = np.array([[0, 0], [1, 1]])
+    # create a mask with several components to force connectivity fixing
+    m = np.array([[True, False], [False, True]])
+    c = grid_to_graph(n_x=2, n_y=2, mask=m)
+    w = Ward(connectivity=c)
+    w.fit(x)
+
+
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
