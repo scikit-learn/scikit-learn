@@ -47,7 +47,7 @@ print "fitting to HMM and decoding ...",
 n_components = 5
 
 # make an HMM instance and execute fit
-model = GaussianHMM(n_components, "diag", n_iter=1000)
+model = GaussianHMM(n_components, covariance_type="diag", n_iter=1000)
 
 model.fit([X])
 
