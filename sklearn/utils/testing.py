@@ -7,6 +7,7 @@ from .fixes import savemat
 import urllib2
 from StringIO import StringIO
 import scipy as sp
+from numpy.testing import assert_equal
 
 
 try:
@@ -45,6 +46,20 @@ try:
     from nose.tools import assert_greater
 except ImportError:
     assert_greater = _assert_greater
+
+
+def assert_raise_message(exception, message, callable, *args, **kwargs):
+    """Helper function to test error messages in exceptions"""
+    try:
+        callable(*args, **kwargs)
+        raise AssertionError("Should have raised %r" % exception(message))
+    except exception as e:
+        if hasattr(e, 'message'):
+            # python 2.x
+            assert_equal(message, e.message)
+        else:
+            # python 3.x
+            assert_equal(message, e.args[0])
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
