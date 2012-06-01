@@ -8,6 +8,12 @@ with various manifold learning methods.
 
 For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
+
+Note that the purpose of the MDS is to find a low-dimensional
+representation of the data (here 2D) in which the distances respect well
+the distances in the original high-dimensional space, unlike other
+manifold-learning algorithms, it does not seeks an isotropic
+representation of the data in the low-dimensional space.
 """
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
@@ -31,7 +37,7 @@ X, color = datasets.samples_generator.make_s_curve(n_points)
 n_neighbors = 10
 n_components = 2
 
-fig = pl.figure(figsize=(12, 8))
+fig = pl.figure(figsize=(15, 8))
 pl.suptitle("Manifold Learning with %i points, %i neighbors"
                % (1000, n_neighbors), fontsize=14)
 

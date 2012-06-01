@@ -347,7 +347,11 @@ The overall complexity of standard LTSA is
 Multi-dimensional Scaling (MDS)
 ===============================
 
-Multidimensional scaling (:class:`MDS`) is a technique used for analyzing similarity or
+Multidimensional scaling (:class:`MDS`) seeks a low-dimensional
+representation of the data in which the distances respect well the
+distances in the original high-dimensional space.
+
+In general, is a technique used for analyzing similarity or
 dissimilarity data. :class:`MDS` attempts to model similarity or dissimilarity data as
 distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
@@ -361,6 +365,12 @@ close as possible to the similarity or dissimilarity data. In the non metric
 vision, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
+
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_10.png
+   :target: ../auto_examples/manifold/plot_lle_digits.html
+   :align: center
+   :scale: 50
+ 
 
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
