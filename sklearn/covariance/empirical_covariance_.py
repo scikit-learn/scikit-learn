@@ -75,6 +75,11 @@ class EmpiricalCovariance(BaseEstimator):
     ----------
     store_precision : bool
         Specifies if the estimated precision is stored
+    assume_centered: bool
+        If True, data are not centered before computation.
+        Useful when working with data whose mean is almost, but not exactly
+        zero.
+        If False (default), data are centered before computation.
 
     Attributes
     ----------
@@ -87,19 +92,6 @@ class EmpiricalCovariance(BaseEstimator):
 
     """
     def __init__(self, store_precision=True, assume_centered=False):
-        """
-
-        Parameters
-        ----------
-        store_precision: bool
-          Specify if the estimated precision is stored
-        assume_centered: Boolean
-          If True, data are not centered before computation.
-          Useful when working with data whose mean is almost, but not exactly
-          zero.
-          If False, data are centered before computation.
-
-        """
         self.store_precision = store_precision
         self.assume_centered = assume_centered
 
@@ -164,6 +156,12 @@ class EmpiricalCovariance(BaseEstimator):
         X_test : array-like, shape = [n_samples, n_features]
             Test data of which we compute the likelihood, where n_samples is
             the number of samples and n_features is the number of features.
+        assume_centered: bool
+            If True, data in X_test are not centered before computation.
+            Useful when working with data whose mean is almost, but not
+            exactly zero.
+            If False, data in X_test are centered before computation.
+            Note that `assume_centered` != self.assume_centered.
 
         Returns
         -------
@@ -247,6 +245,7 @@ class EmpiricalCovariance(BaseEstimator):
           If `assume_centered` is True (default), one may want to center them
           using a location estimate first. Otherwise, the observations will
           be removed their empirical mean.
+          Note that `assume_centered` != self.assume_centered.
 
         Returns
         -------

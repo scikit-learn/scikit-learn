@@ -149,10 +149,11 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     block_size: int,
       Size of the blocks into which the covariance matrix will be split.
-      If n_features > `block_size`, block computation will be made (so it
-      will not be made in one shot) and the shrunk covariance matrix will
-      not be returned. Otherwise, the shrunk covariance matrix will be
-      returned since it can hold in memory.
+      If n_features > `block_size`, the shrunk covariance matrix will
+      be None but the shrinkage coefficient will still be computed.
+      This is possible because we use a block computation.
+      Otherwise, the shrunk covariance matrix will be returned since it
+      can hold in memory.
 
     Returns
     -------
@@ -253,6 +254,14 @@ class LedoitWolf(EmpiricalCovariance):
     ----------
     store_precision : bool
         Specify if the estimated precision is stored
+    block_size: int,
+      Size of the blocks into which the covariance matrix will be split
+      during its Ledoit-Wolf estimation.
+      If n_features > `block_size`, the shrunk covariance matrix will
+      be None but the shrinkage coefficient will still be computed.
+      This is possible because we use a block computation.
+      Otherwise, the shrunk covariance matrix will be returned since it
+      can hold in memory.
 
     Attributes
     ----------
@@ -284,6 +293,10 @@ class LedoitWolf(EmpiricalCovariance):
     February 2004, pages 365-411.
 
     """
+    def __init__(self, store_precision=True, block_size=1000):
+        EmpiricalCovariance.__init__(self, store_precision=store_precision)
+        self.block_size = block_size
+
     def fit(self, X, assume_centered=False):
         """ Fits the Ledoit-Wolf shrunk covariance model
         according to the given training data and parameters.
@@ -306,7 +319,12 @@ class LedoitWolf(EmpiricalCovariance):
             Returns self.
 
         """
-        covariance, shrinkage = ledoit_wolf(X, assume_centered=assume_centered)
+        # only return the shrunk covariance if it is not to big
+        if X.shape[1] > self.block_size:
+            raise MemoryError("LW: n_features is too large")
+        covariance, shrinkage = ledoit_wolf(
+            X, assume_centered=assume_centered,
+            block_size=self.block_size)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
 

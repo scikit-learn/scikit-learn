@@ -35,7 +35,7 @@ from sklearn.covariance import EllipticEnvelope
 
 # Example settings
 n_samples = 200
-outliers_fraction = 0.1
+outliers_fraction = 0.25
 clusters_separation = [0, 1, 2]
 
 # define two outlier detection tools to be compared
