@@ -37,24 +37,24 @@ Observations and states are assumed to be sampled at times [0...T-1]
 
 References
 ==========
-  * Abbeel, Pieter. "Maximum Likelihood, EM".
-    http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/
-  * Yu, Byron M. and Shenoy, Krishna V. and Sahani, Maneesh. "Derivation of
-    Kalman Filtering and Smoothing Equations".
-    http://www.ece.cmu.edu/~byronyu/papers/derive_ks.pdf
-  * Ghahramani, Zoubin and Hinton, Geoffrey E. "Parameter Estimation for Linear
-    Dynamical Systems." http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
-  * Welling, Max. "The Kalman Filter".
-    http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
+    * Abbeel, Pieter. "Maximum Likelihood, EM".
+      http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/
+    * Yu, Byron M. and Shenoy, Krishna V. and Sahani, Maneesh. "Derivation of
+      Kalman Filtering and Smoothing Equations".
+      http://www.ece.cmu.edu/~byronyu/papers/derive_ks.pdf
+    * Ghahramani, Zoubin and Hinton, Geoffrey E. "Parameter Estimation for Linear
+      Dynamical Systems." http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
+    * Welling, Max. "The Kalman Filter".
+      http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
 """
 import warnings
 
 import numpy as np
 import numpy.ma as ma
 
-from .base import BaseEstimator
-from .mixture import log_multivariate_normal_density
-from .utils import array2d
+from ..base import BaseEstimator
+from ..mixture import log_multivariate_normal_density
+from ..utils import array1d, array2d
 
 # Dimensionality of each Kalman Filter parameter for a single time step
 DIM = {
@@ -85,14 +85,14 @@ def _last_dims(X, t, ndims=2):
     Y : array with dimension `ndims`
         the final `ndims` dimensions indexed by `t`
     """
+    X = np.asarray(X)
     if len(X.shape) == ndims + 1:
         return X[t]
     elif len(X.shape) == ndims:
         return X
     else:
-        raise ValueError("X only has {} ".format(len(X.shape)) +
-                         "dimensions when {}".format(ndims) +
-                         " or more are required")
+        raise ValueError(("X only has %d dimensions when %d" + \
+                " or more are required") % (len(X.shape), ndims))
 
 
 def _pad(X, n=1, dim=None):
@@ -496,9 +496,9 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
     .. math::
 
         R &= \frac{1}{T} \sum_{t=0}^{T-1}
-               [y_t - C_t \mathbb{E}[x_t] - d_t]
-                  [y_t - C_t \mathbb{E}[x_t] - d_t]^T
-               + C_t Var(x_t) C_t^T
+                [y_t - C_t \mathbb{E}[x_t] - d_t]
+                    [y_t - C_t \mathbb{E}[x_t] - d_t]^T
+                + C_t Var(x_t) C_t^T
     """
     _, n_dim_state = mu_smooth.shape
     T, n_dim_obs = Z.shape
@@ -525,7 +525,7 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     .. math::
 
         A &= ( \sum_{t=1}^{T-1} \mathbb{E}[x_t x_{t-1}^{T}]
-                  - b_{t-1} \mathbb{E}[x_{t-1}]^T )
+                - b_{t-1} \mathbb{E}[x_{t-1}]^T )
              ( \sum_{t=1}^{T-1} \mathbb{E}[x_{t-1} x_{t-1}^T] )^{-1}
     """
     T, n_dim_state, _ = sigma_smooth.shape
@@ -548,10 +548,10 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     .. math::
 
         Q &= \frac{1}{T-1} \sum_{t=0}^{T-2}
-               (\mathbb{E}[x_{t+1}] - A_t \mathbb{E}[x_t] - b_t)
-                  (\mathbb{E}[x_{t+1}] - A_t \mathbb{E}[x_t] - b_t)^T
-               + A_t Var(x_t) A_t^T + Var(x_{t+1})
-               - Cov(x_{t+1}, x_t) A_t^T - A_t Cov(x_t, x_{t+1})
+                (\mathbb{E}[x_{t+1}] - A_t \mathbb{E}[x_t] - b_t)
+                    (\mathbb{E}[x_{t+1}] - A_t \mathbb{E}[x_t] - b_t)^T
+                + A_t Var(x_t) A_t^T + Var(x_{t+1})
+                - Cov(x_{t+1}, x_t) A_t^T - A_t Cov(x_t, x_{t+1})
     """
     T, n_dim_state, _ = sigma_smooth.shape
     res = np.zeros((n_dim_state, n_dim_state))
@@ -600,7 +600,7 @@ def _em_b(A, mu_smooth):
     .. math::
 
         b = \frac{1}{T-1} \sum_{t=1}^{T-1}
-              \mathbb{E}[x_t] - A_{t-1} \mathbb{E}[x_{t-1}]
+                \mathbb{E}[x_t] - A_{t-1} \mathbb{E}[x_{t-1}]
     """
     T, n_dim_state = mu_smooth.shape
     b = np.zeros(n_dim_state)
@@ -643,33 +643,34 @@ class KalmanFilter(BaseEstimator):
         z_{t}     &= C_{t} x_{t} + d_{t} + Normal(0, R_{t})
 
     The Kalman Filter is an algorithm designed to estimate 
-    :math:`P(x_t | z_{1:t})``.  As all state transitions and observations are
+    :math:`P(x_t | z_{0:t})``.  As all state transitions and observations are
     linear with Gaussian distributed noise, these distributions can be
     represented exactly as Gaussian distributions with mean `mu_filt[t]` and
     covariances `sigma_filt[t]`.
 
     Similarly, the Kalman Smoother is an algorithm designed to estimate
-    :math:`P(x_t | z_{1:T})`.
+    :math:`P(x_t | z_{0:T})`.
 
-    The EM algorithm aims to find for :math:`theta = (A,C,Q,R,\mu_0,\sigma_0)`
-
-    .. math::
-
-        \max_{\theta} P(z_{1:T}; \theta)
-
-    If we define :math:`L(x_{1:t},\theta) = \log P(z_{1:T}, x_{1:T}; \theta)`,
-    then the EM algorithm works by iteratively finding,
+    The EM algorithm aims to find for :math:`theta = (A, b, C, d, Q, R, \mu_0,
+    \sigma_0)`
 
     .. math::
 
-        P(x_{1:T} | z_{1:T}, \theta_i)
+        \max_{\theta} P(z_{0:T-1}; \theta)
+
+    If we define :math:`L(x_{0:t},\theta) = \log P(z_{0:T-1}, x_{0:T-1};
+    \theta)`, then the EM algorithm works by iteratively finding,
+
+    .. math::
+
+        P(x_{0:T-1} | z_{0:T-1}, \theta_i)
 
     then by maximizing,
 
     .. math::
 
         \theta_{i+1} = \arg\max_{\theta}
-            E_{x_{1:T}} [ L(x_{1:t}, \theta)| z_{1:T], \theta_i ]
+            E_{x_{0:T-1}} [ L(x_{0:t}, \theta)| z_{0:T-1}, \theta_i ]
 
     Parameters
     ==========
@@ -698,15 +699,15 @@ class KalmanFilter(BaseEstimator):
         variables will be estimated.
     """
     def __init__(self, A, C, Q, R, b, d, mu_0, sigma_0, random_state=None,
-            em_vars=['Q', 'R', 'mu_0', 'sigma_0']):
+                 em_vars=['Q', 'R', 'mu_0', 'sigma_0']):
         """Initialize Kalman Filter"""
         self.A = array2d(A)
         self.C = array2d(C)
         self.Q = array2d(Q)
         self.R = array2d(R)
-        self.b = np.asarray(np.atleast_1d(b))
-        self.d = np.asarray(np.atleast_1d(d))
-        self.mu_0 = np.asarray(np.atleast_1d(mu_0))
+        self.b = array1d(b)
+        self.d = array1d(d)
+        self.mu_0 = array1d(mu_0)
         self.sigma_0 = array2d(sigma_0)
         self.random_state = random_state
         self.em_vars = em_vars

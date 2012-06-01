@@ -24,18 +24,18 @@ for i in range(len(ll)):
     kf = kf.fit(Z=data.data, n_iter=1)
     ll[i] = np.sum(kf.filter(Z=data.data)[-1])
 
-# Estimate the state without using an observations.  This will let us see how
+# Estimate the state without using any observations.  This will let us see how
 # good we could do if we ran blind.
 n_dim_state = data.A.shape[0]
 T = data.data.shape[0]
-x_blind = np.zeros( (T+1, n_dim_state) )
+x_blind = np.zeros( (T, n_dim_state) )
 for t in range(T-1):
   if t == 0:
     x_blind[t] = data.x_0
   x_blind[t+1] = data.A.dot(x_blind[t]) + data.b[t]
 
 # Estimate the hidden states using observations up to and including
-# time t for t in [0...T].  This method outputs the mean and covariance
+# time t for t in [0...T-1].  This method outputs the mean and covariance
 # characterizing the Multivariate Normal distribution for
 #   P(x_t | z_{1:t})
 (x_filt, _, _) = kf.filter(data.data)

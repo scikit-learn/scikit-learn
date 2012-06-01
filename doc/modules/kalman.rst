@@ -63,10 +63,10 @@ generated in the following way,
 
 .. math::
 
-    x_0               & \sim \text{Gaussian}(\mu_0, \Sigma_0)       \\
-    x_{t+1}           & = A x_t + b_t + \epsilon_{t+1}^{1}            \\
-    y_{t}             & = C x_{t} + d_{t} + \epsilon_{t}^2        \\
-    \epsilon_t^1      & \sim \text{Gaussian}(0, Q)                  \\
+    x_0               & \sim \text{Gaussian}(\mu_0, \Sigma_0)    \\
+    x_{t+1}           & = A x_t + b_t + \epsilon_{t+1}^{1}       \\
+    y_{t}             & = C x_{t} + d_{t} + \epsilon_{t}^2       \\
+    \epsilon_t^1      & \sim \text{Gaussian}(0, Q)               \\
     \epsilon_{t}^2    & \sim \text{Gaussian}(0, R)
 
 The Gaussian distribution is characterized by its single mode and exponentially
@@ -103,8 +103,8 @@ from :math:`t = 1 \ldots T`.  This module assumes both :math:`x_t` and
 
 .. topic:: Examples:
 
- * :ref:`example_plot_kalman_online.py`
- * :ref:`example_plot_kalman_filter.py`
+ * :ref:`example_kalman_plot_online.py`
+ * :ref:`example_kalman_plot_filter.py`
 
 EM Algorithm
 ============
@@ -145,12 +145,16 @@ values parameters can grow extremely out of hand with insufficient data.
 
 .. topic:: Examples:
 
- * :ref:`example_plot_kalman_em.py`
+ * :ref:`example_kalman_plot_em.py`
 
 Missing Observations
 ====================
 
-A real system will often get measurements at regular points in time, but there will also be times when the sensor fails.  :mod:`sklearn.kalman` offers you the ability to continue applying all of its implemented algorithms even if this is the case.  In order to use this feature, one simply needs to wrap the measurements in :mod:`numpy.ma` and mark a timestep as masked::
+A real system will often get measurements at regular points in time, but there
+will also be times when the sensor fails.  :mod:`sklearn.kalman` offers you the
+ability to continue applying all of its implemented algorithms even if this is
+the case.  In order to use this feature, one simply needs to wrap the
+measurements in :mod:`numpy.ma` and mark a timestep as masked::
 
   >>> from sklearn.datasets import load_kalman_data
   >>> import numpy.ma as ma
@@ -159,4 +163,4 @@ A real system will often get measurements at regular points in time, but there w
 
 .. topic:: Examples:
 
- * :ref:`example_plot_kalman_missing.py`
+ * :ref:`example_kalman_plot_missing.py`

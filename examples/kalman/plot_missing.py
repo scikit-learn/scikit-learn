@@ -4,7 +4,7 @@ Applying the Kalman Filter with Missing Observations
 ====================================================
 
 This example shows how one may apply all of :mod:`sklearn.kalman`'s Kalman
-Smooth, even with missing observations.
+Smoother, even with missing observations.
 '''
 import numpy as np
 import numpy.ma as ma
@@ -49,4 +49,3 @@ plt.legend(
     ('true', 'all', 'missing'), loc='lower right'
 )
 plt.show()
-
