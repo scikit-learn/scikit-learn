@@ -16,6 +16,8 @@ Changelog
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+
 .. _changes_0_11:
 
 0.11

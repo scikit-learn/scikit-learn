@@ -343,6 +343,7 @@ The overall complexity of standard LTSA is
      <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.3693>`_
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
+.. _multidimensional_scaling:
 
 Multi-dimensional Scaling (MDS)
 ===============================
