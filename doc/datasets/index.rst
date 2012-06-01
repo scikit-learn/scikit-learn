@@ -59,7 +59,6 @@ require to download any file from some external website.
    load_diabetes
    load_digits
    load_linnerud
-   load_cities
 
 These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
