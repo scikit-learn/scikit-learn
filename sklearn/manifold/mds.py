@@ -187,15 +187,17 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         B = - ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1. / n_samples * np.dot(B, X)
+
+        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
         if verbose == 2:
             print 'it: %d, stress %s' % (it, stress)
         if old_stress is not None:
-            if(old_stress - stress) < eps:
+            if(old_stress - stress / dis) < eps:
                 if verbose:
                     print 'breaking at iteration %d with stress %s' % (it,
                                                                        stress)
                 break
-        old_stress = stress
+        old_stress = stress / dis
 
     return X, stress
 
@@ -342,7 +344,7 @@ class MDS(BaseEstimator):
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
-    n_init: int, optional, default: 8
+    n_init: int, optional, default: 4
         Number of time the smacof algorithm will be run with different
         initialisation. The final results will be the best output of the
         n_init consecutive runs in terms of stress.
@@ -394,7 +396,7 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
-    def __init__(self, n_components=2, metric=True, n_init=8,
+    def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
                  random_state=None):
         self.n_components = n_components
