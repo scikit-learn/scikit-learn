@@ -164,12 +164,13 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
 
     # check that warm restart leads to the same result with
     # sparse and dense versions
-    
-    coef_init = np.random.randn(n_features)
-    
-    d_clf.fit(X_train, y_train, coef_init = coef_init)
-    s_clf.fit(X_train, y_train, coef_init = coef_init)
-    
+
+    rng = np.random.RandomState(seed=0)
+    coef_init = rng.randn(n_features)
+
+    d_clf.fit(X_train, y_train, coef_init=coef_init)
+    s_clf.fit(X_train, y_train, coef_init=coef_init)
+
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
     assert_almost_equal(s_clf.intercept_, d_clf.intercept_, 5)
 
