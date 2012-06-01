@@ -136,7 +136,7 @@ class ElasticNet(LinearModel):
                 self.coef_ = np.zeros(n_features, dtype=np.float64)
         else:
             if coef_init.shape[0] != X.shape[1]:
-                raise ValueError("X and coef_init have incompatible "+
+                raise ValueError("X and coef_init have incompatible " +
                                   "shapes.")
             self.coef_ = coef_init
 
