@@ -41,7 +41,6 @@ from scipy.sparse import issparse
 
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
-from ..utils import deprecated
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..externals.joblib import Parallel
@@ -186,11 +185,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-@deprecated("to be deprecated in v0.11; use euclidean_distances instead")
-def euclidian_distances(*args, **kwargs):
-    return euclidean_distances(*args, **kwargs)
-
-
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
@@ -228,7 +222,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     >>> manhattan_distances(2, 3)#doctest:+ELLIPSIS
     array([[ 1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
-		 [[1, 2], [0, 3]])#doctest:+ELLIPSIS
+         [[1, 2], [0, 3]])#doctest:+ELLIPSIS
     array([[ 0.,  2.],
            [ 4.,  4.]])
     >>> import numpy as np

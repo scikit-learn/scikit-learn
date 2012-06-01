@@ -11,6 +11,7 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state
+from ..utils import deprecated
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -167,6 +168,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         The generator used to shuffle the sequence of coordinates of theta in
         the Welch optimizer. If an integer is given, it fixes the seed.
         Defaults to the global numpy random number generator.
+
+
+    Attributes
+    ----------
+    `theta_`: array
+        Specified theta OR The best set of autocorrelation parameters (the
+        sought maximizer of the reduced likelihood function).
+
+    `reduced_likelihood_function_value_`: array
+        The optimal reduced likelihood function value.
 
     Examples
     --------
@@ -332,9 +343,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Performing Maximum Likelihood Estimation of the "
                     + "autocorrelation parameters...")
-            self.theta, self.reduced_likelihood_function_value, par = \
-                self.arg_max_reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value):
+            self.theta_, self.reduced_likelihood_function_value_, par = \
+                self._arg_max_reduced_likelihood_function()
+            if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad parameter region. "
                               + "Try increasing upper bound")
 
@@ -343,10 +354,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Given autocorrelation parameters. "
                     + "Computing Gaussian Process model parameters...")
-            self.theta = self.theta0
-            self.reduced_likelihood_function_value, par = \
+            self.theta_ = self.theta0
+            self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value):
+            if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad point. Try increasing theta0.")
 
         self.beta = par['beta']
@@ -432,7 +443,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
+            r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -524,7 +535,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array containing the autocorrelation parameters at which the
             Gaussian Process model parameters should be determined.
             Default uses the built-in autocorrelation parameters
-            (ie theta = self.theta).
+            (ie theta = self.theta_).
 
         Returns
         -------
@@ -554,7 +565,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if theta is None:
             # Use built-in autocorrelation parameters
-            theta = self.theta
+            theta = self.theta_
 
         # Initialize output
         reduced_likelihood_function_value = - np.inf
@@ -636,7 +647,24 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return reduced_likelihood_function_value, par
 
+    @deprecated("to be removed;"
+            " access self.theta_ etc. directly after fit")
     def arg_max_reduced_likelihood_function(self):
+        return self._arg_max_reduced_likelihood_function()
+
+    @property
+    @deprecated('``theta`` is deprecated and will be removed'
+        'please use ``theta_`` instead.')
+    def theta(self):
+        return self.theta_
+
+    @property
+    @deprecated('``reduced_likelihood_function_value`` is deprecated and will be removed'
+        'please use ``reduced_likelihood_function_value_`` instead.')
+    def reduced_likelihood_function_value(self):
+        return self.reduced_likelihood_function_value_
+
+    def _arg_max_reduced_likelihood_function(self):
         """
         This function estimates the autocorrelation parameters theta as the
         maximizer of the reduced likelihood function.
@@ -749,7 +777,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.thetaL = array2d(self.thetaL.min())
             self.thetaU = array2d(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
-                self.arg_max_reduced_likelihood_function()
+                self._arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
 
             # Iterate over all dimensions of theta allowing for anisotropy
@@ -770,7 +798,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
-                    self.arg_max_reduced_likelihood_function()
+                    self._arg_max_reduced_likelihood_function()
 
             # Restore the given atrributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU

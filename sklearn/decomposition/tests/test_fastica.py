@@ -107,6 +107,7 @@ def test_fastica(add_noise=False):
     ica = FastICA(fun=nl, algorithm=algo, random_state=0)
     ica.fit(m)
     ica.get_mixing_matrix()
+    assert_true(ica.components_.shape == (2, 2))
 
 
 def test_fastica_nowhiten():

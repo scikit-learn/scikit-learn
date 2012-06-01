@@ -392,7 +392,7 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
-    ||\gamma||_0 \leq n_{nonzero_coefs}
+    ||\gamma||_0 \leq n_{nonzero\_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:

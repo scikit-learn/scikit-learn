@@ -478,7 +478,7 @@ class GMM(BaseEstimator):
         for _ in range(self.n_init):
             if 'm' in self.init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
-                    k=self.n_components).fit(X).cluster_centers_
+                    n_clusters=self.n_components).fit(X).cluster_centers_
 
             if 'w' in self.init_params or not hasattr(self, 'weights_'):
                 self.weights_ = np.tile(1.0 / self.n_components,
@@ -508,7 +508,8 @@ class GMM(BaseEstimator):
                     break
 
                 # Maximization step
-                self._do_mstep(X, responsibilities, self.params, self.min_covar)
+                self._do_mstep(X, responsibilities, self.params,
+                        self.min_covar)
 
             # if the results are better, keep it
             if self.n_iter:

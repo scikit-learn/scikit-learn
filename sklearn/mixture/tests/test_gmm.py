@@ -128,6 +128,7 @@ def test_GMM_attributes():
 
 class GMMTester():
     do_test_eval = True
+
     def _setUp(self):
         self.n_components = 10
         self.n_features = 4
@@ -264,20 +265,24 @@ class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
     model = mixture.GMM
     setUp = GMMTester._setUp
 
+
 class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
     covariance_type = 'diag'
     model = mixture.GMM
     setUp = GMMTester._setUp
+
 
 class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
     covariance_type = 'tied'
     model = mixture.GMM
     setUp = GMMTester._setUp
 
+
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     covariance_type = 'full'
     model = mixture.GMM
     setUp = GMMTester._setUp
+
 
 def test_multiple_init():
     """Test that multiple inits does not much worse than a single one"""

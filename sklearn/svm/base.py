@@ -395,7 +395,7 @@ class BaseLibSVM(BaseEstimator):
         -----
         The probability model is created using cross validation, so
         the results can be slightly different than those obtained by
-        predict. Also, it will meaningless results on very small
+        predict. Also, it will produce meaningless results on very small
         datasets.
         """
         if not self.probability:

@@ -16,7 +16,6 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
-import scipy.sparse.linalg as sp_linalg
 
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator
@@ -181,6 +180,8 @@ class LinearRegression(LinearModel):
                     linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
+        if y.ndim == 1:
+            self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -196,8 +197,8 @@ class BaseSGD(BaseEstimator):
 
     def __init__(self, loss, penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1, seed=0, learning_rate="optimal", eta0=0.0,
-                 power_t=0.5, warm_start=False):
+                 verbose=0, epsilon=0.1, seed=0, learning_rate="optimal",
+                 eta0=0.0, power_t=0.5, warm_start=False):
         self.loss = str(loss)
         self.penalty = str(penalty).lower()
         self.epsilon = float(epsilon)
