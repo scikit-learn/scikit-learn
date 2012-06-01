@@ -104,6 +104,17 @@ class ElasticNet(LinearModel):
     def fit(self, X, y, coef_init=None):
         """Fit current model with coordinate descent
 
+        Parameters
+        -----------
+        X: ndarray, (n_samples, n_features)
+            Data
+        y: ndarray, (n_samples)
+            Target
+        coef_init: ndarray of shape n_features, optional
+            The initial coeffients to warm-start the optimization.
+
+        Notes
+        -----
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
@@ -120,10 +131,13 @@ class ElasticNet(LinearModel):
 
         n_samples, n_features = X.shape[0], X.shape[1]
 
-        if coef_init is None:
-            if not self.warm_start or self.coef_ is None:
+        if coef_init is None and \
+            (not self.warm_start or self.coef_ is None):
                 self.coef_ = np.zeros(n_features, dtype=np.float64)
         else:
+            if coef_init.shape[0] != X.shape[1]:
+                raise ValueError("X and coef_init have incompatible "+
+                                  "shapes.")
             self.coef_ = coef_init
 
         alpha = self.alpha * self.rho * n_samples
