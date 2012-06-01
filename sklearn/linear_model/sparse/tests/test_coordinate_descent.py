@@ -140,7 +140,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
     s_clf = SparseENet(alpha=alpha, rho=0.8, fit_intercept=fit_intercept,
-                       max_iter=max_iter, tol=1e-7, positive=positive)
+                       max_iter=max_iter, tol=1e-7, positive=positive,
+                       warm_start=True)
     s_clf.fit(X_train, y_train)
 
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
@@ -148,7 +149,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
 
     # check the convergence is the same as the dense version
     d_clf = DenseENet(alpha=alpha, rho=0.8, fit_intercept=fit_intercept,
-                      max_iter=max_iter, tol=1e-7, positive=positive)
+                      max_iter=max_iter, tol=1e-7, positive=positive,
+                      warm_start=True)
     d_clf.fit(X_train, y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
@@ -159,6 +161,17 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
 
     # check that the coefs are sparse
     assert_less(np.sum(s_clf.coef_ != 0.0), 2 * n_informative)
+
+    # check that warm restart leads to the same result with
+    # sparse and dense versions
+    
+    coef_init = np.random.randn(n_features)
+    
+    d_clf.fit(X_train, y_train, coef_init = coef_init)
+    s_clf.fit(X_train, y_train, coef_init = coef_init)
+    
+    assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
+    assert_almost_equal(s_clf.intercept_, d_clf.intercept_, 5)
 
 
 def test_sparse_enet_not_as_toy_dataset():
