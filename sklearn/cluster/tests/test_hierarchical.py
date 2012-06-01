@@ -137,7 +137,7 @@ def test_connectivity_popagation():
     ward.fit(X)
 
 
-def test_connectivity_fixing_bug():
+def test_connectivity_fixing_non_lil():
     """
     Check non regression of a bug if a non item assignable connectivity is
     provided with more than one component.
