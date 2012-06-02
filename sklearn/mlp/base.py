@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..base import BaseEstimator
-from .mlp_fast import sgd, predict, SquaredLoss, SoftMax, CrossEntropyLoss
+from .mlp_fast import sgd, predict, SquaredLoss, SoftMax, MultiCrossEntropyLoss, CrossEntropyLoss, LogSig
 from .mlp_fast import Tanh
 
 
@@ -26,7 +26,7 @@ class BaseMLP(BaseEstimator):
         if loss_function == 'squared':
             self.loss_function = SquaredLoss()
         elif loss_function == 'cross-entropy' and output_function == 'softmax':
-            self.loss_function = CrossEntropyLoss()
+            self.loss_function = MultiCrossEntropyLoss()
         else:
             # TODO
             raise ValueError('Loss function must be one of ...')
@@ -43,6 +43,11 @@ class BaseMLP(BaseEstimator):
 
         n_samples, n_features = X.shape
         n_outs = y.shape[1]
+
+        # Only one class
+        if n_outs == 1 and isinstance(self.loss_function, MultiCrossEntropyLoss):
+            self.loss_function = CrossEntropyLoss()
+            self.output_function = LogSig()
 
         self.weights_hidden = np.zeros((n_features, self.n_hidden))
         self.bias_hidden = np.zeros(self.n_hidden)
