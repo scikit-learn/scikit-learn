@@ -870,7 +870,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, max_features
+            min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, alpha)
 
     def fit(self, X, y):
