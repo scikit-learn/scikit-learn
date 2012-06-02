@@ -261,6 +261,17 @@ def test_check_inputs_predict():
     assert_raises(ValueError, clf.predict, x)
 
 
+def test_check_max_features():
+    """test if max_features is valid. """
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
+                                    max_features=0)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
+                                    max_features=(len(X[0]) + 1))
+    assert_raises(ValueError, clf.fit, X, y)
+
+
 def test_staged_predict():
     """Test whether staged decision function eventually gives
     the same prediction.
