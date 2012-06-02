@@ -374,8 +374,8 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
-                 min_samples_leaf, max_depth, init, subsample, random_state,
-                 alpha=0.9):
+                 min_samples_leaf, max_depth, init, subsample,
+                 max_features, random_state, alpha=0.9):
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
@@ -399,6 +399,8 @@ class BaseGradientBoosting(BaseEnsemble):
         if subsample <= 0.0 or subsample > 1:
             raise ValueError("subsample must be in (0,1]")
         self.subsample = subsample
+
+        self.max_features = max_features
 
         if max_depth <= 0:
             raise ValueError("max_depth must be larger than 0")
@@ -432,7 +434,7 @@ class BaseGradientBoosting(BaseEnsemble):
             tree = Tree(1, self.n_features)
             tree.build(X, residual, MSE(), self.max_depth,
                        self.min_samples_split, self.min_samples_leaf, 0.0,
-                       self.n_features, self.random_state, _find_best_split,
+                       self.max_features, self.random_state, _find_best_split,
                        sample_mask, X_argsorted)
 
             # update tree leaves
@@ -474,6 +476,12 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("Number of labels does not match " \
                              "number of samples.")
         self.n_features = n_features
+
+        if self.max_features == None:
+            self.max_features = n_features
+
+        if not (0 < self.max_features <= n_features):
+            raise ValueError("max_features must be in (0, n_features]")
 
         loss_class = LOSS_FUNCTIONS[self.loss]
         if self.loss == 'huber':
@@ -626,6 +634,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
 
+    max_features : int, None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        Features are choosen randomly at each split point.
+        If None, then `max_features=n_features`. Choosing
+        `max_features < n_features` leads to a reduction of variance
+        and an increase in bias.
+
     Examples
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0]]
@@ -652,11 +667,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     def __init__(self, loss='deviance', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
-                 max_depth=3, init=None, random_state=None):
+                 max_depth=3, init=None, random_state=None,
+                 max_features=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, random_state)
+            min_samples_leaf, max_depth, init, subsample, max_features,
+            random_state)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -781,6 +798,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
 
+    max_features : int, None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        Features are choosen randomly at each split point.
+        If None, then `max_features=n_features`. Choosing
+        `max_features < n_features` leads to a reduction of variance
+        and an increase in bias.
+
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function for robust regression.
         Only if ``loss='huber'``.
@@ -842,12 +866,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 alpha=0.9):
+                 max_features=None, alpha=0.9):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, random_state,
-            alpha)
+            min_samples_leaf, max_depth, init, subsample, max_features
+            random_state, alpha)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
