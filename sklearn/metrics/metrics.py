@@ -964,3 +964,50 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
     return np.mean(losses)
+
+
+def _check_and_normalize(y_true, y_prob):
+    if len(y_true) != len(y_prob):
+        raise ValueError("y_true and y_prob must have the same length.")
+
+    labels = np.unique(y_true)
+
+    if len(labels) != 2:
+        raise ValueError("Only binary classification is supported.")
+
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    y_true = y_true.copy()
+    y_true[y_true == labels[0]] = 0
+    y_true[y_true == labels[1]] = 1
+
+    return y_true
+
+
+def brier_score(y_true, y_prob):
+    """Compute the Brier score.
+
+    The smaller the Brier score, the better.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets.
+
+    y_prob : array, shape = [n_samples]
+        Probabilities of the positive class.
+
+    Returns
+    -------
+    float : Brier score
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Brier_score
+    """
+    y_true = _check_and_normalize(y_true, y_prob)
+    return np.mean((y_true - y_prob) ** 2)
