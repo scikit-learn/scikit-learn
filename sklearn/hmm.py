@@ -384,7 +384,7 @@ class _BaseHMM(BaseEstimator):
 
     def fit(self, obs, **kwargs):
         """Estimate model parameters.
-        
+
         An initialization step is performed before entering the EM
         algorithm. If you want to avoid this step, set the keyword
         argument init_params to the empty string ''. Likewise, if you
@@ -404,7 +404,7 @@ class _BaseHMM(BaseEstimator):
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
         """
-        
+
         if kwargs:
             warnings.warn("Setting parameters in the 'fit' method is"
                     "deprecated. Set it on initialization instead.",
@@ -419,10 +419,10 @@ class _BaseHMM(BaseEstimator):
                 self.params = kwargs['params']
             if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
-        
+
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
-        
+
         self._init(obs, self.init_params)
 
         logprob = []
@@ -674,7 +674,7 @@ class GaussianHMM(_BaseHMM):
                  transmat=None, startprob_prior=None, transmat_prior=None,
                  algorithm="viterbi", means_prior=None, means_weight=0,
                  covars_prior=1e-2, covars_weight=1,
-                 random_state=None, n_iter=10, thresh=1e-2, 
+                 random_state=None, n_iter=10, thresh=1e-2,
                  params=string.ascii_letters,
                  init_params=string.ascii_letters):
         _BaseHMM.__init__(self, n_components, startprob, transmat,
@@ -1045,9 +1045,9 @@ class GMMHMM(_BaseHMM):
     """
 
     def __init__(self, n_components=1, n_mix=1, startprob=None, transmat=None,
-                 startprob_prior=None, transmat_prior=None, algorithm="viterbi",
-                 gmms=None, covariance_type='diag', covars_prior=1e-2,
-                 random_state=None, n_iter=10, thresh=1e-2, 
+                 startprob_prior=None, transmat_prior=None,
+                 algorithm="viterbi", gmms=None, covariance_type='diag',
+                 covars_prior=1e-2, random_state=None, n_iter=10, thresh=1e-2,
                  params=string.ascii_letters,
                  init_params=string.ascii_letters):
         """Create a hidden Markov model with GMM emissions.
