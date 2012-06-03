@@ -186,13 +186,13 @@ class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
 
         Parameters
         ----------
-            X : ndarray (n_samples, n_features)
+        X : ndarray (n_samples, n_features)
 
         Returns
         -------
-            is_inlier: ndarray (n_samples,)
-                indicating which samples of the
-                training set are inliers.
+        is_inlier: ndarray (n_samples,)
+            indicating which samples of the
+            training set are inliers.
         """
         MinCovDet.fit(self, X)
         X_centered = X - self.location_
