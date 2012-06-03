@@ -71,6 +71,17 @@ def test_ovr_fit_predict():
     assert_true(np.mean(iris.target == pred) >= 0.65)
 
 
+def test_ovr_always_present():
+    # Test that ovr works with classes that are always present or absent
+    X = np.ones((10, 2))
+    X[:5, :] = 0
+    y = [[int(i >= 5), 2, 3] for i in xrange(10)]
+    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr.fit(X, y)
+    y_pred = ovr.predict(X)
+    assert_array_equal(np.array(y_pred), np.array(y))
+
+
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
