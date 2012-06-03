@@ -45,7 +45,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     labels : array, shape = [n_classes]
         lists all labels occuring in the dataset.
-        If none is given, those that apprear at least once
+        If none is given, those that appear at least once
         in y_true or y_pred are used.
 
     Returns
