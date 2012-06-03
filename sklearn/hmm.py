@@ -600,7 +600,7 @@ class GaussianHMM(_BaseHMM):
     n_components : int
         Number of states.
 
-    _covariance_type : string
+    ``_covariance_type`` : string
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -628,7 +628,7 @@ class GaussianHMM(_BaseHMM):
 
     covars : array
         Covariance parameters for each state.  The shape depends on
-        `_covariance_type`::
+        ``_covariance_type``::
 
             (`n_components`,)                   if 'spherical',
             (`n_features`, `n_features`)              if 'tied',
@@ -999,6 +999,16 @@ class GMMHMM(_BaseHMM):
 
     Attributes
     ----------
+    init_params : string, optional
+        Controls which parameters are initialized prior to training. Can \
+        contain any combination of 's' for startprob, 't' for transmat, 'm' \
+        for means, and 'c' for covars, etc.  Defaults to all parameters.
+
+    params : string, optional
+        Controls which parameters are updated in the training process.  Can
+        contain any combination of 's' for startprob, 't' for transmat,'m' for
+        means, and 'c' for covars, etc.  Defaults to all parameters.
+
     n_components : int
         Number of states in the model.
 
@@ -1011,7 +1021,7 @@ class GMMHMM(_BaseHMM):
     gmms : array of GMM objects, length `n_components`
         GMM emission distributions for each state.
 
-    random_state: RandomState or an int seed (0 by default)
+    random_state : RandomState or an int seed (0 by default)
         A random number generator instance
 
     n_iter : int, optional
@@ -1019,18 +1029,6 @@ class GMMHMM(_BaseHMM):
 
     thresh : float, optional
         Convergence threshold.
-
-    params : string, optional
-        Controls which parameters are updated in the training
-        process.  Can contain any combination of 's' for startprob,
-        't' for transmat, 'm' for means, and 'c' for covars, etc.
-        Defaults to all parameters.
-
-    init_params : string, optional
-        Controls which parameters are initialized prior to
-        training.  Can contain any combination of 's' for
-        startprob, 't' for transmat, 'm' for means, and 'c' for
-        covars, etc.  Defaults to all parameters.
 
     Examples
     --------

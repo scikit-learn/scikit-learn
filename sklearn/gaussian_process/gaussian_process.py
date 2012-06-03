@@ -173,7 +173,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     Attributes
     ----------
     `theta_`: array
-        Specified theta OR The best set of autocorrelation parameters (the
+        Specified theta OR the best set of autocorrelation parameters (the \
         sought maximizer of the reduced likelihood function).
 
     `reduced_likelihood_function_value_`: array
@@ -535,7 +535,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array containing the autocorrelation parameters at which the
             Gaussian Process model parameters should be determined.
             Default uses the built-in autocorrelation parameters
-            (ie theta = self.theta_).
+            (ie ``theta = self.theta_``).
 
         Returns
         -------
@@ -648,7 +648,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         return reduced_likelihood_function_value, par
 
     @deprecated("to be removed;"
-            " access self.theta_ etc. directly after fit")
+            " access ``self.theta_`` etc. directly after fit")
     def arg_max_reduced_likelihood_function(self):
         return self._arg_max_reduced_likelihood_function()
 
@@ -659,8 +659,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         return self.theta_
 
     @property
-    @deprecated('``reduced_likelihood_function_value`` is deprecated and will be removed'
-        'please use ``reduced_likelihood_function_value_`` instead.')
+    @deprecated("``reduced_likelihood_function_value`` is deprecated and will"
+            "be removed' 'please use ``reduced_likelihood_function_value_`` "
+            "instead.")
     def reduced_likelihood_function_value(self):
         return self.reduced_likelihood_function_value_
 

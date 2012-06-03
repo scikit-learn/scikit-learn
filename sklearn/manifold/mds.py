@@ -138,8 +138,8 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" % \
                             n_samples)
-
-    if np.any((similarities - similarities.T) > 100 * np.finfo(np.float).resolution):
+    eps = 100 * np.finfo(np.float).resolution
+    if np.any((similarities - similarities.T) > eps):
         raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).flatten()
@@ -226,26 +226,26 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
     Parameters
     ----------
-    similarities: symmetric ndarray, shape (n_samples, n_samples)
+    similarities : symmetric ndarray, shape (n_samples, n_samples)
         similarities between the points
 
-    metric: boolean, optional, default: True
+    metric : boolean, optional, default: True
         compute metric or nonmetric SMACOF algorithm
 
-    n_components: int, optional, default: 2
+    n_components : int, optional, default: 2
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
-    init: {None or ndarray of shape (n_samples, n_components)}
+    init : {None or ndarray of shape (n_samples, n_components)}
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
 
-    n_init: int, optional, default: 8
+    n_init : int, optional, default: 8
         Number of time the smacof algorithm will be run with different
         initialisation. The final results will be the best output of the
         n_init consecutive runs in terms of stress.
 
-    n_jobs: int, optional, default: 1
+    n_jobs : int, optional, default: 1
 
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
@@ -256,26 +256,26 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    max_iter: int, optional, default: 300
+    max_iter : int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run
 
-    verbose: int, optional, default: 0
+    verbose : int, optional, default: 0
         level of verbosity
 
-    eps: float, optional, default: 1e-6
+    eps : float, optional, default: 1e-6
         relative tolerance w.r.t stress to declare converge
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
     Returns
     -------
-    X: ndarray (n_samples,n_components)
+    X : ndarray (n_samples,n_components)
         Coordinates of the n_samples points in a n_components-space
 
-    stress: float
+    stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
@@ -336,29 +336,29 @@ class MDS(BaseEstimator):
 
     Parameters
     ----------
-    metric: boolean, optional, default: True
+    metric : boolean, optional, default: True
         compute metric or nonmetric SMACOF (Scaling by Majorizing a
         Complicated Function) algorithm
 
-    n_components: int, optional, default: 2
+    n_components : int, optional, default: 2
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
-    n_init: int, optional, default: 4
+    n_init : int, optional, default: 4
         Number of time the smacof algorithm will be run with different
         initialisation. The final results will be the best output of the
         n_init consecutive runs in terms of stress.
 
-    max_iter: int, optional, default: 300
+    max_iter : int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run
 
-    verbose: int, optional, default: 0
+    verbose : int, optional, default: 0
         level of verbosity
 
-    eps: float, optional, default: 1e-6
+    eps : float, optional, default: 1e-6
         relative tolerance w.r.t stress to declare converge
 
-    n_jobs: int, optional, default: 1
+    n_jobs : int, optional, default: 1
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -368,7 +368,7 @@ class MDS(BaseEstimator):
         (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
@@ -376,10 +376,10 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    embedding_: array-like, shape [n_components, n_samples]
+    ``embedding_`` : array-like, shape [n_components, n_samples]
         Stores the position of the dataset in the embedding space
 
-    stress_: float
+    ``stress_`` : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
