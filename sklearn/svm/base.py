@@ -167,7 +167,7 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
-        if (hasattr(self.kernel, '__call__') or self._pairwise):
+        if hasattr(self.kernel, '__call__'):
             kernel = 'precomputed'
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X.shape[0] should be equal to X.shape[1] "
@@ -257,7 +257,7 @@ class BaseLibSVM(BaseEstimator):
                              % (sample_weight.shape, X.shape))
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__') or self._pairwise:
+        if hasattr(kernel, '__call__'):
             kernel = 'precomputed'
 
         solver_type = LIBSVM_IMPL.index(self.impl)
@@ -327,7 +327,7 @@ class BaseLibSVM(BaseEstimator):
         X = self._compute_kernel(X)
 
         kernel = self.kernel
-        if self._pairwise or hasattr(self.kernel, "__call__"):
+        if hasattr(self.kernel, "__call__"):
             kernel = 'precomputed'
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "

@@ -118,8 +118,6 @@ def test_precomputed():
     kfunc = lambda x, y: np.dot(x, y.T)
     clf = svm.SVC(kernel=kfunc)
     clf.fit(X, Y)
-    print(np.array(X).shape)
-    print(np.array(T).shape)
     pred = clf.predict(T)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
@@ -379,7 +377,7 @@ def test_bad_input():
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 
-    clf.set_params(kernel='linear')
+    clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
