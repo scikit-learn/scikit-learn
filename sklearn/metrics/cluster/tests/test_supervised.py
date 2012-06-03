@@ -6,6 +6,7 @@ from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import adjusted_mutual_info_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
@@ -21,6 +22,7 @@ score_funcs = [
     completeness_score,
     v_measure_score,
     adjusted_mutual_info_score,
+    normalized_mutual_info_score,
 ]
 
 

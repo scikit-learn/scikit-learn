@@ -652,13 +652,15 @@ See the :ref:`clustering` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
-   metrics.adjusted_rand_score
    metrics.adjusted_mutual_info_score
+   metrics.adjusted_rand_score
+   metrics.completeness_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
-   metrics.completeness_score
-   metrics.v_measure_score
+   metrics.mutual_info_score
+   metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.v_measure_score
 
 Pairwise metrics
 ----------------
