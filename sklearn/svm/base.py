@@ -662,7 +662,7 @@ class BaseLibLinear(BaseEstimator):
             self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.int32).ravel()
+        y = np.asarray(y, dtype=np.float64).ravel()
         self._sparse = sp.isspmatrix(X)
 
         self.class_weight_, self.class_weight_label_ = \
