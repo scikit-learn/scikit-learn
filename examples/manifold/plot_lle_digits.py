@@ -171,7 +171,7 @@ plot_embedding(X_ltsa,
 #----------------------------------------------------------------------
 # MDS  embedding of the digits dataset
 print "Computing MDS embedding"
-clf = manifold.MDS(n_components=2, n_init=2)
+clf = manifold.MDS(n_components=2, n_init=1, max_iter=100)
 t0 = time()
 X_mds = clf.fit_transform(euclidean_distances(X))
 print "Done. Stress: %f" % clf.stress_
