@@ -5,7 +5,6 @@
 
 import numpy as np
 from scipy import linalg
-import warnings
 
 from ..utils.arpack import eigsh
 from ..base import BaseEstimator, TransformerMixin
@@ -104,10 +103,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         params = {"gamma": self.gamma,
                   "degree": self.degree,
                   "coef0": self.coef0}
-        if self.kernel == "precomputed":
-            warnings.warn("Using `kernel='precomputed'` and `fit` is "
-                " deprecated and will be removed in 0.13. Use "
-                "`fit_pairwise` instead.", DeprecationWarning)
         try:
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
@@ -166,20 +161,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
         self.X_transformed_fit_ = X_transformed
 
-    def fit_pairwise(self, K):
-        """Fit the model using a precomputed kernel.
-
-        Parameters
-        ----------
-        K: array-like, shape (n_samples, n_samples)
-            Precomputed kernel of the training data.
-        """
-        if self.fit_inverse_transform:
-            raise ValueError("It is not possible to compute an inverse "
-                "transform with a precomputed kernel.")
-        self._fit_transform(K)
-        return self
-
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -227,28 +208,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         return X_transformed
 
-    def fit_transform_pairwise(self, K, y=None):
-        """Fit the model from data in X and transform X.
-
-        Parameters
-        ----------
-        X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        Returns
-        -------
-        X_new: array-like, shape (n_samples, n_components)
-        """
-        self.fit_pairwise(K)
-
-        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
-
-        if self.fit_inverse_transform:
-            self._fit_inverse_transform(X_transformed, K)
-
-        return X_transformed
-
     def transform(self, X):
         """Transform X.
 
@@ -261,17 +220,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         X_new: array-like, shape (n_samples, n_components)
         """
         K = self.centerer.transform(self._get_kernel(X, self.X_fit_))
-        return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
-
-    def transform_pairwise(self, K):
-        """Transform data using a precomputed kernel.
-
-        Parameters
-        ----------
-        K : array-like, shape [n_samples_test, n_samples_train]
-        """
-
-        K = self.centerer.transform(K)
         return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
 
     def inverse_transform(self, X):

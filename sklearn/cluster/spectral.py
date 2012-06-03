@@ -245,7 +245,7 @@ class SpectralClustering(BaseEstimator):
 
     or a k-nearest neighbors matrix.
 
-    Alternatively, using ``fit_pairwise``, a user-provided affinity
+    Alternatively, using ``precomputed``, a user-provided affinity
     matrix can be used.
 
     Parameters
@@ -253,10 +253,7 @@ class SpectralClustering(BaseEstimator):
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
-<<<<<<< HEAD
-    mode : {None, 'arpack' or 'amg'}
-=======
-    affinity: string, 'nearest_neighbors' or 'gaussian'
+    affinity: string, 'nearest_neighbors', 'gaussian' or 'precomputed'
 
     gamma: float
         Scaling factor of Gaussian affinity kernel. Ignored for
@@ -267,7 +264,6 @@ class SpectralClustering(BaseEstimator):
         the nearest neighbors method. Ignored for ``affinity='gaussian'``.
 
     mode: {None, 'arpack' or 'amg'}
->>>>>>> ENH "fit_pairwise" for spectral clustering.
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
@@ -292,6 +288,22 @@ class SpectralClustering(BaseEstimator):
         Affinity matrix used for clustering. Available only if
         after calling ``fit``.
 
+    Notes
+    -----
+    If you have an affinity matrix, such as a distance matrix,
+    for which 0 means identical elements, and high values means
+    very dissimilar elements, it can be transformed in a
+    similarity matrix that is well suited for the algorithm by
+    applying the gaussian (heat) kernel::
+
+        np.exp(- X ** 2 / (2. * delta ** 2))
+
+    Another alternative is to take a symmetric version of the k
+    nearest neighbors connectivity matrix of the points.
+
+    If the pyamg package is installed, it is used: this greatly
+    speeds up computation.
+
     References
     ----------
 
@@ -305,7 +317,8 @@ class SpectralClustering(BaseEstimator):
     """
 
     def __init__(self, n_cluster=8, mode=None, random_state=None, n_init=10,
-            gamma=1., affinity='gaussian', n_neighbors=10, k=None):
+            gamma=1., affinity='gaussian', n_neighbors=10, k=None,
+            precomputed=False):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
@@ -324,11 +337,13 @@ class SpectralClustering(BaseEstimator):
         Parameters
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features)
+            OR, if affinity==`precomputed`, a precomputed affinity
+            matrix of shape (n_samples, n_samples)
         """
-        if X.shape[0] == X.shape[1]:
+        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                     "now constructs an affinity matrix from data. To use "
-                    "a custom affinity matrix, use ``fit_pairwise``.")
+                    "a custom affinity matrix, set ``affinity=precomputed``.")
 
         if self.affinity == 'gaussian':
             self.affinity_matrix_ = np.exp(- self.gamma *
@@ -337,43 +352,19 @@ class SpectralClustering(BaseEstimator):
         elif self.affinity == 'nearest_neighbors':
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+        elif self.affinity == 'precomputed':
+            self.affinity_matrix_ = X
         else:
-            raise ValueError("Invalid 'affinity'. Expecte 'gaussian' or "
-                "'nearest_neighbors', got '%s'." % self.affinity_matrix)
+            raise ValueError("Invalid 'affinity'. Expecte 'gaussian', "
+                "'nearest_neighbors' or 'precomputed', got '%s'."
+                % self.affinity_matrix)
 
-        self.fit_pairwise(self.affinity_matrix_)
-        return self
-
-    def fit_pairwise(self, X):
-        """Compute the spectral clustering from the affinity matrix
-
-        Parameters
-        ----------
-        X: array-like or sparse matrix, shape: (n_samples, n_samples)
-            An affinity matrix describing the pairwise similarity of the
-            data. If can also be an adjacency matrix of the graph to embed.
-            X must be symmetric and its entries must be positive or
-            zero. Zero means that elements have nothing in common,
-            whereas high values mean that elements are strongly similar.
-
-        Notes
-        -----
-        If you have an affinity matrix, such as a distance matrix,
-        for which 0 means identical elements, and high values means
-        very dissimilar elements, it can be transformed in a
-        similarity matrix that is well suited for the algorithm by
-        applying the gaussian (heat) kernel::
-
-            np.exp(- X ** 2 / (2. * delta ** 2))
-
-        Another alternative is to take a symmetric version of the k
-        nearest neighbors connectivity matrix of the points.
-
-        If the pyamg package is installed, it is used: this greatly
-        speeds up computation.
-        """
         self.random_state = check_random_state(self.random_state)
-        self.labels_ = spectral_clustering(X, n_clusters=self.n_clusters,
-                mode=self.mode, random_state=self.random_state,
-                n_init=self.n_init)
+        self.labels_ = spectral_clustering(self.affinity_matrix_,
+                n_clusters=self.self.n_clusters, mode=self.mode,
+                random_state=self.random_state, n_init=self.n_init)
         return self
+
+    @property
+    def _pairwise(self):
+        return self.affinity == "precomputed"

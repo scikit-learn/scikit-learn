@@ -97,19 +97,9 @@ class BaseLibSVM(BaseEstimator):
         self.class_weight = class_weight
         self.verbose = verbose
 
-    def fit_pairwise(self, K, y, sample_weight=None):
-        self._precomputed = True
-        if self.sparse == "auto":
-            self._sparse = sp.isspmatrix(K)
-        else:
-            self._sparse = self.sparse
-
-        fit = self._sparse_fit if self._sparse else self._dense_fit
-
-        if self.verbose:
-            print '[LibSVM]',
-        fit(K, y, sample_weight)
-        return self
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -140,14 +130,6 @@ class BaseLibSVM(BaseEstimator):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
-        if self.kernel == "precomputed":
-            warnings.warn("Using `kernel='precomputed'` and `fit` is "
-                    "deprecated and will be removed in 0.13. "
-                    "Use `fit_pairwise` instead.",
-                    DeprecationWarning)
-            self._precomputed = True
-        else:
-            self._precomputed = False
 
         if self.sparse == "auto":
             self._sparse = sp.isspmatrix(X)
@@ -185,7 +167,7 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
-        if (hasattr(self.kernel, '__call__') or self._precomputed):
+        if (hasattr(self.kernel, '__call__') or self._pairwise):
             kernel = 'precomputed'
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X.shape[0] should be equal to X.shape[1] "
@@ -275,7 +257,7 @@ class BaseLibSVM(BaseEstimator):
                              % (sample_weight.shape, X.shape))
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__') or self._precomputed:
+        if hasattr(kernel, '__call__') or self._pairwise:
             kernel = 'precomputed'
 
         solver_type = LIBSVM_IMPL.index(self.impl)
@@ -336,27 +318,6 @@ class BaseLibSVM(BaseEstimator):
         predict = self._sparse_predict if self._sparse else self._dense_predict
         return predict(X)
 
-    def predict_pairwise(self, X):
-        """Perform classification or regression using a precomputed kernel.
-
-        Parameters
-        ----------
-        X : {array-like, sparese matrix}, \
-                shape=[n_samples_test, n_samples_train]
-
-        Returns
-        -------
-        y_pred : array, shape = [n_samples]
-        """
-        if not self._precomputed:
-            raise RuntimeError("You are trying to predict "
-                    "using a precomputed kernel on an estimator "
-                    "that was not trained with a precomputed kernel."
-                    "This is not supported.")
-        X = self._validate_for_predict(X)
-        predict = self._sparse_predict if self._sparse else self._dense_predict
-        return predict(X)
-
     def _dense_predict(self, X):
         X = np.asarray(X, dtype=np.float64, order='C')
         if X.ndim == 1:
@@ -366,7 +327,7 @@ class BaseLibSVM(BaseEstimator):
         X = self._compute_kernel(X)
 
         kernel = self.kernel
-        if self._precomputed or hasattr(self.kernel, "__call__"):
+        if self._pairwise or hasattr(self.kernel, "__call__"):
             kernel = 'precomputed'
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
