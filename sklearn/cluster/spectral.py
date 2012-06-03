@@ -316,7 +316,7 @@ class SpectralClustering(BaseEstimator):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, n_cluster=8, mode=None, random_state=None, n_init=10,
+    def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
             gamma=1., affinity='gaussian', n_neighbors=10, k=None,
             precomputed=False):
         if not k is None:

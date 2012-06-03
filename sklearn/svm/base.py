@@ -167,7 +167,7 @@ class BaseLibSVM(BaseEstimator):
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
-        if hasattr(self.kernel, '__call__'):
+        if hasattr(self.kernel, '__call__') or self.kernel == 'precomputed':
             kernel = 'precomputed'
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X.shape[0] should be equal to X.shape[1] "
