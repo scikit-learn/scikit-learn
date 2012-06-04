@@ -403,6 +403,10 @@ class _BaseHMM(BaseEstimator):
         a sign of overfitting (e.g. a covariance parameter getting too
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
+        
+        **Please note that setting parameters in the `fit` method is
+        deprecated and will be removed in the next release. 
+        Set it on initialization instead.**
         """
 
         if kwargs:
@@ -607,7 +611,7 @@ class GaussianHMM(_BaseHMM):
 
     Attributes
     ----------
-    covariance_type : string
+    ``_covariance_type`` : string
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
