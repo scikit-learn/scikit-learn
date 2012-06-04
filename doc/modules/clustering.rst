@@ -349,8 +349,8 @@ roll.
 The connectivity constraints are imposed via an connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
-matrix can be constructed from apriori information, for instance if you
-whish to cluster web pages, but only merging pages with a link pointing
+matrix can be constructed from a-priori information, for instance if you
+wish to cluster web pages, but only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in the :ref:`swiss roll
@@ -379,7 +379,7 @@ DBSCAN
 
 The :class:`DBSCAN` algorithm clusters data by finding core points which have
 many neighbours within a given radius. After a core point is found, the cluster
-is expanded by adding its neighbours to the current cluster and recusively
+is expanded by adding its neighbours to the current cluster and recursively
 checking if any are core points. Formally, a point is considered a core point
 if it has more than min_points points which are of a similarity greater than
 the given threshold eps. This is shown in the figure below, where the color
@@ -460,7 +460,7 @@ Presentation and usage
 Given the knowledge of the ground truth class assignments ``labels_true``
 and our clustering algorithm assignments of the same samples
 ``labels_pred``, the **adjusted Rand index** is a function that measures
-the **similarity** of the two assignements, ignoring permutations and **with
+the **similarity** of the two assignments, ignoring permutations and **with
 chance normalization**::
 
   >>> from sklearn import metrics
@@ -501,12 +501,12 @@ Bad (e.g. independent labelings) have negative or close to 0.0 scores::
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignements have a ARI score close to 0.0**
+- **Random (uniform) label assignments have a ARI score close to 0.0**
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Rand index or the V-measure for instance).
 
 - **Bounded range [-1, 1]**: negative values are bad (independent
-  labelings), similar clusterings have a positve ARI, 1.0 is the perfect
+  labelings), similar clusterings have a positive ARI, 1.0 is the perfect
   match score.
 
 - **No assumption is made on the cluster structure**: can be used
@@ -518,11 +518,11 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **ARI requires the knowlege of the ground truth
-  classes** while almost never available in practice or requires manual
+- Contrary to inertia, **ARI requires knowledge of the ground truth
+  classes** while is almost never available in practice or requires manual
   assignment by human annotators (as in the supervised learning setting).
 
-  However ARI can also be useful in purely unsupervised setting as a
+  However ARI can also be useful in a purely unsupervised setting as a
   building block for a Consensus Index that can be used for clustering
   model selection (TODO).
 
@@ -531,13 +531,13 @@ Drawbacks
 
  * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
-   for random assignements.
+   for random assignments.
 
 
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If C is a ground truth class assignement and K the clustering, let us
+If C is a ground truth class assignment and K the clustering, let us
 define :math:`a` and :math:`b` as:
 
 - :math:`a`, the number of pairs of elements that are in the same set
@@ -553,7 +553,7 @@ The raw (unadjusted) Rand index is then given by:
 Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
 in the dataset (without ordering).
 
-However the RI score does not guarantee that random label assignements
+However the RI score does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
@@ -581,7 +581,7 @@ Presentation and usage
 Given the knowledge of the ground truth class assignments ``labels_true`` and
 our clustering algorithm assignments of the same samples ``labels_pred``, the
 **Mutual Information** is a function that measures the **agreement** of the two
-assignements, ignoring permutations.  Two different normalized versions of this
+assignments, ignoring permutations.  Two different normalized versions of this
 measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
 Mutual Information(AMI)**. NMI is often used in the literature while AMI was
 proposed more recently and is **normalized against chance**::
@@ -632,7 +632,7 @@ Bad (e.g. independent labelings) have non-positive scores::
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignements have a AMI score close to 0.0**
+- **Random (uniform) label assignments have a AMI score close to 0.0**
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
@@ -651,7 +651,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **MI-based measures require the knowlege
+- Contrary to inertia, **MI-based measures require the knowledge
   of the ground truth classes** while almost never available in practice or
   requires manual assignment by human annotators (as in the supervised learning
   setting).
@@ -667,7 +667,7 @@ Drawbacks
 
  * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
-   for random assignements. This example also includes the Adjusted Rand 
+   for random assignments. This example also includes the Adjusted Rand 
    Index.
 
 
@@ -800,7 +800,7 @@ homogeneous but not complete::
 .. note::
 
   :func:`v_measure_score` is **symmetric**: it can be used to evaluate
-  the **agreement** of two independent assignements on the same dataset.
+  the **agreement** of two independent assignments on the same dataset.
 
   This is not the case for :func:`completeness_score` and
   :func:`homogeneity_score`: both are bound by the relationship::
@@ -843,7 +843,7 @@ Drawbacks
    :align: center
    :scale: 100
 
-- These metrics **require the knowlege of the ground truth classes** while
+- These metrics **require the knowledge of the ground truth classes** while
   almost never available in practice or requires manual assignment by
   human annotators (as in the supervised learning setting).
 
@@ -852,7 +852,7 @@ Drawbacks
 
  * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
-   for random assignements.
+   for random assignments.
 
 
 Mathematical formulation
