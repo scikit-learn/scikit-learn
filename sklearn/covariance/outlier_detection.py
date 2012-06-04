@@ -196,14 +196,12 @@ class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
         """
         MinCovDet.fit(self, X)
         X_centered = X - self.location_
-        values = self.mahalanobis(X_centered)
+        mahal_dist = self.mahalanobis(X_centered)
         self.threshold = sp.stats.scoreatpercentile(
-            values, 100. * (1. - self.contamination))
-        transformed_mahal_dist = values ** 0.33
-        decision = self.threshold ** 0.33 - transformed_mahal_dist
+            mahal_dist, 100. * (1. - self.contamination))
 
         is_inlier = -np.ones(X.shape[0], dtype=int)
-        is_inlier[decision <= self.threshold] = 1
+        is_inlier[mahal_dist <= self.threshold] = 1
 
         return is_inlier
 

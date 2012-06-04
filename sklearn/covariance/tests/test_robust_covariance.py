@@ -4,7 +4,8 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal,\
+        assert_array_equal, assert_equal
 
 import numpy as np
 
@@ -75,8 +76,13 @@ def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
+    clf2 = EllipticEnvelope(contamination=0.1)
     clf.fit(X)
     y_pred = clf.predict(X)
+    y_fit_pred = clf2.fit_predict(X)
+    assert_equal(clf.threshold, clf2.threshold)
+
+    assert_array_equal(y_pred, y_fit_pred)
 
     assert_array_almost_equal(
         clf.decision_function(X, raw_mahalanobis=True),
