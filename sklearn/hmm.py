@@ -604,14 +604,14 @@ class GaussianHMM(_BaseHMM):
     n_components : int
         Number of states.
 
-    _covariance_type : string
+    ``_covariance_type`` : string
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
     Attributes
     ----------
-    _covariance_type : string
+    ``_covariance_type`` : string
         String describing the type of covariance parameters used by
         the model.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
@@ -1004,8 +1004,8 @@ class GMMHMM(_BaseHMM):
     Attributes
     ----------
     init_params : string, optional
-        Controls which parameters are initialized prior to training. Can
-        contain any combination of 's' for startprob, 't' for transmat, 'm'
+        Controls which parameters are initialized prior to training. Can \
+        contain any combination of 's' for startprob, 't' for transmat, 'm' \
         for means, and 'c' for covars, etc.  Defaults to all parameters.
 
     params : string, optional
