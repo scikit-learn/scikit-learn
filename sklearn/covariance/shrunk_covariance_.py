@@ -133,13 +133,13 @@ class ShrunkCovariance(EmpiricalCovariance):
 ###############################################################################
 # Ledoit-Wolf estimator
 
-def ledoit_wolf(X, assume_centered=False, block_size=1000):
+def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Parameters
     ----------
     X: array-like, shape (n_samples, n_features)
-      Data from which to compute the covariance estimate
+      Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage
 
     assume_centered: Boolean
       If True, data are not centered before computation.
@@ -149,19 +149,11 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     block_size: int,
       Size of the blocks into which the covariance matrix will be split.
-      If n_features > `block_size`, the shrunk covariance matrix will
-      be None but the shrinkage coefficient will still be computed.
-      This is possible because we use a block computation.
-      Otherwise, the shrunk covariance matrix will be returned since it
-      can hold in memory.
 
     Returns
     -------
-    shrunk_cov: array-like, shape (n_features, n_features)
-      Shrunk covariance, returned only if n_features < `block_size`.
-
     shrinkage: float
-      coefficient in the convex combination used for the computation
+      Coefficient in the convex combination used for the computation
       of the shrunk estimate.
 
     Notes
@@ -177,9 +169,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
-        if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X ** 2).mean()), 0.
+        return 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. " \
@@ -231,12 +221,75 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     # finally get shrinkage
     shrinkage = beta / delta
     # only return the shrunk covariance if it is not to big
-    if n_features > block_size:
-        shrunk_cov = None
+
+    return shrinkage
+
+
+def ledoit_wolf(X, assume_centered=False, block_size=1000):
+    """Estimates the shrunk Ledoit-Wolf covariance matrix.
+
+    Parameters
+    ----------
+    X: array-like, shape (n_samples, n_features)
+      Data from which to compute the covariance estimate
+
+    assume_centered: Boolean
+      If True, data are not centered before computation.
+      Usefull to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, data are centered before computation.
+
+    block_size: int,
+      Size of the blocks into which the covariance matrix will be split.
+      If n_features > `block_size`, an error will be raised since the
+      shrunk covariance matrix will be considered as too large regarding
+      the available memory.
+
+    Returns
+    -------
+    shrunk_cov: array-like, shape (n_features, n_features)
+      Shrunk covariance.
+
+    shrinkage: float
+      Coefficient in the convex combination used for the computation
+      of the shrunk estimate.
+
+    Notes
+    -----
+    The regularized (shrunk) covariance is:
+
+    (1 - shrinkage)*cov
+      + shrinkage * mu * np.identity(n_features)
+
+    where mu = trace(cov) / n_features
+
+    """
+    X = np.asarray(X)
+    # for only one feature, the result is the same whatever the shrinkage
+    if len(X.shape) == 2 and X.shape[1] == 1:
+        if not assume_centered:
+            X = X - X.mean()
+        return np.atleast_2d((X ** 2).mean()), 0.
+    if X.ndim == 1:
+        X = np.reshape(X, (1, -1))
+        warnings.warn("Only one sample available. " \
+                          "You may want to reshape your data array")
+        n_samples = 1
+        n_features = X.size
     else:
-        shrunk_cov = (1. - shrinkage) * empirical_covariance(
-            X, assume_centered=assume_centered)
-        shrunk_cov.flat[::n_features + 1] += shrinkage * mu
+        n_samples, n_features = X.shape
+
+    if n_features > block_size:
+        raise MemoryError("LW: n_features is too large, " +
+                          "try increasing block_size")
+
+    # get Ledoit-Wolf shrinkage
+    shrinkage = ledoit_wolf_shrinkage(
+        X, assume_centered=assume_centered, block_size=block_size)
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+    mu = np.sum(np.trace(emp_cov)) / n_features
+    shrunk_cov = (1. - shrinkage) * emp_cov
+    shrunk_cov.flat[::n_features + 1] += shrinkage * mu
 
     return shrunk_cov, shrinkage
 
@@ -257,11 +310,9 @@ class LedoitWolf(EmpiricalCovariance):
     block_size: int,
       Size of the blocks into which the covariance matrix will be split
       during its Ledoit-Wolf estimation.
-      If n_features > `block_size`, the shrunk covariance matrix will
-      be None but the shrinkage coefficient will still be computed.
-      This is possible because we use a block computation.
-      Otherwise, the shrunk covariance matrix will be returned since it
-      can hold in memory.
+      If n_features > `block_size`, an error will be raised since the
+      shrunk covariance matrix will be considered as too large regarding
+      the available memory.
 
     Attributes
     ----------
@@ -319,12 +370,9 @@ class LedoitWolf(EmpiricalCovariance):
             Returns self.
 
         """
-        # only return the shrunk covariance if it is not to big
-        if X.shape[1] > self.block_size:
-            raise MemoryError("LW: n_features is too large")
+        # only return the shrunk covariance if it is not too big
         covariance, shrinkage = ledoit_wolf(
-            X, assume_centered=assume_centered,
-            block_size=self.block_size)
+            X, assume_centered=assume_centered, block_size=self.block_size)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
 
