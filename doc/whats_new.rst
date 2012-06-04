@@ -21,6 +21,14 @@ Changelog
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
      decompresses them on the fly.
 
+API changes summary
+-------------------
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
+     object when initialising it and not through ``fit``. Now ``fit`` will 
+     only accept the data as an input parameter.
+
 .. _changes_0_11:
 
 0.11

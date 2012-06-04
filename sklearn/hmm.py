@@ -403,6 +403,10 @@ class _BaseHMM(BaseEstimator):
         a sign of overfitting (e.g. a covariance parameter getting too
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
+        
+        **Please note that setting parameters in the `fit` method is
+        deprecated and will be removed in the next release. 
+        Set it on initialization instead.**
         """
 
         if kwargs:
@@ -1000,8 +1004,8 @@ class GMMHMM(_BaseHMM):
     Attributes
     ----------
     init_params : string, optional
-        Controls which parameters are initialized prior to training. Can \
-        contain any combination of 's' for startprob, 't' for transmat, 'm' \
+        Controls which parameters are initialized prior to training. Can
+        contain any combination of 's' for startprob, 't' for transmat, 'm'
         for means, and 'c' for covars, etc.  Defaults to all parameters.
 
     params : string, optional
