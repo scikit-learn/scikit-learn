@@ -181,6 +181,30 @@ class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
 
         return self
 
+    def fit_predict(self, X):
+        """Fit EllipticEnvelope and predict on the training set.
+
+        Parameters
+        ----------
+        X : ndarray (n_samples, n_features)
+
+        Returns
+        -------
+        is_inlier: ndarray (n_samples,)
+            indicating which samples of the
+            training set are inliers.
+        """
+        MinCovDet.fit(self, X)
+        X_centered = X - self.location_
+        mahal_dist = self.mahalanobis(X_centered)
+        self.threshold = sp.stats.scoreatpercentile(
+            mahal_dist, 100. * (1. - self.contamination))
+
+        is_inlier = -np.ones(X.shape[0], dtype=int)
+        is_inlier[mahal_dist <= self.threshold] = 1
+
+        return is_inlier
+
 
 # Deprecated classes
 @deprecated("Use EllipticEnvelope instead")

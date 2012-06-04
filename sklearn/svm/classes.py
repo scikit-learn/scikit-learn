@@ -689,3 +689,26 @@ class OneClassSVM(BaseLibSVM):
         super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
                 **params)
         return self
+
+    def fit_predict(self, X, sample_weight=None, **params):
+        """
+        Detects the soft boundary of the set of samples X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Set of samples, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        is_inlier : array-like, shape [n_samples,]
+            Prediction on the training set.
+
+        Notes
+        -----
+        If X is not a C-ordered contiguous array it is copied.
+
+        """
+        self.fit(X, sample_weight=sample_weight, **params)
+        return self.predict(X)
