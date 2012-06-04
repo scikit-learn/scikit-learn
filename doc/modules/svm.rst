@@ -177,29 +177,29 @@ for these classifiers.
 
 This might be made more clear by an example:
 
-    Consider a three class problem with with class 0 having 3 support vectors
-    :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
-    vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
-    For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
-    Let's call the coefficient of support vector :math:`v^{j}_i` in the
-    classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
-    Then ``dual_coef_`` looks like this:
+Consider a three class problem with with class 0 having 3 support vectors
+:math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
+vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
+For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
+Let's call the coefficient of support vector :math:`v^{j}_i` in the
+classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
+Then ``dual_coef_`` looks like this:
 
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|for SVs           |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|of class 0        |
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|for SVs of class 2|
-    +------------------------+------------------------+------------------+
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
++------------------------+------------------------+for SVs of class 0|
+|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|                  |
++------------------------+------------------------+                  |
+|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|                  |
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
++------------------------+------------------------+for SVs of class 1|
+|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|                  |
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
++------------------------+------------------------+for SVs of class 2|
+|:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
++------------------------+------------------------+------------------+
 
 
 Unbalanced problems

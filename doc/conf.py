@@ -220,6 +220,7 @@ latex_logo = "logos/scikit-learn-logo.png"
 # Additional stuff for the LaTeX preamble.
 latex_preamble = """
 \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
+\usepackage{enumitem} \setlistdepth{10}
 """
 
 # Documents to append as an appendix to all manuals.
