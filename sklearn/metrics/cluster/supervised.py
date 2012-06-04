@@ -13,6 +13,8 @@ from scipy.special import gammaln
 
 import numpy as np
 
+from ...utils.fixes import unique
+
 
 # the exact version if faster for k == 2: use it by default globally in
 # this module instead of the float approximate variant
@@ -776,7 +778,8 @@ def expected_mutual_information(contingency, n_samples):
 
 def entropy(labels):
     """Calculates the entropy for a labeling."""
-    pi = np.bincount(labels).astype(np.float)
+    label_idx = unique(labels, return_inverse=True)[1]
+    pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
     pi /= np.sum(pi)
     return -np.sum(pi * np.log(pi))

@@ -10,6 +10,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.cluster import entropy
 
 from nose.tools import assert_almost_equal
 from nose.tools import assert_equal
@@ -57,6 +58,7 @@ def test_perfect_matches():
         assert_equal(score_func([0], [1]), 1.0)
         assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
         assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
+        assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -160,3 +162,7 @@ def test_adjusted_mutual_info_score():
     ami = adjusted_mutual_info_score(a110, b110)
     # This is not accurate to more than 2 places
     assert_almost_equal(ami, 0.37, 2)
+
+def test_entropy():
+    ent = entropy([0, 0, 42.])
+    assert_almost_equal(ent, 0.6365141, 5)
