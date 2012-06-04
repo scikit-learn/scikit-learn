@@ -20,6 +20,7 @@ improves.
 # License: BSD Style.
 
 import numpy as np
+import warnings
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
@@ -32,7 +33,9 @@ def _fit_binary(estimator, X, y):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)
     if len(unique_y) == 1:
-        estimator = ConstantPredictor().fit(X, unique_y)
+        warnings.warn("Label %s is present in all training examples." %
+                str(unique_y))
+        estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
         print(X, y)
@@ -76,16 +79,16 @@ def predict_ovr(estimators, label_binarizer, X):
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
-class ConstantPredictor(BaseEstimator):
+class _ConstantPredictor(BaseEstimator):
     def fit(self, X, y):
         self.y_ = y
         return self
 
     def predict(self, X):
-        return self.y_ * np.ones(X.shape[0])
+        return np.repeat(self.y_, X.shape[0])
 
     def decision_function(self, X):
-        return self.y_ * np.ones(X.shape[0])
+        return np.repeat(self.y_, X.shape[0])
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
