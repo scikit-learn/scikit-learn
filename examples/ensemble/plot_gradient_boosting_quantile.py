@@ -24,7 +24,9 @@ y += noise
 # its MSE
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
-clf = GradientBoostingRegressor(loss='quantile', alpha=0.9,
+alpha = 0.95
+
+clf = GradientBoostingRegressor(loss='quantile', alpha=alpha,
                                 n_estimators=250, max_depth=3,
                                 learn_rate=.1, min_samples_leaf=9,
                                 min_samples_split=9)
@@ -34,7 +36,7 @@ clf.fit(X, y)
 # Make the prediction on the meshed x-axis
 y_upper = clf.predict(xx)
 
-clf.set_params(alpha=0.1)
+clf.set_params(alpha=1.0 - alpha)
 clf.fit(X, y)
 
 # Make the prediction on the meshed x-axis
@@ -56,9 +58,10 @@ pl.plot(xx, y_upper, 'k-')
 pl.plot(xx, y_lower, 'k-')
 pl.fill(np.concatenate([xx, xx[::-1]]),
         np.concatenate([y_upper, y_lower[::-1]]),
-        alpha=.5, fc='b', ec='None', label='90% confidence interval')
+        alpha=.5, fc='b', ec='None', label='95% prediction interval')
 pl.xlabel('$x$')
 pl.ylabel('$f(x)$')
 pl.ylim(-10, 20)
 pl.legend(loc='upper left')
+pl.title('Prediction Intervals for Gradient Boosting Regression')
 pl.show()
