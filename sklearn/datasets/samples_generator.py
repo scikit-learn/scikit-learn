@@ -434,7 +434,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     y : array of shape [n_samples] or [n_samples, n_targets]
         The output values.
 
-    coef : array of shape [n_features], optional
+    coef : array of shape [n_features] or [n_features, n_targets], optional
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
