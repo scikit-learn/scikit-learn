@@ -36,9 +36,10 @@ def test_covariance():
     assert_almost_equal(
         cov.error_norm(empirical_covariance(X), squared=False), 0)
     # Mahalanobis distances computation test
-    mahal_dist = cov.mahalanobis(X, assume_centered=True)
-    assert(np.amax(mahal_dist) < 250)
-    assert(np.amin(mahal_dist) > 50)
+    mahal_dist = cov.mahalanobis(X)
+    print np.amin(mahal_dist), np.amax(mahal_dist)
+    assert(np.amax(mahal_dist) < 20)
+    assert(np.amin(mahal_dist) > 0)
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))
@@ -94,27 +95,26 @@ def test_ledoit_wolf():
 
     """
     # test shrinkage coeff on a simple data set
-    lw = LedoitWolf()
-    lw.fit(X, assume_centered=True)
+    lw = LedoitWolf(assume_centered=True)
+    lw.fit(X)
     assert_almost_equal(lw.shrinkage_, 0.00192, 4)
-    assert_almost_equal(lw.score(X, assume_centered=True), -2.89795, 4)
+    assert_almost_equal(lw.score(X), -2.89795, 4)
     assert_almost_equal(lw.shrinkage_,
                         ledoit_wolf_shrinkage(X, assume_centered=True))
-    assert_almost_equal(lw.shrinkage_, ledoit_wolf(X, assume_centered=True)[1])
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X,
                                                         assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
     # compare estimates given by LW and ShrunkCovariance
-    scov = ShrunkCovariance(shrinkage=lw.shrinkage_)
-    scov.fit(X, assume_centered=True)
+    scov = ShrunkCovariance(shrinkage=lw.shrinkage_, assume_centered=True)
+    scov.fit(X)
     assert_array_almost_equal(scov.covariance_, lw.covariance_, 4)
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))
-    lw = LedoitWolf()
-    lw.fit(X_1d, assume_centered=True)
+    lw = LedoitWolf(assume_centered=True)
+    lw.fit(X_1d)
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_1d,
                                                          assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
@@ -122,9 +122,9 @@ def test_ledoit_wolf():
     assert_array_almost_equal((X_1d ** 2).sum() / n_samples, lw.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
-    lw = LedoitWolf(store_precision=False)
-    lw.fit(X, assume_centered=True)
-    assert_almost_equal(lw.score(X, assume_centered=True), -2.89795, 4)
+    lw = LedoitWolf(store_precision=False, assume_centered=True)
+    lw.fit(X)
+    assert_almost_equal(lw.score(X), -2.89795, 4)
     assert(lw.precision_ is None)
 
     # Same tests without assuming centered data
@@ -165,32 +165,32 @@ def test_oas():
 
     """
     # test shrinkage coeff on a simple data set
-    oa = OAS()
-    oa.fit(X, assume_centered=True)
+    oa = OAS(assume_centered=True)
+    oa.fit(X)
     assert_almost_equal(oa.shrinkage_, 0.018740, 4)
-    assert_almost_equal(oa.score(X, assume_centered=True), -5.03605, 4)
+    assert_almost_equal(oa.score(X), -5.03605, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X, assume_centered=True)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shinkrage_from_mle, oa.shrinkage_)
     # compare estimates given by OAS and ShrunkCovariance
-    scov = ShrunkCovariance(shrinkage=oa.shrinkage_)
-    scov.fit(X, assume_centered=True)
+    scov = ShrunkCovariance(shrinkage=oa.shrinkage_, assume_centered=True)
+    scov.fit(X)
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))
-    oa = OAS()
-    oa.fit(X_1d, assume_centered=True)
+    oa = OAS(assume_centered=True)
+    oa.fit(X_1d)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d, assume_centered=True)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shinkrage_from_mle, oa.shrinkage_)
     assert_array_almost_equal((X_1d ** 2).sum() / n_samples, oa.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
-    oa = OAS(store_precision=False)
-    oa.fit(X, assume_centered=True)
-    assert_almost_equal(oa.score(X, assume_centered=True), -5.03605, 4)
+    oa = OAS(store_precision=False, assume_centered=True)
+    oa.fit(X)
+    assert_almost_equal(oa.score(X), -5.03605, 4)
     assert(oa.precision_ is None)
 
     ### Same tests without assuming centered data

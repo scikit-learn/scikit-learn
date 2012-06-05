@@ -96,11 +96,13 @@ class ShrunkCovariance(EmpiricalCovariance):
     where mu = trace(cov) / n_features
 
     """
-    def __init__(self, store_precision=True, shrinkage=0.1):
-        self.store_precision = store_precision
+    def __init__(self, store_precision=True, assume_centered=False,
+                 shrinkage=0.1):
+        EmpiricalCovariance.__init__(self, store_precision=store_precision,
+                                     assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
-    def fit(self, X, assume_centered=False):
+    def fit(self, X):
         """ Fits the shrunk covariance model
         according to the given training data and parameters.
 
@@ -122,9 +124,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             Returns self.
 
         """
-        empirical_cov = empirical_covariance(
-            X, assume_centered=assume_centered)
-        covariance = shrunk_covariance(empirical_cov, self.shrinkage)
+        EmpiricalCovariance.fit(self, X)
+        covariance = shrunk_covariance(self.covariance_, self.shrinkage)
         self._set_estimates(covariance)
 
         return self
@@ -307,12 +308,17 @@ class LedoitWolf(EmpiricalCovariance):
     ----------
     store_precision : bool
         Specify if the estimated precision is stored
+    assume_centered: bool
+        If True, data are not centered before computation.
+        Useful when working with data whose mean is almost, but not exactly
+        zero.
+        If False (default), data are centered before computation.
     block_size: int,
-      Size of the blocks into which the covariance matrix will be split
-      during its Ledoit-Wolf estimation.
-      If n_features > `block_size`, an error will be raised since the
-      shrunk covariance matrix will be considered as too large regarding
-      the available memory.
+        Size of the blocks into which the covariance matrix will be split
+        during its Ledoit-Wolf estimation.
+        If n_features > `block_size`, an error will be raised since the
+        shrunk covariance matrix will be considered as too large regarding
+        the available memory.
 
     Attributes
     ----------
@@ -344,11 +350,13 @@ class LedoitWolf(EmpiricalCovariance):
     February 2004, pages 365-411.
 
     """
-    def __init__(self, store_precision=True, block_size=1000):
-        EmpiricalCovariance.__init__(self, store_precision=store_precision)
+    def __init__(self, store_precision=True, assume_centered=False,
+                 block_size=1000):
+        EmpiricalCovariance.__init__(self, store_precision=store_precision,
+                                     assume_centered=assume_centered)
         self.block_size = block_size
 
-    def fit(self, X, assume_centered=False):
+    def fit(self, X):
         """ Fits the Ledoit-Wolf shrunk covariance model
         according to the given training data and parameters.
 
@@ -358,12 +366,6 @@ class LedoitWolf(EmpiricalCovariance):
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
 
-        assume_centered: Boolean
-          If True, data are not centered before computation.
-          Useful to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, data are centered before computation.
-
         Returns
         -------
         self : object
@@ -371,8 +373,10 @@ class LedoitWolf(EmpiricalCovariance):
 
         """
         # only return the shrunk covariance if it is not too big
+        EmpiricalCovariance.fit(self, X)
         covariance, shrinkage = ledoit_wolf(
-            X, assume_centered=assume_centered, block_size=self.block_size)
+            X - self.location_, assume_centered=True,
+            block_size=self.block_size)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
 
@@ -388,7 +392,7 @@ def oas(X, assume_centered=False):
     Parameters
     ----------
     X: array-like, shape (n_samples, n_features)
-      Data from which to compute the covariance estimate
+        Data from which to compute the covariance estimate
 
     assume_centered: boolean
       If True, data are not centered before computation.
@@ -460,7 +464,12 @@ class OAS(EmpiricalCovariance):
     Parameters
     ----------
     store_precision : bool
-        Specify if the estimated precision is stored
+        Specify if the estimated precision is stored.
+    assume_centered: bool
+        If True, data are not centered before computation.
+        Useful when working with data whose mean is almost, but not exactly
+        zero.
+        If False (default), data are centered before computation.
 
     Attributes
     ----------
@@ -491,7 +500,7 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     """
-    def fit(self, X, assume_centered=False):
+    def fit(self, X):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.
 
@@ -501,19 +510,14 @@ class OAS(EmpiricalCovariance):
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
 
-        assume_centered: boolean
-          If True, data are not centered before computation.
-          Useful to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, data are centered before computation.
-
         Returns
         -------
         self : object
             Returns self.
 
         """
-        covariance, shrinkage = oas(X, assume_centered=assume_centered)
+        EmpiricalCovariance.fit(self, X)
+        covariance, shrinkage = oas(X - self.location_, assume_centered=True)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
 

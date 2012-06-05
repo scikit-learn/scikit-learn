@@ -30,10 +30,10 @@ def test_mcd():
     launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50)
 
     ### Medium data set
-    launch_mcd_on_dataset(1000, 5, 450, 1e-3, 1e-3, 540)
+    launch_mcd_on_dataset(1000, 5, 450, 0.1, 0.1, 540)
 
     ### Large data set
-    launch_mcd_on_dataset(1700, 5, 800, 1e-3, 1e-3, 870)
+    launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870)
 
     ### 1D data set
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
@@ -64,6 +64,7 @@ def launch_mcd_on_dataset(
     error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
     assert(error_cov < tol_cov)
     assert(np.sum(H) >= tol_support)
+    assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
 def test_outlier_detection():
@@ -74,7 +75,7 @@ def test_outlier_detection():
     y_pred = clf.predict(X)
 
     assert_array_almost_equal(
-        clf.decision_function(X, raw_values=True),
-        clf.mahalanobis(X))
+        clf.decision_function(X, raw_values=True), clf.mahalanobis(X))
+    assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
