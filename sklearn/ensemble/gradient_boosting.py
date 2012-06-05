@@ -45,6 +45,21 @@ __all__ = ["GradientBoostingClassifier",
            "GradientBoostingRegressor"]
 
 
+class QuantileEstimator(object):
+    """An estimator predicting the alpha-quantile of the training targets."""
+    def __init__(self, alpha=0.9):
+        assert 0 < alpha < 1.0
+        self.alpha = alpha
+
+    def fit(self, X, y):
+        self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+
+    def predict(self, X):
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
+        y.fill(self.quantile)
+        return y
+
+
 class MedianEstimator(object):
     """An estimator predicting the median of the training targets."""
     def fit(self, X, y):
@@ -272,6 +287,47 @@ class HuberLossFunction(RegressionLossFunction):
             np.minimum(np.abs(diff_minus_median), gamma))
 
 
+class QuantileLossFunction(RegressionLossFunction):
+    """Loss function for quantile regression.
+
+    Quantile regression allows to estimate the percentiles
+    of the conditional distribution of the target.
+    """
+
+    def __init__(self, n_classes, alpha=0.9):
+        super(QuantileLossFunction, self).__init__(n_classes)
+        assert 0 < alpha < 1.0
+        self.alpha = alpha
+        self.percentile = alpha * 100.0
+
+    def init_estimator(self):
+        return QuantileEstimator(self.alpha)
+
+    def __call__(self, y, pred):
+        pred = pred.ravel()
+        diff = y - pred
+        alpha = self.alpha
+
+        mask = y > pred
+        return (alpha * diff[mask].sum() +
+                (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
+
+    def negative_gradient(self, y, pred, **kargs):
+        alpha = self.alpha
+        pred = pred.ravel()
+        mask = y > pred
+        return alpha * mask - (1.0 - alpha) * ~mask
+
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
+        """LAD updates terminal regions to median estimates. """
+        terminal_region = np.where(terminal_regions == leaf)[0]
+        diff = y.take(terminal_region, axis=0) - \
+               pred.take(terminal_region, axis=0)
+        val = stats.scoreatpercentile(diff, self.percentile)
+        tree.value[leaf, 0] = val
+
+
 class BinomialDeviance(LossFunction):
     """Binomial deviance loss function for binary classification.
 
@@ -366,6 +422,7 @@ class MultinomialDeviance(LossFunction):
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
                   'huber': HuberLossFunction,
+                  'quantile': QuantileLossFunction,
                   'bdeviance': BinomialDeviance,
                   'mdeviance': MultinomialDeviance,
                   'deviance': None}  # for both, multinomial and binomial
@@ -484,7 +541,7 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("max_features must be in (0, n_features]")
 
         loss_class = LOSS_FUNCTIONS[self.loss]
-        if self.loss == 'huber':
+        if self.loss in ('huber', 'quantile'):
             loss = loss_class(self.n_classes_, self.alpha)
         else:
             loss = loss_class(self.n_classes_)
