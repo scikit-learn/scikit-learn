@@ -59,13 +59,20 @@ class ElasticNet(LinearModel):
     ----------
     alpha : float
         Constant that multiplies the L1 term. Defaults to 1.0
+
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1.
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
 
-        TODO: fit_intercept=True is not yet implemented
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    positive: bool, optional
+        When set to True, forces the coefficients to be positive.
 
     Notes
     -----
@@ -73,7 +80,8 @@ class ElasticNet(LinearModel):
     while alpha corresponds to the lambda parameter in glmnet.
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=False,
-                 normalize=False, max_iter=1000, tol=1e-4, positive=False):
+                 normalize=False, max_iter=1000, tol=1e-4,
+                 warm_start=False, positive=False):
         self.alpha = alpha
         self.rho = rho
         self.fit_intercept = fit_intercept
@@ -81,6 +89,7 @@ class ElasticNet(LinearModel):
         self.intercept_ = 0.0
         self.max_iter = max_iter
         self.tol = tol
+        self.warm_start = warm_start
         self.positive = positive
         self._set_coef(None)
 
@@ -92,9 +101,20 @@ class ElasticNet(LinearModel):
             # sparse representation of the fitted coef for the predict method
             self.sparse_coef_ = sp.csr_matrix(coef_)
 
-    def fit(self, X, y):
+    def fit(self, X, y, coef_init=None):
         """Fit current model with coordinate descent
 
+        Parameters
+        -----------
+        X: ndarray, (n_samples, n_features)
+            Data
+        y: ndarray, (n_samples)
+            Target
+        coef_init: ndarray of shape n_features, optional
+            The initial coeffients to warm-start the optimization.
+
+        Notes
+        -----
         X is expected to be a sparse matrix. For maximum efficiency, use a
         sparse matrix in CSC format (scipy.sparse.csc_matrix)
         """
@@ -110,8 +130,15 @@ class ElasticNet(LinearModel):
         # avoid breaking the sparsity of X
 
         n_samples, n_features = X.shape[0], X.shape[1]
-        if self.coef_ is None:
-            self.coef_ = np.zeros(n_features, dtype=np.float64)
+
+        if coef_init is None and \
+            (not self.warm_start or self.coef_ is None):
+                self.coef_ = np.zeros(n_features, dtype=np.float64)
+        else:
+            if coef_init.shape[0] != X.shape[1]:
+                raise ValueError("X and coef_init have incompatible " +
+                                  "shapes.")
+            self.coef_ = coef_init
 
         alpha = self.alpha * self.rho * n_samples
         beta = self.alpha * (1.0 - self.rho) * n_samples
