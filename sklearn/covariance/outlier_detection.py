@@ -173,10 +173,8 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
         """
         """
         MinCovDet.fit(self, X)
-        X_centered = X - self.location_
-        values = self.mahalanobis(X_centered)
         self.threshold = sp.stats.scoreatpercentile(
-            values, 100. * (1. - self.contamination))
+            self.dist_, 100. * (1. - self.contamination))
 
         return self
 
