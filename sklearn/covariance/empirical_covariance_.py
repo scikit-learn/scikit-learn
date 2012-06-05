@@ -108,18 +108,29 @@ class EmpiricalCovariance(BaseEstimator):
           is computed.
 
         """
-        if covariance is None:
-            self.covariance_ = None
-            self.precision_ = None
+        covariance = array2d(covariance)
+        # set covariance
+        self.covariance_ = covariance
+        # set precision
+        if self.store_precision:
+            self.precision_ = linalg.pinv(covariance)
         else:
-            covariance = array2d(covariance)
-            # set covariance
-            self.covariance_ = covariance
-            # set precision
-            if self.store_precision:
-                self.precision_ = linalg.pinv(covariance)
-            else:
-                self.precision_ = None
+            self.precision_ = None
+
+    def get_precision(self):
+        """Getter for the precision matrix.
+
+        Returns
+        -------
+        precision_: array-like,
+          The precision matrix associated to the current covariance object.
+
+        """
+        if self.store_precision:
+            precision = self.precision_
+        else:
+            precision = linalg.pinv(self.covariance_)
+        return precision
 
     def fit(self, X):
         """Fits the Maximum Likelihood Estimator covariance model
@@ -147,21 +158,17 @@ class EmpiricalCovariance(BaseEstimator):
 
         return self
 
-    def score(self, X_test, assume_centered=False):
+    def score(self, X_test):
         """Computes the log-likelihood of a gaussian data set with
         `self.covariance_` as an estimator of its covariance matrix.
 
         Parameters
         ----------
         X_test : array-like, shape = [n_samples, n_features]
-            Test data of which we compute the likelihood, where n_samples is
-            the number of samples and n_features is the number of features.
-        assume_centered: bool
-            If True, data in X_test are not centered before computation.
-            Useful when working with data whose mean is almost, but not
-            exactly zero.
-            If False, data in X_test are centered before computation.
-            Note that `assume_centered` != self.assume_centered.
+          Test data of which we compute the likelihood, where n_samples is
+          the number of samples and n_features is the number of features.
+          X_test is assumed to be drawn from the same distribution than
+          tha data used in fit (including centering).
 
         Returns
         -------
@@ -171,13 +178,10 @@ class EmpiricalCovariance(BaseEstimator):
 
         """
         # compute empirical covariance of the test set
-        test_cov = empirical_covariance(X_test,
-                                        assume_centered=assume_centered)
+        test_cov = empirical_covariance(
+            X_test - self.location_, assume_centered=True)
         # compute log likelihood
-        if self.store_precision:
-            res = log_likelihood(test_cov, self.precision_)
-        else:
-            res = log_likelihood(test_cov, linalg.pinv(self.covariance_))
+        res = log_likelihood(test_cov, self.get_precision())
 
         return res
 
@@ -230,7 +234,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         return result
 
-    def mahalanobis(self, observations, assume_centered=False):
+    def mahalanobis(self, observations):
         """Computes the mahalanobis distances of given observations.
 
         The provided observations are assumed to be centered. One may want to
@@ -240,12 +244,8 @@ class EmpiricalCovariance(BaseEstimator):
         ----------
         observations: array-like, shape = [n_observations, n_features]
           The observations, the Mahalanobis distances of the which we compute.
-        assume_centered: bool,
-          Whether or not to consider the observations are centered.
-          If `assume_centered` is True (default), one may want to center them
-          using a location estimate first. Otherwise, the observations will
-          be removed their empirical mean.
-          Note that `assume_centered` != self.assume_centered.
+          Observations are assumed to be drawn from the same distribution than
+          tha data used in fit (including centering).
 
         Returns
         -------
@@ -253,16 +253,10 @@ class EmpiricalCovariance(BaseEstimator):
             Mahalanobis distances of the observations.
 
         """
-        # get precision
-        if self.store_precision:
-            precision = self.precision_
-        else:
-            precision = linalg.pinv(self.covariance_)
-
+        precision = self.get_precision()
         # compute mahalanobis distances
-        if not assume_centered:
-            observations = observations - self.location_
+        centered_obs = observations - self.location_
         mahalanobis_dist = np.sum(
-            np.dot(observations, precision) * observations, 1)
+            np.dot(centered_obs, precision) * centered_obs, 1)
 
         return mahalanobis_dist
