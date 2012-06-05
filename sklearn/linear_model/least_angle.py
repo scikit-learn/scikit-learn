@@ -435,11 +435,18 @@ class Lars(LinearModel, RegressorMixin):
         """
         X = array2d(X)
         y = np.asarray(y)
+        n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
                                                         self.normalize,
                                                         self.copy_X)
+
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        n_targets = y.shape[1]
+
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -447,18 +454,28 @@ class Lars(LinearModel, RegressorMixin):
         else:
             max_iter = self.max_iter
 
-        Gram = self._get_gram()
+        self.alphas_ = np.empty((n_targets, max_iter + 1))
+        self.active_ = np.empty((n_targets, max_iter))
+        self.coef_path_ = np.empty((n_targets, n_features, max_iter + 1))
+        self.coef_ = np.empty((n_targets, n_features))
 
-        self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
-                  Gram=Gram, copy_X=self.copy_X,
-                  copy_Gram=False, alpha_min=alpha,
-                  method=self.method, verbose=max(0, self.verbose - 1),
-                  max_iter=max_iter, eps=self.eps)
+        for k in xrange(n_targets):
+            Gram = self._get_gram()
+            alphas, active, coef_path = lars_path(X, y[:, k], Gram=Gram,
+                          copy_X=self.copy_X, copy_Gram=False,
+                          alpha_min=alpha, method=self.method,
+                          verbose=max(0, self.verbose - 1), max_iter=max_iter,
+                          eps=self.eps)
+            self.alphas_[k, :len(alphas)] = alphas
+            self.active_[k, :len(active)] = active
+            self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
+            self.coef_[k, :] = coef_path[:, -1]
 
-        self.coef_ = self.coef_path_[:, -1]
+        self.alphas_, self.active_, self.coef_path_, self.coef_ = (
+            np.squeeze(a) for a in (self.alphas_, self.active_,
+                                    self.coef_path_, self.coef_))
 
         self._set_intercept(X_mean, y_mean, X_std)
-
         return self
 
 
