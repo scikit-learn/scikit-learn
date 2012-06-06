@@ -1,4 +1,5 @@
 # encoding: utf-8
+# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -144,14 +145,14 @@ cdef class LogSig(OutputFunction):
 
 
 cdef forward(np.ndarray[DTYPE_t, ndim=2] X,
-              np.ndarray[DTYPE_t, ndim=2] weights_hidden,
-              np.ndarray[DTYPE_t, ndim=1] bias_hidden,
-              np.ndarray[DTYPE_t, ndim=2] weights_output,
-              np.ndarray[DTYPE_t, ndim=1] bias_output,
-              np.ndarray[DTYPE_t, ndim=2] x_hidden,
-              np.ndarray[DTYPE_t, ndim=2] x_output,
-              OutputFunction output,
-              OutputFunction hidden):
+             np.ndarray[DTYPE_t, ndim=2] weights_hidden,
+             np.ndarray[DTYPE_t, ndim=1] bias_hidden,
+             np.ndarray[DTYPE_t, ndim=2] weights_output,
+             np.ndarray[DTYPE_t, ndim=1] bias_output,
+             np.ndarray[DTYPE_t, ndim=2] x_hidden,
+             np.ndarray[DTYPE_t, ndim=2] x_output,
+             OutputFunction output,
+             OutputFunction hidden):
 
     # Hidden layer
     np.dot(X, weights_hidden, x_hidden)
@@ -165,19 +166,19 @@ cdef forward(np.ndarray[DTYPE_t, ndim=2] X,
 
 
 def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
-          np.ndarray[DTYPE_t, ndim=2] y not None,
-          LossFunction loss not None,
-          OutputFunction output not None,
-          OutputFunction hidden not None,
-          np.ndarray[DTYPE_t, ndim=2] weights_hidden not None,
-          np.ndarray[DTYPE_t, ndim=2] weights_output not None,
-          np.ndarray[DTYPE_t, ndim=1] bias_hidden not None,
-          np.ndarray[DTYPE_t, ndim=1] bias_output not None,
-          np.float64_t lr,
-          int n_hidden,
-          int max_epochs,
-          int batch_size,
-          int shuffle_data):
+        np.ndarray[DTYPE_t, ndim=2] y not None,
+        LossFunction loss not None,
+        OutputFunction output not None,
+        OutputFunction hidden not None,
+        np.ndarray[DTYPE_t, ndim=2] weights_hidden not None,
+        np.ndarray[DTYPE_t, ndim=2] weights_output not None,
+        np.ndarray[DTYPE_t, ndim=1] bias_hidden not None,
+        np.ndarray[DTYPE_t, ndim=1] bias_output not None,
+        np.float64_t lr,
+        int n_hidden,
+        int max_epochs,
+        int batch_size,
+        int shuffle_data):
     """Stochastic gradient descent for multilayer perceptron
 
     Parameters
@@ -191,6 +192,8 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
     cdef int n_features = X.shape[1]
     cdef int n_outs = y.shape[1]
     cdef int n_batches = n_samples / batch_size
+    cdef int i
+    cdef int j
 
     cdef np.ndarray[DTYPE_t, ndim=2] x_hidden = np.empty((batch_size, n_hidden))
     cdef np.ndarray[DTYPE_t, ndim=2] delta_h = np.empty((batch_size, n_hidden))
@@ -252,12 +255,12 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
 
 
 def predict(np.ndarray[DTYPE_t, ndim=2] X not None,
-              np.ndarray[DTYPE_t, ndim=2] weights_hidden not None,
-              np.ndarray[DTYPE_t, ndim=1] bias_hidden not None,
-              np.ndarray[DTYPE_t, ndim=2] weights_output not None,
-              np.ndarray[DTYPE_t, ndim=1] bias_output not None,
-              OutputFunction output not None,
-              OutputFunction hidden not None):
+            np.ndarray[DTYPE_t, ndim=2] weights_hidden not None,
+            np.ndarray[DTYPE_t, ndim=1] bias_hidden not None,
+            np.ndarray[DTYPE_t, ndim=2] weights_output not None,
+            np.ndarray[DTYPE_t, ndim=1] bias_output not None,
+            OutputFunction output not None,
+            OutputFunction hidden not None):
 
     cdef int n_samples = X.shape[0]
     cdef int n_hidden = weights_hidden.shape[1]
