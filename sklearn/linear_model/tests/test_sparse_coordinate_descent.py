@@ -17,20 +17,6 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
 
-
-def test_sparse_predict():
-    """Check that the predict method works with dense coef_ and sparse X"""
-    X = sp.lil_matrix((3, 2))
-    X[0, 0] = 1
-    X[0, 1] = 0.5
-    X[1, 0] = -1
-
-    clf = ElasticNet()
-    clf._set_coef(np.array([1, -1]))
-    predicted = clf.predict(X)
-    np.testing.assert_array_equal([0.5, -1.0, 0.0], predicted)
-
-
 def test_lasso_zero():
     """Check that the sparse lasso can handle zero data without crashing"""
     X = sp.csc_matrix((3, 1))
