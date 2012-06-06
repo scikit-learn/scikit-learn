@@ -17,8 +17,42 @@ from .base import LinearModel
 from ..utils import as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
-from . import cd_fast
+from ..utils.extmath import safe_sparse_dot
+from ..utils.sparsefuncs import csc_mean_variance_axis0, \
+                                inplace_csc_column_scale
 
+from . import cd_fast
+from .sparse import cd_fast_sparse
+
+
+def sparse_center_data(X, y, fit_intercept, normalize=False):
+    """
+    Compute informations needed to center data to have mean zero along
+    axis 0. Be aware that X will not be centered since it would break
+    the sparsity, but will be normalized if asked so.
+    """
+    X_data = np.array(X.data, np.float64)
+    if fit_intercept:
+        X = sp.csc_matrix(X, copy=normalize)  # copy if 'normalize' is
+                      # True or X is not a csc matrix
+        X_mean, X_std = csc_mean_variance_axis0(X)
+        if normalize:
+            X_std = cd_fast_sparse.sparse_std(
+                X.shape[0], X.shape[1],
+                X_data, X.indices, X.indptr, X_mean)
+            X_std[X_std == 0] = 1
+            inplace_csc_column_scale(X)
+        else:
+            X_std = np.ones(X.shape[1])
+        y_mean = y.mean(axis=0)
+        y = y - y_mean
+    else:
+        X_mean = np.zeros(X.shape[1])
+        X_std = np.ones(X.shape[1])
+        y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
+
+    X_data = np.array(X.data, np.float64)
+    return X_data, y, X_mean, y_mean, X_std
 
 ###############################################################################
 # ElasticNet model
@@ -108,6 +142,16 @@ class ElasticNet(LinearModel):
         self.warm_start = warm_start
         self.positive = positive
         self.sparse = "auto"
+        self._set_coef(None)
+        self.intercept_ = 0.0
+
+    def _set_coef(self, coef_):
+        self.coef_ = coef_
+        if coef_ is None:
+            self.sparse_coef_ = None
+        else:
+            # sparse representation of the fitted coef for the predict method
+            self.sparse_coef_ = sp.csr_matrix(coef_)
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -208,7 +252,73 @@ class ElasticNet(LinearModel):
         return self
 
     def _sparse_fit(self, X, y, Xy=None, coef_init=None):
-        pass
+        X = sp.csc_matrix(X)
+        y = np.asarray(y, dtype=np.float64)
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "Note: Sparse matrices cannot be indexed w/" +
+                             "boolean masks (use `indices=True` in CV).")
+
+        # NOTE: we are explicitly not centering the data the naive way to
+        # avoid breaking the sparsity of X
+
+        n_samples, n_features = X.shape[0], X.shape[1]
+
+        if coef_init is None and \
+            (not self.warm_start or self.coef_ is None):
+                self.coef_ = np.zeros(n_features, dtype=np.float64)
+        else:
+            if coef_init.shape[0] != X.shape[1]:
+                raise ValueError("X and coef_init have incompatible " +
+                                  "shapes.")
+            self.coef_ = coef_init
+
+        alpha = self.alpha * self.rho * n_samples
+        beta = self.alpha * (1.0 - self.rho) * n_samples
+        X_data, y, X_mean, y_mean, X_std = sparse_center_data(X, y,
+                                                       self.fit_intercept,
+                                                       self.normalize)
+
+        coef_, self.dual_gap_, self.eps_ = \
+                cd_fast_sparse.enet_coordinate_descent(
+                    self.coef_, alpha, beta, X_data, X.indices,
+                    X.indptr, y, X_mean / X_std,
+                    self.max_iter, self.tol, self.positive)
+
+        # update self.coef_ and self.sparse_coef_ consistently
+        self._set_coef(coef_)
+        self._set_intercept(X_mean, y_mean, X_std)
+
+        if self.dual_gap_ > self.eps_:
+            warnings.warn('Objective did not converge, you might want'
+                                'to increase the number of iterations')
+
+        # return self for chaining fit and predict calls
+        return self
+
+    def decision_function(self, X):
+        """Decision function of the linear model
+
+        Parameters
+        ----------
+        X : scipy.sparse matrix of shape [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples] with the predicted real values
+        """
+
+        if self.sparse == "auto":
+            self._sparse = sp.isspmatrix(X)
+        else:
+            self._sparse = self.sparse
+
+        if self._sparse:
+            return np.ravel(safe_sparse_dot(self.sparse_coef_, X.T, \
+                                        dense_output=True) + self.intercept_)
+        else:
+            return super(ElasticNet, self).decision_function(X)
 
 
 ###############################################################################
