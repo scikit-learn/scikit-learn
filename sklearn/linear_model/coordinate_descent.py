@@ -141,16 +141,7 @@ class ElasticNet(LinearModel):
         self.tol = tol
         self.warm_start = warm_start
         self.positive = positive
-        self._set_coef(None)
         self.intercept_ = 0.0
-
-    def _set_coef(self, coef_):
-        self.coef_ = coef_
-        if coef_ is None:
-            self.sparse_coef_ = None
-        else:
-            # sparse representation of the fitted coef for the predict method
-            self.sparse_coef_ = sp.csr_matrix(coef_)
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -178,9 +169,7 @@ class ElasticNet(LinearModel):
         initial data in memory directly using that format.
         """
 
-        self._sparse = sp.isspmatrix(X)
-
-        fit = self._sparse_fit if self._sparse else self._dense_fit
+        fit = self._sparse_fit if sp.isspmatrix(X) else self._dense_fit
 
         fit(X, y, Xy, coef_init)
         return self
@@ -276,14 +265,12 @@ class ElasticNet(LinearModel):
                                                        self.fit_intercept,
                                                        self.normalize)
 
-        coef_, self.dual_gap_, self.eps_ = \
+        self.coef_, self.dual_gap_, self.eps_ = \
                 cd_fast_sparse.enet_coordinate_descent(
                     self.coef_, alpha, beta, X_data, X.indices,
                     X.indptr, y, X_mean / X_std,
                     self.max_iter, self.tol, self.positive)
 
-        # update self.coef_ and self.sparse_coef_ consistently
-        self._set_coef(coef_)
         self._set_intercept(X_mean, y_mean, X_std)
 
         if self.dual_gap_ > self.eps_:
@@ -305,7 +292,7 @@ class ElasticNet(LinearModel):
         array, shape = [n_samples] with the predicted real values
         """
         if sp.isspmatrix(X):
-            return np.ravel(safe_sparse_dot(self.sparse_coef_, X.T, \
+            return np.ravel(safe_sparse_dot(self.coef_, X.T, \
                                         dense_output=True) + self.intercept_)
         else:
             return super(ElasticNet, self).decision_function(X)
