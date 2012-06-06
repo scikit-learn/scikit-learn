@@ -234,7 +234,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # TODO: better names for these variables: z
         drop = False
-        z = -coefs[n_iter, active] / least_squares
+        z = -coefs[n_iter, active] / (least_squares + tiny)
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
