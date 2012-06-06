@@ -730,24 +730,25 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         The initial error contained in the node.
     """
     # Variables
-    cdef int n_total_samples = X.shape[0]
-    cdef int n_features = X.shape[1]
-    cdef int i, a, b, best_i = -1
-    cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = np.inf, best_t = np.inf
-    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
-    cdef DTYPE_t *X_i = NULL
-    cdef int *X_argsorted_i = NULL
-    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+    cdef:
+        int n_total_samples = X.shape[0]
+        int n_features = X.shape[1]
+        int i, a, b, c, n_left, best_i = -1
+        DTYPE_t t, initial_error, error
+        DTYPE_t best_error = np.inf, best_t = np.inf
+        DTYPE_t *y_ptr = <DTYPE_t *>y.data
+        DTYPE_t *X_i = NULL
+        int *X_argsorted_i = NULL
+        BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
 
-    # Compute the column strides (increment in pointer elements to get
-    # from column i to i + 1) for `X` and `X_argsorted`
-    cdef int X_elem_stride = X.strides[0]
-    cdef int X_col_stride = X.strides[1]
-    cdef int X_stride = X_col_stride / X_elem_stride
-    cdef int X_argsorted_elem_stride = X_argsorted.strides[0]
-    cdef int X_argsorted_col_stride = X_argsorted.strides[1]
-    cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
+        # Compute the column strides (increment in pointer elements to get
+        # from column i to i + 1) for `X` and `X_argsorted`
+        int X_elem_stride = X.strides[0]
+        int X_col_stride = X.strides[1]
+        int X_stride = X_col_stride / X_elem_stride
+        int X_argsorted_elem_stride = X_argsorted.strides[0]
+        int X_argsorted_col_stride = X_argsorted.strides[1]
+        int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
 
     # Compute the initial criterion value
     X_argsorted_i = <int *>X_argsorted.data
