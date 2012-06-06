@@ -32,7 +32,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, array2d
 
 from ..tree.tree import Tree
-from ..tree._tree import _find_best_split
+from ..tree._tree import _find_best_split, _find_best_random_split
 from ..tree._tree import _random_sample_mask
 from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
