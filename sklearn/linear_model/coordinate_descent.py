@@ -141,7 +141,6 @@ class ElasticNet(LinearModel):
         self.tol = tol
         self.warm_start = warm_start
         self.positive = positive
-        self.sparse = "auto"
         self._set_coef(None)
         self.intercept_ = 0.0
 
@@ -179,10 +178,7 @@ class ElasticNet(LinearModel):
         initial data in memory directly using that format.
         """
 
-        if self.sparse == "auto":
-            self._sparse = sp.isspmatrix(X)
-        else:
-            self._sparse = self.sparse
+        self._sparse = sp.isspmatrix(X)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
 
@@ -308,13 +304,7 @@ class ElasticNet(LinearModel):
         -------
         array, shape = [n_samples] with the predicted real values
         """
-
-        if self.sparse == "auto":
-            self._sparse = sp.isspmatrix(X)
-        else:
-            self._sparse = self.sparse
-
-        if self._sparse:
+        if sp.isspmatrix(X):
             return np.ravel(safe_sparse_dot(self.sparse_coef_, X.T, \
                                         dense_output=True) + self.intercept_)
         else:
