@@ -122,6 +122,9 @@ class ElasticNet(LinearModel):
     positive: bool, optional
         When set to True, forces the coefficients to be positive.
 
+    sparse_coef_: is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -279,6 +282,11 @@ class ElasticNet(LinearModel):
 
         # return self for chaining fit and predict calls
         return self
+
+    @property
+    def sparse_coef_(self):
+        """ sparse representation of the fitted coef """
+        return sp.csr_matrix(self.coef_)
 
     def decision_function(self, X):
         """Decision function of the linear model
