@@ -132,6 +132,9 @@ def all_estimators():
         prefix='sklearn.', onerror=lambda x: None):
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
+        # get rid of abstract base classes
+        classes = [c for c in classes if not "__abstractmethods__" in
+                c[1].__dict__]
         all_classes.extend(classes)
 
     all_classes = set(all_classes)
