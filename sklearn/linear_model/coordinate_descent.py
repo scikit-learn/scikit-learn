@@ -22,7 +22,6 @@ from ..utils.sparsefuncs import csc_mean_variance_axis0, \
                                 inplace_csc_column_scale
 
 from . import cd_fast
-from .sparse import cd_fast_sparse
 
 
 def sparse_center_data(X, y, fit_intercept, normalize=False):
@@ -277,7 +276,7 @@ class ElasticNet(LinearModel):
                                                        self.normalize)
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast_sparse.enet_coordinate_descent(
+                cd_fast.sparse_enet_coordinate_descent(
                     self.coef_, alpha, beta, X_data, X.indices,
                     X.indptr, y, X_mean / X_std,
                     self.max_iter, self.tol, self.positive)
