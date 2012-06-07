@@ -130,22 +130,64 @@ class BaseLibSVM(BaseEstimator):
             self._sparse = sp.isspmatrix(X)
         else:
             self._sparse = self.sparse
+
+        if self._sparse:
+            X = sp.csr_matrix(X)
+        else:
+            X = np.asarray(X, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.float64, order='C')
+
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
                     "Using it in the 'fit' method is deprecated.",
                     DeprecationWarning)
             self.class_weight = class_weight
+
+        sample_weight = np.asarray([] if sample_weight is None
+                                      else sample_weight, dtype=np.float64)
+        solver_type = LIBSVM_IMPL.index(self.impl)
+        self.class_weight_, self.class_weight_label_ = \
+                     _get_class_weight(self.class_weight, y)
+
+        # input validation
+        if solver_type != 2 and X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n" +
+                             "X has %s samples, but y has %s." %
+                             (X.shape[0], y.shape[0]))
+
+        if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
+            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+
+        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
+            raise ValueError("sample_weight and X have incompatible shapes:"
+                             "%r vs %r\n"
+                             "Note: Sparse matrices cannot be indexed w/"
+                             "boolean masks (use `indices=True` in CV)."
+                             % (sample_weight.shape, X.shape))
+
+        if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
+            # if custom gamma is not provided ...
+            self._gamma = 1.0 / X.shape[1]
+        else:
+            self._gamma = self.gamma
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
             print '[LibSVM]',
-        fit(X, y, sample_weight)
+        fit(X, y, sample_weight, solver_type, kernel)
+
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function. Use self._intercept_ internally.
+        self._intercept_ = self.intercept_.copy()
+        if len(self.label_) == 2 and self.impl != 'one_class':
+            self.intercept_ *= -1
         return self
 
-    def _dense_fit(self, X, y, sample_weight=None):
-        X = np.asarray(X, dtype=np.float64, order='C')
-        y = np.asarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asarray([] if sample_weight is None
-                                      else sample_weight, dtype=np.float64)
+    def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
 
         if hasattr(self.kernel, '__call__'):
             # you must store a reference to X to compute the kernel in predict
@@ -153,30 +195,12 @@ class BaseLibSVM(BaseEstimator):
             self.__Xfit = X
             X = self._compute_kernel(X)
 
-        self.class_weight_, self.class_weight_label_ = \
-                     _get_class_weight(self.class_weight, y)
-
-        # check dimensions
-        solver_type = LIBSVM_IMPL.index(self.impl)
-        if solver_type != 2 and X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
-
-        if (hasattr(self.kernel, '__call__') or self.kernel == "precomputed") \
-                and X.shape[0] != X.shape[1]:
+        if hasattr(self.kernel, '__call__') and X.shape[0] != X.shape[1]:
             raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
-        if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
-            # if custom gamma is not provided ...
-            self.gamma = 1.0 / X.shape[1]
         self.shape_fit_ = X.shape
 
         libsvm.set_verbosity_wrap(self.verbose)
-
-        kernel = self.kernel
-        if hasattr(kernel, '__call__'):
-            kernel = 'precomputed'
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -189,82 +213,12 @@ class BaseLibSVM(BaseEstimator):
             kernel=kernel, C=self.C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
+            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
 
-        # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ internally.
-        self._intercept_ = self.intercept_.copy()
-        if len(self.label_) == 2 and self.impl != 'one_class':
-            self.intercept_ *= -1
-
-    def _sparse_fit(self, X, y, sample_weight=None):
-        """
-        Fit the SVM model according to the given training data and parameters.
-
-        Parameters
-        ----------
-        X : sparse matrix, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-
-        class_weight : {dict, 'auto'}, optional
-            Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
-            The 'auto' mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
-
-        Returns
-        -------
-        self : object
-            Returns an instance of self.
-
-        Notes
-        -----
-        For maximum effiency, use a sparse matrix in csr format
-        (scipy.sparse.csr_matrix)
-        """
-
-        X = sp.csr_matrix(X)
+    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
-        y = np.asarray(y, dtype=np.float64, order='C')
-        sample_weight = np.asarray([] if sample_weight is None
-                                      else sample_weight, dtype=np.float64)
 
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes: %r vs %r\n"
-                             "Note: Sparse matrices cannot be indexed w/"
-                             "boolean masks (use `indices=True` in CV)."
-                             % (X.shape, y.shape))
-
-        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes:"
-                             "%r vs %r\n"
-                             "Note: Sparse matrices cannot be indexed w/"
-                             "boolean masks (use `indices=True` in CV)."
-                             % (sample_weight.shape, X.shape))
-
-        kernel = self.kernel
-        if hasattr(kernel, '__call__'):
-            kernel = 'precomputed'
-
-        solver_type = LIBSVM_IMPL.index(self.impl)
         kernel_type = self._sparse_kernels.index(kernel)
-
-        self.class_weight_, self.class_weight_label_ = \
-                     _get_class_weight(self.class_weight, y)
-
-        if (kernel_type in [1, 2]) and (self.gamma == 0):
-            # if custom gamma is not provided ...
-            self.gamma = 1.0 / X.shape[1]
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
@@ -272,16 +226,10 @@ class BaseLibSVM(BaseEstimator):
             self.n_support_, self.probA_, self.probB_ = \
             libsvm_sparse.libsvm_sparse_train(
                  X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
-                 kernel_type, self.degree, self.gamma, self.coef0, self.tol,
+                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
                  self.C, self.class_weight_label_, self.class_weight_,
                  sample_weight, self.nu, self.cache_size, self.epsilon,
                  int(self.shrinking), int(self.probability))
-
-        # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ internally.
-        self._intercept_ = self.intercept_.copy()
-        if len(self.label_) == 2 and self.impl != 'one_class':
-            self.intercept_ *= -1
 
         n_class = len(self.label_) - 1
         n_SV = self.support_vectors_.shape[0]
@@ -348,7 +296,7 @@ class BaseLibSVM(BaseEstimator):
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
+            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
@@ -368,7 +316,7 @@ class BaseLibSVM(BaseEstimator):
                       self.support_vectors_.indptr,
                       self.dual_coef_.data, self._intercept_,
                       LIBSVM_IMPL.index(self.impl), kernel_type,
-                      self.degree, self.gamma, self.coef0, self.tol,
+                      self.degree, self._gamma, self.coef0, self.tol,
                       C, self.class_weight_label_, self.class_weight_,
                       self.nu, self.epsilon, self.shrinking,
                       self.probability, self.n_support_, self.label_,
@@ -428,7 +376,7 @@ class BaseLibSVM(BaseEstimator):
             svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
+            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
 
         return pprob
 
@@ -457,7 +405,7 @@ class BaseLibSVM(BaseEstimator):
             self.support_vectors_.indptr,
             self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
-            self.degree, self.gamma, self.coef0, self.tol,
+            self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_label_, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self.label_,
@@ -521,7 +469,7 @@ class BaseLibSVM(BaseEstimator):
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self.gamma, epsilon=self.epsilon)
+            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
