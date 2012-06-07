@@ -163,6 +163,7 @@ def test_adjusted_mutual_info_score():
     # This is not accurate to more than 2 places
     assert_almost_equal(ami, 0.37, 2)
 
+
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
