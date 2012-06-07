@@ -7,9 +7,10 @@ Base class for ensemble-based estimators.
 
 from ..base import clone
 from ..base import BaseEstimator
+from ..base import MetaEstimatorMixin
 
 
-class BaseEnsemble(BaseEstimator):
+class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
@@ -28,7 +29,7 @@ class BaseEnsemble(BaseEstimator):
         new base estimator. If none are given, default parameters are used.
     """
 
-    def __init__(self, base_estimator, n_estimators, estimator_params=[]):
+    def __init__(self, base_estimator, n_estimators=10, estimator_params=[]):
         # Check parameters
         if not isinstance(base_estimator, BaseEstimator):
             raise TypeError("estimator must be a subclass of BaseEstimator")
