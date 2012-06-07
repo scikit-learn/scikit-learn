@@ -360,7 +360,7 @@ class SelectFpr(_AbstractUnivariateFilter):
     amount of false detections.
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -385,7 +385,7 @@ class SelectFdr(_AbstractUnivariateFilter):
     discovery rate.
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -410,7 +410,7 @@ class SelectFwe(_AbstractUnivariateFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -420,7 +420,7 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     """
 
-    def __init__(self, score_func, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
@@ -437,7 +437,7 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
     """Univariate feature selector with configurable strategy
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues

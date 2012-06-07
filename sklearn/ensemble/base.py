@@ -27,6 +27,7 @@ class BaseEnsemble(BaseEstimator):
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
     """
+
     def __init__(self, base_estimator, n_estimators, estimator_params=[]):
         # Check parameters
         if not isinstance(base_estimator, BaseEstimator):
