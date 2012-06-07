@@ -138,6 +138,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sys.stdout.flush()
 
     tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
+    tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
 
     while True:
         if Cov.size:
@@ -234,7 +235,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # TODO: better names for these variables: z
         drop = False
-        z = -coefs[n_iter, active] / (least_squares + tiny)
+        z = -coefs[n_iter, active] / (least_squares + tiny32)
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
