@@ -125,6 +125,13 @@ class mock_urllib2(object):
 
 
 def all_estimators():
+    def is_abstract(c):
+        if not(hasattr(c, '__abstractmethods__')):
+            return False
+        if not len(c.__abstractmethods__):
+            return False
+        return True
+
     all_classes = []
     # get parent folder
     path = sklearn.__path__
@@ -133,8 +140,8 @@ def all_estimators():
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         # get rid of abstract base classes
-        classes = [c for c in classes if not "__abstractmethods__" in
-                c[1].__dict__]
+        print(module)
+        classes = [c for c in classes if not is_abstract(c[1])]
         all_classes.extend(classes)
 
     all_classes = set(all_classes)
