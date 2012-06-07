@@ -33,8 +33,8 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     """
     X_data = np.array(X.data, np.float64)
     if fit_intercept:
-        X = sp.csc_matrix(X, copy=normalize)  # copy if 'normalize' is
-                      # True or X is not a csc matrix
+        # copy if 'normalize' is True or X is not a csc matrix
+        X = sp.csc_matrix(X, copy=normalize)
         X_mean, X_std = csc_mean_variance_axis0(X)
         if normalize:
             X_std = cd_fast_sparse.sparse_std(
@@ -101,7 +101,8 @@ class ElasticNet(LinearModel):
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
-        matrix can also be passed as argument.
+        matrix can also be passed as argument. For sparse input
+        this option is always True to preserve sparsity.
 
     max_iter: int, optional
         The maximum number of iterations
@@ -122,8 +123,16 @@ class ElasticNet(LinearModel):
     positive: bool, optional
         When set to True, forces the coefficients to be positive.
 
-    sparse_coef_: is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+    Attributes
+    ----------
+    coef_ : array, shape = [n_features]
+        parameter vector (w in the fomulation formula)
+
+    sparse_coef_: scipy.sparse matrix, shape = [n_features, 1]
+        sparse_coef_: is a readonly property derived from coef_
+
+    intercept_ : float
+        independent term in decision function.
 
     Notes
     -----
@@ -151,7 +160,7 @@ class ElasticNet(LinearModel):
 
         Parameters
         -----------
-        X: ndarray, (n_samples, n_features)
+        X: ndarray or scipy.sparse matrix, (n_samples, n_features)
             Data
         y: ndarray, (n_samples)
             Target
@@ -173,7 +182,6 @@ class ElasticNet(LinearModel):
         """
 
         fit = self._sparse_fit if sp.isspmatrix(X) else self._dense_fit
-
         fit(X, y, Xy, coef_init)
         return self
 
@@ -293,7 +301,7 @@ class ElasticNet(LinearModel):
 
         Parameters
         ----------
-        X : scipy.sparse matrix of shape [n_samples, n_features]
+        X : numpy array or scipy.sparse matrix of shape [n_samples, n_features]
 
         Returns
         -------
@@ -338,7 +346,8 @@ class Lasso(ElasticNet):
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
-        matrix can also be passed as argument.
+        matrix can also be passed as argument. For sparse input
+        this option is always True to preserve sparsity.
 
     max_iter: int, optional
         The maximum number of iterations
@@ -361,6 +370,9 @@ class Lasso(ElasticNet):
     ----------
     `coef_` : array, shape = [n_features]
         parameter vector (w in the fomulation formula)
+
+    sparse_coef_: scipy.sparse matrix, shape = [n_features, 1]
+        sparse_coef_: is a readonly property derived from coef_
 
     `intercept_` : float
         independent term in decision function.
