@@ -17,6 +17,16 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
 
+
+def test_sparse_coef():
+    """ Check that the sparse_coef propery works """
+    clf = ElasticNet()
+    clf.coef_ = [1, 2, 3]
+
+    assert_true(sp.isspmatrix(clf.sparse_coef_))
+    assert_equal(clf.sparse_coef_.todense().tolist()[0], clf.coef_)
+
+
 def test_lasso_zero():
     """Check that the sparse lasso can handle zero data without crashing"""
     X = sp.csc_matrix((3, 1))
