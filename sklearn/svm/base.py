@@ -165,6 +165,8 @@ class BaseLibSVM(BaseEstimator):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
+        self.shape_fit_ = X.shape
+
         if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self._gamma = 1.0 / X.shape[1]
@@ -197,8 +199,6 @@ class BaseLibSVM(BaseEstimator):
 
         if hasattr(self.kernel, '__call__') and X.shape[0] != X.shape[1]:
             raise ValueError("X.shape[0] should be equal to X.shape[1]")
-
-        self.shape_fit_ = X.shape
 
         libsvm.set_verbosity_wrap(self.verbose)
 
@@ -259,6 +259,17 @@ class BaseLibSVM(BaseEstimator):
         C : array, shape = [n_samples]
         """
         X = self._validate_for_predict(X)
+        n_samples, n_features = X.shape
+
+        if self.kernel == "precomputed":
+            if X.shape[1] != self.shape_fit_[0]:
+                raise ValueError("X.shape[1] = %d should be equal to %d, "
+                                 "the number of samples at training time" %
+                                 (X.shape[1], self.shape_fit_[0]))
+        elif n_features != self.shape_fit_[1]:
+            raise ValueError("X.shape[1] = %d should be equal to %d, "
+                             "the number of features at training time" %
+                             (n_features, self.shape_fit_[1]))
         predict = self._sparse_predict if self._sparse else self._dense_predict
         return predict(X)
 
@@ -270,15 +281,11 @@ class BaseLibSVM(BaseEstimator):
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
 
-        if hasattr(self.kernel, '__call__') or self.kernel == "precomputed":
+        if hasattr(self.kernel, '__call__'):
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
-        elif n_features != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] = %d should be equal to %d, "
-                             "the number of features at training time" %
-                             (n_features, self.shape_fit_[1]))
 
         C = 0.0  # C is not useful here
 
