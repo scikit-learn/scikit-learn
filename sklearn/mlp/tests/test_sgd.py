@@ -50,17 +50,18 @@ def test_sgd_faster():
     data = digits.images.reshape((n_samples, -1))
 
     data = preprocessing.scale(data)
-
     classifier = MLPClassifierA(n_hidden=10, lr=0.3, loss='cross_entropy', output_layer='softmax', batch_size=100)
     start = datetime.now()
+    np.random.seed(0)
     classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2],
-        max_epochs=1000)
+        max_epochs=1000, shuffle_data=False)
     time_sgd_a = datetime.now() - start
     expected_a = digits.target[n_samples / 2:]
     predicted_a = classifier.predict(data[n_samples / 2:])
 
     classifier = MLPClassifier(n_hidden=10, lr=0.3, loss_function='cross-entropy', output_function='softmax', batch_size=100)
     start = datetime.now()
+    np.random.seed(0)
     classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2],
         max_epochs=1000)
     time_sgd = datetime.now() - start
