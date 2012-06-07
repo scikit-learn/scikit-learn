@@ -1,6 +1,7 @@
 """
 General tests for all estimators in sklearn.
 """
+import warnings
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
@@ -23,14 +24,17 @@ def test_all_estimators():
         if E in dont_test:
             continue
         # test default-constructibility
-        if issubclass(E, MetaEstimatorMixin):
-            e = E(clf)
-        else:
-            e = E()
-        #test cloning
-        clone(e)
-        ## test __repr__
-        #print(e)
+        # get rid of deprecation warnings
+        with warnings.catch_warnings(record=True) as w:
+            if issubclass(E, MetaEstimatorMixin):
+                e = E(clf)
+            else:
+                e = E()
+            #test cloning
+            clone(e)
+        print(w)
+        # test __repr__
+        print(e)
 
 
 def test_classifiers():
