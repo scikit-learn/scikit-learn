@@ -40,7 +40,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
                 X.shape[0], X.shape[1],
                 X_data, X.indices, X.indptr, X_mean)
             X_std[X_std == 0] = 1
-            inplace_csc_column_scale(X)
+            inplace_csc_column_scale(X, X_std)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)
