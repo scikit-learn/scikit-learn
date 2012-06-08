@@ -55,6 +55,7 @@ def test_enet_toy_list_input():
     """Test ElasticNet for various parameters of alpha and rho with list X"""
 
     X = np.array([[-1], [0], [1]])
+    X = sp.csc_matrix(X)
     Y = [-1, 0, 1]       # just a straight line
     T = np.array([[2], [3], [4]])  # test sample
 
@@ -139,6 +140,7 @@ def make_sparse_data(n_samples, n_features, n_informative, seed=42,
 
     # generate training ground truth labels
     y = np.dot(X, w)
+    X = sp.csc_matrix(X)
     return X, y
 
 
