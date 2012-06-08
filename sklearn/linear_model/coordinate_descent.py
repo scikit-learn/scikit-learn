@@ -247,7 +247,7 @@ class ElasticNet(LinearModel):
         return self
 
     def _sparse_fit(self, X, y, Xy=None, coef_init=None):
-        X = sp.csc_matrix(X)
+        X = sp.csc_matrix(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
