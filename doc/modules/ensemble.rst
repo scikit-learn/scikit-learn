@@ -226,8 +226,8 @@ parameter ``n_estimators``; The maximum depth of each tree is controlled via
 ``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
-.. note:: 
-   
+.. note::
+
    Classification with more than 2 classes requires the induction
    of ``n_classes`` regression trees at each at each iteration,
    thus, the total number of induced trees equals
