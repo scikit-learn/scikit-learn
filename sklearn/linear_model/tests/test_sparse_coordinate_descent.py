@@ -30,13 +30,14 @@ def test_sparse_coef():
 
 def test_normalize_option():
     """ Check that the normalize option in enet works """
-    X, y = make_regression(random_state=0, n_informative=4, n_features=4, n_samples=4)
+    X = sp.csc_matrix([[-1], [0], [1]])
+    y = [-1, 0, 1]
     clf_dense = ElasticNet(fit_intercept=True, normalize=True)
     clf_sparse = ElasticNet(fit_intercept=True, normalize=True)
     clf_dense.fit(X, y)
     X = sp.csc_matrix(X)
     clf_sparse.fit(X, y)
-    assert_almost_equal(clf_sparse.dual_gap_, 0)
+    assert_almost_equal(clf_dense.dual_gap_, 0)
     assert_array_almost_equal(clf_dense.coef_, clf_sparse.coef_)
 
 
