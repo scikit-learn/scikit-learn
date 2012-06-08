@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV
+from sklearn.datasets.samples_generator import make_classification
 
 
 def test_sparse_coef():
@@ -25,6 +26,17 @@ def test_sparse_coef():
 
     assert_true(sp.isspmatrix(clf.sparse_coef_))
     assert_equal(clf.sparse_coef_.todense().tolist()[0], clf.coef_)
+
+
+def test_normalize_option():
+    """ Check that the normalize option in enet works """
+    X, y = make_classification(n_samples=50, n_features=10, n_informative=8)
+    X = sp.csc_matrix(X)
+    clf = ElasticNet()
+    clf_normalize = ElasticNet(fit_intercept=True, normalize=True)
+    clf.fit(X, y)
+    clf_normalize.fit(X, y)
+    assert_array_almost_equal(clf.coef_, clf_normalize.coef_)
 
 
 def test_lasso_zero():
