@@ -987,14 +987,14 @@ class MultiTaskLasso(Lasso):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 1, 2], [0, 1, 2]])
-    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', tol=0.0001,
-       warm_start=False)
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+            normalize=False, tol=0.0001, warm_start=False)
     >>> print clf.coef_
-    [[ 0.85  0.  ], [ 0.85  0.  ]]
+    [[ 0.89393398  0.        ]
+     [ 0.89393398  0.        ]]
     >>> print clf.intercept_
-    [0.15, 0.15]
+    [ 0.10606602  0.10606602]
 
     See also
     --------
