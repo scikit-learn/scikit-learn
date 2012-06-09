@@ -1,22 +1,14 @@
-import warnings
-from sys import version_info
-
 import numpy as np
-from scipy import interpolate
 import scipy.sparse as sp
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
-from nose import SkipTest
 from nose.tools import assert_true
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less, assert_greater
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.linear_model.coordinate_descent import Lasso, ElasticNet
 
 
 def test_sparse_coef():
