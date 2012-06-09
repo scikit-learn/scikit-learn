@@ -97,7 +97,7 @@ class ElasticNet(LinearModel):
     Attributes
     ----------
     coef_ : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the cost function formula)
 
     sparse_coef_: scipy.sparse matrix, shape = [n_features, 1]
         sparse_coef_: is a readonly property derived from coef_
@@ -157,6 +157,7 @@ class ElasticNet(LinearModel):
         return self
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None):
+
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
@@ -219,7 +220,9 @@ class ElasticNet(LinearModel):
         return self
 
     def _sparse_fit(self, X, y, Xy=None, coef_init=None):
-        X = sp.csc_matrix(X, dtype=np.float64)
+
+        if not sp.isspmatrix_csc(X) or not np.issubdtype(np.float64, X):
+            X = sp.csc_matrix(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
@@ -340,7 +343,7 @@ class Lasso(ElasticNet):
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the cost function formula)
 
     sparse_coef_: scipy.sparse matrix, shape = [n_features, 1]
         sparse_coef_: is a readonly property derived from coef_
