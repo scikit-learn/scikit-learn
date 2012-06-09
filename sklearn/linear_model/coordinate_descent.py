@@ -14,47 +14,19 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import LinearModel
+from .base import sparse_center_data
 from ..utils import as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import csc_mean_variance_axis0, \
-                                inplace_csc_column_scale
+
 
 from . import cd_fast
 
 
-def sparse_center_data(X, y, fit_intercept, normalize=False):
-    """
-    Compute informations needed to center data to have mean zero along
-    axis 0. Be aware that X will not be centered since it would break
-    the sparsity, but will be normalized if asked so.
-    """
-    X_data = np.array(X.data, np.float64)
-    if fit_intercept:
-        # copy if 'normalize' is True or X is not a csc matrix
-        X = sp.csc_matrix(X, copy=normalize)
-        X_mean, X_std = csc_mean_variance_axis0(X)
-        if normalize:
-            X_std = cd_fast.sparse_std(
-                X.shape[0], X.shape[1],
-                X_data, X.indices, X.indptr, X_mean)
-            X_std[X_std == 0] = 1
-            inplace_csc_column_scale(X, X_std)
-        else:
-            X_std = np.ones(X.shape[1])
-        y_mean = y.mean(axis=0)
-        y = y - y_mean
-    else:
-        X_mean = np.zeros(X.shape[1])
-        X_std = np.ones(X.shape[1])
-        y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
-
-    X_data = np.array(X.data, np.float64)
-    return X_data, y, X_mean, y_mean, X_std
-
 ###############################################################################
 # ElasticNet model
+
 
 class ElasticNet(LinearModel):
     """Linear Model trained with L1 and L2 prior as regularizer
@@ -262,7 +234,7 @@ class ElasticNet(LinearModel):
 
         if coef_init is None and \
             (not self.warm_start or self.coef_ is None):
-                self.coef_ = np.zeros(n_features, dtype=np.float64)
+            self.coef_ = np.zeros(n_features, dtype=np.float64)
         else:
             if coef_init.shape[0] != X.shape[1]:
                 raise ValueError("X and coef_init have incompatible " +
