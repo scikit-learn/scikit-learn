@@ -7,13 +7,6 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('sparse', parent_package, top_path)
 
-    config.add_extension('cd_fast_sparse',
-                         sources=[join('src', 'cd_fast_sparse.c')],
-                         include_dirs=[numpy.get_include()]
-                         )
-
-    # add other directories
-    config.add_subpackage('tests')
     return config
 
 if __name__ == '__main__':
