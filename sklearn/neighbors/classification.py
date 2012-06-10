@@ -126,13 +126,19 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         labels: array
             List of class labels (one for each data sample).
         """
-        probabilities = self.predict_proba(X)
+        X = atleast2d_or_csr(X)
 
-        # If self._classes (unique class labels) are guaranteed to be
-        # np.arange(n_classes) (e.g. consecutive and starting with 0),
-        # then the below return simplifies into:
-        # return probabilities.argmax(axis=1).astype(np.int)
-        return self._classes[probabilities.argmax(axis=1)].astype(np.int)
+        neigh_dist, neigh_ind = self.kneighbors(X)
+        pred_labels = self._y[neigh_ind]
+
+        weights = _get_weights(neigh_dist, self.weights)
+
+        if weights is None:
+            mode, _ = stats.mode(pred_labels, axis=1)
+        else:
+            mode, _ = weighted_mode(pred_labels, weights, axis=1)
+
+        return mode.flatten().astype(np.int)
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
