@@ -560,8 +560,8 @@ For sparse data
    :toctree: generated/
    :template: class.rst
 
-   linear_model.sparse.Lasso
-   linear_model.sparse.ElasticNet
+   linear_model.Lasso
+   linear_model.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
    linear_model.LogisticRegression
