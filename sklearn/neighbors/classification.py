@@ -169,13 +169,15 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         # Translate class label to a column index in probabilities array.
         # This may not be needed provided classes labels are guaranteed to be
         # np.arange(n_classes) (e.g. consecutive and starting with 0)
-        to_indices = np.vectorize(self._classes.tolist().index)
+        pred_indices = pred_labels.copy()
+        for k, c in enumerate(self._classes):
+            pred_indices[pred_labels == c] = k
 
         # a simple ':' index doesn't work right
         all_rows = np.arange(X.shape[0])
 
-        for i, neighbors in enumerate(pred_labels.T):  # loop is O(n_neighbors)
-            probabilities[all_rows, to_indices(neighbors)] += weights[:, i]
+        for i, idx in enumerate(pred_indices.T):  # loop is O(n_neighbors)
+            probabilities[all_rows, idx] += weights[:, i]
 
         # normalize 'votes' into real [0,1] probabilities
         probabilities = (probabilities.T / probabilities.sum(axis=1)).T
