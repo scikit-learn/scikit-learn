@@ -18,6 +18,7 @@ libsvm command line programs.
 from bz2 import BZ2File
 from contextlib import closing
 import gzip
+import io
 import os.path
 
 import numpy as np
@@ -92,8 +93,8 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
 
 def _gen_open(f):
-    if isinstance(f, int):  # file descriptor, supported in Python 3
-        return open(f, "rb")
+    if isinstance(f, int):  # file descriptor
+        return io.open(f, "rb")
     elif not isinstance(f, basestring):
         raise TypeError("expected {str, int, file-like}, got %s" % type(f))
 
@@ -125,9 +126,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    files : iterable over {str, file-like}
+    files : iterable over {str, file-like, int}
         (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
-        be uncompressed on the fly.
+        be uncompressed on the fly. If an integer is passed, it is assumed to
+        be a file descriptor.
 
     n_features: int or None
         The number of features to use. If None, it will be inferred from the

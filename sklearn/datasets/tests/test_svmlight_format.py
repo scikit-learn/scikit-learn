@@ -2,7 +2,7 @@ from bz2 import BZ2File
 import gzip
 from io import BytesIO
 import numpy as np
-import os.path
+import os
 import shutil
 import tempfile
 
@@ -47,6 +47,16 @@ def test_load_svmlight_file():
 
     # test y
     assert_array_equal(y, [1, 2, 3])
+
+
+def test_load_svmlight_file_fd():
+    # test loading from file descriptor
+    X1, y1 = load_svmlight_file(datafile)
+
+    fd = os.open(datafile, os.O_RDONLY)
+    X2, y2 = load_svmlight_file(fd)
+    assert_equal(X1.data, X2.data)
+    assert_equal(y1, y2)
 
 
 def test_load_svmlight_file_multilabel():
