@@ -158,6 +158,7 @@ Loaders
    datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
+   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.load_sample_image
    datasets.load_sample_images
