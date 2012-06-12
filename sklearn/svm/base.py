@@ -458,7 +458,8 @@ class BaseLibSVM(BaseEstimator):
             in the model.
         """
         if self._sparse:
-            raise ValueError("decision_function not supported for sparse SVM")
+            raise NotImplementedError("decision_function not supported for"
+                    " sparse SVM")
 
         X = array2d(X, dtype=np.float64, order="C")
 
