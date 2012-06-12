@@ -9,6 +9,7 @@ import sys
 import warnings
 import itertools
 import operator
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
@@ -615,7 +616,9 @@ def _path_residuals(X, y, train, test, path, path_params, rho=1):
 
 class LinearModelCV(LinearModel):
     """Base class for iterative model fitting along a regularization path"""
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
             normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
             copy_X=True, cv=None, verbose=False):
