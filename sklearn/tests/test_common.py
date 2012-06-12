@@ -8,10 +8,10 @@ from numpy.testing import assert_array_equal
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
-from sklearn.base import clone, ClassifierMixin
+from sklearn.base import clone, ClassifierMixin, RegressorMixin
 from sklearn.preprocessing import Scaler
 #from sklearn.datasets import load_digits
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, load_boston
 from sklearn.metrics import zero_one_score
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM, BaseLibLinear
@@ -25,6 +25,7 @@ from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.linear_model import RidgeClassifier, RidgeClassifierCV
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
@@ -96,3 +97,29 @@ def test_classifiers():
                 assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
             except NotImplementedError:
                 pass
+
+
+def test_regressors():
+    estimators = all_estimators()
+    regressors = [(name, E) for name, E in estimators if issubclass(E,
+        RegressorMixin)]
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    # TODO: test with intercept
+    # TODO: test with multiple responses
+    X = Scaler().fit_transform(X)
+    y = Scaler().fit_transform(y)
+    for name, Reg in regressors:
+        if Reg in dont_test or Reg in meta_estimators:
+            continue
+        if Reg in [RidgeClassifier, RidgeClassifierCV]:
+            #TODO this is not a regressor!
+            continue
+        reg = Reg()
+        if hasattr(reg, 'alpha'):
+            reg.set_params(alpha=0.01)
+
+        # fit
+        reg.fit(X, y)
+        reg.predict(X)
+        assert_greater(reg.score(X, y), 0.5)
