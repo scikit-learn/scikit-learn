@@ -9,6 +9,7 @@ from numpy.testing import assert_array_equal
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin
+from sklearn.preprocessing import Scaler
 from sklearn.datasets import load_iris
 from sklearn.metrics import zero_one_score
 from sklearn.lda import LDA
@@ -21,6 +22,7 @@ from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
 from sklearn.feature_selection import RFE, RFECV
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
@@ -45,7 +47,7 @@ def test_all_estimators():
             #test cloning
             clone(e)
             # test __repr__
-            print(e)
+            repr(e)
         print(w)
 
 
@@ -55,9 +57,11 @@ def test_classifiers():
         ClassifierMixin)]
     iris = load_iris()
     X, y = iris.data, iris.target
-    #X = Scaler().fit_transform(X)
+    X = Scaler().fit_transform(X)
     for name, Clf in classifiers:
         if Clf in dont_test or Clf in meta_estimators:
+            continue
+        if Clf in [MultinomialNB, BernoulliNB]:
             continue
         clf = Clf()
         # fit
