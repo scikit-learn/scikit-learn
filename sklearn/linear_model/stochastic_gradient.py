@@ -81,7 +81,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         not achievable with 'l2'.
 
     alpha : float
-        Constant that multiplies the regularization term. Defaults to 0.0001
+        Constant that multiplies the regularization term. Defaults to 0.01
 
     rho : float
         The Elastic Net mixing parameter, with 0 < rho <= 1.
@@ -93,7 +93,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     n_iter: int, optional
         The number of passes over the training data (aka epochs).
-        Defaults to 5.
+        Defaults to 20.
 
     shuffle: bool, optional
         Whether or not the training data should be shuffled after each epoch.
@@ -154,9 +154,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
+    SGDClassifier(alpha=0.01, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, learning_rate='optimal', loss='hinge',
-            n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
+            n_iter=20, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
             shuffle=False, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -166,8 +166,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     LinearSVC, LogisticRegression, Perceptron
 
     """
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.01,
+                 rho=0.85, fit_intercept=True, n_iter=20, shuffle=False,
                  verbose=0, epsilon=0.1, n_jobs=1, seed=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False):
@@ -610,7 +610,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
+    SGDRegressor(alpha=0.01, epsilon=0.1, eta0=0.01, fit_intercept=True,
            learning_rate='invscaling', loss='squared_loss', n_iter=5, p=None,
            penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
            verbose=0, warm_start=False)
@@ -620,7 +620,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     Ridge, ElasticNet, Lasso, SVR
 
     """
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.01,
             rho=0.85, fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
             epsilon=0.1, p=None, seed=0, learning_rate="invscaling", eta0=0.01,
             power_t=0.25, warm_start=False):
