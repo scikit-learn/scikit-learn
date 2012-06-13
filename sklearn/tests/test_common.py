@@ -61,7 +61,7 @@ def test_classifiers():
         ClassifierMixin)]
     iris = load_iris()
     X, y = iris.data, iris.target
-    X, y = shuffle(X, y)
+    X, y = shuffle(X, y, random_state=7)
     #digits = load_digits()
     #X, y = digits.data, digits.target
     X = Scaler().fit_transform(X)
@@ -107,6 +107,7 @@ def test_regressors():
         RegressorMixin)]
     boston = load_boston()
     X, y = boston.data, boston.target
+    X, y = shuffle(X, y, random_state=0)
     # TODO: test with intercept
     # TODO: test with multiple responses
     X = Scaler().fit_transform(X)
