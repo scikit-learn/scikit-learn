@@ -755,9 +755,6 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
                          sample_weight=sample_weight * sample_weight2)
         return self
 
-    def decision_function(self, X):
-        return _BaseRidgeCV.decision_function(self, X)
-
     def predict(self, X):
         """Predict target values according to the fitted model.
 
