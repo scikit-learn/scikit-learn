@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import LinearModel
+from ..base import RegressorMixin
 from .base import sparse_center_data
 from ..utils import as_float_array
 from ..cross_validation import check_cv
@@ -28,7 +29,7 @@ from . import cd_fast
 # ElasticNet model
 
 
-class ElasticNet(LinearModel):
+class ElasticNet(LinearModel, RegressorMixin):
     """Linear Model trained with L1 and L2 prior as regularizer
 
     Minimizes the objective function::
@@ -711,7 +712,7 @@ class LinearModelCV(LinearModel):
         return self
 
 
-class LassoCV(LinearModelCV):
+class LassoCV(LinearModelCV, RegressorMixin):
     """Lasso linear model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
@@ -789,7 +790,7 @@ class LassoCV(LinearModelCV):
     n_jobs = 1
 
 
-class ElasticNetCV(LinearModelCV):
+class ElasticNetCV(LinearModelCV, RegressorMixin):
     """Elastic Net model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.

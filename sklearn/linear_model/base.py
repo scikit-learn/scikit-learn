@@ -96,7 +96,7 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
     return X, y, X_mean, y_mean, X_std
 
 
-class LinearModel(BaseEstimator, RegressorMixin):
+class LinearModel(BaseEstimator):
     """Base class for Linear Models"""
 
     def decision_function(self, X):
@@ -140,7 +140,7 @@ class LinearModel(BaseEstimator, RegressorMixin):
             self.intercept_ = 0
 
 
-class LinearRegression(LinearModel):
+class LinearRegression(LinearModel, RegressorMixin):
     """
     Ordinary least squares Linear Regression.
 
