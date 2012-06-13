@@ -54,8 +54,11 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f: str or file-like open in binary mode.
-        (Path to) a file to load.
+    f: {str, file-like, int}
+        (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
+        be uncompressed on the fly. If an integer is passed, it is assumed to
+        be a file descriptor. A file-like or file descriptor will not be closed
+        by this function. A file-like object must be opened in binary mode.
 
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
@@ -94,7 +97,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
-        return io.open(f, "rb")
+        return io.open(f, "rb", closefd=False)
     elif not isinstance(f, basestring):
         raise TypeError("expected {str, int, file-like}, got %s" % type(f))
 
@@ -129,7 +132,9 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     files : iterable over {str, file-like, int}
         (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
-        be a file descriptor.
+        be a file descriptor. File-likes and file descriptors will not be
+        closed by this function. File-like objects must be opened in binary
+        mode.
 
     n_features: int or None
         The number of features to use. If None, it will be inferred from the
