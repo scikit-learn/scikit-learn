@@ -9,6 +9,7 @@ from numpy.testing import assert_array_equal
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin
+from sklearn.utils import shuffle
 from sklearn.preprocessing import Scaler
 #from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris, load_boston
@@ -60,6 +61,7 @@ def test_classifiers():
         ClassifierMixin)]
     iris = load_iris()
     X, y = iris.data, iris.target
+    X, y = shuffle(X, y)
     #digits = load_digits()
     #X, y = digits.data, digits.target
     X = Scaler().fit_transform(X)
