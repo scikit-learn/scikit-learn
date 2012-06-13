@@ -7,6 +7,7 @@ Ridge regression
 # License: Simplified BSD
 
 
+from abc import ABCMeta, abstractmethod
 import warnings
 import numpy as np
 
@@ -126,7 +127,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
 
 class _BaseRidge(LinearModel):
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, tol=1e-3):
         self.alpha = alpha
