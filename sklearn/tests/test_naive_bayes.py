@@ -73,6 +73,7 @@ def test_mnnb():
     for X in [X2, scipy.sparse.csr_matrix(X2)]:
         # Check the ability to predict the learning set.
         clf = MultinomialNB()
+        assert_raises(ValueError, clf.fit, -X, y2)
         y_pred = clf.fit(X, y2).predict(X)
 
         assert_array_equal(y_pred, y2)
