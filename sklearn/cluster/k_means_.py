@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils import check_arrays
@@ -596,7 +596,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-class KMeans(BaseEstimator):
+class KMeans(BaseEstimator, ClusterMixin):
     """K-Means clustering
 
     Parameters
@@ -755,14 +755,6 @@ class KMeans(BaseEstimator):
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
             n_jobs=self.n_jobs)
         return self
-
-    def fit_predict(self, X):
-        """Compute cluster centers and predict cluster index for each sample.
-
-        Convenience method; equivalent to calling fit(X) followed by
-        predict(X).
-        """
-        return self.fit(X).labels_
 
     def transform(self, X, y=None):
         """Transform the data to a cluster-distance space
@@ -960,7 +952,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
     return False
 
 
-class MiniBatchKMeans(KMeans):
+class MiniBatchKMeans(KMeans, ClusterMixin):
     """Mini-Batch K-Means clustering
 
     Parameters

@@ -417,6 +417,14 @@ def test_predict_minibatch_dense_input():
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
 
 
+def test_fit_predict_minibatch_dense_input():
+    mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, random_state=40)
+    pred = mb_k_means.fit_predict(X)
+    assert_array_equal(mb_k_means.labels_, pred)
+    pred2 = mb_k_means.predict(X)
+    assert_array_equal(pred2, pred)
+
+
 def test_predict_minibatch_kmeanspp_init_sparse_input():
     mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init='k-means++',
                                  n_init=10).fit(X_csr)

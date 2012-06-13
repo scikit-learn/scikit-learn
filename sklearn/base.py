@@ -364,6 +364,34 @@ class TransformerMixin(object):
 
 
 ###############################################################################
+class ClusterMixin(object):
+    """Mixin class for all clustering objects in scikit-learn"""
+
+    def fit_predict(self, X, y=None, **fit_params):
+        """Fit to data, return cluster memberships.
+
+        Fit clustering to X and returns the computed
+        cluster memberships.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Training set.
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+            Cluster memberships
+
+        """
+        self.fit(X)
+        if hasattr(self, 'labels_'):
+            return self.labels_
+        else:
+            # for MiniBatchKMeans with compute_labels=False
+            return self.predict(X)
+
+
+###############################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):
