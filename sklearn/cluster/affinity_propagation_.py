@@ -9,7 +9,7 @@ clustering.
 
 import numpy as np
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
 
 
@@ -165,7 +165,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
 
 ###############################################################################
 
-class AffinityPropagation(BaseEstimator):
+class AffinityPropagation(BaseEstimator, ClusterMixin):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
