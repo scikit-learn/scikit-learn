@@ -226,8 +226,8 @@ parameter ``n_estimators``; The maximum depth of each tree is controlled via
 ``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
-.. note:: 
-   
+.. note::
+
    Classification with more than 2 classes requires the induction
    of ``n_classes`` regression trees at each at each iteration,
    thus, the total number of induced trees equals
@@ -347,6 +347,13 @@ the parameter ``loss``:
     * Least absolute deviation (``'lad'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
+    * Huber (``'huber'``): Another robust loss function that combines
+      least squares and least absolute deviation; use ``alpha`` to
+      control the sensitivity w.r.t. outliers (see [F2001]_ for more
+      information).
+    * Quantile (``'quantile'``): A loss function for quantile regression.
+      Use ``0 < alpha < 1`` to specify the quantile. This loss function
+      can be used to create prediction intervals.
 
   * Classification
 
@@ -411,6 +418,9 @@ does poorly.
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
+
+Another strategy to reduce the variance is by subsampling the features as in
+Random Forests using the ``max_features`` parameter.
 
 
 .. topic:: Examples:
