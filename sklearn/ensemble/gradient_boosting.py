@@ -27,12 +27,13 @@ import numpy as np
 from scipy import stats
 
 from .base import BaseEnsemble
+from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d
 
 from ..tree.tree import Tree
-from ..tree._tree import _find_best_split, _find_best_random_split
+from ..tree._tree import _find_best_split
 from ..tree._tree import _random_sample_mask
 from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
@@ -41,11 +42,8 @@ from ..tree._tree import DTYPE
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 
-__all__ = ["GradientBoostingClassifier",
-           "GradientBoostingRegressor"]
 
-
-class QuantileEstimator(object):
+class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
         assert 0 < alpha < 1.0
@@ -60,7 +58,7 @@ class QuantileEstimator(object):
         return y
 
 
-class MedianEstimator(object):
+class MedianEstimator(BaseEstimator):
     """An estimator predicting the median of the training targets."""
     def fit(self, X, y):
         self.median = np.median(y)
@@ -71,7 +69,7 @@ class MedianEstimator(object):
         return y
 
 
-class MeanEstimator(object):
+class MeanEstimator(BaseEstimator):
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y):
         self.mean = np.mean(y)
@@ -82,7 +80,7 @@ class MeanEstimator(object):
         return y
 
 
-class LogOddsEstimator(object):
+class LogOddsEstimator(BaseEstimator):
     """An estimator predicting the log odds ratio."""
     def fit(self, X, y):
         n_pos = np.sum(y)
@@ -94,7 +92,7 @@ class LogOddsEstimator(object):
         return y
 
 
-class PriorProbabilityEstimator(object):
+class PriorProbabilityEstimator(BaseEstimator):
     """An estimator predicting the probability of each
     class in the training data.
     """
@@ -233,7 +231,9 @@ class LeastAbsoluteError(RegressionLossFunction):
         return np.abs(y - pred.ravel()).mean()
 
     def negative_gradient(self, y, pred, **kargs):
-        return np.sign(y - pred.ravel())
+        """1.0 if y - pred > 0.0 else -1.0"""
+        pred = pred.ravel()
+        return 2.0 * (y - pred > 0.0) - 1.0
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
@@ -316,7 +316,7 @@ class QuantileLossFunction(RegressionLossFunction):
         alpha = self.alpha
         pred = pred.ravel()
         mask = y > pred
-        return alpha * mask - (1.0 - alpha) * ~mask
+        return (alpha * mask) - ((1.0 - alpha) * ~mask)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
@@ -690,6 +690,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
 
     max_features : int, None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -854,6 +856,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
 
     max_features : int, None, optional (default=None)
         The number of features to consider when looking for the best split.
@@ -863,8 +867,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         and an increase in bias.
 
     alpha : float (default=0.9)
-        The alpha-quantile of the huber loss function for robust regression.
-        Only if ``loss='huber'``.
+        The alpha-quantile of the huber loss function and the quantile
+        loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
     Attributes
     ----------
