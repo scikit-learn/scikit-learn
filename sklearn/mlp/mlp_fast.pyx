@@ -114,10 +114,14 @@ cdef class MultiCrossEntropyLoss(LossFunction):
 cdef class OutputFunction:
     """Base class for ouput functions"""
 
-    cdef inline output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
+    cdef inline output(self,
+                       np.ndarray[DTYPE_t, ndim=2] x,
+                       np.ndarray[DTYPE_t, ndim=2] out):
         raise NotImplementedError()
 
-    cdef inline np.ndarray[DTYPE_t, ndim=2] doutput(self, np.ndarray[DTYPE_t, ndim=2] x):
+    cdef inline doutput(self,
+                        np.ndarray[DTYPE_t, ndim=2] x,
+                        np.ndarray[DTYPE_t, ndim=2] out):
         raise NotImplementedError()
 
 
@@ -126,9 +130,11 @@ cdef class Tanh(OutputFunction):
     cdef inline output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
         np.tanh(x, out)
 
-    cdef inline np.ndarray[DTYPE_t, ndim=2] doutput(self, np.ndarray[DTYPE_t, ndim=2] x):
-        return -x * x + 1
-
+    cdef inline doutput(self,
+                        np.ndarray[DTYPE_t, ndim=2] x,
+                        np.ndarray[DTYPE_t, ndim=2] out):
+        np.multiply(-x, x, out)
+        out += 1
 
 cdef class SoftMax(OutputFunction):
 
@@ -165,6 +171,45 @@ cdef forward(np.ndarray[DTYPE_t, ndim=2] X,
     output.output(x_output, x_output)
 
 
+cdef backward(np.ndarray[DTYPE_t, ndim=2] X,
+              np.ndarray[DTYPE_t, ndim=2] x_output,
+              np.ndarray[DTYPE_t, ndim=2] x_hidden,
+              np.ndarray[DTYPE_t, ndim=2] y,
+              np.ndarray[DTYPE_t, ndim=2] weights_output,
+              np.ndarray[DTYPE_t, ndim=1] bias_output,
+              np.ndarray[DTYPE_t, ndim=2] weights_hidden,
+              np.ndarray[DTYPE_t, ndim=1] bias_hidden,
+              np.ndarray[DTYPE_t, ndim=2] delta_o,
+              np.ndarray[DTYPE_t, ndim=2] delta_h,
+              np.ndarray[DTYPE_t, ndim=2] dx_output,
+              np.ndarray[DTYPE_t, ndim=2] dx_hidden,
+              LossFunction loss,
+              OutputFunction output,
+              OutputFunction hidden,
+              np.float64_t lr):
+
+    cdef int batch_size = X.shape[0]
+
+    # Output layer
+    if isinstance(loss, (CrossEntropyLoss, MultiCrossEntropyLoss)):
+        loss.dloss(y, x_output, delta_o)
+    else:
+        loss.dloss(y, x_output, delta_o)
+        output.doutput(x_output, dx_output)
+        delta_o *= dx_output
+
+    # Hidden layer
+    np.dot(delta_o, weights_output.T, delta_h)
+    hidden.doutput(x_hidden, dx_hidden)
+    delta_h *= dx_hidden
+
+    # Update weights
+    weights_output += lr / batch_size * np.dot(x_hidden.T, delta_o)
+    bias_output += lr * np.mean(delta_o, axis=0)
+    weights_hidden += lr / batch_size * np.dot(X.T, delta_h)
+    bias_hidden += lr * np.mean(delta_h, axis=0)
+
+
 def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
         np.ndarray[DTYPE_t, ndim=2] y not None,
         LossFunction loss not None,
@@ -197,8 +242,10 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
 
     cdef np.ndarray[DTYPE_t, ndim=2] x_hidden = np.empty((batch_size, n_hidden))
     cdef np.ndarray[DTYPE_t, ndim=2] delta_h = np.empty((batch_size, n_hidden))
+    cdef np.ndarray[DTYPE_t, ndim=2] dx_hidden = np.empty((batch_size, n_hidden))
     cdef np.ndarray[DTYPE_t, ndim=2] x_output = np.empty((batch_size, n_outs))
     cdef np.ndarray[DTYPE_t, ndim=2] delta_o = np.empty((batch_size, n_outs))
+    cdef np.ndarray[DTYPE_t, ndim=2] dx_output = np.empty((batch_size, n_hidden))
 
     if y.shape[0] != n_samples:
         raise ValueError("Shapes of X and y don't fit.")
@@ -232,24 +279,22 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
                     output,
                     hidden)
 
-            # BACKWARD
-
-            # Output layer
-            if isinstance(loss, (CrossEntropyLoss, MultiCrossEntropyLoss)):
-                loss.dloss(y[j - batch_size:j], x_output, delta_o)
-            else:
-                loss.dloss(y[j - batch_size:j], x_output, delta_o)
-                delta_o *= output.doutput(x_output)
-
-            # Hidden layer
-            np.dot(delta_o, weights_output.T, delta_h)
-            delta_h *= hidden.doutput(x_hidden)
-
-            # Update weights
-            weights_output += lr / batch_size * np.dot(x_hidden.T, delta_o)
-            bias_output += lr * np.mean(delta_o, axis=0)
-            weights_hidden += lr / batch_size * np.dot(X[j - batch_size:j].T, delta_h)
-            bias_hidden += lr * np.mean(delta_h, axis=0)
+            backward(X[j - batch_size:j],
+                     x_output,
+                     x_hidden,
+                     y[j - batch_size:j],
+                     weights_output,
+                     bias_output,
+                     weights_hidden,
+                     bias_hidden,
+                     delta_o,
+                     delta_h,
+                     dx_output,
+                     dx_hidden,
+                     loss,
+                     output,
+                     hidden,
+                     lr)
 
     return weights_hidden, bias_hidden, weights_output, bias_output
 
