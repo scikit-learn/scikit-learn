@@ -4,14 +4,17 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 
 import numpy as np
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 
 from nose.tools import assert_raises
 
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state
+
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+
 from sklearn import datasets
 
 # toy sample
@@ -327,3 +330,20 @@ def test_degenerate_targets():
     clf.predict(rng.rand(2))
     assert_array_equal(np.ones((1,), dtype=np.float64),
                        clf.predict(rng.rand(2)))
+
+
+def test_quantile_loss():
+    """Check if quantile loss with alpha=0.5 equals lad. """
+    clf_quantile = GradientBoostingRegressor(n_estimators=100, loss='quantile',
+                                             max_depth=4, alpha=0.5,
+                                             random_state=7)
+
+    clf_quantile.fit(boston.data, boston.target)
+    y_quantile = clf_quantile.predict(boston.data)
+
+    clf_lad = GradientBoostingRegressor(n_estimators=100, loss='lad',
+                                        max_depth=4, random_state=7)
+
+    clf_lad.fit(boston.data, boston.target)
+    y_lad = clf_lad.predict(boston.data)
+    assert_array_almost_equal(y_quantile, y_lad, decimal=4)
