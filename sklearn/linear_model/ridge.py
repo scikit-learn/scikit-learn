@@ -125,7 +125,56 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
     return coef.T
 
 
-class Ridge(LinearModel, RegressorMixin):
+class _BaseRidge(LinearModel):
+
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+                 copy_X=True, tol=1e-3):
+        self.alpha = alpha
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.copy_X = copy_X
+        self.tol = tol
+
+    def fit(self, X, y, sample_weight=1.0, solver='auto'):
+        """Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : array-like, shape = [n_samples] or [n_samples, n_responses]
+            Target values
+
+        sample_weight : float or numpy array of shape [n_samples]
+            Individual weights for each sample
+
+        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
+            Solver to use in the computational
+            routines. 'delse_cholesky' will use the standard
+            scipy.linalg.solve function, 'sparse_cg' will use the
+            conjugate gradient solver as found in
+            scipy.sparse.linalg.cg while 'auto' will chose the most
+            appropriate depending on the matrix X.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        X = safe_asarray(X, dtype=np.float)
+        y = np.asarray(y, dtype=np.float)
+
+        X, y, X_mean, y_mean, X_std = \
+           self._center_data(X, y, self.fit_intercept,
+                   self.normalize, self.copy_X)
+
+        self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
+                                      solver, self.tol)
+        self._set_intercept(X_mean, y_mean, X_std)
+        return self
+
+
+class Ridge(_BaseRidge, RegressorMixin):
     """Linear least squares with l2 regularization.
 
     This model solves a regression model where the loss function is
@@ -180,54 +229,8 @@ class Ridge(LinearModel, RegressorMixin):
        tol=0.001)
     """
 
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-            copy_X=True, tol=1e-3):
-        self.alpha = alpha
-        self.fit_intercept = fit_intercept
-        self.normalize = normalize
-        self.copy_X = copy_X
-        self.tol = tol
 
-    def fit(self, X, y, sample_weight=1.0, solver='auto'):
-        """Fit Ridge regression model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
-
-        y : array-like, shape = [n_samples] or [n_samples, n_responses]
-            Target values
-
-        sample_weight : float or numpy array of shape [n_samples]
-            Individual weights for each sample
-
-        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
-            Solver to use in the computational
-            routines. 'delse_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the
-            conjugate gradient solver as found in
-            scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropriate depending on the matrix X.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
-
-        X, y, X_mean, y_mean, X_std = \
-           self._center_data(X, y, self.fit_intercept,
-                   self.normalize, self.copy_X)
-
-        self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
-                                      solver, self.tol)
-        self._set_intercept(X_mean, y_mean, X_std)
-        return self
-
-
-class RidgeClassifier(Ridge, ClassifierMixin):
+class RidgeClassifier(_BaseRidge, ClassifierMixin):
     """Classifier using Ridge regression.
 
     Parameters
@@ -312,11 +315,9 @@ class RidgeClassifier(Ridge, ClassifierMixin):
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self.label_binarizer = LabelBinarizer()
         Y = self.label_binarizer.fit_transform(y)
-        Ridge.fit(self, X, Y, solver=solver, sample_weight=sample_weight_classes)
+        _BaseRidge.fit(self, X, Y, solver=solver,
+                       sample_weight=sample_weight_classes)
         return self
-
-    def decision_function(self, X):
-        return Ridge.decision_function(self, X)
 
     def predict(self, X):
         """Predict target values according to the fitted model.
