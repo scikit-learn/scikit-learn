@@ -131,10 +131,7 @@ class BaseLibSVM(BaseEstimator):
         else:
             self._sparse = self.sparse
 
-        if self._sparse:
-            X = sp.csr_matrix(X)
-        else:
-            X = np.asarray(X, dtype=np.float64, order='C')
+        X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = np.asarray(y, dtype=np.float64, order='C')
 
         if class_weight != None:
@@ -165,8 +162,6 @@ class BaseLibSVM(BaseEstimator):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        self.shape_fit_ = X.shape
-
         if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
             # if custom gamma is not provided ...
             self._gamma = 1.0 / X.shape[1]
@@ -181,6 +176,8 @@ class BaseLibSVM(BaseEstimator):
         if self.verbose:
             print '[LibSVM]',
         fit(X, y, sample_weight, solver_type, kernel)
+
+        self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
