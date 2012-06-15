@@ -1,3 +1,12 @@
+"""
+=====================================================
+Prediction Intervals for Gradient Boosting Regression
+=====================================================
+
+This example shows how quantile regression can be used
+to create prediction intervals.
+"""
+
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 from matplotlib import pyplot as pl
@@ -63,5 +72,4 @@ pl.xlabel('$x$')
 pl.ylabel('$f(x)$')
 pl.ylim(-10, 20)
 pl.legend(loc='upper left')
-pl.title('Prediction Intervals for Gradient Boosting Regression')
 pl.show()
