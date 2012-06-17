@@ -33,18 +33,26 @@ def test_classification_toy():
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+
     # Same test, but with a sparse matrix to fit and test.
     clf = NearestCentroid()
     clf.fit(X_csr, y)
     assert_array_equal(clf.predict(T_csr), true_result)
+
     # Fit with sparse, test with non-sparse
     clf = NearestCentroid()
     clf.fit(X_csr, y)
     assert_array_equal(clf.predict(T), true_result)
+
     # Fit with non-sparse, test with sparse
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T_csr), true_result)
+
+    # Fit and predict with non-CSR sparse matrices
+    clf = NearestCentroid()
+    clf.fit(X_csr.tocoo(), y)
+    assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
 
 def test_precomputed():
