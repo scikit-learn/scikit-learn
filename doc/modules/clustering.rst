@@ -147,7 +147,7 @@ Mini Batch K-Means
 The :class:`MiniBatchKMeans` is a variant of the :class:`KMeans` algorithm
 using mini-batches, random subset of the dataset, to compute the centroids.
 
-Althought the :class:`MiniBatchKMeans` converge faster than the KMeans
+Although the :class:`MiniBatchKMeans` converge faster than the KMeans
 version, the quality of the results, measured by the inertia, the sum of
 the distance of each points to the nearest centroid, is not as good as
 the :class:`KMeans` algorithm.
