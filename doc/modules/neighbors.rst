@@ -164,7 +164,7 @@ machine learning.  The most naive neighbor search implementation involves
 the brute-force computation of distances between all pairs of points in the
 dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
 as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
-competetive for small data samples.
+competitive for small data samples.
 However, as the number of samples :math:`N` grows, the brute-force
 approach quickly becomes infeasible.  In the classes within
 :mod:`sklearn.neighbors`, brute-force neighbors searches are specified
@@ -193,7 +193,7 @@ the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
 to an arbitrary number of dimensions.  The KD tree is a tree
 structure which recursively partitions the parameter space along the data
-axes, deviding it into nested orthotopic regions into which data points
+axes, dividing it into nested orthotopic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
 is performed only along the data axes, no :math:`D`-dimensional distances
 need to be computed.  Once constructed, the nearest neighbor of a query
@@ -220,7 +220,7 @@ Ball Tree
 
 To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
-cartesian axes, ball trees partition data in a series of nesting
+Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
 KD tree, but
 results in a data structure which allows for efficient neighbors searches

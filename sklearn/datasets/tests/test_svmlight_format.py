@@ -1,6 +1,10 @@
-import numpy as np
-import os.path
+from bz2 import BZ2File
+import gzip
 from io import BytesIO
+import numpy as np
+import os
+import shutil
+import tempfile
 
 from numpy.testing import assert_equal, assert_array_equal
 from nose.tools import raises
@@ -45,6 +49,19 @@ def test_load_svmlight_file():
     assert_array_equal(y, [1, 2, 3])
 
 
+def test_load_svmlight_file_fd():
+    # test loading from file descriptor
+    X1, y1 = load_svmlight_file(datafile)
+
+    fd = os.open(datafile, os.O_RDONLY)
+    try:
+        X2, y2 = load_svmlight_file(fd)
+        assert_equal(X1.data, X2.data)
+        assert_equal(y1, y2)
+    finally:
+        os.close(fd)
+
+
 def test_load_svmlight_file_multilabel():
     X, y = load_svmlight_file(multifile, multilabel=True)
     assert_equal(y, [(0, 1), (2,), (1, 2)])
@@ -78,6 +95,28 @@ def test_load_svmlight_file_n_features():
                      (1, 5, 1.0), (1, 12, -3)):
 
         assert_equal(X[i, j], val)
+
+
+def test_load_compressed():
+    X, y = load_svmlight_file(datafile)
+
+    try:
+        tempdir = tempfile.mkdtemp(prefix="sklearn-test")
+
+        tmpgz = os.path.join(tempdir, "datafile.gz")
+        shutil.copyfileobj(open(datafile, "rb"), gzip.open(tmpgz, "wb"))
+        Xgz, ygz = load_svmlight_file(tmpgz)
+        assert_array_equal(X.toarray(), Xgz.toarray())
+        assert_array_equal(y, ygz)
+
+        tmpbz = os.path.join(tempdir, "datafile.bz2")
+        shutil.copyfileobj(open(datafile, "rb"), BZ2File(tmpbz, "wb"))
+        Xbz, ybz = load_svmlight_file(tmpgz)
+        assert_array_equal(X.toarray(), Xbz.toarray())
+        assert_array_equal(y, ybz)
+    except:
+        shutil.rmtree(tempdir)
+        raise
 
 
 @raises(ValueError)

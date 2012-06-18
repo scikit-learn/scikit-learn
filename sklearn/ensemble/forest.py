@@ -529,6 +529,9 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -664,6 +667,9 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -800,6 +806,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -939,6 +948,9 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 

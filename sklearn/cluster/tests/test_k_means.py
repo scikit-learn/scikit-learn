@@ -13,6 +13,7 @@ from nose.tools import assert_true
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
@@ -184,13 +185,14 @@ def test_k_means_new_centers():
                             [.2,  0, .2, .2],
                             [+0,  0,  0,  0]])
 
-    km = KMeans(n_clusters=3, init=bad_centers, max_iter=10, random_state=1)
+    km = KMeans(n_clusters=3, init=bad_centers, n_init=1, max_iter=10,
+                random_state=1)
     for this_X in (X, sp.coo_matrix(X)):
         km.fit(this_X)
         this_labels = km.labels_
         # Reorder the labels so that the first instance is in cluster 0,
         # the second in cluster 1, ...
-        this_labels = np.unique(this_labels,
+        this_labels = unique(this_labels,
                                 return_index=True)[1][this_labels]
         np.testing.assert_array_equal(this_labels, labels)
 

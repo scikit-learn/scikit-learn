@@ -1,8 +1,12 @@
 Gael Varoquaux <gael.varoquaux@normalesup.org> gvaroquaux <gael.varoquaux@normalesup.org>
 Gael Varoquaux <gael.varoquaux@normalesup.org> Gael varoquaux <gael.varoquaux@normalesup.org>
 Gael Varoquaux <gael.varoquaux@normalesup.org> GaelVaroquaux <gael.varoquaux@normalesup.org>
+Gael Varoquaux <gael.varoquaux@normalesup.org> Varoquaux <varoquau@normalesup.org>
 Olivier Grisel <olivier.grisel@ensta.org> ogrisel <olivier.grisel@ensta.org>
+Olivier Grisel <olivier.grisel@ensta.org> Olivier Grisel <ogrisel@turingcarpet.(none)>
 Alexandre Gramfort <alexandre.gramfort@inria.fr> Alexandre Gramfort <alexandre.gramfort@gmail.com>
+Alexandre Gramfort <alexandre.gramfort@inria.fr> Alexandre Gramfort <alexandre.gramfort@m4x.org>
+Alexandre Gramfort <alexandre.gramfort@inria.fr> Alexandre Gramfort <gramfort@localhost.(none)>
 Matthieu Perrot <matthieu.perrot@cea.fr> Matthieu Perrot <revilyo@earth.(none)>
 Matthieu Perrot <matthieu.perrot@cea.fr> revilyo <revilyo@earth.(none)>
 Vincent Michel <vincent.michel@inria.fr> vincent <vincent@vincent.org>
@@ -12,6 +16,7 @@ Vincent Michel <vincent.michel@inria.fr> Vincent M <vm.michel@gmail.com>
 Vincent Michel <vincent.michel@inria.fr> Vincent Michel <vincent.michel@logilab.fr>
 Vincent Michel <vincent.michel@inria.fr> Vincent M <vincent.michel@logilab.fr>
 Vincent Michel <vincent.michel@inria.fr> Vincent michel <vmic@crater2.logilab.fr>
+Vincent Michel <vincent.michel@inria.fr> Vincent Michel <vm.michel@gmail.com>
 Ariel Rokem <arokem@berkeley.edu> arokem <arokem@berkeley.edu>
 Bertrand Thirion <bertrand.thirion@inria.fr> bthirion <bertrand.thirion@inria.fr>
 Peter Prettenhofer <peter.prettenhofer@gmail.com> pprett <peter.prettenhofer@gmail.com>
@@ -23,19 +28,41 @@ James Bergstra <james.bergstra@gmail.com> james.bergstra <james.bergstra@gmail.c
 Xinfan Meng <mxf3306@gmail.com> mxf <mxf@chomsky.localdomain>
 Jan Schlüter <scikit-learn@jan-schlueter.de> f0k <scikit-learn@jan-schlueter.de>
 Vlad Niculae <vlad@vene.ro> vene <vlad@vene.ro>
-Andreas Müller <amueller@ais.uni-bonn.de> amueller <amueller@ais.uni-bonn.de>
 Virgile Fritsch <virgile.fritsch@gmail.com> VirgileFritsch <virgile.fritsch@gmail.com>
 Virgile Fritsch <virgile.fritsch@gmail.com> Virgile <virgile.fritsch@gmail.com>
+Virgile Fritsch <virgile.fritsch@gmail.com> Virgile <virgile@virgile-Precision-M4400.(none)>
 Jean Kossaifi <jean.kossaifi@gmail.com> Jean  KOSSAIFI <jkossaifi@is208616.intra.cea.fr>
 Jean Kossaifi <jean.kossaifi@gmail.com> JeanKossaifi <jean.kossaifi@gmail.com>
-Jake Vanderplas <vanderplas@astro.washington.edu> Jacob Vanderplas <jakevdp@yahoo.com>
+Jean Kossaifi <jean.kossaifi@gmail.com> Jean Kossaifi <kossaifi@is208616.intra.cea.fr>
+Jake VanderPlas <vanderplas@astro.washington.edu> Jacob Vanderplas <jakevdp@yahoo.com>
+Jake VanderPlas <vanderplas@astro.washington.edu> Jake Vanderplas <jakevdp@yahoo.com>
+Jake VanderPlas <vanderplas@astro.washington.edu> Jake Vanderplas <vanderplas@astro.washington.edu>
 Andreas Mueller <amueller@ais.uni-bonn.de> Andy <amueller@ais.uni-bonn.de>
 Andreas Mueller <amueller@ais.uni-bonn.de> andy <andy@marvin>
 Andreas Mueller <amueller@ais.uni-bonn.de> Andreas Mueller <amueller@templateimage.ista.local>
+Andreas Mueller <amueller@ais.uni-bonn.de> Andreas Müller <amueller@ais.uni-bonn.de>
 Brian Holt <bh00038@cvplws63.eps.surrey.ac.uk> bdholt1 <bdholt1@gmail.com>
+Brian Holt <bh00038@cvplws63.eps.surrey.ac.uk> Brian Holt <bdholt1@gmail.com>
 Robert Layton <robertlayton@gmail.com> robertlayton <robertlayton@gmail.com>
+Robert Layton <robertlayton@gmail.com> = <robertlayton@gmail.com>
 Fabian Pedregosa <fabian@fseoane.net> Fabian Pedregosa <fabian.pedregosa@inria.fr>
 Lars Buitinck <L.J.Buitinck@uva.nl> Lars Buitinck <larsmans@gmail.com>
 Lars Buitinck <L.J.Buitinck@uva.nl> unknown <Lars@.(none)>
 Lars Buitinck <L.J.Buitinck@uva.nl> Lars Buitinck <l.j.buitinck@uva.nl>
 DraXus <draxus@gmail.com> draxus <draxus@hammer.ugr>
+Edouard DUCHESNAY <ed203246@is206877.intra.cea.fr>  Edouard Duchesnay <duchesnay@is143433.(none)>
+Edouard DUCHESNAY <ed203246@is206877.intra.cea.fr> Edouard Duchesnay <edouard.duchesnay@gmail.com>
+Edouard DUCHESNAY <ed203246@is206877.intra.cea.fr> duchesnay <edouard.duchesnay@gmail.com>
+Edouard DUCHESNAY <ed203246@is206877.intra.cea.fr> duchesnay <edouard@is2206219.(none)> 
+Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org> Emmanuelle Gouillart <emma@aleph.(none)>
+Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org> emmanuelle <emmanuelle.gouillart@nsup.org> 
+Gilles Louppe <g.louppe@gmail.com> Gilles Louppe <g.louppe@ulg.ac.be>
+Nelle Varoquaux <nelle.varoquaux@gmail.com> Nelle Varoquaux <nelle@phgroup.com>
+Nicolas Pinto <pinto@alum.mit.edu> Nicolas Pinto <pinto@mit.edu>
+Olivier Hervieu <olivier.hervieu@gmail.com> Olivier Hervieu <olivier.hervieu@tinyclues.com>
+Satrajit Ghosh <satra@mit.edu> Satrajit Ghosh <satrajit.ghosh@gmail.com>
+Shiqiao Du <lucidfrontier.45@gmail.com> Shiqiao Du <s.du@freebit.net>
+Shiqiao Du <lucidfrontier.45@gmail.com> Shiqiao <lucidfrontier.45@gmail.com>
+Tim Sheerman-Chase <t.sheerman-chase@surrey.ac.uk> Tim Sheerman-Chase <ts00051@ts00051-desktop.(none)>
+Vincent Schut <schut@sarvision.nl> Vincent Schut <vincent@TIMO.(none)>
+iBayer <mane.desk@gmail.com> ibayer <mane.desk@gmail.com>

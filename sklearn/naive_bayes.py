@@ -286,6 +286,8 @@ class BaseDiscreteNB(BaseNB):
             N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative.")
         N_c_i = safe_sparse_dot(Y.T, X)
         N_c = np.sum(N_c_i, axis=1)
 
