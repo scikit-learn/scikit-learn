@@ -128,10 +128,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * linalg.norm(y) ** 2
 
-    # test code Covariance Updates
-    # precompute first term on the right hand side of Eq 9
-    XjY = np.array([np.dot(X[:, i], y) for i in xrange(n_features)])
-
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
@@ -155,8 +151,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # test code for Covariance Updates
             # right hand side of Eq. 8, the sum is replaced by the right hand side
             # of Eq. 9
-            tmp = XjY[ii] - np.array([np.dot(X[:, ii], X[:, k]) * w[k] \
-                               for k in xrange(n_features)]).sum() + w_ii
+            tmp_sum = np.array([np.dot(X[:, ii], X[:, k]) * w[k] for k in xrange(n_features)]).sum()
+            tmp =  (1/n_features)*(np.dot(X[:, ii], y) - tmp_sum) + w_ii
 
             if positive and tmp < 0:
                 w[ii] = 0.0
