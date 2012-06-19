@@ -136,12 +136,15 @@ class BaseMLP(BaseEstimator):
         else:
             raise ValueError("Unknown combination of output function and error.")
 
+        delta_h[:] = np.dot(delta_o, self.weights2_.T)
+
         self.weights2_ += self.lr / self.batch_size * np.dot(x_hidden.T, delta_o)
         self.bias2_ += self.lr * np.mean(delta_o, axis=0)
 
         if self.verbose > 0:
             print(np.linalg.norm(delta_o / self.batch_size))
-        delta_h[:] = np.dot(delta_o, self.weights2_.T) * _dtanh(x_hidden)
+
+        delta_h[:] *= _dtanh(x_hidden)
 
         # update weights
         self.weights1_ += self.lr / self.batch_size * np.dot(X[batch_slice].T, delta_h)
