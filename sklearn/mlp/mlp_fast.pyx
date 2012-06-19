@@ -86,7 +86,7 @@ cdef class CrossEntropyLoss(LossFunction):
                      np.ndarray[DTYPE_t, ndim=2] y,
                      np.ndarray[DTYPE_t, ndim=2] p,
                      np.ndarray[DTYPE_t, ndim=2] out):
-        out[:] -y * np.log(p) - (1 - y) * np.log(1 - p)
+        out[:] = -y * np.log(p) - (1 - y) * np.log(1 - p)
 
     cdef inline dloss(self,
                       np.ndarray[DTYPE_t, ndim=2] y,
