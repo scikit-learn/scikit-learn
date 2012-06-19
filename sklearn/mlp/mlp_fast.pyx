@@ -150,7 +150,7 @@ cdef class LogSig(OutputFunction):
         out[:] = 1 / (1 + out)
 
 
-cdef forward(np.ndarray[DTYPE_t, ndim=2] X,
+cpdef forward(np.ndarray[DTYPE_t, ndim=2] X,
              np.ndarray[DTYPE_t, ndim=2] weights_hidden,
              np.ndarray[DTYPE_t, ndim=1] bias_hidden,
              np.ndarray[DTYPE_t, ndim=2] weights_output,
@@ -171,7 +171,7 @@ cdef forward(np.ndarray[DTYPE_t, ndim=2] X,
     output.output(x_output, x_output)
 
 
-cdef backward(np.ndarray[DTYPE_t, ndim=2] X,
+cpdef backward(np.ndarray[DTYPE_t, ndim=2] X,
               np.ndarray[DTYPE_t, ndim=2] x_output,
               np.ndarray[DTYPE_t, ndim=2] x_hidden,
               np.ndarray[DTYPE_t, ndim=2] y,
