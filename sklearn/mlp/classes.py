@@ -29,6 +29,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
                  loss_function='cross-entropy',
                  output_function='softmax',
                  learning_method='backprop',
+                 shuffle_data=False,
                  verbose=0):
         super(MLPClassifier, self).__init__(n_hidden,
                                             lr,
@@ -36,6 +37,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
                                             loss_function,
                                             output_function,
                                             learning_method,
+                                            shuffle_data,
                                             verbose=0)
 
     def fit(self, X, y, max_epochs=10, shuffle_data=False):
