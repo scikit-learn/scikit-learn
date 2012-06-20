@@ -245,7 +245,7 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
     cdef np.ndarray[DTYPE_t, ndim=2] dx_hidden = np.empty((batch_size, n_hidden))
     cdef np.ndarray[DTYPE_t, ndim=2] x_output = np.empty((batch_size, n_outs))
     cdef np.ndarray[DTYPE_t, ndim=2] delta_o = np.empty((batch_size, n_outs))
-    cdef np.ndarray[DTYPE_t, ndim=2] dx_output = np.empty((batch_size, n_hidden))
+    cdef np.ndarray[DTYPE_t, ndim=2] dx_output = np.empty((batch_size, n_outs))
 
     if y.shape[0] != n_samples:
         raise ValueError("Shapes of X and y don't fit.")
