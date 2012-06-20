@@ -568,6 +568,7 @@ class SupervisedIntegerMixin(object):
             Target values, array of integer values.
         """
         self._y = np.asarray(y)
+        self._classes = np.sort(np.unique(y))
         return self._fit(X)
 
 

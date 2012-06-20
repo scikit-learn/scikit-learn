@@ -85,11 +85,11 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     >>> print(iris.data[0])
     [-0.555556  0.25     -0.864407 -0.916667]
 
-    Load the 'leukemia' dataset from mldata.org, which respects the
-    sklearn axes convention:
-    >>> leuk = fetch_mldata('leukemia', transpose_data=False)
+    Load the 'leukemia' dataset from mldata.org, which needs to be transposed
+    to respects the sklearn axes convention:
+    >>> leuk = fetch_mldata('leukemia', transpose_data=True)
     >>> print(leuk.data.shape[0])
-    7129
+    72
 
     Load an alternative 'iris' dataset, which has different names for the
     columns:

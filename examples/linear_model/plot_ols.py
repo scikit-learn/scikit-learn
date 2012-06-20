@@ -39,14 +39,6 @@ diabetes_X_temp = diabetes_X[:, :, 2]
 diabetes_X_train = diabetes_X_temp[:-20]
 diabetes_X_test = diabetes_X_temp[-20:]
 
-from sklearn.datasets.samples_generator import make_regression
-
-# this is our test set, it's just a straight line with some
-# gaussian noise
-X, Y = make_regression(n_samples=100, n_features=1, n_informative=1,\
-                        random_state=0, noise=35)
-
-
 # Split the targets into training/testing sets
 diabetes_y_train = diabetes.target[:-20]
 diabetes_y_test = diabetes.target[-20:]
