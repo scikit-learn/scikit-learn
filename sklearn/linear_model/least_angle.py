@@ -459,10 +459,16 @@ class Lars(LinearModel, RegressorMixin):
         self.coef_path_ = np.empty((n_targets, n_features, max_iter + 1))
         self.coef_ = np.empty((n_targets, n_features))
 
-        for k in xrange(n_targets):
+        if self.precompute == True or (
+           self.precompute == 'auto' and X.shape[0] > X.shape[1]) or (
+           self.precompute == 'auto' and y.shape[1] > 1):
+            Gram = np.dot(X.T, X)
+        else:
             Gram = self._get_gram()
+
+        for k in xrange(n_targets):
             alphas, active, coef_path = lars_path(X, y[:, k], Gram=Gram,
-                          copy_X=self.copy_X, copy_Gram=False,
+                          copy_X=self.copy_X, copy_Gram=True,
                           alpha_min=alpha, method=self.method,
                           verbose=max(0, self.verbose - 1), max_iter=max_iter,
                           eps=self.eps)
