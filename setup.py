@@ -28,15 +28,12 @@ def configuration(parent_package='', top_path=None):
         os.remove('MANIFEST')
 
     from numpy.distutils.misc_util import Configuration
-    config = Configuration(None, parent_package, top_path,
-        namespace_packages=['scikits'])
-
-    config.add_subpackage('scikits.learn')
-    config.add_data_files('scikits/__init__.py')
+    config = Configuration(None, parent_package, top_path)
 
     config.add_subpackage('sklearn')
 
     return config
+
 
 if __name__ == "__main__":
 
