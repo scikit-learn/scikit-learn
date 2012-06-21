@@ -192,6 +192,77 @@ def load_files(container_path, description=None, categories=None,
                  target=target,
                  DESCR=description)
 
+def load_datadict(datadict, description=None, categories=None,
+                  shuffle=True, random_state=0):
+    """Load a dictionary with categories as keys and a list of samples as values.
+    e.g.: {'ham':['machine','learning'], 'spam':['viagra','casino']}
+
+    This is useful if datasets are stored in a different format than the usual
+    folder structure used by load_files().
+
+    As there are no filenames the complete dataset will be loaded into memory.
+
+    Parameters
+    ----------
+    datadict : dictionary
+        A python dictionary with categories as keys and a list of samples as values.
+
+    description: string or unicode, optional (default=None)
+        A paragraph describing the characteristic of the dataset: its source,
+        reference, etc.
+
+    categories : A collection of strings or None, optional (default=None)
+        If None (default), load all the categories.
+        If not None, list of category names to load (other categories ignored).
+
+    shuffle : bool, optional (default=True)
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
+
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the raw text data to learn,
+        'target', the classification labels (integer index),
+        'target_names', the meaning of the labels, and 'DESCR', the full
+        description of the dataset.
+    """
+
+    target = []
+    target_names = []
+    data = []
+
+    target_names = sorted(datadict.keys())
+
+    if categories is not None:
+        target_names = [f for f in target_names if f in categories]
+
+    for label, t in enumerate(target_names):
+        for sample in datadict[t]:
+            target.append(label)
+            data.append(sample)
+
+    target = np.array(target)
+
+    if shuffle:
+        random_state = check_random_state(random_state)
+        indices = np.arange(target.shape[0])
+        random_state.shuffle(indices)
+        target = target[indices]
+        data = [data[i] for i in indices]
+
+    return Bunch(data=data,
+                 target_names=target_names,
+                 target=target,
+                 DESCR=description)
 
 def load_iris():
     """Load and return the iris dataset (classification).
