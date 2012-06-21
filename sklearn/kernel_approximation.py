@@ -231,19 +231,38 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
 
         X = array2d(X)
-        # check if X has zeros. Doesn't play well with np.log.
-        if (X <= 0).any():
-            raise ValueError("Entries of X must be strictly positive.")
+        # check if X has negative values. Doesn't play well with np.log.
+        if (X < 0).any():
+            raise ValueError("Entries of X must be positive.")
         X_new = []
         # zeroth component
         # 1/cosh = sech
-        X_new.append(np.sqrt(X * self.sample_interval / np.cosh(0)))
+        # cosh(0) = 1.0
 
-        log_step = self.sample_interval * np.log(X)
-        step = 2 * X * self.sample_interval
+        non_zero = (X != 0.0)
+        X_nz = X[non_zero]
+
+        X_step = np.zeros_like(X)
+        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
+        X_new.append(X_step.copy())
+
+        log_step = np.zeros_like(X)
+        step = np.zeros_like(X)
+
+        log_step[non_zero] = self.sample_interval * np.log(X_nz)
+        step[non_zero] = 2 * X_nz * self.sample_interval
+
+        log_step_nz = log_step[non_zero]
+        step_nz = step[non_zero]
+
+        factor = np.zeros_like(X)
 
         for j in xrange(1, self.sample_steps):
-            factor = np.sqrt(step / np.cosh(np.pi * j * self.sample_interval))
-            X_new.append(factor * np.cos(j * log_step))
-            X_new.append(factor * np.sin(j * log_step))
+            factor[non_zero] = np.sqrt(step_nz / \
+                             np.cosh(np.pi * j * self.sample_interval))
+            factor_nz = factor[non_zero]
+            X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
+            X_new.append(X_step.copy())
+            X_step[non_zero] = factor_nz * np.sin(j * log_step_nz)
+            X_new.append(X_step.copy())
         return np.hstack(X_new)
