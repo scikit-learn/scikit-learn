@@ -24,7 +24,7 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-            gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+            gamma=0.0, kernel='rbf', probability=False, shrinking=True,
             tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
@@ -59,7 +59,7 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm.sparse import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.5,
+    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
             kernel='rbf', nu=0.5, probability=False, shrinking=True, tol=0.001,
             verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -132,7 +132,7 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.2,
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
        kernel='rbf', nu=0.1, probability=False, shrinking=True, tol=0.001,
        verbose=False)
     """
