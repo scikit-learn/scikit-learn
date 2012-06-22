@@ -334,8 +334,10 @@ class FastICA(BaseEstimator):
 
     Attributes
     ----------
-    `components_` : 2D array, [n_components, n_samples]
+    `components_` : 2D array, [n_components, n_features]
         The unmixing matrix
+    `sources_`: 2D array, [n_samples, n_components]
+        The estimated latent sources of the data.
 
     Notes
     -----
@@ -372,7 +374,7 @@ class FastICA(BaseEstimator):
             self.components_ = np.dot(unmixing_, whitening_)
         else:
             self.components_ = unmixing_
-        self.components_ = sources_
+        self.sources_ = sources_
         return self
 
     def transform(self, X):

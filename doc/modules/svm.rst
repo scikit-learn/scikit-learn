@@ -84,7 +84,7 @@ training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.5, kernel='rbf', probability=False, shrinking=True, tol=0.001,
+    gamma=0.0, kernel='rbf', probability=False, shrinking=True, tol=0.001,
     verbose=False)
 
 After being fitted, the model can then be used to predict new values::
@@ -123,7 +123,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=1.0, kernel='rbf', probability=False, shrinking=True,
+    gamma=0.0, kernel='rbf', probability=False, shrinking=True,
     tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -177,29 +177,29 @@ for these classifiers.
 
 This might be made more clear by an example:
 
-    Consider a three class problem with with class 0 having 3 support vectors
-    :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
-    vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
-    For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
-    Let's call the coefficient of support vector :math:`v^{j}_i` in the
-    classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
-    Then ``dual_coef_`` looks like this:
+Consider a three class problem with with class 0 having 3 support vectors
+:math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
+vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
+For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
+Let's call the coefficient of support vector :math:`v^{j}_i` in the
+classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
+Then ``dual_coef_`` looks like this:
 
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|for SVs           |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|of class 0        |
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|for SVs of class 2|
-    +------------------------+------------------------+------------------+
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
++------------------------+------------------------+for SVs of class 0|
+|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|                  |
++------------------------+------------------------+                  |
+|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|                  |
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
++------------------------+------------------------+for SVs of class 1|
+|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|                  |
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
++------------------------+------------------------+for SVs of class 2|
+|:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
++------------------------+------------------------+------------------+
 
 
 Unbalanced problems
@@ -270,7 +270,7 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+    epsilon=0.1, gamma=0.0, kernel='rbf', probability=False, shrinking=True,
     tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])

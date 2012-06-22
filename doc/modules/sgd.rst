@@ -344,7 +344,8 @@ where :math:`t` is the time step (there are a total of `n_samples * epochs`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
-approx. 1). See `"The Tradeoffs of Large Scale Machine Learning" <http://leon.bottou.org/slides/largescale/lstut.pdf>`_ by Léon Bottou for further details.
+approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
+
 
 For regression, the default learning rate schedule, inverse scaling
 (`learning_rate='invscaling'`), is given by

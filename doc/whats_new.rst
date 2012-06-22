@@ -18,6 +18,21 @@ Changelog
 
    - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
 
+   - SVMlight file format loader now detects compressed (gzip/bzip2) files and
+     decompresses them on the fly.
+
+API changes summary
+-------------------
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
+     object when initialising it and not through ``fit``. Now ``fit`` will 
+     only accept the data as an input parameter.
+
+   - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
+     the default gamma value was only computed the first time ``fit`` was called
+     and then stored. It is now recalculated on every call to ``fit``.
+
 .. _changes_0_11:
 
 0.11

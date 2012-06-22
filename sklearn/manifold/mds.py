@@ -142,7 +142,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     if np.any((similarities - similarities.T) > eps):
         raise ValueError("similarities must be symmetric")
 
-    sim_flat = ((1 - np.tri(n_samples)) * similarities).flatten()
+    sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
@@ -164,7 +164,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         if metric:
             disparities = similarities
         else:
-            dis_flat = dis.flatten()
+            dis_flat = dis.ravel()
             # similarities with 0 are considered as missing values
             dis_flat_w = dis_flat[sim_flat != 0]
 
@@ -178,12 +178,12 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
                            (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.flatten() - \
-                    disparities.flatten()) ** 2).sum() / 2
+        stress = ((dis.ravel() - \
+                    disparities.ravel()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
+        dis[dis == 0] = 1e-5
         ratio = disparities / dis
-        ratio[np.isinf(ratio) | np.isnan(ratio)] = 0
         B = - ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1. / n_samples * np.dot(B, X)

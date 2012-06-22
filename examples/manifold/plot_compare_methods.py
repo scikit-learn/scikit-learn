@@ -81,7 +81,8 @@ pl.axis('tight')
 
 
 t0 = time()
-Y = manifold.MDS(n_components).fit_transform(euclidean_distances(X))
+mds = manifold.MDS(n_components, max_iter=100, n_init=1)
+Y = mds.fit_transform(euclidean_distances(X))
 t1 = time()
 print "MDS: %.2g sec" % (t1 - t0)
 ax = fig.add_subplot(247)

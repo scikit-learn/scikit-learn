@@ -494,7 +494,7 @@ class CountVectorizer(BaseEstimator):
                 for i in xrange(n_samples)]
 
     def get_feature_names(self):
-        """Array mapping from feature integer indicex to feature name"""
+        """Array mapping from feature integer indices to feature name"""
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 

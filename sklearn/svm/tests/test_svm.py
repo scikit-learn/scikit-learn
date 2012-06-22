@@ -95,6 +95,7 @@ def test_precomputed():
     # Gram matrix for test data (rectangular matrix)
     KT = np.dot(T, np.array(X).T)
     pred = clf.predict(KT)
+    assert_raises(ValueError, clf.predict, KT.T)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.support_, [1, 3])
