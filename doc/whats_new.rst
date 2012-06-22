@@ -29,6 +29,10 @@ API changes summary
      object when initialising it and not through ``fit``. Now ``fit`` will 
      only accept the data as an input parameter.
 
+   - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
+     the default gamma value was only computed the first time ``fit`` was called
+     and then stored. It is now recalculated on every call to ``fit``.
+
 .. _changes_0_11:
 
 0.11
