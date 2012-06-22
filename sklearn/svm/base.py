@@ -99,7 +99,8 @@ class BaseLibSVM(BaseEstimator):
 
     @property
     def _pairwise(self):
-        return self.kernel == "precomputed"
+        kernel = self.kernel
+        return kernel == "precomputed" or hasattr(kernel, "__call__")
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
