@@ -244,7 +244,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         X_step = np.zeros_like(X)
         X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
-        
+
         X_new.append(X_step)
 
         log_step_nz = self.sample_interval * np.log(X_nz)
@@ -253,7 +253,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         for j in xrange(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
                              np.cosh(np.pi * j * self.sample_interval))
-                             
+
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
             X_new.append(X_step)
