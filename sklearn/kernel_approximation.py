@@ -233,7 +233,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         X = array2d(X)
         # check if X has negative values. Doesn't play well with np.log.
         if (X < 0).any():
-            raise ValueError("Entries of X must be positive.")
+            raise ValueError("Entries of X must be non-negative.")
         X_new = []
         # zeroth component
         # 1/cosh = sech
@@ -244,7 +244,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         X_step = np.zeros_like(X)
         X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
-        X_new.append(X_step.copy())
+        
+        X_new.append(X_step)
 
         log_step_nz = self.sample_interval * np.log(X_nz)
         step_nz = 2 * X_nz * self.sample_interval
@@ -252,8 +253,13 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         for j in xrange(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
                              np.cosh(np.pi * j * self.sample_interval))
+                             
+            X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
-            X_new.append(X_step.copy())
+            X_new.append(X_step)
+
+            X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.sin(j * log_step_nz)
-            X_new.append(X_step.copy())
+            X_new.append(X_step)
+
         return np.hstack(X_new)
