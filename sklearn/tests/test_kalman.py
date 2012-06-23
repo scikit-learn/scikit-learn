@@ -20,7 +20,7 @@ def test_kalman_filter_update():
                       d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
     # use Kalman Filter
-    (x_filt, V_filt, ll) = kf.filter(Z=data.data)
+    (x_filt, V_filt, ll) = kf.filter(X=data.data)
 
     # use online Kalman Filter
     T = data.data.shape[0]
@@ -41,7 +41,7 @@ def test_kalman_filter():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
                       d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
-    (x_filt, V_filt, ll) = kf.filter(Z=data.data)
+    (x_filt, V_filt, ll) = kf.filter(X=data.data)
     for t in range(500):
         assert np.linalg.norm(x_filt[t] - data.X_filt[t]) < 1e-5
         assert np.linalg.norm(V_filt[t] - data.V_filt[t]) < 1e-5
@@ -51,7 +51,7 @@ def test_kalman_predict():
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q, R=data.R, b=data.b,
                       d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
-    x_smooth = kf.predict(Z=data.data)
+    x_smooth = kf.predict(X=data.data)
     for t in reversed(range(501)):
         assert np.linalg.norm(x_smooth[t] - data.X_smooth[t]) < 1e-5
 
@@ -63,8 +63,8 @@ def test_kalman_fit():
     
     scores = np.zeros(5)
     for i in range(len(scores)):
-        scores[i] = np.sum(kf.filter(Z=data.data)[-1])
-        kf.fit(Z=data.data, n_iter=1)
+        scores[i] = np.sum(kf.filter(X=data.data)[-1])
+        kf.fit(X=data.data, n_iter=1)
 
     assert np.allclose(scores, data.ll[:5])
 
@@ -72,7 +72,7 @@ def test_kalman_fit():
     kf.em_vars = 'all'
     T = 30
     for i in range(len(scores)):
-        kf.fit(Z=data.data[0:T], n_iter=1)
-        scores[i] = np.sum(kf.filter(Z=data.data[0:T])[-1])
+        kf.fit(X=data.data[0:T], n_iter=1)
+        scores[i] = np.sum(kf.filter(X=data.data[0:T])[-1])
     for i in range(len(scores)-1):
         assert scores[i] < scores[i+1]

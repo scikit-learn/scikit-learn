@@ -891,7 +891,7 @@ class KalmanFilter(BaseEstimator):
         return (mu_new, sigma_new, ll)
 
 
-    def predict(self, Z):
+    def predict(self, X):
         """Apply the Kalman Smoother to estimate the hidden state at time
         t for t = [0...T-1] given all observations.  See
         :func:`sklearn.kalman._smooth` for more complex output

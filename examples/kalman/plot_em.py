@@ -21,8 +21,8 @@ kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
 # Learn good values for A, C, Q, R, x_0, and V_0 using the EM algorithm.
 ll = np.zeros(10)
 for i in range(len(ll)):
-    kf = kf.fit(Z=data.data, n_iter=1)
-    ll[i] = np.sum(kf.filter(Z=data.data)[-1])
+    kf = kf.fit(X=data.data, n_iter=1)
+    ll[i] = np.sum(kf.filter(X=data.data)[-1])
 
 # Estimate the state without using any observations.  This will let us see how
 # good we could do if we ran blind.
