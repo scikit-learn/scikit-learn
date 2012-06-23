@@ -453,10 +453,10 @@ class Lars(LinearModel, RegressorMixin):
         else:
             max_iter = self.max_iter
 
-        self.alphas_ = np.empty((n_targets, max_iter + 1))
-        self.active_ = np.empty((n_targets, max_iter))
-        self.coef_path_ = np.empty((n_targets, n_features, max_iter + 1))
-        self.coef_ = np.empty((n_targets, n_features))
+        self.alphas_ = np.ones((n_targets, max_iter + 1))
+        self.active_ = np.ones((n_targets, max_iter))
+        self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
+        self.coef_ = np.zeros((n_targets, n_features))
 
         if self.precompute == True or (
            self.precompute == 'auto' and X.shape[0] > X.shape[1]) or (

@@ -201,6 +201,26 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert_true(len(lars.coef_.nonzero()[0]) == 6)
 
 
+def test_multitarget():
+    """
+    Assure that estimators receiving multidimensional y do the right thing
+    """
+    X = diabetes.data
+    Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
+    n_targets = Y.shape[1]
+
+    for estimator in (linear_model.LassoLars(), linear_model.Lars()):
+        estimator.fit(X, Y)
+        alphas, active, coef, path = (estimator.alphas_, estimator.active_,
+                                      estimator.coef_, estimator.coef_path_)
+        for k in xrange(n_targets):
+            estimator.fit(X, Y[:, k])
+            assert_array_almost_equal(alphas[k, :], estimator.alphas_)
+            assert_array_almost_equal(active[k, :], estimator.active_)
+            assert_array_almost_equal(coef[k, :], estimator.coef_)
+            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
+
+
 def test_lars_cv():
     """ Test the LassoLarsCV object by checking that the optimal alpha
         increases as the number of samples increases.
