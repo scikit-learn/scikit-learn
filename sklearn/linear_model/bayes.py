@@ -10,13 +10,14 @@ import numpy as np
 from scipy import linalg
 
 from .base import LinearModel
+from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 
 
 ###############################################################################
 # BayesianRidge regression
 
-class BayesianRidge(LinearModel):
+class BayesianRidge(LinearModel, RegressorMixin):
     """Bayesian ridge regression
 
     Fit a Bayesian ridge model and optimize the regularization parameters
@@ -220,7 +221,7 @@ class BayesianRidge(LinearModel):
 # ARD (Automatic Relevance Determination) regression
 
 
-class ARDRegression(LinearModel):
+class ARDRegression(LinearModel, RegressorMixin):
     """Bayesian ARD regression.
 
     Fit the weights of a regression model, using an ARD prior. The weights of

@@ -363,9 +363,10 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     return X, y
 
 
-def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
-                    effective_rank=None, tail_strength=0.5, noise=0.0,
-                    shuffle=True, coef=False, random_state=None):
+def make_regression(n_samples=100, n_features=100, n_informative=10,
+                    n_targets=1, bias=0.0, effective_rank=None,
+                    tail_strength=0.5, noise=0.0, shuffle=True, coef=False,
+                    random_state=None):
     """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
@@ -388,6 +389,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     n_informative : int, optional (default=10)
         The number of informative features, i.e., the number of features used
         to build the linear model used to generate the output.
+
+    n_targets : int, optional (default=1)
+        The number of regression targets, i.e., the dimension of the y output
+        vector associated with a sample. By default, the output is a scalar.
 
     bias : float, optional (default=0.0)
         The bias term in the underlying linear model.
@@ -426,10 +431,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     X : array of shape [n_samples, n_features]
         The input samples.
 
-    y : array of shape [n_samples]
+    y : array of shape [n_samples] or [n_samples, n_targets]
         The output values.
 
-    coef : array of shape [n_features], optional
+    coef : array of shape [n_features] or [n_features, n_targets], optional
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
@@ -450,8 +455,9 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     # Generate a ground truth model with only n_informative features being non
     # zeros (the other features are not correlated to y and should be ignored
     # by a sparsifying regularizers such as L1 or elastic net)
-    ground_truth = np.zeros(n_features)
-    ground_truth[:n_informative] = 100 * generator.rand(n_informative)
+    ground_truth = np.zeros((n_features, n_targets))
+    ground_truth[:n_informative, :] = 100 * generator.rand(n_informative,
+                                                           n_targets)
 
     y = np.dot(X, ground_truth) + bias
 
@@ -468,8 +474,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         X[:, :] = X[:, indices]
         ground_truth = ground_truth[indices]
 
+    y = np.squeeze(y)
+
     if coef:
-        return X, y, ground_truth
+        return X, y, np.squeeze(ground_truth)
 
     else:
         return X, y

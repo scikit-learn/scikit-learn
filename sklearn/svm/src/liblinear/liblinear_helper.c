@@ -79,11 +79,11 @@ sparse_error:
 
 
 /*
-c * Convert scipy.sparse.csr to libsvm's sparse data structure
+ * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
-		int *indices, npy_intp *shape_indptr, int *indptr, double bias,
-                int n_features)
+static struct feature_node **csr_to_sparse(double *values,
+        npy_intp *shape_indices, int *indices, npy_intp *shape_indptr,
+        int *indptr, double bias, int n_features)
 {
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
@@ -137,7 +137,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
         problem->n = (int) dims[1];
     }
 
-    problem->y = (int *) Y;
+    problem->y = (double *) Y;
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
     if (problem->x == NULL) { 
@@ -163,7 +163,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
         problem->n = (int) n_features;
     }
 
-    problem->y = (int *) Y;
+    problem->y = (double *) Y;
     problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr, bias, n_features);
     problem->bias = bias;
@@ -186,6 +186,7 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
+    param->p = .1;  // epsilon for epsilon-SVR; TODO pass as a parameter
     param->nr_weight = (int) nr_weight;
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;

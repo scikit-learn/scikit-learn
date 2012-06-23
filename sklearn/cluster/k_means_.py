@@ -180,8 +180,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         'random': generate k centroids from a Gaussian with mean and
         variance estimated from the data.
 
-        If an ndarray is passed, it should be of shape (k, p) and gives
-        the initial centers.
+        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
 
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
@@ -625,7 +625,8 @@ class KMeans(BaseEstimator):
         'random': choose k observations (rows) at random from data for
         the initial centroids.
 
-        if init is an 2d array, it is used as a seed for the centroids
+        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
 
     precompute_distances : boolean
         Precompute distances (faster but takes more memory).
@@ -1011,7 +1012,9 @@ class MiniBatchKMeans(KMeans):
         'random': choose k observations (rows) at random from data for
         the initial centroids.
 
-        if init is an 2d array, it is used as a seed for the centroids
+
+        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
 
     compute_labels: boolean
         Compute label assignements and inertia for the complete dataset

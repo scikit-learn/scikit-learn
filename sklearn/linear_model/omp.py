@@ -12,6 +12,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
+from ..base import RegressorMixin
 from ..utils import array2d
 from ..utils.arrayfuncs import solve_triangular
 
@@ -396,7 +397,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(LinearModel):
+class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     """Orthogonal Mathching Pursuit model (OMP)
 
     Parameters

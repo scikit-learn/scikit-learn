@@ -84,7 +84,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        X, y = check_arrays(X, y)
+        X, y = check_arrays(X, y, sparse_format="csr")
         if sp.issparse(X) and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")

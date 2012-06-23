@@ -79,11 +79,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> neigh = KNeighborsClassifier(n_neighbors=2)
+    >>> neigh = KNeighborsClassifier(n_neighbors=3)
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(neigh.predict([[1.5]]))
+    >>> print(neigh.predict([[1.1]]))
     [0]
+    >>> print(neigh.predict_proba([[0.9]]))
+    [[ 0.66666667  0.33333333]]
 
     See also
     --------
@@ -137,6 +139,50 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             mode, _ = weighted_mode(pred_labels, weights, axis=1)
 
         return mode.flatten().astype(np.int)
+
+    def predict_proba(self, X):
+        """Return probability estimates for the test data X.
+
+        Parameters
+        ----------
+        X: array, shape = (n_samples, n_features)
+            A 2-D array representing the test points.
+
+        Returns
+        -------
+        probabilities : array, shape = [n_samples, n_classes]
+            Probabilities of the samples for each class in the model,
+            where classes are ordered arithmetically.
+        """
+        X = atleast2d_or_csr(X)
+
+        neigh_dist, neigh_ind = self.kneighbors(X)
+        pred_labels = self._y[neigh_ind]
+
+        weights = _get_weights(neigh_dist, self.weights)
+
+        if weights is None:
+            weights = np.ones_like(pred_labels)
+
+        probabilities = np.zeros((X.shape[0], self._classes.size))
+
+        # Translate class label to a column index in probabilities array.
+        # This may not be needed provided classes labels are guaranteed to be
+        # np.arange(n_classes) (e.g. consecutive and starting with 0)
+        pred_indices = pred_labels.copy()
+        for k, c in enumerate(self._classes):
+            pred_indices[pred_labels == c] = k
+
+        # a simple ':' index doesn't work right
+        all_rows = np.arange(X.shape[0])
+
+        for i, idx in enumerate(pred_indices.T):  # loop is O(n_neighbors)
+            probabilities[all_rows, idx] += weights[:, i]
+
+        # normalize 'votes' into real [0,1] probabilities
+        probabilities = (probabilities.T / probabilities.sum(axis=1)).T
+
+        return probabilities
 
 
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
