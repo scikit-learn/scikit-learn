@@ -86,8 +86,10 @@ def _center_scale_xy(X, Y, scale=True):
     # scale
     if scale:
         x_std = X.std(axis=0, ddof=1)
+        x_std[x_std == 0.0] = 1.0
         X /= x_std
         y_std = Y.std(axis=0, ddof=1)
+        y_std[y_std == 0.0] = 1.0
         Y /= y_std
     else:
         x_std = np.ones(X.shape[1])

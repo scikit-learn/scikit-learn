@@ -352,10 +352,9 @@ Tips on Practical Use
     set `cache_size` to a higher value than the default of 200(MB),
     such as 500(MB) or 1000(MB).
 
-  * **Setting C**: In constrast to the scaling in LibSVM and LibLinear,
-    the ``C`` parameter in `sklearn.svm` is a per sample penalty.
-    Commonly good values for ``C`` often are very large (i.e. ``10**4``)
-    and seldom below ``1``.
+  * **Setting C**: C is ``1`` by default and it's a reasonable default choice.
+    If you have a lot of noisy observations you should decrease it.
+    It corresponds to regularize more the estimation.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each

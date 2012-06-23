@@ -94,7 +94,8 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
     # visualize decision function for these parameters
     pl.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
-    pl.title("gamma {}, C {}".format(gamma, C), size='medium')
+    pl.title("gamma 10^%d, C 10^%d" % (np.log10(gamma), np.log10(C)),
+        size='medium')
 
     # visualize parameter's effect on decision function
     pl.pcolormesh(xx, yy, -Z, cmap=pl.cm.jet)
