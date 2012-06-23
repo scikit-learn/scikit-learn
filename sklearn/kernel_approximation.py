@@ -179,7 +179,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
     space is transformed into 2×sample_steps+1 features, where sample_steps is
-    a parameter of the method. Typical values of n include 1, 2 and 3.
+    a parameter of the method. Typical values of sample_steps include 1, 2 and
+    3.
 
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
@@ -227,14 +228,13 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_features * (2n + 1))
+        X_new: array-like, shape (n_samples, n_features × (2×sample_steps + 1))
         """
 
         X = array2d(X)
         # check if X has negative values. Doesn't play well with np.log.
         if (X < 0).any():
             raise ValueError("Entries of X must be non-negative.")
-        X_new = []
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
@@ -245,7 +245,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         X_step = np.zeros_like(X)
         X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
 
-        X_new.append(X_step)
+        X_new = [X_step]
 
         log_step_nz = self.sample_interval * np.log(X_nz)
         step_nz = 2 * X_nz * self.sample_interval
