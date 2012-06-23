@@ -54,6 +54,20 @@ def test_simple_precomputed():
             assert_true(ocur == X.shape[1])
 
 
+def test_all_precomputed():
+    """
+    Test that lars_path with precomputed Gram and Xy gives the right answer
+    """
+    X, y = diabetes.data, diabetes.target
+    G = np.dot(X.T, X)
+    Xy = np.dot(X.T, y)
+    for method in 'lar', 'lasso':
+        output = linear_model.lars_path(X, y, method=method)
+        output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy, method=method)
+        for expected, got in zip(output, output_pre):
+            assert_array_almost_equal(expected, got)
+
+
 def test_lars_lstsq():
     """
     Test that Lars gives least square solution at the end
