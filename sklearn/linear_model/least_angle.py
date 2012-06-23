@@ -409,8 +409,7 @@ class Lars(LinearModel, RegressorMixin):
         # precompute if n_samples > n_features
         precompute = self.precompute
         if hasattr(precompute, '__array__'):
-            # copy as it's going to be modified
-            Gram = precompute.copy()
+            Gram = precompute
         elif precompute == 'auto':
             Gram = 'auto'
         else:
@@ -1036,7 +1035,7 @@ class LassoLarsIC(LassoLars):
 
         alphas_, active_, coef_path_ = lars_path(X, y,
                   Gram=Gram, copy_X=copy_X,
-                  copy_Gram=False, alpha_min=0.0,
+                  copy_Gram=True, alpha_min=0.0,
                   method='lasso', verbose=self.verbose,
                   max_iter=max_iter, eps=self.eps)
 
