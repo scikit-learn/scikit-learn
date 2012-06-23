@@ -226,11 +226,14 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X: {array-like, sparse matrix}, shape = (n_samples, n_features)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_features × (2×sample_steps + 1))
+        X_new: {array, sparse matrix},
+               shape = (n_samples, n_features × (2×sample_steps + 1))
+            Whether the return value is an array of sparse matrix depends on
+            the type of the input X.
         """
 
         X = atleast2d_or_csr(X)
