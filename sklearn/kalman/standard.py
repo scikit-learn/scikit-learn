@@ -42,8 +42,9 @@ References
     * Yu, Byron M. and Shenoy, Krishna V. and Sahani, Maneesh. "Derivation of
       Kalman Filtering and Smoothing Equations".
       http://www.ece.cmu.edu/~byronyu/papers/derive_ks.pdf
-    * Ghahramani, Zoubin and Hinton, Geoffrey E. "Parameter Estimation for Linear
-      Dynamical Systems." http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
+    * Ghahramani, Zoubin and Hinton, Geoffrey E. "Parameter Estimation for
+      Linear Dynamical Systems."
+      http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
     * Welling, Max. "The Kalman Filter".
       http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
 """
@@ -67,6 +68,7 @@ DIM = {
     'mu_0': 1,
     'sigma_0': 2,
 }
+
 
 def _last_dims(X, t, ndims=2):
     """Extract the final `ndim` dimensions at index `t` if
@@ -103,7 +105,7 @@ def _pad(X, n=1, dim=None):
     if len(X.shape) == dim:
         return X
     else:
-        xs = [np.zeros( X.shape[1:] )[np.newaxis] for i in range(n)]
+        xs = [np.zeros(X.shape[1:])[np.newaxis] for i in range(n)]
         return np.vstack(xs + [X])
 
 
@@ -119,8 +121,8 @@ def _logmvnpdf(x, mu, sigma):
     sigma : [n_dim, n_dim] array
         covariance of multivariate normal
     """
-    return log_multivariate_normal_density(x[np.newaxis,:], mu[np.newaxis,:],
-        sigma[np.newaxis,:,:], 'full')
+    return log_multivariate_normal_density(x[np.newaxis, :], mu[np.newaxis, :],
+        sigma[np.newaxis, :, :], 'full')
 
 
 def _filter_predict(A, Q, b, mu, sigma):
@@ -203,7 +205,7 @@ def _filter_correct(C, R, d, mu_pred, sigma_pred, z):
     else:
         n_dim_state = sigma_pred.shape[0]
         n_dim_obs = C.shape[0]
-        K_new = np.zeros( (n_dim_state, n_dim_obs) )
+        K_new = np.zeros((n_dim_state, n_dim_obs))
 
         ll = 0.0
         mu_new = mu_pred
@@ -218,11 +220,11 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
 
     Parameters
     ==========
-    A : [T-1, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+    A : [T-1,n_dim_state,n_dim_state] or [n_dim_state,n_dim_state] array-like
         state transition matrix
     C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
         observation matrix
-    Q : [T-1, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+    Q : [T-1,n_dim_state,n_dim_state] or [n_dim_state,n_dim_state] array-like
         state transition covariance matrix
     R : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
         observation covariance matrix
@@ -278,7 +280,7 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
             Q_t1 = _last_dims(Q, t - 1)
             b_t1 = _last_dims(b, t - 1, ndims=1)
             (mu_pred[t], sigma_pred[t]) = _filter_predict(
-                A_t1, Q_t1, b_t1, mu_filt[t-1], sigma_filt[t-1])
+                A_t1, Q_t1, b_t1, mu_filt[t - 1], sigma_filt[t - 1])
 
         C_t = _last_dims(C, t)
         R_t = _last_dims(R, t)
@@ -289,7 +291,8 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
     return (mu_pred, sigma_pred, K, mu_filt, sigma_filt, ll)
 
 
-def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev, sigma_rev):
+def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev,
+                   sigma_rev):
     """One iteration of Kalman Smoothing.  Calculates posterior
     distribution of the hidden state at time t given the observations
     from times [1...T].
@@ -377,7 +380,7 @@ def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
     mu_smooth[-1] = mu_filt[-1]
     sigma_smooth[-1] = sigma_filt[-1]
 
-    for t in reversed(range(T-1)):
+    for t in reversed(range(T - 1)):
         A_t = _last_dims(A, t)
         (mu_smooth[t], sigma_smooth[t], L[t]) = _smooth_update(
             A_t,
@@ -389,7 +392,8 @@ def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
 
 
 def _smooth_pair(sigma_smooth, L):
-    """Calculate covariance between hidden states at t and t-1 for t = [0...T-1]
+    """Calculate covariance between hidden states at t and t-1 for t =
+    [0...T-1]
 
     Parameters
     ==========
@@ -563,7 +567,7 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
         res += np.outer(err, err) + A_t.dot(sigma_smooth[t]).dot(A_t.T) \
             + sigma_smooth[t + 1] - Vt1t_A - Vt1t_A.T
 
-    return (1.0 / (T-1)) * res
+    return (1.0 / (T - 1)) * res
 
 
 def _em_mu_0(mu_smooth):
@@ -605,9 +609,9 @@ def _em_b(A, mu_smooth):
     T, n_dim_state = mu_smooth.shape
     b = np.zeros(n_dim_state)
     for t in range(1, T):
-        A_t1 = _last_dims(A, t-1)
+        A_t1 = _last_dims(A, t - 1)
         b += mu_smooth[t] - A_t1.dot(mu_smooth[t - 1])
-    return (1.0/(T-1))*b
+    return (1.0 / (T - 1)) * b
 
 
 def _em_d(C, mu_smooth, Z):
@@ -627,7 +631,7 @@ def _em_d(C, mu_smooth, Z):
             d += Z[t] - C_t.dot(mu_smooth[t])
             n_obs += 1
     if n_obs > 0:
-        return (1.0/n_obs)*d
+        return (1.0 / n_obs) * d
     else:
         return d
 
@@ -642,7 +646,7 @@ class KalmanFilter(BaseEstimator):
         x_{t+1}   &= A_{t} x_{t} + b_{t} + Normal(0, Q_{t}) \\
         z_{t}     &= C_{t} x_{t} + d_{t} + Normal(0, R_{t})
 
-    The Kalman Filter is an algorithm designed to estimate 
+    The Kalman Filter is an algorithm designed to estimate
     :math:`P(x_t | z_{0:t})``.  As all state transitions and observations are
     linear with Gaussian distributed noise, these distributions can be
     represented exactly as Gaussian distributions with mean `mu_filt[t]` and
@@ -674,7 +678,7 @@ class KalmanFilter(BaseEstimator):
 
     Parameters
     ==========
-    A : [T-1, n_dim_state, n_dim_state] or [n_dim_state, n_dim_state] array-like
+    A : [T-1,n_dim_state,n_dim_state] or [n_dim_state,n_dim_state] array-like
         state transition matrix for times [0...T-2]
     C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
         observation matrix for times [0...T-1]
@@ -768,7 +772,7 @@ class KalmanFilter(BaseEstimator):
         return (x, ma.array(Z))
 
 
-    def filter(self, Z):
+    def filter(self, X):
         """Apply the Kalman Filter to estimate the hidden state at time
         t for t = [0...T-1] given observations up to and including time t.
         Observations are assumed to correspond to times [0...T-1].  The output
@@ -777,9 +781,9 @@ class KalmanFilter(BaseEstimator):
 
         Parameters
         ==========
-        Z : [T, n_dim_obs] array-like
-            observations corresponding to times [0...T-1].  If `Z` is a masked
-            array and any of `Z[t]` is masked, then `Z[t]` will be treated as a
+        X : [T, n_dim_obs] array-like
+            observations corresponding to times [0...T-1].  If `X` is a masked
+            array and any of `X[t]` is masked, then `X[t]` will be treated as a
             missing observation.
 
         Returns
@@ -794,14 +798,15 @@ class KalmanFilter(BaseEstimator):
         ll : float
             log likelihood of all observations
         """
-        Z = ma.asarray(Z)
+        Z = ma.asarray(X)
 
         (_, _, _, x_filt, V_filt, ll) = _filter(self.A, self.C,
             self.Q, self.R, self.b, self.d, self.mu_0, self.sigma_0, Z)
         return (x_filt, V_filt, ll)
 
 
-    def filter_update(self, mu_filt, sigma_filt, z=None, b=None, d=None, t=None):
+    def filter_update(self, mu_filt, sigma_filt, z=None, b=None, d=None,
+                      t=None):
         """Perform a one-step update to estimate the state at time t+1
         give an observation at time t+1 and the previous estimate for
         time t given observations from times [1...t].  This method is useful if
@@ -838,12 +843,12 @@ class KalmanFilter(BaseEstimator):
             mean estimate for state at time t+1 given observations from times
             [1...t+1]
         sigma_new : [n_dim_state, n_dim_state] array
-            covariance of estimate for state at time t+1 given observations from
-            times [1...t+1]
+            covariance of estimate for state at time t+1 given observations
+            from times [1...t+1]
         ll : float
             likelihood of observation z given all previous observations.
         """
-        
+
         if t is not None:
             if b is None:
                 b = _last_dims(self.b, t, ndims=1)
@@ -855,17 +860,21 @@ class KalmanFilter(BaseEstimator):
             if b is None:
                 b = self.b
                 if len(b.shape) > 1:
-                    raise ValueError('b is not constant for all time, you must specify t')
+                    raise ValueError('b is not constant for all time, ' +
+                                     'you must specify t')
             if d is None:
                 d = self.d
                 if len(d.shape) > 1:
-                    raise ValueError('d is not constant for all time, you must specify t')
+                    raise ValueError('d is not constant for all time, ' +
+                                     'you must specify t')
             A = self.A
             if len(A.shape) != 2:
-                raise ValueError('A is not constant for all time, you must specify t')
+                raise ValueError('A is not constant for all time, you ' +
+                                 'must specify t')
             C = self.C
             if len(C.shape) != 2:
-                raise ValueError('C is not constant for all time, you must specify t')
+                raise ValueError('C is not constant for all time, you ' +
+                                 ' must specify t')
         Q = self.Q  # assumed to be time-invariant
         R = self.R
 
@@ -876,7 +885,8 @@ class KalmanFilter(BaseEstimator):
             z.mask = True
 
         (mu_pred, sigma_pred) = _filter_predict(A, Q, b, mu_filt, sigma_filt)
-        (_, mu_new, sigma_new, ll) = _filter_correct(C, R, d, mu_pred, sigma_pred, z)
+        (_, mu_new, sigma_new, ll) = \
+                _filter_correct(C, R, d, mu_pred, sigma_pred, z)
 
         return (mu_new, sigma_new, ll)
 
@@ -888,9 +898,9 @@ class KalmanFilter(BaseEstimator):
 
         Parameters
         ==========
-        Z : [T, n_dim_obs] array-like
-            observations corresponding to times [0...T-1].  If `Z` is a masked
-            array and any of `Z[t]` is masked, then `Z[t]` will be treated as a
+        X : [T, n_dim_obs] array-like
+            observations corresponding to times [0...T-1].  If `X` is a masked
+            array and any of `X[t]` is masked, then `X[t]` will be treated as a
             missing observation.
 
         Returns
@@ -899,7 +909,7 @@ class KalmanFilter(BaseEstimator):
             mean of hidden state distributions for times [0...T-1] given
             all observations
         """
-        Z = ma.asarray(Z)
+        Z = ma.asarray(X)
 
         (mu_pred, sigma_pred, _, mu_filt, sigma_filt, ll) = _filter(
             self.A, self.C, self.Q, self.R, self.b, self.d, self.mu_0,
@@ -909,16 +919,16 @@ class KalmanFilter(BaseEstimator):
         return mu_smooth
 
 
-    def fit(self, Z, n_iter=10, em_vars=None):
+    def fit(self, X, y=None, n_iter=10, em_vars=None):
         """Apply the EM algorithm to estimate all parameters specified by
         `em_vars`.  Note that all variables estimated are assumed to be
         constant for all time.  See :func:`sklearn.kalman._em` for details.
 
         Parameters
         ==========
-        Z : [T, n_dim_obs] array-like
-            observations corresponding to times [0...T-1].  If `Z` is a masked
-            array and any of `Z[t]`'s components is masked, then `Z[t]` will be
+        X : [T, n_dim_obs] array-like
+            observations corresponding to times [0...T-1].  If `X` is a masked
+            array and any of `X[t]`'s components is masked, then `X[t]` will be
             treated as a missing observation.
         n_iter : int, optional
             number of EM iterations to perform
@@ -926,7 +936,7 @@ class KalmanFilter(BaseEstimator):
             variables to perform EM over.  Any variable not appearing here is
             left untouched.
         """
-        Z = ma.asarray(Z)
+        Z = ma.asarray(X)
 
         # Create dictionary of variables not to perform EM on
         if em_vars is None:
@@ -950,7 +960,7 @@ class KalmanFilter(BaseEstimator):
                     given.pop(k)
 
         # If a parameter is time varying, print a warning
-        for (k,v) in self.get_params().items():
+        for (k, v) in self.get_params().items():
             if k in DIM and (not k in given) and len(v.shape) != DIM[k]:
                 warn_str = '%s has %s dimensions now; ' % (k, len(v.shape)) + \
                     'after fitting, it will have dimension %d' % (DIM[k],)
@@ -965,6 +975,6 @@ class KalmanFilter(BaseEstimator):
                 self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
             sigma_pair_smooth = _smooth_pair(sigma_smooth, L)
             (self.A,  self.C, self.b, self.d, self.Q, self.R, self.mu_0,
-                self.sigma_0) = _em( Z, self.b, self.d, mu_smooth,
+                self.sigma_0) = _em(Z, self.b, self.d, mu_smooth,
                     sigma_smooth, sigma_pair_smooth, given=given)
         return self

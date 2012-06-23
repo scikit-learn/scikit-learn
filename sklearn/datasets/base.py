@@ -506,6 +506,7 @@ def load_sample_image(image_name):
         raise AttributeError("Cannot find sample image: %s" % image_name)
     return images.images[index]
 
+
 def load_kalman_data():
     def pad_and_mask(X):
         """Pad X's first index with zeros and mask it"""
@@ -523,12 +524,12 @@ def load_kalman_data():
     A = data['A']
     b = data['b'].T
     C = data['C']
-    d = data['d'][:,0]
-    Q_0 = 10.0*np.eye(5)
-    R_0 = 10.0*np.eye(2)
+    d = data['d'][:, 0]
+    Q_0 = 10.0 * np.eye(5)
+    R_0 = 10.0 * np.eye(2)
     Q = data['Q']
     R = data['R']
-    x_0 = data['x0'][:,0]
+    x_0 = data['x0'][:, 0]
     V_0 = data['P_0']
     X_filt = data['xfilt'].T
     V_filt = data['Vfilt'][0]

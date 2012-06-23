@@ -157,6 +157,7 @@ the case.  In order to use this feature, one simply needs to wrap the
 measurements in :mod:`numpy.ma` and mark a timestep as masked::
 
   >>> from sklearn.datasets import load_kalman_data
+  >>> import numpy as np
   >>> import numpy.ma as ma
   >>> Z = load_kalman_data().data
   >>> Z = ma.array(Z, mask=np.zeros(Z.shape))
