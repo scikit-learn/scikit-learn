@@ -94,7 +94,8 @@ steps and :math:`d` is the dimensionality of the state space, and thus the
 Smoother should be preferred.  In practice, the Smoother takes roughly twice as
 long as the Filter as it must perform two passes over the measurements.  The
 only case where the Filter is better suited is when measurements :math:`z_t`
-come in a streaming fashion and estimates for `x_t` need to be updated online.
+come in a streaming fashion and estimates for :math:`x_t` need to be updated
+online.
 
 Finally, textbook examples of the Kalman Filter and Kalman Smoother often
 assume :math:`x_t` ranges from :math:`t = 0 \ldots T` while :math:`z_t` ranges
@@ -161,6 +162,8 @@ measurements in :mod:`numpy.ma` and mark a timestep as masked::
   >>> import numpy.ma as ma
   >>> Z = load_kalman_data().data
   >>> Z = ma.array(Z, mask=np.zeros(Z.shape))
+  >>> Z[5] = ma.masked  # observation at time step 5 will now be ignored
+  >>> Z[5] = ma.nomask  # observation will be recognized again
 
 .. topic:: Examples:
 

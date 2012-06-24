@@ -32,7 +32,7 @@ kf = KalmanFilter(A, C, Q, R, b, d, x_0, V_0,
 z_missing = ma.array(z_all, mask=np.zeros(z_all.shape))
 for t in range(T):
     if t % 5 != 0:
-        z_missing.mask[t] = True
+        z_missing[t] = ma.masked
 
 # estimate state with filtering and smoothing
 x_smooth_all = kf.predict(z_all)

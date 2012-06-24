@@ -18,7 +18,7 @@ kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
                   d=data.d, mu_0=data.x_0, sigma_0=data.V_0,
                   em_vars=['A', 'C', 'Q', 'R', 'd', 'mu_0', 'sigma_0'])
 
-# Learn good values for A, C, Q, R, x_0, and V_0 using the EM algorithm.
+# Learn good values for A, C, Q, R, mu_0, and sigma_0 using the EM algorithm.
 ll = np.zeros(10)
 for i in range(len(ll)):
     kf = kf.fit(X=data.data, n_iter=1)
