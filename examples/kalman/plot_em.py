@@ -7,7 +7,7 @@ This example shows how one may use the EM algorithm to estimate model
 parameters in a Linear-Gaussian model.
 '''
 import numpy as np
-import matplotlib.pyplot as plt
+import pylab as pl
 
 from sklearn.datasets import load_kalman_data
 from sklearn.kalman import KalmanFilter
@@ -28,11 +28,11 @@ for i in range(len(ll)):
 # good we could do if we ran blind.
 n_dim_state = data.A.shape[0]
 T = data.data.shape[0]
-x_blind = np.zeros( (T, n_dim_state) )
-for t in range(T-1):
-  if t == 0:
-    x_blind[t] = data.x_0
-  x_blind[t+1] = data.A.dot(x_blind[t]) + data.b[t]
+x_blind = np.zeros((T, n_dim_state))
+for t in range(T - 1):
+    if t == 0:
+        x_blind[t] = data.x_0
+    x_blind[t + 1] = data.A.dot(x_blind[t]) + data.b[t]
 
 # Estimate the hidden states using observations up to and including
 # time t for t in [0...T-1].  This method outputs the mean and covariance
@@ -50,22 +50,22 @@ x_smooth = kf.predict(data.data)
 
 # Draw the true, filtered, and smoothed state estimates for all
 # 5 dimensions.
-plt.figure(figsize=(16,6))
-plt.hold(True)
-lines_true = plt.plot(data.target, linestyle='-', color='b')
-lines_blind = plt.plot(x_blind, linestyle=':', color='m')
-lines_filt = plt.plot(x_filt, linestyle='--', color='g')
-lines_smooth = plt.plot(x_smooth, linestyle='-.', color='r')
-plt.legend((lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
-            (      'true',        'blind',    'filtered',      'smoothed'))
-plt.xlabel('time')
-plt.ylabel('state')
-plt.xlim(xmax=500)
+pl.figure(figsize=(16, 6))
+pl.hold(True)
+lines_true = pl.plot(data.target, linestyle='-', color='b')
+lines_blind = pl.plot(x_blind, linestyle=':', color='m')
+lines_filt = pl.plot(x_filt, linestyle='--', color='g')
+lines_smooth = pl.plot(x_smooth, linestyle='-.', color='r')
+pl.legend((lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
+            ('true',        'blind',    'filtered',      'smoothed'))
+pl.xlabel('time')
+pl.ylabel('state')
+pl.xlim(xmax=500)
 
 # Draw log likelihood of observations as a function of EM iteration number.
 # Notice how it is increasing (this is guaranteed by the EM algorithm)
-plt.figure()
-plt.plot(ll)
-plt.xlabel('em iteration number')
-plt.ylabel('log likelihood')
-plt.show()
+pl.figure()
+pl.plot(ll)
+pl.xlabel('em iteration number')
+pl.ylabel('log likelihood')
+pl.show()

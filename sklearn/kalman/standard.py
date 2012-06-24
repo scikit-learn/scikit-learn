@@ -36,7 +36,7 @@ the EM algorithm, for :math:`\theta = (A,b,C,d,Q,R,\mu_0,\Sigma_0)`,
 Observations and states are assumed to be sampled at times [0...T-1]
 
 References
-==========
+----------
     * Abbeel, Pieter. "Maximum Likelihood, EM".
       http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/
     * Yu, Byron M. and Shenoy, Krishna V. and Sahani, Maneesh. "Derivation of
@@ -55,7 +55,7 @@ import numpy.ma as ma
 
 from ..base import BaseEstimator
 from ..mixture import log_multivariate_normal_density
-from ..utils import array1d, array2d
+from ..utils import array1d, array2d, check_random_state
 
 # Dimensionality of each Kalman Filter parameter for a single time step
 DIM = {
@@ -71,11 +71,13 @@ DIM = {
 
 
 def _last_dims(X, t, ndims=2):
-    """Extract the final `ndim` dimensions at index `t` if
-    X has >= ndim+1 dimensions, else return X.
+    """Extract the final dimensions of `X`
+    
+    Extract the final `ndim` dimensions at index `t` if `X` has >= `ndim` + 1
+    dimensions, otherwise return `X`.
 
     Parameters
-    ==========
+    ----------
     X : array with at least dimension `ndims`
     t : int
         index to use for the `ndims`+1th dimension
@@ -83,7 +85,7 @@ def _last_dims(X, t, ndims=2):
         number of dimensions in the array desired
 
     Returns
-    =======
+    -------
     Y : array with dimension `ndims`
         the final `ndims` dimensions indexed by `t`
     """
@@ -98,8 +100,9 @@ def _last_dims(X, t, ndims=2):
 
 
 def _pad(X, n=1, dim=None):
-    """
-    Pad an array along its first axis with `n` all-zero sub-arrays if its
+    """Pad `X` along its first axis with zeros.
+    
+    Pad an `X` along its first axis with `n` all-zero sub-arrays if its
     dimension isn't equal to `dim`.
     """
     if len(X.shape) == dim:
@@ -113,7 +116,7 @@ def _logmvnpdf(x, mu, sigma):
     """log density of the multivariate normal distribution
 
     Parameters
-    ==========
+    ----------
     x : [n_dim] array
         point sampled from multivariate normal
     mu : [n_dim] array
@@ -128,8 +131,11 @@ def _logmvnpdf(x, mu, sigma):
 def _filter_predict(A, Q, b, mu, sigma):
     """Calculate the mean and covariance of :math:`P(x_{t+1} | z_{0:t})`
 
+    Using the mean and covariance of :math:`P(x_t | z_{0:t})`, calculate the
+    mean and covariance of :math:`P(x_{t+1} | z_{0:t})`.
+
     Parameters
-    ==========
+    ----------
     A : [n_dim_state, n_dim_state} array
         state transition matrix from time t to t+1
     Q : [n_dim_state, n_dim_state] array
@@ -144,7 +150,7 @@ def _filter_predict(A, Q, b, mu, sigma):
         [0...t]
 
     Returns
-    =======
+    -------
     mu_pred : [n_dim_state] array
         mean of state at time t+1 given observations from times [0...t]
     sigma_pred : [n_dim_state, n_dim_state] array
@@ -158,11 +164,13 @@ def _filter_predict(A, Q, b, mu, sigma):
 
 
 def _filter_correct(C, R, d, mu_pred, sigma_pred, z):
-    """Incorporate observation z from time t to turn :math:`P(x_t | z_{0:t-1})`
-    into :math:`P(x_t | z_{0:t})`
+    """Correct a predicted state with a Kalman Filter update
+    
+    Incorporate observation `z` from time `t` to turn 
+    :math:`P(x_t | z_{0:t-1})` into :math:`P(x_t | z_{0:t})`
 
     Parameters
-    ==========
+    ----------
     C : [n_dim_obs, n_dim_state] array
         observation matrix for time t
     R : [n_dim_obs, n_dim_obs] array
@@ -180,7 +188,7 @@ def _filter_correct(C, R, d, mu_pred, sigma_pred, z):
         values are masked, the observation will be ignored.
 
     Returns
-    =======
+    -------
     K : [n_dim_state, n_dim_obs] array
         Kalman gain matrix for time t
     mu_new : [n_dim_state] array
@@ -215,11 +223,13 @@ def _filter_correct(C, R, d, mu_pred, sigma_pred, z):
 
 
 def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
-    """Apply the Kalman Filter to calculate posterior distribution over hidden
-    states given observations up to and including the current time step.
+    """Apply the Kalman Filter
+    
+    Calculate posterior distribution over hidden states given observations up
+    to and including the current time step.
 
     Parameters
-    ==========
+    ----------
     A : [T-1,n_dim_state,n_dim_state] or [n_dim_state,n_dim_state] array-like
         state transition matrix
     C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
@@ -241,7 +251,7 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
         `Z[t]` is masked, then `Z[t]` will be treated as a missing observation.
 
     Returns
-    =======
+    -------
     mu_pred : [T, n_dim_state] array
         `mu_pred[t]` = mean of hidden state at time t given observations from
         times [0...t-1]
@@ -293,12 +303,13 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
 
 def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev,
                    sigma_rev):
-    """One iteration of Kalman Smoothing.  Calculates posterior
-    distribution of the hidden state at time t given the observations
-    from times [1...T].
+    """Correct a predicted state with a Kalman Smoother update
+    
+    Calculates posterior distribution of the hidden state at time `t` given the
+    observations from times :math:`[0...T-1]` via Kalman Smoothing.
 
     Parameters
-    ==========
+    ----------
     A : [n_dim_state, n_dim_state] array
         state transition matrix from time t to t+1
     mu_for : [n_dim_state] array
@@ -321,7 +332,7 @@ def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev,
         times [1...T]
 
     Returns
-    =======
+    -------
     mu : [n_dim_state] array
         mean of smoothed state at time t given observations from times
         [1...T]
@@ -340,11 +351,13 @@ def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev,
 
 
 def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
-    """Apply the Kalman Smoother to estimate the hidden state at time
-    t for t = [0...T-1] given all observations.
+    """Apply the Kalman Smoother
+    
+    Estimate the hidden state at time :math:`t` for :math:`t = [0...T-1]` given
+    all observations.
 
     Parameters
-    ==========
+    ----------
     A : [T-1, n_dim_state, n_dim_state]  or [n_dim_state, n_dim_state] array
         `A[t]` = transition matrix from time t to t+1
     mu_filt : [T, n_dim_state] array
@@ -361,7 +374,7 @@ def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
         observations from times [0...t-1]
 
     Returns
-    =======
+    -------
     mu_smooth : [T, n_dim_state]
         mean of hidden state distributions for times [0...T-1] given
         all observations
@@ -392,18 +405,20 @@ def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
 
 
 def _smooth_pair(sigma_smooth, L):
-    """Calculate covariance between hidden states at t and t-1 for t =
-    [0...T-1]
+    """Calculate pairwise covariance between hidden states
+    
+    Calculate covariance between hidden states at :math:`t` and :math:`t-1` for
+    :math:`t = [0...T-1]`
 
     Parameters
-    ==========
+    ----------
     sigma_smooth : [T, n_dim_state, n_dim_state] array
         covariance of hidden state given all observations
     L : [T-1, n_dim_state, n_dim_state]
         Correction matrices from Kalman Smoothing
 
     Returns
-    =======
+    -------
     sigma_pair_smooth : [T, n_dim_state, n_dim_state] array
         Covariance between hidden states at times t and t-1 for t = [1...T-1].
         Time 0 is ignored.
@@ -416,11 +431,13 @@ def _smooth_pair(sigma_smooth, L):
 
 
 def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, given={}):
-    """Estimate Linear-Gaussian model parameters by maximizing the expected log
-    likelihood.
+    """Apply the EM Algorithm to the Linear-Gaussian model
+    
+    Estimate Linear-Gaussian model parameters by maximizing the expected log
+    likelihood of all observations.
 
     Parameters
-    ==========
+    ----------
     Z : [T, n_dim_obs] array
         observations for times [0...T-1].  If Z is a masked array and any of
         Z[t] is masked, then it will be treated as a missing observation.
@@ -442,7 +459,7 @@ def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, given={}):
         returned in its place.
 
     Returns
-    =======
+    -------
     A : [n_dim_state, n_dim_state] array
         estimated transition matrix
     C : [n_dim_obs, n_dim_state] array
@@ -473,8 +490,10 @@ def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, given={}):
 
 
 def _em_C(Z, d, mu_smooth, sigma_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    observation matrix C.
+    """Apply the EM algorithm to parameter `C`
+    
+    Maximize expected log likelihood of observations with respect to the
+    observation matrix `C`.
 
     .. math::
 
@@ -494,8 +513,10 @@ def _em_C(Z, d, mu_smooth, sigma_smooth):
 
 
 def _em_R(Z, d, C, mu_smooth, sigma_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    observation covariance matrix R.
+    """Apply the EM algorithm to parameter `R`
+    
+    Maximize expected log likelihood of observations with respect to the
+    observation covariance matrix `R`.
 
     .. math::
 
@@ -523,8 +544,10 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
 
 
 def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    transition matrix A.
+    """Apply the EM algorithm to parameter `A`
+    
+    Maximize expected log likelihood of observations with respect to the state
+    transition matrix `A`.
 
     .. math::
 
@@ -546,8 +569,10 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
 
 def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    transition covariance matrix Q.
+    """Apply the EM algorithm to parameter `Q`
+    
+    Maximize expected log likelihood of observations with respect to the
+    transition covariance matrix `Q`.
 
     .. math::
 
@@ -571,8 +596,10 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
 
 def _em_mu_0(mu_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    initial state distribution mean mu_0.
+    """Apply the EM algorithm to parameter `mu_0`
+    
+    Maximize expected log likelihood of observations with respect to the
+    initial state distribution mean `mu_0`.
 
     .. math::
 
@@ -583,8 +610,10 @@ def _em_mu_0(mu_smooth):
 
 
 def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    covariance of the initial state distribution sigma_0
+    """Apply the EM algorithm to parameter `sigma_0`
+    
+    Maximize expected log likelihood of observations with respect to the
+    covariance of the initial state distribution `sigma_0`.
 
     .. math::
 
@@ -598,8 +627,10 @@ def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
 
 
 def _em_b(A, mu_smooth):
-    """Maximize expected log likelihood of observations with respect to the
-    state transition offset
+    """Apply the EM algorithm to parameter `b`
+    
+    Maximize expected log likelihood of observations with respect to the
+    state transition offset `b`.
 
     .. math::
 
@@ -615,8 +646,10 @@ def _em_b(A, mu_smooth):
 
 
 def _em_d(C, mu_smooth, Z):
-    """Maximize expected log likelihood of observations with respect to the
-    observation offset
+    """Apply the EM algorithm to parameter `d`
+    
+    Maximize expected log likelihood of observations with respect to the
+    observation offset `d`.
 
     .. math::
 
@@ -637,9 +670,10 @@ def _em_d(C, mu_smooth, Z):
 
 
 class KalmanFilter(BaseEstimator):
-    """
-    Implements the Kalman Filter, Kalman Smoother, and EM algorithm for
-    a Linear Gaussian model specified by,
+    """Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
+    
+    This class implements the Kalman Filter, Kalman Smoother, and EM Algorithm
+    for a Linear Gaussian model specified by,
 
     .. math::
 
@@ -647,7 +681,7 @@ class KalmanFilter(BaseEstimator):
         z_{t}     &= C_{t} x_{t} + d_{t} + Normal(0, R_{t})
 
     The Kalman Filter is an algorithm designed to estimate
-    :math:`P(x_t | z_{0:t})``.  As all state transitions and observations are
+    :math:`P(x_t | z_{0:t})`.  As all state transitions and observations are
     linear with Gaussian distributed noise, these distributions can be
     represented exactly as Gaussian distributions with mean `mu_filt[t]` and
     covariances `sigma_filt[t]`.
@@ -655,8 +689,8 @@ class KalmanFilter(BaseEstimator):
     Similarly, the Kalman Smoother is an algorithm designed to estimate
     :math:`P(x_t | z_{0:T})`.
 
-    The EM algorithm aims to find for :math:`theta = (A, b, C, d, Q, R, \mu_0,
-    \sigma_0)`
+    The EM algorithm aims to find for 
+    :math:`theta = (A, b, C, d, Q, R, \mu_0, \sigma_0)`
 
     .. math::
 
@@ -677,7 +711,7 @@ class KalmanFilter(BaseEstimator):
             E_{x_{0:T-1}} [ L(x_{0:t}, \theta)| z_{0:T-1}, \theta_i ]
 
     Parameters
-    ==========
+    ----------
     A : [T-1,n_dim_state,n_dim_state] or [n_dim_state,n_dim_state] array-like
         state transition matrix for times [0...T-2]
     C : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
@@ -716,17 +750,16 @@ class KalmanFilter(BaseEstimator):
         self.random_state = random_state
         self.em_vars = em_vars
 
-
     def sample(self, T, x_0=None, random_state=None):
-        """Sample a trajectory of `T` timesteps in length.
+        """Sample a state sequence `T` timesteps in length.
 
         Parameters
-        ==========
+        ----------
         T : int
             number of timesteps
 
         Returns
-        =======
+        -------
         x : [T, n_dim_state] array
             hidden states corresponding to times [0...T-1]
         z : [T, n_dim_obs] array
@@ -739,12 +772,9 @@ class KalmanFilter(BaseEstimator):
 
         # logic for instantiating rng
         if random_state is None:
-            if self.random_state is None:
-                rng = np.random.RandomState()
-            else:
-                rng = self.random_state
+            rng = check_random_state(self.random_state)
         else:
-            rng = random_state
+            rng = check_random_state(random_state)
 
         # logic for selecting initial state
         if x_0 is None:
@@ -771,23 +801,24 @@ class KalmanFilter(BaseEstimator):
 
         return (x, ma.array(Z))
 
-
     def filter(self, X):
-        """Apply the Kalman Filter to estimate the hidden state at time
-        t for t = [0...T-1] given observations up to and including time t.
-        Observations are assumed to correspond to times [0...T-1].  The output
-        of this method corresponding to time T-1 can be used in
+        """Apply the Kalman Filter
+        
+        Apply the Kalman Filter to estimate the hidden state at time :math:`t`
+        for :math:`t = [0...T-1]` given observations up to and including time
+        `t`.  Observations are assumed to correspond to times `[0...T-1]`.  The
+        output of this method corresponding to time :math:`T-1` can be used in
         :func:`KalmanFilter.filter_update` for online updating.
 
         Parameters
-        ==========
+        ----------
         X : [T, n_dim_obs] array-like
             observations corresponding to times [0...T-1].  If `X` is a masked
             array and any of `X[t]` is masked, then `X[t]` will be treated as a
             missing observation.
 
         Returns
-        =======
+        -------
         mu_filt : [T, n_dim_state]
             mean of hidden state distributions for times [0...T-1] given
             observations up to and including the current time step
@@ -804,16 +835,18 @@ class KalmanFilter(BaseEstimator):
             self.Q, self.R, self.b, self.d, self.mu_0, self.sigma_0, Z)
         return (x_filt, V_filt, ll)
 
-
     def filter_update(self, mu_filt, sigma_filt, z=None, b=None, d=None,
                       t=None):
-        """Perform a one-step update to estimate the state at time t+1
-        give an observation at time t+1 and the previous estimate for
-        time t given observations from times [1...t].  This method is useful if
-        one wants to track an object with streaming observations.
+        """Update a Kalman Filter state estimate
+        
+        Perform a one-step update to estimate the state at time :math:`t+1`
+        give an observation at time :math:`t+1` and the previous estimate for
+        time :math:`t` given observations from times :math:`[0...t]`.  This
+        method is useful if one wants to track an object with streaming
+        observations.
 
         Parameters
-        ==========
+        ----------
         mu_filt : [n_dim_state] array
             mean estimate for state at time t given observations from times
             [1...t]
@@ -838,7 +871,7 @@ class KalmanFilter(BaseEstimator):
             argument can be disregarded.
 
         Returns
-        =======
+        -------
         mu_new : [n_dim_state] array
             mean estimate for state at time t+1 given observations from times
             [1...t+1]
@@ -890,21 +923,22 @@ class KalmanFilter(BaseEstimator):
 
         return (mu_new, sigma_new, ll)
 
-
     def predict(self, X):
-        """Apply the Kalman Smoother to estimate the hidden state at time
-        t for t = [0...T-1] given all observations.  See
+        """Apply the Kalman Smoother
+        
+        Apply the Kalman Smoother to estimate the hidden state at time
+        :math:`t` for :math:`t = [0...T-1]` given all observations.  See
         :func:`sklearn.kalman._smooth` for more complex output
 
         Parameters
-        ==========
+        ----------
         X : [T, n_dim_obs] array-like
             observations corresponding to times [0...T-1].  If `X` is a masked
             array and any of `X[t]` is masked, then `X[t]` will be treated as a
             missing observation.
 
         Returns
-        =======
+        -------
         mu_smooth : [T, n_dim_state]
             mean of hidden state distributions for times [0...T-1] given
             all observations
@@ -918,14 +952,15 @@ class KalmanFilter(BaseEstimator):
             self.A, mu_filt, sigma_filt, mu_pred, sigma_pred)
         return mu_smooth
 
-
     def fit(self, X, y=None, n_iter=10, em_vars=None):
-        """Apply the EM algorithm to estimate all parameters specified by
+        """Apply the EM algorithm
+        
+        Apply the EM algorithm to estimate all parameters specified by
         `em_vars`.  Note that all variables estimated are assumed to be
         constant for all time.  See :func:`sklearn.kalman._em` for details.
 
         Parameters
-        ==========
+        ----------
         X : [T, n_dim_obs] array-like
             observations corresponding to times [0...T-1].  If `X` is a masked
             array and any of `X[t]`'s components is masked, then `X[t]` will be

@@ -62,9 +62,11 @@ def as_float_array(X, copy=True):
         X = X.astype(np.float64)
     return X
 
+
 def array1d(X, dtype=None, order=None):
     """Returns at least 1-d array with data from X"""
     return np.asarray(np.atleast_1d(X), dtype=dtype, order=order)
+
 
 def array2d(X, dtype=None, order=None):
     """Returns at least 2-d array with data from X"""

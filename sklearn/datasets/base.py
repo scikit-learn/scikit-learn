@@ -508,6 +508,30 @@ def load_sample_image(image_name):
 
 
 def load_kalman_data():
+    """Load and return synthetic robot state data (state estimation)
+
+    ==============     ==============
+    Samples total                 500
+    Dimensionality                  2
+    Features           real, positive
+    Targets                       501
+    ==============     ==============
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the observed state of the robot, 'target', the true state of
+        the robot, 'DESCR', a complete description of the dataset, and 'A',
+        'b', 'C', 'd', 'Q', 'R', 'x_0', and 'V_0', the parameters of the model
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_kalman_data
+    >>> kalman_data = load_kalman_data()
+    >>> kalman_data.data.shape
+    (501, 2)
+    """
     def pad_and_mask(X):
         """Pad X's first index with zeros and mask it"""
         zeros = np.zeros(X.shape[1:])[np.newaxis]

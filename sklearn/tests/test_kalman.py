@@ -1,5 +1,7 @@
 import numpy as np
 
+from nose.tools import assert_true
+
 from ..kalman import KalmanFilter
 from sklearn.datasets import load_kalman_data
 
@@ -11,8 +13,8 @@ def test_kalman_sampling():
                       d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
 
     (x, z) = kf.sample(100)
-    assert x.shape == (100, data.A.shape[0])
-    assert z.shape == (100, data.C.shape[0])
+    assert_true(x.shape == (100, data.A.shape[0]))
+    assert_true(z.shape == (100, data.C.shape[0]))
 
 
 def test_kalman_filter_update():
@@ -27,14 +29,14 @@ def test_kalman_filter_update():
     n_dim_state = data.A.shape[0]
     x_filt2 = np.zeros((T, n_dim_state))
     V_filt2 = np.zeros((T, n_dim_state, n_dim_state))
-    for t in range(T-1):
+    for t in range(T - 1):
         if t == 0:
             x_filt2[0] = data.x_0
             V_filt2[0] = data.V_0
-        (x_filt2[t+1], V_filt2[t+1], _) = kf.filter_update(x_filt2[t],
-            V_filt2[t], data.data[t+1], t=t)
-    assert np.all(x_filt == x_filt2)
-    assert np.all(V_filt == V_filt2)
+        (x_filt2[t + 1], V_filt2[t + 1], _) = kf.filter_update(x_filt2[t],
+            V_filt2[t], data.data[t + 1], t=t)
+    assert_true(np.all(x_filt == x_filt2))
+    assert_true(np.all(V_filt == V_filt2))
 
 
 def test_kalman_filter():
@@ -43,8 +45,8 @@ def test_kalman_filter():
 
     (x_filt, V_filt, ll) = kf.filter(X=data.data)
     for t in range(500):
-        assert np.linalg.norm(x_filt[t] - data.X_filt[t]) < 1e-5
-        assert np.linalg.norm(V_filt[t] - data.V_filt[t]) < 1e-5
+        assert_true(np.linalg.norm(x_filt[t] - data.X_filt[t]) < 1e-5)
+        assert_true(np.linalg.norm(V_filt[t] - data.V_filt[t]) < 1e-5)
 
 
 def test_kalman_predict():
@@ -53,20 +55,21 @@ def test_kalman_predict():
 
     x_smooth = kf.predict(X=data.data)
     for t in reversed(range(501)):
-        assert np.linalg.norm(x_smooth[t] - data.X_smooth[t]) < 1e-5
+        assert_true(np.linalg.norm(x_smooth[t] - data.X_smooth[t]) < 1e-5)
 
 
 def test_kalman_fit():
     # check against MATLAB dataset
     kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0, em_vars=['Q', 'R'])
-    
+                      d=data.d, mu_0=data.x_0, sigma_0=data.V_0,
+                      em_vars=['Q', 'R'])
+
     scores = np.zeros(5)
     for i in range(len(scores)):
         scores[i] = np.sum(kf.filter(X=data.data)[-1])
         kf.fit(X=data.data, n_iter=1)
 
-    assert np.allclose(scores, data.ll[:5])
+    assert_true(np.allclose(scores, data.ll[:5]))
 
     # check that EM for all parameters is working
     kf.em_vars = 'all'
@@ -74,5 +77,5 @@ def test_kalman_fit():
     for i in range(len(scores)):
         kf.fit(X=data.data[0:T], n_iter=1)
         scores[i] = np.sum(kf.filter(X=data.data[0:T])[-1])
-    for i in range(len(scores)-1):
-        assert scores[i] < scores[i+1]
+    for i in range(len(scores) - 1):
+        assert_true(scores[i] < scores[i + 1])
