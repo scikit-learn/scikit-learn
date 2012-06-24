@@ -25,7 +25,7 @@ T = 50
 
 # sample from model
 kf = KalmanFilter(A, C, Q, R, b, d, x_0, V_0,
-    random_state=np.random.RandomState(0))
+                  random_state=0)
 (x, z_all) = kf.sample(T, x_0=x_0)
 
 # label half of the observations as missing

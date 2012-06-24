@@ -72,7 +72,7 @@ DIM = {
 
 def _last_dims(X, t, ndims=2):
     """Extract the final dimensions of `X`
-    
+
     Extract the final `ndim` dimensions at index `t` if `X` has >= `ndim` + 1
     dimensions, otherwise return `X`.
 
@@ -101,7 +101,7 @@ def _last_dims(X, t, ndims=2):
 
 def _pad(X, n=1, dim=None):
     """Pad `X` along its first axis with zeros.
-    
+
     Pad an `X` along its first axis with `n` all-zero sub-arrays if its
     dimension isn't equal to `dim`.
     """
@@ -165,8 +165,8 @@ def _filter_predict(A, Q, b, mu, sigma):
 
 def _filter_correct(C, R, d, mu_pred, sigma_pred, z):
     """Correct a predicted state with a Kalman Filter update
-    
-    Incorporate observation `z` from time `t` to turn 
+
+    Incorporate observation `z` from time `t` to turn
     :math:`P(x_t | z_{0:t-1})` into :math:`P(x_t | z_{0:t})`
 
     Parameters
@@ -224,7 +224,7 @@ def _filter_correct(C, R, d, mu_pred, sigma_pred, z):
 
 def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
     """Apply the Kalman Filter
-    
+
     Calculate posterior distribution over hidden states given observations up
     to and including the current time step.
 
@@ -304,7 +304,7 @@ def _filter(A, C, Q, R, b, d, mu_0, sigma_0, Z):
 def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev,
                    sigma_rev):
     """Correct a predicted state with a Kalman Smoother update
-    
+
     Calculates posterior distribution of the hidden state at time `t` given the
     observations from times :math:`[0...T-1]` via Kalman Smoothing.
 
@@ -352,7 +352,7 @@ def _smooth_update(A, mu_for, sigma_for, mu_pred, sigma_pred, mu_rev,
 
 def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
     """Apply the Kalman Smoother
-    
+
     Estimate the hidden state at time :math:`t` for :math:`t = [0...T-1]` given
     all observations.
 
@@ -406,7 +406,7 @@ def _smooth(A, mu_filt, sigma_filt, mu_pred, sigma_pred):
 
 def _smooth_pair(sigma_smooth, L):
     """Calculate pairwise covariance between hidden states
-    
+
     Calculate covariance between hidden states at :math:`t` and :math:`t-1` for
     :math:`t = [0...T-1]`
 
@@ -432,7 +432,7 @@ def _smooth_pair(sigma_smooth, L):
 
 def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, given={}):
     """Apply the EM Algorithm to the Linear-Gaussian model
-    
+
     Estimate Linear-Gaussian model parameters by maximizing the expected log
     likelihood of all observations.
 
@@ -491,7 +491,7 @@ def _em(Z, b, d, mu_smooth, sigma_smooth, sigma_pair_smooth, given={}):
 
 def _em_C(Z, d, mu_smooth, sigma_smooth):
     """Apply the EM algorithm to parameter `C`
-    
+
     Maximize expected log likelihood of observations with respect to the
     observation matrix `C`.
 
@@ -514,7 +514,7 @@ def _em_C(Z, d, mu_smooth, sigma_smooth):
 
 def _em_R(Z, d, C, mu_smooth, sigma_smooth):
     """Apply the EM algorithm to parameter `R`
-    
+
     Maximize expected log likelihood of observations with respect to the
     observation covariance matrix `R`.
 
@@ -545,7 +545,7 @@ def _em_R(Z, d, C, mu_smooth, sigma_smooth):
 
 def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     """Apply the EM algorithm to parameter `A`
-    
+
     Maximize expected log likelihood of observations with respect to the state
     transition matrix `A`.
 
@@ -570,7 +570,7 @@ def _em_A(b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
 def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
     """Apply the EM algorithm to parameter `Q`
-    
+
     Maximize expected log likelihood of observations with respect to the
     transition covariance matrix `Q`.
 
@@ -597,7 +597,7 @@ def _em_Q(A, b, mu_smooth, sigma_smooth, sigma_pair_smooth):
 
 def _em_mu_0(mu_smooth):
     """Apply the EM algorithm to parameter `mu_0`
-    
+
     Maximize expected log likelihood of observations with respect to the
     initial state distribution mean `mu_0`.
 
@@ -611,7 +611,7 @@ def _em_mu_0(mu_smooth):
 
 def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
     """Apply the EM algorithm to parameter `sigma_0`
-    
+
     Maximize expected log likelihood of observations with respect to the
     covariance of the initial state distribution `sigma_0`.
 
@@ -628,7 +628,7 @@ def _em_sigma_0(mu_0, mu_smooth, sigma_smooth):
 
 def _em_b(A, mu_smooth):
     """Apply the EM algorithm to parameter `b`
-    
+
     Maximize expected log likelihood of observations with respect to the
     state transition offset `b`.
 
@@ -647,7 +647,7 @@ def _em_b(A, mu_smooth):
 
 def _em_d(C, mu_smooth, Z):
     """Apply the EM algorithm to parameter `d`
-    
+
     Maximize expected log likelihood of observations with respect to the
     observation offset `d`.
 
@@ -671,7 +671,7 @@ def _em_d(C, mu_smooth, Z):
 
 class KalmanFilter(BaseEstimator):
     """Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
-    
+
     This class implements the Kalman Filter, Kalman Smoother, and EM Algorithm
     for a Linear Gaussian model specified by,
 
@@ -689,7 +689,7 @@ class KalmanFilter(BaseEstimator):
     Similarly, the Kalman Smoother is an algorithm designed to estimate
     :math:`P(x_t | z_{0:T})`.
 
-    The EM algorithm aims to find for 
+    The EM algorithm aims to find for
     :math:`theta = (A, b, C, d, Q, R, \mu_0, \sigma_0)`
 
     .. math::
@@ -803,7 +803,7 @@ class KalmanFilter(BaseEstimator):
 
     def filter(self, X):
         """Apply the Kalman Filter
-        
+
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...T-1]` given observations up to and including time
         `t`.  Observations are assumed to correspond to times `[0...T-1]`.  The
@@ -838,7 +838,7 @@ class KalmanFilter(BaseEstimator):
     def filter_update(self, mu_filt, sigma_filt, z=None, b=None, d=None,
                       t=None):
         """Update a Kalman Filter state estimate
-        
+
         Perform a one-step update to estimate the state at time :math:`t+1`
         give an observation at time :math:`t+1` and the previous estimate for
         time :math:`t` given observations from times :math:`[0...t]`.  This
@@ -925,7 +925,7 @@ class KalmanFilter(BaseEstimator):
 
     def predict(self, X):
         """Apply the Kalman Smoother
-        
+
         Apply the Kalman Smoother to estimate the hidden state at time
         :math:`t` for :math:`t = [0...T-1]` given all observations.  See
         :func:`sklearn.kalman._smooth` for more complex output
@@ -954,7 +954,7 @@ class KalmanFilter(BaseEstimator):
 
     def fit(self, X, y=None, n_iter=10, em_vars=None):
         """Apply the EM algorithm
-        
+
         Apply the EM algorithm to estimate all parameters specified by
         `em_vars`.  Note that all variables estimated are assumed to be
         constant for all time.  See :func:`sklearn.kalman._em` for details.
