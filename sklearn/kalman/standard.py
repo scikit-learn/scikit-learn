@@ -169,7 +169,9 @@ def _filter_predict(transition_matrix, transition_covariance,
     return (predicted_state_mean, predicted_state_covariance)
 
 
-def _filter_correct(observation_matrix, observation_covariance, observation_offset, predicted_state_mean, predicted_state_covariance, observation):
+def _filter_correct(observation_matrix, observation_covariance,
+                    observation_offset, predicted_state_mean,
+                    predicted_state_covariance, observation):
     """Correct a predicted state with a Kalman Filter update
 
     Incorporate observation `observation` from time `t` to turn
@@ -237,7 +239,7 @@ def _filter_correct(observation_matrix, observation_covariance, observation_offs
         corrected_state_mean = predicted_state_mean
         predicted_state_covariance = predicted_state_covariance
 
-    return (kalman_gain, corrected_state_mean, 
+    return (kalman_gain, corrected_state_mean,
             predicted_state_covariance, loglikelihood)
 
 
@@ -316,7 +318,7 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
             transition_covariance = _last_dims(transition_covariance, t - 1)
             transition_offset = _last_dims(transition_offsets, t - 1, ndims=1)
             (predicted_state_means[t], predicted_state_covariances[t]) =    \
-                    _filter_predict(transition_matrix, 
+                    _filter_predict(transition_matrix,
                                     transition_covariance,
                                     transition_offset,
                                     filtered_state_means[t - 1],
@@ -325,9 +327,9 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
         observation_matrix = _last_dims(observation_matrices, t)
         observation_covariance = _last_dims(observation_covariance, t)
         observation_offset = _last_dims(observation_offsets, t, ndims=1)
-        (kalman_gains[t], filtered_state_means[t], 
+        (kalman_gains[t], filtered_state_means[t],
          filtered_state_covariances[t], loglikelihoods[t]) =    \
-                 _filter_correct(observation_matrix, 
+                 _filter_correct(observation_matrix,
                                  observation_covariance,
                                  observation_offset,
                                  predicted_state_means[t],
@@ -839,16 +841,16 @@ class KalmanFilter(BaseEstimator):
     .. math::
 
         \theta_{i+1} = \arg\max_{\theta}
-            \mathbb{E}_{x_{0:T-1}} [ 
-                L(x_{0:t}, \theta)| z_{0:T-1}, \theta_i 
+            \mathbb{E}_{x_{0:T-1}} [
+                L(x_{0:t}, \theta)| z_{0:T-1}, \theta_i
             ]
 
     Parameters
     ----------
     transition_matrices : [T-1,n_dim_state,n_dim_state] or
     [n_dim_state,n_dim_state] array-like
-        Also known as :math:`A`.  state transition matrix between times t and t+1 for
-        t in [0...T-2]
+        Also known as :math:`A`.  state transition matrix between times t and
+        t+1 for t in [0...T-2]
     observation_matrices : [T, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs]
     array-like
         Also known as :math:`C`.  observation matrix for times [0...T-1]
@@ -942,7 +944,7 @@ class KalmanFilter(BaseEstimator):
                         self.transition_covariance, t - 1
                 )
                 states[t] = transition_matrix.dot(
-                        states[t - 1]) +  transition_offset +   \
+                        states[t - 1]) + transition_offset +    \
                         rng.multivariate_normal(np.zeros(n_dim_state),
                         transition_covariance.newbyteorder('=')
                 )
@@ -994,8 +996,16 @@ class KalmanFilter(BaseEstimator):
         """
         Z = ma.asarray(X)
 
-        (_, _, _, filtered_state_means, filtered_state_covariances, loglikelihoods) = _filter(self.transition_matrices, self.observation_matrices, self.transition_covariance, self.observation_covariance, self.transition_offsets, self.observation_offsets, self.initial_state_mean, self.initial_state_covariance, Z)
-        return (filtered_state_means, filtered_state_covariances, loglikelihoods)
+        (_, _, _, filtered_state_means,
+         filtered_state_covariances, loglikelihoods) = _filter(
+                 self.transition_matrices, self.observation_matrices,
+                 self.transition_covariance, self.observation_covariance,
+                 self.transition_offsets, self.observation_offsets,
+                 self.initial_state_mean, self.initial_state_covariance,
+                 Z
+        )
+        return (filtered_state_means, filtered_state_covariances,
+                loglikelihoods)
 
     def filter_update(self, filtered_state_mean, filtered_state_covariance,
                       observation=None, transition_offset=None,
@@ -1017,9 +1027,9 @@ class KalmanFilter(BaseEstimator):
             covariance of estimate for state at time t given observations from
             times [1...t]
         observation : [n_dim_obs] array or None
-            observation from time t+1.  If `observation` is a masked array and any of
-            `observation`'s components are masked or if `observation` is None,
-            then `observation` will be treated as a missing observation.
+            observation from time t+1.  If `observation` is a masked array and
+            any of `observation`'s components are masked or if `observation` is
+            None, then `observation` will be treated as a missing observation.
         transition_offset : optional, [n_dim_state] array
             state offset for transition from time t to t+1.  If unspecified,
             `self.transition_offset` will be used.
@@ -1102,7 +1112,7 @@ class KalmanFilter(BaseEstimator):
                         transition_offset, filtered_state_mean,
                         filtered_state_covariance
                 )
-        (_, next_filtered_state_mean, 
+        (_, next_filtered_state_mean,
          next_filtered_state_covariance, loglikelihood) =   \
                 _filter_correct(
                         observation_matrix, observation_covariance,
@@ -1136,7 +1146,7 @@ class KalmanFilter(BaseEstimator):
         Z = ma.asarray(X)
 
         (predicted_state_means, predicted_state_covariances,
-         _, filtered_state_means, filtered_state_covariances, 
+         _, filtered_state_means, filtered_state_covariances,
          loglikelihoods) = _filter(
                  self.transition_matrices, self.observation_matrices,
                  self.transition_covariance, self.observation_covariance,
@@ -1201,7 +1211,7 @@ class KalmanFilter(BaseEstimator):
 
         # Actual EM iterations
         for i in range(n_iter):
-            (predicted_state_means, predicted_state_covariances, 
+            (predicted_state_means, predicted_state_covariances,
              kalman_gains, filtered_state_means,
              filtered_state_covariances, loglikelihoods) = _filter(     \
                      self.transition_matrices, self.observation_matrices,

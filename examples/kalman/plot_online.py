@@ -36,7 +36,7 @@ for t in range(T - 1):
     if t == 0:
         filtered_state_means[t] = data.initial_state_mean
         filtered_state_covariances[t] = data.initial_state_covariance
-    (filtered_state_means[t + 1], 
+    (filtered_state_means[t + 1],
      filtered_state_covariances[t + 1], _) = kf.filter_update(
          filtered_state_means[t], filtered_state_covariances[t],
          data.data[t + 1], transition_offset=data.transition_offsets[t],

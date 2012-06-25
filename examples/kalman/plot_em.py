@@ -25,7 +25,7 @@ kf = KalmanFilter(
     data.initial_state_covariance,
     em_vars=[
       'transition_matrices', 'observation_matrices',
-      'transition_covariance', 'observation_covariance', 
+      'transition_covariance', 'observation_covariance',
       'observation_offsets', 'initial_state_mean',
       'initial_state_covariance'
     ])
@@ -71,7 +71,7 @@ lines_blind = pl.plot(blind_state_estimates, linestyle=':', color='m')
 lines_filt = pl.plot(filtered_state_estimates, linestyle='--', color='g')
 lines_smooth = pl.plot(smoothed_state_estimates, linestyle='-.', color='r')
 pl.legend(
-    (lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]), 
+    (lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
     ('true', 'blind', 'filtered', 'smoothed')
 )
 pl.xlabel('time')

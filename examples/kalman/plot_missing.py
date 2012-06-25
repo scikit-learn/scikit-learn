@@ -33,7 +33,7 @@ kf = KalmanFilter(
 
 # label half of the observations as missing
 observations_missing = ma.array(
-    observations_all, 
+    observations_all,
     mask=np.zeros(observations_all.shape)
 )
 for t in range(T):
