@@ -401,6 +401,60 @@ cdef class MSE(RegressionCriterion):
         return self.var_left + self.var_right
 
 
+cdef class MultiOuputCriterion(Criterion):
+    cdef int n_outputs
+    cdef int y_stride
+
+    def __init__(self):
+        self.criteria = []
+
+        self.n_outputs = 0
+        self.y_stride = -1
+
+    def add_criterion(self, criterion):
+        self.criteria.append(criterion)
+        self.n_outputs += 1
+
+    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples, int n_total_samples):
+        cdef Criterion criterion
+        self.y_stride = n_total_samples
+
+        for criterion in self.criteria:
+            criterion.init(y, sample_mask, n_samples, n_total_samples)
+            y += self.y_stride
+
+    cdef void reset(self):
+        cdef Criterion criterion
+
+        for criterion in self.criteria:
+            criterion.reset()
+
+    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i, BOOL_t *sample_mask):
+        cdef Criterion criterion
+
+        for criterion in self.criteria:
+            n_left = criterion.update(a, b, y, X_argsorted_i, sample_mask)
+            y += self.y_stride
+
+    cdef double eval(self):
+        cdef Criterion criterion
+        cdef double value = 0.0
+
+        for criterion in self.criteria:
+            value += criterion.eval()
+
+        return value / self.n_outputs
+
+    cpdef np.ndarray init_value(self):
+        cdef Criterion criterion
+        values = []
+
+        for criterion in self.criteria:
+            values.append(criterion.init_value())
+
+        return np.hstack(values)
+
+
 ################################################################################
 # Tree util functions
 #

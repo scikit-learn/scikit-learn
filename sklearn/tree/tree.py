@@ -471,7 +471,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.n_classes_ = 1
             criterion = REGRESSION[self.criterion]()
 
-        y = np.ascontiguousarray(y, dtype=DTYPE)
+        y = np.asarray(y, dtype=DTYPE)
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
