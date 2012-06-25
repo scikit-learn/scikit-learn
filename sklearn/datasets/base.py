@@ -522,8 +522,11 @@ def load_kalman_data():
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the observed state of the robot, 'target', the true state of
-        the robot, 'DESCR', a complete description of the dataset, and 'A',
-        'b', 'C', 'd', 'Q', 'R', 'x_0', and 'V_0', the parameters of the model
+        the robot, 'DESCR', a complete description of the dataset, and
+        'transition_matrix', 'transition_offsets', 'observation_matrix',
+        'observation_offset', 'transition_covariance',
+        'observation_covariance', 'initial_state_mean', and
+        'initial_state_covariance', the parameters of the model
 
     Examples
     --------
@@ -562,6 +565,11 @@ def load_kalman_data():
     V_smooth = data['Vsmooth'][0]
     T = Z.shape[0]
 
-    return Bunch(T=T, data=Z, target=X, A=A, b=b, C=C, d=d, Q_0=Q_0, R_0=R_0,
-        Q=Q, R=R, x_0=x_0, V_0=V_0, X_filt=X_filt, V_filt=V_filt, ll=ll,
-        X_smooth=X_smooth, V_smooth=V_smooth, DESCR=descr)
+    return Bunch(T=T, data=Z, target=X, transition_matrix=A,
+        transition_offsets=b, observation_matrix=C, observation_offset=d,
+        initial_transition_covariance=Q_0, initial_observation_covariance=R_0,
+        transition_covariance=Q, observation_covariance=R,
+        initial_state_mean=x_0, initial_state_covariance=V_0,
+        filtered_state_means=X_filt, filtered_state_covariances=V_filt,
+        loglikelihoods=ll, smoothed_state_means=X_smooth,
+        smoothed_state_covariances=V_smooth, DESCR=descr)

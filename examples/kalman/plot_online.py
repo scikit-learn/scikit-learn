@@ -15,27 +15,38 @@ from sklearn.kalman import KalmanFilter
 
 # Initialize the Kalman Filter
 data = load_kalman_data()
-kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                  d=data.d, mu_0=data.x_0, sigma_0=data.V_0)
+kf = KalmanFilter(
+    data.transition_matrix,
+    data.observation_matrix,
+    data.initial_transition_covariance,
+    data.initial_observation_covariance,
+    data.transition_offsets,
+    data.observation_offset,
+    data.initial_state_mean,
+    data.initial_state_covariance,
+    random_state=0
+)
 
 # Estimate mean and covariance of hidden state distribution iteratively.
 T = data.data.shape[0]
-n_dim_state = data.A.shape[0]
-x_filt = np.zeros((T, n_dim_state))
-V_filt = np.zeros((T, n_dim_state, n_dim_state))
+n_dim_state = data.transition_matrix.shape[0]
+filtered_state_means = np.zeros((T, n_dim_state))
+filtered_state_covariances = np.zeros((T, n_dim_state, n_dim_state))
 for t in range(T - 1):
     if t == 0:
-        x_filt[t] = data.x_0
-        V_filt[t] = data.V_0
-    (x_filt[t + 1], V_filt[t + 1], _) = kf.filter_update(
-        x_filt[t], V_filt[t], data.data[t + 1], b=data.b[t], d=data.d
+        filtered_state_means[t] = data.initial_state_mean
+        filtered_state_covariances[t] = data.initial_state_covariance
+    (filtered_state_means[t + 1], 
+     filtered_state_covariances[t + 1], _) = kf.filter_update(
+         filtered_state_means[t], filtered_state_covariances[t],
+         data.data[t + 1], transition_offset=data.transition_offsets[t],
+         observation_offset=data.observation_offset
     )
 
 # draw estimates
 pl.figure()
 pl.hold(True)
 lines_true = pl.plot(data.target, color='b')
-lines_filt = pl.plot(x_filt, color='r')
-pl.legend((lines_true[0], lines_filt[0]),
-            ('true',        'filt'))
+lines_filt = pl.plot(filtered_state_means, color='r')
+pl.legend((lines_true[0], lines_filt[0]), ('true', 'filt'))
 pl.show()

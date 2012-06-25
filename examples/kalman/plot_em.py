@@ -14,31 +14,45 @@ from sklearn.kalman import KalmanFilter
 
 # Load data and initialize Kalman Filter
 data = load_kalman_data()
-kf = KalmanFilter(A=data.A, C=data.C, Q=data.Q_0, R=data.R_0, b=data.b,
-                  d=data.d, mu_0=data.x_0, sigma_0=data.V_0,
-                  em_vars=['A', 'C', 'Q', 'R', 'd', 'mu_0', 'sigma_0'])
+kf = KalmanFilter(
+    data.transition_matrix,
+    data.observation_matrix,
+    data.initial_transition_covariance,
+    data.initial_observation_covariance,
+    data.transition_offsets,
+    data.observation_offset,
+    data.initial_state_mean,
+    data.initial_state_covariance,
+    em_vars=[
+      'transition_matrices', 'observation_matrices',
+      'transition_covariance', 'observation_covariance', 
+      'observation_offsets', 'initial_state_mean',
+      'initial_state_covariance'
+    ])
 
-# Learn good values for A, C, Q, R, mu_0, and sigma_0 using the EM algorithm.
-ll = np.zeros(10)
-for i in range(len(ll)):
+# Learn good values for variables named in `em_vars` using the EM algorithm
+loglikelihoods = np.zeros(10)
+for i in range(len(loglikelihoods)):
     kf = kf.fit(X=data.data, n_iter=1)
-    ll[i] = np.sum(kf.filter(X=data.data)[-1])
+    loglikelihoods[i] = np.sum(kf.filter(X=data.data)[-1])
 
 # Estimate the state without using any observations.  This will let us see how
 # good we could do if we ran blind.
-n_dim_state = data.A.shape[0]
+n_dim_state = data.transition_matrix.shape[0]
 T = data.data.shape[0]
-x_blind = np.zeros((T, n_dim_state))
+blind_state_estimates = np.zeros((T, n_dim_state))
 for t in range(T - 1):
     if t == 0:
-        x_blind[t] = data.x_0
-    x_blind[t + 1] = data.A.dot(x_blind[t]) + data.b[t]
+        blind_state_estimates[t] = data.initial_state_mean
+    blind_state_estimates[t + 1] = data.transition_matrix.  \
+        dot(blind_state_estimates[t]) +   \
+        data.transition_offsets[t]
 
 # Estimate the hidden states using observations up to and including
 # time t for t in [0...T-1].  This method outputs the mean and covariance
 # characterizing the Multivariate Normal distribution for
 #   P(x_t | z_{1:t})
-(x_filt, _, _) = kf.filter(data.data)
+(filtered_state_estimates, _, _) = kf.filter(data.data)
 
 # Estimate the hidden states using all observations.  These estimates
 # will be 'smoother' (and are to be preferred) to those produced by
@@ -46,18 +60,20 @@ for t in range(T - 1):
 # Probabilistically, this method produces the mean and covariance
 # characterizing,
 #    P(x_t | z_{1:T})
-x_smooth = kf.predict(data.data)
+smoothed_state_estimates = kf.predict(data.data)
 
 # Draw the true, filtered, and smoothed state estimates for all
 # 5 dimensions.
 pl.figure(figsize=(16, 6))
 pl.hold(True)
 lines_true = pl.plot(data.target, linestyle='-', color='b')
-lines_blind = pl.plot(x_blind, linestyle=':', color='m')
-lines_filt = pl.plot(x_filt, linestyle='--', color='g')
-lines_smooth = pl.plot(x_smooth, linestyle='-.', color='r')
-pl.legend((lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]),
-            ('true',        'blind',    'filtered',      'smoothed'))
+lines_blind = pl.plot(blind_state_estimates, linestyle=':', color='m')
+lines_filt = pl.plot(filtered_state_estimates, linestyle='--', color='g')
+lines_smooth = pl.plot(smoothed_state_estimates, linestyle='-.', color='r')
+pl.legend(
+    (lines_true[0], lines_blind[0], lines_filt[0], lines_smooth[0]), 
+    ('true', 'blind', 'filtered', 'smoothed')
+)
 pl.xlabel('time')
 pl.ylabel('state')
 pl.xlim(xmax=500)
@@ -65,7 +81,7 @@ pl.xlim(xmax=500)
 # Draw log likelihood of observations as a function of EM iteration number.
 # Notice how it is increasing (this is guaranteed by the EM algorithm)
 pl.figure()
-pl.plot(ll)
+pl.plot(loglikelihoods)
 pl.xlabel('em iteration number')
 pl.ylabel('log likelihood')
 pl.show()
