@@ -592,6 +592,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
+    cdef Py_ssize_t feature_idx = -1
     cdef int n_left = 0
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
@@ -599,6 +600,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef DTYPE_t *X_i = NULL
     cdef int *X_argsorted_i = NULL
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] features = None
 
     # Compute the column strides (increment in pointer elements to get
     # from column i to i + 1) for `X` and `X_argsorted`
@@ -622,11 +624,13 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     # Features to consider
     if max_features < 0 or max_features == n_features:
         features = np.arange(n_features)
+        max_features = n_features
     else:
         features = random_state.permutation(n_features)[:max_features]
 
     # Look for the best split
-    for i in features:
+    for feature_idx in range(max_features):
+        i = features[feature_idx]
         # Get i-th col of X and X_sorted
         X_i = (<DTYPE_t *>X.data) + X_stride * i
         X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
@@ -730,25 +734,26 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
         The initial error contained in the node.
     """
     # Variables
-    cdef:
-        int n_total_samples = X.shape[0]
-        int n_features = X.shape[1]
-        int i, a, b, c, n_left, best_i = -1
-        DTYPE_t t, initial_error, error
-        DTYPE_t best_error = np.inf, best_t = np.inf
-        DTYPE_t *y_ptr = <DTYPE_t *>y.data
-        DTYPE_t *X_i = NULL
-        int *X_argsorted_i = NULL
-        BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+    cdef int n_total_samples = X.shape[0]
+    cdef int n_features = X.shape[1]
+    cdef int i, a, b, c, n_left, best_i = -1
+    cdef Py_ssize_t feature_idx = -1
+    cdef DTYPE_t t, initial_error, error
+    cdef DTYPE_t best_error = np.inf, best_t = np.inf
+    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
+    cdef DTYPE_t *X_i = NULL
+    cdef int *X_argsorted_i = NULL
+    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] features = None
 
-        # Compute the column strides (increment in pointer elements to get
-        # from column i to i + 1) for `X` and `X_argsorted`
-        int X_elem_stride = X.strides[0]
-        int X_col_stride = X.strides[1]
-        int X_stride = X_col_stride / X_elem_stride
-        int X_argsorted_elem_stride = X_argsorted.strides[0]
-        int X_argsorted_col_stride = X_argsorted.strides[1]
-        int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
+    # Compute the column strides (increment in pointer elements to get
+    # from column i to i + 1) for `X` and `X_argsorted`
+    cdef int X_elem_stride = X.strides[0]
+    cdef int X_col_stride = X.strides[1]
+    cdef int X_stride = X_col_stride / X_elem_stride
+    cdef int X_argsorted_elem_stride = X_argsorted.strides[0]
+    cdef int X_argsorted_col_stride = X_argsorted.strides[1]
+    cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
 
     # Compute the initial criterion value
     X_argsorted_i = <int *>X_argsorted.data
@@ -763,11 +768,13 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     # Features to consider
     if max_features == n_features:
         features = np.arange(n_features)
+        max_features = n_features
     else:
         features = random_state.permutation(n_features)[:max_features]
 
     # Look for the best random split
-    for i in features:
+    for feature_idx in range(max_features):
+        i = features[feature_idx]
         # Get i-th col of X and X_sorted
         X_i = (<DTYPE_t *>X.data) + X_stride * i
         X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
@@ -788,7 +795,8 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
             continue
 
         # Draw a random threshold in [a, b)
-        t = X_i[X_argsorted_i[a]] + random_state.rand() * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]])
+        t = X_i[X_argsorted_i[a]] + (random_state.rand() *
+                                     (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]))
         if t == X_i[X_argsorted_i[b]]:
             t = X_i[X_argsorted_i[a]]
 
