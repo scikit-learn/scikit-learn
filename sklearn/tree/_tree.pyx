@@ -592,7 +592,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, best_i = -1
-    cdef Py_ssize_t feature_idx = -1
+    cdef np.int32_t feature_idx = -1
     cdef int n_left = 0
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
@@ -600,7 +600,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef DTYPE_t *X_i = NULL
     cdef int *X_argsorted_i = NULL
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] features = None
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] features = None
 
     # Compute the column strides (increment in pointer elements to get
     # from column i to i + 1) for `X` and `X_argsorted`
@@ -622,11 +622,11 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
 
     # Features to consider
-    if max_features < 0 or max_features == n_features:
-        features = np.arange(n_features)
+    features = np.arange(n_features, dtype=np.int32)
+    if max_features < 0 or max_features >= n_features:
         max_features = n_features
     else:
-        features = random_state.permutation(n_features)[:max_features]
+        features = random_state.permutation(features)[:max_features]
 
     # Look for the best split
     for feature_idx in range(max_features):
@@ -737,14 +737,14 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, c, n_left, best_i = -1
-    cdef Py_ssize_t feature_idx = -1
+    cdef np.int32_t feature_idx = -1
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
     cdef int *X_argsorted_i = NULL
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] features = None
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] features = None
 
     # Compute the column strides (increment in pointer elements to get
     # from column i to i + 1) for `X` and `X_argsorted`
@@ -766,11 +766,11 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
 
     # Features to consider
-    if max_features == n_features:
-        features = np.arange(n_features)
+    features = np.arange(n_features, dtype=np.int32)
+    if max_features < 0 or max_features >= n_features:
         max_features = n_features
     else:
-        features = random_state.permutation(n_features)[:max_features]
+        features = random_state.permutation(features)[:max_features]
 
     # Look for the best random split
     for feature_idx in range(max_features):
