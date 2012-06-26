@@ -128,6 +128,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * linalg.norm(y) ** 2
 
+    Xy = np.dot(X.T, y)
+    gradient = np.zeros(n_features)
+    feature_inner_product = np.zeros(shape=(n_features, n_features))
+    active_set = set(range(n_features))
+
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
@@ -143,16 +148,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
 
-            # tmp = (X[:,ii]*R).sum()
-            tmp = ddot(n_samples,
-                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                       <DOUBLE*>R.data, 1)
+            # initial calculation
+            if n_iter == 0:
+                feature_inner_product[:, ii] = np.dot(X[:, ii], X)
+                gradient[ii] = Xy[ii] - np.dot(feature_inner_product[:, ii], w)
 
-            # test code for Covariance Updates
-            # right hand side of Eq. 8, the sum is replaced by the right hand side
-            # of Eq. 9
-            tmp_sum = np.array([np.dot(X[:, ii], X[:, k]) * w[k] for k in xrange(n_features)]).sum()
-            tmp =  (1/n_features)*(np.dot(X[:, ii], y) - tmp_sum) + w_ii
+            tmp = gradient[ii] + w_ii * norm_cols_X[ii]
 
             if positive and tmp < 0:
                 w[ii] = 0.0
@@ -166,6 +167,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
                       <DOUBLE*>R.data, 1)
 
+            # update gradients, if coef changed
+            if w_ii != w[ii]:
+                for j in active_set:
+                    if n_iter >= 1 or j <= ii:
+                        gradient[j] -= feature_inner_product[ii, j] * \
+                                                         (w[ii] - w_ii)
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
