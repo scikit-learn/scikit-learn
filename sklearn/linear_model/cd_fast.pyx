@@ -136,17 +136,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in xrange(n_features):  # Loop over coordinates
+        for ii in active_set:  # Loop over coordinates
             if norm_cols_X[ii] == 0.0:
                 continue
 
             w_ii = w[ii]  # Store previous value
-
-            if w_ii != 0.0:
-                # R += w_ii * X[:,ii]
-                daxpy(n_samples, w_ii,
-                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                      <DOUBLE*>R.data, 1)
 
             # initial calculation
             if n_iter == 0:
@@ -161,18 +155,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
-            if w[ii] != 0.0:
-                # R -=  w[ii] * X[:,ii] # Update residual
-                daxpy(n_samples, -w[ii],
-                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                      <DOUBLE*>R.data, 1)
-
             # update gradients, if coef changed
             if w_ii != w[ii]:
                 for j in active_set:
                     if n_iter >= 1 or j <= ii:
                         gradient[j] -= feature_inner_product[ii, j] * \
                                                          (w[ii] - w_ii)
+
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
@@ -185,6 +174,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
+            R = y - np.dot(X, w)
 
             XtA = np.dot(X.T, R) - beta * w
             if positive:
@@ -209,6 +199,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if gap < tol:
                 # return if we reached desired tolerance
                 break
+
 
     return w, gap, tol
 
