@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import warnings
+from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
@@ -71,8 +72,10 @@ class BaseLibSVM(BaseEstimator):
     This implements support vector machine classification and regression.
     """
 
+    __metaclass__ = ABCMeta
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
+    @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  sparse, class_weight, verbose):
@@ -455,7 +458,8 @@ class BaseLibSVM(BaseEstimator):
             in the model.
         """
         if self._sparse:
-            raise ValueError("decision_function not supported for sparse SVM")
+            raise NotImplementedError("decision_function not supported for"
+                    " sparse SVM")
 
         X = array2d(X, dtype=np.float64, order="C")
 

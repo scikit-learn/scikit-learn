@@ -8,12 +8,13 @@
 
 import numpy as np
 from ..base import BaseEstimator
+from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
 
 
-class RFE(BaseEstimator):
+class RFE(BaseEstimator, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -83,7 +84,7 @@ class RFE(BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, n_features_to_select, step=1):
+    def __init__(self, estimator, n_features_to_select=None, step=1):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -102,6 +103,10 @@ class RFE(BaseEstimator):
         """
         # Initialization
         n_features = X.shape[1]
+        if self.n_features_to_select is None:
+            n_features_to_select = n_features / 2
+        else:
+            n_features_to_select = self.n_features_to_select
 
         if 0.0 < self.step < 1.0:
             step = int(self.step * n_features)
@@ -114,7 +119,7 @@ class RFE(BaseEstimator):
         ranking_ = np.ones(n_features, dtype=np.int)
 
         # Elimination
-        while np.sum(support_) > self.n_features_to_select:
+        while np.sum(support_) > n_features_to_select:
             # Remaining features
             features = np.arange(n_features)[support_]
 
@@ -128,7 +133,7 @@ class RFE(BaseEstimator):
                 ranks = np.argsort(estimator.coef_ ** 2)
 
             # Eliminate the worse features
-            threshold = min(step, np.sum(support_) - self.n_features_to_select)
+            threshold = min(step, np.sum(support_) - n_features_to_select)
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -187,7 +192,7 @@ class RFE(BaseEstimator):
         return X[:, self.support_]
 
 
-class RFECV(RFE):
+class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
        selection of the best number of features.
 
@@ -283,9 +288,8 @@ class RFECV(RFE):
             regression).
         """
         # Initialization
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=1,
-                  step=self.step)
+        rfe = RFE(estimator=self.estimator, n_features_to_select=1,
+                step=self.step)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
         scores = {}

@@ -1,10 +1,14 @@
 import numpy as np
 import scipy.sparse
+from abc import ABCMeta, abstractmethod
 
 from ..base import BaseLibSVM
 
 
 class SparseBaseLibSVM(BaseLibSVM):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose):

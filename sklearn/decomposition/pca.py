@@ -49,7 +49,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
 
     pu = -rank * np.log(2)
     for i in range(rank):
-        pu += gammaln((n_features - i) / 2) - np.log(np.pi) * (n_features - i) / 2
+        pu += (gammaln((n_features - i) / 2)
+                - np.log(np.pi) * (n_features - i) / 2)
 
     pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2
@@ -429,8 +430,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components, copy=True, iterated_power=3,
-                 whiten=False, random_state=None):
+    def __init__(self, n_components=None, copy=True, iterated_power=3,
+            whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy
         self.iterated_power = iterated_power
@@ -465,8 +466,12 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
+        if self.n_components is None:
+            n_components = X.shape[1]
+        else:
+            n_components = self.n_components
 
-        U, S, V = randomized_svd(X, self.n_components,
+        U, S, V = randomized_svd(X, n_components,
                                  n_iterations=self.iterated_power,
                                  random_state=self.random_state)
 
