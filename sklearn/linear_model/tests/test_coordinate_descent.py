@@ -278,6 +278,26 @@ def test_multi_task_lasso_and_enet():
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
+
+def test_enet_multitarget():
+    rng = np.random.RandomState(0)
+    X, y = rng.randn(10, 8), rng.randn(10, 3)
+    n_targets = y.shape[1]
+
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
+    # XXX: There is a bug when precompute is not None!
+    estimator.fit(X, y)
+    coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
+                                      estimator.dual_gap_, estimator.eps_)
+
+    for k in xrange(n_targets):
+        estimator.fit(X, y[:, k])
+        assert_array_almost_equal(coef[k, :], estimator.coef_)
+        assert_array_almost_equal(intercept[k], estimator.intercept_)
+        assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+        assert_array_almost_equal(eps[k], estimator.eps_)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
