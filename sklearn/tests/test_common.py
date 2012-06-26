@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin
 from sklearn.utils import shuffle
 from sklearn.preprocessing import Scaler
-from sklearn.cross_validation import train_test_split
+#from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_iris, load_boston
 from sklearn.metrics import zero_one_score
 from sklearn.lda import LDA
@@ -26,8 +26,10 @@ from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
 
-dont_test = [Pipeline, GridSearchCV, SparseCoder]
+dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
+        EllipticEnvelop]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
@@ -51,7 +53,6 @@ def test_all_estimators():
             clone(e)
             # test __repr__
             repr(e)
-        print(w)
 
 
 def test_classifiers_train():
@@ -72,13 +73,16 @@ def test_classifiers_train():
         if Clf in [MultinomialNB, BernoulliNB]:
             # TODO also test these!
             continue
-        clf = Clf()
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True) as w:
+            clf = Clf()
         # fit
         clf.fit(X, y)
         y_pred = clf.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
         assert_greater(zero_one_score(y, y_pred), 0.78)
+
         # raises error on malformed input for predict
         if isinstance(clf, BaseLibSVM) or isinstance(clf, BaseLibLinear):
             # TODO: libsvm decision functions, input validation
@@ -124,7 +128,10 @@ def test_classifiers_classes():
         if Clf in [MultinomialNB, BernoulliNB]:
             # TODO also test these!
             continue
-        clf = Clf()
+
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True) as w:
+            clf = Clf()
         # fit
         clf.fit(X, y)
         y_pred = clf.predict(X)
@@ -133,32 +140,6 @@ def test_classifiers_classes():
         assert_greater(zero_one_score(y, y_pred), 0.78)
 
 
-def test_classifiers_test():
-    # test if classifiers can cope with non-consecutive classes
-    estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators if issubclass(E,
-        ClassifierMixin)]
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=7)
-    X = Scaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    for name, Clf in classifiers:
-        if Clf in dont_test or Clf in meta_estimators:
-            continue
-        if Clf in [MultinomialNB, BernoulliNB]:
-            # TODO also test these!
-            continue
-        clf = Clf()
-        # fit
-        try:
-            clf.fit(X_train, y_train)
-            y_pred = clf.predict(X_test)
-            # test set performance
-            assert_greater(zero_one_score(y_test, y_pred), 0.78)
-        except Exception as ex:
-            print(ex)
-            print(clf)
 
 
 def test_regressors_train():
@@ -175,7 +156,9 @@ def test_regressors_train():
     for name, Reg in regressors:
         if Reg in dont_test or Reg in meta_estimators:
             continue
-        reg = Reg()
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True) as w:
+            reg = Reg()
         if hasattr(reg, 'alpha'):
             reg.set_params(alpha=0.01)
 
