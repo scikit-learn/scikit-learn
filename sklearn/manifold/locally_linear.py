@@ -611,10 +611,11 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.hessian_tol = hessian_tol
         self.modified_tol = modified_tol
         self.random_state = random_state
-        self.nbrs_ = NearestNeighbors(n_neighbors,
-                                      algorithm=neighbors_algorithm)
+        self.neighbors_algorithm = neighbors_algorithm
 
     def _fit_transform(self, X):
+        self.nbrs_ = NearestNeighbors(self.n_neighbors,
+                algorithm=self.neighbors_algorithm)
         if self.out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
                 "``n_components`` and is now deprecated.", DeprecationWarning,

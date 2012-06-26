@@ -15,6 +15,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, is_classifier, clone
+from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import deprecated
@@ -176,7 +177,7 @@ def _has_one_grid_point(param_grid):
     return True
 
 
-class GridSearchCV(BaseEstimator):
+class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     """Grid search on the parameters of a classifier
 
     Important members are fit, predict.
