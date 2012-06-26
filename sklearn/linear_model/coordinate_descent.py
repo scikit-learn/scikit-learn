@@ -792,6 +792,14 @@ class LassoCV(LinearModelCV, RegressorMixin):
     path = staticmethod(lasso_path)
     n_jobs = 1
 
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
+            normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+            copy_X=True, cv=None, verbose=False):
+        super(LassoCV, self).__init__(eps=eps, n_alphas=n_alphas,
+                alphas=alphas, fit_intercept=fit_intercept,
+                normalize=normalize, precompute=precompute, max_iter=max_iter,
+                tol=tol, copy_X=copy_X, cv=cv, verbose=verbose)
+
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
     """Elastic Net model with iterative fitting along a regularization path

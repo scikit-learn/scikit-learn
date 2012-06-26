@@ -105,6 +105,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X = np.asarray(X)
         if self.n_components is None:
             n_components = X.shape[1]
+        else:
+            n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
         Vt, _, E = dict_learning(X.T, n_components, self.alpha,
@@ -247,6 +249,8 @@ class MiniBatchSparsePCA(SparsePCA):
         X = np.asarray(X)
         if self.n_components is None:
             n_components = X.shape[1]
+        else:
+            n_components = self.n_components
         Vt, _ = dict_learning_online(X.T, n_components, alpha=self.alpha,
                                      n_iter=self.n_iter, return_code=True,
                                      dict_init=None, verbose=self.verbose,

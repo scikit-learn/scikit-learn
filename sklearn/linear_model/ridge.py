@@ -231,6 +231,10 @@ class Ridge(_BaseRidge, RegressorMixin):
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, normalize=False,
        tol=0.001)
     """
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+                 copy_X=True, tol=1e-3):
+        super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
+                normalize=normalize, copy_X=copy_X, tol=tol)
 
 
 class RidgeClassifier(_BaseRidge, ClassifierMixin):

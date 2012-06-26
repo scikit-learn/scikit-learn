@@ -611,6 +611,7 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.hessian_tol = hessian_tol
         self.modified_tol = modified_tol
         self.random_state = random_state
+        self.neighbors_algorithm = neighbors_algorithm
 
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(self.n_neighbors,

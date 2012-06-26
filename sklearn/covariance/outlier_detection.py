@@ -16,6 +16,7 @@ import numpy as np
 import  scipy as sp
 from . import MinCovDet
 from ..utils import deprecated
+from ..base import ClassifierMixin
 
 
 class OutlierDetectionMixin(object):
@@ -102,7 +103,7 @@ class OutlierDetectionMixin(object):
         return is_inlier
 
 
-class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
+class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Attributes
