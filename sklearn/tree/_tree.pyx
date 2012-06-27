@@ -40,8 +40,10 @@ cdef extern from "float.h":
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)"""
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
-                   int n_total_samples):
+    cdef void init(self, DTYPE_t *y,
+                         BOOL_t *sample_mask,
+                         int n_samples,
+                         int n_total_samples):
         """Initialise the criterion class for new split point."""
         pass
 
@@ -49,8 +51,11 @@ cdef class Criterion:
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
-                    BOOL_t *sample_mask):
+    cdef int update(self, int a,
+                          int b,
+                          DTYPE_t *y,
+                          int *X_argsorted_i,
+                          BOOL_t *sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         pass
@@ -91,7 +96,11 @@ cdef class ClassificationCriterion(Criterion):
     n_right : int
         The number of samples right of splitting point.
     """
-    cdef int n_classes
+    cdef int y_stride
+    cdef int n_outputs
+    cdef int* n_classes
+    cdef int count_stride
+
     cdef int n_samples
     cdef int* label_count_left
     cdef int* label_count_right
@@ -104,15 +113,35 @@ cdef class ClassificationCriterion(Criterion):
     cdef ndarray_label_count_right
     cdef ndarray_label_count_init
 
-    def __init__(self, int n_classes):
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_left \
-            = np.zeros((n_classes,), dtype=np.int32, order='C')
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_right \
-            = np.zeros((n_classes,), dtype=np.int32, order='C')
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_init \
-            = np.zeros((n_classes,), dtype=np.int32, order='C')
+    def __init__(self, np.ndarray[DTYPE_t, mode="fortran"] y):
+        cdef int k = 0
 
-        self.n_classes = n_classes
+        if y.ndim == 2:
+            self.y_stride = y.strides[1] / y.strides[0]
+            self.n_outputs = y.shape[1]
+        else:
+            self.y_stride = 1
+            self.n_outputs = 1
+
+        cdef np.ndarray[np.int32_t, ndim=1] n_classes = \
+            np.zeros((self.n_outputs,), dtype=np.int32, order="C")
+
+        if y.ndim == 2:
+            for k from 0 <= k < self.n_outputs:
+                n_classes[k] = len(np.unique(y[:, k]))
+        else:
+            n_classes[0] = len(np.unique(y))
+
+        self.n_classes = <int*>n_classes.data
+        self.count_stride = np.max(n_classes)
+
+        cdef np.ndarray[np.int32_t, ndim=2] ndarray_label_count_left \
+            = np.zeros((self.n_outputs, self.count_stride), dtype=np.int32, order="C")
+        cdef np.ndarray[np.int32_t, ndim=2] ndarray_label_count_right \
+            = np.zeros((self.n_outputs, self.count_stride), dtype=np.int32, order="C")
+        cdef np.ndarray[np.int32_t, ndim=2] ndarray_label_count_init \
+            = np.zeros((self.n_outputs, self.count_stride), dtype=np.int32, order="C")
+
         self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
@@ -126,46 +155,57 @@ cdef class ClassificationCriterion(Criterion):
     cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
                    int n_total_samples):
         """Initialise the criterion class."""
+        cdef int k = 0
         cdef int c = 0
         cdef int j = 0
 
         self.n_samples = n_samples
 
-        for c from 0 <= c < self.n_classes:
-            self.label_count_init[c] = 0
+        for k from 0 <= k < self.n_outputs:
+            for c from 0 <= c < self.n_classes[k]:
+                self.label_count_init[k * self.count_stride + c] = 0
 
-        for j from 0 <= j < n_total_samples:
-            if sample_mask[j] == 0:
-                continue
-            c = <int>(y[j])
-            self.label_count_init[c] += 1
+            for j from 0 <= j < n_total_samples:
+                if sample_mask[j] == 0:
+                    continue
+
+                c = <int>(y[k * self.y_stride + j])
+                self.label_count_init[k * self.count_stride + c] += 1
 
         self.reset()
 
     cdef void reset(self):
         """Reset label_counts by setting `label_count_left to zero
         and copying the init array into the right."""
+        cdef int k = 0
         cdef int c = 0
         self.n_left = 0
         self.n_right = self.n_samples
 
-        for c from 0 <= c < self.n_classes:
-            self.label_count_left[c] = 0
-            self.label_count_right[c] = self.label_count_init[c]
+        for k from 0 <= k < self.n_outputs:
+            for c from 0 <= c < self.n_classes[k]:
+                self.label_count_left[k * self.count_stride + c] = 0
+                self.label_count_right[k * self.count_stride + c] = self.label_count_init[k * self.count_stride + c]
 
     cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
                     BOOL_t *sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
+        cdef int k
         cdef int c
+
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
             s = X_argsorted_i[idx]
+
             if sample_mask[s] == 0:
                 continue
-            c = <int>(y[s])
-            self.label_count_right[c] -= 1
-            self.label_count_left[c] += 1
+
+            for k from 0 <= k < self.n_outputs:
+                c = <int>(y[k * self.y_stride + s])
+                self.label_count_right[k * self.count_stride + c] -= 1
+                self.label_count_left[k * self.count_stride + c] += 1
+
             self.n_right -= 1
             self.n_left += 1
 
@@ -187,31 +227,39 @@ cdef class Gini(ClassificationCriterion):
 
     cdef double eval(self):
         """Returns Gini index of left branch + Gini index of right branch. """
+        cdef double total = 0.0
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
-        cdef double H_left = n_left * n_left
-        cdef double H_right = n_right * n_right
-        cdef int k, count_left, count_right
+        cdef double H_left
+        cdef double H_right
+        cdef int k, c, count_left, count_right
 
-        for k from 0 <= k < self.n_classes:
-            count_left = self.label_count_left[k]
-            if count_left > 0:
-                H_left -= (count_left * count_left)
-            count_right = self.label_count_right[k]
-            if count_right > 0:
-                H_right -= (count_right * count_right)
+        for k from 0 <= k < self.n_outputs:
+            H_left = n_left * n_left
+            H_right = n_right * n_right
 
-        if n_left == 0:
-            H_left = 0
-        else:
-            H_left /= n_left
+            for c from 0 <= c < self.n_classes[k]:
+                count_left = self.label_count_left[k * self.count_stride + c]
+                if count_left > 0:
+                    H_left -= (count_left * count_left)
 
-        if n_right == 0:
-            H_right = 0
-        else:
-            H_right /= n_right
+                count_right = self.label_count_right[k * self.count_stride + c]
+                if count_right > 0:
+                    H_right -= (count_right * count_right)
 
-        return (H_left + H_right) / self.n_samples
+            if n_left == 0:
+                H_left = 0
+            else:
+                H_left /= n_left
+
+            if n_right == 0:
+                H_right = 0
+            else:
+                H_right /= n_right
+
+            total += (H_left + H_right)
+
+        return total / (self.n_samples * self.n_outputs)
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -222,24 +270,33 @@ cdef class Entropy(ClassificationCriterion):
 
     cdef double eval(self):
         """Returns Entropy of left branch + Entropy index of right branch. """
-        cdef double H_left = 0.0
-        cdef double H_right = 0.0
-        cdef int k
+        cdef double total = 0.0
+        cdef double H_left
+        cdef double H_right
+        cdef int k, c
         cdef double e1, e2
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
 
-        for k from 0 <= k < self.n_classes:
-            if self.label_count_left[k] > 0:
-                H_left -= ((self.label_count_left[k] / n_left)
-                           * log(self.label_count_left[k] / n_left))
-            if self.label_count_right[k] > 0:
-                H_right -= ((self.label_count_right[k] / n_right)
-                            * log(self.label_count_right[k] / n_right))
+        for k from 0 <= k < self.n_outputs:
+            H_left = 0.0
+            H_right = 0.0
 
-        e1 = (n_left / self.n_samples) * H_left
-        e2 = (n_right / self.n_samples) * H_right
-        return e1 + e2
+            for c from 0 <= c < self.n_classes[k]:
+                if self.label_count_left[k * self.count_stride + c] > 0:
+                    H_left -= ((self.label_count_left[k * self.count_stride + c] / n_left)
+                               * log(self.label_count_left[k * self.count_stride + c] / n_left))
+
+                if self.label_count_right[k * self.count_stride + c] > 0:
+                    H_right -= ((self.label_count_right[k * self.count_stride + c] / n_right)
+                                * log(self.label_count_right[k * self.count_stride + c] / n_right))
+
+            e1 = (n_left / self.n_samples) * H_left
+            e2 = (n_right / self.n_samples) * H_right
+
+            total += e1 + e2
+
+        return total / self.n_outputs
 
 
 cdef class RegressionCriterion(Criterion):
@@ -281,57 +338,94 @@ cdef class RegressionCriterion(Criterion):
         number of samples right of split point.
     """
 
+    cdef int y_stride
+    cdef int n_outputs
+
     cdef int n_samples
     cdef int n_right
     cdef int n_left
 
-    cdef double mean_left
-    cdef double mean_right
-    cdef double mean_init
+    cdef DTYPE_t* mean_left
+    cdef DTYPE_t* mean_right
+    cdef DTYPE_t* mean_init
+    cdef DTYPE_t* sq_sum_left
+    cdef DTYPE_t* sq_sum_right
+    cdef DTYPE_t* sq_sum_init
+    cdef DTYPE_t* var_left
+    cdef DTYPE_t* var_right
 
-    cdef double sq_sum_right
-    cdef double sq_sum_left
-    cdef double sq_sum_init
+    # need to store ref to arrays to prevent GC
+    cdef ndarray_mean_left
+    cdef ndarray_mean_right
+    cdef ndarray_mean_init
+    cdef ndarray_sq_sum_left
+    cdef ndarray_sq_sum_right
+    cdef ndarray_sq_sum_init
+    cdef ndarray_var_left
+    cdef ndarray_var_right
 
-    cdef double var_left
-    cdef double var_right
+    def __init__(self, np.ndarray[DTYPE_t, mode="fortran"] y):
+        cdef int k = 0
 
-    def __init__(self):
+        if y.ndim == 2:
+            self.y_stride = y.strides[1] / y.strides[0]
+            self.n_outputs = y.shape[1]
+        else:
+            self.y_stride = 1
+            self.n_outputs = 1
+
         self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
-        self.mean_left = 0.0
-        self.mean_right = 0.0
-        self.mean_init = 0.0
-        self.sq_sum_right = 0.0
-        self.sq_sum_left = 0.0
-        self.sq_sum_init = 0.0
-        self.var_left = 0.0
-        self.var_right = 0.0
+
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_mean_left = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_mean_right = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_mean_init = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_sq_sum_left = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_sq_sum_right = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_sq_sum_init = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_var_left = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+        cdef np.ndarray[DTYPE_t, ndim=1] ndarray_var_right = np.zeros((self.n_outputs,), dtype=DTYPE, order="C")
+
+        self.mean_left = <DTYPE_t*>ndarray_mean_left.data
+        self.mean_right = <DTYPE_t*>ndarray_mean_left.data
+        self.mean_init = <DTYPE_t*>ndarray_mean_init.data
+        self.sq_sum_right = <DTYPE_t*>ndarray_sq_sum_left.data
+        self.sq_sum_left = <DTYPE_t*>ndarray_sq_sum_right.data
+        self.sq_sum_init = <DTYPE_t*>ndarray_sq_sum_init.data
+        self.var_left = <DTYPE_t*>ndarray_var_left.data
+        self.var_right = <DTYPE_t*>ndarray_var_left.data
 
     cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
                    int n_total_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
            sum in `self.mean_init` and `self.sq_sum_init`. """
-        self.mean_left = 0.0
-        self.mean_right = 0.0
-        self.mean_init = 0.0
-        self.sq_sum_right = 0.0
-        self.sq_sum_left = 0.0
-        self.sq_sum_init = 0.0
-        self.var_left = 0.0
-        self.var_right = 0.0
+        cdef int k = 0
+
+        for k from 0 <= k < self.n_outputs:
+            self.mean_left[k] = 0.0
+            self.mean_right[k] = 0.0
+            self.mean_init[k] = 0.0
+            self.sq_sum_right[k] = 0.0
+            self.sq_sum_left[k] = 0.0
+            self.sq_sum_init[k] = 0.0
+            self.var_left[k] = 0.0
+            self.var_right[k] = 0.0
+
         self.n_samples = n_samples
 
         cdef int j = 0
-        for j from 0 <= j < n_total_samples:
-            if sample_mask[j] == 0:
-                continue
-            self.sq_sum_init += (y[j] * y[j])
-            self.mean_init += y[j]
 
-        self.mean_init = self.mean_init / self.n_samples
+        for k from 0 <= k < self.n_outputs:
+            for j from 0 <= j < n_total_samples:
+                if sample_mask[j] == 0:
+                    continue
+
+                self.sq_sum_init[k] += (y[k * self.y_stride + j] * y[k * self.y_stride + j])
+                self.mean_init[k] += y[k * self.y_stride + j]
+
+            self.mean_init[k] = self.mean_init[k] / self.n_samples
 
         self.reset()
 
@@ -342,44 +436,48 @@ cdef class RegressionCriterion(Criterion):
         whole dataset into the auxiliary variables of the
         right branch.
         """
+        cdef int k = 0
+
         self.n_right = self.n_samples
         self.n_left = 0
-        self.mean_right = self.mean_init
-        self.mean_left = 0.0
-        self.sq_sum_right = self.sq_sum_init
-        self.sq_sum_left = 0.0
-        self.var_left = 0.0
-        self.var_right = self.sq_sum_right - \
-            self.n_samples * (self.mean_right * self.mean_right)
+
+        for k from 0 <= k < self.n_outputs:
+            self.mean_right[k] = self.mean_init[k]
+            self.mean_left[k] = 0.0
+            self.sq_sum_right[k] = self.sq_sum_init[k]
+            self.sq_sum_left[k] = 0.0
+            self.var_left[k] = 0.0
+            self.var_right[k] = self.sq_sum_right[k] - \
+                self.n_samples * (self.mean_right[k] * self.mean_right[k])
 
     cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
                     BOOL_t *sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef double y_idx = 0.0
-        cdef int idx, j
+        cdef int idx, j, k
+
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
             j = X_argsorted_i[idx]
+
             if sample_mask[j] == 0:
                 continue
-            y_idx = y[j]
-            self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
-            self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
 
-            self.mean_left = (self.n_left * self.mean_left + y_idx) / \
-                <double>(self.n_left + 1)
-            self.mean_right = ((self.n_samples - self.n_left) * \
-                self.mean_right - y_idx) / \
-                <double>(self.n_samples - self.n_left - 1)
+            for k from 0 <= k < self.n_outputs:
+                y_idx = y[k * self.y_stride + j]
+                self.sq_sum_left[k] += (y_idx * y_idx)
+                self.sq_sum_right[k] -= (y_idx * y_idx)
+
+                self.mean_left[k] = (self.n_left * self.mean_left[k] + y_idx) / <double>(self.n_left + 1)
+                self.mean_right[k] = ((self.n_samples - self.n_left) * self.mean_right[k] - y_idx) / <double>(self.n_samples - self.n_left - 1)
 
             self.n_right -= 1
             self.n_left += 1
 
-            self.var_left = self.sq_sum_left - \
-                self.n_left * (self.mean_left * self.mean_left)
-            self.var_right = self.sq_sum_right - \
-                self.n_right * (self.mean_right * self.mean_right)
+            for k from 0 <= k < self.n_outputs:
+                self.var_left[k] = self.sq_sum_left[k] - self.n_left * (self.mean_left[k] * self.mean_left[k])
+                self.var_right[k] = self.sq_sum_right[k] - self.n_right * (self.mean_right[k] * self.mean_right[k])
 
         return self.n_left
 
@@ -387,8 +485,7 @@ cdef class RegressionCriterion(Criterion):
         pass
 
     cpdef np.ndarray init_value(self):
-        ## TODO is calling np.asarray a performance issue?
-        return np.asarray(self.mean_init)
+        return self.ndarray_mean_init
 
 
 cdef class MSE(RegressionCriterion):
@@ -398,61 +495,14 @@ cdef class MSE(RegressionCriterion):
     """
 
     cdef double eval(self):
-        return self.var_left + self.var_right
+        cdef double total = 0.0
+        cdef int k
 
+        for k from 0 <= k < self.n_outputs:
+            total += self.var_left[k] + self.var_right[k]
 
-cdef class MultiOuputCriterion(Criterion):
-    cdef int n_outputs
-    cdef int y_stride
+        return total / self.n_outputs
 
-    def __init__(self):
-        self.criteria = []
-
-        self.n_outputs = 0
-        self.y_stride = -1
-
-    def add_criterion(self, criterion):
-        self.criteria.append(criterion)
-        self.n_outputs += 1
-
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples, int n_total_samples):
-        cdef Criterion criterion
-        self.y_stride = n_total_samples
-
-        for criterion in self.criteria:
-            criterion.init(y, sample_mask, n_samples, n_total_samples)
-            y += self.y_stride
-
-    cdef void reset(self):
-        cdef Criterion criterion
-
-        for criterion in self.criteria:
-            criterion.reset()
-
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i, BOOL_t *sample_mask):
-        cdef Criterion criterion
-
-        for criterion in self.criteria:
-            n_left = criterion.update(a, b, y, X_argsorted_i, sample_mask)
-            y += self.y_stride
-
-    cdef double eval(self):
-        cdef Criterion criterion
-        cdef double value = 0.0
-
-        for criterion in self.criteria:
-            value += criterion.eval()
-
-        return value / self.n_outputs
-
-    cpdef np.ndarray init_value(self):
-        cdef Criterion criterion
-        values = []
-
-        for criterion in self.criteria:
-            values.append(criterion.init_value())
-
-        return np.hstack(values)
 
 
 ################################################################################
@@ -585,7 +635,7 @@ cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
 
 
 def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                     np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
+                     np.ndarray[DTYPE_t, ndim=2, mode="fortran"] y,
                      np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                      np.ndarray sample_mask,
                      int n_samples,
@@ -654,7 +704,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef DTYPE_t *X_i = NULL
     cdef int *X_argsorted_i = NULL
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] features = None
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] features = None
 
     # Compute the column strides (increment in pointer elements to get
     # from column i to i + 1) for `X` and `X_argsorted`
@@ -676,11 +726,12 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
 
     # Features to consider
-    if max_features < 0 or max_features == n_features:
-        features = np.arange(n_features)
+    features = np.arange(n_features, dtype=np.int32)
+    if max_features < 0 or max_features >= n_features:
         max_features = n_features
     else:
-        features = random_state.permutation(n_features)[:max_features]
+        features = random_state.permutation(features)[:max_features]
+
 
     # Look for the best split
     for feature_idx in range(max_features):
@@ -730,7 +781,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     return best_i, best_t, best_error, initial_error
 
 def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                            np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
+                            np.ndarray[DTYPE_t, ndim=2, mode="fortran"] y,
                             np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                             np.ndarray sample_mask,
                             int n_samples,
@@ -791,14 +842,14 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int n_total_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, a, b, c, n_left, best_i = -1
-    cdef Py_ssize_t feature_idx = -1
+    cdef np.int32_t feature_idx = -1
     cdef DTYPE_t t, initial_error, error
     cdef DTYPE_t best_error = np.inf, best_t = np.inf
     cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
     cdef DTYPE_t *X_i = NULL
     cdef int *X_argsorted_i = NULL
     cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] features = None
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] features = None
 
     # Compute the column strides (increment in pointer elements to get
     # from column i to i + 1) for `X` and `X_argsorted`
@@ -820,11 +871,11 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     best_error = initial_error
 
     # Features to consider
-    if max_features == n_features:
-        features = np.arange(n_features)
+    features = np.arange(n_features, dtype=np.int32)
+    if max_features < 0 or max_features >= n_features:
         max_features = n_features
     else:
-        features = random_state.permutation(n_features)[:max_features]
+        features = random_state.permutation(features)[:max_features]
 
     # Look for the best random split
     for feature_idx in range(max_features):
