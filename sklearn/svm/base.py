@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator
-from ..utils import array2d, atleast2d_or_csr
+from ..utils import atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -259,17 +259,6 @@ class BaseLibSVM(BaseEstimator):
         C : array, shape = [n_samples]
         """
         X = self._validate_for_predict(X)
-        n_samples, n_features = X.shape
-
-        if self.kernel == "precomputed":
-            if X.shape[1] != self.shape_fit_[0]:
-                raise ValueError("X.shape[1] = %d should be equal to %d, "
-                                 "the number of samples at training time" %
-                                 (X.shape[1], self.shape_fit_[0]))
-        elif n_features != self.shape_fit_[1]:
-            raise ValueError("X.shape[1] = %d should be equal to %d, "
-                             "the number of features at training time" %
-                             (n_features, self.shape_fit_[1]))
         predict = self._sparse_predict if self._sparse else self._dense_predict
         return predict(X)
 
@@ -354,7 +343,7 @@ class BaseLibSVM(BaseEstimator):
         datasets.
         """
         if not self.probability:
-            raise ValueError(
+            raise NotImplementedError(
                     "probability estimates must be enabled to use this method")
 
         if self.impl not in ('c_svc', 'nu_svc'):
@@ -461,7 +450,7 @@ class BaseLibSVM(BaseEstimator):
             raise NotImplementedError("decision_function not supported for"
                     " sparse SVM")
 
-        X = array2d(X, dtype=np.float64, order="C")
+        X = self._validate_for_predict(X)
 
         C = 0.0  # C is not useful here
 
@@ -494,6 +483,17 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError(
                 "cannot use sparse input in %r trained on dense data"
                 % type(self).__name__)
+        n_samples, n_features = X.shape
+
+        if self.kernel == "precomputed":
+            if X.shape[1] != self.shape_fit_[0]:
+                raise ValueError("X.shape[1] = %d should be equal to %d, "
+                                 "the number of samples at training time" %
+                                 (X.shape[1], self.shape_fit_[0]))
+        elif n_features != self.shape_fit_[1]:
+            raise ValueError("X.shape[1] = %d should be equal to %d, "
+                             "the number of features at training time" %
+                             (n_features, self.shape_fit_[1]))
         return X
 
     @property
@@ -657,7 +657,6 @@ class BaseLibLinear(BaseEstimator):
         C : array, shape = [n_samples]
         """
         X = self._validate_for_predict(X)
-        self._check_n_features(X)
 
         C = 0.0  # C is not useful here
 
@@ -681,7 +680,6 @@ class BaseLibLinear(BaseEstimator):
             in the model.
         """
         X = self._validate_for_predict(X)
-        self._check_n_features(X)
 
         C = 0.0  # C is not useful here
 
@@ -716,6 +714,7 @@ class BaseLibLinear(BaseEstimator):
                           'Copying them.', RuntimeWarning,
                           stacklevel=3)
             self.raw_coef_ = np.asfortranarray(self.raw_coef_)
+        self._check_n_features(X)
         return X
 
     def _get_intercept_(self):
