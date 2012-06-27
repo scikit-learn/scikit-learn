@@ -124,19 +124,30 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
-    R = y - np.dot(X, w)
-
     tol = tol * linalg.norm(y) ** 2
 
     Xy = np.dot(X.T, y)
     gradient = np.zeros(n_features)
+
+    # memory foodprint has to be reduced
     feature_inner_product = np.zeros(shape=(n_features, n_features))
     active_set = set(range(n_features))
 
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in active_set:  # Loop over coordinates
+
+        #remove inactive features
+        # its not clear why this fails with
+        # n_iter > 1 for the test_lasso_path
+        if n_iter > 2:
+            tmp_s = set.copy(active_set)
+            for j in tmp_s:
+                if w[j] == 0:
+                    active_set.remove(j)
+
+        for ii in active_set:  # Loop over features
+
             if norm_cols_X[ii] == 0.0:
                 continue
 
@@ -161,7 +172,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     if n_iter >= 1 or j <= ii:
                         gradient[j] -= feature_inner_product[ii, j] * \
                                                          (w[ii] - w_ii)
-
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
@@ -174,6 +184,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
+
+            # not efficient
             R = y - np.dot(X, w)
 
             XtA = np.dot(X.T, R) - beta * w
@@ -199,7 +211,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if gap < tol:
                 # return if we reached desired tolerance
                 break
-
 
     return w, gap, tol
 
