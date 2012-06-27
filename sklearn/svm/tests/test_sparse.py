@@ -26,7 +26,7 @@ true_result2 = [1, 2, 3]
 
 iris = datasets.load_iris()
 # permute
-rng = np.random.RandomState(0)
+rng = np.random.RandomState(42)
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
@@ -212,6 +212,12 @@ def test_sparse_svc_clone_with_callable_kernel():
     b.predict_proba(X_sp)
     # b.decision_function(X_sp)  # XXX : should be supported
 
+
+def test_sparse_svc_clone_with_precomputed_kernel():
+    a = svm.SVC(C=1, kernel="precomputed", probability=True)
+    b = base.clone(a)
+    X_kernel = X_sp * X_sp.T
+    b.fit(X_kernel, Y)
 
 if __name__ == '__main__':
     import nose
