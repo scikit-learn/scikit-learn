@@ -140,10 +140,10 @@ def all_estimators():
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         # get rid of abstract base classes
-        classes = [c for c in classes if not is_abstract(c[1])]
         all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
     estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
+    estimators = [c for c in estimators if not is_abstract(c[1])]
     return estimators
