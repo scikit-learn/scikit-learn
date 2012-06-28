@@ -136,7 +136,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive=False):
+                            int max_iter, double tol, bool positive=False,
+                            int memory_limit=500):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -164,6 +165,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int n_iter
+    cdef bool store_feature_inner_product = True
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -174,6 +176,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     Xy = np.dot(X.T, y)
 
     # memory foodprint has to be reduced
+    #memory_limit = 5000
+    if memory_limit > n_features * n_features:
+        feature_inner_product = np.zeros(shape=(n_features, n_features))
+    else:
+        store_feature_inner_product = False
+        warnings.warn("Allowed memory is not sufficient "
+            " some values need to be recalculated.")
+
     feature_inner_product = np.zeros(shape=(n_features, n_features))
     gradient = np.zeros(n_features)
     active_set = set(range(n_features))
@@ -192,9 +202,15 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w_ii = w[ii]  # Store previous value
 
             # initial calculation
-            if n_iter == 0:
+            if n_iter == 0 and store_feature_inner_product:
                 feature_inner_product[:, ii] = np.dot(X[:, ii], X)
-                gradient[ii] = Xy[ii] - np.dot(feature_inner_product[:, ii], w)
+                gradient[ii] = Xy[ii] - \
+                        np.dot(feature_inner_product[:, ii], w)
+
+            if not store_feature_inner_product:
+                tmp_feature_inner_product = np.dot(X[:, ii], X)
+                gradient[ii] = Xy[ii] - \
+                        np.dot(tmp_feature_inner_product, w)
 
             tmp = gradient[ii] + w_ii * norm_cols_X[ii]
 
@@ -208,9 +224,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if w_ii != w[ii]:
                 for j in active_set:
                     if n_iter >= 1 or j <= ii:
-                        gradient[j] -= feature_inner_product[ii, j] * \
+                        if store_feature_inner_product:
+                            gradient[j] -= feature_inner_product[ii, j] * \
                                                          (w[ii] - w_ii)
-
+                        else:
+                            tmp_feature_inner_product = np.dot(X[:, j], X)
+                            gradient[j] -= tmp_feature_inner_product[j] * \
+                                                         (w[ii] - w_ii)
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
