@@ -146,6 +146,7 @@ def test_scaler_without_centering():
     assert_true(X_csr_scaled_back is not X_csr_scaled)
     assert_array_almost_equal(X_scaled_back, X)
 
+
 def test_scaler_without_copy():
     """Check that Scaler.fit does not change input"""
     rng = np.random.RandomState(42)
@@ -154,13 +155,12 @@ def test_scaler_without_copy():
     X_csr = sp.csr_matrix(X)
 
     X_copy = X.copy()
-    scaler = Scaler(copy=False).fit(X)
+    Scaler(copy=False).fit(X)
     assert_array_equal(X, X_copy)
 
     X_csr_copy = X_csr.copy()
-    assert_array_equal(X_csr.todense(), X_csr_copy.todense())
-    scaler = Scaler(with_mean=False, copy=False).fit(X_csr)
-    assert_array_equal(X_csr.todense(), X_csr_copy.todense())
+    Scaler(with_mean=False, copy=False).fit(X_csr)
+    assert_array_equal(X_csr.toarray(), X_csr_copy.toarray())
 
 
 def test_scale_sparse_with_mean_raise_exception():
