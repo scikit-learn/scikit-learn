@@ -21,6 +21,7 @@ from ..utils import deprecated
 
 from .sgd_fast import plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils.weight_vector import WeightVector
 
 from .sgd_fast import Hinge
 from .sgd_fast import Log
@@ -233,8 +234,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             "log": (Log, tuple()),
             "modified_huber": (ModifiedHuber, tuple()),
             "squared_loss": (SquaredLoss, tuple()),
-            "huber": (Huber, (self.epsilon,))
-            "epsilon_insensitive": (EpsilonInsensitive, (self.epsilon,))
+            "huber": (Huber, (self.epsilon,)),
+            "epsilon_insensitive": (EpsilonInsensitive, (self.epsilon,)),
             "multinomial_log": (MultinomialLog, tuple()),
         }
         try:
@@ -516,7 +517,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             # Use joblib to fit OVR in parallel
             result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_fit_binary)(self, i, X, y, n_iter,
-                                    np.array([self._expanded_class_weight[i], 1.]),
+                                    np.array([self._expanded_class_weight[i],
+                                              1.]),
                                     sample_weight)
                 for i in xrange(len(self.classes_)))
 
