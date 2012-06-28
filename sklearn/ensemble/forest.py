@@ -35,6 +35,7 @@ The module structure is the following:
 
 import itertools
 import numpy as np
+from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
@@ -117,7 +118,7 @@ def _partition_trees(forest):
         n_jobs = min(forest.n_jobs, forest.n_estimators)
 
     # Partition trees between jobs
-    n_trees = [forest.n_estimators / n_jobs] * n_jobs
+    n_trees = [int(forest.n_estimators / n_jobs)] * n_jobs
 
     for i in xrange(forest.n_estimators % n_jobs):
         n_trees[i] += 1
@@ -164,6 +165,9 @@ class BaseForest(BaseEnsemble, SelectorMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
@@ -294,6 +298,9 @@ class ForestClassifier(BaseForest, ClassifierMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
@@ -394,6 +401,9 @@ class ForestRegressor(BaseForest, RegressorMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
@@ -529,6 +539,9 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -664,6 +677,9 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -800,6 +816,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -939,6 +958,9 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 

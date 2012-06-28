@@ -60,7 +60,7 @@ def _get_weights(dist, weights):
         return None
     elif weights == 'distance':
         with np.errstate(divide='ignore'):
-            dist = 1./dist
+            dist = 1. / dist
         return dist
     elif callable(weights):
         return weights(dist)
@@ -131,7 +131,9 @@ class NeighborsBase(BaseEstimator):
 
         if self._fit_method == 'auto':
             # BallTree outperforms the others in nearly any circumstance.
-            if self.n_neighbors < self._fit_X.shape[0] / 2:
+            if self.n_neighbors is None:
+                self._fit_method = 'ball_tree'
+            elif self.n_neighbors < self._fit_X.shape[0] // 2:
                 self._fit_method = 'ball_tree'
             else:
                 self._fit_method = 'brute'
@@ -188,7 +190,7 @@ class KNeighborsMixin(object):
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        >>> print(neigh.kneighbors([1., 1., 1.])) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
@@ -366,7 +368,7 @@ class RadiusNeighborsMixin(object):
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print neigh.radius_neighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        >>> print(neigh.radius_neighbors([1., 1., 1.])) # doctest: +ELLIPSIS
         (array([[ 1.5,  0.5]]...), array([[1, 2]]...)
 
         The first array returned contains the distances to all points which
@@ -566,6 +568,7 @@ class SupervisedIntegerMixin(object):
             Target values, array of integer values.
         """
         self._y = np.asarray(y)
+        self._classes = np.sort(np.unique(y))
         return self._fit(X)
 
 

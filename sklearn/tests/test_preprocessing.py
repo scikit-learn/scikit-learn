@@ -327,14 +327,14 @@ def test_label_binarizer():
     lb = LabelBinarizer()
 
     # two-class case
-    inp = np.array([0, 1, 1, 0])
+    inp = ["neg", "pos", "pos", "neg"]
     expected = np.array([[0, 1, 1, 0]]).T
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
     # multi-class case
-    inp = np.array([3, 2, 1, 2, 0])
+    inp = ["spam", "ham", "eggs", "ham", "0"]
     expected = np.array([[0, 0, 0, 1],
                          [0, 0, 1, 0],
                          [0, 1, 0, 0],

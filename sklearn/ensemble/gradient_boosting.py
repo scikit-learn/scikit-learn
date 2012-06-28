@@ -27,7 +27,7 @@ import numpy as np
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state
+from ..utils import check_random_state, array2d
 
 from ..tree.tree import Tree
 from ..tree._tree import _find_best_split
@@ -326,6 +326,9 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, random_state):
         if n_estimators <= 0:
@@ -510,8 +513,7 @@ class BaseGradientBoosting(BaseEnsemble):
             ordered by arithmetical order. Regression and binary
             classification are special cases with ``n_classes == 1``.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE, order='C')
 
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, call `fit` " \
@@ -662,8 +664,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE, order='C')
+
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict_proba`.")
@@ -825,8 +827,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y: array of shape = [n_samples]
             The predicted values.
         """
-        X = np.atleast_2d(X)
-        X = X.astype(DTYPE)
+        X = array2d(X, dtype=DTYPE, order='C')
+
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, " \
                              "call `fit` before `predict`.")
@@ -854,5 +856,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted value of the input samples.
         """
+        X = array2d(X, dtype=DTYPE, order='C')
         for y in self.staged_decision_function(X):
             yield y.ravel()

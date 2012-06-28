@@ -21,9 +21,15 @@ from ..utils import deprecated
 
 from .sgd_fast import plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
-from ..utils.weight_vector import WeightVector
-from .sgd_fast import (Hinge, Log, ModifiedHuber, SquaredLoss, Huber,
-                       Perceptron, MultinomialLog)
+
+from .sgd_fast import Hinge
+from .sgd_fast import Log
+from .sgd_fast import ModifiedHuber
+from .sgd_fast import SquaredLoss
+from .sgd_fast import Huber
+from .sgd_fast import EpsilonInsensitive
+from .sgd_fast import Perceptron
+from .sgd_fast import MultinomialLog
 
 
 def _make_dataset(X, y_i, sample_weight):
@@ -172,11 +178,11 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, class_weight=None, eta0=0.0,
+    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, learning_rate='optimal', loss='hinge',
             n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
             shuffle=False, verbose=0, warm_start=False)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
     See also
@@ -186,9 +192,11 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     """
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, n_jobs=1, seed=0, learning_rate="optimal",
-                 eta0=0.0, power_t=0.5, class_weight=None, warm_start=False,
+                 verbose=0, epsilon=0.1, n_jobs=1, seed=0,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False,
                  multi_class='ovr'):
+
         # FIXME refactor - we need to call that before _set_loss_func
         if multi_class not in ('ovr', 'multinomial', 'multi'):
             raise ValueError("multi_class must be either 'ovr' or " \
@@ -201,7 +209,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                                             alpha=alpha, rho=rho,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
-                                            verbose=verbose, seed=seed,
+                                            verbose=verbose, epsilon=epsilon,
+                                            seed=seed,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
                                             warm_start=warm_start)
@@ -216,11 +225,16 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     def _set_loss_function(self, loss):
         """Set concrete LossFunction."""
+
+        # FIXME refactor instantiate this dict on module level
         loss_functions = {
             "hinge": (Hinge, (1.0,)),
             "perceptron": (Perceptron, tuple()),
             "log": (Log, tuple()),
             "modified_huber": (ModifiedHuber, tuple()),
+            "squared_loss": (SquaredLoss, tuple()),
+            "huber": (Huber, (self.epsilon,))
+            "epsilon_insensitive": (EpsilonInsensitive, (self.epsilon,))
             "multinomial_log": (MultinomialLog, tuple()),
         }
         try:
@@ -456,15 +470,29 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         array, shape = [n_samples] if n_classes == 2 else [n_samples,
         n_classes]
             Contains the membership probabilities of the positive class.
+
+        References
+        ----------
+
+        The justification for the formula in the loss="modified_huber"
+        case is in the appendix B in:
+        http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
         if len(self.classes_) != 2:
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
-        elif not isinstance(self.loss_function, Log):
-            raise NotImplementedError("predict_(log_)proba only supported when"
-                                      " loss='log' (%s given)" % self.loss)
 
-        return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+        if self.loss == "log":
+            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+        elif self.loss == "modified_huber":
+            ret = np.minimum(1, np.maximum(-1, self.decision_function(X)))
+            ret += 1
+            ret /= 2
+            return ret
+        else:
+            raise NotImplementedError("predict_(log_)proba only supported when"
+                                      " loss='log' or loss='modified_huber' "
+                                      "(%s given)" % self.loss)
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         coef, intercept = _fit_binary(self, 1, X, y, n_iter,
@@ -614,7 +642,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     verbose: integer, optional
         The verbosity level.
 
-    p : float
+    epsilon: float
         Epsilon in the epsilon-insensitive huber loss function;
         only if `loss=='huber'`.
 
@@ -653,8 +681,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(alpha=0.0001, eta0=0.01, fit_intercept=True,
-           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=0.1,
+    SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
+           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=None,
            penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
            verbose=0, warm_start=False)
 
@@ -664,24 +692,35 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, p=0.1, seed=0, learning_rate="invscaling",
-                 eta0=0.01, power_t=0.25, warm_start=False):
-        self.p = float(p)
+            rho=0.85, fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+            epsilon=0.1, p=None, seed=0, learning_rate="invscaling", eta0=0.01,
+            power_t=0.25, warm_start=False):
+
+        if p is not None:
+            warnings.warn("Using 'p' is deprecated and will be removed in "
+                          "scikit-learn 0.12, use epsilon instead.",
+                           DeprecationWarning)
+            self.p = float(p)
+            epsilon = p
+
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                            alpha=alpha, rho=rho,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
-                                           verbose=verbose, seed=seed,
+                                           verbose=verbose, epsilon=epsilon,
+                                           seed=seed,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
 
     def _set_loss_function(self, loss):
         """Get concrete LossFunction"""
+
+        # FIXME instantiate this map on module level
         loss_functions = {
             "squared_loss": (SquaredLoss, tuple()),
             "huber": (Huber, (self.p,)),
+            "epsilon_insensitive": (EpsilonInsensitive, (self.epsilon,))
         }
         try:
             loss_class, args = loss_functions[loss]

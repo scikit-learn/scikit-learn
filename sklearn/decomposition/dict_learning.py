@@ -251,10 +251,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    warnings.warn("Please note: the interface of sparse_encode has changed: "
-                  "It now follows the dictionary learning API and it also "
-                  "handles parallelization. Please read the docstring for "
-                  "more information.", stacklevel=2)
     if copy_gram is not None:
         warnings.warn("copy_gram in sparse_encode is deprecated: it"
             "lead to errors.", DeprecationWarning, stacklevel=2)
@@ -274,6 +270,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   init=init, max_iter=max_iter)
     code = np.empty((n_samples, n_atoms))
     slices = list(gen_even_slices(n_samples, n_jobs))
+    if cov is None:
+        # We cannot keep cov to None: it needs to be slicable
+        class StupidSliceable(object):
+            def __getitem__(self, anything):
+                return None
+        cov = StupidSliceable()
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(sparse_encode)(X[this_slice], dictionary, gram,
                                        cov[:, this_slice], algorithm,
@@ -452,8 +454,8 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     if n_jobs == -1:
         n_jobs = cpu_count()
 
-    # Init U and V with SVD of Y
-    if code_init is not None and code_init is not None:
+    # Init the code and the dictionary with SVD of Y
+    if code_init is not None and dict_init is not None:
         code = np.array(code_init, order='F')
         # Don't copy V, it will happen below
         dictionary = dict_init
@@ -933,7 +935,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     SparsePCA
     MiniBatchSparsePCA
     """
-    def __init__(self, n_atoms, alpha=1, max_iter=1000, tol=1e-8,
+    def __init__(self, n_atoms=None, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
@@ -966,7 +968,12 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         """
         self.random_state = check_random_state(self.random_state)
         X = np.asarray(X)
-        V, U, E = dict_learning(X, self.n_atoms, self.alpha,
+        if self.n_atoms is None:
+            n_atoms = X.shape[1]
+        else:
+            n_atoms = self.n_atoms
+
+        V, U, E = dict_learning(X, n_atoms, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
                                 method=self.fit_algorithm,
                                 n_jobs=self.n_jobs,
@@ -1078,7 +1085,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_atoms, alpha=1, n_iter=1000,
+    def __init__(self, n_atoms=None, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=1, chunk_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1113,7 +1120,12 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         """
         self.random_state = check_random_state(self.random_state)
         X = np.asarray(X)
-        U = dict_learning_online(X, self.n_atoms, self.alpha,
+        if self.n_atoms is None:
+            n_atoms = X.shape[1]
+        else:
+            n_atoms = self.n_atoms
+
+        U = dict_learning_online(X, n_atoms, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs,

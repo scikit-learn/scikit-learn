@@ -9,8 +9,34 @@
 Changelog
 ---------
 
-   - Add :class:`preprocessing.LabelBinarizer`, a simple utility class to
+   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
+
+   - Added the epsilon-insensitive loss and the ability to make probabilistic
+     predictions with the modified huber loss in :ref:`sgd`, by
+     `Mathieu Blondel`_.
+
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+
+   - SVMlight file format loader now detects compressed (gzip/bzip2) files and
+     decompresses them on the fly.
+
+   - A common testing framework for all estimators was added.
+
+API changes summary
+-------------------
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
+     object when initialising it and not through ``fit``. Now ``fit`` will 
+     only accept the data as an input parameter.
+
+   - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
+     the default gamma value was only computed the first time ``fit`` was called
+     and then stored. It is now recalculated on every call to ``fit``.
+
+   - All ``Base`` classes are now abstract meta classes so that they can not be
+     instantiated.
 
 .. _changes_0_11:
 
@@ -1186,3 +1212,4 @@ of commits):
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
 
 .. _David Marek: http://http://www.davidmarek.cz/
+

@@ -13,7 +13,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import array2d, as_float_array, check_random_state
+from ..utils import array2d, as_float_array, check_random_state, deprecated
 
 __all__ = ['fastica', 'FastICA']
 
@@ -334,8 +334,10 @@ class FastICA(BaseEstimator):
 
     Attributes
     ----------
-    `unmixing_matrix_` : 2D array, [n_components, n_samples]
+    `components_` : 2D array, [n_components, n_features]
         The unmixing matrix
+    `sources_`: 2D array, [n_samples, n_components]
+        The estimated latent sources of the data.
 
     Notes
     -----
@@ -369,10 +371,10 @@ class FastICA(BaseEstimator):
                         self.tol, self.w_init,
                         random_state=self.random_state)
         if self.whiten == True:
-            self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+            self.components_ = np.dot(unmixing_, whitening_)
         else:
-            self.unmixing_matrix_ = unmixing_
-        self.components_ = sources_
+            self.components_ = unmixing_
+        self.sources_ = sources_
         return self
 
     def transform(self, X):
@@ -380,9 +382,14 @@ class FastICA(BaseEstimator):
 
         S = X * W.T
         """
-        return np.dot(X, self.unmixing_matrix_.T)
+        return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):
         """Compute the mixing matrix
         """
-        return linalg.pinv(self.unmixing_matrix_)
+        return linalg.pinv(self.components_)
+
+    @property
+    @deprecated("Renamed to ``components_``")
+    def unmixing_matrix_(self):
+        return self.components_

@@ -105,8 +105,10 @@ def test_fastica(add_noise=False):
 
     # Test FastICA class
     ica = FastICA(fun=nl, algorithm=algo, random_state=0)
-    ica.fit(m)
+    ica.fit(m.T)
     ica.get_mixing_matrix()
+    assert_true(ica.components_.shape == (2, 2))
+    assert_true(ica.sources_.shape == (1000, 2))
 
 
 def test_fastica_nowhiten():

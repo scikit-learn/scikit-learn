@@ -2,11 +2,15 @@
 
 # Copyright (c) 2011 Pietro Berkes
 # License: Simplified BSD
+import inspect
+import pkgutil
 
-from .fixes import savemat
 import urllib2
 from StringIO import StringIO
 import scipy as sp
+import sklearn
+from sklearn.base import BaseEstimator
+from .fixes import savemat
 
 
 try:
@@ -118,3 +122,28 @@ class mock_urllib2(object):
 
     def quote(self, string, safe='/'):
         return urllib2.quote(string, safe)
+
+
+def all_estimators():
+    def is_abstract(c):
+        if not(hasattr(c, '__abstractmethods__')):
+            return False
+        if not len(c.__abstractmethods__):
+            return False
+        return True
+
+    all_classes = []
+    # get parent folder
+    path = sklearn.__path__
+    for importer, modname, ispkg in pkgutil.walk_packages(path=path,
+        prefix='sklearn.', onerror=lambda x: None):
+        module = __import__(modname, fromlist="dummy")
+        classes = inspect.getmembers(module, inspect.isclass)
+        # get rid of abstract base classes
+        all_classes.extend(classes)
+
+    all_classes = set(all_classes)
+
+    estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
+    estimators = [c for c in estimators if not is_abstract(c[1])]
+    return estimators

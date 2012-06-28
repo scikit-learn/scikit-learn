@@ -2,6 +2,8 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
+from collections import Sequence
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -504,9 +506,11 @@ def _is_label_indicator_matrix(y):
 
 
 def _is_multilabel(y):
-    return isinstance(y[0], tuple) or \
-           isinstance(y[0], list) or \
-           _is_label_indicator_matrix(y)
+    # the explicit check for ndarray is for forward compatibility; future
+    # versions of Numpy might want to register ndarray as a Sequence
+    return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
+       and not isinstance(y[0], basestring) \
+        or _is_label_indicator_matrix(y)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -751,18 +755,21 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
             return Y
 
-        elif len(self.classes_) == 2:
-            Y[y == self.classes_[1], 0] = self.pos_label
-            return Y
-
-        elif len(self.classes_) >= 2:
-            for i, k in enumerate(self.classes_):
-                Y[y == k, i] = self.pos_label
-            return Y
-
         else:
-            # Only one class, returns a matrix with all negative labels.
-            return Y
+            y = np.asarray(y)
+
+            if len(self.classes_) == 2:
+                Y[y == self.classes_[1], 0] = self.pos_label
+                return Y
+
+            elif len(self.classes_) >= 2:
+                for i, k in enumerate(self.classes_):
+                    Y[y == k, i] = self.pos_label
+                return Y
+
+            else:
+                # Only one class, returns a matrix with all negative labels.
+                return Y
 
     def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels
