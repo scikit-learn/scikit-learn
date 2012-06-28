@@ -115,6 +115,20 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
     return gap
 
 
+def update_active_set(active_set, w, n_iter):
+    #remove inactive features
+    # its not clear why this fails with
+    # n_iter > 1 for the test_lasso_path
+    if n_iter > 2:
+        tmp_s = set.copy(active_set)
+        for j in tmp_s:
+            if w[j] == 0:
+                active_set.remove(j)
+        return tmp_s
+    return active_set
+
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -168,14 +182,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         w_max = 0.0
         d_w_max = 0.0
 
-        #remove inactive features
-        # its not clear why this fails with
-        # n_iter > 1 for the test_lasso_path
-        if n_iter > 2:
-            tmp_s = set.copy(active_set)
-            for j in tmp_s:
-                if w[j] == 0:
-                    active_set.remove(j)
+        active_set = update_active_set(active_set, w, n_iter)
 
         for ii in active_set:  # Loop over coordinates
 
@@ -203,6 +210,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     if n_iter >= 1 or j <= ii:
                         gradient[j] -= feature_inner_product[ii, j] * \
                                                          (w[ii] - w_ii)
+
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
