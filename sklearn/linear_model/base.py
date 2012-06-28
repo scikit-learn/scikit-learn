@@ -333,6 +333,7 @@ class BaseSGD(BaseEstimator):
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None, order='C'):
         """Allocate mem for parameters; initialize if provided. """
+        print("allocate mem for %d classes" % n_classes)
         if n_classes > 2:
             # allocate coef_ for multi-class
             if coef_init is not None:
@@ -363,7 +364,7 @@ class BaseSGD(BaseEstimator):
                                      "match dataset.")
                 self.coef_ = coef_init
             else:
-                self.coef_ = np.zeros(n_features, dtype=np.float64)
+                self.coef_ = np.zeros((1, n_features), dtype=np.float64)
 
             # allocate intercept_ for binary problem
             if intercept_init is not None:
@@ -374,6 +375,11 @@ class BaseSGD(BaseEstimator):
                 self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64)
+
+        print("Allocated parameters")
+        print self.coef_
+        print self.coef_.flags
+        print
 
     def _check_fit_data(self, X, y):
         n_samples, _ = X.shape

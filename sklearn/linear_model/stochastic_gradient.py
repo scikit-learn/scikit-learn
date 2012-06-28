@@ -49,8 +49,12 @@ def _make_weight_vector(est, coef=None, intercept=None, intercept_decay=1.0):
         coef = est.coef_
     if intercept is None:
         intercept = est.intercept_
-    # FIXME coef must be fortran style
-    ##assert coef.flags.f_contiguous
+
+    print("make_weight_vector")
+    print("coef.shape", coef.shape)
+    print("coef.flags", coef.flags)
+    # FIXME coef must not be fortran style
+    assert not coef.flags.f_contiguous
     weight_vector = WeightVector(coef.T, intercept,
                                  est.fit_intercept,
                                  intercept_decay)
@@ -299,7 +303,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         # use fortran-layout for true multi-class
-        coef_order = 'C'
+        coef_order = 'F'
         if n_classes > 2 and self.multi_class != 'ovr':
             coef_order = 'F'
 
@@ -542,8 +546,12 @@ def _prepare_fit_binary(est, y, i):
     y_i = np.ones(y.shape, dtype=np.float64, order="C")
     y_i[y != est.classes_[i]] = -1.0
 
+    print("prepare binary fit")
+    print("coef_.shape", est.coef_.shape)
+    print("coef_.flags", est.coef_.flags)
+
     if len(est.classes_) == 2:
-        coef = est.coef_.ravel()
+        coef = est.coef_  # FIXME .ravel()
         intercept = est.intercept_[0]
     else:
         coef = est.coef_[i].reshape((1, est.coef_.shape[1]))
@@ -561,6 +569,8 @@ def _fit_binary(est, i, X, y, n_iter, class_weight,
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
 
     # coef should be at least 2d
+    print("coef.shape", coef.shape)
+
     assert len(coef.shape) == 2
     return _fit(est, X, y_i, sample_weight, coef=coef, intercept=intercept)
 
