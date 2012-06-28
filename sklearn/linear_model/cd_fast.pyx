@@ -184,7 +184,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         warnings.warn("Allowed memory is not sufficient "
             " some values need to be recalculated.")
 
-    feature_inner_product = np.zeros(shape=(n_features, n_features))
     gradient = np.zeros(n_features)
     active_set = set(range(n_features))
 
