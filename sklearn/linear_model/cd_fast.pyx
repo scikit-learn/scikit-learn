@@ -81,6 +81,40 @@ def sparse_std(unsigned int n_samples,
     return np.sqrt(X_std)
 
 
+cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
+                            double alpha, double beta,
+                            np.ndarray[DOUBLE, ndim=2] X,
+                            np.ndarray[DOUBLE, ndim=1] y, bool positive):
+    cdef double gap
+
+    # initial value of the residuals
+    cdef np.ndarray[DOUBLE, ndim=1] R
+
+    # not efficient
+    R = y - np.dot(X, w)
+
+    XtA = np.dot(X.T, R) - beta * w
+    if positive:
+        dual_norm_XtA = np.max(XtA)
+    else:
+        dual_norm_XtA = linalg.norm(XtA, np.inf)
+
+    # TODO: use squared L2 norm directly
+    R_norm = linalg.norm(R)
+    w_norm = linalg.norm(w, 2)
+    if (dual_norm_XtA > alpha):
+        const = alpha / dual_norm_XtA
+        A_norm = R_norm * const
+        gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+    else:
+        const = 1.0
+        gap = R_norm ** 2
+
+    gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
+                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+    return gap
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -107,9 +141,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
-    # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=1] R
-
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -127,10 +158,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     tol = tol * linalg.norm(y) ** 2
 
     Xy = np.dot(X.T, y)
-    gradient = np.zeros(n_features)
 
     # memory foodprint has to be reduced
     feature_inner_product = np.zeros(shape=(n_features, n_features))
+    gradient = np.zeros(n_features)
     active_set = set(range(n_features))
 
     for n_iter in range(max_iter):
@@ -146,7 +177,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if w[j] == 0:
                     active_set.remove(j)
 
-        for ii in active_set:  # Loop over features
+        for ii in active_set:  # Loop over coordinates
 
             if norm_cols_X[ii] == 0.0:
                 continue
@@ -185,28 +216,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
 
-            # not efficient
-            R = y - np.dot(X, w)
-
-            XtA = np.dot(X.T, R) - beta * w
-            if positive:
-                dual_norm_XtA = np.max(XtA)
-            else:
-                dual_norm_XtA = linalg.norm(XtA, np.inf)
-
-            # TODO: use squared L2 norm directly
-            R_norm = linalg.norm(R)
-            w_norm = linalg.norm(w, 2)
-            if (dual_norm_XtA > alpha):
-                const = alpha / dual_norm_XtA
-                A_norm = R_norm * const
-                gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
-            else:
-                const = 1.0
-                gap = R_norm ** 2
-
-            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+            gap = calculate_gap(w, alpha, beta, X, y, positive)
 
             if gap < tol:
                 # return if we reached desired tolerance
@@ -481,6 +491,127 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
             gap += alpha * linalg.norm(w, 1) \
                    - const * y_norm2 \
                    + const * q_dot_w + \
+                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+
+            if gap < tol:
+                # return if we reached desired tolerance
+                break
+
+    return w, gap, tol
+
+# ------------------ old code, to be removed later -------------------------
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def enet_coordinate_descent_old(np.ndarray[DOUBLE, ndim=1] w,
+                            double alpha, double beta,
+                            np.ndarray[DOUBLE, ndim=2] X,
+                            np.ndarray[DOUBLE, ndim=1] y,
+                            int max_iter, double tol, bool positive=False):
+    """Cython version of the coordinate descent algorithm
+        for Elastic-Net regression
+
+        We minimize
+
+        1 norm(y - X w, 2)^2 + alpha norm(w, 1) + beta norm(w, 2)^2
+        -                                         ----
+        2                                           2
+
+    """
+
+    # get the data information into easy vars
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    # compute norms of the columns of X
+    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
+
+    # initial value of the residuals
+    cdef np.ndarray[DOUBLE, ndim=1] R
+
+    cdef double tmp
+    cdef double w_ii
+    cdef double d_w_max
+    cdef double w_max
+    cdef double d_w_ii
+    cdef double gap = tol + 1.0
+    cdef double d_w_tol = tol
+    cdef unsigned int ii
+    cdef unsigned int n_iter
+
+    if alpha == 0:
+        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+            " results and is discouraged.")
+
+    R = y - np.dot(X, w)
+
+    tol = tol * linalg.norm(y) ** 2
+
+    for n_iter in range(max_iter):
+        w_max = 0.0
+        d_w_max = 0.0
+        for ii in xrange(n_features):  # Loop over coordinates
+            if norm_cols_X[ii] == 0.0:
+                continue
+
+            w_ii = w[ii]  # Store previous value
+
+            if w_ii != 0.0:
+                # R += w_ii * X[:,ii]
+                daxpy(n_samples, w_ii,
+                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
+
+            # tmp = (X[:,ii]*R).sum()
+            tmp = ddot(n_samples,
+                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                       <DOUBLE*>R.data, 1)
+
+            if positive and tmp < 0:
+                w[ii] = 0.0
+            else:
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                    / (norm_cols_X[ii] + beta)
+
+            if w[ii] != 0.0:
+                # R -=  w[ii] * X[:,ii] # Update residual
+                daxpy(n_samples, -w[ii],
+                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                      <DOUBLE*>R.data, 1)
+
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            if fabs(w[ii]) > w_max:
+                w_max = fabs(w[ii])
+
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            # the biggest coordinate update of this iteration was smaller than
+            # the tolerance: check the duality gap as ultimate stopping
+            # criterion
+
+            XtA = np.dot(X.T, R) - beta * w
+            if positive:
+                dual_norm_XtA = np.max(XtA)
+            else:
+                dual_norm_XtA = linalg.norm(XtA, np.inf)
+
+            # TODO: use squared L2 norm directly
+            R_norm = linalg.norm(R)
+            w_norm = linalg.norm(w, 2)
+            if (dual_norm_XtA > alpha):
+                const = alpha / dual_norm_XtA
+                A_norm = R_norm * const
+                gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+            else:
+                const = 1.0
+                gap = R_norm ** 2
+
+            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
                   0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
 
             if gap < tol:
