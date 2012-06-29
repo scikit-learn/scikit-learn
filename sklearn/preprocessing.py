@@ -204,7 +204,6 @@ class Scaler(BaseEstimator, TransformerMixin):
             _, var = mean_variance_axis0(X)
             self.std_ = np.sqrt(var)
             self.std_[var == 0.0] = 1.0
-            inplace_csr_column_scale(X, 1 / self.std_)
             return self
         else:
             X = np.asarray(X)

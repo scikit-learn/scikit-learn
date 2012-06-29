@@ -196,7 +196,7 @@ class GMM(BaseEstimator):
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+    GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
@@ -214,7 +214,7 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+    GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
@@ -226,7 +226,7 @@ class GMM(BaseEstimator):
                  random_state=None, thresh=1e-2, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc'):
         self.n_components = n_components
-        self._covariance_type = covariance_type
+        self.covariance_type = covariance_type
         self.thresh = thresh
         self.min_covar = min_covar
         self.random_state = random_state
@@ -257,19 +257,19 @@ class GMM(BaseEstimator):
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
             """
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             return self.covars_
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             return [np.diag(cov) for cov in self.covars_]
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             return [self.covars_] * self.n_components
-        elif self._covariance_type == 'spherical':
+        elif self.covariance_type == 'spherical':
             return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
         """Provide values for covariance"""
         covars = np.asarray(covars)
-        _validate_covars(covars, self._covariance_type, self.n_components)
+        _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
 
     def eval(self, X):
@@ -302,7 +302,7 @@ class GMM(BaseEstimator):
             raise ValueError('the shape of X  is not compatible with self')
 
         lpr = (log_multivariate_normal_density(
-                X, self.means_, self.covars_, self._covariance_type)
+                X, self.means_, self.covars_, self.covariance_type)
                + np.log(self.weights_))
         logprob = logsumexp(lpr, axis=1)
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
@@ -420,14 +420,14 @@ class GMM(BaseEstimator):
             # number of those occurrences
             num_comp_in_X = comp_in_X.sum()
             if num_comp_in_X > 0:
-                if self._covariance_type == 'tied':
+                if self.covariance_type == 'tied':
                     cv = self.covars_
-                elif self._covariance_type == 'spherical':
+                elif self.covariance_type == 'spherical':
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
                 X[comp_in_X] = sample_gaussian(
-                    self.means_[comp], cv, self._covariance_type,
+                    self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
 
@@ -490,7 +490,7 @@ class GMM(BaseEstimator):
                     cv.shape = (1, 1)
                 self.covars_ = \
                     distribute_covar_matrix_to_match_covariance_type(
-                    cv, self._covariance_type, self.n_components)
+                    cv, self.covariance_type, self.n_components)
 
             # EM algorithms
             log_likelihood = []
@@ -536,7 +536,7 @@ class GMM(BaseEstimator):
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:
-            covar_mstep_func = _covar_mstep_funcs[self._covariance_type]
+            covar_mstep_func = _covar_mstep_funcs[self.covariance_type]
             self.covars_ = covar_mstep_func(
                 self, X, responsibilities, weighted_X_sum, inverse_weights,
                 min_covar)
@@ -545,13 +545,13 @@ class GMM(BaseEstimator):
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
         ndim = self.means_.shape[1]
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             cov_params = self.n_components * ndim * (ndim + 1) / 2.
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             cov_params = self.n_components * ndim
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             cov_params = ndim * (ndim + 1) / 2.
-        elif self._covariance_type == 'spherical':
+        elif self.covariance_type == 'spherical':
             cov_params = self.n_components
         mean_params = ndim * self.n_components
         return  int(cov_params + mean_params + self.n_components - 1)

@@ -12,6 +12,7 @@ randomized trees.
 
 from __future__ import division
 import numpy as np
+from abc import ABCMeta, abstractmethod
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
@@ -412,6 +413,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, criterion,
                        max_depth,
                        min_samples_split,
