@@ -582,7 +582,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         P = self.tree_.predict(X)
 
         if isinstance(self, ClassifierMixin):
-            predictions = np.zeros((X.shape[0], self.n_outputs_))
+            predictions = np.zeros((n_samples, self.n_outputs_))
 
             for k in xrange(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k], axis=1), axis=0)
@@ -590,7 +590,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             predictions = P[:, :, 0]
 
         if self.n_outputs_ == 1:
-            predictions = predictions.reshape((predictions.shape[0], ))
+            predictions = predictions.reshape((n_samples, ))
 
         return predictions
 

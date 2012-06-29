@@ -348,6 +348,25 @@ def test_pickle():
             " after pickling (regression) "
 
 
+def test_multioutput():
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y = [[-1, 1], [-1, 1], [-1, 1], [1, -1], [1, -1], [1, -1]]
+    T = [[-1, -1], [2, 2], [3, 2]]
+    true_result = [[-1, 1], [1, -1], [1, -1]]
+
+    # toy classification problem
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    assert_array_equal(clf.predict(T), true_result)
+
+    # toy regression problem
+    clf = tree.DecisionTreeRegressor()
+    clf.fit(X, y)
+
+    assert_almost_equal(clf.predict(T), true_result)
+
+
 if __name__ == "__main__":
     # import nose
     # nose.runmodule()
