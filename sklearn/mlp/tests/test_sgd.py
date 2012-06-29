@@ -1,10 +1,11 @@
 import numpy as np
 
+from ..mlp_fast import forward, backward, LogSig, Tanh, CrossEntropyLoss, SquaredLoss
 from ..classes import MLPClassifier
-from ..classes_andreas import MLPClassifierA
 from ... import datasets, preprocessing
+
 from nose.tools import assert_true
-from datetime import datetime
+from scipy.optimize import check_grad
 
 
 def test_cross_entropy():
@@ -12,7 +13,8 @@ def test_cross_entropy():
 
     X = preprocessing.scale(X)
 
-    classifier = MLPClassifier(n_hidden=10, lr=0.3, batch_size=100)
+    classifier = MLPClassifier(n_hidden=10, lr=0.3, lr_moment=0.3,
+        batch_size=100, loss_function='cross-entropy')
     classifier.fit(X, y,
         max_epochs=500)
 
@@ -26,7 +28,7 @@ def test_numbers():
 
     data = preprocessing.scale(data)
 
-    classifier = MLPClassifier(n_hidden=10, lr=0.3, batch_size=100)
+    classifier = MLPClassifier(n_hidden=10, lr=0.3, lr_moment=0.3, batch_size=100)
     classifier.fit(data, digits.target,
         max_epochs=500)
 
@@ -38,35 +40,70 @@ def test_iris():
     data, target = iris.data, iris.target
     data = preprocessing.scale(data)
 
-    classifier = MLPClassifier(n_hidden=10, lr=0.3, batch_size=1)
+    classifier = MLPClassifier(n_hidden=10, lr=0.3, lr_moment=0.3, batch_size=1)
     classifier.fit(data, target, max_epochs=300)
 
     assert_true(np.mean(classifier.predict(data) == target) > .95)
 
 
-def test_sgd_faster():
-    digits = datasets.load_digits()
-    n_samples = len(digits.images)
-    data = digits.images.reshape((n_samples, -1))
+def test_gradient():
+    n_features = 2
+    n_hidden = 2
+    n_outs = 1
+    batch_size = 1
 
-    data = preprocessing.scale(data)
-    classifier = MLPClassifierA(n_hidden=10, lr=0.3, loss='cross_entropy', output_layer='softmax', batch_size=100)
-    start = datetime.now()
-    np.random.seed(0)
-    classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2],
-        max_epochs=1000, shuffle_data=False)
-    time_sgd_a = datetime.now() - start
-    expected_a = digits.target[n_samples / 2:]
-    predicted_a = classifier.predict(data[n_samples / 2:])
+    X = np.random.normal(size=(batch_size, n_features))
+    y = np.random.normal(size=(batch_size, n_outs))
+    x_hidden = np.empty((batch_size, n_hidden))
+    x_output = np.empty((batch_size, n_outs))
 
-    classifier = MLPClassifier(n_hidden=10, lr=0.3, loss_function='cross-entropy', output_function='softmax', batch_size=100)
-    start = datetime.now()
-    np.random.seed(0)
-    classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2],
-        max_epochs=1000)
-    time_sgd = datetime.now() - start
-    expected = digits.target[n_samples / 2:]
-    predicted = classifier.predict(data[n_samples / 2:])
+    weights_hidden = np.random.normal(size=(n_features, n_hidden)) \
+        / np.sqrt(n_features)
+    bias_hidden = np.zeros(n_hidden)
+    weights_output = np.random.normal(size=(n_hidden, n_outs)) \
+        / np.sqrt(n_hidden)
+    bias_output = np.zeros(n_outs)
 
-    print "SGD algorithm: %s (%f)" % (time_sgd, np.mean(expected == predicted))
-    print "Pure implementation: %s (%f)" % (time_sgd_a, np.mean(expected_a == predicted_a))
+    delta_h = np.empty((batch_size, n_hidden))
+    dx_hidden = np.empty((batch_size, n_hidden))
+    delta_o = np.empty((batch_size, n_outs))
+    dx_output = np.empty((batch_size, n_outs))
+    weights_moment_o = np.zeros((n_hidden, n_outs))
+    weights_moment_h = np.zeros((n_features, n_hidden))
+
+    def function(w0, output, loss):
+        new_weights_h = w0[:n_features * n_hidden].reshape((n_features, n_hidden))
+        new_weights_o = w0[n_features * n_hidden:].reshape((n_hidden, n_outs))
+
+        forward(X, new_weights_h, bias_hidden, new_weights_o, bias_output,
+            x_hidden, x_output, output, Tanh())
+
+        out = np.empty((batch_size, n_outs))
+        loss.loss(y, x_output, out)
+
+        return out
+
+    def gradient(w0, output, loss):
+        new_weights_h = np.array(w0[:n_features * n_hidden].reshape((n_features, n_hidden)))
+        new_weights_o = np.array(w0[n_features * n_hidden:].reshape((n_hidden, n_outs)))
+
+        new_bias_o = np.array(bias_output)
+        new_bias_h = np.array(bias_hidden)
+
+        forward(X, new_weights_h, bias_hidden, new_weights_o, bias_output,
+            x_hidden, x_output, output, Tanh())
+        backward(X, x_output, x_hidden, y, new_weights_o, new_bias_o,
+            new_weights_h, new_bias_h, delta_o, delta_h, dx_output,
+            dx_hidden, weights_moment_o, weights_moment_h, loss,
+            output, Tanh(), 1, 0)
+
+        g = np.dot(X.T, -delta_h).reshape(-1)
+        g = np.append(g, np.dot(x_hidden.T, -delta_o).reshape(-1))
+
+        return g
+
+    w = weights_hidden.reshape(-1)
+    w = np.append(w, weights_output.reshape(-1))
+
+    assert_true(check_grad(function, gradient, w, Tanh(), SquaredLoss()) < 1e-5)
+    assert_true(check_grad(function, gradient, w, LogSig(), CrossEntropyLoss()) < 1e-5)

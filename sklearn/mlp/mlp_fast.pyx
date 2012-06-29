@@ -17,10 +17,10 @@ ctypedef np.float64_t DTYPE_t
 cdef class LossFunction:
     """Base class for loss functions"""
 
-    cdef inline loss(self,
-                     np.ndarray[DTYPE_t] y,
-                     np.ndarray[DTYPE_t] p,
-                     np.ndarray[DTYPE_t, ndim=2] out):
+    def loss(self,
+             np.ndarray[DTYPE_t] y,
+             np.ndarray[DTYPE_t] p,
+             np.ndarray[DTYPE_t, ndim=2] out):
         """Evaluate the loss function.
 
         Parameters
@@ -38,10 +38,10 @@ cdef class LossFunction:
         """
         raise NotImplementedError()
 
-    cdef inline dloss(self,
-                      np.ndarray[DTYPE_t] y,
-                      np.ndarray[DTYPE_t] p,
-                      np.ndarray[DTYPE_t, ndim=2] out):
+    def dloss(self,
+              np.ndarray[DTYPE_t, ndim=2] y,
+              np.ndarray[DTYPE_t, ndim=2] p,
+              np.ndarray[DTYPE_t, ndim=2] out):
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
 
@@ -64,16 +64,16 @@ cdef class LossFunction:
 cdef class SquaredLoss(LossFunction):
     """Squared loss function."""
 
-    cdef inline loss(self,
-                     np.ndarray[DTYPE_t, ndim=2] y,
-                     np.ndarray[DTYPE_t, ndim=2] p,
-                     np.ndarray[DTYPE_t, ndim=2] out):
+    def loss(self,
+             np.ndarray[DTYPE_t, ndim=2] y,
+             np.ndarray[DTYPE_t, ndim=2] p,
+             np.ndarray[DTYPE_t, ndim=2] out):
         out[:] = 0.5 * (y - p) * (y - p)
 
-    cdef inline dloss(self,
-                      np.ndarray[DTYPE_t, ndim=2] y,
-                      np.ndarray[DTYPE_t, ndim=2] p,
-                      np.ndarray[DTYPE_t, ndim=2] out):
+    def dloss(self,
+              np.ndarray[DTYPE_t, ndim=2] y,
+              np.ndarray[DTYPE_t, ndim=2] p,
+              np.ndarray[DTYPE_t, ndim=2] out):
         out[:] = y - p
 
     def __reduce__(self):
@@ -82,70 +82,70 @@ cdef class SquaredLoss(LossFunction):
 
 cdef class CrossEntropyLoss(LossFunction):
     """Cross entropy loss function"""
-    cdef inline loss(self,
-                     np.ndarray[DTYPE_t, ndim=2] y,
-                     np.ndarray[DTYPE_t, ndim=2] p,
-                     np.ndarray[DTYPE_t, ndim=2] out):
+    def loss(self,
+             np.ndarray[DTYPE_t, ndim=2] y,
+             np.ndarray[DTYPE_t, ndim=2] p,
+             np.ndarray[DTYPE_t, ndim=2] out):
         out[:] = -y * np.log(p) - (1 - y) * np.log(1 - p)
 
-    cdef inline dloss(self,
-                      np.ndarray[DTYPE_t, ndim=2] y,
-                      np.ndarray[DTYPE_t, ndim=2] p,
-                      np.ndarray[DTYPE_t, ndim=2] out):
+    def dloss(self,
+              np.ndarray[DTYPE_t, ndim=2] y,
+              np.ndarray[DTYPE_t, ndim=2] p,
+              np.ndarray[DTYPE_t, ndim=2] out):
         out[:] = y - p
 
 
 cdef class MultiCrossEntropyLoss(LossFunction):
     """Multinomial cross entropy loss function."""
 
-    cdef inline loss(self,
-                     np.ndarray[DTYPE_t, ndim=2] y,
-                     np.ndarray[DTYPE_t, ndim=2] p,
-                     np.ndarray[DTYPE_t, ndim=2] out):
+    def loss(self,
+             np.ndarray[DTYPE_t, ndim=2] y,
+             np.ndarray[DTYPE_t, ndim=2] p,
+             np.ndarray[DTYPE_t, ndim=2] out):
         out[:] = -y * np.log(p)
 
-    cdef inline dloss(self,
-                      np.ndarray[DTYPE_t, ndim=2] y,
-                      np.ndarray[DTYPE_t, ndim=2] p,
-                      np.ndarray[DTYPE_t, ndim=2] out):
+    def dloss(self,
+              np.ndarray[DTYPE_t, ndim=2] y,
+              np.ndarray[DTYPE_t, ndim=2] p,
+              np.ndarray[DTYPE_t, ndim=2] out):
         out[:] = y - p
 
 
 cdef class OutputFunction:
     """Base class for ouput functions"""
 
-    cdef inline output(self,
-                       np.ndarray[DTYPE_t, ndim=2] x,
-                       np.ndarray[DTYPE_t, ndim=2] out):
+    def output(self,
+               np.ndarray[DTYPE_t, ndim=2] x,
+               np.ndarray[DTYPE_t, ndim=2] out):
         raise NotImplementedError()
 
-    cdef inline doutput(self,
-                        np.ndarray[DTYPE_t, ndim=2] x,
-                        np.ndarray[DTYPE_t, ndim=2] out):
+    def doutput(self,
+                np.ndarray[DTYPE_t, ndim=2] x,
+                np.ndarray[DTYPE_t, ndim=2] out):
         raise NotImplementedError()
 
 
 cdef class Tanh(OutputFunction):
 
-    cdef inline output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
+    def output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
         np.tanh(x, out)
 
-    cdef inline doutput(self,
-                        np.ndarray[DTYPE_t, ndim=2] x,
-                        np.ndarray[DTYPE_t, ndim=2] out):
+    def doutput(self,
+                np.ndarray[DTYPE_t, ndim=2] x,
+                np.ndarray[DTYPE_t, ndim=2] out):
         np.multiply(-x, x, out)
         out += 1
 
 cdef class SoftMax(OutputFunction):
 
-    cdef inline output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
+    def output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
         np.exp(x, out)
         out /= np.sum(out, axis=1)[:, np.newaxis]
 
 
 cdef class LogSig(OutputFunction):
 
-    cdef inline output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
+    def output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
         np.exp(-x, out)
         out[:] = 1 / (1 + out)
 
@@ -183,10 +183,13 @@ cpdef backward(np.ndarray[DTYPE_t, ndim=2] X,
               np.ndarray[DTYPE_t, ndim=2] delta_h,
               np.ndarray[DTYPE_t, ndim=2] dx_output,
               np.ndarray[DTYPE_t, ndim=2] dx_hidden,
+              np.ndarray[DTYPE_t, ndim=2] weights_moment_o,
+              np.ndarray[DTYPE_t, ndim=2] weights_moment_h,
               LossFunction loss,
               OutputFunction output,
               OutputFunction hidden,
-              np.float64_t lr):
+              np.float64_t lr,
+              np.float64_t lr_moment):
 
     cdef int batch_size = X.shape[0]
 
@@ -205,8 +208,10 @@ cpdef backward(np.ndarray[DTYPE_t, ndim=2] X,
 
     # Update weights
     weights_output += lr / batch_size * np.dot(x_hidden.T, delta_o)
+    weights_output += lr_moment * weights_moment_o
     bias_output += lr * np.mean(delta_o, axis=0)
     weights_hidden += lr / batch_size * np.dot(X.T, delta_h)
+    weights_hidden += lr_moment * weights_moment_h
     bias_hidden += lr * np.mean(delta_h, axis=0)
 
 
@@ -220,6 +225,7 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
         np.ndarray[DTYPE_t, ndim=1] bias_hidden not None,
         np.ndarray[DTYPE_t, ndim=1] bias_output not None,
         np.float64_t lr,
+        np.float64_t lr_moment,
         int n_hidden,
         int max_epochs,
         int batch_size,
@@ -247,6 +253,14 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
     cdef np.ndarray[DTYPE_t, ndim=2] delta_o = np.empty((batch_size, n_outs))
     cdef np.ndarray[DTYPE_t, ndim=2] dx_output = np.empty((batch_size, n_outs))
 
+    cdef np.ndarray[DTYPE_t, ndim=2] weights_prev_o
+    cdef np.ndarray[DTYPE_t, ndim=2] weights_prev_prev_o
+    cdef np.ndarray[DTYPE_t, ndim=2] weights_moment_o
+
+    cdef np.ndarray[DTYPE_t, ndim=2] weights_prev_h
+    cdef np.ndarray[DTYPE_t, ndim=2] weights_prev_prev_h
+    cdef np.ndarray[DTYPE_t, ndim=2] weights_moment_h
+
     if y.shape[0] != n_samples:
         raise ValueError("Shapes of X and y don't fit.")
 
@@ -262,6 +276,14 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
     weights_output[:] = np.random.uniform(size=(n_hidden, n_outs)) \
         / np.sqrt(n_hidden)
     bias_output[:] = np.zeros(n_outs)
+
+    weights_prev_o = np.array(weights_output)
+    weights_prev_prev_o = np.array(weights_output)
+    weights_moment_o = np.zeros((n_hidden, n_outs))
+
+    weights_prev_h = np.array(weights_hidden)
+    weights_prev_prev_h = np.array(weights_hidden)
+    weights_moment_h = np.zeros((n_features, n_hidden))
 
     if shuffle_data:
         X, y = shuffle(X, y)
@@ -279,6 +301,11 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
                     output,
                     hidden)
 
+            weights_moment_o[:] = weights_prev_o
+            weights_moment_o -= weights_prev_prev_o
+            weights_moment_h[:] = weights_prev_h
+            weights_moment_h -= weights_prev_prev_h
+
             backward(X[j - batch_size:j],
                      x_output,
                      x_hidden,
@@ -291,10 +318,18 @@ def sgd(np.ndarray[DTYPE_t, ndim=2] X not None,
                      delta_h,
                      dx_output,
                      dx_hidden,
+                     weights_moment_o,
+                     weights_moment_h,
                      loss,
                      output,
                      hidden,
-                     lr)
+                     lr,
+                     lr_moment)
+
+            weights_prev_prev_o[:] = weights_prev_o
+            weights_prev_o[:] = weights_output
+            weights_prev_prev_h[:] = weights_prev_h
+            weights_prev_h[:] = weights_hidden
 
     return weights_hidden, bias_hidden, weights_output, bias_output
 

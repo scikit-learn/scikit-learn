@@ -10,6 +10,7 @@ class BaseMLP(BaseEstimator):
     def __init__(self,
                  n_hidden,
                  lr,
+                 lr_moment,
                  batch_size,
                  loss_function='squared',
                  output_function='tanh',
@@ -20,6 +21,7 @@ class BaseMLP(BaseEstimator):
         self.n_hidden = n_hidden
         self.learning_method = learning_method
         self.lr = lr
+        self.lr_moment = lr_moment
         self.batch_size = batch_size
         self.shuffle_data = shuffle_data
 
@@ -63,6 +65,7 @@ class BaseMLP(BaseEstimator):
             bias_hidden=self.bias_hidden,
             bias_output=self.bias_output,
             lr=self.lr,
+            lr_moment=self.lr_moment,
             n_hidden=self.n_hidden,
             max_epochs=max_epochs,
             batch_size=self.batch_size,

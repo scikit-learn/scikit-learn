@@ -25,6 +25,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
     def __init__(self,
                  n_hidden,
                  lr,
+                 lr_moment,
                  batch_size,
                  loss_function='cross-entropy',
                  output_function='softmax',
@@ -33,6 +34,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
                  verbose=0):
         super(MLPClassifier, self).__init__(n_hidden,
                                             lr,
+                                            lr_moment,
                                             batch_size,
                                             loss_function,
                                             output_function,
@@ -40,12 +42,11 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
                                             shuffle_data,
                                             verbose=0)
 
-    def fit(self, X, y, max_epochs=10, shuffle_data=False):
+    def fit(self, X, y, max_epochs=10):
         self.lb = LabelBinarizer()
         one_hot_labels = self.lb.fit_transform(y)
         super(MLPClassifier, self).fit(
-                X, one_hot_labels, max_epochs,
-                shuffle_data)
+                X, one_hot_labels, max_epochs)
         return self
 
     def predict(self, X):
