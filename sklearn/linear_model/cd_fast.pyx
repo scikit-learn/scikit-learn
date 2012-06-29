@@ -128,7 +128,6 @@ def update_active_set(active_set, w, n_iter):
     return active_set
 
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -137,7 +136,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bool positive=False,
-                            int memory_limit=500):
+                            int memory_limit=250000):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -165,24 +164,20 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int n_iter
-    cdef bool store_feature_inner_product = True
+    cdef bool use_cache = False
+    cdef bool initialize_cache = False
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
+    if memory_limit < n_features * n_features:
+        warnings.warn("Allowed memory is not sufficient "
+            "for caching some values need to be recalculated.")
+
     tol = tol * linalg.norm(y) ** 2
 
     Xy = np.dot(X.T, y)
-
-    # memory foodprint has to be reduced
-    #memory_limit = 5000
-    if memory_limit > n_features * n_features:
-        feature_inner_product = np.zeros(shape=(n_features, n_features))
-    else:
-        store_feature_inner_product = False
-        warnings.warn("Allowed memory is not sufficient "
-            " some values need to be recalculated.")
 
     gradient = np.zeros(n_features)
     active_set = set(range(n_features))
@@ -193,6 +188,15 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
         active_set = update_active_set(active_set, w, n_iter)
 
+        # check if memory is now sufficient for caching
+        if not use_cache:
+            n_active_features = len(active_set)
+            if n_active_features ** 2 < memory_limit:
+                feature_inner_product = \
+                    np.zeros(shape=(n_active_features, n_active_features))
+                use_cache = True
+                initialize_cache = True
+
         for ii in active_set:  # Loop over coordinates
 
             if norm_cols_X[ii] == 0.0:
@@ -201,12 +205,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w_ii = w[ii]  # Store previous value
 
             # initial calculation
-            if n_iter == 0 and store_feature_inner_product:
+            if initialize_cache:
                 feature_inner_product[:, ii] = np.dot(X[:, ii], X)
                 gradient[ii] = Xy[ii] - \
                         np.dot(feature_inner_product[:, ii], w)
 
-            if not store_feature_inner_product:
+            if not use_cache:
                 tmp_feature_inner_product = np.dot(X[:, ii], X)
                 gradient[ii] = Xy[ii] - \
                         np.dot(tmp_feature_inner_product, w)
@@ -223,7 +227,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if w_ii != w[ii]:
                 for j in active_set:
                     if n_iter >= 1 or j <= ii:
-                        if store_feature_inner_product:
+                        if use_cache:
                             gradient[j] -= feature_inner_product[ii, j] * \
                                                          (w[ii] - w_ii)
                         else:
@@ -248,6 +252,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if gap < tol:
                 # return if we reached desired tolerance
                 break
+
+        initialize_cache = False
 
     return w, gap, tol
 
