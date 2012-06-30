@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_almost_equal
 
 from nose.tools import assert_true
 
@@ -67,8 +68,8 @@ def test_kalman_filter():
 
     (x_filt, V_filt, ll) = kf.filter(X=data.data)
     for t in range(500):
-        assert_true(np.linalg.norm(x_filt[t] - data.filtered_state_means[t]) < 1e-5)
-        assert_true(np.linalg.norm(V_filt[t] - data.filtered_state_covariances[t]) < 1e-5)
+        assert_true(np.linalg.norm(x_filt[t] - data.filtered_state_means[t]) < 1e-3)
+        assert_true(np.linalg.norm(V_filt[t] - data.filtered_state_covariances[t]) < 1e-3)
 
 
 def test_kalman_predict():
@@ -84,7 +85,7 @@ def test_kalman_predict():
 
     x_smooth = kf.predict(X=data.data)
     for t in reversed(range(501)):
-        assert_true(np.linalg.norm(x_smooth[t] - data.smoothed_state_means[t]) < 1e-5)
+        assert_true(np.linalg.norm(x_smooth[t] - data.smoothed_state_means[t]) < 1e-3)
 
 
 def test_kalman_fit():
