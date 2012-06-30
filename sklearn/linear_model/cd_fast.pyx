@@ -224,18 +224,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     / (norm_cols_X[ii] + beta)
 
             # update gradients, if coef changed#
-            # loop should be avoided for the update case
             if w_ii != w[ii]:
                 if use_cache:
-                    if not initialize_cache:
-                        gradient -= feature_inner_product[ii, :] * \
+                    gradient -= feature_inner_product[ii, :] * \
                                                         (w[ii] - w_ii)
-                    else:
-                        for j in active_set:
-                            if n_iter >= 1 or j <= ii:
-                                if use_cache:
-                                    gradient[j] -= feature_inner_product[ii, j] * \
-                                                                 (w[ii] - w_ii)
                 else:
                     for j in active_set:
                         if n_iter >= 1 or j <= ii:
