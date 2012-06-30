@@ -223,14 +223,22 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                     / (norm_cols_X[ii] + beta)
 
-            # update gradients, if coef changed
+            # update gradients, if coef changed#
+            # loop should be avoided for the update case
             if w_ii != w[ii]:
-                for j in active_set:
-                    if n_iter >= 1 or j <= ii:
-                        if use_cache:
-                            gradient[j] -= feature_inner_product[ii, j] * \
-                                                         (w[ii] - w_ii)
-                        else:
+                if use_cache:
+                    if not initialize_cache:
+                        gradient -= feature_inner_product[ii, :] * \
+                                                        (w[ii] - w_ii)
+                    else:
+                        for j in active_set:
+                            if n_iter >= 1 or j <= ii:
+                                if use_cache:
+                                    gradient[j] -= feature_inner_product[ii, j] * \
+                                                                 (w[ii] - w_ii)
+                else:
+                    for j in active_set:
+                        if n_iter >= 1 or j <= ii:
                             tmp_feature_inner_product = np.dot(X[:, j], X)
                             gradient[j] -= tmp_feature_inner_product[j] * \
                                                          (w[ii] - w_ii)
