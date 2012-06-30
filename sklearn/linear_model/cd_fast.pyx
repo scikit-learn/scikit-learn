@@ -228,12 +228,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if use_cache:
                     gradient -= feature_inner_product[ii, :] * \
                                                         (w[ii] - w_ii)
-                else:
-                    for j in active_set:
-                        if n_iter >= 1 or j <= ii:
-                            tmp_feature_inner_product = np.dot(X[:, j], X)
-                            gradient[j] -= tmp_feature_inner_product[j] * \
-                                                         (w[ii] - w_ii)
+
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
             if d_w_ii > d_w_max:
