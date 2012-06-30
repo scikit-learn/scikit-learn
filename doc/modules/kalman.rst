@@ -17,9 +17,10 @@ In particular, the Linear-Gaussian Model and Hidden Markov Model both assume
 that the true state of the system, :math:`x_t`, and the measurements,
 :math:`z_t`, influence each other as shown in the following diagram.
 
-.. figure:: ../images/hmm.jpg
-   :align: center
+.. figure:: ../auto_examples/kalman/images/plot_pomp_diagram_1.png
+   :target: ../auto_examples/kalman/plot_pomp_diagram.html
    :width: 350 px
+   :align: center
 
 Where these two models differ is in what these variables represent.  While in a
 Hidden Markov Model both :math:`x_t` and :math:`z_t` are one of a finite set of
