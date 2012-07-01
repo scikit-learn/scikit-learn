@@ -51,7 +51,8 @@ References
 import warnings
 
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
+from scipy import linalg
 
 from ..base import BaseEstimator
 from ..mixture import log_multivariate_normal_density
@@ -222,7 +223,7 @@ def _filter_correct(observation_matrix, observation_covariance,
 
         kalman_gain = predicted_state_covariance.   \
                 dot(observation_matrix.T).  \
-                dot(np.linalg.pinv(predicted_observation_covariance))
+                dot(linalg.pinv(predicted_observation_covariance))
 
         corrected_state_mean = predicted_state_mean +   \
                 kalman_gain.dot(observation - predicted_observation_mean)
@@ -386,7 +387,7 @@ def _smooth_update(transition_matrix, filtered_state_mean,
     """
     kalman_smoothing_gain = filtered_state_covariance.  \
             dot(transition_matrix.T).   \
-            dot(np.linalg.pinv(predicted_state_covariance))
+            dot(linalg.pinv(predicted_state_covariance))
 
     smoothed_state_mean = filtered_state_mean +     \
             kalman_smoothing_gain.  \
@@ -620,7 +621,7 @@ def _em_observation_matrix(observations, observation_offsets,
                              smoothed_state_means[t])
             res2 += smoothed_state_covariances[t] +     \
                     np.outer(smoothed_state_means[t], smoothed_state_means[t])
-    return res1.dot(np.linalg.pinv(res2))
+    return res1.dot(linalg.pinv(res2))
 
 
 def _em_observation_covariance(observations, observation_offsets,
@@ -684,7 +685,7 @@ def _em_transition_matrix(transition_offsets, smoothed_state_means,
         res2 += smoothed_state_covariances[t - 1] \
             + np.outer(smoothed_state_means[t - 1],
                        smoothed_state_means[t - 1])
-    return res1.dot(np.linalg.pinv(res2))
+    return res1.dot(linalg.pinv(res2))
 
 
 def _em_transition_covariance(transition_matrices, transition_offsets,

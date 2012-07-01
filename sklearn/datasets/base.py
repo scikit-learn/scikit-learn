@@ -20,8 +20,8 @@ from os import listdir
 from os import makedirs
 
 import numpy as np
-import numpy.ma as ma
-import scipy.io as io
+from numpy import ma
+from scipy import io
 
 from ..utils import check_random_state
 

@@ -7,7 +7,7 @@ This example shows how one may apply all of :mod:`sklearn.kalman`'s Kalman
 Smoother, even with missing observations.
 '''
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
 import pylab as pl
 from sklearn.kalman import KalmanFilter
 
