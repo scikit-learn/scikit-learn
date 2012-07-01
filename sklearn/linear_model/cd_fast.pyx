@@ -84,7 +84,7 @@ def sparse_std(unsigned int n_samples,
 cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
-                            np.ndarray[DOUBLE, ndim=1] y, bool positive):
+                            np.ndarray[DOUBLE, ndim=1] y, bint positive):
     cdef double gap
 
     # initial value of the residuals
@@ -122,7 +122,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive=False,
+                            int max_iter, double tol, bint positive=False,
                             int memory_limit=250000):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -151,8 +151,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int n_iter
-    cdef bool use_cache = False
-    cdef bool initialize_cache = False
+    cdef bint use_cache = False
+    cdef bint initialize_cache = False
+    cdef int n_active_features
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -164,10 +165,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * linalg.norm(y) ** 2
 
-    Xy = np.dot(X.T, y)
-
-    gradient = np.zeros(n_features)
-    active_set = np.array(range(n_features))
+    cdef np.ndarray[DOUBLE, ndim=1] Xy = np.dot(X.T, y)
+    cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features)
+    cdef np.ndarray[INTEGER, ndim=1] active_set = np.array(range(n_features))
+    cdef np.ndarray[DOUBLE, ndim=2] feature_inner_product
 
     for n_iter in range(max_iter):
         w_max = 0.0
