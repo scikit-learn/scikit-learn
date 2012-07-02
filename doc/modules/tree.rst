@@ -204,7 +204,7 @@ multi-output problems. This indeed amounts to:
   - Use splitting criteria that compute the average reduction across all
     n outputs.
 
-Scikit-Learn offers support for multi-output problems by implementing this
+This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
 of size ``[n_samples, n_outputs]`` then the resulting estimator will:
@@ -230,7 +230,7 @@ largest reduction in entropy.  This has a cost of
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}log(n_{samples}))`.
 
-Scikit-Learn offers a more efficient implementation for the construction of
+Scikit-learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
 new split point along a given feature. By presorting the feature over all
