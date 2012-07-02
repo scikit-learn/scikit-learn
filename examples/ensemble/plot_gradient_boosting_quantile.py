@@ -8,8 +8,9 @@ to create prediction intervals.
 """
 
 import numpy as np
+import pylab as pl
 from sklearn.ensemble import GradientBoostingRegressor
-from matplotlib import pyplot as pl
+
 
 np.random.seed(1)
 
