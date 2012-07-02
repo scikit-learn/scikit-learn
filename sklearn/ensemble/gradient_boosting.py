@@ -377,17 +377,16 @@ class BaseGradientBoosting(BaseEnsemble):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k)[:, np.newaxis]
+            residual = loss.negative_gradient(y, y_pred, k=k)
 
             # induce regression tree on residuals
             tree = Tree(1, self.n_features, 1)
-            tree.build(X, residual, MSE(1), self.max_depth,
+            tree.build(X, residual[:, np.newaxis], MSE(1), self.max_depth,
                        self.min_samples_split, self.min_samples_leaf, 0.0,
                        self.n_features, self.random_state, _find_best_split,
                        sample_mask, X_argsorted)
 
             # update tree leaves
-            residual = residual[:, 0]
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
                                                sample_mask, self.learn_rate,
                                                k=k)
