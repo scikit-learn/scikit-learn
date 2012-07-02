@@ -76,10 +76,10 @@ def test_graphviz_toy():
 
     tree_toy = StringIO("digraph Tree {\n"
     "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [[ 3.  3.]]\", shape=\"box\"] ;\n"
-    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [[ 3.  0.]]\", shape=\"box\"] ;\n"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
-    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [[ 0.  3.]]\", shape=\"box\"] ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -95,10 +95,10 @@ def test_graphviz_toy():
 
     tree_toy = StringIO("digraph Tree {\n"
     "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [[ 3.  3.]]\", shape=\"box\"] ;\n"
-    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [[ 3.  0.]]\", shape=\"box\"] ;\n"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
-    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [[ 0.  3.]]\", shape=\"box\"] ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()

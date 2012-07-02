@@ -78,6 +78,7 @@ The disadvantages of decision trees include:
       It is therefore recommended to balance the dataset prior to fitting
       with the decision tree.
 
+
 .. _tree_classification:
 
 Classification
@@ -147,6 +148,7 @@ After being fitted, the model can then be used to predict new values::
 
  * :ref:`example_tree_plot_iris.py`
 
+
 .. _tree_regression:
 
 Regression
@@ -176,6 +178,7 @@ instead of integer values::
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_tree_regression.py`
+
 
 .. _tree_complexity:
 
@@ -228,6 +231,7 @@ slowing down the algorithm significantly.
 
 Tips on practical use
 =====================
+
   * Decision trees tend to overfit on data with a large number of features.
     Getting the right ratio of samples to number of features is important, since
     a tree with few samples in high dimensional space is very likely to overfit.
@@ -258,6 +262,7 @@ Tips on practical use
 
   * All decision trees use Fortran ordered ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
+
 
 .. _tree_algorithms:
 
@@ -296,6 +301,7 @@ scikit-learn uses an optimised version of the CART algorithm.
 
 .. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+
 
 .. _tree_mathematical_formulation:
 

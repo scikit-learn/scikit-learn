@@ -84,15 +84,23 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             feature = feature_names[tree.feature[node_id]]
         else:
             feature = "X[%s]" % tree.feature[node_id]
+
+        value = tree.value[node_id]
+        if tree.n_outputs == 1:
+            value = value[0, :]
+
         if tree.children[node_id, 0] == Tree.LEAF:
             return "error = %.4f\\nsamples = %s\\nvalue = %s" \
-                   % (tree.init_error[node_id], tree.n_samples[node_id],
-                      tree.value[node_id])
+                   % (tree.init_error[node_id],
+                      tree.n_samples[node_id],
+                      value)
 
         return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
-               % (feature, tree.threshold[node_id],
-                  tree.init_error[node_id], tree.n_samples[node_id],
-                  tree.value[node_id])
+               % (feature,
+                  tree.threshold[node_id],
+                  tree.init_error[node_id],
+                  tree.n_samples[node_id],
+                  value)
 
     def recurse(tree, node_id, parent=None):
         if node_id == Tree.LEAF:
