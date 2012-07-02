@@ -94,13 +94,13 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
                    % (tree.init_error[node_id],
                       tree.n_samples[node_id],
                       value)
-
-        return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
-               % (feature,
-                  tree.threshold[node_id],
-                  tree.init_error[node_id],
-                  tree.n_samples[node_id],
-                  value)
+        else:
+            return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+                   % (feature,
+                      tree.threshold[node_id],
+                      tree.init_error[node_id],
+                      tree.n_samples[node_id],
+                      value)
 
     def recurse(tree, node_id, parent=None):
         if node_id == Tree.LEAF:
@@ -155,7 +155,7 @@ class Tree(object):
         The feature to split on (only for internal nodes).
 
     threshold : np.ndarray of float64
-        The threshold of each node (only for leaves).
+        The threshold of each node (only for internal nodes).
 
     value : np.ndarray of float64, shape=(capacity, n_outputs, n_classes)
         Contains the constant prediction value of each node.
@@ -242,6 +242,7 @@ class Tree(object):
                 self.children[parent, 1] = node_id
 
         self.node_count += 1
+
         return node_id
 
     def _add_leaf(self, parent, is_left_child, value, error, n_samples):
@@ -262,8 +263,8 @@ class Tree(object):
             self.children[parent, 1] = node_id
 
         self.children[node_id, :] = Tree.LEAF
-
         self.node_count += 1
+
         return node_id
 
     def build(self, X, y, criterion, max_depth, min_samples_split,

@@ -38,6 +38,8 @@ Some advantages of decision trees are:
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
+    - Able to handle multi-output problems.
+
     - Uses a white box model. If a given situation is observable in a model,
       the explanation for the condition is easily explained by boolean logic.
       By constrast, in a black box model (e.g., in an artificial neural
@@ -88,8 +90,8 @@ Classification
 classification on a dataset.
 
 As other classifiers, :class:`DecisionTreeClassifier` take as input two
-arrays: an array X of size [n_samples, n_features] holding the training
-samples, and an array Y of integer values, size [n_samples], holding
+arrays: an array X of size ``[n_samples, n_features]`` holding the training
+samples, and an array Y of integer values, size ``[n_samples]``, holding
 the class labels for the training samples::
 
     >>> from sklearn import tree
@@ -180,6 +182,38 @@ instead of integer values::
  * :ref:`example_tree_plot_tree_regression.py`
 
 
+.. _tree_multioutput:
+
+Multi-output problems
+=====================
+
+A multi-output problem is a supervised learning problem with several outputs
+to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
+
+When there is no correlation between the outputs, a very simple way to solve
+this kind of problems is to build n independent models, i.e. one for each
+output, and then to use those models to independently predict each one of the n
+outputs. However, because it is likely that the output values related to the
+same input are themselves correlated, an often better way is to build a single
+model capable of predicting simultaneously all n outputs.
+
+With regard to decision trees, this strategy can readily be used to support
+multi-output problems. This indeed amounts to:
+
+  - Store n output values in leaves, instead of 1;
+  - Use splitting criteria that compute the average reduction across all
+    n outputs.
+
+Scikit-Learn offers support for multi-output problems by implementing this
+strategy in both :class:`DecisionTreeClassifier` and
+:class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
+of size ``[n_samples, n_outputs]`` then the resulting estimator will:
+
+  - Output n_output values upon ``predict``;
+  - Output a list of n_output arrays of class probabilities upon
+    ``predict_proba``.
+
+
 .. _tree_complexity:
 
 Complexity
@@ -196,7 +230,7 @@ largest reduction in entropy.  This has a cost of
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}log(n_{samples}))`.
 
-Scikit-learn offers a more efficient implementation for the construction of
+Scikit-Learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
 new split point along a given feature. By presorting the feature over all

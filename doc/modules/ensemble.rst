@@ -42,13 +42,17 @@ prediction of the individual classifiers.
 As other classifiers, forest classifiers have to be fitted with two
 arrays: an array X of size ``[n_samples, n_features]`` holding the
 training samples, and an array Y of size ``[n_samples]`` holding the
-target values (class labels) for the training samples::
+target values (class labels or re) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
     >>> Y = [0, 1]
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
+
+Like :ref:`decision trees <tree>`, forests of trees also extend
+to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
+``[n_samples, n_outputs]``).
 
 
 Random Forests
