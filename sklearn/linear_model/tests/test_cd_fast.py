@@ -135,6 +135,30 @@ def test_memory_limit_warning():
         assert_greater(len(warning), 0)  # warnings should be raised
 
 
+def test_indexing_for_late_caching():
+    # test if cache indexing works correct for late caching. For less memory
+    # then n_features**2, caching is turned on when active_set is sufficiently
+    # shrunken
+    X, y = make_regression(n_samples=200, n_features=50, n_informative=5,
+                        random_state=0)
+    rho = 0.80
+    alpha = 5
+
+    n_samples, n_features = X.shape
+    l2_reg = alpha * rho * n_samples
+    l1_reg = alpha * (1.0 - rho) * n_samples
+    w = np.zeros(n_features)
+    X = np.asfortranarray(X)
+    old_result, old_gap, old_tol = enet_coordinate_descent_old(w, l2_reg, l1_reg,
+                                X, y, max_iter=100, tol=1e-7, positive=False)
+    w = np.zeros(n_features)
+    #memory needed to store all feature products = 2500, giving only
+    # 2000 forces late caching.
+    my_result, gab, tol = enet_coordinate_descent(w, l2_reg, l1_reg,
+                                X, y, max_iter=100, tol=1e-7, positive=False, \
+                                 memory_limit=2000)
+    assert_array_almost_equal(my_result, old_result, 9)
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
