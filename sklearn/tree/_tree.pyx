@@ -29,6 +29,8 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
+cdef DTYPE_t inf = np.inf
+
 
 ################################################################################
 # Classification entropy measures
@@ -624,7 +626,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
 
     cdef int n_bagged = 0
     cdef int i = 0
-    for i in range(n_total_samples):
+    for i from 0 <= i < n_total_samples:
         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
             sample_mask[i] = 1
             n_bagged += 1
@@ -642,7 +644,7 @@ def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
     cdef int i = 0
     cdef int n = X.shape[0]
     cdef int node_id = 0
-    for i in xrange(n):
+    for i from 0 <= i < n:
         node_id = 0
         # While node_id not a leaf
         while children[node_id, 0] != -1 and children[node_id, 1] != -1:
@@ -796,7 +798,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef np.int32_t feature_idx = -1
     cdef int n_left = 0
     cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = np.inf, best_t = np.inf
+    cdef DTYPE_t best_error = inf, best_t = inf
     cdef DTYPE_t* X_i = NULL
     cdef int* X_argsorted_i = NULL
     cdef DTYPE_t* y_ptr = <DTYPE_t*>y.data
@@ -941,7 +943,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int i, a, b, c, n_left, best_i = -1
     cdef np.int32_t feature_idx = -1
     cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = np.inf, best_t = np.inf
+    cdef DTYPE_t best_error = inf, best_t = inf
     cdef DTYPE_t* X_i = NULL
     cdef int* X_argsorted_i = NULL
     cdef DTYPE_t* y_ptr = <DTYPE_t*>y.data
