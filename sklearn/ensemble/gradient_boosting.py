@@ -162,7 +162,7 @@ class LossFunction(object):
                                          y_pred[:, k])
 
         # update predictions (both in-bag and out-of-bag)
-        y_pred[:, k] += learn_rate * tree.value[:, 0].take(terminal_regions,
+        y_pred[:, k] += learn_rate * tree.value[:, 0, 0].take(terminal_regions,
                                                            axis=0)
 
     @abstractmethod
@@ -222,8 +222,8 @@ class LeastAbsoluteError(RegressionLossFunction):
                                 residual, pred):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
-        tree.value[leaf, 0] = np.median(y.take(terminal_region, axis=0) - \
-                                        pred.take(terminal_region, axis=0))
+        tree.value[leaf, 0, 0] = np.median(y.take(terminal_region, axis=0) - \
+                                           pred.take(terminal_region, axis=0))
 
 
 class BinomialDeviance(LossFunction):
@@ -262,9 +262,9 @@ class BinomialDeviance(LossFunction):
         denominator = np.sum((y - residual) * (1 - y + residual))
 
         if denominator == 0.0:
-            tree.value[leaf, 0] = 0.0
+            tree.value[leaf, 0, 0] = 0.0
         else:
-            tree.value[leaf, 0] = numerator / denominator
+            tree.value[leaf, 0, 0] = numerator / denominator
 
 
 class MultinomialDeviance(LossFunction):
@@ -312,9 +312,9 @@ class MultinomialDeviance(LossFunction):
         denominator = np.sum((y - residual) * (1.0 - y + residual))
 
         if denominator == 0.0:
-            tree.value[leaf, 0] = 0.0
+            tree.value[leaf, 0, 0] = 0.0
         else:
-            tree.value[leaf, 0] = numerator / denominator
+            tree.value[leaf, 0, 0] = numerator / denominator
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
@@ -377,16 +377,17 @@ class BaseGradientBoosting(BaseEnsemble):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k)
+            residual = loss.negative_gradient(y, y_pred, k=k)[:, np.newaxis]
 
             # induce regression tree on residuals
-            tree = Tree(1, self.n_features)
-            tree.build(X, residual, MSE(), self.max_depth,
+            tree = Tree(1, self.n_features, 1)
+            tree.build(X, residual, MSE(1), self.max_depth,
                        self.min_samples_split, self.min_samples_leaf, 0.0,
                        self.n_features, self.random_state, _find_best_split,
                        sample_mask, X_argsorted)
 
             # update tree leaves
+            residual = residual[:, 0]
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
                                                sample_mask, self.learn_rate,
                                                k=k)
