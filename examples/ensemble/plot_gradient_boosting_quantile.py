@@ -21,6 +21,7 @@ def f(x):
 #----------------------------------------------------------------------
 #  First the noiseless case
 X = np.atleast_2d(np.random.uniform(0, 10.0, size=100)).T
+X = X.astype(np.float32)
 
 # Observations
 y = f(X).ravel()
@@ -28,10 +29,12 @@ y = f(X).ravel()
 dy = 1.5 + 1.0 * np.random.random(y.shape)
 noise = np.random.normal(0, dy)
 y += noise
+y = y.astype(np.float32)
 
 # Mesh the input space for evaluations of the real function, the prediction and
 # its MSE
 xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
+xx = xx.astype(np.float32)
 
 alpha = 0.95
 
