@@ -349,26 +349,54 @@ def test_pickle():
 
 
 def test_multioutput():
-    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-    y = [[-1, 1], [-1, 1], [-1, 1], [1, -1], [1, -1], [1, -1]]
-    T = [[-1, -1], [2, 2], [3, 2]]
-    true_result = [[-1, 1], [1, -1], [1, -1]]
+    X = [[-2, -1],
+         [-1, -1],
+         [-1, -2],
+         [1, 1],
+         [1, 2],
+         [2, 1],
+         [-2, 1],
+         [-1, 1],
+         [-1, 2],
+         [2, -1],
+         [1, -1],
+         [1, -2]]
+
+    y = [[-1, 0],
+         [-1, 0],
+         [-1, 0],
+         [1, 1],
+         [1, 1],
+         [1, 1],
+         [-1, 2],
+         [-1, 2],
+         [-1, 2],
+         [1, 3],
+         [1, 3],
+         [1, 3]]
+
+    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
 
     # toy classification problem
     clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
+    y_hat = clf.fit(X, y).predict(T)
+    assert_array_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
 
-    assert_array_equal(clf.predict(T), true_result)
+    proba = clf.predict_proba(T)
+    assert_equal(len(proba), 2)
+    assert_equal(proba[0].shape, (4, 2))
+    assert_equal(proba[1].shape, (4, 4))
 
     # toy regression problem
     clf = tree.DecisionTreeRegressor()
-    clf.fit(X, y)
+    y_hat = clf.fit(X, y).predict(T)
+    assert_almost_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
 
-    assert_almost_equal(clf.predict(T), true_result)
 
 
 if __name__ == "__main__":
-    # import nose
-    # nose.runmodule()
-    import cProfile
-    cProfile.run("test_arrayrepr()")
+    import nose
+    nose.runmodule()
