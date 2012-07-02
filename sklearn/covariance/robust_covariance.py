@@ -119,6 +119,12 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     previous_dist = dist
     dist = (np.dot(X - location, linalg.pinv(covariance)) \
                 * (X - location)).sum(axis=1)
+    # Catch computation errors
+    if np.isinf(det):
+        raise ValueError(
+            "Singular covariance matrix. "
+            "Please check that the covariance matrix corresponding "
+            "to the dataset is full rank.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -523,6 +529,10 @@ class MinCovDet(EmpiricalCovariance):
         """
         self.random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
+        # check that the empirical covariance is full rank
+        if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
+            warnings.warn("The covariance matrix associated to your dataset " \
+                              "is not full rank")
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
                 X, support_fraction=self.support_fraction,
