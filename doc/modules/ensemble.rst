@@ -42,7 +42,7 @@ prediction of the individual classifiers.
 As other classifiers, forest classifiers have to be fitted with two
 arrays: an array X of size ``[n_samples, n_features]`` holding the
 training samples, and an array Y of size ``[n_samples]`` holding the
-target values (class labels or re) for the training samples::
+target values (class labels) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
