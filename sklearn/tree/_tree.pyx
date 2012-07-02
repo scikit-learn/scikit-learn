@@ -209,8 +209,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef int n_left = self.n_left
         cdef int n_right = self.n_right
 
-        cdef int k
-        cdef int c
+        cdef int idx, k, c, s
 
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
@@ -242,6 +241,8 @@ cdef class ClassificationCriterion(Criterion):
         cdef int* label_count_init = self.label_count_init
 
         cdef np.ndarray[DTYPE_t, ndim=2] value = np.zeros((n_outputs, label_count_stride), dtype=DTYPE)
+
+        cdef int k, c
 
         for k from 0 <= k < n_outputs:
             for c from 0 <= c < n_classes[k]:
@@ -659,13 +660,13 @@ def _predict_tree(np.ndarray[DTYPE_t, ndim=2] X,
                   np.ndarray[np.float64_t, ndim=3] values,
                   np.ndarray[np.float64_t, ndim=3] pred):
     """Finds the terminal region (=leaf node) values for each sample. """
-    cdef int i = 0
+    cdef int i, k, c
     cdef int n = X.shape[0]
     cdef int node_id = 0
     cdef int n_outputs = values.shape[1]
     cdef int n_classes = values.shape[2]
 
-    for i in xrange(n):
+    for i from 0 <= i < n:
         node_id = 0
         # While node_id not a leaf
         while children[node_id, 0] != -1 and children[node_id, 1] != -1:
@@ -674,8 +675,8 @@ def _predict_tree(np.ndarray[DTYPE_t, ndim=2] X,
             else:
                 node_id = children[node_id, 1]
 
-        for k in xrange(n_outputs):
-            for c in xrange(n_classes):
+        for k from 0 <= k < n_outputs:
+            for c from 0 <= c < n_classes:
                 pred[i, k, c] = values[node_id, k, c]
 
 
