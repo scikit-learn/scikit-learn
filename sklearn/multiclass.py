@@ -22,6 +22,7 @@ improves.
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
@@ -70,7 +71,7 @@ def predict_ovr(estimators, label_binarizer, X):
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
+class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -216,7 +217,7 @@ def predict_ovo(estimators, classes, X):
     return classes[votes.argmax(axis=1)]
 
 
-class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
+class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-one multiclass strategy
 
     This strategy consists in fitting one classifier per class pair.
@@ -346,7 +347,7 @@ def predict_ecoc(estimators, classes, code_book, X):
     return classes[pred]
 
 
-class OutputCodeClassifier(BaseEstimator, ClassifierMixin):
+class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """(Error-Correcting) Output-Code multiclass strategy
 
     Output-code based strategies consist in representing each class with a

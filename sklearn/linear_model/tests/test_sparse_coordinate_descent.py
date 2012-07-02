@@ -160,7 +160,7 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     d_clf = ElasticNet(alpha=alpha, rho=0.8, fit_intercept=fit_intercept,
                       max_iter=max_iter, tol=1e-7, positive=positive,
                       warm_start=True)
-    d_clf.fit(X_train, y_train)
+    d_clf.fit(X_train.todense(), y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert_greater(d_clf.score(X_test, y_test), 0.85)
@@ -177,7 +177,7 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     rng = np.random.RandomState(seed=0)
     coef_init = rng.randn(n_features)
 
-    d_clf.fit(X_train, y_train, coef_init=coef_init)
+    d_clf.fit(X_train.todense(), y_train, coef_init=coef_init)
     s_clf.fit(X_train, y_train, coef_init=coef_init)
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
@@ -213,7 +213,7 @@ def test_sparse_lasso_not_as_toy_dataset():
     # check the convergence is the same as the dense version
     d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter,
             tol=1e-7)
-    d_clf.fit(X_train, y_train)
+    d_clf.fit(X_train.todense(), y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert_greater(d_clf.score(X_test, y_test), 0.85)
 

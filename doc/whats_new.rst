@@ -21,6 +21,8 @@ Changelog
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
      decompresses them on the fly.
 
+   - A common testing framework for all estimators was added.
+
 API changes summary
 -------------------
 
@@ -32,6 +34,9 @@ API changes summary
    - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
      the default gamma value was only computed the first time ``fit`` was called
      and then stored. It is now recalculated on every call to ``fit``.
+
+   - All ``Base`` classes are now abstract meta classes so that they can not be
+     instantiated.
 
 .. _changes_0_11:
 

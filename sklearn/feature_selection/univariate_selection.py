@@ -298,7 +298,7 @@ class SelectPercentile(_AbstractUnivariateFilter):
 
     """
 
-    def __init__(self, score_func, percentile=10):
+    def __init__(self, score_func=f_classif, percentile=10):
         self.percentile = percentile
         _AbstractUnivariateFilter.__init__(self, score_func)
 
@@ -335,7 +335,7 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     """
 
-    def __init__(self, score_func, k=10):
+    def __init__(self, score_func=f_classif, k=10):
         self.k = k
         _AbstractUnivariateFilter.__init__(self, score_func)
 
@@ -360,7 +360,7 @@ class SelectFpr(_AbstractUnivariateFilter):
     amount of false detections.
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -369,7 +369,7 @@ class SelectFpr(_AbstractUnivariateFilter):
         the highest p-value for features to be kept
     """
 
-    def __init__(self, score_func, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
@@ -385,7 +385,7 @@ class SelectFdr(_AbstractUnivariateFilter):
     discovery rate.
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -395,7 +395,7 @@ class SelectFdr(_AbstractUnivariateFilter):
 
     """
 
-    def __init__(self, score_func, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
@@ -410,7 +410,7 @@ class SelectFwe(_AbstractUnivariateFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -420,7 +420,7 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     """
 
-    def __init__(self, score_func, alpha=5e-2):
+    def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
         _AbstractUnivariateFilter.__init__(self, score_func)
 
@@ -437,7 +437,7 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
     """Univariate feature selector with configurable strategy
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
@@ -456,7 +456,7 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
                         'fwe':          SelectFwe,
                         }
 
-    def __init__(self, score_func, mode='percentile', param=1e-5):
+    def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
         if not callable(score_func):
             raise TypeError(
                 "The score function should be a callable, '%s' (type %s) "

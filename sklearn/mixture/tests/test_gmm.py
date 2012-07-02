@@ -108,7 +108,7 @@ def test_GMM_attributes():
     means = rng.randint(-20, 20, (n_components, n_features))
 
     assert g.n_components == n_components
-    assert g._covariance_type == covariance_type
+    assert g.covariance_type == covariance_type
 
     g.weights_ = weights
     assert_array_almost_equal(g.weights_, weights)

@@ -430,6 +430,9 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 
 class BaseGradientBoosting(BaseEnsemble):
     """Abstract base class for Gradient Boosting. """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample,
                  max_features, random_state, alpha=0.9):

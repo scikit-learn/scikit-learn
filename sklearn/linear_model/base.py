@@ -98,6 +98,11 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True):
 
 class LinearModel(BaseEstimator):
     """Base class for Linear Models"""
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def fit(self, X, y):
+        """Fit model."""
 
     def decision_function(self, X):
         """Decision function of the linear model
