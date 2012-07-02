@@ -403,7 +403,6 @@ def test_multioutput():
     assert_equal(y_hat.shape, (4, 2))
 
 
-
 if __name__ == "__main__":
     import nose
     nose.runmodule()

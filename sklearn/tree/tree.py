@@ -181,7 +181,8 @@ class Tree(object):
         self.feature.fill(Tree.UNDEFINED)
 
         self.threshold = np.empty((capacity,), dtype=np.float64)
-        self.value = np.empty((capacity, n_outputs, np.max(n_classes)), dtype=np.float64)
+        self.value = np.empty((capacity, n_outputs, np.max(n_classes)),
+                              dtype=np.float64)
 
         self.best_error = np.empty((capacity,), dtype=np.float32)
         self.init_error = np.empty((capacity,), dtype=np.float32)
@@ -198,7 +199,8 @@ class Tree(object):
         self.children.resize((capacity, 2), refcheck=False)
         self.feature.resize((capacity,), refcheck=False)
         self.threshold.resize((capacity,), refcheck=False)
-        self.value.resize((capacity, self.value.shape[1], self.value.shape[2]), refcheck=False)
+        self.value.resize((capacity, self.value.shape[1], self.value.shape[2]),
+                          refcheck=False)
         self.best_error.resize((capacity,), refcheck=False)
         self.init_error.resize((capacity,), refcheck=False)
         self.n_samples.resize((capacity,), refcheck=False)
@@ -350,7 +352,8 @@ class Tree(object):
         return self
 
     def predict(self, X):
-        out = np.empty((X.shape[0], self.value.shape[1], self.value.shape[2]), dtype=np.float64)
+        out = np.empty((X.shape[0], self.value.shape[1], self.value.shape[2]),
+                       dtype=np.float64)
 
         _tree._predict_tree(X,
                             self.children,
@@ -460,7 +463,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             Returns self.
         """
         # set min_samples_split sensibly
-        self.min_samples_split = max(self.min_samples_split, 2 * self.min_samples_leaf)
+        self.min_samples_split = max(self.min_samples_split,
+                                     2 * self.min_samples_leaf)
 
         # Convert data
         X = np.asarray(X, dtype=DTYPE, order="F")
@@ -490,7 +494,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         y = np.asarray(y, dtype=DTYPE, order="C")
 
         if is_classification:
-            criterion = CLASSIFICATION[self.criterion](self.n_outputs_, self.n_classes_)
+            criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
+                                                       self.n_classes_)
         else:
             criterion = REGRESSION[self.criterion](self.n_outputs_)
 
@@ -585,7 +590,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             predictions = np.zeros((n_samples, self.n_outputs_))
 
             for k in xrange(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k], axis=1), axis=0)
+                predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k],
+                                                                    axis=1),
+                                                          axis=0)
         else:
             predictions = P[:, :, 0]
 
@@ -715,8 +722,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
-            arrays if n_outputs > 1.
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
@@ -758,8 +765,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
-            arrays if n_outputs > 1.
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
@@ -773,7 +780,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                 proba[k] = np.log(proba[k])
 
             return proba
-
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):

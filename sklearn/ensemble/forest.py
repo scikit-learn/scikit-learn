@@ -289,7 +289,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                 predictions = []
                 for k in xrange(self.n_outputs_):
-                    predictions.append(np.zeros((n_samples, self.n_classes_[k])))
+                    predictions.append(np.zeros((n_samples,
+                                                 self.n_classes_[k])))
 
                 for estimator in self.estimators_:
                     mask = np.ones(n_samples, dtype=np.bool)
@@ -303,11 +304,16 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         predictions[k][mask, :] += p_estimator[k]
 
                 for k in xrange(self.n_outputs_):
-                    self.oob_decision_function_.append((predictions[k] / predictions[k].sum(axis=1)[:, np.newaxis]))
-                    self.oob_score_ += np.mean(y[:, k] == np.argmax(predictions[k], axis=1))
+                    decision = predictions[k] \
+                               / predictions[k].sum(axis=1)[:, np.newaxis]
+                    self.oob_decision_function_.append(decision)
+
+                    self.oob_score_ += np.mean(y[:, k] \
+                                       == np.argmax(predictions[k], axis=1))
 
                 if self.n_outputs_ == 1:
-                    self.oob_decision_function_ = self.oob_decision_function_[0]
+                    self.oob_decision_function_ = \
+                        self.oob_decision_function_[0]
 
                 self.oob_score_ /= self.n_outputs_
 
@@ -331,7 +337,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                 self.oob_prediction_ = predictions
                 if self.n_outputs_ == 1:
-                    self.oob_prediction_ = self.oob_prediction_.reshape((n_samples, ))
+                    self.oob_prediction_ = \
+                        self.oob_prediction_.reshape((n_samples, ))
 
                 self.oob_score_ = 0.0
                 for k in xrange(self.n_outputs_):
@@ -401,7 +408,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         predictions = np.zeros((n_samples, self.n_outputs_))
 
         for k in xrange(self.n_outputs_):
-            predictions[:, k] = self.classes_[k].take(np.argmax(P[k], axis=1), axis=0)
+            predictions[:, k] = self.classes_[k].take(np.argmax(P[k], axis=1),
+                                                      axis=0)
 
         if self.n_outputs_ == 1:
             predictions = predictions.reshape((n_samples, ))
@@ -421,8 +429,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
-            arrays if n_outputs > 1.
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
@@ -470,8 +478,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
-            arrays if n_outputs > 1.
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """

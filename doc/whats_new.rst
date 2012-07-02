@@ -23,7 +23,7 @@ Changelog
 
    - A common testing framework for all estimators was added.
 
-   - Decision trees and forests of randomized now support multi-output
+   - Decision trees and forests of randomized trees now support multi-output
      classification and regression problems, by `Gilles Louppe`
 
 API changes summary
