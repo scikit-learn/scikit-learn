@@ -1,6 +1,6 @@
 """
 This module gathers tree-based methods, including decision, regression and
-randomized trees.
+randomized trees. Single and multi-output problems are both handled.
 """
 
 # Code is originally adapted from MILK: Machine Learning Toolkit
@@ -450,7 +450,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         X : array-like of shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -564,7 +564,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
         X = array2d(X, dtype=DTYPE)
@@ -715,7 +715,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
+            arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
@@ -757,11 +758,22 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
+            arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return np.log(proba)
+
+        else:
+            for k in xrange(self.n_outputs_):
+                proba[k] = np.log(proba[k])
+
+            return proba
+
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):

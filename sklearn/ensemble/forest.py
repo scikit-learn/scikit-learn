@@ -28,6 +28,8 @@ The module structure is the following:
   ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
   sub-estimator implementations.
 
+Single and multi-output problems are both handled.
+
 """
 
 # Authors: Gilles Louppe, Brian Holt
@@ -212,7 +214,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         X : array-like of shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -387,7 +389,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
         n_samples = len(X)
@@ -419,7 +421,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
+            arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
@@ -467,11 +470,21 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs such
+            arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return np.log(proba)
+
+        else:
+            for k in xrange(self.n_outputs_):
+                proba[k] = np.log(proba[k])
+
+            return proba
 
 
 class ForestRegressor(BaseForest, RegressorMixin):
@@ -516,7 +529,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
 
         Returns
         -------
-        y: array of shape = [n_samples]
+        y: array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
         # Check data

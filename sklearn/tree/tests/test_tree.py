@@ -391,6 +391,11 @@ def test_multioutput():
     assert_equal(proba[0].shape, (4, 2))
     assert_equal(proba[1].shape, (4, 4))
 
+    log_proba = clf.predict_log_proba(T)
+    assert_equal(len(log_proba), 2)
+    assert_equal(log_proba[0].shape, (4, 2))
+    assert_equal(log_proba[1].shape, (4, 4))
+
     # toy regression problem
     clf = tree.DecisionTreeRegressor()
     y_hat = clf.fit(X, y).predict(T)
