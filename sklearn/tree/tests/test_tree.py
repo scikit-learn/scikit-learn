@@ -349,6 +349,8 @@ def test_pickle():
 
 
 def test_multioutput():
+    """Check estimators on multi-output problems."""
+
     X = [[-2, -1],
          [-1, -1],
          [-1, -2],

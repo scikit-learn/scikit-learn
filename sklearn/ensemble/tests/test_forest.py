@@ -260,7 +260,7 @@ def test_pickle():
     import pickle
 
     # Random forest
-    obj = RandomForestClassifier()
+    obj = RandomForestClassifier(random_state=0)
     obj.fit(iris.data, iris.target)
     score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
@@ -270,7 +270,7 @@ def test_pickle():
     score2 = obj2.score(iris.data, iris.target)
     assert_true(score == score2)
 
-    obj = RandomForestRegressor()
+    obj = RandomForestRegressor(random_state=0)
     obj.fit(boston.data, boston.target)
     score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
@@ -281,7 +281,7 @@ def test_pickle():
     assert_true(score == score2)
 
     # Extra-trees
-    obj = ExtraTreesClassifier()
+    obj = ExtraTreesClassifier(random_state=0)
     obj.fit(iris.data, iris.target)
     score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
@@ -291,7 +291,7 @@ def test_pickle():
     score2 = obj2.score(iris.data, iris.target)
     assert_true(score == score2)
 
-    obj = ExtraTreesRegressor()
+    obj = ExtraTreesRegressor(random_state=0)
     obj.fit(boston.data, boston.target)
     score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
@@ -300,6 +300,56 @@ def test_pickle():
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
     assert_true(score == score2)
+
+
+def test_multioutput():
+    """Check estimators on multi-output problems."""
+
+    X = [[-2, -1],
+         [-1, -1],
+         [-1, -2],
+         [1, 1],
+         [1, 2],
+         [2, 1],
+         [-2, 1],
+         [-1, 1],
+         [-1, 2],
+         [2, -1],
+         [1, -1],
+         [1, -2]]
+
+    y = [[-1, 0],
+         [-1, 0],
+         [-1, 0],
+         [1, 1],
+         [1, 1],
+         [1, 1],
+         [-1, 2],
+         [-1, 2],
+         [-1, 2],
+         [1, 3],
+         [1, 3],
+         [1, 3]]
+
+    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    # toy classification problem
+    clf = ExtraTreesClassifier(random_state=0)
+    y_hat = clf.fit(X, y).predict(T)
+    assert_array_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+    proba = clf.predict_proba(T)
+    assert_equal(len(proba), 2)
+    assert_equal(proba[0].shape, (4, 2))
+    assert_equal(proba[1].shape, (4, 4))
+
+    # toy regression problem
+    clf = ExtraTreesRegressor(random_state=5)
+    y_hat = clf.fit(X, y).predict(T)
+    assert_almost_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
 
 
 if __name__ == "__main__":
