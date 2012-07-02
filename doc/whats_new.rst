@@ -23,12 +23,15 @@ Changelog
 
    - A common testing framework for all estimators was added.
 
+   - Decision trees and forests of randomized now support multi-output
+     classification and regression problems, by `Gilles Louppe`
+
 API changes summary
 -------------------
 
-   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
-     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
-     object when initialising it and not through ``fit``. Now ``fit`` will 
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
+     object when initialising it and not through ``fit``. Now ``fit`` will
      only accept the data as an input parameter.
 
    - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
