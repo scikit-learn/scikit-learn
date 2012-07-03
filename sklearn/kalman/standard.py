@@ -100,19 +100,6 @@ def _last_dims(X, t, ndims=2):
                 " or more are required") % (len(X.shape), ndims))
 
 
-def _pad(X, n=1, dim=None):
-    """Pad `X` along its first axis with zeros.
-
-    Pad an `X` along its first axis with `n` all-zero sub-arrays if its
-    dimension isn't equal to `dim`.
-    """
-    if len(X.shape) == dim:
-        return X
-    else:
-        xs = [np.zeros(X.shape[1:])[np.newaxis] for i in range(n)]
-        return np.vstack(xs + [X])
-
-
 def _logmvnpdf(x, mu, sigma):
     """log density of the multivariate normal distribution
 
