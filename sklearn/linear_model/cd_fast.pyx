@@ -181,7 +181,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         # check if memory is now sufficient for caching
         if not use_cache:
             n_active_features = len(active_set)
-            if n_active_features ** 2 < memory_limit:
+            if n_active_features ** 2 <= memory_limit:
                 feature_inner_product = \
                     np.zeros(shape=(n_active_features, n_active_features))
                 use_cache = True
