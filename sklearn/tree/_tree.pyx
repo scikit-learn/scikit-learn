@@ -29,7 +29,7 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
-cdef DTYPE_t inf = np.inf
+cdef DTYPE_t INFINITY = np.inf
 
 
 ################################################################################
@@ -798,7 +798,7 @@ def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef np.int32_t feature_idx = -1
     cdef int n_left = 0
     cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = inf, best_t = inf
+    cdef DTYPE_t best_error = INFINITY, best_t = INFINITY
     cdef DTYPE_t* X_i = NULL
     cdef int* X_argsorted_i = NULL
     cdef DTYPE_t* y_ptr = <DTYPE_t*>y.data
@@ -943,7 +943,7 @@ def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
     cdef int i, a, b, c, n_left, best_i = -1
     cdef np.int32_t feature_idx = -1
     cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = inf, best_t = inf
+    cdef DTYPE_t best_error = INFINITY, best_t = INFINITY
     cdef DTYPE_t* X_i = NULL
     cdef int* X_argsorted_i = NULL
     cdef DTYPE_t* y_ptr = <DTYPE_t*>y.data

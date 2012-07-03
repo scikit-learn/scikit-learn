@@ -195,7 +195,9 @@ this kind of problems is to build n independent models, i.e. one for each
 output, and then to use those models to independently predict each one of the n
 outputs. However, because it is likely that the output values related to the
 same input are themselves correlated, an often better way is to build a single
-model capable of predicting simultaneously all n outputs.
+model capable of predicting simultaneously all n outputs. First, it requires
+lower training time since only a single estimator is built. Second, the
+generalization accuracy of the resulting estimator may often be increased.
 
 With regard to decision trees, this strategy can readily be used to support
 multi-output problems. This indeed amounts to:
