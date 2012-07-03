@@ -481,6 +481,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         is_classification = isinstance(self, ClassifierMixin)
 
+        y = np.copy(y)
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]

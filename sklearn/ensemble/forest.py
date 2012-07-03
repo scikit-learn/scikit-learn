@@ -247,6 +247,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
             X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
+        y = np.copy(y)
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]
