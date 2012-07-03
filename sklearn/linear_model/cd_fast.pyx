@@ -81,6 +81,8 @@ def sparse_std(unsigned int n_samples,
     return np.sqrt(X_std)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
@@ -115,18 +117,20 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
     return gap
 
 
-def restore_w(w, index, n_features):
-    tmp = np.zeros(n_features)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef inline restore_w(np.ndarray[DOUBLE, ndim=1] w,
+                      np.ndarray[INTEGER, ndim=1] index, int n_features):
+    cdef np.ndarray[DOUBLE, ndim=1] tmp = np.zeros(n_features)
     tmp[index] = w
     return tmp
-
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
-                            double alpha, double beta,
+                            double l2_reg, double l1_reg,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bint positive=False,
@@ -161,8 +165,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef bint initialize_cache = False
     cdef int n_active_features
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if l2_reg == 0:
+        warnings.warn("Coordinate descent with l2_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
     if memory_limit < n_features * n_features:
@@ -173,7 +177,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     cdef np.ndarray[DOUBLE, ndim=1] Xy = np.dot(X.T, y)
     cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features)
-    cdef np.ndarray[INTEGER, ndim=1] non_zero_pos
+    cdef np.ndarray[INTEGER, ndim=1] nz_index
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.array(range(n_features))
     cdef np.ndarray[DOUBLE, ndim=2] feature_inner_product
 
@@ -189,13 +193,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         if not use_cache:
             n_active_features = len(active_set)
             if n_active_features ** 2 <= memory_limit:
-                non_zero_pos = active_set
+                nz_index = active_set
                 active_set = np.array(range(n_active_features))
                 feature_inner_product = \
-                    np.zeros(shape=(n_active_features, n_active_features))
-                gradient = gradient[non_zero_pos]
-                w = w[non_zero_pos]
-                norm_cols_X = norm_cols_X[non_zero_pos]
+                    np.zeros(shape=(n_active_features, n_active_features)) 
+                # resize
+                gradient = gradient[nz_index]
+                w = w[nz_index]
+                norm_cols_X = norm_cols_X[nz_index]
                 use_cache = True
                 initialize_cache = True
 
@@ -208,9 +213,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             # initial calculation
             if initialize_cache:
-                tmp_feature_inner_product = np.dot(X[:, non_zero_pos[ii]], X)[non_zero_pos]
+                tmp_feature_inner_product = np.dot(X[:, nz_index[ii]], X)[nz_index]
                 feature_inner_product[:, ii] = tmp_feature_inner_product
-                gradient[ii] = Xy[non_zero_pos[ii]] - \
+                gradient[ii] = Xy[nz_index[ii]] - \
                         np.dot(feature_inner_product[:, ii], w)
 
             if not use_cache:
@@ -223,8 +228,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if positive and tmp < 0:
                 w[ii] = 0.0
             else:
-                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                    / (norm_cols_X[ii] + beta)
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - l2_reg, 0) \
+                    / (norm_cols_X[ii] + l1_reg)
 
             # update gradients, if w changed
             if w_ii != w[ii]:
@@ -245,9 +250,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
             if use_cache:
-                gap = calculate_gap(restore_w(w, non_zero_pos, n_features), alpha, beta, X, y, positive)
+                gap = calculate_gap(restore_w(w, nz_index, n_features), l2_reg, l1_reg, X, y, positive)
             else:
-                gap = calculate_gap(w, alpha, beta, X, y, positive)
+                gap = calculate_gap(w, l2_reg, l1_reg, X, y, positive)
 
             if gap < tol:
                 # return if we reached desired tolerance
@@ -256,7 +261,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         initialize_cache = False
 
     if use_cache:
-        w = restore_w(w, non_zero_pos, n_features)
+        w = restore_w(w, nz_index, n_features)
     return w, gap, tol
 
 
