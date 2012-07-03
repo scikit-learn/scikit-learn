@@ -115,6 +115,13 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
     return gap
 
 
+def restore_w(w, index, n_features):
+    tmp = np.zeros(n_features)
+    tmp[index] = w
+    return tmp
+
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -141,7 +148,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     # compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
-
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -167,6 +173,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     cdef np.ndarray[DOUBLE, ndim=1] Xy = np.dot(X.T, y)
     cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features)
+    cdef np.ndarray[INTEGER, ndim=1] non_zero_pos
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.array(range(n_features))
     cdef np.ndarray[DOUBLE, ndim=2] feature_inner_product
 
@@ -182,8 +189,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         if not use_cache:
             n_active_features = len(active_set)
             if n_active_features ** 2 <= memory_limit:
+                non_zero_pos = active_set
+                active_set = np.array(range(n_active_features))
                 feature_inner_product = \
                     np.zeros(shape=(n_active_features, n_active_features))
+                gradient = gradient[non_zero_pos]
+                w = w[non_zero_pos]
+                norm_cols_X = norm_cols_X[non_zero_pos]
                 use_cache = True
                 initialize_cache = True
 
@@ -196,8 +208,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             # initial calculation
             if initialize_cache:
-                feature_inner_product[:, ii] = np.dot(X[:, ii], X)
-                gradient[ii] = Xy[ii] - \
+                tmp_feature_inner_product = np.dot(X[:, non_zero_pos[ii]], X)[non_zero_pos]
+                feature_inner_product[:, ii] = tmp_feature_inner_product
+                gradient[ii] = Xy[non_zero_pos[ii]] - \
                         np.dot(feature_inner_product[:, ii], w)
 
             if not use_cache:
@@ -231,8 +244,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
-
-            gap = calculate_gap(w, alpha, beta, X, y, positive)
+            if use_cache:
+                gap = calculate_gap(restore_w(w, non_zero_pos, n_features), alpha, beta, X, y, positive)
+            else:
+                gap = calculate_gap(w, alpha, beta, X, y, positive)
 
             if gap < tol:
                 # return if we reached desired tolerance
@@ -240,6 +255,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
         initialize_cache = False
 
+    if use_cache:
+        w = restore_w(w, non_zero_pos, n_features)
     return w, gap, tol
 
 
