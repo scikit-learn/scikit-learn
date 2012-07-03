@@ -516,24 +516,18 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
-
                 else:
                     max_features = self.n_features_
-
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_)))
-
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_)))
-
             else:
                 raise ValueError(
                     'Invalid value for max_features. Allowed string '
                     'values are "auto", "sqrt" or "log2".')
-
         elif self.max_features is None:
             max_features = self.n_features_
-
         else:
             max_features = self.max_features
 
