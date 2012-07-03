@@ -1,5 +1,9 @@
 """
-Plot the SDSS filter curves over a reference spectrum
+SDSS Filters
+------------
+
+This example downloads and plots the filters from the Sloan Digital Sky
+Survey, along with a reference spectrum.
 """
 import os
 import urllib2

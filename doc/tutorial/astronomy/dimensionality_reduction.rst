@@ -14,7 +14,8 @@ measures the flux of a particular wavelength of light.
 Because of the large dimensionality of this data, visualization of the dataset
 becomes very challenging.  This is where unsupervised dimensionality
 reduction methods can be useful.  One of the most commonly used dimensionality
-reduction methods in astronomy is Principal Component Analysis (PCA).  We won't
+reduction methods in astronomy is
+`Principal Component Analysis (PCA) http://scikit-learn.org/0.6/modules/decompositions.html#principal-component-analysis-pca>`_.  We won't
 go through the mathematical details here, but PCA essentially seeks dimensions
 of the input data which contain the bulk of the variability present in the
 data.  The model has this form:
@@ -103,8 +104,8 @@ Thus it will help if we normalize the spectra.  For this we'll use the
 scikit-learn preprocessing module.  We'll then plot both the mean and standard
 deviation to give us an idea of the data we're working with::
 
-    >>> from sklearn import preprocessing
-    >>> X = preprocessing.normalize(X)
+    >>> from sklearn.preprocessing import normalize
+    >>> X = normalize(X)
     >>> mu = X.mean(0)
     >>> std = X.std(0)
     >>> pl.plot(wavelengths, mu, color='black')
@@ -192,8 +193,7 @@ are not as robust as the normal method.  But for tasks such as ours where we
 are seeking only a few of a large number of eigenvectors, it performs
 fairly well.  To keep our results consistent between runs, we'll explicitly
 set the random seed for the fit.  You should repeat this with several different
-random seeds to convince yourself that the results are consistent.  Also,
-because these spectra have a wide range in::
+random seeds to convince yourself that the results are consistent::
 
     >>> from sklearn.decomposition import RandomizedPCA
     >>> rpca = RandomizedPCA(n_components=4, random_state=0)

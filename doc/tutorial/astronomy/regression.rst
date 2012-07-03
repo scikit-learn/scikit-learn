@@ -5,15 +5,21 @@ Regression: Photometric Redshifts of Galaxies
 =============================================
 
 Another important learning task in astronomy is the problem of determining
-`photometric redshifts`.  In the current standard cosmological model, the
+`redshifts <http://en.wikipedia.org/wiki/Redshift>`_ of distant galaxies.
+In the current standard cosmological model, the
 universe began nearly 14 billion years ago, in an explosive event commonly
 known as the Big Bang.  Since then, the very fabric of space has been
-expanding, so that distant galaxies appear to be moving away from us at
-very fast speeds.  The uniformity of this expansion means that there is
+`expanding <http://en.wikipedia.org/wiki/Expansion_of_space>`_,
+so that distant galaxies appear to be moving away from us at
+very high speeds.  The uniformity of this expansion means that there is
 a relationship between the distance to a galaxy, and the speed that it
-appears to be receeding from us.  This recession speed leads to a shift
-in the frequency of photons, very similar to the audio doppler shift that
-can be heard when a car blaring its horn passes by.  If a galaxy were
+appears to be receeding from us (this relationship is known as 
+`Hubble's Law <http://en.wikipedia.org/wiki/Hubble_expansion>`_, named
+after Edwin Hubble).  This recession speed leads to a shift
+in the frequency of photons, very similar to the more familiar
+`doppler shift <http://en.wikipedia.org/wiki/Doppler_shift>`_ that
+causes the pitch of a siren to change as an emergency vehicle passes by.
+If a galaxy or star were
 moving toward us, its light would be shifted to higher frequencies, or
 `blue-shifted`.  Because the universe is expanding away from us, distant
 galaxies appear to be `red-shifted`: their photons are shifted to lower
@@ -67,6 +73,9 @@ accelerating the cosmic expansion.
 
 A Simple Method: Decision Tree Regression
 -----------------------------------------
+
+.. currentmodule:: sklearn.tree
+
 Here we'll take an extremely simple approach to the photometric redshift
 problem, using a decision tree.
 In the folder ``$TUTORIAL_HOME/data/sdss_photoz``, there is a script
@@ -99,7 +108,7 @@ sample which we'll use to evaluate our training::
    >>> Xtest = X[Ntrain:]
    >>> ztest = z[Ntrain:]
 
-Now we'll use the scikit-learn Decision Tree Regression routine to
+Now we'll use the scikit-learn :class:`DecisionTreeRegressor` method to
 train a model and predict redshifts for the test set based on a
 20-level decision tree::
 

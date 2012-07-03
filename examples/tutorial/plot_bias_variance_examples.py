@@ -1,3 +1,11 @@
+"""
+Bias and Variance
+-----------------
+
+This script plots some simple examples of how model complexity affects
+bias and variance.
+"""
+
 import numpy as np
 import pylab as pl
 from matplotlib import ticker

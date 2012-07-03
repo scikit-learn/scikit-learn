@@ -25,7 +25,7 @@ like a database system would do.
 The following will introduce the main concepts used to qualify
 machine learning algorithms as implemented in ``scikit-learn``:
 
-- how to turn raw data info numerical arrays
+- how to turn raw data into numerical arrays
 
 - what is supervised learning
 
@@ -178,7 +178,8 @@ into arrays of numerical features.
   :Text documents:
 
     Count the frequency of each word or pair of consecutive words
-    in each document. This approach is called **Bag of Words**.
+    in each document. This approach is called
+    `Bag of Words <http://scikit-learn.org/dev/modules/feature_extraction.html#text-feature-extraction>`_
 
     Note: we include other file formats such as HTML and PDF in
     this category: an ad-hoc preprocessing step is required to
@@ -235,7 +236,7 @@ some label given to the model while training by some teacher. In
 ``scikit-learn`` this array is often noted ``y`` and has generally
 the shape ``(n_samples,)``.
 
-After training, the fitted model does no longer expect the ``y``
+After training, the fitted model no longer expects the ``y``
 as an input: it will try to predict the most likely labels ``y_new``
 for new a set of samples ``X_new``.
 
@@ -286,7 +287,7 @@ driven selection::
 
   >>> clf
   LinearSVC(C=1.0, dual=True, fit_intercept=True, intercept_scaling=1,
-       loss='l2', multi_class=False, penalty='l2', scale_C=None, tol=0.0001)
+       loss='l2', multi_class=False, penalty='l2', tol=0.0001)
 
 By default the real model parameters are not initialized. They will be
 tuned automatically from the data by calling the ``fit`` method::
@@ -335,7 +336,7 @@ of the outcome.  This is the case of logistic regression models::
   >>> clf2 = LogisticRegression().fit(X, y)
   >>> clf2
   LogisticRegression(C=1.0, dual=False, fit_intercept=True, intercept_scaling=1,
-            penalty='l2', scale_C=False, tol=0.0001)
+            penalty='l2', tol=0.0001)
   >>> clf2.predict_proba(X_new)
   array([[  9.07512928e-01,   9.24770379e-02,   1.00343962e-05]])
 
@@ -357,29 +358,29 @@ most likely outcome is also available::
 Notable implementations of classifiers
 ++++++++++++++++++++++++++++++++++++++
 
-:``sklearn.linear_model.LogisticRegression``:
+:class:`sklearn.linear_model.LogisticRegression`
 
   Regularized Logistic Regression based on ``liblinear``
 
-:``sklearn.svm.LinearSVC``:
+:class:`sklearn.svm.LinearSVC`
 
   Support Vector Machines without kernels based on ``liblinear``
 
-:``sklearn.svm.SVC``:
+:class:`sklearn.svm.SVC`
 
   Support Vector Machines with kernels based on ``libsvm``
 
-:``sklearn.linear_model.SGDClassifier``:
+:class:`sklearn.linear_model.SGDClassifier`
 
   Regularized linear models (SVM or logistic regression) using a Stochastic
   Gradient Descent algorithm written in ``Cython``
 
-:``sklearn.neighbors.NeighborsClassifier``:
+:class:`sklearn.neighbors.NeighborsClassifier`
 
   k-Nearest Neighbors classifier based on the ball tree datastructure for low
   dimensional data and brute force search for high dimensional data
 
-:``sklearn.naive_bayes.GaussianNB``
+:class:`sklearn.naive_bayes.GaussianNB`
 
   Gaussian Naive Bayes model.  This is an unsophisticated model which can
   be trained very quickly.  It is often used to obtain baseline results
@@ -420,35 +421,35 @@ some input variables (a.k.a. the features, "predictors" or
 "regressors"). Some notable implementations of regression models in
 ``scikit-learn`` include:
 
-:``sklearn.linear_model.Ridge``:
+:class:`sklearn.linear_model.Ridge`
 
   L2-regularized least squares linear model
 
-:``sklearn.linear_model.ElasticNet``:
+:class:`sklearn.linear_model.ElasticNet`
 
   L1+L2-regularized least squares linear model trained using
   Coordinate Descent
 
-:``sklearn.linear_model.LassoLARS``:
+:class:`sklearn.linear_model.LassoLARS`
 
   L1-regularized least squares linear model trained with Least Angle
   Regression
 
-:``sklearn.linear_model.SGDRegressor``:
+:class:`sklearn.linear_model.SGDRegressor`
 
   L1+L2-regularized least squares linear model trained using
   Stochastic Gradient Descent
 
-:``sklearn.linear_model.ARDRegression``:
+:class:`sklearn.linear_model.ARDRegression`
 
   Bayesian Automated Relevance Determination regression
 
-:``sklearn.svm.SVR``:
+:class:`sklearn.svm.SVR`
 
   Non-linear regression using Support Vector Machines (wrapper for
   ``libsvm``)
 
-:``sklearn.ensemble.RandomForestRegressor``
+:class:`sklearn.ensemble.RandomForestRegressor`
 
   An ensemble method which constructs multiple decision trees from subsets
   of the data.
@@ -491,7 +492,9 @@ The most common technique for dimensionality reduction is called
 **Principal Component Analysis**.
 
 PCA can be done using linear combinations of the original features
-using a truncated Singular Value Decomposition of the matrix ``X``
+using a truncated `Singular Value Decomposition
+<http://en.wikipedia.org/wiki/Singular_value_decomposition#Truncated_SVD>`_
+of the matrix ``X``
 so as to project the data onto a base of the top singular vectors.
 
 If the number of retained components is 2 or 3, PCA can be used to
@@ -573,7 +576,7 @@ display the following:
 
   If you are interested in a number of components that is much
   smaller than both ``n_samples`` and ``n_features``, consider using
-  ``sklearn.decomposition.RandomizedPCA`` instead.
+  :class:`sklearn.decomposition.RandomizedPCA` instead.
 
 
 Other applications of dimensionality reduction
@@ -590,7 +593,7 @@ instance or that do not work well with linearly correlated features.
 
   ``scikit-learn`` also features an implementation of Independant
   Component Analysis (ICA) and several manifold learning methods
-  (See `Exercise 3 <exercises.html>`)
+  (See `Exercise 3 <exercises.html>`_)
 
 
 Clustering
@@ -644,30 +647,30 @@ The following are two well-known clustering algorithms. Like most
 unsupervised learning models in the scikit, they expect the data
 to be clustered to have the shape ``(n_samples, n_features)``:
 
-:``sklearn.cluster.KMeans``:
+:class:`sklearn.cluster.KMeans`
 
   The simplest, yet effective clustering algorithm. Needs to be
   provided with the number of clusters in advance, and assumes that the
   data is normalized as input (but use a PCA model as preprocessor).
 
-:``sklearn.cluster.MeanShift``:
+:class:`sklearn.cluster.MeanShift`
 
   Can find better looking clusters than KMeans but is not scalable
   to high number of samples.
 
-:``sklearn.cluster.DBSCAN``:
+:class:`sklearn.cluster.DBSCAN`
   Can detect irregularly shaped clusters based on density, i.e. sparse regions
   in the input space are likely to become inter-cluster boundaries. Can also
   detect outliers (samples that are not part of a cluster).
 
-:``sklearn.manifold.LocallyLinearEmbedding``:
+:class:`sklearn.manifold.LocallyLinearEmbedding`
 
   Locally Linear Embedding is a nonlinear neighbors-based
   manifold learning technique.
   The scikit-learn implementation makes available several variants to
   the basic algorithm.
 
-:``sklearn.manifold.Isomap``:
+:class:`sklearn.manifold.Isomap`
 
   Isomap is another neighbors-based manifold learning method that can find
   nonlinear projections of data.
@@ -676,22 +679,23 @@ Other clustering algorithms do not work with a data array of shape
 ``(n_samples, n_features)`` but directly with a precomputed affinity matrix
 of shape ``(n_samples, n_samples)``:
 
-:``sklearn.cluster.AffinityPropagation``:
+:class:`sklearn.cluster.AffinityPropagation`
 
   Clustering algorithm based on message passing between data points.
 
-:``sklearn.cluster.SpectralClustering``:
+:class:`sklearn.cluster.SpectralClustering`
 
   KMeans applied to a projection of the normalized graph Laplacian:
   finds normalized graph cuts if the affinity matrix is interpreted
   as an adjacency matrix of a graph.
 
+:class:`sklearn.cluster.Ward`
+
+  ``Ward`` implements hierarchical clustering based on the Ward algorithm,
+     a variance-minimizing approach. At each step, it minimizes the sum of
+     squared differences within all clusters (inertia criterion).
 
 ``DBSCAN`` can work with either an array of samples or an affinity matrix.
-
-Hierarchical clustering is being implemented in a branch that is
-likely to be merged into master before the release of ``scikit-learn``
-0.9.
 
 
 Applications of clustering
@@ -760,24 +764,25 @@ separable (a model with a gaussian kernel is required in that case).
    data points labeled as white and black in a 2D space. This dataset would
    not have been seperated by a simple linear model.
 
+.. topic:: **Exercise**
+   :class: green
 
-:Exercise:
+   Fit a model that is able to solve the XOR problem using the GUI:
+   the XOR problem is composed of 4 samples:
 
-  Fit a model that is able to solve the XOR problem using the GUI:
-  the XOR problem is composed of 4 samples:
+     - 2 white samples in the top-left and bottom-right corners
 
-    - 2 white samples in the top-left and bottom-right corners
+     - 2 black samples in the bottom-left and top-right corners
 
-    - 2 black samples in the bottom-left and top-right corners
+   **Question**: is the XOR problem linearly separable?
 
-  **Question**: is the XOR problem linearly separable?
-
-:Exercise:
+.. topic:: **Exercise**
+   :class: green
 
    Construct a problem with less than 10 points where the predictive
    accuracy of the best linear model is 50%.
 
-.. note:
+.. note::
 
   the higher the dimension of the feature space, the more likely
   the data is linearly separable: for instance this is often the
@@ -787,7 +792,7 @@ separable (a model with a gaussian kernel is required in that case).
 Training set, test set and overfitting
 --------------------------------------
 
-The most common mistake beginners do when training statistical
+The most common mistake beginners make when training statistical
 models is to evaluate the quality of the model on the same data
 used for fitting the model:
 

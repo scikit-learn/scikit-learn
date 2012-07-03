@@ -1,3 +1,11 @@
+"""
+Linear Model Example
+--------------------
+
+This is an example plot from the tutorial which accompanies an explanation
+of the support vector machine GUI.
+"""
+
 import numpy as np
 import pylab as pl
 import matplotlib

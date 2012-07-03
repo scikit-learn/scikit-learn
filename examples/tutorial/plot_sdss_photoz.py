@@ -1,3 +1,11 @@
+"""
+SDSS Photometric Redshifts
+--------------------------
+
+This example shows how a Decision tree can be used to learn redshifts
+of galaxies in the Sloan Digital Sky Survey.
+"""
+
 import os
 import urllib2
 import numpy as np

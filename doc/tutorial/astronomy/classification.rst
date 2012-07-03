@@ -5,9 +5,14 @@ Classification: Learning Labels of Astronomical Sources
 =======================================================
 
 Modern astronomy is concerned with the study and characterization of distant
-objects such as stars, galazies, or quasars.  Objects can often be very
-quickly characterized through measurements of their optical spectrum.  A
-spectrum is a measure of the photon flux as a function of wavelength.
+objects such as
+`stars <http://en.wikipedia.org/wiki/Star>`_,
+`galaxies <http://en.wikipedia.org/wiki/Galaxy>`_,
+or `quasars <http://en.wikipedia.org/wiki/Quasar>`_.
+Objects can often be very quickly characterized through detailed measurements
+of their optical `spectrum <http://en.wikipedia.org/wiki/Spectrum>`_.
+A spectrum is a measure of the photon flux (that is, the number of photons
+per second) as a function of photon frequency or wavelength.
 
 .. figure:: ../../auto_examples/tutorial/images/plot_sdss_filters_1.png
    :target: ../../auto_examples/tutorial/plot_sdss_filters.html
@@ -21,12 +26,18 @@ spectrum is a measure of the photon flux as a function of wavelength.
 
 The above spectrum is that of the star Vega, the brightest star in the
 northern constellation Lyra.  Its surface is at about 9600 degrees Kelvin,
-and its spectrum is roughly that of a 9600K black-body, with absorption due
-to molecules in its cooler atmosphere.  The deepest of these absorption spikes
+and its spectrum is roughly that of a 9600K
+`black-body <http://en.wikipedia.org/wiki/Black_body>`_,
+with absorption due to molecules in its atmosphere.
+Because of the quantum mechanical properties of atoms, different atoms can
+absorb light at only specific, discrete wavelengths.  Because of this fact,
+characteristic patterns in the spectrum of a distant star can be used to
+infer its chemical composition!
+
+In the spectrum above, the deepest of these absorption spikes
 are due to the energy levels of Hydrogen.  From examination of high-resolution
 spectra like this one, one can learn a lot about the physical processes at work
 in a distant astronomical  source.
-
 Unfortunately, spectra like these are very time-consuming and expensive to
 obtain, especially for very faint objects.  For this reason, astronomers have
 long observed objects through broad-band filters.

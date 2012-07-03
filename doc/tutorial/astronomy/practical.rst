@@ -201,7 +201,7 @@ training data will not help matters: both lines have converged to a relatively
 high error.
 
 In the right plot, we have the learning curve for `d` = 20.  From the above
-discussion, we know that `d` = 20 is a high-variance estimator which under-fits
+discussion, we know that `d` = 20 is a high-variance estimator which over-fits
 the data.  This is indicated by the fact that the training error is much less
 than the cross-validation error.  As we add more samples to this training set,
 the training error will continue to climb, while the cross-validation error
@@ -213,7 +213,7 @@ cross-validation error.
 
 .. note::
    With a degree-20 polynomial, we'd expect the training error to be
-   identically zero for training set size :math`N<=20`.  Why is this?
+   identically zero for training set size :math:`N<=20`.  Why is this?
    It is because when the degrees of freedom are greater than the number of
    constraints, the problem should be perfectly solvable: a curve can be
    found which passes through every point (for example, imagine fitting a line

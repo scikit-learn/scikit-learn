@@ -43,7 +43,8 @@ Exercise 1: Photometric Classification with GMM
 In this exercise, you will improve on the results of the classification
 example described in the `classification <classification.html>`_ section.
 We previously used a simple Gaussian Naive Bayes classifier to distinguish
-between stars and quasars.  Here we will use Gaussian Mixture Models
+between stars and quasars.  Here we will use
+`Gaussian Mixture Models <http://scikit-learn.org/0.6/modules/mixture.html>`_
 to recreate the Gaussian Naive Bayes classifier, and then tweak the
 parameters of these mixture models, evaluating them using a cross-validation
 set, and attempt to arrive at a better classifier.

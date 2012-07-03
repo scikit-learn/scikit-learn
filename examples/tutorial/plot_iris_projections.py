@@ -1,5 +1,8 @@
 """
-This code generates the example plots found in the tutorial
+Iris Projections
+----------------
+
+This code generates the Iris projection example plots found in the tutorial
 """
 
 from itertools import cycle
