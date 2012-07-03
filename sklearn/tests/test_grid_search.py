@@ -13,6 +13,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
+from sklearn.cross_validation import KFold
 
 
 class MockClassifier(BaseEstimator):
@@ -21,6 +22,7 @@ class MockClassifier(BaseEstimator):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
         return self
 
     def predict(self, T):
@@ -211,3 +213,15 @@ def test_refit():
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
                        score_func=precision_score, refit=True)
     clf.fit(X, y)
+
+
+def test_X_as_list():
+    """Pass X as list in GridSearchCV
+    """
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = MockClassifier()
+    cv = KFold(n=len(X), k=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X.tolist(), y).score(X, y)
