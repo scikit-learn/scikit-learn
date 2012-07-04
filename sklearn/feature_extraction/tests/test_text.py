@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
+from nose import SkipTest
 from nose.tools import assert_equal, assert_equals, \
             assert_false, assert_not_equal, assert_true
 from numpy.testing import assert_array_almost_equal
@@ -260,8 +261,15 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
+    # First we need to verify that numpy here provides div 0 warnings
+    with warnings.catch_warnings(record=True) as w:
+        _ = 1. / np.array([0.])
+        numpy_provides_div0_warning = len(w) == 1
+
     with warnings.catch_warnings(record=True) as w:
         tfidf = tr.fit_transform(X).toarray()
+        if not numpy_provides_div0_warning:
+            raise SkipTest("Numpy does not provide div 0 warnings.")
         assert_equal(len(w), 1)
         # For Python 3 compatibility
         if hasattr(w[0].message, 'args'):
