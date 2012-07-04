@@ -1,0 +1,49 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: [PATCH] ENH do not fail the test reslying on numpy div 0 warnings if
+ those are not spit out by numpy in general
+
+$> python -c 'import numpy as np; from platform import platform; print np.__version__, platform(); 1.0 / np.array([0.])'
+1.6.2 Linux-3.1.0-1-amd64-x86_64-with-debian-wheezy-sid
+-c:1: RuntimeWarning: divide by zero encountered in divide
+
+$> python -c 'import numpy as np; from platform import platform; print np.__version__, platform(); 1.0 / np.array([0.])'
+1.4.1 Linux-2.6.32-5-amd64-x86_64-with-debian-6.0.4
+
+(sid)yoh@abel:~$ python -c 'import numpy as np; from platform import platform; print np.__version__, platform(); 1.0 / np.array([0.])'
+1.6.2 Linux-2.6.32-armv5tel-with-debian-wheezy-sid
+
+Origin: Debian
+Bug: https://github.com/scikit-learn/scikit-learn/pull/928
+Applied-Upstream: https://github.com/scikit-learn/scikit-learn/commit/f0961c22762d008a71379e39c3e9707bdd88652d
+Last-Update: 2012-07-04
+
+---
+ sklearn/feature_extraction/tests/test_text.py |    8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/sklearn/feature_extraction/tests/test_text.py
++++ b/sklearn/feature_extraction/tests/test_text.py
+@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
+ from sklearn.svm import LinearSVC
+ 
+ import numpy as np
++from nose import SkipTest
+ from nose.tools import assert_equal, assert_equals, \
+             assert_false, assert_not_equal, assert_true
+ from numpy.testing import assert_array_almost_equal
+@@ -260,8 +261,15 @@ def test_tfidf_no_smoothing():
+          [1, 0, 0]]
+     tr = TfidfTransformer(smooth_idf=False, norm='l2')
+ 
++    # First we need to verify that numpy here provides div 0 warnings
++    with warnings.catch_warnings(record=True) as w:
++        _ = 1. / np.array([0.])
++        numpy_provides_div0_warning = len(w) == 1
++
+     with warnings.catch_warnings(record=True) as w:
+         tfidf = tr.fit_transform(X).toarray()
++        if not numpy_provides_div0_warning:
++            raise SkipTest("Numpy does not provide div 0 warnings.")
+         assert_equal(len(w), 1)
+         assert_true("divide by zero encountered in divide" in w[0].message)
+ 
