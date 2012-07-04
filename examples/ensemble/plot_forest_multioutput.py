@@ -6,8 +6,8 @@ Face completion with multi-output forests
 This example shows the use of multi-output forests to complete images.
 The goal is to predict the lower half of a face given its upper half.
 
-The first row of images show the true faces. The second half show the completed
-faces.
+The first row of images shows true faces. The second half illustrates
+how the forest completes the lower half of those faces.
 
 """
 print __doc__
