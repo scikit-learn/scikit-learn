@@ -1,3 +1,11 @@
+scikit-learn (0.11.0-2) unstable; urgency=low
+
+  * Patches to resolve FTBFS'es (Closes: #680246)
+    - armel: up_inconsistent_numpy_warnings (adopted upstream)
+    - mipsel: up_MinCovDet_test_seeding (picked up from upstream)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 04 Jul 2012 11:26:24 -0400
+
 scikit-learn (0.11.0-1) unstable; urgency=low
 
   * Fresh upstream release
