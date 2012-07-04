@@ -19,8 +19,6 @@ from sklearn.datasets import fetch_olivetti_faces
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.tree import DecisionTreeRegressor
 
-# Number of cores to use to perform parallel fitting of the forest model
-n_jobs = 2
 
 # Loading the faces datasets
 data = fetch_olivetti_faces()
@@ -28,18 +26,17 @@ targets = data.target
 
 data = data.images.reshape((len(data.images), -1))
 train = data[targets < 30]
-test = data[targets >= 30] # Test on independent people
+test = data[targets >= 30]  # Test on independent people
 n_pixels = data.shape[1]
 
-X_train = train[:, :int(0.5*n_pixels)] # Upper half of the faces
-Y_train = train[:, int(0.5*n_pixels):] # Lower half of the faces
-X_test = test[:, :int(0.5*n_pixels)]
-Y_test = test[:, int(0.5*n_pixels):]
+X_train = train[:, :int(0.5 * n_pixels)]  # Upper half of the faces
+Y_train = train[:, int(0.5 * n_pixels):]  # Lower half of the faces
+X_test = test[:, :int(0.5 * n_pixels)]
+Y_test = test[:, int(0.5 * n_pixels):]
 
 # # Build a multi-output forest
 forest = ExtraTreesRegressor(n_estimators=10,
                              max_features=32,
-                             n_jobs=n_jobs,
                              random_state=0)
 
 forest.fit(X_train, Y_train)

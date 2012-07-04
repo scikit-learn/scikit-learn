@@ -54,6 +54,8 @@ Like :ref:`decision trees <tree>`, forests of trees also extend
 to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
 ``[n_samples, n_outputs]``).
 
+ * :ref:`example_ensemble_plot_forest_multioutput.py`
+
 
 Random Forests
 --------------
