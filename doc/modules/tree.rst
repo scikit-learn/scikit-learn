@@ -215,6 +215,18 @@ of size ``[n_samples, n_outputs]`` then the resulting estimator will:
   - Output a list of n_output arrays of class probabilities upon
     ``predict_proba``.
 
+The use of multi-output trees is demonstrated in
+:ref:`example_ensemble_plot_forest_multioutput.py`. In this example, the inputs
+X are the pixels of the upper half of faces and the outputs Y are the pixels of
+the lower half of those faces.
+
+.. figure:: ../auto_examples/ensemble/images/plot_forest_multioutput_1.png
+   :target: ../auto_examples/ensemble/plot_forest_multioutput.html
+   :scale: 75
+   :align: center
+
+.. topic:: Examples:
+
  * :ref:`example_ensemble_plot_forest_multioutput.py`
 
 
