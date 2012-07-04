@@ -49,7 +49,8 @@ def test_kalman_filter_update():
             x_filt2[0] = data.initial_state_mean
             V_filt2[0] = data.initial_state_covariance
         (x_filt2[t + 1], V_filt2[t + 1], _) = kf.filter_update(
-            x_filt2[t], V_filt2[t], data.data[t + 1], t=t
+            x_filt2[t], V_filt2[t], data.data[t + 1],
+            transition_offset=data.transition_offsets[t]
         )
     assert_true(np.all(x_filt == x_filt2))
     assert_true(np.all(V_filt == V_filt2))
@@ -68,8 +69,12 @@ def test_kalman_filter():
 
     (x_filt, V_filt, ll) = kf.filter(X=data.data)
     for t in range(500):
-        assert_true(linalg.norm(x_filt[t] - data.filtered_state_means[t]) < 1e-3)
-        assert_true(linalg.norm(V_filt[t] - data.filtered_state_covariances[t]) < 1e-3)
+        assert_true(
+            linalg.norm(x_filt[t] - data.filtered_state_means[t]) < 1e-3
+        )
+        assert_true(
+            linalg.norm(V_filt[t] - data.filtered_state_covariances[t]) < 1e-3
+        )
 
 
 def test_kalman_predict():
@@ -85,7 +90,9 @@ def test_kalman_predict():
 
     x_smooth = kf.predict(X=data.data)
     for t in reversed(range(501)):
-        assert_true(linalg.norm(x_smooth[t] - data.smoothed_state_means[t]) < 1e-3)
+        assert_true(
+            linalg.norm(x_smooth[t] - data.smoothed_state_means[t]) < 1e-3
+        )
 
 
 def test_kalman_fit():
@@ -116,3 +123,28 @@ def test_kalman_fit():
         scores[i] = np.sum(kf.filter(X=data.data[0:T])[-1])
     for i in range(len(scores) - 1):
         assert_true(scores[i] < scores[i + 1])
+
+
+def test_kalman_initialize_parameters():
+    def check_dims(n_dim_state, n_dim_obs, **kwargs):
+        kf = KalmanFilter(**kwargs)
+        (transition_matrices, transition_offsets, transition_covariance,
+         observation_matrices, observation_offsets, observation_covariance,
+         initial_state_mean, initial_state_covariance) = (
+            kf._initialize_parameters()
+        )
+        assert_true(transition_matrices.shape == (n_dim_state, n_dim_state))
+        assert_true(transition_offsets.shape == (n_dim_state,))
+        assert_true(transition_covariance.shape == (n_dim_state, n_dim_state))
+        assert_true(observation_matrices.shape == (n_dim_obs, n_dim_state))
+        assert_true(observation_offsets.shape == (n_dim_obs,))
+        assert_true(observation_covariance.shape == (n_dim_obs, n_dim_obs))
+        assert_true(initial_state_mean.shape == (n_dim_state,))
+        assert_true(
+            initial_state_covariance.shape == (n_dim_state, n_dim_state)
+        )
+
+    check_dims(5, 1, transition_matrices=np.eye(5))
+    check_dims(1, 3, observation_offsets=np.zeros(3))
+    check_dims(2, 3, transition_covariance=np.eye(2),
+               observation_offsets=np.zeros(3))
