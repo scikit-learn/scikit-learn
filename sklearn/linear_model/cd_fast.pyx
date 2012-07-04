@@ -179,24 +179,28 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features)
     cdef np.ndarray[INTEGER, ndim=1] nz_index
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.array(range(n_features))
-    cdef np.ndarray[DOUBLE, ndim=2] feature_inner_product
+    cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] feature_inner_product
+    cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product
 
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
 
+        n_active_features = len(active_set)
+
         # black magic conditions
-        if n_iter > 2 and len(active_set) > 2:
+        if n_iter > 2 and n_active_features > 2:
             active_set = np.nonzero(w)[0]
+            n_active_features = len(active_set)
 
         # check if memory is now sufficient for caching
         if not use_cache:
-            n_active_features = len(active_set)
             if n_active_features ** 2 <= memory_limit:
                 nz_index = active_set
                 active_set = np.array(range(n_active_features))
                 feature_inner_product = \
-                    np.zeros(shape=(n_active_features, n_active_features)) 
+                    np.zeros(shape=(n_active_features, n_active_features),
+                             dtype=np.float64, order='F') 
                 # resize
                 gradient = gradient[nz_index]
                 w = w[nz_index]
@@ -221,7 +225,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if not use_cache:
                 tmp_feature_inner_product = np.dot(X[:, ii], X)
                 gradient[ii] = Xy[ii] - \
-                        np.dot(tmp_feature_inner_product, w)
+                        ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
+                        # np.dot(tmp_feature_inner_product, w)
+
 
             tmp = gradient[ii] + w_ii * norm_cols_X[ii]
 
@@ -236,6 +242,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if use_cache:
                     gradient -= feature_inner_product[ii, :] * \
                                                         (w[ii] - w_ii)
+#                    daxpy(n_active_features, -(w[ii] - w_ii), 
+#                          &feature_inner_product[0, ii], 1, &gradient[0], 1)
 
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
@@ -659,3 +667,36 @@ def enet_coordinate_descent_old(np.ndarray[DOUBLE, ndim=1] w,
                 break
 
     return w, gap, tol
+
+def learn_ddot():
+    cdef np.ndarray[DOUBLE, ndim = 1] y = np.ones(3, np.float64)*2
+    cdef np.ndarray[DOUBLE, ndim=2, mode='c'] X = \
+                                np.arange(6, dtype=float).reshape(2,3)
+    cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] X_f = \
+                                np.asfortranarray(np.arange(6, dtype=float).reshape(2,3))
+
+    print ' mode = c \n'
+    print 'X = ' + str(X)
+
+    print "ddot(n_active_features, &X[0, 0],1 , &X[0, 0], 1)"
+    print ddot(3, &X[0, 0],1 , &X[0, 0], 1)
+
+    print "ddot(3, &X[1, 0],1 , &X[1, 0], 1)"
+    print ddot(3, &X[1, 0],1 , &X[1, 0], 1)
+
+    print 'mode=fortran \n'
+    print 'X_f = ' + str(X_f)
+    print "ddot(2, &X[0, 0],1 , &X_f[0, 0], 1)"
+    print ddot(2, &X_f[0, 0],1 , &X_f[0, 0], 1)
+
+    print "ddot(2, &X[0, 1],1 , &X_f[0, 1], 1)"
+    print ddot(2, &X_f[0, 1],1 , &X_f[0, 1], 1)
+
+    print "ddot(2, &X[0, 2],1 , &X_f[0, 2], 1)"
+    print ddot(2, &X_f[0, 2],1 , &X_f[0, 2], 1)
+    
+    print "\n y = " + str(y) + ", X[1,:] = " + str(X[1,:])
+    print "ddot(3, &y[0], 1, &X[1,0], 1)"
+    print ddot(3, &y[0], 1, &X[1,0], 1)
+
+
