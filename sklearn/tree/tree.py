@@ -503,6 +503,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         y = np.asarray(y, dtype=DTYPE, order="C")
 
+        print y.strides
+
         if is_classification:
             criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
                                                        self.n_classes_)

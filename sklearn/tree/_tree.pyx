@@ -539,7 +539,7 @@ cdef class RegressionCriterion(Criterion):
                 continue
 
             for k from 0 <= k < n_outputs:
-                y_idx = y[k * y_stride + j]
+                y_idx = y[j * y_stride + k]
                 sq_sum_left[k] += (y_idx * y_idx)
                 sq_sum_right[k] -= (y_idx * y_idx)
 
