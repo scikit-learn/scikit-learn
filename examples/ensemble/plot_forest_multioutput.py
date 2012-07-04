@@ -20,7 +20,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 
-# Loading the faces datasets
+# Load the faces datasets
 data = fetch_olivetti_faces()
 targets = data.target
 
@@ -34,7 +34,7 @@ Y_train = train[:, int(0.5 * n_pixels):]  # Lower half of the faces
 X_test = test[:, :int(0.5 * n_pixels)]
 Y_test = test[:, int(0.5 * n_pixels):]
 
-# # Build a multi-output forest
+# Build a multi-output forest
 forest = ExtraTreesRegressor(n_estimators=10,
                              max_features=32,
                              random_state=0)
