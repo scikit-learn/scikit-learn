@@ -215,6 +215,8 @@ of size ``[n_samples, n_outputs]`` then the resulting estimator will:
   - Output a list of n_output arrays of class probabilities upon
     ``predict_proba``.
 
+ * :ref:`example_ensemble_plot_forest_multioutput.py`
+
 
 .. _tree_complexity:
 
