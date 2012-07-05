@@ -358,3 +358,57 @@ def test_symbol_labels():
     clf.fit(X, symbol_y)
     assert_array_equal(clf.predict(T), map(str, true_result))
     assert_equal(100, len(clf.estimators_))
+
+
+def test_float_class_labels():
+    """Test with float class labels. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    float_y = np.asarray(y, dtype=np.float32)
+
+    clf.fit(X, float_y)
+    assert_array_equal(clf.predict(T), np.asarray(true_result, dtype=np.float32))
+    assert_equal(100, len(clf.estimators_))
+
+
+def test_shape_y():
+    """Test with float class labels. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    y_ = np.asarray(y, dtype=np.int32)
+    y_ = y_[:, np.newaxis]
+
+    clf.fit(X, y_)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
+
+
+def test_mem_layout():
+    """Test with different memory layouts of X and y"""
+    X_ = np.asfortranarray(X)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X_, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
+
+    X_ = np.ascontiguousarray(X)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X_, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
+
+    y_ = np.asarray(y, dtype=np.int32)
+    y_ = y_[:, np.newaxis]
+    y_ = np.ascontiguousarray(y_)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X, y_)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
+
+    y_ = np.asarray(y, dtype=np.int32)
+    y_ = y_[:, np.newaxis]
+    y_ = np.asfortranarray(y_)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X, y_)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(100, len(clf.estimators_))
