@@ -32,6 +32,12 @@ cdef inline double fsign(double f):
 cdef extern from "cblas.h":
     void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
                              double *Y, int incY)
+    #enum CBLAS_ORDER {CblasRowMajor=101, CblasColMajor=102 };
+    #enum CBLAS_TRANSPOSE {CblasNoTrans=111, CblasTrans=112, CblasConjTrans=113,
+    #                      AtlasConj=114};
+    void dgemv "cblas_dgemv"(int order, int transpose, int M, int N,
+                             double alpha, double *A, int lda, double *X,
+                             int incX, double beta, double *Y, int incY)
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
 
 
@@ -131,7 +137,7 @@ cdef inline restore_w(np.ndarray[DOUBLE, ndim=1] w,
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double l2_reg, double l1_reg,
-                            np.ndarray[DOUBLE, ndim=2] X,
+                            np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bint positive=False,
                             int memory_limit=250000):
@@ -164,7 +170,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef bint use_cache = False
     cdef bint initialize_cache = False
     cdef int n_active_features
-    cdef int n_fixed_features
+    cdef int n_cached_features
 
     if l2_reg == 0:
         warnings.warn("Coordinate descent with l2_reg=0 may lead to unexpected"
@@ -181,7 +187,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[INTEGER, ndim=1] nz_index
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.arange(n_features, dtype=np.int32)
     cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] feature_inner_product
-    cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product
+    cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product = np.zeros(n_features, dtype=np.float64)
+
+    cdef int row_major = 101
+    cdef int col_major = 102
+    cdef int no_trans = 111
+    cdef int trans = 112
 
     for n_iter in range(max_iter):
         w_max = 0.0
@@ -206,7 +217,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 gradient = gradient[nz_index]
                 w = w[nz_index]
                 norm_cols_X = norm_cols_X[nz_index]
-                n_fixed_features = n_active_features
+                n_cached_features = n_active_features
                 use_cache = True
                 initialize_cache = True
 
@@ -219,16 +230,24 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             # initial calculation
             if initialize_cache:
-                tmp_feature_inner_product = np.dot(X[:, nz_index[ii]], X)[nz_index]
-                feature_inner_product[:, ii] = tmp_feature_inner_product
+                #tmp_feature_inner_product = np.dot(X[:, nz_index[ii]], X)
+                dgemv(col_major, trans, n_samples, n_features,
+                          1, &X[0,0], n_samples, &X[0, nz_index[ii]], 
+                          1, 0, &tmp_feature_inner_product[0], 1)
+                feature_inner_product[:, ii] = tmp_feature_inner_product[nz_index]
                 gradient[ii] = Xy[nz_index[ii]] - \
                         np.dot(feature_inner_product[:, ii], w)
 
             if not use_cache:
-                tmp_feature_inner_product = np.dot(X[:, ii], X)
+                #tmp_feature_inner_product = np.dot(X[:, ii], X)
+                #gradient[ii] = Xy[ii] - \
+                #         np.dot(tmp_feature_inner_product, w)
+                dgemv(col_major, trans, n_samples, n_features,
+                          1, &X[0,0], n_samples, &X[0,ii], 
+                          1, 0, &tmp_feature_inner_product[0], 1)
+
                 gradient[ii] = Xy[ii] - \
                         ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
-                        # np.dot(tmp_feature_inner_product, w)
 
 
             tmp = gradient[ii] + w_ii * norm_cols_X[ii]
@@ -244,7 +263,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if use_cache:
                     # gradient -= feature_inner_product[ii, :] * \
                     #                                    (w[ii] - w_ii)
-                    daxpy(n_fixed_features, -(w[ii] - w_ii),
+                    daxpy(n_cached_features, -(w[ii] - w_ii),
                           &feature_inner_product[0, ii], 1, &gradient[0], 1)
 
             # update the maximum absolute coefficient update
@@ -701,4 +720,57 @@ def learn_ddot():
     print "ddot(3, &y[0], 1, &X[1,0], 1)"
     print ddot(3, &y[0], 1, &X[1,0], 1)
 
+#    #enum CBLAS_ORDER {CblasRowMajor=101, CblasColMajor=102 };
+#    #enum CBLAS_TRANSPOSE {CblasNoTrans=111, CblasTrans=112, CblasConjTrans=113,
+#    #                      AtlasConj=114};
+#    void dgemv "cblas_dgemv"(int order, int transpose, int M, int N,
+#                             double alpha, double *A, int lda, double *X,
+#                             int incX, double beta, double *Y, int incY)
+#     y := alpha*A*x + beta*y,   or   y := alpha*A'*x + beta*y,
 
+
+def learn_dgemv():
+    cdef np.ndarray[DOUBLE, ndim = 1] x = np.ones(3, np.float64)*2
+    cdef np.ndarray[DOUBLE, ndim = 1] x_f = np.ones(2, np.float64)*2
+    cdef np.ndarray[DOUBLE, ndim = 1] y = np.zeros(2, np.float64)
+    cdef np.ndarray[DOUBLE, ndim = 1] y_f = np.zeros(3, np.float64)
+    cdef np.ndarray[DOUBLE, ndim = 1] A_a = np.zeros(3, np.float64)
+    cdef np.ndarray[DOUBLE, ndim=2, mode='c'] A = \
+                                np.arange(6, dtype=float).reshape(2,3)
+    cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] A_f = \
+                    np.asfortranarray(np.arange(6, dtype=float).reshape(2,3))
+    cdef int n_samples = 2 
+    cdef int n_features = 3
+    print ' mode = c \n'
+    print 'A = ' + str(A)
+    print "x = " + str(x)
+    print "y = " + str(y)
+
+    cdef int row_major = 101
+    cdef int col_major = 102
+    cdef int no_trans = 111
+    cdef int trans = 112
+    dgemv(row_major, no_trans, n_samples, n_features,
+           1, &A[0,0], n_features, &x[0], 
+           1, 0, &y[0], 1)
+    print "y = Ax \n = " + str(y)
+
+    print 'mode=fortran \n'
+    print "A' = " + str(A.T)
+    print "x = " + str(x_f)
+    print "y = " + str(y_f)
+    dgemv(col_major, trans, n_samples, n_features,
+           1, &A_f[0,0], n_samples, &x_f[0], 
+           1, 0, &y_f[0], 1)
+    print "y = A'x \n = " + str(y_f)
+
+    dgemv(col_major, trans, n_samples, n_features,
+           1, &A_f[0,0], n_samples, &A_f[0,0], 
+           1, 0, &A_a[0], 1)
+    print "\n y = A'A[:,0] \n = " + str(A_a)
+    A_a = np.zeros(3, np.float64)
+
+    dgemv(col_major, trans, n_samples, n_features,
+           1, &A_f[0,0], n_samples, &A_f[0,1], 
+           1, 0, &A_a[0], 1)
+    print "\n y = A'A[:,1] \n = " + str(A_a)
