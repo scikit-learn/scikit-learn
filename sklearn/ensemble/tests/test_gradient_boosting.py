@@ -347,3 +347,14 @@ def test_quantile_loss():
     clf_lad.fit(boston.data, boston.target)
     y_lad = clf_lad.predict(boston.data)
     assert_array_almost_equal(y_quantile, y_lad, decimal=4)
+
+
+def test_symbol_labels():
+    """Test with non-integer class labels. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+
+    symbol_y = map(str, y)
+
+    clf.fit(X, symbol_y)
+    assert_array_equal(clf.predict(T), map(str, true_result))
+    assert_equal(100, len(clf.estimators_))
