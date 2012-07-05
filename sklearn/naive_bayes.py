@@ -128,7 +128,7 @@ class GaussianNB(BaseNB):
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
     GaussianNB()
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
 
@@ -286,6 +286,8 @@ class BaseDiscreteNB(BaseNB):
             N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative.")
         N_c_i = safe_sparse_dot(Y.T, X)
         N_c = np.sum(N_c_i, axis=1)
 
@@ -345,7 +347,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
     MultinomialNB(alpha=1.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     Notes
@@ -402,7 +404,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
     BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     References

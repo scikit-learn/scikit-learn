@@ -51,7 +51,7 @@ image_array = np.reshape(china, (w * h, d))
 print "Fitting estimator on a small sub-sample of the data"
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0)[:1000]
-kmeans = KMeans(k=n_colors, random_state=0).fit(image_array_sample)
+kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
 print "done in %0.3fs." % (time() - t0)
 
 # Get labels for all points

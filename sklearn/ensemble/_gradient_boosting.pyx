@@ -88,7 +88,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
 
 @cython.nonecheck(False)
 def predict_stages(np.ndarray[object, ndim=2] estimators,
-                   np.ndarray[DTYPE_t, ndim=2] X, double scale,
+                   np.ndarray[DTYPE_t, ndim=2, mode='c'] X, double scale,
                    np.ndarray[np.float64_t, ndim=2] out):
     """Add predictions of ``estimators`` to ``out``.
 
@@ -102,6 +102,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Py_ssize_t n_features = X.shape[1]
     cdef Py_ssize_t K = estimators.shape[1]
     cdef object tree
+
     for i in range(n_estimators):
         for k in range(K):
             tree = estimators[i, k]

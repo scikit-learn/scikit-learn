@@ -41,7 +41,6 @@ from scipy.sparse import issparse
 
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
-from ..utils import deprecated
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..externals.joblib import Parallel
@@ -59,8 +58,9 @@ def check_pairwise_arrays(X, Y):
     given parameters are correct and safe to use.
 
     Specifically, this function first ensures that both X and Y are arrays,
-    then checkes that they are at least two dimensional. Finally, the function
-    checks that the size of the second dimension of the two arrays is equal.
+    then checks that they are at least two dimensional while ensuring that
+    their elements are floats. Finally, the function checks that the size
+    of the second dimension of the two arrays is equal.
 
     Parameters
     ----------
@@ -79,12 +79,13 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = Y = safe_asarray(X)
+        X = safe_asarray(X)
+        X = Y = atleast2d_or_csr(X, dtype=np.float)
     else:
         X = safe_asarray(X)
         Y = safe_asarray(Y)
-    X = atleast2d_or_csr(X)
-    Y = atleast2d_or_csr(Y)
+        X = atleast2d_or_csr(X, dtype=np.float)
+        Y = atleast2d_or_csr(Y, dtype=np.float)
     if len(X.shape) < 2:
         raise ValueError("X is required to be at least two dimensional.")
     if len(Y.shape) < 2:
@@ -184,11 +185,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-@deprecated("to be deprecated in v0.11; use euclidean_distances instead")
-def euclidian_distances(*args, **kwargs):
-    return euclidean_distances(*args, **kwargs)
-
-
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
@@ -219,21 +215,22 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
-    >>> manhattan_distances(3, 3)
-    array([[0]])
-    >>> manhattan_distances(3, 2)
-    array([[1]])
-    >>> manhattan_distances(2, 3)
-    array([[1]])
-    >>> manhattan_distances([[1, 2], [3, 4]], [[1, 2], [0, 3]])
-    array([[0, 2],
-           [4, 4]])
+    >>> manhattan_distances(3, 3)#doctest:+ELLIPSIS
+    array([[ 0.]])
+    >>> manhattan_distances(3, 2)#doctest:+ELLIPSIS
+    array([[ 1.]])
+    >>> manhattan_distances(2, 3)#doctest:+ELLIPSIS
+    array([[ 1.]])
+    >>> manhattan_distances([[1, 2], [3, 4]],\
+         [[1, 2], [0, 3]])#doctest:+ELLIPSIS
+    array([[ 0.,  2.],
+           [ 4.,  4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
-    >>> manhattan_distances(X, y, sum_over_features=False)
+    >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
     array([[ 1.,  1.],
-           [ 1.,  1.]])
+           [ 1.,  1.]]...)
     """
     X, Y = check_pairwise_arrays(X, Y)
     n_samples_X, n_features_X = X.shape

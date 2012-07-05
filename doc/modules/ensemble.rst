@@ -50,8 +50,10 @@ target values (class labels) for the training samples::
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
 
+
 Random Forests
 --------------
+
 In random forests (see :class:`RandomForestClassifier` and
 :class:`RandomForestRegressor` classes), each tree in the ensemble is
 built from a sample drawn with replacement (i.e., a bootstrap sample)
@@ -173,6 +175,45 @@ amount of time (e.g., on large datasets).
 .. _gradient_boosting:
 
 
+Feature importance evaluation
+-----------------------------
+
+The relative rank (i.e. depth) of a feature used as a decision node in a
+tree can be used to assess the relative importance of that feature with
+respect to the predictability of the target variable. Features used at
+the top of the tree are used contribute to the final prediction decision
+of a larger fraction of the input samples. The **expected fraction of
+the samples** they contribute to can thus be used as an estimate of the
+**relative importance of the features**.
+
+By **averaging** those expected activity rates over several randomized
+trees one can **reduce the variance** of such an estimate and use it
+for feature selection.
+
+The following example shows a color-coded representation of the relative
+importances of each individual pixel for a face recognition task using
+a :class:`ExtraTreesClassifier` model.
+
+.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_1.png
+   :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
+   :align: center
+   :scale: 75
+
+
+In practice those estimates can be computed by explicitly passing
+``compute_importances=True`` to the constructor of the decision trees,
+random forest and extremly randomized trees models. The result is stored
+as an attribute named ``features_importances_`` on the fitted model. This
+is an array with shape ``(n_features,)`` whose values are positive and sum
+to 1.0. The higher the value, the more important is the contribution of
+the matching feature to the prediction function.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_forest_importances_faces.py`
+ * :ref:`example_ensemble_plot_forest_importances.py`
+
+
 Gradient Tree Boosting
 ======================
 
@@ -202,7 +243,7 @@ for both classification and regression via gradient boosted regression
 trees.
 
 Classification
-==============
+---------------
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
 classification via the deviance loss function (``loss='deviance'``).
@@ -226,15 +267,17 @@ parameter ``n_estimators``; The maximum depth of each tree is controlled via
 ``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
-.. note: Classification with more than 2 classes requires the induction
-         of ``n_classes`` regression trees at each at each iteration,
-         thus, the total number of induced trees equals
-         ``n_classes * n_estimators``. For datasets with a large number
-         of classes we strongly recommend to use
-         :class:`RandomForestClassifier` as an alternative to GBRT.
+.. note::
+
+   Classification with more than 2 classes requires the induction
+   of ``n_classes`` regression trees at each at each iteration,
+   thus, the total number of induced trees equals
+   ``n_classes * n_estimators``. For datasets with a large number
+   of classes we strongly recommend to use
+   :class:`RandomForestClassifier` as an alternative to GBRT.
 
 Regression
-==========
+----------
 
 :class:`GradientBoostingRegressor` supports a number of different loss
 functions for regression which can be specified via the argument
@@ -272,7 +315,7 @@ property.
 
 
 Mathematical formulation
-========================
+-------------------------
 
 GBRT considers additive models of the following form:
 
@@ -332,7 +375,7 @@ only differ in the concrete loss function used.
 
 
 Loss Functions
---------------
+...............
 
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
@@ -361,12 +404,12 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
 
 Regularization
-==============
+----------------
 
 .. _gradient_boosting_shrinkage:
 
 Shrinkage
----------
+..........
 
 [F2001]_ proposed a simple regularization strategy that scales
 the contribution of each weak learner by a factor :math:`\nu`:
@@ -390,7 +433,7 @@ stopping. For a more detailed discussion of the interaction between
 ``learn_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
------------
+............
 
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration

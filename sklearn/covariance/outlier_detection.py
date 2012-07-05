@@ -15,11 +15,11 @@ covariance estimator (the Minimum Covariance Determinant).
 import numpy as np
 import  scipy as sp
 from . import MinCovDet
-from ..base import ClassifierMixin
 from ..utils import deprecated
+from ..base import ClassifierMixin
 
 
-class OutlierDetectionMixin(ClassifierMixin):
+class OutlierDetectionMixin(object):
     """Set of methods for outliers detection with covariance estimators.
 
     Parameters
@@ -103,7 +103,7 @@ class OutlierDetectionMixin(ClassifierMixin):
         return is_inlier
 
 
-class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
+class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Attributes

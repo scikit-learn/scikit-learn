@@ -179,8 +179,8 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../auto_examples/images/datasets/plot_digits_last_image_1.png
-    :target: ../../auto_examples/plot_digits_last_image.html
+.. image:: ../../auto_examples/datasets/images/plot_digits_last_image_1.png
+    :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
 
@@ -204,7 +204,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.25,
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
     kernel='rbf', probability=False, shrinking=True, tol=0.001,
     verbose=False)
 

@@ -29,7 +29,7 @@ if len(quotes) == 0:
 # unpack quotes
 dates = np.array([q[0] for q in quotes], dtype=int)
 close_v = np.array([q[2] for q in quotes])
-volume = np.array([q[2] for q in quotes])[1:]
+volume = np.array([q[5] for q in quotes])[1:]
 
 # take diff of close value
 # this makes len(diff) = len(close_t) - 1
@@ -47,8 +47,9 @@ print "fitting to HMM and decoding ...",
 n_components = 5
 
 # make an HMM instance and execute fit
-model = GaussianHMM(n_components, "diag")
-model.fit([X], n_iter=1000)
+model = GaussianHMM(n_components, covariance_type="diag", n_iter=1000)
+
+model.fit([X])
 
 # predict the optimal sequence of internal hidden state
 hidden_states = model.predict(X)

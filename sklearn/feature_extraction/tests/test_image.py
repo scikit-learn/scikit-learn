@@ -188,6 +188,13 @@ def test_patch_extractor_max_patches():
     assert_true(patches.shape == (len(lenas) * 100, 8, 8))
 
 
+def test_patch_extractor_max_patches_default():
+    lenas = lena_collection
+    extr = PatchExtractor(max_patches=100, random_state=0)
+    patches = extr.transform(lenas)
+    assert_equal(patches.shape, (len(lenas) * 100, 12, 12))
+
+
 def test_patch_extractor_all_patches():
     lenas = lena_collection
     i_h, i_w = lenas.shape[1:3]

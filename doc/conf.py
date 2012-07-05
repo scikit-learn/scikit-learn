@@ -73,7 +73,7 @@ copyright = u'2010–2011, scikit-learn developers (BSD License)'
 # built documents.
 #
 # The short X.Y version.
-version = '0.11'
+version = '0.12-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -220,6 +220,7 @@ latex_logo = "logos/scikit-learn-logo.png"
 # Additional stuff for the LaTeX preamble.
 latex_preamble = """
 \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
+\usepackage{enumitem} \setlistdepth{10}
 """
 
 # Documents to append as an appendix to all manuals.

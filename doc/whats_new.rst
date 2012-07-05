@@ -1,5 +1,43 @@
 .. currentmodule:: sklearn
 
+
+.. _changes_0_12:
+
+0.12
+====
+
+Changelog
+---------
+
+   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
+     normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
+
+   - Added the epsilon-insensitive loss and the ability to make probabilistic
+     predictions with the modified huber loss in :ref:`sgd`, by
+     `Mathieu Blondel`_.
+
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+
+   - SVMlight file format loader now detects compressed (gzip/bzip2) files and
+     decompresses them on the fly.
+
+   - A common testing framework for all estimators was added.
+
+API changes summary
+-------------------
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
+     object when initialising it and not through ``fit``. Now ``fit`` will 
+     only accept the data as an input parameter.
+
+   - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
+     the default gamma value was only computed the first time ``fit`` was called
+     and then stored. It is now recalculated on every call to ``fit``.
+
+   - All ``Base`` classes are now abstract meta classes so that they can not be
+     instantiated.
+
 .. _changes_0_11:
 
 0.11
@@ -40,7 +78,7 @@ Highlights
      a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
      by `Yannick Schwartz`.
 
-   - :class:`sklean.neighbors.NearestCentroid` classifier added, along with a
+   - :class:`sklearn.neighbors.NearestCentroid` classifier added, along with a
      ``shrink_threshold`` parameter, which implements **shrunken centroid
      classification**, by `Robert Layton`_.
 
@@ -88,7 +126,7 @@ Other changes
      is difficult to cythonize. If you are interested in contributing a cython
      version, you can use the python version in the git history as a reference.
 
-   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for 
+   - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
      nearest neighbors searches. The metric can be specified by argument ``p``.
 
 API changes summary
@@ -96,7 +134,7 @@ API changes summary
 
    - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
      instead.
-  
+
    - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
@@ -178,8 +216,60 @@ API changes summary
      ``n_train`` are deprecated and renamed to ``test_size`` and
      ``train_size`` and can accept both ``float`` and ``int``.
 
-   - Argument ``p`` added to classes in :ref:`neighbors` to specify an 
+   - Argument ``p`` added to classes in :ref:`neighbors` to specify an
      arbitrary Minkowski metric for nearest neighbors searches.
+
+
+People
+------
+   * 282  `Andreas Müller`_
+   * 239  `Peter Prettenhofer`_
+   * 198  `Gael Varoquaux`_
+   * 129  `Olivier Grisel`_
+   * 114  `Mathieu Blondel`_
+   * 103  Clay Woolam
+   *  96  `Lars Buitinck`_
+   *  88  `Jaques Grobler`_
+   *  82  `Alexandre Gramfort`_
+   *  50  `Bertrand Thirion`_
+   *  42  `Robert Layton`_
+   *  28  flyingimmidev
+   *  26  `Jake Vanderplas`_
+   *  26  Shiqiao Du
+   *  21  `Satrajit Ghosh`_
+   *  17  `David Marek`_
+   *  17  `Gilles Louppe`_
+   *  14  `Vlad Niculae`_
+   *  11  Yannick Schwartz
+   *  10  `Fabian Pedregosa`_
+   *   9  fcostin
+   *   7  Nick Wilson
+   *   5  Adrien Gaidon
+   *   5  `Nicolas Pinto`_
+   *   4  `David Warde-Farley`_
+   *   5  Nelle Varoquaux
+   *   5  Emmanuelle Gouillart
+   *   3  Joonas Sillanpää
+   *   3  Paolo Losi
+   *   2  Charles McCarthy
+   *   2  Roy Hyunjin Han
+   *   2  Scott White
+   *   2  ibayer
+   *   1  Brandyn White
+   *   1  Carlos Scheidegger
+   *   1  Claire Revillet
+   *   1  Conrad Lee
+   *   1  Edouard Duchesnay
+   *   1  Jan Hendrik Metzen
+   *   1  Meng Xinfan
+   *   1  Rob Zinkov
+   *   1  Shiqiao
+   *   1  Udi Weinsberg
+   *   1  Virgile Fritsch
+   *   1  Xinfan Meng
+   *   1  Yaroslav Halchenko
+   *   1  jansoe
+   *   1  Leon Palafox
 
 
 .. _changes_0_10:
@@ -1120,3 +1210,6 @@ of commits):
 .. _Scott White: http://twitter.com/scottblanc
 
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
+
+.. _David Marek: http://http://www.davidmarek.cz/
+

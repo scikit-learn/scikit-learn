@@ -6,6 +6,7 @@ cluster analysis results. There are two forms of evaluation:
 - unsupervised, which does not and measures the 'quality' of the model itself.
 """
 from .supervised import adjusted_mutual_info_score
+from .supervised import normalized_mutual_info_score
 from .supervised import adjusted_rand_score
 from .supervised import completeness_score
 from .supervised import contingency_matrix
@@ -14,5 +15,6 @@ from .supervised import homogeneity_completeness_v_measure
 from .supervised import homogeneity_score
 from .supervised import mutual_info_score
 from .supervised import v_measure_score
+from .supervised import entropy
 from .unsupervised import silhouette_samples
 from .unsupervised import silhouette_score

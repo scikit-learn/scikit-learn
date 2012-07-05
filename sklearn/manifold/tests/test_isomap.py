@@ -1,8 +1,6 @@
 from itertools import product
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
-from nose.tools import assert_true
-
 
 from sklearn import datasets
 from sklearn import manifold

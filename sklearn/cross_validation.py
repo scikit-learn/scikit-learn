@@ -8,6 +8,8 @@ validation and performance evaluation.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
+from __future__ import print_function
+
 from itertools import combinations
 from math import ceil, floor, factorial
 import operator
@@ -52,13 +54,13 @@ class LeaveOneOut(object):
     >>> loo = cross_validation.LeaveOneOut(2)
     >>> len(loo)
     2
-    >>> print loo
+    >>> print(loo)
     sklearn.cross_validation.LeaveOneOut(n=2)
     >>> for train_index, test_index in loo:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print X_train, X_test, y_train, y_test
+    ...    print("%s %s %s %s" % (X_train, X_test, y_train, y_test))
     TRAIN: [1] TEST: [0]
     [[3 4]] [[1 2]] [2] [1]
     TRAIN: [0] TEST: [1]
@@ -129,10 +131,10 @@ class LeavePOut(object):
     >>> lpo = cross_validation.LeavePOut(4, 2)
     >>> len(lpo)
     6
-    >>> print lpo
+    >>> print(lpo)
     sklearn.cross_validation.LeavePOut(n=4, p=2)
     >>> for train_index, test_index in lpo:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
@@ -171,7 +173,7 @@ class LeavePOut(object):
         )
 
     def __len__(self):
-        return (factorial(self.n) / factorial(self.n - self.p)
+        return int(factorial(self.n) / factorial(self.n - self.p)
                 / factorial(self.p))
 
 
@@ -219,10 +221,10 @@ class KFold(object):
     >>> kf = cross_validation.KFold(4, k=2)
     >>> len(kf)
     2
-    >>> print kf
+    >>> print(kf)
     sklearn.cross_validation.KFold(n=4, k=2)
     >>> for train_index, test_index in kf:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
@@ -314,10 +316,10 @@ class StratifiedKFold(object):
     >>> skf = cross_validation.StratifiedKFold(y, k=2)
     >>> len(skf)
     2
-    >>> print skf
+    >>> print(skf)
     sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], k=2)
     >>> for train_index, test_index in skf:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 3] TEST: [0 2]
@@ -402,13 +404,13 @@ class LeaveOneLabelOut(object):
     >>> lol = cross_validation.LeaveOneLabelOut(labels)
     >>> len(lol)
     2
-    >>> print lol
+    >>> print(lol)
     sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
     >>> for train_index, test_index in lol:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print X_train, X_test, y_train, y_test
+    ...    print("%s %s %s %s" % (X_train, X_test, y_train, y_test))
     TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
@@ -487,13 +489,13 @@ class LeavePLabelOut(object):
     >>> lpl = cross_validation.LeavePLabelOut(labels, p=2)
     >>> len(lpl)
     3
-    >>> print lpl
+    >>> print(lpl)
     sklearn.cross_validation.LeavePLabelOut(labels=[1 2 3], p=2)
     >>> for train_index, test_index in lpl:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print X_train, X_test, y_train, y_test
+    ...    print("%s %s %s %s" % (X_train, X_test, y_train, y_test))
     TRAIN: [2] TEST: [0 1]
     [[5 6]] [[1 2]
      [3 4]] [1] [1 2]
@@ -539,7 +541,7 @@ class LeavePLabelOut(object):
         )
 
     def __len__(self):
-        return (factorial(self.n_unique_labels) /
+        return int(factorial(self.n_unique_labels) /
                 factorial(self.n_unique_labels - self.p) /
                 factorial(self.p))
 
@@ -596,10 +598,10 @@ class Bootstrap(object):
     >>> bs = cross_validation.Bootstrap(9, random_state=0)
     >>> len(bs)
     3
-    >>> print bs
+    >>> print(bs)
     Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
     >>> for train_index, test_index in bs:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...
     TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
     TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
@@ -730,11 +732,11 @@ class ShuffleSplit(object):
     ...     test_size=.25, random_state=0)
     >>> len(rs)
     3
-    >>> print rs
+    >>> print(rs)
     ... # doctest: +ELLIPSIS
     ShuffleSplit(4, n_iterations=3, test_size=0.25, indices=True, ...)
     >>> for train_index, test_index in rs:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...
     TRAIN: [3 1 0] TEST: [2]
     TRAIN: [2 1 3] TEST: [0]
@@ -743,7 +745,7 @@ class ShuffleSplit(object):
     >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
     ...     train_size=0.5, test_size=.25, random_state=0)
     >>> for train_index, test_index in rs:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...
     TRAIN: [3 1] TEST: [2]
     TRAIN: [2 1] TEST: [0]
@@ -925,10 +927,10 @@ class StratifiedShuffleSplit(object):
     >>> sss = StratifiedShuffleSplit(y, 3, test_size=0.5, random_state=0)
     >>> len(sss)
     3
-    >>> print sss       # doctest: +ELLIPSIS
+    >>> print(sss)       # doctest: +ELLIPSIS
     StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, ...)
     >>> for train_index, test_index in sss:
-    ...    print "TRAIN:", train_index, "TEST:", test_index
+    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [0 3] TEST: [1 2]
@@ -1252,7 +1254,7 @@ def train_test_split(*arrays, **options):
            [4, 5],
            [6, 7],
            [8, 9]])
-    >>> b
+    >>> list(b)
     [0, 1, 2, 3, 4]
 
     >>> a_train, a_test, b_train, b_test = train_test_split(

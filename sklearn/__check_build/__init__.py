@@ -4,7 +4,7 @@ compile the scikit properly.
 import os
 
 INPLACE_MSG = """
-It appears that you are importing a local tree of the scikit-learn. For
+It appears that you are importing a local scikit-learn source tree. For
 this, you need to have an inplace install. Maybe you are in the source
 directory and you need to try from another location."""
 
@@ -35,9 +35,9 @@ ___________________________________________________________________________
 Contents of %s:
 %s
 ___________________________________________________________________________
-It seems that the scikit-learn has not been built correctly.
+It seems that scikit-learn has not been built correctly.
 
-If you have installed the scikit-learn from source, please do not forget
+If you have installed scikit-learn from source, please do not forget
 to build the package before using it: run `python setup.py install` or
 `make` in the source directory.
 %s""" % (e, local_dir, ''.join(dir_content).strip(), msg))
