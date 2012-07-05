@@ -186,7 +186,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features, dtype=np.float64)
     cdef np.ndarray[INTEGER, ndim=1] nz_index
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.arange(n_features, dtype=np.int32)
-    cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] feature_inner_product
+    cdef np.ndarray[DOUBLE, ndim=2, mode='c'] feature_inner_product
     cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product = np.zeros(n_features, dtype=np.float64)
 
     cdef int row_major = 101
@@ -212,7 +212,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 active_set = np.arange(n_active_features, dtype=np.int32)
                 feature_inner_product = \
                     np.zeros(shape=(n_active_features, n_active_features),
-                             dtype=np.float64, order='F') 
+                             dtype=np.float64, order='C') 
                 # resize
                 gradient = gradient[nz_index]
                 w = w[nz_index]
@@ -235,9 +235,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                           1, &X[0,0], n_samples, &X[0, nz_index[ii]], 
                           1, 0, &tmp_feature_inner_product[0], 1)
                 feature_inner_product[:, ii] = tmp_feature_inner_product[nz_index]
+#                gradient[ii] = Xy[nz_index[ii]] - \
+#                        ddot(n_features, &feature_inner_product[ii, 0],n_samples , &w[0], 1)
                 gradient[ii] = Xy[nz_index[ii]] - \
                         np.dot(feature_inner_product[:, ii], w)
-
             if not use_cache:
                 #tmp_feature_inner_product = np.dot(X[:, ii], X)
                 #gradient[ii] = Xy[ii] - \
@@ -264,7 +265,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     # gradient -= feature_inner_product[ii, :] * \
                     #                                    (w[ii] - w_ii)
                     daxpy(n_cached_features, -(w[ii] - w_ii),
-                          &feature_inner_product[0, ii], 1, &gradient[0], 1)
+                          &feature_inner_product[ii, 0], 1, &gradient[0], 1)
 
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
