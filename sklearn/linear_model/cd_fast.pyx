@@ -164,6 +164,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef bint use_cache = False
     cdef bint initialize_cache = False
     cdef int n_active_features
+    cdef int n_fixed_features
 
     if l2_reg == 0:
         warnings.warn("Coordinate descent with l2_reg=0 may lead to unexpected"
@@ -176,9 +177,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     tol = tol * linalg.norm(y) ** 2
 
     cdef np.ndarray[DOUBLE, ndim=1] Xy = np.dot(X.T, y)
-    cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features)
+    cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features, dtype=np.float64)
     cdef np.ndarray[INTEGER, ndim=1] nz_index
-    cdef np.ndarray[INTEGER, ndim=1] active_set = np.array(range(n_features))
+    cdef np.ndarray[INTEGER, ndim=1] active_set = np.arange(n_features, dtype=np.int32)
     cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] feature_inner_product
     cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product
 
@@ -197,7 +198,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         if not use_cache:
             if n_active_features ** 2 <= memory_limit:
                 nz_index = active_set
-                active_set = np.array(range(n_active_features))
+                active_set = np.arange(n_active_features, dtype=np.int32)
                 feature_inner_product = \
                     np.zeros(shape=(n_active_features, n_active_features),
                              dtype=np.float64, order='F') 
@@ -205,6 +206,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 gradient = gradient[nz_index]
                 w = w[nz_index]
                 norm_cols_X = norm_cols_X[nz_index]
+                n_fixed_features = n_active_features
                 use_cache = True
                 initialize_cache = True
 
@@ -240,10 +242,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # update gradients, if w changed
             if w_ii != w[ii]:
                 if use_cache:
-                    gradient -= feature_inner_product[ii, :] * \
-                                                        (w[ii] - w_ii)
-#                    daxpy(n_active_features, -(w[ii] - w_ii), 
-#                          &feature_inner_product[0, ii], 1, &gradient[0], 1)
+                    # gradient -= feature_inner_product[ii, :] * \
+                    #                                    (w[ii] - w_ii)
+                    daxpy(n_fixed_features, -(w[ii] - w_ii),
+                          &feature_inner_product[0, ii], 1, &gradient[0], 1)
 
             # update the maximum absolute coefficient update
             d_w_ii = fabs(w[ii] - w_ii)
