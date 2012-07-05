@@ -235,10 +235,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                           1, &X[0,0], n_samples, &X[0, nz_index[ii]], 
                           1, 0, &tmp_feature_inner_product[0], 1)
                 feature_inner_product[:, ii] = tmp_feature_inner_product[nz_index]
-#                gradient[ii] = Xy[nz_index[ii]] - \
-#                        ddot(n_features, &feature_inner_product[ii, 0],n_samples , &w[0], 1)
+                #gradient[ii] = Xy[nz_index[ii]] - \
+                #        np.dot(feature_inner_product[:, ii], w)
                 gradient[ii] = Xy[nz_index[ii]] - \
-                        np.dot(feature_inner_product[:, ii], w)
+                        ddot(n_active_features, &feature_inner_product[0,ii], n_active_features, &w[0], 1)
+
             if not use_cache:
                 #tmp_feature_inner_product = np.dot(X[:, ii], X)
                 #gradient[ii] = Xy[ii] - \
@@ -699,14 +700,22 @@ def learn_ddot():
 
     print ' mode = c \n'
     print 'X = ' + str(X)
-
+    print "---- ddot between rows ---------"
     print "ddot(n_active_features, &X[0, 0],1 , &X[0, 0], 1)"
     print ddot(3, &X[0, 0],1 , &X[0, 0], 1)
 
     print "ddot(3, &X[1, 0],1 , &X[1, 0], 1)"
     print ddot(3, &X[1, 0],1 , &X[1, 0], 1)
+    
+    print "---- ddot between colums ---------"
+    print "ddot(2, &X[0, 0],3 , &X[0, 0], 3)"
+    print ddot(2, &X[0, 0],3 , &X[0, 0], 3)
+    
+    print "ddot(2, &X[0, 1],3 , &X[0, 1], 3)"
+    print ddot(2, &X[0, 1],3 , &X[0, 1], 3)
 
-    print 'mode=fortran \n'
+
+    print '\n mode=fortran \n'
     print 'X_f = ' + str(X_f)
     print "ddot(2, &X[0, 0],1 , &X_f[0, 0], 1)"
     print ddot(2, &X_f[0, 0],1 , &X_f[0, 0], 1)
