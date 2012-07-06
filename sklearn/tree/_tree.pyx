@@ -130,6 +130,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef int n_right
 
     def __init__(self, int n_outputs, object n_classes):
+        """Constructor."""
         cdef int k = 0
 
         self.n_outputs = n_outputs
@@ -152,16 +153,14 @@ cdef class ClassificationCriterion(Criterion):
         self.n_right = 0
 
     def __del__(self):
+        """Destructor."""
         free(self.n_classes)
         free(self.label_count_left)
         free(self.label_count_right)
         free(self.label_count_init)
 
-    cdef void init(self, DTYPE_t* y,
-                         int y_stride,
-                         BOOL_t *sample_mask,
-                         int n_samples,
-                         int n_total_samples):
+    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t *sample_mask,
+                   int n_samples, int n_total_samples):
         """Initialise the criterion."""
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
@@ -189,8 +188,7 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
 
     cdef void reset(self):
-        """Reset label_counts by setting `label_count_left to zero
-        and copying the init array into the right."""
+        """Reset the criterion for a new feature index."""
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
         cdef int label_count_stride = self.label_count_stride
@@ -205,15 +203,14 @@ cdef class ClassificationCriterion(Criterion):
 
         for k from 0 <= k < n_outputs:
             for c from 0 <= c < n_classes[k]:
+                # Reset left label counts to 0
                 label_count_left[k * label_count_stride + c] = 0
+
+                # Reset right label counts to the initial counts
                 label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
-    cdef int update(self, int a,
-                          int b,
-                          DTYPE_t* y,
-                          int y_stride,
-                          int* X_argsorted_i,
-                          BOOL_t* sample_mask):
+    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+                    int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef int n_outputs = self.n_outputs
@@ -246,9 +243,12 @@ cdef class ClassificationCriterion(Criterion):
         return n_left
 
     cdef double eval(self):
+        """Evaluate the criteria (aka the split error)."""
         pass
 
     cpdef np.ndarray init_value(self):
+        """Get the initial value of the criterion (`init` must be called
+           before)."""
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
         cdef int label_count_stride = self.label_count_stride
@@ -264,23 +264,25 @@ cdef class ClassificationCriterion(Criterion):
 
         return value
 
+
 cdef class Gini(ClassificationCriterion):
     """Gini Index splitting criteria.
 
-    Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
-               = 1 - \sum_{k=0}^{K-1} pmk ** 2
+    Let the target be a classification outcome taking values in 0, 1, ..., K-1.
+    If node m represents a region Rm with Nm observations, then let
 
-    If the target is a classification outcome taking on values 0, 1, ..., K-1,
-    then in node m representing a region Rm with Nm observations, let
-
-       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+        pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
 
     be the proportion of class k observations in node m.
 
+    The Gini Index is then defined as:
+
+        index = \sum_{k=0}^{K-1} pmk (1 - pmk)
+              = 1 - \sum_{k=0}^{K-1} pmk ** 2
     """
 
     cdef double eval(self):
-        """Returns Gini index of left branch + Gini index of right branch. """
+        """Returns Gini index of left branch + Gini index of right branch."""
         cdef int n_samples = self.n_samples
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
@@ -324,9 +326,18 @@ cdef class Gini(ClassificationCriterion):
 
 
 cdef class Entropy(ClassificationCriterion):
-    """Entropy splitting criteria.
+    """Cross Entropy splitting criteria.
 
-    Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
+    Let the target be a classification outcome taking values in 0, 1, ..., K-1.
+    If node m represents a region Rm with Nm observations, then let
+
+        pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
+    The cross-entropy is then defined as
+
+        cross-entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
     """
 
     cdef double eval(self):
@@ -366,9 +377,9 @@ cdef class Entropy(ClassificationCriterion):
 
 
 cdef class RegressionCriterion(Criterion):
-    """Abstract criterion for regression. Computes variance of the
-       target values left and right of the split point.
+    """Abstract criterion for regression.
 
+    Computes variance of the target values left and right of the split point.
     Computation is linear in `n_samples` by using ::
 
         var = \sum_i^n (y_i - y_bar) ** 2
@@ -429,6 +440,7 @@ cdef class RegressionCriterion(Criterion):
     cdef int n_left
 
     def __init__(self, int n_outputs):
+        """Constructor."""
         cdef int k = 0
 
         self.n_outputs = n_outputs
@@ -447,6 +459,7 @@ cdef class RegressionCriterion(Criterion):
         self.var_right = <double*> calloc(n_outputs, sizeof(double))
 
     def __del__(self):
+        """Destructor."""
         free(self.mean_left)
         free(self.mean_right)
         free(self.mean_init)
@@ -456,11 +469,8 @@ cdef class RegressionCriterion(Criterion):
         free(self.var_left)
         free(self.var_right)
 
-    cdef void init(self, DTYPE_t* y,
-                         int y_stride,
-                         BOOL_t* sample_mask,
-                         int n_samples,
-                         int n_total_samples):
+    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
+                   int n_samples, int n_total_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
            sum in `self.mean_init` and `self.sq_sum_init`. """
@@ -537,12 +547,8 @@ cdef class RegressionCriterion(Criterion):
             var_left[k] = 0.0
             var_right[k] = sq_sum_right[k] - n_samples * (mean_right[k] * mean_right[k])
 
-    cdef int update(self, int a,
-                          int b,
-                          DTYPE_t* y,
-                          int y_stride,
-                          int* X_argsorted_i,
-                          BOOL_t* sample_mask):
+    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+                    int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef double* mean_left = self.mean_left
@@ -587,9 +593,12 @@ cdef class RegressionCriterion(Criterion):
         return n_left
 
     cdef double eval(self):
+        """Evaluate the criteria (aka the split error)."""
         pass
 
     cpdef np.ndarray init_value(self):
+        """Get the initial value of the criterion (`init` must be called
+           before)."""
         cdef int n_outputs = self.n_outputs
         cdef double* mean_init = self.mean_init
 
@@ -605,7 +614,7 @@ cdef class RegressionCriterion(Criterion):
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
 
-    MSE = var_left + var_right
+        MSE = var_left + var_right
     """
 
     cdef double eval(self):
