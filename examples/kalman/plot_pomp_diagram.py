@@ -13,7 +13,7 @@ from matplotlib import rc
 import numpy as np
 import pylab as pl
 
-boxcolor='w'
+boxcolor = 'w'
 
 # make the figure/axes to be drawn on
 fig = pl.figure(figsize=(5, 3))
@@ -40,7 +40,7 @@ patches = [
     Arrow(4, 1.6, 0, -0.2, width=0.5, fc=boxcolor),
 ]
 for p in patches:
-  ax.add_patch(p)
+    ax.add_patch(p)
 
 # make the text
 rc('text', usetex=True)
