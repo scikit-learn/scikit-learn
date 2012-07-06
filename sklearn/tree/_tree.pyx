@@ -7,12 +7,16 @@
 #
 # License: BSD Style.
 
+
+# TODO: cpdef init_value => cdef init_value
+
+
+
 cimport cython
 
 import numpy as np
 cimport numpy as np
 
-# Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
 ctypedef np.int8_t BOOL_t
@@ -32,39 +36,32 @@ cdef extern from "float.h":
 cdef DTYPE_t INFINITY = np.inf
 
 
-################################################################################
-# Classification entropy measures
-#
-#    From Hastie et al. Elements of Statistical Learning, 2009.
-#
-#    If a target is a classification outcome taking on values 0,1,...,K-1
-#    In node m, representing a region Rm with Nm observations, let
-#
-#       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
-#
-#    be the proportion of class k observations in node m
+
+
+# ==============================================================================
+# Tree
+# ==============================================================================
+
+
+
+# ==============================================================================
+# Criterion
+# ==============================================================================
 
 cdef class Criterion:
-    """Interface for splitting criteria (regression and classification)"""
+    """Interface for splitting criteria (regression and classification)."""
 
-    cdef void init(self, DTYPE_t* y,
-                         int y_stride,
-                         BOOL_t* sample_mask,
-                         int n_samples,
-                         int n_total_samples):
-        """Initialise the criterion class for new split point."""
+    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t*
+                   sample_mask, int n_samples, int n_total_samples):
+        """Initialise the criterion."""
         pass
 
     cdef void reset(self):
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a,
-                          int b,
-                          DTYPE_t* y,
-                          int y_stride,
-                          int* X_argsorted_i,
-                          BOOL_t* sample_mask):
+    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+                    int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         pass
@@ -74,7 +71,8 @@ cdef class Criterion:
         pass
 
     cpdef np.ndarray init_value(self):
-        """Get the init value of the criterion - `init` must be called before."""
+        """Get the initial value of the criterion (`init` must be called
+           before)."""
         pass
 
 
@@ -83,27 +81,41 @@ cdef class ClassificationCriterion(Criterion):
 
     Attributes
     ----------
-    n_classes : int
-        The number of classes.
+    n_outputs : int
+        The number of outputs.
+
+    n_classes : int*
+        n_classes[k] is the number of classes for output k.
 
     n_samples : int
         The number of samples.
 
+    label_count_stride : int
+        The stride between outputs in label_count_* arrays.
+
     label_count_left : int*
-        The label counts for samples left of splitting point.
+        label_count_left[k * label_count_stride + c] is the number of samples
+        of class c left of splitting point for output k.
 
     label_count_right : int*
-        The label counts for samples right of splitting point.
+        label_count_rightt[k * label_count_stride + c] is the number of samples
+        of class c right of splitting point for output k.
 
     label_count_init : int*
-        The initial label counts for samples right of splitting point.
-        Used to reset `label_count_right` for each feature.
+        label_count_init[k * label_count_stride + c] is the initial number of
+        samples of class c for output k. Used to reset `label_count_right` for
+        each feature.
 
     n_left : int
         The number of samples left of splitting point.
 
     n_right : int
         The number of samples right of splitting point.
+
+    References
+    ----------
+
+    [1] Hastie et al. "Elements of Statistical Learning", 2009.
     """
     cdef int n_outputs
     cdef int* n_classes
@@ -150,7 +162,7 @@ cdef class ClassificationCriterion(Criterion):
                          BOOL_t *sample_mask,
                          int n_samples,
                          int n_total_samples):
-        """Initialise the criterion class."""
+        """Initialise the criterion."""
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
         cdef int label_count_stride = self.label_count_stride
@@ -257,6 +269,14 @@ cdef class Gini(ClassificationCriterion):
 
     Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
                = 1 - \sum_{k=0}^{K-1} pmk ** 2
+
+    If the target is a classification outcome taking on values 0, 1, ..., K-1,
+    then in node m representing a region Rm with Nm observations, let
+
+       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
     """
 
     cdef double eval(self):
@@ -356,26 +376,35 @@ cdef class RegressionCriterion(Criterion):
 
     Attributes
     ----------
+    n_outputs : int
+        The number of outputs.
+
     n_samples : int
         The number of samples
 
-    mean_left : double
-        The mean target value of the samples left of the split point.
+    mean_left : double*
+        mean_left[k] is the mean target value of the samples left of the split
+        point for output k.
 
-    mean_right : double
-        The mean target value of the samples right of the split.
+    mean_right : double*
+        mean_right[k] is the mean target value of the samples right of the split
+        point for output k.
 
-    sq_sum_left : double
-        The sum of squared target values left of the split point.
+    sq_sum_left : double*
+        sq_sum_left[k] is the sum of squared target values left of the split
+        point for output k.
 
-    sq_sum_right : double
-        The sum of squared target values right of the split point.
+    sq_sum_right : double*
+        sq_sum_right[k] is the sum of squared target values right of the split
+        point for output k.
 
-    var_left : double
-        The variance of the target values left of the split point.
+    var_left : double*
+        var_left[k] is the variance of the values left of the split point for
+        output k.
 
-    var_right : double
-        The variance of the target values left of the split point.
+    var_right : double*
+        var_right[k] is the variance of the values riht of the split point for
+        output k.
 
     n_left : int
         number of samples left of split point.
