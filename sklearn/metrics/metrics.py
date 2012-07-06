@@ -172,7 +172,7 @@ def roc_curve(y_true, y_score):
         fpr = np.array([0.0, fpr[0], 1.0])
         tpr = np.array([0.0, tpr[0], 1.0])
 
-    return fpr, tpr, (thresholds[::-1])
+    return fpr, tpr, thresholds[::-1]
 
 
 def auc(x, y):
