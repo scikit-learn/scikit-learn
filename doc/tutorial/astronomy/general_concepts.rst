@@ -4,6 +4,25 @@
 Machine Learning 101: General Concepts
 ======================================
 
+.. topic:: Objectives
+   
+   By the end of this section you will
+
+   1. Know how to extract features from real-world data in order to perform
+      machine learning tasks.
+   2. Know the basic categories of `supervised learning`,
+      including `classification` and `regression` problems.
+   3. Know the basic categories of `unsupervised learning`,
+      including dimensionality reduction and clustering.
+   4. Understand the distinction between linearly separable and
+      non-linearly separable data.
+
+   In addition, you will know several tools within scikit-learn which can
+   be used to accomplish the above tasks.
+
+
+In this section we will begin to explore the basic principles of
+machine learning.
 Machine Learning is about building **programs with tunable parameters**
 (typically an array of floating point values) that are adjusted
 automatically so as to improve their behavior by **adapting to
@@ -15,26 +34,18 @@ to make computers learn to behave more intelligently by somehow
 **generalizing** rather that just storing and retrieving data items
 like a database system would do.
 
+A very simple example of a machine learning task can be seen in the following
+figure: it shows a collection of two-dimensional data, colored according
+to two different class labels.  A classification algorithm is used to draw
+a dividing boundary between the two clusters of points.
+
 .. figure:: ../../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_1.png
    :target: ../../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 80%
 
-   Decision boundary learned from two classes of data.
-
-The following will introduce the main concepts used to qualify
-machine learning algorithms as implemented in ``scikit-learn``:
-
-- how to turn raw data into numerical arrays
-
-- what is supervised learning
-
-- what is unsupervised learning
-
-- what is linearly separable data
-
-- what is overfitting
-
+As with all figures in this tutorial, the image has a hyper-link to the python
+source code which is used to generate it.
 
 Features and feature extraction
 -------------------------------
@@ -66,6 +77,11 @@ in memory.
 A simple example: the iris dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`01_datasets.ipynb <notebooks/01_datasets.ipynb>`,
+   which can be viewed using `iPython notebook`_.
+
 The machine learning community often uses a simple flowers database
 where each row in the database (or CSV file) is a set of measurements
 of an individual iris flower.
@@ -91,12 +107,6 @@ helper function to load it into numpy arrays::
 
   >>> from sklearn.datasets import load_iris
   >>> iris = load_iris()
-
-.. note::
-
-  To be able to copy and paste examples without taking care of the leading
-  ``>>>`` and ``...`` prompt signs, enable the ipython doctest mode with:
-  ``%doctest_mode``
 
 The features of each sample flower are stored in the ``data`` attribute
 of the dataset::
@@ -219,8 +229,99 @@ Practical implementations of such feature extraction strategies
 will be presented in the last sections of this tutorial.
 
 
-Supervised Learning: ``model.fit(X, y)``
-----------------------------------------
+
+Supervised Learning, Unsupervised Learning, and ``scikit-learn`` syntax
+-----------------------------------------------------------------------
+
+Machine learning can be broken into two broad regimes: supervised learning
+and unsupervised learning.  We'll introduce these concepts here, and discuss
+them in more detail below.
+
+In **Supervised Learning**, we have a dataset consisting of both
+*features* and *labels*.  The task is to construct an estimator which is
+able to predict the label of an object given the set of features.
+A relatively simple example is predicting the species of iris given a set
+of measurements of its flower.  This is a relatively simple task.
+Some more complicated examples are:
+
+- given a multicolor image of an object through a telescope, determine
+  whether that object is a star, a quasar, or a galaxy.
+- given a photograph of a person, identify the person in the photo.
+- given a list of movies a person has watched and their personal rating
+  of the movie, recommend a list of movies they would like (A famous example
+  is the `Netflix Prize <http://en.wikipedia.org/wiki/Netflix_prize>`_).
+
+What these tasks have in common is that there is one or more unknown
+quantities associated with the object which needs to be determined
+from other observed quantities.  Supervised learning is further broken
+down into two categories, *classification* and *regression*.  In
+classification, the label is discrete, while in regression, the label
+is continuous.  For example, in astronomy, the task of determining
+whether an object is a star, a galaxy, or a quasar is a classification
+problem: the label is from three distinct categories.  On the other
+hand, we might wish to determine the age of an object based on
+such observations: this would be a regression problem: the label (age)
+is a continuous quantity.
+
+**Unsupervised Learning** addresses a different sort of problem.  Here
+the data has no labels, and we are interested in finding similarities
+between the objects in question.  In a sense, you can think of unsupervised
+learning as a means of discovering labels from the data itself.
+Unsupervised learning comprises
+tasks such as dimensionality reduction, clustering, and density estimation.
+For example, in the iris data discussed above, we can used unsupervised
+methods to determine combinations of the measurements which best 
+display the structure of the data.  As we'll see below, such a projection
+of the data can be used to visualize the four-dimensional dataset in
+two dimensions.
+Some more involved unsupervised learning problems are:
+
+- given detailed observations of distant galaxies, determine which features
+  or combinations of features are most important in distinguishing between
+  galaxies.
+- given a mixture of two sound sources (for example, a person talking over
+  some music), separate the two (this is called the
+  `blind source separation <http://en.wikipedia.org/wiki/Blind_signal_separation>`_ problem).
+- given a video, isolate a moving object and categorize in relation to
+  other moving objects which have been seen.
+
+``scikit-learn`` strives to have a uniform interface across all methods,
+and we'll see examples of these below.  Given a ``scikit-learn`` estimator
+object named ``model``, the following methods are available:
+
+- **Available in all Estimators**
+
+  - ``model.fit()`` : fit training data.  For supervised learning applications,
+    this accepts two arguments: the data ``X`` and the labels ``y``
+    (e.g. ``model.fit(X, y)``).  For unsupervised learning applications,
+    this accepts only a single argument, the data ``X``
+    (e.g. ``model.fit(X)``).
+
+- **Available in supervised estimators**
+
+  - ``model.predict()`` : given a trained model, predict the label of
+    a new set of data.  This method accepts one argument, the new
+    data ``X_new`` (e.g. ``model.predict(X_new)``), and returns the
+    learned label for each object in the array.
+  - ``model.predict_proba()`` : For classification problems,
+    some estimators also provide this method, which returns the probability
+    that a new observation has each categorical label.  In this case, the
+    label with the highest probability is returned by ``model.predict()``.
+
+- **Available in unsupervised estimators**
+
+  - ``model.transform()`` : given an unsupervised model, transform new data
+    into the new basis.  This also accepts one argument ``X_new``, and
+    returns the new representation of the data based on the unsupervised
+    model.
+  - ``model.fit_transform()`` : some estimators implement this method,
+    which performs a ``fit`` and a ``transform`` on the same input data.
+
+
+.. _astro_supervised_learning:
+
+Supervised Learning
+-------------------
 
 .. figure:: ../../auto_examples/tutorial/images/plot_ML_flow_chart_1.png
    :target: ../../auto_examples/tutorial/plot_ML_flow_chart.html
@@ -228,17 +329,20 @@ Supervised Learning: ``model.fit(X, y)``
    :align: center
    :alt: Flow diagram for supervised learning
 
-   Supervised Learning overview
+.. figure:: ../../auto_examples/tutorial/images/plot_ML_flow_chart_2.png
+   :target: ../../auto_examples/tutorial/plot_ML_flow_chart.html
+   :scale: 75 %
+   :align: center
+   :alt: Flow diagram for supervised learning with scikit-learn
 
-A supervised learning algorithm makes the distinction between the
-raw observed data ``X`` with shape ``(n_samples, n_features)`` and
-some label given to the model while training by some teacher. In
-``scikit-learn`` this array is often noted ``y`` and has generally
-the shape ``(n_samples,)``.
+   Overview of supervised Learning with scikit-learn
 
-After training, the fitted model no longer expects the ``y``
-as an input: it will try to predict the most likely labels ``y_new``
-for new a set of samples ``X_new``.
+As mentioned above, a supervised learning algorithm makes the distinction
+between the raw observed data ``X`` with shape ``(n_samples, n_features)``
+and some label given to the model during training. In ``scikit-learn``
+this array is often noted ``y`` and has generally the shape ``(n_samples,)``.
+After training, the fitted model will try to predict the most likely labels
+``y_new`` for new a set of samples ``X_new``.
 
 Depending on the nature of the target ``y``, supervised learning
 can be given different names:
@@ -251,13 +355,23 @@ can be given different names:
     a temperature, a size...), the task to predict ``y`` is called
     **regression**.
 
-
 Classification
 ~~~~~~~~~~~~~~
+
+Classification is the task of predicting the value of a categorical
+variable given some input variables (a.k.a. the features or "predictors").
+This section includes a first exploration of classification with
+scikit-learn. We'll explore a detailed example of classification with
+astronomical data in :ref:`astronomy_classification`.
 
 
 A first classifier example with ``scikit-learn``
 ++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`02_iris_classification.ipynb <notebooks/02_iris_classification.ipynb>`,
+   which can be viewed using `iPython notebook`_.
 
 In the iris dataset example, suppose we are assigned the task to
 guess the class of an individual flower given the measurements of
@@ -318,16 +432,6 @@ The following figure places the location of the ``fit`` and ``predict``
 calls on the previous flow diagram. The ``vec`` object is a vectorizer
 used for feature extraction that is not used in the case of the iris
 data (it already comes as vectors of features):
-
-
-.. figure:: ../../auto_examples/tutorial/images/plot_ML_flow_chart_2.png
-   :target: ../../auto_examples/tutorial/plot_ML_flow_chart.html
-   :scale: 75 %
-   :align: center
-   :alt: Flow diagram for supervised learning with scikit-learn
-
-   Supervised Learning with scikit-learn
-
 
 Some ``scikit-learn`` classifiers can further predict probabilities
 of the outcome.  This is the case of logistic regression models::
@@ -418,8 +522,10 @@ Regression
 Regression is the task of predicting the value of a continuously varying
 variable (e.g. a price, a temperature, a conversion rate...) given
 some input variables (a.k.a. the features, "predictors" or
-"regressors"). Some notable implementations of regression models in
-``scikit-learn`` include:
+"regressors").  We'll explore a detailed example of regression with
+astronomical data in :ref:`astronomy_regression`.
+
+Some notable implementations of regression models in ``scikit-learn`` include:
 
 :class:`sklearn.linear_model.Ridge`
 
@@ -455,6 +561,8 @@ some input variables (a.k.a. the features, "predictors" or
   of the data.
 
 
+.. _astro_unsupervised_learning:
+
 Unsupervised Learning: ``model.fit(X)``
 ---------------------------------------
 
@@ -488,6 +596,11 @@ retaining **most of the variance** of the original data.
 Normalization and visualization with PCA
 ++++++++++++++++++++++++++++++++++++++++
 
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`03_iris_dimensionality.ipynb <notebooks/03_iris_dimensionality.ipynb>`,
+   which can be viewed using `iPython notebook`_.
+
 The most common technique for dimensionality reduction is called
 **Principal Component Analysis**.
 
@@ -516,7 +629,7 @@ Once fitted, the ``pca`` model exposes the singular vectors in the
   >>> pca.explained_variance_ratio_.sum()                  # doctest: +ELLIPSIS
   0.97...
 
-Let us project the iris dataset along those first 3 dimensions::
+Let us project the iris dataset along those first 2 dimensions::
 
   >>> X_pca = pca.transform(X)
 
@@ -538,8 +651,7 @@ correlation::
   array([[ 1., -0.],
          [-0.,  1.]])
 
-
-And visualize the dataset using ``pylab``, for instance by defining the
+We can visualize the dataset using ``pylab``, for instance by defining the
 following utility function::
 
   >>> import pylab as pl
@@ -567,6 +679,12 @@ display the following:
 
    2D PCA projection of the iris dataset
 
+Note that this projection was determined *without* any information about the
+labels (represented by the colors): this is the sense in which the learning
+is unsupervised.  Nevertheless, we see that the projection gives us insight
+into the distribution of the different flowers in parameter space: notably,
+*iris setosa* is much more distinct than the other two species.
+
 
 .. note::
 
@@ -593,7 +711,7 @@ instance or that do not work well with linearly correlated features.
 
   ``scikit-learn`` also features an implementation of Independant
   Component Analysis (ICA) and several manifold learning methods
-  (See `Exercise 3 <exercises.html>`_)
+  (See :ref:`astro_exercise_3`)
 
 
 Clustering
@@ -611,7 +729,7 @@ clustering algorithm (KMeans)::
   >>> from numpy.random import RandomState
   >>> rng = RandomState(42)
 
-  >>> kmeans = KMeans(3, random_state=rng).fit(X_pca)
+  >>> kmeans = KMeans(n_clusters=3, random_state=rng).fit(X_pca)
 
   >>> np.round(kmeans.cluster_centers_, decimals=2)
   array([[ 1.02, -0.71],
@@ -945,4 +1063,5 @@ Key takeaway points
 
   - tune the regularization parameter on a validation set
 
-Next section: `Practical Advice for Machine Learning <practical.html>`_
+
+.. _`iPython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html

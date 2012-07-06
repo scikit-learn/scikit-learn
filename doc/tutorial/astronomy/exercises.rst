@@ -37,6 +37,8 @@ code must be filled-in by the user.  These places are marked by the comment
 details of each sub-task.
 
 
+.. _astro_exercise_1:
+
 Exercise 1: Photometric Classification with GMM
 -----------------------------------------------
 
@@ -71,6 +73,7 @@ the ipython command is::
 
     In [1]: %run workspace/exercise_01.py data/sdss_colors
 
+.. _astro_exercise_2:
 
 Exercise 2: Photometric redshifts with Decision Trees
 -----------------------------------------------------
@@ -110,6 +113,7 @@ the ipython command is::
 
     In [1]: %run workspace/exercise_02.py data/sdss_photoz/
 
+.. _astro_exercise_3:
 
 Exercise 3: Dimensionality Reduction of Spectra
 -----------------------------------------------

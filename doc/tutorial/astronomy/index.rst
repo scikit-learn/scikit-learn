@@ -1,8 +1,8 @@
-==================================
-scikit-learn and Astronomical Data
-==================================
+===============================================
+Machine Learning for Astronomical Data Analysis
+===============================================
 
-.. author:: Jake Vanderplas <vanderplas@astro.washington.edu>
+.. sectionauthor:: Jake Vanderplas <vanderplas@astro.washington.edu>
 
 .. topic:: Machine Learning for Astronomy with scikit-learn
 
@@ -18,7 +18,7 @@ scikit-learn and Astronomical Data
     engineering**.
 
 
-.. include:: big_toc_css.rst
+.. include:: ../../includes/big_toc_css.rst
 
 .. note:: This document is meant to be used with **scikit-learn version
    0.11+** (i.e. the current state of the master branch at the time of

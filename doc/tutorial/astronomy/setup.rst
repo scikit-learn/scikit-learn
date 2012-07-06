@@ -2,48 +2,42 @@
 Tutorial Setup and Installation
 ===============================
 
-The following assumes you have extracted the source distribution
-of this tutorial somewhere on your local disk. Alternatively you
-can use git to clone this repo directly from github onto your
-local disk::
+.. topic:: Objectives
 
-    % git clone https://github.com/jakevdp/scikit-learn/
-    % cd scikit-learn
+   At the end of this section, you will
+  
+   1. Have scikit-learn and all the prerequisites and dependencies for
+      this tutorial installed on your machine.
+   2. Download the source files and data required for this tutorial
 
-In the rest of the tutorial, the path to the ``scikit-learn`` source
-folder will be named ``$SKL_HOME``.  Within this directory can be
-found the tutorial source, in the ``sklearn-tutorial`` branch::
+Python Prerequisites
+--------------------
 
-    % git checkout sklearn-tutorial
-    % cd scikit-learn/doc/tutorial/astronomy
+This tutorial is based on scikit-learn, which has the following dependencies:
 
-In the following we will name this folder ``$TUTORIAL_HOME``. It
-should contain the following folders:
+- `numpy <http://numpy.scipy.org>`_ : this is a python module which has powerful
+  tools for the creation and manipulation of arrays.  It is the foundation of
+  most scientific computing packages in python
 
-  * ``data`` - folder to put the datasets used during the tutorial
+- `scipy <http://www.scipy.org>`_ : this is a python module which builds on
+  numpy and provides fast implementations of many basic scientific algorithms.
 
-  * ``skeletons`` - sample incomplete scripts for the exercices
+- `matplotlib <http://matplotlib.sourceforge.net/>`_ : this is a powerful
+  package for generating plots, figures, and diagrams.  Our main form of
+  visual interaction with data and results depends on matplotlib.
 
-  * ``solutions`` - solutions of the exercices
+We will also make extensive use of `iPython <http://ipython.org>`_, an
+interactive python interpreter.  In particular, much of the interactive
+material will make use of the 
+`ipython notebook`_ functionality, which was introduced in ipython version 0.12.
 
+Installing scikit-learn and Dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can aleardy copy the skeletons into a new folder named ``workspace``
-where you will edit your own files for the exercices while keeping
-the original skeletons intact::
-
-    % cp -r skeletons workspace
-
-
-Install scikit-learn build dependencies
----------------------------------------
-
-Please refer to the `scikit-learn install`_ page for per-system
-instructions.
-
-.. _`scikit-learn install`: http://scikit-learn.sourceforge.net/install.html
-
-You must have ``numpy``, ``scipy``, ``matplotlib`` and ``ipython``
-installed:
+Please refer to the :ref:`install page <installing_scikit_learn>` for
+per-system instructions on installing scikit-learn.  In addition to
+``numpy``, ``scipy``, and ``scikit-learn``, this tutorial will assume that
+you have ``matplotlib`` and ``ipython`` installed as well.
 
   * Under **Debian or Ubuntu Linux** you should use::
 
@@ -57,53 +51,61 @@ installed:
   * Under **Windows** the `Python(x,y)`_ is probably your best bet to get a
     working numpy / scipy environment up and running.
 
+  * Power-users may wish to install bleeding edge versions of these
+    packages from the source.  The source can be downloaded using
+    ``git`` from their respective `GitHub`_ repositories.
+
 Alternatively under Windows and MaxOSX you can use the EPD_ (Enthought
 Python Distribution) which is a (non-open source) packaging of the
 scientific python stack.
 
-.. _`Scipy Superpack`: http://stronginference.com/scipy-superpack/
+.. note::
+   that to use `ipython notebook`_, you must install ``ipython`` version
+   0.12 and several other dependencies.  Refer to the ipython documentation
+   for details.
+
+.. _`Scipy Superpack`: http://fonnesbeck.github.com/ScipySuperpack/
 .. _`Python(x,y)`: http://www.pythonxy.com/
 .. _EPD: https://www.enthought.com/products/epd.php
+.. _GitHub: http://www.github.com
+.. _`ipython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html
 
 
-Build scikit-learn from source
-------------------------------
+Tutorial Files
+--------------
+The source code for the example files in the following pages is best
+accessed through cloning the scikit-learn repository using
+`git <http://git-scm.com/>`_.  Once ``git`` is installed the
+command to accomplish this is::
 
-Here are the instructions to install the current master from source
-on a POSIX system (e.g. Linux and MacOSX). Change directories to the
-scikit-learn top-directory, $SKL_HOME.  You can then build scikit-learn
-locally and add it to your PYTHONPATH environment variable::
+    % git clone https://github.com/jakevdp/scikit-learn/
+    % cd scikit-learn
+    % git checkout -b sklearn-tutorial origin/sklearn-tutorial
 
-    % python setup.py build_ext -i
-    % export PYTHONPATH=`pwd`
+The last line switches to the branch of the repository which contains
+the source of this tutorial.  In what follows, the path to the
+``scikit-learn`` source folder will be named ``$SKL_HOME``.
+Within this directory can be found the tutorial source::
 
-Alternatively you can install the library globally::
+    % cd doc/tutorial/astronomy
 
-    % python setup.py build
-    % sudo python setup.py install
+In what follows, this directory will be named ``$TUTORIAL_HOME``. It
+should contain the following folders:
 
-You should also be able to launch the tests from anywhere in the system
-(if nose is installed) with the following::
+  * ``data`` - folder to put the datasets used during the tutorial
 
-    % nosetests sklearn
+  * ``skeletons`` - sample incomplete scripts for the exercices
 
-The output should end with ``OK`` as in::
+  * ``solutions`` - solutions of the exercices
 
-    ----------------------------------------------------------------------
-    Ran 589 tests in 36.876s
+  * ``notebooks`` - ipython notebooks which provide an interactive interface
+    to parts of this tutorial.
 
-    OK (SKIP=2)
+You can aleardy copy the skeletons into a new folder named ``workspace``
+where you will edit your own files for the exercices while keeping
+the original skeletons intact::
 
-If this is not the case please send a mail to the `scikit-learn mailing list`_
-including the error messages along with the version number of all the afore
-mentioned dependencies and your operating system.
-
-.. _`scikit-learn mailing list`: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-
-As usual building from source under Windows is slightly more complicated.
-Checkout the `build instructions`_ on the scikit-learn website.
-
-.. _`build instructions`: http://scikit-learn.sourceforge.net/dev/install.html#building-on-windows
+    % cp -r skeletons workspace
 
 
 Download the datasets
@@ -111,12 +113,12 @@ Download the datasets
 
 Machine Learning algorithms need data. Go to each ``$TUTORIAL_HOME/data/``
 sub-folder and run the ``fetch_data.py`` script from there (after
-having read them first).
+having read them first).  This will download a dataset to the current
+directory.  This tutorial has three such datasets; they will be used
+in the examples and exercises later on.
 
-For instance::
+For example::
 
     % cd $TUTORIAL_HOME/data/sdss_colors
     % less fetch_data.py
     % python fetch_data.py
-
-Next section: `general concepts <general_concepts.html>`_
