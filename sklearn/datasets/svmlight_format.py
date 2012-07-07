@@ -195,8 +195,12 @@ def _dump_svmlight(X, y, f, zero_based):
     is_sp = int(hasattr(X, "tocsr"))
 
     one_based = not zero_based
+    if X.dtype == np.float64:
+        value_pattern = u"%d:%0.16f"
+    else:
+        value_pattern = u"%d:%f"
     for i in xrange(X.shape[0]):
-        s = u" ".join([u"%d:%f" % (j + one_based, X[i, j])
+        s = u" ".join([value_pattern % (j + one_based, X[i, j])
                        for j in X[i].nonzero()[is_sp]])
         f.write((u"%f %s\n" % (y[i], s)).encode('ascii'))
 

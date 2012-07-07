@@ -6,7 +6,9 @@ import os
 import shutil
 import tempfile
 
-from numpy.testing import assert_equal, assert_array_equal
+from numpy.testing import assert_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 from nose.tools import raises
 
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
@@ -22,10 +24,10 @@ def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
     # test X's shape
-    assert_equal(X.indptr.shape[0], 4)
-    assert_equal(X.shape[0], 3)
+    assert_equal(X.indptr.shape[0], 5)
+    assert_equal(X.shape[0], 4)
     assert_equal(X.shape[1], 21)
-    assert_equal(y.shape[0], 3)
+    assert_equal(y.shape[0], 4)
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
@@ -46,7 +48,7 @@ def test_load_svmlight_file():
     assert_equal(X[0, 2], 5)
 
     # test y
-    assert_array_equal(y, [1, 2, 3])
+    assert_array_equal(y, [1, 2, 3, 4])
 
 
 def test_load_svmlight_file_fd():
@@ -86,8 +88,8 @@ def test_load_svmlight_file_n_features():
     X, y = load_svmlight_file(datafile, n_features=20)
 
     # test X'shape
-    assert_equal(X.indptr.shape[0], 4)
-    assert_equal(X.shape[0], 3)
+    assert_equal(X.indptr.shape[0], 5)
+    assert_equal(X.shape[0], 4)
     assert_equal(X.shape[1], 20)
 
     # test X's non-zero values
@@ -168,9 +170,20 @@ def test_dump():
 
     for X in (Xs, Xd):
         for zero_based in (True, False):
-            f = BytesIO()
-            dump_svmlight_file(X, y, f, zero_based=zero_based)
-            f.seek(0)
-            X2, y2 = load_svmlight_file(f, zero_based=zero_based)
-            assert_array_equal(Xd, X2.toarray())
-            assert_array_equal(y, y2)
+            for dtype in [np.float32, np.float64]:
+                f = BytesIO()
+                dump_svmlight_file(X.astype(dtype), y, f,
+                                   zero_based=zero_based)
+                f.seek(0)
+                X2, y2 = load_svmlight_file(f, dtype=dtype,
+                                            zero_based=zero_based)
+                assert_equal(X2.dtype, dtype)
+                if dtype == np.float32:
+                    assert_array_almost_equal(
+                        # allow a rounding error at the last decimal place
+                        Xd.astype(dtype), X2.toarray(), 4)
+                else:
+                    assert_array_almost_equal(
+                        # allow a rounding error at the last decimal place
+                        Xd.astype(dtype), X2.toarray(), 15)
+                assert_array_equal(y, y2)
