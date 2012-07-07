@@ -396,11 +396,6 @@ the parameter ``loss``:
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals.
 
-      .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_quantile_1.png
-         :target: ../auto_examples/ensemble/plot_gradient_boosting_quantile.html
-         :align: center
-         :scale: 50
-
   * Classification
 
     * Binomial deviance (``'deviance'``): The negative binomial
@@ -477,7 +472,6 @@ can be controled via the ``max_features`` parameter.
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
 
 .. topic:: References
 
