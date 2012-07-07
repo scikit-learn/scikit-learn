@@ -172,9 +172,6 @@ amount of time (e.g., on large datasets).
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 
-.. _gradient_boosting:
-
-
 Feature importance evaluation
 -----------------------------
 
@@ -213,6 +210,7 @@ the matching feature to the prediction function.
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
 
+.. _gradient_boosting:
 
 Gradient Tree Boosting
 ======================
