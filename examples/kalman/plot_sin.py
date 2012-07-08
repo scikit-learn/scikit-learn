@@ -1,12 +1,17 @@
-'''
+r'''
 ==================================
 Kalman Filter tracking a sine wave
 ==================================
+
+This example shows how to use the Kalman Filter for state estimation.
 
 In this example, we generate a fake target trajectory using a sine wave.
 Instead of observing those positions exactly, we observe the position plus some
 random noise.  We then use a Kalman Filter to estimate the velocity of the
 system as well.
+
+The figure drawn illustrates the measurements, and the position and velocity
+estimates predicted by the Kalman Smoother.
 '''
 import numpy as np
 import pylab as pl
@@ -25,7 +30,8 @@ observations = 20 * (np.sin(x) + 0.5 * rnd.randn(T))
 # space.  If you already have good guesses for the initial parameters, put them
 # in here.  The Kalman Filter will try to learn the values of all variables.
 kf = KalmanFilter(
-    transition_matrices=np.array([[1, 1], [0, 1]]),
+    transition_matrices=np.array([[1, 1],
+                                  [0, 1]]),
     transition_covariance=np.eye(2) * 0.01,
     observation_covariance=10.0,
 )
@@ -39,8 +45,7 @@ print 'fitted model: %s' % (kf,)
 # target before fitting, and the estimated position after fitting.
 pl.figure(figsize=(16, 6))
 pl.hold(True)
-obs_line = pl.plot(x, observations, linestyle='-', marker='x',
-        color='b')
+obs_scatter = pl.scatter(x, observations, marker='x', color='b')
 position_line = pl.plot(
     x, states_pred[:, 0], linestyle='-', marker='o', color='r'
 )
@@ -48,9 +53,10 @@ velocity_line = pl.plot(
     x, states_pred[:, 1], linestyle='-', marker='o', color='g'
 )
 pl.legend(
-    (obs_line[0], position_line[0], velocity_line[0]),
-    ('true', 'position est.', 'velocity est.'),
+    (obs_scatter, position_line[0], velocity_line[0]),
+    ('measurements', 'position est.', 'velocity est.'),
     loc='lower right'
 )
-pl.xlim(xmax=x.max())
+pl.xlim(xmin=0, xmax=x.max())
+pl.xlabel('time')
 pl.show()

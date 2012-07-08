@@ -5,6 +5,16 @@ Using the Kalman Filter and Kalman Smoother
 
 This simple example shows how one may apply the Kalman Filter and Kalman
 Smoother to some randomly generated data.
+
+The Kalman Filter and Kalman Smoother are two algorithms for predicting the
+hidden state of Linear-Gaussian system. In this script, all model parameters
+are specified beforehand, so there is no need to fit the Kalman Filter's
+parameters to the measurements. However, this is not essential; sensible
+defaults will be used for unspecified parameters, and they may be learned using
+:func:`KalmanFilter.fit`.
+
+The figure drawn shows the true, hidden state, the state estimates given by the
+Kalman Filter, and the state estimates given by the Kalman Smoother.
 '''
 import numpy as np
 import pylab as pl

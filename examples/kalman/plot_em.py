@@ -4,7 +4,34 @@ EM for Linear-Gaussian Models
 =============================
 
 This example shows how one may use the EM algorithm to estimate model
-parameters in a Linear-Gaussian model.
+parameters with a Kalman Filter.
+
+The EM algorithm is a meta-algorithm for learning parameters in probabilistic
+models. The algorithm works by first fixing the parameters and finding a closed
+form distribution over the unobserved variables, then finds new parameters that
+maximize the expected likelihood of the observed variables (where the
+expectation is taken over the unobserved ones). Due to convexity arguments, we
+are guaranteed that each iteration of the algorithm will increase the
+likelihood of the observed data and that it will eventually reach a local
+optimum.
+
+The EM algorithm is applied to the Linear-Gaussian system (that is, the model
+assumed by the Kalman Filter) by first using the Kalman Smoother to calculate
+the distribution over all unobserved variables (in this case, the hidden target
+states), then closed-form update equations are used to update the model
+parameters.
+
+The first figure plotted contains 4 sets of lines. The first, labeled `true`,
+represents the true, unobserved state of the system. The second, labeled
+`blind`, represents the predicted state of the system if no measurements are
+incorporated.  The third, labeled `filtered`, are the state estimates given
+measurements up to and including the current time step.  Finally, the fourth,
+labeled `smoothed`, are the state estimates using all observations for all time
+steps.  The latter three estimates use parameters learned via 10 iterations of
+the EM algorithm.
+
+The second figure contains a single line representing the likelihood of the
+observed data as a function of the EM Algorithm iteration.
 '''
 import numpy as np
 import pylab as pl
@@ -28,9 +55,10 @@ kf = KalmanFilter(
       'transition_covariance', 'observation_covariance',
       'observation_offsets', 'initial_state_mean',
       'initial_state_covariance'
-    ])
+    ]
+)
 
-# Learn good values for variables named in `em_vars` using the EM algorithm
+# Learn good values for parameters named in `em_vars` using the EM algorithm
 loglikelihoods = np.zeros(10)
 for i in range(len(loglikelihoods)):
     kf = kf.fit(X=data.data, n_iter=1)
@@ -43,10 +71,11 @@ T = data.data.shape[0]
 blind_state_estimates = np.zeros((T, n_dim_state))
 for t in range(T - 1):
     if t == 0:
-        blind_state_estimates[t] = data.initial_state_mean
-    blind_state_estimates[t + 1] = data.transition_matrix.  \
-        dot(blind_state_estimates[t]) +   \
-        data.transition_offsets[t]
+        blind_state_estimates[t] = kf.initial_state_mean
+    blind_state_estimates[t + 1] = (
+      np.dot(kf.transition_matrices, blind_state_estimates[t])
+      + kf.transition_offsets[t]
+    )
 
 # Estimate the hidden states using observations up to and including
 # time t for t in [0...T-1].  This method outputs the mean and covariance
@@ -62,8 +91,8 @@ for t in range(T - 1):
 #    P(x_t | z_{1:T})
 smoothed_state_estimates = kf.predict(data.data)
 
-# Draw the true, filtered, and smoothed state estimates for all
-# 5 dimensions.
+# Draw the true, blind,e filtered, and smoothed state estimates for all 5
+# dimensions.
 pl.figure(figsize=(16, 6))
 pl.hold(True)
 lines_true = pl.plot(data.target, linestyle='-', color='b')

@@ -3,8 +3,17 @@
 Applying the Kalman Filter with Missing Observations
 ====================================================
 
-This example shows how one may apply all of :mod:`sklearn.kalman`'s Kalman
-Smoother, even with missing observations.
+This example shows how one may apply :class:`KalmanFilter` when some
+measurements are missing.
+
+While the Kalman Filter and Kalman Smoother are typically presented assuming a
+measurement exists for every time step, this is not always the case in reality.
+:class:`KalmanFilter` is implemented to recognize masked portions of numpy
+arrays as missing measurements.
+
+The figure drawn illustrates the trajectory of each dimension of the true
+state, the estimated state using all measurements, and the estimated state
+using every fifth measurement.
 '''
 import numpy as np
 import pylab as pl
@@ -51,6 +60,7 @@ lines_smooth_all = pl.plot(smoothed_states_all, color='r')
 lines_smooth_missing = pl.plot(smoothed_states_missing, color='g')
 pl.legend(
     (lines_true[0], lines_smooth_all[0], lines_smooth_missing[0]),
-    ('true', 'all', 'missing'), loc='lower right'
+    ('true', 'all', 'missing'),
+    loc='lower right'
 )
 pl.show()

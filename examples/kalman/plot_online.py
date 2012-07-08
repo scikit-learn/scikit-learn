@@ -3,9 +3,19 @@
 Online State Estimation with the Kalman Filter
 ==============================================
 
-The Kalman Filter updates the state mean and covariance matrix in a recursive
-fashion and is thus ideal for online state estimation.  This example shows how
-it can be applied with the :mod:`sklearn.kalman` module.
+This example shows how :class:`KalmanFilter` can be used to estimate hidden
+states in an online setting.
+
+While the Kalman Smoother is able to estimate the hidden state of a target at
+any time step using *all* measurements, the Kalman Filter only uses
+measurements up to and including the current time step.  This is done using a
+set of recursive formulae that only require the mean and covariance matrix
+output by the Kalman Filter at the previous time step, meaning that we may
+apply the Kalman Filter in an online manner.
+
+The drawn figure shows two sets of lines; the first represents the true, hidden
+state of the target, while the second represents the estimates output by the
+Kalman Filter.
 '''
 import numpy as np
 import pylab as pl
@@ -27,7 +37,10 @@ kf = KalmanFilter(
     random_state=0
 )
 
-# Estimate mean and covariance of hidden state distribution iteratively.
+# Estimate mean and covariance of hidden state distribution iteratively.  This
+# is equivalent to
+#
+#   >>> (filter_state_means, filtered_state_covariance, _) = kf.filter(data)
 T = data.data.shape[0]
 n_dim_state = data.transition_matrix.shape[0]
 filtered_state_means = np.zeros((T, n_dim_state))
@@ -48,5 +61,5 @@ pl.figure()
 pl.hold(True)
 lines_true = pl.plot(data.target, color='b')
 lines_filt = pl.plot(filtered_state_means, color='r')
-pl.legend((lines_true[0], lines_filt[0]), ('true', 'filt'))
+pl.legend((lines_true[0], lines_filt[0]), ('true', 'filtered'))
 pl.show()
