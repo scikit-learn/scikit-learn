@@ -40,7 +40,7 @@ kf = KalmanFilter(
 # Estimate mean and covariance of hidden state distribution iteratively.  This
 # is equivalent to
 #
-#   >>> (filter_state_means, filtered_state_covariance, _) = kf.filter(data)
+#   >>> (filter_state_means, filtered_state_covariance) = kf.filter(data)
 T = data.data.shape[0]
 n_dim_state = data.transition_matrix.shape[0]
 filtered_state_means = np.zeros((T, n_dim_state))
@@ -49,7 +49,7 @@ for t in range(T - 1):
     if t == 0:
         filtered_state_means[t] = data.initial_state_mean
         filtered_state_covariances[t] = data.initial_state_covariance
-    (filtered_state_means[t + 1], filtered_state_covariances[t + 1], _) = (
+    (filtered_state_means[t + 1], filtered_state_covariances[t + 1]) = (
         kf.filter_update(
             filtered_state_means[t], filtered_state_covariances[t],
             data.data[t + 1], transition_offset=data.transition_offsets[t],

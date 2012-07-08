@@ -57,6 +57,70 @@ def _last_dims(X, t, ndims=2):
                 " or more are required") % (len(X.shape), ndims))
 
 
+def _loglikelihoods(observation_matrices, observation_offsets,
+                    observation_covariance, predicted_state_means,
+                    predicted_state_covariances, observations):
+    """Calculate log likelihood of all observations
+
+    Parameters
+    ----------
+    observation_matrices : [T, n_dim_obs, n_dim_obs] or [n_dim_obs,
+    n_dim_state] array
+        observation matrices for t in [0...T-1]
+    observation_offsets : [T, n_dim_obs] or [n_dim_obs] array
+        offsets for observations for t = [0...T-1]
+    observation_covariance : [n_dim_obs, n_dim_obs] array
+        covariance matrix for all observations
+    predicted_state_means : [T, n_dim_state] array
+        mean of state at time t given observations from times
+        [0...t-1] for t in [0...T-1]
+    predicted_state_covariances : [T, n_dim_state, n_dim_state] array
+        covariance of state at time t given observations from times
+        [0...t-1] for t in [0...T-1]
+    observations : [n_dim_obs] array
+        All observations.  If `observations[t]` is a masked array and any of
+        its values are masked, the observation will be ignored.
+
+    Returns
+    -------
+    loglikelihoods: [T] array
+        `loglikelihoods[t]` is the probability density of the observation
+        generated at time step t
+    """
+    T = observations.shape[0]
+    loglikelihoods = np.zeros(T)
+    for t in range(T):
+        observation = observations[t]
+        if not np.any(np.ma.getmask(observation)):
+            observation_matrix = _last_dims(observation_matrices, t)
+            observation_offset = _last_dims(observation_offsets, t, ndims=1)
+            predicted_state_mean = _last_dims(
+                predicted_state_means, t, ndims=1
+            )
+            predicted_state_covariance = _last_dims(
+                predicted_state_covariances, t
+            )
+
+            predicted_observation_mean = (
+                np.dot(observation_matrix,
+                       predicted_state_mean)
+                + observation_offset
+            )
+            predicted_observation_covariance = (
+                np.dot(observation_matrix,
+                       np.dot(predicted_state_covariance,
+                              observation_matrix.T))
+                + observation_covariance
+            )
+            loglikelihoods[t] = log_multivariate_normal_density(
+                observation[np.newaxis, :],
+                predicted_observation_mean[np.newaxis, :],
+                predicted_observation_covariance[np.newaxis, :, :],
+                'full'
+            )
+    return loglikelihoods
+
+
 def _filter_predict(transition_matrix, transition_covariance,
                     transition_offset, current_state_mean,
                     current_state_covariance):
@@ -132,15 +196,12 @@ def _filter_correct(observation_matrix, observation_covariance,
     -------
     kalman_gain : [n_dim_state, n_dim_obs] array
         Kalman gain matrix for time t
-    mu_new : [n_dim_state] array
+    corrected_state_mean : [n_dim_state] array
         mean of state at time t given observations from times
         [0...t]
-    predicted_state_covariance : [n_dim_state, n_dim_state] array
+    corrected_state_covariance : [n_dim_state, n_dim_state] array
         covariance of state at time t given observations from times
         [0...t]
-    loglikelihood : float
-        log likelihood of observation at time t given observations
-        from times [0...t-1]
     """
     if not np.any(np.ma.getmask(observation)):
         predicted_observation_mean = (
@@ -154,12 +215,6 @@ def _filter_correct(observation_matrix, observation_covariance,
                           observation_matrix.T))
             + observation_covariance
         )
-        loglikelihood = log_multivariate_normal_density(
-            observation[np.newaxis, :],
-            predicted_observation_mean[np.newaxis, :],
-            predicted_observation_covariance[np.newaxis, :, :],
-            'full'
-        )
 
         kalman_gain = (
             np.dot(predicted_state_covariance,
@@ -171,7 +226,7 @@ def _filter_correct(observation_matrix, observation_covariance,
             predicted_state_mean
             + np.dot(kalman_gain, observation - predicted_observation_mean)
         )
-        predicted_state_covariance = (
+        corrected_state_covariance = (
             predicted_state_covariance
             - np.dot(kalman_gain,
                      np.dot(observation_matrix,
@@ -182,12 +237,11 @@ def _filter_correct(observation_matrix, observation_covariance,
         n_dim_obs = observation_matrix.shape[0]
         kalman_gain = np.zeros((n_dim_state, n_dim_obs))
 
-        loglikelihood = 0.0
         corrected_state_mean = predicted_state_mean
-        predicted_state_covariance = predicted_state_covariance
+        corrected_state_covariance = predicted_state_covariance
 
     return (kalman_gain, corrected_state_mean,
-            predicted_state_covariance, loglikelihood)
+            corrected_state_covariance)
 
 
 def _filter(transition_matrices, observation_matrices, transition_covariance,
@@ -241,9 +295,6 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
     filtered_state_covariances : [T, n_dim_state] array
         `filtered_state_covariances[t]` = covariance of hidden state at time t
         given observations from times [0...t]
-    loglikelihoods : [T] array
-        `loglikelihoods[t]` = log likelihood of observation at time t given
-        observations from times [0...t-1]
     """
     T = observations.shape[0]
     n_dim_state = len(initial_state_mean)
@@ -254,7 +305,6 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
     kalman_gains = np.zeros((T, n_dim_state, n_dim_obs))
     filtered_state_means = np.zeros((T, n_dim_state))
     filtered_state_covariances = np.zeros((T, n_dim_state, n_dim_state))
-    loglikelihoods = np.zeros(T)
 
     for t in range(T):
         if t == 0:
@@ -278,7 +328,7 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
         observation_covariance = _last_dims(observation_covariance, t)
         observation_offset = _last_dims(observation_offsets, t, ndims=1)
         (kalman_gains[t], filtered_state_means[t],
-         filtered_state_covariances[t], loglikelihoods[t]) = (
+         filtered_state_covariances[t]) = (
             _filter_correct(observation_matrix,
                 observation_covariance,
                 observation_offset,
@@ -290,7 +340,7 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
 
     return (predicted_state_means, predicted_state_covariances,
             kalman_gains, filtered_state_means,
-            filtered_state_covariances, loglikelihoods)
+            filtered_state_covariances)
 
 
 def _smooth_update(transition_matrix, filtered_state_mean,
@@ -507,49 +557,64 @@ def _em(observations, transition_offsets, observation_offsets,
     initial_state_covariance : [n_dim_state] array
         estimated covariance of initial state distribution
     """
-    observation_matrix = given.get('observation_matrices',
-        _em_observation_matrix(
+    def get_or_call(key, f):
+        """Retrieve a key from `given` or call a function"""
+        try:
+            return given[key]
+        except KeyError:
+            return f()
+
+    observation_matrix = get_or_call(
+        'observation_matrices',
+        lambda: _em_observation_matrix(
             observations, observation_offsets,
             smoothed_state_means, smoothed_state_covariances
         )
     )
-    observation_covariance = given.get('observation_covariance',
-        _em_observation_covariance(
+    observation_covariance = get_or_call(
+        'observation_covariance',
+        lambda: _em_observation_covariance(
             observations, observation_offsets,
             observation_matrix, smoothed_state_means,
             smoothed_state_covariances
         )
     )
-    transition_matrix = given.get('transition_matrices',
-        _em_transition_matrix(
+    transition_matrix = get_or_call(
+        'transition_matrices',
+        lambda: _em_transition_matrix(
             transition_offsets, smoothed_state_means,
             smoothed_state_covariances, pairwise_covariances
         )
     )
-    transition_covariance = given.get('transition_covariance',
-        _em_transition_covariance(
+    transition_covariance = get_or_call(
+        'transition_covariance',
+        lambda: _em_transition_covariance(
             transition_matrix, transition_offsets,
             smoothed_state_means, smoothed_state_covariances,
             pairwise_covariances
         )
     )
-    initial_state_mean = given.get('initial_state_mean',
-        _em_initial_state_mean(smoothed_state_means)
+    initial_state_mean = get_or_call(
+        'initial_state_mean',
+        lambda: _em_initial_state_mean(smoothed_state_means)
     )
-    initial_state_covariance = given.get('initial_state_covariance',
-        _em_initial_state_covariance(
+    initial_state_covariance = get_or_call(
+        'initial_state_covariance',
+        lambda: _em_initial_state_covariance(
             initial_state_mean, smoothed_state_means,
             smoothed_state_covariances
         )
     )
-    transition_offsets = given.get('transition_offsets',
-        _em_transition_offset(
+    transition_offsets = get_or_call(
+        'transition_offsets',
+        lambda: _em_transition_offset(
             transition_matrix,
             smoothed_state_means
         )
     )
-    observation_offsets = given.get('observation_offsets',
-        _em_observation_offset(
+    observation_offsets = get_or_call(
+        'observation_offsets',
+        lambda: _em_observation_offset(
             observation_matrix, smoothed_state_means,
             observations
         )
@@ -570,7 +635,7 @@ def _em_observation_matrix(observations, observation_offsets,
 
     .. math::
 
-        C &= ( \sum_{t=0}^{T-1} (z_t - d_t) \mathbb{E}[x_t] )
+        C &= ( \sum_{t=0}^{T-1} (z_t - d_t) \mathbb{E}[x_t]^T )
              ( \sum_{t=0}^{T-1} \mathbb{E}[x_t x_t^T] )^-1
 
     """
@@ -998,8 +1063,6 @@ class KalmanFilter(BaseEstimator):
             covariance matrix of hidden state distributions for times
             [0...T-1] given observations up to and including the current
             time step
-        loglikelihoods : [T] array
-            log likelihood of observations at each time step
         """
         Z = self._parse_observations(X)
 
@@ -1010,7 +1073,7 @@ class KalmanFilter(BaseEstimator):
         )
 
         (_, _, _, filtered_state_means,
-         filtered_state_covariances, loglikelihoods) = (
+         filtered_state_covariances) = (
             _filter(
                 transition_matrices, observation_matrices,
                 transition_covariance, observation_covariance,
@@ -1019,8 +1082,7 @@ class KalmanFilter(BaseEstimator):
                 Z
             )
         )
-        return (filtered_state_means, filtered_state_covariances,
-                loglikelihoods)
+        return (filtered_state_means, filtered_state_covariances)
 
     def filter_update(self, filtered_state_mean, filtered_state_covariance,
                       observation=None, transition_matrix=None,
@@ -1074,9 +1136,6 @@ class KalmanFilter(BaseEstimator):
         next_filtered_state_covariance : [n_dim_state, n_dim_state] array
             covariance of estimate for state at time t+1 given observations
             from times [1...t+1]
-        loglikelihood : float
-            likelihood of observation observation given all previous
-            observations.
         """
         def arg_or_default(arg, default, dim, name):
             if arg is None:
@@ -1137,7 +1196,7 @@ class KalmanFilter(BaseEstimator):
             )
         )
         (_, next_filtered_state_mean,
-         next_filtered_state_covariance, loglikelihood) = (
+         next_filtered_state_covariance) = (
             _filter_correct(
                 observation_matrix, observation_covariance,
                 observation_offset, predicted_state_mean,
@@ -1145,8 +1204,7 @@ class KalmanFilter(BaseEstimator):
             )
         )
 
-        return (next_filtered_state_mean, next_filtered_state_covariance,
-                loglikelihood)
+        return (next_filtered_state_mean, next_filtered_state_covariance)
 
     def predict(self, X):
         r"""Apply the Kalman Smoother
@@ -1177,8 +1235,7 @@ class KalmanFilter(BaseEstimator):
         )
 
         (predicted_state_means, predicted_state_covariances,
-         _, filtered_state_means, filtered_state_covariances,
-         loglikelihoods) = (
+         _, filtered_state_means, filtered_state_covariances) = (
             _filter(
                 transition_matrices, observation_matrices,
                 transition_covariance, observation_covariance,
@@ -1258,7 +1315,7 @@ class KalmanFilter(BaseEstimator):
         for i in range(n_iter):
             (predicted_state_means, predicted_state_covariances,
              kalman_gains, filtered_state_means,
-             filtered_state_covariances, loglikelihoods) = (
+             filtered_state_covariances) = (
                 _filter(
                     self.transition_matrices, self.observation_matrices,
                     self.transition_covariance, self.observation_covariance,
@@ -1289,6 +1346,50 @@ class KalmanFilter(BaseEstimator):
                 )
             )
         return self
+
+    def score(self, X):
+        """Calculate the log likelihood of all observations
+
+        Parameters
+        ----------
+        X : [T, n_dim_obs] array
+            observations for time steps [0...T-1]
+
+        Returns
+        -------
+        likelihood : float
+            likelihood of all observations
+        """
+        Z = self._parse_observations(X)
+
+        # initialize parameters
+        (transition_matrices, transition_offsets,
+         transition_covariance, observation_matrices,
+         observation_offsets, observation_covariance,
+         initial_state_mean, initial_state_covariance) = (
+            self._initialize_parameters()
+        )
+
+        # apply the Kalman Filter
+        (predicted_state_means, predicted_state_covariances,
+         kalman_gains, filtered_state_means,
+         filtered_state_covariances) = (
+            _filter(
+                transition_matrices, observation_matrices,
+                transition_covariance, observation_covariance,
+                transition_offsets, observation_offsets,
+                initial_state_mean, initial_state_covariance,
+                Z
+            )
+        )
+
+        # get likelihoods for each time step
+        loglikelihoods = _loglikelihoods(
+          observation_matrices, observation_offsets, observation_covariance,
+          predicted_state_means, predicted_state_covariances, Z
+        )
+
+        return np.sum(loglikelihoods)
 
     def _initialize_parameters(self):
         """Retrieve parameters if they exist, else replace with defaults"""

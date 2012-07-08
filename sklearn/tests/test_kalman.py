@@ -37,7 +37,7 @@ def test_kalman_filter_update():
         data.initial_state_covariance)
 
     # use Kalman Filter
-    (x_filt, V_filt, ll) = kf.filter(X=data.data)
+    (x_filt, V_filt) = kf.filter(X=data.data)
 
     # use online Kalman Filter
     T = data.data.shape[0]
@@ -48,7 +48,7 @@ def test_kalman_filter_update():
         if t == 0:
             x_filt2[0] = data.initial_state_mean
             V_filt2[0] = data.initial_state_covariance
-        (x_filt2[t + 1], V_filt2[t + 1], _) = kf.filter_update(
+        (x_filt2[t + 1], V_filt2[t + 1]) = kf.filter_update(
             x_filt2[t], V_filt2[t], data.data[t + 1],
             transition_offset=data.transition_offsets[t]
         )
@@ -67,7 +67,7 @@ def test_kalman_filter():
         data.initial_state_mean,
         data.initial_state_covariance)
 
-    (x_filt, V_filt, ll) = kf.filter(X=data.data)
+    (x_filt, V_filt) = kf.filter(X=data.data)
     for t in range(500):
         assert_true(
             linalg.norm(x_filt[t] - data.filtered_state_means[t]) < 1e-3
@@ -110,7 +110,7 @@ def test_kalman_fit():
 
     scores = np.zeros(5)
     for i in range(len(scores)):
-        scores[i] = np.sum(kf.filter(X=data.data)[-1])
+        scores[i] = kf.score(data.data)
         kf.fit(X=data.data, n_iter=1)
 
     assert_true(np.allclose(scores, data.loglikelihoods[:5]))
@@ -120,7 +120,7 @@ def test_kalman_fit():
     T = 30
     for i in range(len(scores)):
         kf.fit(X=data.data[0:T], n_iter=1)
-        scores[i] = np.sum(kf.filter(X=data.data[0:T])[-1])
+        scores[i] = kf.score(data.data[0:T])
     for i in range(len(scores) - 1):
         assert_true(scores[i] < scores[i + 1])
 

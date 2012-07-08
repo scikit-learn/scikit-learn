@@ -62,7 +62,7 @@ kf = KalmanFilter(
 loglikelihoods = np.zeros(10)
 for i in range(len(loglikelihoods)):
     kf = kf.fit(X=data.data, n_iter=1)
-    loglikelihoods[i] = np.sum(kf.filter(X=data.data)[-1])
+    loglikelihoods[i] = kf.score(data.data)
 
 # Estimate the state without using any observations.  This will let us see how
 # good we could do if we ran blind.
@@ -81,7 +81,7 @@ for t in range(T - 1):
 # time t for t in [0...T-1].  This method outputs the mean and covariance
 # characterizing the Multivariate Normal distribution for
 #   P(x_t | z_{1:t})
-(filtered_state_estimates, _, _) = kf.filter(data.data)
+(filtered_state_estimates, _) = kf.filter(data.data)
 
 # Estimate the hidden states using all observations.  These estimates
 # will be 'smoother' (and are to be preferred) to those produced by
