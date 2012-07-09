@@ -51,6 +51,7 @@ Some advantages of decision trees are:
     - Performs well even if its assumptions are somewhat violated by
       the true model from which the data were generated.
 
+
 The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
@@ -103,7 +104,7 @@ the class labels for the training samples::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([1])
+    array([ 1.])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -139,7 +140,7 @@ iris dataset::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict(iris.data[0, :])
-    array([0])
+    array([ 0.])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -191,7 +192,7 @@ A multi-output problem is a supervised learning problem with several outputs
 to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
 
 When there is no correlation between the outputs, a very simple way to solve
-this kind of problems is to build n independent models, i.e. one for each
+this kind of problem is to build n independent models, i.e. one for each
 output, and then to use those models to independently predict each one of the n
 outputs. However, because it is likely that the output values related to the
 same input are themselves correlated, an often better way is to build a single
@@ -200,7 +201,7 @@ lower training time since only a single estimator is built. Second, the
 generalization accuracy of the resulting estimator may often be increased.
 
 With regard to decision trees, this strategy can readily be used to support
-multi-output problems. This indeed amounts to:
+multi-output problems. This requires the following changes:
 
   - Store n output values in leaves, instead of 1;
   - Use splitting criteria that compute the average reduction across all
@@ -211,11 +212,22 @@ strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
 of size ``[n_samples, n_outputs]`` then the resulting estimator will:
 
-  - Output n_output values upon ``predict``;
-  - Output a list of n_output arrays of class probabilities upon
+  * Output n_output values upon ``predict``;
+
+  * Output a list of n_output arrays of class probabilities upon
     ``predict_proba``.
 
-The use of multi-output trees is demonstrated in
+
+The use of multi-output trees for regression is demonstrated in
+:ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
+X is a single real value and the outputs Y are the sine and cosine of X.
+
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_1.png
+   :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
+   :scale: 75
+   :align: center
+
+The use of multi-output trees for classification is demonstrated in
 :ref:`example_ensemble_plot_forest_multioutput.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
@@ -227,6 +239,7 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
+ * :ref:`example_tree_plot_tree_regression_multioutput.py`
  * :ref:`example_ensemble_plot_forest_multioutput.py`
 
 

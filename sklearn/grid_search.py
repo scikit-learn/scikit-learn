@@ -85,8 +85,14 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     clf.set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
-        X_train = [X[i] for i, cond in enumerate(train) if cond]
-        X_test = [X[i] for i, cond in enumerate(test) if cond]
+        # train and test can be boolean mask but for list
+        # they should be indices so conversion is done if needed.
+        if isinstance(train, np.ndarray) and train.dtype == np.bool:
+            train = np.where(train)[0]
+        if isinstance(test, np.ndarray) and test.dtype == np.bool:
+            test = np.where(test)[0]
+        X_train = [X[i] for i in train]
+        X_test = [X[i] for i in test]
     else:
         if sp.issparse(X):
             # For sparse matrices, slicing only works with indices
