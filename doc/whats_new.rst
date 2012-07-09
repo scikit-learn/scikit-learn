@@ -28,6 +28,9 @@ Changelog
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
      decompresses them on the fly.
 
+   - SVMlight file format serializer now preserves double precision floating
+     point values, by `Olivier Grisel`_.
+
    - A common testing framework for all estimators was added.
 
    - Decision trees and forests of randomized trees now support multi-output
