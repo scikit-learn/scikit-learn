@@ -27,7 +27,7 @@ API changes summary
 -------------------
 
    - In :class:`metrics.roc_curve`, the `thresholds` array is now returned
-     with it's order reversed, in order to keep it consitant with the order
+     with it's order reversed, in order to keep it consistent with the order
      of the returned `fpr` and `tpr`.
 
    - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
