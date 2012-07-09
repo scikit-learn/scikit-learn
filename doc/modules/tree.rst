@@ -104,7 +104,7 @@ the class labels for the training samples::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([1])
+    array([1.])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -140,7 +140,7 @@ iris dataset::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict(iris.data[0, :])
-    array([0])
+    array([0.])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
