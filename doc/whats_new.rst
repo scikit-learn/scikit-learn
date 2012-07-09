@@ -26,6 +26,10 @@ Changelog
 API changes summary
 -------------------
 
+   - In :class:`metrics.roc_curve`, the `thresholds` array is now returned
+     with it's order reversed, in order to keep it consitant with the order
+     of the returned `fpr` and `tpr`.
+
    - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
      :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
      object when initialising it and not through ``fit``. Now ``fit`` will 

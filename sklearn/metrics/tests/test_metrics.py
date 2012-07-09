@@ -91,7 +91,7 @@ def test_roc_returns_consistency():
         p = np.sum(y_true)
         tpr_correct.append(1.0 * tp / p)
 
-    # compare tpr and tpr_correct to see if the thresholds' order was correctq
+    # compare tpr and tpr_correct to see if the thresholds' order was correct
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
 
 
