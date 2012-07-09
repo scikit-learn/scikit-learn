@@ -236,6 +236,7 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
+ * :ref:`example_tree_plot_tree_regression_multioutput.py`
  * :ref:`example_ensemble_plot_forest_multioutput.py`
 
 
