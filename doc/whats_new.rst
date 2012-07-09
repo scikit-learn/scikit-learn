@@ -9,6 +9,13 @@
 Changelog
 ---------
 
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
+     via the ``max_features`` argument.
+
+   - Added Huber and Quantile loss functions to
+     :class:`ensemble.GradientBoostingRegressor`.
+
    - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
@@ -26,9 +33,9 @@ Changelog
 API changes summary
 -------------------
 
-   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
-     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
-     object when initialising it and not through ``fit``. Now ``fit`` will 
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
+     object when initialising it and not through ``fit``. Now ``fit`` will
      only accept the data as an input parameter.
 
    - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
