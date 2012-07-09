@@ -50,6 +50,10 @@ target values (class labels) for the training samples::
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
 
+Like :ref:`decision trees <tree>`, forests of trees also extend
+to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
+``[n_samples, n_outputs]``).
+
 
 Random Forests
 --------------
@@ -161,6 +165,8 @@ amount of time (e.g., on large datasets).
 
  * :ref:`example_ensemble_plot_forest_iris.py`
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
+ * :ref:`example_ensemble_plot_forest_multioutput.py`
+
 
 .. topic:: References
 
@@ -209,6 +215,7 @@ the matching feature to the prediction function.
 
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
+
 
 .. _gradient_boosting:
 
@@ -470,6 +477,7 @@ can be controled via the ``max_features`` parameter.
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+
 
 .. topic:: References
 
