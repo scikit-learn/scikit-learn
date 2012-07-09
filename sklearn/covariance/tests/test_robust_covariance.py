@@ -41,9 +41,7 @@ def test_mcd():
 
 def launch_mcd_on_dataset(
     n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support):
-    """
 
-    """
     rand_gen = np.random.RandomState(0)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers
@@ -56,7 +54,7 @@ def launch_mcd_on_dataset(
 
     pure_data = data[inliers_mask]
     # compute MCD by fitting an object
-    mcd_fit = MinCovDet().fit(data)
+    mcd_fit = MinCovDet(random_state=rand_gen).fit(data)
     T = mcd_fit.location_
     S = mcd_fit.covariance_
     H = mcd_fit.support_
@@ -69,9 +67,6 @@ def launch_mcd_on_dataset(
 
 
 def test_outlier_detection():
-    """
-
-    """
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
