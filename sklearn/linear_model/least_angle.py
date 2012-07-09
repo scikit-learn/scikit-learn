@@ -215,6 +215,18 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # is this really needed ?
         AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
+
+        if not np.isfinite(AA):
+            # L is too ill-conditionned
+            i = 0
+            L_ = L[:n_active, :n_active].copy()
+            while not np.isfinite(AA):
+                L_.flat[::n_active + 1] += (2 ** i) * eps
+                least_squares, info = solve_cholesky(L_,
+                                    sign_active[:n_active], lower=True)
+                AA = 1. / np.sqrt(np.sum(least_squares
+                                         * sign_active[:n_active]))
+                i += 1
         least_squares *= AA
 
         if Gram is None:

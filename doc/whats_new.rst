@@ -9,6 +9,13 @@
 Changelog
 ---------
 
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
+     via the ``max_features`` argument.
+
+   - Added Huber and Quantile loss functions to
+     :class:`ensemble.GradientBoostingRegressor`.
+
    - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
@@ -26,13 +33,19 @@ Changelog
 
    - A common testing framework for all estimators was added.
 
+   - Decision trees and forests of randomized trees now support multi-output
+     classification and regression problems, by `Gilles Louppe`
 
 API changes summary
 -------------------
 
-   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
-     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
-     object when initialising it and not through ``fit``. Now ``fit`` will 
+   - In :class:`metrics.roc_curve`, the `thresholds` array is now returned
+     with it's order reversed, in order to keep it consistent with the order
+     of the returned `fpr` and `tpr`.
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
+     object when initialising it and not through ``fit``. Now ``fit`` will
      only accept the data as an input parameter.
 
    - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
