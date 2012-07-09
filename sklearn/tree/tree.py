@@ -1,6 +1,6 @@
 """
 This module gathers tree-based methods, including decision, regression and
-randomized trees.
+randomized trees. Single and multi-output problems are both handled.
 """
 
 # Code is originally adapted from MILK: Machine Learning Toolkit
@@ -19,6 +19,8 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 
 from . import _tree
+
+import sys
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -82,15 +84,23 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             feature = feature_names[tree.feature[node_id]]
         else:
             feature = "X[%s]" % tree.feature[node_id]
+
+        value = tree.value[node_id]
+        if tree.n_outputs == 1:
+            value = value[0, :]
+
         if tree.children[node_id, 0] == Tree.LEAF:
             return "error = %.4f\\nsamples = %s\\nvalue = %s" \
-                   % (tree.init_error[node_id], tree.n_samples[node_id],
-                      tree.value[node_id])
-
-        return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
-               % (feature, tree.threshold[node_id],
-                  tree.init_error[node_id], tree.n_samples[node_id],
-                  tree.value[node_id])
+                   % (tree.init_error[node_id],
+                      tree.n_samples[node_id],
+                      value)
+        else:
+            return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+                   % (feature,
+                      tree.threshold[node_id],
+                      tree.init_error[node_id],
+                      tree.n_samples[node_id],
+                      value)
 
     def recurse(tree, node_id, parent=None):
         if node_id == Tree.LEAF:
@@ -145,9 +155,9 @@ class Tree(object):
         The feature to split on (only for internal nodes).
 
     threshold : np.ndarray of float64
-        The threshold of each node (only for leaves).
+        The threshold of each node (only for internal nodes).
 
-    value : np.ndarray of float64, shape=(capacity, n_classes)
+    value : np.ndarray of float64, shape=(capacity, n_outputs, n_classes)
         Contains the constant prediction value of each node.
 
     best_error : np.ndarray of float64
@@ -165,9 +175,10 @@ class Tree(object):
     LEAF = -1
     UNDEFINED = -2
 
-    def __init__(self, n_classes, n_features, capacity=3):
+    def __init__(self, n_classes, n_features, n_outputs, capacity=3):
         self.n_classes = n_classes
         self.n_features = n_features
+        self.n_outputs = n_outputs
 
         self.node_count = 0
 
@@ -178,7 +189,8 @@ class Tree(object):
         self.feature.fill(Tree.UNDEFINED)
 
         self.threshold = np.empty((capacity,), dtype=np.float64)
-        self.value = np.empty((capacity, n_classes), dtype=np.float64)
+        self.value = np.empty((capacity, n_outputs, np.max(n_classes)),
+                              dtype=np.float64)
 
         self.best_error = np.empty((capacity,), dtype=np.float32)
         self.init_error = np.empty((capacity,), dtype=np.float32)
@@ -195,7 +207,8 @@ class Tree(object):
         self.children.resize((capacity, 2), refcheck=False)
         self.feature.resize((capacity,), refcheck=False)
         self.threshold.resize((capacity,), refcheck=False)
-        self.value.resize((capacity, self.value.shape[1]), refcheck=False)
+        self.value.resize((capacity, self.value.shape[1], self.value.shape[2]),
+                          refcheck=False)
         self.best_error.resize((capacity,), refcheck=False)
         self.init_error.resize((capacity,), refcheck=False)
         self.n_samples.resize((capacity,), refcheck=False)
@@ -218,6 +231,7 @@ class Tree(object):
         self.init_error[node_id] = init_error
         self.best_error[node_id] = best_error
         self.n_samples[node_id] = n_samples
+
         self.value[node_id] = value
 
         # set as left or right child of parent
@@ -228,6 +242,7 @@ class Tree(object):
                 self.children[parent, 1] = node_id
 
         self.node_count += 1
+
         return node_id
 
     def _add_leaf(self, parent, is_left_child, value, error, n_samples):
@@ -248,8 +263,8 @@ class Tree(object):
             self.children[parent, 1] = node_id
 
         self.children[node_id, :] = Tree.LEAF
-
         self.node_count += 1
+
         return node_id
 
     def build(self, X, y, criterion, max_depth, min_samples_split,
@@ -315,10 +330,10 @@ class Tree(object):
         # Setup auxiliary data structures and check input before
         # recursive partitioning
         if X.dtype != DTYPE or not np.isfortran(X):
-            X = np.asanyarray(X, dtype=DTYPE, order="F")
+            X = np.asarray(X, dtype=DTYPE, order="F")
 
         if y.dtype != DTYPE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+            y = np.asarray(y, dtype=DTYPE, order="C")
 
         if sample_mask is None:
             sample_mask = np.ones((X.shape[0],), dtype=np.bool)
@@ -346,7 +361,8 @@ class Tree(object):
         return self
 
     def predict(self, X):
-        out = np.empty((X.shape[0], self.value.shape[1]), dtype=np.float64)
+        out = np.empty((X.shape[0], self.value.shape[1], self.value.shape[2]),
+                       dtype=np.float64)
 
         _tree._predict_tree(X,
                             self.children,
@@ -430,6 +446,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.random_state = check_random_state(random_state)
 
         self.n_features_ = None
+        self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
         self.find_split_ = _tree._find_best_split
@@ -445,7 +462,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         X : array-like of shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -455,27 +472,42 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             Returns self.
         """
         # set min_samples_split sensibly
-        self.min_samples_split = max(self.min_samples_split, 2 *
-                self.min_samples_leaf)
+        self.min_samples_split = max(self.min_samples_split,
+                                     2 * self.min_samples_leaf)
 
         # Convert data
-        X = np.asarray(X, dtype=DTYPE, order='F')
+        X = np.asarray(X, dtype=DTYPE, order="F")
         n_samples, self.n_features_ = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
 
+        y = np.copy(y)
+        y = np.atleast_1d(y)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        self.classes_ = []
+        self.n_classes_ = []
+        self.n_outputs_ = y.shape[1]
+
         if is_classification:
-            self.classes_ = np.unique(y)
-            self.n_classes_ = self.classes_.shape[0]
-            criterion = CLASSIFICATION[self.criterion](self.n_classes_)
-            y = np.searchsorted(self.classes_, y)
+            for k in xrange(self.n_outputs_):
+                unique = np.unique(y[:, k])
+                self.classes_.append(unique)
+                self.n_classes_.append(unique.shape[0])
+                y[:, k] = np.searchsorted(unique, y[:, k])
 
         else:
-            self.classes_ = None
-            self.n_classes_ = 1
-            criterion = REGRESSION[self.criterion]()
+            self.classes_ = [None] * self.n_outputs_
+            self.n_classes_ = [1] * self.n_outputs_
 
-        y = np.ascontiguousarray(y, dtype=DTYPE)
+        y = np.asarray(y, dtype=DTYPE, order="C")
+
+        if is_classification:
+            criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
+                                                       self.n_classes_)
+        else:
+            criterion = REGRESSION[self.criterion](self.n_outputs_)
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
@@ -484,24 +516,18 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
-
                 else:
                     max_features = self.n_features_
-
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_)))
-
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_)))
-
             else:
                 raise ValueError(
                     'Invalid value for max_features. Allowed string '
                     'values are "auto", "sqrt" or "log2".')
-
         elif self.max_features is None:
             max_features = self.n_features_
-
         else:
             max_features = self.max_features
 
@@ -520,7 +546,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree_ = Tree(self.n_classes_, self.n_features_)
+        self.tree_ = Tree(self.n_classes_, self.n_features_, self.n_outputs_)
         self.tree_.build(X, y, criterion, max_depth,
                 self.min_samples_split, self.min_samples_leaf,
                 self.min_density, max_features, self.random_state,
@@ -547,7 +573,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
         X = array2d(X, dtype=DTYPE)
@@ -562,11 +588,20 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
+        P = self.tree_.predict(X)
+
         if isinstance(self, ClassifierMixin):
-            predictions = self.classes_.take(np.argmax(
-                self.tree_.predict(X), axis=1), axis=0)
+            predictions = np.zeros((n_samples, self.n_outputs_))
+
+            for k in xrange(self.n_outputs_):
+                predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k],
+                                                                    axis=1),
+                                                          axis=0)
         else:
-            predictions = self.tree_.predict(X).ravel()
+            predictions = P[:, :, 0]
+
+        if self.n_outputs_ == 1:
+            predictions = predictions.reshape((n_samples, ))
 
         return predictions
 
@@ -691,7 +726,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
@@ -707,11 +743,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
+        proba = []
         P = self.tree_.predict(X)
-        normalizer = P.sum(axis=1)[:, np.newaxis]
-        normalizer[normalizer == 0.0] = 1.0
-        P /= normalizer
-        return P
+
+        for k in xrange(self.n_outputs_):
+            P_k = P[:, k, :self.n_classes_[k]]
+            normalizer = P_k.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            P_k /= normalizer
+            proba.append(P_k)
+
+        if self.n_outputs_ == 1:
+            return proba[0]
+
+        else:
+            return proba
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.
@@ -723,11 +769,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return np.log(proba)
+
+        else:
+            for k in xrange(self.n_outputs_):
+                proba[k] = np.log(proba[k])
+
+            return proba
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
