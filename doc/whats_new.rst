@@ -9,6 +9,13 @@
 Changelog
 ---------
 
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
+     via the ``max_features`` argument.
+
+   - Added Huber and Quantile loss functions to
+     :class:`ensemble.GradientBoostingRegressor`.
+
    - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 

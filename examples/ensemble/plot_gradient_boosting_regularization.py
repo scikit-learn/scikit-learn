@@ -6,10 +6,15 @@ Gradient Boosting regularization
 Illustration of the effect of different regularization strategies
 for Gradient Boosting. The example is taken from Hastie et al 2009.
 
-The loss function used is binomial deviance. In combination with
-shrinkage, stochastic gradient boosting (Sample 0.5) can produce
-more accurate models.
+The loss function used is binomial deviance. Regularization via
+shrinkage (``learn_rate < 1.0``) improves performance considerably.
+In combination with shrinkage, stochastic gradient boosting
+(``subsample < 1.0``) can produce more accurate models by reducing the
+variance via bagging.
 Subsampling without shrinkage usually does poorly.
+Another strategy to reduce the variance is by subsampling the features
+analogous to the random splits in Random Forests
+(via the ``max_features`` parameter).
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
@@ -39,12 +44,14 @@ pl.figure()
 
 for label, color, setting in [('No shrinkage', 'orange',
                                {'learn_rate': 1.0, 'subsample': 1.0}),
-                              ('Shrink=0.1', 'turquoise',
+                              ('learn_rate=0.1', 'turquoise',
                                {'learn_rate': 0.1, 'subsample': 1.0}),
-                              ('Sample=0.5', 'blue',
+                              ('subsample=0.5', 'blue',
                                {'learn_rate': 1.0, 'subsample': 0.5}),
-                              ('Shrink=0.1, Sample=0.5', 'gray',
-                               {'learn_rate': 0.1, 'subsample': 0.5})]:
+                              ('learn_rate=0.1, subsample=0.5', 'gray',
+                               {'learn_rate': 0.1, 'subsample': 0.5}),
+                              ('learn_rate=0.1, max_features=2', 'magenta',
+                               {'learn_rate': 0.1, 'max_features': 2})]:
     params = dict(original_params)
     params.update(setting)
 
@@ -57,10 +64,9 @@ for label, color, setting in [('No shrinkage', 'orange',
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         test_deviance[i] = clf.loss_(y_test, y_pred)
 
-    pl.plot(np.arange(test_deviance.shape[0]) + 1, test_deviance, '-',
+    pl.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5], '-',
             color=color, label=label)
 
-pl.title('Deviance')
 pl.legend(loc='upper left')
 pl.xlabel('Boosting Iterations')
 pl.ylabel('Test Set Deviance')
