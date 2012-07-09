@@ -78,12 +78,13 @@ def test_roc_curve():
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
 
+
 def test_roc_returns_consistency():
     """Test whether the returned threshold matches up with tpr"""
     # make small toy dataset
     y_true, _, probas_pred = make_prediction(binary=True)
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
-    
+
     # use the given thresholds to determine the tpr
     tpr_correct = []
     for t in range(len(thresholds)):
