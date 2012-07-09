@@ -51,6 +51,7 @@ Some advantages of decision trees are:
     - Performs well even if its assumptions are somewhat violated by
       the true model from which the data were generated.
 
+
 The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
@@ -211,9 +212,11 @@ strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
 of size ``[n_samples, n_outputs]`` then the resulting estimator will:
 
-  - Output n_output values upon ``predict``;
-  - Output a list of n_output arrays of class probabilities upon
+  * Output n_output values upon ``predict``;
+
+  * Output a list of n_output arrays of class probabilities upon
     ``predict_proba``.
+
 
 The use of multi-output trees for regression is demonstrated in
 :ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
