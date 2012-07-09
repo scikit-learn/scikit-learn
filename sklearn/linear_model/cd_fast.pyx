@@ -90,7 +90,7 @@ def sparse_std(unsigned int n_samples,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
-                            double alpha, double beta,
+                            double l1_reg, double l2_reg,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y, bint positive):
     cdef double gap
@@ -101,7 +101,7 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
     # not efficient
     R = y - np.dot(X, w)
 
-    XtA = np.dot(X.T, R) - beta * w
+    XtA = np.dot(X.T, R) - l2_reg * w
     if positive:
         dual_norm_XtA = np.max(XtA)
     else:
@@ -110,16 +110,16 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
     # TODO: use squared L2 norm directly
     R_norm = linalg.norm(R)
     w_norm = linalg.norm(w, 2)
-    if (dual_norm_XtA > alpha):
-        const = alpha / dual_norm_XtA
+    if (dual_norm_XtA > l1_reg):
+        const = l1_reg / dual_norm_XtA
         A_norm = R_norm * const
         gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
     else:
         const = 1.0
         gap = R_norm ** 2
 
-    gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+    gap += l1_reg * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
+                  0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
     return gap
 
 
@@ -136,7 +136,7 @@ cdef inline restore_w(np.ndarray[DOUBLE, ndim=1] w,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
-                            double l2_reg, double l1_reg,
+                            double l1_reg, double l2_reg,
                             np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bint positive=False,
@@ -172,7 +172,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef int n_active_features
     cdef int n_cached_features
 
-    if l2_reg == 0:
+    if l1_reg == 0:
         warnings.warn("Coordinate descent with l2_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
@@ -212,7 +212,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 active_set = np.arange(n_active_features, dtype=np.int32)
                 feature_inner_product = \
                     np.zeros(shape=(n_active_features, n_active_features),
-                             dtype=np.float64, order='C') 
+                             dtype=np.float64, order='C')
                 # resize
                 gradient = gradient[nz_index]
                 w = w[nz_index]
@@ -257,8 +257,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if positive and tmp < 0:
                 w[ii] = 0.0
             else:
-                w[ii] = fsign(tmp) * fmax(fabs(tmp) - l2_reg, 0) \
-                    / (norm_cols_X[ii] + l1_reg)
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - l1_reg, 0) \
+                    / (norm_cols_X[ii] + l2_reg)
 
             # update gradients, if w changed
             if w_ii != w[ii]:
@@ -281,9 +281,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
             if use_cache:
-                gap = calculate_gap(restore_w(w, nz_index, n_features), l2_reg, l1_reg, X, y, positive)
+                gap = calculate_gap(restore_w(w, nz_index, n_features), l1_reg, l2_reg, X, y, positive)
             else:
-                gap = calculate_gap(w, l2_reg, l1_reg, X, y, positive)
+                gap = calculate_gap(w, l1_reg, l2_reg, X, y, positive)
 
             if gap < tol:
                 # return if we reached desired tolerance
@@ -784,3 +784,12 @@ def learn_dgemv():
            1, &A_f[0,0], n_samples, &A_f[0,1], 
            1, 0, &A_a[0], 1)
     print "\n y = A'A[:,1] \n = " + str(A_a)
+
+
+def shrink_vector(np.ndarray[DOUBLE, ndim=1] v,
+                  np.ndarray[INTEGER, ndim=1] index, int length):
+    cdef int i
+    for i in range(length):
+        v[i] = v[index[i]]
+    v = np.resize(v, length)
+    return v
