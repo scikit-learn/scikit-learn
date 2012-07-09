@@ -196,13 +196,19 @@ def _dump_svmlight(X, y, f, zero_based):
 
     one_based = not zero_based
     if X.dtype == np.float64:
-        value_pattern = u"%d:%0.16f"
+        value_pattern = u"%d:%0.16e"
     else:
         value_pattern = u"%d:%f"
+
+    if y.dtype.kind == 'i':
+        line_pattern = u"%d %s\n"
+    else:
+        line_pattern = u"%f %s\n"
+
     for i in xrange(X.shape[0]):
         s = u" ".join([value_pattern % (j + one_based, X[i, j])
                        for j in X[i].nonzero()[is_sp]])
-        f.write((u"%f %s\n" % (y[i], s)).encode('ascii'))
+        f.write((line_pattern % (y[i], s)).encode('ascii'))
 
 
 def dump_svmlight_file(X, y, f, zero_based=True):
