@@ -172,9 +172,6 @@ amount of time (e.g., on large datasets).
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 
-.. _gradient_boosting:
-
-
 Feature importance evaluation
 -----------------------------
 
@@ -213,6 +210,7 @@ the matching feature to the prediction function.
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
 
+.. _gradient_boosting:
 
 Gradient Tree Boosting
 ======================
@@ -279,11 +277,10 @@ that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 Regression
 ----------
 
-:class:`GradientBoostingRegressor` supports a number of different loss
-functions for regression which can be specified via the argument
-``loss``. Currently, supported are least squares (``loss='ls'``) and
-least absolute deviation (``loss='lad'``), which is more robust w.r.t.
-outliers. See [F2001]_ for detailed information.
+:class:`GradientBoostingRegressor` supports a number of
+:ref:`different loss functions <gradient_boosting_loss>`
+for regression which can be specified via the argument
+``loss`` which defaults to least squares (``'ls'``).
 
 ::
 
@@ -373,6 +370,7 @@ Where the step length :math:`\gamma_m` is choosen using line search:
 The algorithms for regression and classification
 only differ in the concrete loss function used.
 
+.. _gradient_boosting_loss:
 
 Loss Functions
 ...............
@@ -388,6 +386,13 @@ the parameter ``loss``:
     * Least absolute deviation (``'lad'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
+    * Huber (``'huber'``): Another robust loss function that combines
+      least squares and least absolute deviation; use ``alpha`` to
+      control the sensitivity w.r.t. outliers (see [F2001]_ for more
+      details).
+    * Quantile (``'quantile'``): A loss function for quantile regression.
+      Use ``0 < alpha < 1`` to specify the quantile. This loss function
+      can be used to create prediction intervals.
 
   * Classification
 
@@ -438,8 +443,7 @@ Subsampling
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
-the available training data.
-The subsample is drawn without replacement.
+the available training data. The subsample is drawn without replacement.
 A typical value of ``subsample`` is 0.5.
 
 The figure below illustrates the effect of shrinkage and subsampling
@@ -452,6 +456,14 @@ does poorly.
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
+
+For ``subsample < 1``, the deviance on the out-of-bag samples in the i-the iteration
+is stored in the attribute ``oob_score_[i]``. Out-of-bag estimates can be
+used for model selection (e.g. to determine the optimal number of iterations).
+
+Another strategy to reduce the variance is by subsampling the features
+analogous to the random splits in Random Forests. The size of the subsample
+can be controled via the ``max_features`` parameter.
 
 
 .. topic:: Examples:
