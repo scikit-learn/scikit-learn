@@ -10,6 +10,7 @@ of Gaussian Mixture Models.
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, deprecated
@@ -119,7 +120,7 @@ class GMM(BaseEstimator):
     n_components : int, optional
         Number of mixture components. Defaults to 1.
 
-    covariance_type : string (read-only), optional
+    covariance_type : string, optional
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
@@ -134,14 +135,26 @@ class GMM(BaseEstimator):
     thresh : float, optional
         Convergence threshold.
 
+    n_iter : int, optional
+        Number of EM iterations to perform.
+
+    n_init : int, optional
+        Number of initializations to perform. the best results is kept
+
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    init_params : string, optional
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
     Attributes
     ----------
-    covariance_type : string
-        String describing the type of covariance parameters used by the GMM. \
-        Must be one of 'spherical', 'tied', 'diag', 'full'.
-
     `weights_` : array, shape (`n_components`,)
-        Mixing weights for each mixture component.
+        This attribute stores the mixing weights for each mixture component.
 
     `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
@@ -183,7 +196,8 @@ class GMM(BaseEstimator):
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, min_covar=0.001, n_components=2,
+    GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
+            n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
@@ -193,14 +207,15 @@ class GMM(BaseEstimator):
     >>> np.round(g.covars_, 2) #doctest: +SKIP
     array([[[ 1.02]],
            [[ 0.96]]])
-    >>> g.predict([[0], [2], [9], [10]])
-    array([1, 1, 0, 0])
+    >>> g.predict([[0], [2], [9], [10]]) #doctest: +ELLIPSIS
+    array([1, 1, 0, 0]...)
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
     array([-2.19, -4.58, -1.75, -1.21])
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, min_covar=0.001, n_components=2,
+    GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
+            n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
@@ -208,15 +223,24 @@ class GMM(BaseEstimator):
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
-                 random_state=None, thresh=1e-2, min_covar=1e-3):
+                 random_state=None, thresh=1e-2, min_covar=1e-3,
+                 n_iter=100, n_init=1, params='wmc', init_params='wmc'):
         self.n_components = n_components
-        self._covariance_type = covariance_type
+        self.covariance_type = covariance_type
         self.thresh = thresh
         self.min_covar = min_covar
         self.random_state = random_state
+        self.n_iter = n_iter
+        self.n_init = n_init
+        self.params = params
+        self.init_params = init_params
 
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
-            raise ValueError('bad covariance_type: ' + str(covariance_type))
+            raise ValueError('Invalid value for covariance_type: %s' %
+                            covariance_type)
+
+        if n_init < 1:
+            raise ValueError('GMM estimation requires at least one run')
 
         self.weights_ = np.ones(self.n_components) / self.n_components
 
@@ -233,19 +257,19 @@ class GMM(BaseEstimator):
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
             """
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             return self.covars_
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             return [np.diag(cov) for cov in self.covars_]
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             return [self.covars_] * self.n_components
-        elif self._covariance_type == 'spherical':
+        elif self.covariance_type == 'spherical':
             return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
         """Provide values for covariance"""
         covars = np.asarray(covars)
-        _validate_covars(covars, self._covariance_type, self.n_components)
+        _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
 
     def eval(self, X):
@@ -278,7 +302,7 @@ class GMM(BaseEstimator):
             raise ValueError('the shape of X  is not compatible with self')
 
         lpr = (log_multivariate_normal_density(
-                X, self.means_, self.covars_, self._covariance_type)
+                X, self.means_, self.covars_, self.covariance_type)
                + np.log(self.weights_))
         logprob = logsumexp(lpr, axis=1)
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
@@ -396,49 +420,32 @@ class GMM(BaseEstimator):
             # number of those occurrences
             num_comp_in_X = comp_in_X.sum()
             if num_comp_in_X > 0:
-                if self._covariance_type == 'tied':
+                if self.covariance_type == 'tied':
                     cv = self.covars_
-                elif self._covariance_type == 'spherical':
+                elif self.covariance_type == 'spherical':
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
                 X[comp_in_X] = sample_gaussian(
-                    self.means_[comp], cv, self._covariance_type,
+                    self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X, n_iter=100, n_init=1, thresh=1e-2, params='wmc',
-            init_params='wmc'):
+    def fit(self, X, **kwargs):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string ''. Likewise, if you
-        would like just to do an initialization, call this method with
-        n_iter=0.
+        argument init_params to the empty string '' when creating the
+        GMM object. Likewise, if you would like just to do an
+        initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-
-        n_iter : int, optional
-            Number of EM iterations to perform.
-
-        n_init : int, optional
-            number of initializations to perform. the best results is kept
-
-        params : string, optional
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-
-        init_params : string, optional
-            Controls which parameters are updated in the initialization
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
         """
         ## initialization step
         X = np.asarray(X)
@@ -448,33 +455,48 @@ class GMM(BaseEstimator):
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
+        if kwargs:
+            warnings.warn("Setting parameters in the 'fit' method is"
+                    "deprecated. Set it on initialization instead.",
+                    DeprecationWarning)
+            # initialisations for in case the user still adds parameters to fit
+            # so things don't break
+            if 'n_iter' in kwargs:
+                self.n_iter = kwargs['n_iter']
+            if 'n_init' in kwargs:
+                if kwargs['n_init'] < 1:
+                    raise ValueError('GMM estimation requires at least one run')
+                else:
+                    self.n_init = kwargs['n_init']
+            if 'params' in kwargs:
+                self.params = kwargs['params']
+            if 'init_params' in kwargs:
+                self.init_params = kwargs['init_params']
 
         max_log_prob = - np.infty
-        if n_init < 1:
-            raise ValueError('GMM estimation requires at least one run')
 
-        for _ in range(n_init):
-            if 'm' in init_params or not hasattr(self, 'means_'):
+        for _ in range(self.n_init):
+            if 'm' in self.init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
-                    k=self.n_components).fit(X).cluster_centers_
+                    n_clusters=self.n_components).fit(X).cluster_centers_
 
-            if 'w' in init_params or not hasattr(self, 'weights_'):
+            if 'w' in self.init_params or not hasattr(self, 'weights_'):
                 self.weights_ = np.tile(1.0 / self.n_components,
                                         self.n_components)
 
-            if 'c' in init_params or not hasattr(self, 'covars_'):
+            if 'c' in self.init_params or not hasattr(self, 'covars_'):
                 cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
                 if not cv.shape:
                     cv.shape = (1, 1)
                 self.covars_ = \
                     distribute_covar_matrix_to_match_covariance_type(
-                    cv, self._covariance_type, self.n_components)
+                    cv, self.covariance_type, self.n_components)
 
             # EM algorithms
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
-            for i in xrange(n_iter):
+            for i in xrange(self.n_iter):
                 # Expectation step
                 curr_log_likelihood, responsibilities = self.eval(X)
                 log_likelihood.append(curr_log_likelihood.sum())
@@ -486,16 +508,17 @@ class GMM(BaseEstimator):
                     break
 
                 # Maximization step
-                self._do_mstep(X, responsibilities, params, self.min_covar)
+                self._do_mstep(X, responsibilities, self.params,
+                        self.min_covar)
 
-            # if the results is better, keep it
-            if n_iter:
+            # if the results are better, keep it
+            if self.n_iter:
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
                     best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
-        if n_iter:
+        if self.n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
             self.weights_ = best_params['weights']
@@ -513,7 +536,7 @@ class GMM(BaseEstimator):
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:
-            covar_mstep_func = _covar_mstep_funcs[self._covariance_type]
+            covar_mstep_func = _covar_mstep_funcs[self.covariance_type]
             self.covars_ = covar_mstep_func(
                 self, X, responsibilities, weighted_X_sum, inverse_weights,
                 min_covar)
@@ -522,13 +545,13 @@ class GMM(BaseEstimator):
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
         ndim = self.means_.shape[1]
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             cov_params = self.n_components * ndim * (ndim + 1) / 2.
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             cov_params = self.n_components * ndim
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             cov_params = ndim * (ndim + 1) / 2.
-        elif self._covariance_type == 'spherical':
+        elif self.covariance_type == 'spherical':
             cov_params = self.n_components
         mean_params = ndim * self.n_components
         return  int(cov_params + mean_params + self.n_components - 1)
@@ -664,6 +687,9 @@ def _validate_covars(covars, covariance_type, n_components):
                 or np.any(linalg.eigvalsh(cv) <= 0)):
                 raise ValueError("component %d of 'full' covars must be "
                                  "symmetric, positive-definite" % n)
+    else:
+        raise ValueError("covariance_type must be one of " +
+                         "'spherical', 'tied', 'diag', 'full'")
 
 
 def distribute_covar_matrix_to_match_covariance_type(

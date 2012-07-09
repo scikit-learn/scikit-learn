@@ -18,6 +18,7 @@ from scipy.cluster import hierarchy
 from ..base import BaseEstimator
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
+from ..metrics import euclidean_distances
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -70,18 +71,29 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
 
-    # Compute the number of nodes
-    if connectivity is not None:
-        if n_components is None:
-            n_components, _ = cs_graph_components(connectivity)
-        if n_components > 1:
-            warnings.warn("the number of connected components of the"
-            " connectivity matrix is %d > 1. The tree will be stopped early."
-            % n_components)
-    else:
+    if connectivity is None:
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples
+
+    # Compute the number of nodes
+    if n_components is None:
+        n_components, labels = cs_graph_components(connectivity)
+
+    # Convert connectivity matrix to LIL with a copy if needed
+    if sparse.isspmatrix_lil(connectivity) and copy:
+        connectivity = connectivity.copy()
+    else:
+        connectivity = connectivity.tolil()
+
+    if n_components > 1:
+        warnings.warn("the number of connected components of the"
+        " connectivity matrix is %d > 1. Completing it to avoid"
+        " stopping the tree early."
+        % n_components)
+        connectivity = _fix_connectivity(X, connectivity,
+                                            n_components, labels)
+        n_components = 1
 
     n_nodes = 2 * n_samples - n_components
 
@@ -89,11 +101,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
-    # convert connectivity matrix to LIL eventually with a copy
-    if sparse.isspmatrix_lil(connectivity) and copy:
-        connectivity = connectivity.copy()
-    else:
-        connectivity = connectivity.tolil()
 
     # Remove diagonal from connectivity matrix
     connectivity.setdiag(np.zeros(connectivity.shape[0]))
@@ -176,7 +183,29 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
 
 ###############################################################################
+# For non fully-connected graphs
+
+def _fix_connectivity(X, connectivity, n_components, labels):
+    """
+    Warning: modifies connectivity in place
+    """
+    for i in range(n_components):
+        idx_i = np.where(labels == i)[0]
+        Xi = X[idx_i]
+        for j in range(i):
+            idx_j = np.where(labels == j)[0]
+            Xj = X[idx_j]
+            D = euclidean_distances(Xi, Xj)
+            ii, jj = np.where(D == np.min(D))
+            ii = ii[0]
+            jj = jj[0]
+            connectivity[idx_i[ii], idx_j[jj]] = True
+            connectivity[idx_j[jj], idx_i[ii]] = True
+    return connectivity
+
+###############################################################################
 # Functions for cutting  hierarchical clustering tree
+
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.

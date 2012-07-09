@@ -13,14 +13,21 @@ from scipy.spatial.ckdtree import cKDTree
 
 from .ball_tree import BallTree
 from ..base import BaseEstimator
-from ..metrics import euclidean_distances
+from ..metrics import pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr
+
+
+class NeighborsWarning(UserWarning):
+    pass
+
+# Make sure that NeighborsWarning are displayed more than once
+warnings.simplefilter("always", NeighborsWarning)
 
 
 def warn_equidistant():
     msg = ("kneighbors: neighbor k+1 and neighbor k have the same "
            "distance: results will be dependent on data order.")
-    warnings.warn(msg)
+    warnings.warn(msg, NeighborsWarning, stacklevel=3)
 
 
 def _check_weights(weights):
@@ -37,31 +44,29 @@ def _check_weights(weights):
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
-    ``weights`` can be either a string or an executable.
+    Parameters
+    ===========
+    dist: ndarray
+        The input distances
+    weights: {'uniform', 'distance' or a callable}
+        The kind of weighting used
 
-    returns ``weights_arr``, an array of the same size as ``dist``
-    if ``weights == 'uniform'``, then returns None
+    Returns
+    ========
+    weights_arr: array of the same shape as ``dist``
+        if ``weights == 'uniform'``, then returns None
     """
-    if dist.dtype == np.dtype(object):
-        if weights in (None, 'uniform'):
-            return None
-        elif weights == 'distance':
-            return [1. / d for d in dist]
-        elif callable(weights):
-            return [weights(d) for d in dist]
-        else:
-            raise ValueError("weights not recognized: should be 'uniform', "
-                             "'distance', or a callable function")
+    if weights in (None, 'uniform'):
+        return None
+    elif weights == 'distance':
+        with np.errstate(divide='ignore'):
+            dist = 1. / dist
+        return dist
+    elif callable(weights):
+        return weights(dist)
     else:
-        if weights in (None, 'uniform'):
-            return None
-        elif weights == 'distance':
-            return 1. / dist
-        elif callable(weights):
-            return weights(dist)
-        else:
-            raise ValueError("weights not recognized: should be 'uniform', "
-                             "'distance', or a callable function")
+        raise ValueError("weights not recognized: should be 'uniform', "
+                            "'distance', or a callable function")
 
 
 class NeighborsBase(BaseEstimator):
@@ -71,15 +76,18 @@ class NeighborsBase(BaseEstimator):
     # rely on soon-to-be-updated functionality in the pairwise module.
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30,
-                     warn_on_equidistant=True):
+                     warn_on_equidistant=True, p=2):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.warn_on_equidistant = warn_on_equidistant
+        self.p = p
 
         if algorithm not in ['auto', 'brute', 'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % algorithm)
+        if p < 1:
+            raise ValueError("p must be greater than or equal to 1")
 
         self._fit_X = None
         self._tree = None
@@ -123,7 +131,9 @@ class NeighborsBase(BaseEstimator):
 
         if self._fit_method == 'auto':
             # BallTree outperforms the others in nearly any circumstance.
-            if self.n_neighbors < self._fit_X.shape[0] / 2:
+            if self.n_neighbors is None:
+                self._fit_method = 'ball_tree'
+            elif self.n_neighbors < self._fit_X.shape[0] // 2:
                 self._fit_method = 'ball_tree'
             else:
                 self._fit_method = 'brute'
@@ -131,7 +141,7 @@ class NeighborsBase(BaseEstimator):
         if self._fit_method == 'kd_tree':
             self._tree = cKDTree(X, self.leaf_size)
         elif self._fit_method == 'ball_tree':
-            self._tree = BallTree(X, self.leaf_size)
+            self._tree = BallTree(X, self.leaf_size, p=self.p)
         elif self._fit_method == 'brute':
             self._tree = None
         else:
@@ -180,7 +190,7 @@ class KNeighborsMixin(object):
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        >>> print(neigh.kneighbors([1., 1., 1.])) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
@@ -202,7 +212,16 @@ class KNeighborsMixin(object):
             n_neighbors = self.n_neighbors
 
         if self._fit_method == 'brute':
-            dist = euclidean_distances(X, self._fit_X, squared=True)
+            if self.p == 1:
+                dist = pairwise_distances(X, self._fit_X, 'manhattan')
+            elif self.p == 2:
+                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+                                          squared=True)
+            elif self.p == np.inf:
+                dist = pairwise_distances(X, self._fit_X, 'chebyshev')
+            else:
+                dist = pairwise_distances(X, self._fit_X, 'minkowski',
+                                          p=self.p)
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             if self.warn_on_equidistant and n_neighbors < self._fit_X.shape[0]:
@@ -214,7 +233,10 @@ class KNeighborsMixin(object):
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
-                return np.sqrt(dist[j, neigh_ind]), neigh_ind
+                if self.p == 2:
+                    return np.sqrt(dist[j, neigh_ind]), neigh_ind
+                else:
+                    return dist[j, neigh_ind], neigh_ind
             else:
                 return neigh_ind
         elif self._fit_method == 'ball_tree':
@@ -224,7 +246,7 @@ class KNeighborsMixin(object):
                 warn_equidistant()
             return result
         elif self._fit_method == 'kd_tree':
-            dist, ind = self._tree.query(X, n_neighbors)
+            dist, ind = self._tree.query(X, n_neighbors, p=self.p)
             # kd_tree returns a 1D array for n_neighbors = 1
             if n_neighbors == 1:
                 dist = dist[:, None]
@@ -346,7 +368,7 @@ class RadiusNeighborsMixin(object):
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print neigh.radius_neighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        >>> print(neigh.radius_neighbors([1., 1., 1.])) # doctest: +ELLIPSIS
         (array([[ 1.5,  0.5]]...), array([[1, 2]]...)
 
         The first array returned contains the distances to all points which
@@ -366,10 +388,19 @@ class RadiusNeighborsMixin(object):
             radius = self.radius
 
         if self._fit_method == 'brute':
-            dist = euclidean_distances(X, self._fit_X, squared=True)
-            rad2 = radius ** 2
+            if self.p == 1:
+                dist = pairwise_distances(X, self._fit_X, 'manhattan')
+            elif self.p == 2:
+                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+                                          squared=True)
+                radius *= radius
+            elif self.p == np.inf:
+                dist = pairwise_distances(X, self._fit_X, 'chebyshev')
+            else:
+                dist = pairwise_distances(X, self._fit_X, 'minkowski',
+                                          p=self.p)
 
-            neigh_ind = [np.where(d < rad2)[0] for d in dist]
+            neigh_ind = [np.where(d < radius)[0] for d in dist]
 
             # if there are the same number of neighbors for each point,
             # we can do a normal array.  Otherwise, we return an object
@@ -382,9 +413,14 @@ class RadiusNeighborsMixin(object):
                 dtype_F = object
 
             if return_distance:
-                dist = np.array([np.sqrt(d[neigh_ind[i]]) \
-                                     for i, d in enumerate(dist)],
-                                dtype=dtype_F)
+                if self.p == 2:
+                    dist = np.array([np.sqrt(d[neigh_ind[i]]) \
+                                        for i, d in enumerate(dist)],
+                                    dtype=dtype_F)
+                else:
+                    dist = np.array([d[neigh_ind[i]] \
+                                         for i, d in enumerate(dist)],
+                                    dtype=dtype_F)
                 return dist, neigh_ind
             else:
                 return neigh_ind
@@ -400,7 +436,8 @@ class RadiusNeighborsMixin(object):
         elif self._fit_method == 'kd_tree':
             Npts = self._fit_X.shape[0]
             dist, ind = self._tree.query(X, Npts,
-                                         distance_upper_bound=radius)
+                                         distance_upper_bound=radius,
+                                         p=self.p)
 
             ind = [ind_i[:ind_i.searchsorted(Npts)] for ind_i in ind]
 
@@ -531,6 +568,7 @@ class SupervisedIntegerMixin(object):
             Target values, array of integer values.
         """
         self._y = np.asarray(y)
+        self._classes = np.sort(np.unique(y))
         return self._fit(X)
 
 

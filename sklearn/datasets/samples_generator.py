@@ -323,9 +323,50 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     return np.array(X, dtype=np.float64), Y
 
 
-def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
-                    effective_rank=None, tail_strength=0.5, noise=0.0,
-                    shuffle=True, coef=False, random_state=None):
+def make_hastie_10_2(n_samples=12000, random_state=None):
+    """Generates data for binary classification used in
+    Hastie et al. 2009, Example 10.2.
+
+    The ten features are standard independent Gaussian and
+    the target ``y`` is defined by::
+
+      y[i] = 1 if np.sum(X[i] > 9.34 else -1
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=12000)
+        The number of samples.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 10]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    **References**:
+
+    .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
+    Learning Ed. 2", Springer, 2009.
+    """
+    rs = check_random_state(random_state)
+    shape = (n_samples, 10)
+    X = rs.normal(size=shape).reshape(shape)
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
+    y[y == 0.0] = -1.0
+    return X, y
+
+
+def make_regression(n_samples=100, n_features=100, n_informative=10,
+                    n_targets=1, bias=0.0, effective_rank=None,
+                    tail_strength=0.5, noise=0.0, shuffle=True, coef=False,
+                    random_state=None):
     """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
@@ -348,6 +389,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     n_informative : int, optional (default=10)
         The number of informative features, i.e., the number of features used
         to build the linear model used to generate the output.
+
+    n_targets : int, optional (default=1)
+        The number of regression targets, i.e., the dimension of the y output
+        vector associated with a sample. By default, the output is a scalar.
 
     bias : float, optional (default=0.0)
         The bias term in the underlying linear model.
@@ -386,10 +431,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     X : array of shape [n_samples, n_features]
         The input samples.
 
-    y : array of shape [n_samples]
+    y : array of shape [n_samples] or [n_samples, n_targets]
         The output values.
 
-    coef : array of shape [n_features], optional
+    coef : array of shape [n_features] or [n_features, n_targets], optional
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
@@ -410,8 +455,9 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
     # Generate a ground truth model with only n_informative features being non
     # zeros (the other features are not correlated to y and should be ignored
     # by a sparsifying regularizers such as L1 or elastic net)
-    ground_truth = np.zeros(n_features)
-    ground_truth[:n_informative] = 100 * generator.rand(n_informative)
+    ground_truth = np.zeros((n_features, n_targets))
+    ground_truth[:n_informative, :] = 100 * generator.rand(n_informative,
+                                                           n_targets)
 
     y = np.dot(X, ground_truth) + bias
 
@@ -428,8 +474,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10, bias=0.0,
         X[:, :] = X[:, indices]
         ground_truth = ground_truth[indices]
 
+    y = np.squeeze(y)
+
     if coef:
-        return X, y, ground_truth
+        return X, y, np.squeeze(ground_truth)
 
     else:
         return X, y

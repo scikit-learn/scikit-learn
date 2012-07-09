@@ -33,12 +33,12 @@ static void default_print(const char *buf)
 
 void TRON::info(const char *fmt,...)
 {
-	// char buf[BUFSIZ];
-	// va_list ap;
-	// va_start(ap,fmt);
-	// vsprintf(buf,fmt,ap);
-	// va_end(ap);
-	// (*tron_print_string)(buf);
+	char buf[BUFSIZ];
+	va_list ap;
+	va_start(ap,fmt);
+	vsprintf(buf,fmt,ap);
+	va_end(ap);
+	(*tron_print_string)(buf);
 }
 
 TRON::TRON(const function *fun_obj, double eps, int max_iter)
@@ -135,18 +135,18 @@ void TRON::tron(double *w)
 		}
 		if (f < -1.0e+32)
 		{
-			info("warning: f < -1.0e+32\n");
+			info("WARNING: f < -1.0e+32\n");
 			break;
 		}
 		if (fabs(actred) <= 0 && prered <= 0)
 		{
-			info("warning: actred and prered <= 0\n");
+			info("WARNING: actred and prered <= 0\n");
 			break;
 		}
 		if (fabs(actred) <= 1.0e-12*fabs(f) &&
 		    fabs(prered) <= 1.0e-12*fabs(f))
 		{
-			info("warning: actred and prered too small\n");
+			info("WARNING: actred and prered too small\n");
 			break;
 		}
 	}

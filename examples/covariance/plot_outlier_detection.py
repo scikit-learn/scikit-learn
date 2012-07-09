@@ -31,7 +31,7 @@ import matplotlib.font_manager
 from scipy import stats
 
 from sklearn import svm
-from sklearn.covariance import EllipticEnvelop
+from sklearn.covariance import EllipticEnvelope
 
 # Example settings
 n_samples = 200
@@ -42,7 +42,7 @@ clusters_separation = [0, 1, 2]
 classifiers = {
     "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
                                      kernel="rbf", gamma=0.1),
-    "robust covariance estimator": EllipticEnvelop(contamination=.1),
+    "robust covariance estimator": EllipticEnvelope(contamination=.1),
     }
 
 # Compare given classifiers under given settings
@@ -65,7 +65,6 @@ for i, offset in enumerate(clusters_separation):
 
     # Fit the model with the One-Class SVM
     pl.figure(figsize=(10, 5))
-    pl.set_cmap(pl.cm.Blues_r)
     for i, (clf_name, clf) in enumerate(classifiers.iteritems()):
         # fit the data and tag outliers
         clf.fit(X)
@@ -79,8 +78,8 @@ for i, offset in enumerate(clusters_separation):
         Z = Z.reshape(xx.shape)
         subplot = pl.subplot(1, 2, i + 1)
         subplot.set_title("Outlier detection")
-        subplot.contourf(xx, yy, Z,
-                         levels=np.linspace(Z.min(), threshold, 7))
+        subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
+                cmap=pl.cm.Blues_r)
         a = subplot.contour(xx, yy, Z, levels=[threshold],
                             linewidths=2, colors='red')
         subplot.contourf(xx, yy, Z, levels=[threshold, Z.max()],

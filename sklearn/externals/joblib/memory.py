@@ -159,10 +159,15 @@ class MemorizedFunc(Logger):
     def __call__(self, *args, **kwargs):
         # Compare the function code with the previous to see if the
         # function code has changed
-        output_dir, _ = self.get_output_dir(*args, **kwargs)
+        output_dir, argument_hash = self.get_output_dir(*args, **kwargs)
         # FIXME: The statements below should be try/excepted
         if not (self._check_previous_func_code(stacklevel=3) and
                                  os.path.exists(output_dir)):
+            if self._verbose > 10:
+                _, name = get_func_name(self.func)
+                self.warn('Computing func %s, argument hash %s in '
+                          'directory %s'
+                        % (name, argument_hash, output_dir))
             return self.call(*args, **kwargs)
         else:
             try:
@@ -287,6 +292,10 @@ class MemorizedFunc(Logger):
 
         # The function has changed, wipe the cache directory.
         # XXX: Should be using warnings, and giving stacklevel
+        if self._verbose > 10:
+            _, func_name = get_func_name(self.func, resolv_alias=False)
+            self.warn("Function %s (stored in %s) has changed." %
+                        (func_name, func_dir))
         self.clear(warn=True)
         return False
 
@@ -308,12 +317,11 @@ class MemorizedFunc(Logger):
             persist the output values.
         """
         start_time = time.time()
+        output_dir, argument_hash = self.get_output_dir(*args, **kwargs)
         if self._verbose:
             print self.format_call(*args, **kwargs)
-        output_dir, argument_hash = self.get_output_dir(*args, **kwargs)
         output = self.func(*args, **kwargs)
         self._persist_output(output, output_dir)
-        input_repr = self._persist_input(output_dir, *args, **kwargs)
         duration = time.time() - start_time
         if self._verbose:
             _, name = get_func_name(self.func)
@@ -368,6 +376,8 @@ class MemorizedFunc(Logger):
             mkdirp(dir)
             filename = os.path.join(dir, 'output.pkl')
             numpy_pickle.dump(output, filename, compress=self.compress)
+            if self._verbose > 10:
+                print 'Persisting in %s' % dir
         except OSError:
             " Race condition in the creation of the directory "
 
@@ -398,9 +408,16 @@ class MemorizedFunc(Logger):
         """
         if self._verbose > 1:
             t = time.time() - self.timestamp
-            print '[Memory]% 16s: Loading %s...' % (
+            if self._verbose < 10:
+                print '[Memory]% 16s: Loading %s...' % (
                                     format_time(t),
                                     self.format_signature(self.func)[0]
+                                    )
+            else:
+                print '[Memory]% 16s: Loading %s from %s' % (
+                                    format_time(t),
+                                    self.format_signature(self.func)[0],
+                                    output_dir
                                     )
         filename = os.path.join(output_dir, 'output.pkl')
         return numpy_pickle.load(filename,

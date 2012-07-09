@@ -17,8 +17,6 @@ from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
 from ..pairwise import _parallel_pairwise
 
-np.random.seed(0)
-
 
 def test_pairwise_distances():
     """ Test the pairwise_distance helper function. """
@@ -60,7 +58,6 @@ def test_pairwise_distances():
     S = np.dot(X, X.T)
     S2 = pairwise_distances(S, metric="precomputed")
     assert_true(S is S2)
-    assert_raises(ValueError, pairwise_distances, X, None, "precomputed")
     # Test with sparse X and Y
     X_sparse = csr_matrix(X)
     Y_sparse = csr_matrix(Y)

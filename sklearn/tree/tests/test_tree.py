@@ -8,6 +8,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
+from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
@@ -74,11 +75,11 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"X[0] <= 0.0\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
-    "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
+    "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -93,11 +94,11 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"feature1 <= 0.0\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
-    "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
+    "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -223,6 +224,10 @@ def test_importances():
 
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+    assert_true(clf.feature_importances_ is None)
 
 
 def test_error():

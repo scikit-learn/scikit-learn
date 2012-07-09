@@ -146,22 +146,20 @@
 	</div>
     {%- endif %}
     </div>
-    <p style="text-align: center">This documentation is
+    <p style="text-align: center; background-color: #FFE4E4">This documentation is
     for {{project}} <strong>version {{ release|e }}</strong>
     &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {% else %}
     <h3>News</h3>
 
-    <p>scikit-learn 0.10 is available
+    <p>scikit-learn 0.11 is available
     for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
     See <a href="{{pathto('whats_new')}}">what's new</a> and tips
     on <a href="{{pathto('install')}}">installing</a>.</p>
 
 
-    <h3>Videos</h3>
-    <p>Watch the 2010
-    ICML <a href="http://videolectures.net/icml2010_varaquaux_scik/">Introductory
-    Video</a> by Gaël Varoquaux.</p>
+    <h3>Presentations</h3>
+    <p>Get into the spirit with <a href="{{pathto('presentations')}}">videos</a> from Scikit-Learn tutorials.</p>
 
     <h3>Participate</h3>
 
@@ -228,7 +226,7 @@
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
     {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://webylimonada.com">Web y Limonada</a>.
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://desgrana.es">Desgrana</a>.
     {%- endif %}
     {%- if show_source and has_source and sourcename %}
     <span style="padding-left: 5ex;">

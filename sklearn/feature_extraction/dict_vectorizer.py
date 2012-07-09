@@ -45,8 +45,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     separator: string, optional
         Separator string used when constructing new features for one-hot
         coding.
-    sparse: boolean, optional
+    sparse: boolean, optional.
         Whether transform should produce scipy.sparse matrices.
+        True by default.
 
     Examples
     --------
@@ -55,13 +56,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
     >>> X = v.fit_transform(D)
     >>> X
-    array([[ 1.,  2.,  0.],
-           [ 3.,  0.,  1.]])
+    array([[ 2.,  0.,  1.],
+           [ 0.,  1.,  3.]])
     >>> v.inverse_transform(X) == \
         [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
     True
-    >>> v.transform({'foo': 4, 'quux': 3})
-    array([[ 4.,  0.,  0.]])
+    >>> v.transform({'foo': 4, 'unseen_feature': 3})
+    array([[ 0.,  0.,  4.]])
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True):
@@ -76,7 +77,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ----------
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
-            objects) to feature values (must be convertible to dtype).
+            objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
         Returns
@@ -84,15 +85,19 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         self
         """
         X = _tosequence(X)
-        vocab = {}
 
+        # collect all the possible feature names
+        feature_names = set()
         for x in X:
             for f, v in x.iteritems():
                 if isinstance(v, basestring):
                     f = "%s%s%s" % (f, self.separator, v)
-                vocab.setdefault(f, len(vocab))
+                feature_names.add(f)
 
-        self.vocabulary_ = vocab
+        # sort the feature names to define the mapping
+        feature_names = sorted(feature_names)
+        self.vocabulary_ = dict((f, i) for i, f in enumerate(feature_names))
+        self.feature_names_ = feature_names
 
         return self
 
@@ -105,7 +110,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ----------
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
-            objects) to feature values (must be convertible to dtype).
+            objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
         Returns
@@ -142,7 +147,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         """
         X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
 
-        names = self.get_feature_names()
+        names = self.feature_names_
         Xd = [dict_type() for _ in xrange(X.shape[0])]
 
         if sp.issparse(X):
@@ -167,7 +172,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ----------
         X : Mapping or iterable over Mappings, length = n_samples
             Dict(s) or Mapping(s) from feature names (arbitrary Python
-            objects) to feature values (must be convertible to dtype).
+            objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
         Returns
@@ -179,6 +184,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         vocab = self.vocabulary_
 
         if self.sparse:
+            X = [X] if isinstance(X, Mapping) else X
+
             i_ind = []
             j_ind = []
             values = []
@@ -222,8 +229,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         If one-of-K coding is applied to categorical features, this will
         include the constructed feature names but not the original ones.
         """
-        return [f for f, i in sorted(self.vocabulary_.iteritems(),
-                                     key=itemgetter(1))]
+        return self.feature_names_
 
     def restrict(self, support, indices=False):
         """Restrict the features to those in support.
@@ -239,11 +245,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         if not indices:
             support = np.where(support)[0]
 
-        names = self.get_feature_names()
+        names = self.feature_names_
         new_vocab = {}
         for i in support:
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
+        self.feature_names_ = [f for f, i in sorted(new_vocab.iteritems(),
+                                                    key=itemgetter(1))]
 
         return self

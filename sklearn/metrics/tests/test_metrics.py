@@ -53,11 +53,11 @@ def make_prediction(dataset=None, binary=False):
     half = int(n_samples / 2)
 
     # add noisy features to make the problem harder and avoid perfect results
-    np.random.seed(0)
-    X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
+    rng = np.random.RandomState(0)
+    X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel='linear', probability=True, scale_C=True)
+    clf = svm.SVC(kernel='linear', probability=True)
     probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:

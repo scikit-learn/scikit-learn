@@ -182,7 +182,8 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, precompute='auto', tol=0.0001, warm_start=False)
+       normalize=False, positive=False, precompute='auto', tol=0.0001,
+       warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -391,7 +392,7 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
-    ||\gamma||_0 \leq n_{nonzero_coefs}
+    ||\gamma||_0 \leq n_{nonzero\_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:

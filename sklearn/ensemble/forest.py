@@ -35,6 +35,7 @@ The module structure is the following:
 
 import itertools
 import numpy as np
+from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
@@ -117,7 +118,7 @@ def _partition_trees(forest):
         n_jobs = min(forest.n_jobs, forest.n_estimators)
 
     # Partition trees between jobs
-    n_trees = [forest.n_estimators / n_jobs] * n_jobs
+    n_trees = [int(forest.n_estimators / n_jobs)] * n_jobs
 
     for i in xrange(forest.n_estimators % n_jobs):
         n_trees[i] += 1
@@ -130,12 +131,43 @@ def _partition_trees(forest):
     return n_jobs, n_trees, starts
 
 
+def _parallel_X_argsort(X):
+    """Private function used to sort the features of X."""
+    return np.asarray(np.argsort(X.T, axis=1).T, dtype=np.int32, order="F")
+
+
+def _partition_features(forest, n_total_features):
+    """Private function used to partition features between jobs."""
+    # Compute the number of jobs
+    if forest.n_jobs == -1:
+        n_jobs = min(cpu_count(), n_total_features)
+
+    else:
+        n_jobs = min(forest.n_jobs, n_total_features)
+
+    # Partition features between jobs
+    n_features = [n_total_features / n_jobs] * n_jobs
+
+    for i in xrange(n_total_features % n_jobs):
+        n_features[i] += 1
+
+    starts = [0] * (n_jobs + 1)
+
+    for i in xrange(1, n_jobs + 1):
+        starts[i] = starts[i - 1] + n_features[i - 1]
+
+    return n_jobs, n_features, starts
+
+
 class BaseForest(BaseEnsemble, SelectorMixin):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
@@ -190,8 +222,15 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         " if bootstrap=True")
 
             sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-            X_argsorted = np.asfortranarray(
-                np.argsort(X.T, axis=1).astype(np.int32).T)
+
+            n_jobs, _, starts = _partition_features(self, X.shape[1])
+
+            all_X_argsorted = Parallel(n_jobs=n_jobs)(
+                delayed(_parallel_X_argsort)(
+                    X[:, starts[i]:starts[i + 1]])
+                for i in xrange(n_jobs))
+
+            X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
         if isinstance(self.base_estimator, ClassifierMixin):
             self.classes_ = np.unique(y)
@@ -259,6 +298,9 @@ class ForestClassifier(BaseForest, ClassifierMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
@@ -322,7 +364,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_p = Parallel(n_jobs=self.n_jobs)(
+        all_p = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X, self.n_classes_)
@@ -359,6 +401,9 @@ class ForestRegressor(BaseForest, RegressorMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
@@ -402,7 +447,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=self.n_jobs)(
+        all_y_hat = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
             for i in xrange(n_jobs))
@@ -494,6 +539,9 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -629,6 +677,9 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -765,6 +816,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -904,6 +958,9 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 

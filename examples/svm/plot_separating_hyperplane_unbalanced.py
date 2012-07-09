@@ -17,15 +17,15 @@ import pylab as pl
 from sklearn import svm
 
 # we create 40 separable points
-np.random.seed(0)
+rng = np.random.RandomState(0)
 n_samples_1 = 1000
 n_samples_2 = 100
-X = np.r_[1.5 * np.random.randn(n_samples_1, 2),
-          0.5 * np.random.randn(n_samples_2, 2) + [2, 2]]
+X = np.r_[1.5 * rng.randn(n_samples_1, 2),
+          0.5 * rng.randn(n_samples_2, 2) + [2, 2]]
 y = [0] * (n_samples_1) + [1] * (n_samples_2)
 
 # fit the model and get the separating hyperplane
-clf = svm.SVC(kernel='linear', C=100)
+clf = svm.SVC(kernel='linear', C=1.0)
 clf.fit(X, y)
 
 w = clf.coef_[0]
@@ -43,10 +43,9 @@ wa = -ww[0] / ww[1]
 wyy = wa * xx - wclf.intercept_[0] / ww[1]
 
 # plot separating hyperplanes and samples
-pl.set_cmap(pl.cm.Paired)
 h0 = pl.plot(xx, yy, 'k-', label='no weights')
 h1 = pl.plot(xx, wyy, 'k--', label='with weights')
-pl.scatter(X[:, 0], X[:, 1], c=y)
+pl.scatter(X[:, 0], X[:, 1], c=y, cmap=pl.cm.Paired)
 pl.legend()
 
 pl.axis('tight')

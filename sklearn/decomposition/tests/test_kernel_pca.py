@@ -5,7 +5,10 @@ from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_equal
 from nose.tools import assert_raises
 
-from .. import PCA, KernelPCA
+from sklearn.decomposition import PCA, KernelPCA
+from sklearn.datasets import make_circles
+from sklearn.linear_model import Perceptron
+from sklearn.utils.testing import assert_less
 
 
 def test_kernel_pca():
@@ -112,6 +115,29 @@ def test_kernel_pca_invalid_kernel():
     X_fit = rng.random_sample((2, 4))
     kpca = KernelPCA(kernel="tototiti")
     assert_raises(ValueError, kpca.fit, X_fit)
+
+
+def test_nested_circles():
+    """Test the linear separability of the first 2D KPCA transform"""
+    X, y = make_circles(n_samples=400, factor=.3, noise=.05,
+                        random_state=0)
+
+    # 2D nested circles are not linearly separable
+    train_score = Perceptron().fit(X, y).score(X, y)
+    assert_less(train_score, 0.8)
+
+    # Project the circles data into the first 2 components of a RBF Kernel
+    # PCA model.
+    # Note that the gamma value is data dependent. If this test breaks
+    # and the gamma value has to be updated, the Kernel PCA example will
+    # have to be updated too.
+    kpca = KernelPCA(kernel="rbf", n_components=2,
+                     fit_inverse_transform=True, gamma=10.)
+    X_kpca = kpca.fit_transform(X)
+
+    # The data is perfectly linearly separable in that space
+    train_score = Perceptron().fit(X_kpca, y).score(X_kpca, y)
+    assert_equal(train_score, 1.0)
 
 
 if __name__ == '__main__':

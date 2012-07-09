@@ -4,6 +4,8 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal, \
 from nose import SkipTest
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less
+
 from .. import DictionaryLearning, MiniBatchDictionaryLearning, SparseCoder, \
                dict_learning_online, sparse_encode
 
@@ -129,7 +131,7 @@ def test_sparse_encode_error():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
     assert_true(not np.all(code == 0))
-    assert_true(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1)
+    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
 
 
 def test_sparse_coder_estimator():
@@ -139,4 +141,4 @@ def test_sparse_coder_estimator():
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
                        transform_alpha=0.001).transform(X)
     assert_true(not np.all(code == 0))
-    assert_true(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1)
+    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)

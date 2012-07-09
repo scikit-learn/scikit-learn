@@ -93,7 +93,8 @@ def test_hash_methods():
 def test_hash_numpy():
     """ Test hashing with numpy arrays.
     """
-    arr1 = np.random.random((10, 10))
+    rnd = np.random.RandomState(0)
+    arr1 = rnd.random_sample((10, 10))
     arr2 = arr1.copy()
     arr3 = arr2.copy()
     arr3[0] += 1
@@ -160,7 +161,8 @@ def test_hash_numpy_performance():
         In [26]: %timeit hash(a)
         100 loops, best of 3: 20.8 ms per loop
     """
-    a = np.random.random(1000000)
+    rnd = np.random.RandomState(0)
+    a = rnd.random_sample(1000000)
     md5_hash = lambda x: hashlib.md5(np.getbuffer(x)).hexdigest()
 
     relative_diff = relative_time(md5_hash, hash, a)

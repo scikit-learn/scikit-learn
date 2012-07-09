@@ -212,7 +212,7 @@ vectors in each neighborhood.  This is the essence of *modified locally
 linear embedding* (MLLE).  MLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
-It requires ``n_neighbors > out_dim``.
+It requires ``n_neighbors > n_components``.
 
 .. figure:: ../auto_examples/manifold/images/plot_lle_digits_7.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -262,7 +262,7 @@ improvements which make its cost comparable to that of other LLE variants
 for small output dimension.  HLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
-It requires ``n_neighbors > out_dim * (out_dim + 3) / 2``.
+It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
 .. figure:: ../auto_examples/manifold/images/plot_lle_digits_8.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -343,6 +343,84 @@ The overall complexity of standard LTSA is
      <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.3693>`_
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
+.. _multidimensional_scaling:
+
+Multi-dimensional Scaling (MDS)
+===============================
+
+Multidimensional scaling (:class:`MDS`) seeks a low-dimensional
+representation of the data in which the distances respect well the
+distances in the original high-dimensional space.
+
+In general, is a technique used for analyzing similarity or
+dissimilarity data. :class:`MDS` attempts to model similarity or dissimilarity data as
+distances in a geometric spaces. The data can be ratings of similarity between
+objects, interaction frequencies of molecules, or trade indices between
+countries.
+
+There exists two types of MDS algorithm: metric and non metric. In the
+scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
+simiarity matrix arises from a metric (and thus respects the triangular
+inequality), the distances between output two points are then set to be as
+close as possible to the similarity or dissimilarity data. In the non metric
+vision, the algorithms will try to preserve the order of the distances, and
+hence seek for a monotonic relationship between the distances in the embedded
+space and the similarities/dissimilarities.
+
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_10.png
+   :target: ../auto_examples/manifold/plot_lle_digits.html
+   :align: center
+   :scale: 50
+ 
+
+Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
+:math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
+the similarities chosen in some optimal ways. The objective, called the
+stress, is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
+
+
+Metric MDS
+----------
+
+The simplest metric :class:`MDS` model, called `absolute MDS`, disparities are defined by
+:math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
+should then correspond exactly to the distance between point :math:`i` and
+:math:`j` in the embedding point.
+
+Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
+
+Nonmetric MDS
+-------------
+
+Non metric :class:`MDS` focuses on the ordination of the data. If
+:math:`S_{ij} < S_{kl}`, then the embedding should enforce :math:`d_{ij} <
+d_{jk}`. A simple algorithm to enforce that is to use a monotonic regression
+of :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}`
+in the same order as :math:`S_{ij}`.
+
+A trivial solution to this problem is to set all the points on the origin. In
+order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
+
+
+.. figure:: ../auto_examples/manifold/images/plot_mds_1.png
+   :target: ../auto_examples/manifold/plot_mds.html
+   :align: center
+   :scale: 60
+  
+
+.. topic:: References:
+
+  * `"Modern Multidimensional Scaling - Theory and Applications"
+    <http://www.springer.com/statistics/social+sciences+%26+law/book/978-0-387-25150-9>`_
+    Borg, I.; Groenen P. Springer Series in Statistics (1997)
+
+  * `"Nonmetric multidimensional scaling: a numerical method"
+    <http://www.springerlink.com/content/tj18655313945114/>`_
+    Kruskal, J. Psychometrika, 29 (1964)
+
+  * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
+    <http://www.springerlink.com/content/010q1x323915712x/>`_
+    Kruskal, J. Psychometrika, 29, (1964)
 
 Tips on practical use
 =====================
@@ -355,7 +433,7 @@ Tips on practical use
 * The reconstruction error computed by each routine can be used to choose
   the optimal output dimension.  For a :math:`d`-dimensional manifold embedded
   in a :math:`D`-dimensional parameter space, the reconstruction error will
-  decrease as ``out_dim`` is increased until ``out_dim == d``.
+  decrease as ``n_components`` is increased until ``n_components == d``.
 
 * Note that noisy data can "short-circuit" the manifold, in essence acting
   as a bridge between parts of the manifold that would otherwise be

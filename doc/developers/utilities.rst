@@ -239,8 +239,8 @@ Benchmarking
 Testing Functions
 =================
 
-- :func:`testing.assert_in`: Compare string elements within lists.
-  Used in :mod:`sklearn.datasets` tests.
+- :func:`testing.assert_in`, :func:`testing.assert_not_in`: Assertions for
+  container membership. Designed for forward compatibility with Nose 1.0.
 
 - :class:`mock_urllib2`: Object which mocks the urllib2 module to fake
   requests of mldata.  Used in tests of :mod:`sklearn.datasets`.

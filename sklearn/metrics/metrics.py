@@ -33,7 +33,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     By definition a confusion matrix cm is such that cm[i, j] is equal
     to the number of observations known to be in group i but predicted
-    to be in group j
+    to be in group j.
 
     Parameters
     ----------
@@ -42,6 +42,11 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     y_pred : array, shape = [n_samples]
         estimated targets
+
+    labels : array, shape = [n_classes]
+        lists all labels occuring in the dataset.
+        If none is given, those that appear at least once
+        in y_true or y_pred are used.
 
     Returns
     -------
@@ -58,12 +63,18 @@ def confusion_matrix(y_true, y_pred, labels=None):
         labels = np.asarray(labels, dtype=np.int)
 
     n_labels = labels.size
+    label_to_ind = dict((y, x) for x, y in enumerate(labels))
 
-    CM = np.empty((n_labels, n_labels), dtype=np.long)
-    for i, label_i in enumerate(labels):
-        for j, label_j in enumerate(labels):
-            CM[i, j] = np.sum(
-                np.logical_and(y_true == label_i, y_pred == label_j))
+    if n_labels >= 15:
+        CM = np.zeros((n_labels, n_labels), dtype=np.long)
+        for yt, yp in zip(y_true, y_pred):
+            CM[label_to_ind[yt], label_to_ind[yp]] += 1
+    else:
+        CM = np.empty((n_labels, n_labels), dtype=np.long)
+        for i, label_i in enumerate(labels):
+            for j, label_j in enumerate(labels):
+                CM[i, j] = np.sum(
+                    np.logical_and(y_true == label_i, y_pred == label_j))
 
     return CM
 
@@ -833,22 +844,24 @@ def r2_score(y_true, y_pred):
 
 
 def zero_one_score(y_true, y_pred):
-    """Zero-One classification score
+    """Zero-one classification score (accuracy)
 
     Positive integer (number of good classifications).
     The best performance is 1.
 
-    Return the percentage of good predictions.
+    Return the fraction of correct predictions in y_pred.
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like, shape = n_samples
+        Gold standard labels.
 
-    y_pred : array-like
+    y_pred : array-like, shape = n_samples
+        Predicted labels, as returned by a classifier.
 
     Returns
     -------
-    score : integer
+    score : float
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -874,7 +887,7 @@ def zero_one(y_true, y_pred):
 
     Returns
     -------
-    loss : integer
+    loss : float
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)

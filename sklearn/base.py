@@ -364,6 +364,12 @@ class TransformerMixin(object):
 
 
 ###############################################################################
+class MetaEstimatorMixin(object):
+    """Mixin class for all meta estimators in scikit-learn"""
+    # this is just a tag for the moment
+
+
+###############################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):

@@ -10,7 +10,8 @@ from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import array2d
+from ..utils import array2d, check_random_state
+from ..utils import deprecated
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -163,6 +164,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
+    random_state: integer or numpy.RandomState, optional
+        The generator used to shuffle the sequence of coordinates of theta in
+        the Welch optimizer. If an integer is given, it fixes the seed.
+        Defaults to the global numpy random number generator.
+
+
+    Attributes
+    ----------
+    `theta_`: array
+        Specified theta OR the best set of autocorrelation parameters (the \
+        sought maximizer of the reduced likelihood function).
+
+    `reduced_likelihood_function_value_`: array
+        The optimal reduced likelihood function value.
+
     Examples
     --------
     >>> import numpy as np
@@ -212,7 +228,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                  storage_mode='full', verbose=False, theta0=1e-1,
                  thetaL=None, thetaU=None, optimizer='fmin_cobyla',
                  random_start=1, normalize=True,
-                 nugget=10. * MACHINE_EPSILON):
+                 nugget=10. * MACHINE_EPSILON, random_state=None):
 
         self.regr = regr
         self.corr = corr
@@ -226,6 +242,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.nugget = nugget
         self.optimizer = optimizer
         self.random_start = random_start
+        self.random_state = random_state
 
         # Run input checks
         self._check_params()
@@ -250,6 +267,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A fitted Gaussian Process model object awaiting data to perform
             predictions.
         """
+        self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
         X = array2d(np.asarray(X))
@@ -325,9 +343,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Performing Maximum Likelihood Estimation of the "
                     + "autocorrelation parameters...")
-            self.theta, self.reduced_likelihood_function_value, par = \
-                self.arg_max_reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value):
+            self.theta_, self.reduced_likelihood_function_value_, par = \
+                self._arg_max_reduced_likelihood_function()
+            if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad parameter region. "
                               + "Try increasing upper bound")
 
@@ -336,10 +354,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Given autocorrelation parameters. "
                     + "Computing Gaussian Process model parameters...")
-            self.theta = self.theta0
-            self.reduced_likelihood_function_value, par = \
+            self.theta_ = self.theta0
+            self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value):
+            if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad point. Try increasing theta0.")
 
         self.beta = par['beta']
@@ -425,7 +443,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta, dx).reshape(n_eval, n_samples)
+            r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -517,7 +535,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array containing the autocorrelation parameters at which the
             Gaussian Process model parameters should be determined.
             Default uses the built-in autocorrelation parameters
-            (ie theta = self.theta).
+            (ie ``theta = self.theta_``).
 
         Returns
         -------
@@ -547,7 +565,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if theta is None:
             # Use built-in autocorrelation parameters
-            theta = self.theta
+            theta = self.theta_
 
         # Initialize output
         reduced_likelihood_function_value = - np.inf
@@ -629,7 +647,25 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return reduced_likelihood_function_value, par
 
+    @deprecated("to be removed;"
+            " access ``self.theta_`` etc. directly after fit")
     def arg_max_reduced_likelihood_function(self):
+        return self._arg_max_reduced_likelihood_function()
+
+    @property
+    @deprecated('``theta`` is deprecated and will be removed'
+        'please use ``theta_`` instead.')
+    def theta(self):
+        return self.theta_
+
+    @property
+    @deprecated("``reduced_likelihood_function_value`` is deprecated and will"
+            "be removed' 'please use ``reduced_likelihood_function_value_`` "
+            "instead.")
+    def reduced_likelihood_function_value(self):
+        return self.reduced_likelihood_function_value_
+
+    def _arg_max_reduced_likelihood_function(self):
         """
         This function estimates the autocorrelation parameters theta as the
         maximizer of the reduced likelihood function.
@@ -696,9 +732,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
-                log10_optimal_theta = \
-                    optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                    np.log10(theta0), constraints, iprint=0)
+                try:
+                    log10_optimal_theta = \
+                        optimize.fmin_cobyla(minus_reduced_likelihood_function,
+                                np.log10(theta0), constraints, iprint=0)
+                except ValueError as ve:
+                    print("Optimization failed. Try increasing the ``nugget``")
+                    raise ve
 
                 optimal_theta = 10. ** log10_optimal_theta
                 optimal_minus_rlf_value, optimal_par = \
@@ -742,13 +782,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.thetaL = array2d(self.thetaL.min())
             self.thetaU = array2d(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
-                self.arg_max_reduced_likelihood_function()
+                self._arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
 
             # Iterate over all dimensions of theta allowing for anisotropy
             if verbose:
                 print("Now improving allowing for anisotropy...")
-            for i in np.random.permutation(range(theta0.size)):
+            for i in self.random_state.permutation(theta0.size):
                 if verbose:
                     print "Proceeding along dimension %d..." % (i + 1)
                 self.theta0 = array2d(theta_iso)
@@ -763,7 +803,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
-                    self.arg_max_reduced_likelihood_function()
+                    self._arg_max_reduced_likelihood_function()
 
             # Restore the given atrributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU

@@ -13,14 +13,14 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 
-from . import check_build
+from . import __check_build
 from .base import clone
 
 
 try:
     from numpy.testing import nosetester
 
-    class NoseTester(nosetester.NoseTester):
+    class _NoseTester(nosetester.NoseTester):
         """ Subclass numpy's NoseTester to add doctests by default
         """
 
@@ -35,21 +35,25 @@ try:
             >>> from sklearn import test
             >>> test(extra_argv=['--exe', '-sx']) #doctest: +SKIP
             """
-            return super(NoseTester, self).test(label=label, verbose=verbose,
+            return super(_NoseTester, self).test(label=label, verbose=verbose,
                                     extra_argv=extra_argv,
                                     doctests=doctests, coverage=coverage)
 
-    test = NoseTester().test
+    try:
+        test = _NoseTester(raise_warnings="release").test
+    except TypeError:
+        # Older versions of numpy do not have a raise_warnings argument
+        test = _NoseTester().test
     del nosetester
 except:
     pass
 
 
-__all__ = ['check_build', 'cross_validation', 'cluster', 'covariance',
+__all__ = ['cross_validation', 'cluster', 'covariance',
            'datasets', 'decomposition', 'feature_extraction',
            'feature_selection', 'semi_supervised',
            'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
            'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
            'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-__version__ = '0.11-git'
+__version__ = '0.12-git'

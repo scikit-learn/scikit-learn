@@ -207,7 +207,7 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
                         )
 
     varkwargs = dict()
-    for arg_name, arg_value in kwargs.iteritems():
+    for arg_name, arg_value in sorted(kwargs.items()):
         if arg_name in arg_dict:
             arg_dict[arg_name] = arg_value
         elif arg_keywords is not None:

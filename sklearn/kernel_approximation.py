@@ -9,6 +9,8 @@ approximate kernel feature maps base on Fourier transforms.
 # License: BSD Style.
 
 import numpy as np
+import scipy.sparse as sp
+
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import array2d, atleast2d_or_csr, check_random_state
@@ -179,7 +181,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
     space is transformed into 2×sample_steps+1 features, where sample_steps is
-    a parameter of the method. Typical values of n include 1, 2 and 3.
+    a parameter of the method. Typical values of sample_steps include 1, 2 and
+    3.
 
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
@@ -223,27 +226,79 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X: {array-like, sparse matrix}, shape = (n_samples, n_features)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_features * (2n + 1))
+        X_new: {array, sparse matrix},
+               shape = (n_samples, n_features × (2×sample_steps + 1))
+            Whether the return value is an array of sparse matrix depends on
+            the type of the input X.
         """
 
-        X = array2d(X)
-        # check if X has zeros. Doesn't play well with np.log.
-        if (X <= 0).any():
-            raise ValueError("Entries of X must be strictly positive.")
-        X_new = []
+        X = atleast2d_or_csr(X)
+        sparse = sp.issparse(X)
+
+        # check if X has negative values. Doesn't play well with np.log.
+        if ((X.data if sparse else X) < 0).any():
+            raise ValueError("Entries of X must be non-negative.")
         # zeroth component
         # 1/cosh = sech
-        X_new.append(np.sqrt(X * self.sample_interval / np.cosh(0)))
+        # cosh(0) = 1.0
 
-        log_step = self.sample_interval * np.log(X)
-        step = 2 * X * self.sample_interval
+        transf = self._transform_sparse if sparse else self._transform_dense
+        return transf(X)
+
+    def _transform_dense(self, X):
+        non_zero = (X != 0.0)
+        X_nz = X[non_zero]
+
+        X_step = np.zeros_like(X)
+        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
+
+        X_new = [X_step]
+
+        log_step_nz = self.sample_interval * np.log(X_nz)
+        step_nz = 2 * X_nz * self.sample_interval
 
         for j in xrange(1, self.sample_steps):
-            factor = np.sqrt(step / np.cosh(np.pi * j * self.sample_interval))
-            X_new.append(factor * np.cos(j * log_step))
-            X_new.append(factor * np.sin(j * log_step))
+            factor_nz = np.sqrt(step_nz /
+                             np.cosh(np.pi * j * self.sample_interval))
+
+            X_step = np.zeros_like(X)
+            X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
+            X_new.append(X_step)
+
+            X_step = np.zeros_like(X)
+            X_step[non_zero] = factor_nz * np.sin(j * log_step_nz)
+            X_new.append(X_step)
+
         return np.hstack(X_new)
+
+    def _transform_sparse(self, X):
+        indices = X.indices.copy()
+        indptr = X.indptr.copy()
+
+        data_step = np.sqrt(X.data * self.sample_interval)
+        X_step = sp.csr_matrix((data_step, indices, indptr),
+                               shape=X.shape, dtype=X.dtype, copy=False)
+        X_new = [X_step]
+
+        log_step_nz = self.sample_interval * np.log(X.data)
+        step_nz = 2 * X.data * self.sample_interval
+
+        for j in xrange(1, self.sample_steps):
+            factor_nz = np.sqrt(step_nz /
+                             np.cosh(np.pi * j * self.sample_interval))
+
+            data_step = factor_nz * np.cos(j * log_step_nz)
+            X_step = sp.csr_matrix((data_step, indices, indptr),
+                                   shape=X.shape, dtype=X.dtype, copy=False)
+            X_new.append(X_step)
+
+            data_step = factor_nz * np.sin(j * log_step_nz)
+            X_step = sp.csr_matrix((data_step, indices, indptr),
+                                   shape=X.shape, dtype=X.dtype, copy=False)
+            X_new.append(X_step)
+
+        return sp.hstack(X_new)

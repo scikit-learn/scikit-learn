@@ -45,6 +45,12 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         ordering of the training data.
         If the fit method is ``'kd_tree'``, no warnings will be generated.
 
+    p: integer, optional (default = 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
     Examples
     --------
       >>> from sklearn.neighbors import NearestNeighbors
@@ -54,8 +60,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> neigh.fit(samples)  #doctest: +ELLIPSIS
       NearestNeighbors(...)
 
-      >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
-      array([[2, 0]])
+      >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False) #doctest: +ELLIPSIS
+      array([[2, 0]]...)
 
       >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
       array([[2]])
@@ -78,9 +84,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30,
-                 warn_on_equidistant=True):
+                 warn_on_equidistant=True, p=2):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          warn_on_equidistant=warn_on_equidistant)
+                          warn_on_equidistant=warn_on_equidistant,
+                          p=p)

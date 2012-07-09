@@ -1,8 +1,8 @@
 .. _cross_validation:
 
-================
-Cross-Validation
-================
+===================================================
+Cross-Validation: evaluating estimator performance
+===================================================
 
 .. currentmodule:: sklearn.cross_validation
 
@@ -33,14 +33,14 @@ We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
   >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
-  ...     iris.data, iris.target, test_fraction=0.4, random_state=0)
+  ...     iris.data, iris.target, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
   ((90, 4), (90,))
   >>> X_test.shape, y_test.shape
   ((60, 4), (60,))
 
-  >>> clf = svm.SVC(kernel='linear', C=100).fit(X_train, y_train)
+  >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
   0.96...
 
@@ -68,12 +68,12 @@ linear kernel Support Vector Machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
-  >>> clf = svm.SVC(kernel='linear', C=100)
+  >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
   >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.  ...])
+  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
@@ -89,7 +89,7 @@ scoring function, e.g. from the metrics module::
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
   ...     score_func=metrics.f1_score)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.  ...])
+  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
 
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
@@ -103,11 +103,11 @@ validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]
   >>> cv = cross_validation.ShuffleSplit(n_samples, n_iterations=3,
-  ...     test_fraction=0.3, random_state=0)
+  ...     test_size=0.3, random_state=0)
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  1.        ,  1.        ])
+  array([ 0.97...,  0.97...,  1.        ])
 
 The available cross validation iterators are introduced in the following.
 
@@ -339,12 +339,12 @@ generator.
 
 Here is a usage example::
 
-  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_fraction=0.25,
+  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_size=0.25,
   ...     random_state=0)
   >>> len(ss)
   3
   >>> print ss                                            # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iterations=3, test_fraction=0.25, indices=True, ...)
+  ShuffleSplit(5, n_iterations=3, test_size=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index
@@ -390,7 +390,7 @@ smaller than the total dataset if it is very large.
   >>> len(bs)
   3
   >>> print bs
-  Bootstrap(9, n_bootstraps=3, n_train=5, n_test=4, random_state=0)
+  Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
 
   >>> for train_index, test_index in bs:
   ...    print train_index, test_index

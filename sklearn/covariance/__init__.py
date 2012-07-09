@@ -12,4 +12,4 @@ from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
     ledoit_wolf, LedoitWolf, oas, OAS
 from .robust_covariance import fast_mcd, MinCovDet
 from .graph_lasso_ import graph_lasso, GraphLasso, GraphLassoCV
-from .outlier_detection import EllipticEnvelop
+from .outlier_detection import EllipticEnvelope, EllipticEnvelop

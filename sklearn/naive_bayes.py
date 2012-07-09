@@ -128,7 +128,7 @@ class GaussianNB(BaseNB):
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
     GaussianNB()
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
 
@@ -153,17 +153,22 @@ class GaussianNB(BaseNB):
         X = np.asarray(X)
         y = np.asarray(y)
 
+        n_samples, n_features = X.shape
+
+        if n_samples != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes")
+
         self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
-        _, n_features = X.shape
 
-        self.theta_ = np.empty((n_classes, n_features))
-        self.sigma_ = np.empty((n_classes, n_features))
-        self.class_prior_ = np.empty(n_classes)
+        self.theta_ = np.zeros((n_classes, n_features))
+        self.sigma_ = np.zeros((n_classes, n_features))
+        self.class_prior_ = np.zeros(n_classes)
+        epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
             self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0)
-            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_classes
+            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
+            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
         return self
 
     def _joint_log_likelihood(self, X):
@@ -173,8 +178,9 @@ class GaussianNB(BaseNB):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
-                                    (self.sigma_[i, :]), 1)
+                                 (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
+
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
@@ -280,6 +286,8 @@ class BaseDiscreteNB(BaseNB):
             N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative.")
         N_c_i = safe_sparse_dot(Y.T, X)
         N_c = np.sum(N_c_i, axis=1)
 
@@ -339,7 +347,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
     MultinomialNB(alpha=1.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     Notes
@@ -396,7 +404,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
     BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
-    >>> print clf.predict(X[2])
+    >>> print(clf.predict(X[2]))
     [3]
 
     References

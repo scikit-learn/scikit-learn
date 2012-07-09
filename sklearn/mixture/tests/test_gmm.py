@@ -108,7 +108,7 @@ def test_GMM_attributes():
     means = rng.randint(-20, 20, (n_components, n_features))
 
     assert g.n_components == n_components
-    assert g._covariance_type == covariance_type
+    assert g.covariance_type == covariance_type
 
     g.weights_ = weights
     assert_array_almost_equal(g.weights_, weights)
@@ -128,18 +128,24 @@ def test_GMM_attributes():
 
 class GMMTester():
     do_test_eval = True
-    n_components = 10
-    n_features = 4
-    weights = rng.rand(n_components)
-    weights = weights / weights.sum()
-    means = rng.randint(-20, 20, (n_components, n_features))
-    threshold = -0.5
-    I = np.eye(n_features)
-    covars = {'spherical': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
-              'tied': make_spd_matrix(n_features, random_state=0) + 5 * I,
-              'diag': (0.1 + 2 * rng.rand(n_components, n_features)) ** 2,
-              'full': np.array([make_spd_matrix(n_features, random_state=0)
-                  + 5 * I for x in xrange(n_components)])}
+
+    def _setUp(self):
+        self.n_components = 10
+        self.n_features = 4
+        self.weights = rng.rand(self.n_components)
+        self.weights = self.weights / self.weights.sum()
+        self.means = rng.randint(-20, 20, (self.n_components, self.n_features))
+        self.threshold = -0.5
+        self.I = np.eye(self.n_features)
+        self.covars = {'spherical': (0.1 + 2 * \
+                        rng.rand(self.n_components, self.n_features)) ** 2,
+                  'tied': make_spd_matrix(self.n_features, random_state=0) +\
+                        5 * self.I,
+                  'diag': (0.1 + 2 * rng.rand(self.n_components,\
+                        self.n_features)) ** 2,
+                  'full': np.array([make_spd_matrix(self.n_features,\
+                        random_state=0)
+                      + 5 * self.I for x in range(self.n_components)])}
 
     def test_eval(self):
         if not self.do_test_eval:
@@ -191,17 +197,23 @@ class GMMTester():
         X = g.sample(n_samples=100)
         g = self.model(n_components=self.n_components,
                        covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-1)
-        g.fit(X, n_iter=1, init_params=params)
+                       random_state=rng, min_covar=1e-1,
+                       n_iter=1, init_params=params)
+        g.fit(X)
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
         for iter in xrange(5):
-            g.fit(X, n_iter=1, params=params, init_params='')
+            g.params = params
+            g.init_params = ''
+            g.fit(X)
             trainll.append(self.score(g, X))
-        g.fit(X, n_iter=10, params=params, init_params='')  # finish fitting
+        g.n_iter = 10
+        g.init_params = ''
+        g.params = params
+        g.fit(X)  # finish fitting
 
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
@@ -222,8 +234,9 @@ class GMMTester():
         X = rng.randn(100, self.n_features)
         X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-3)
-        g.fit(X, n_iter=5, init_params=params)
+                       random_state=rng, min_covar=1e-3, n_iter=5,
+                       init_params=params)
+        g.fit(X)
         trainll = g.score(X)
         self.assertTrue(np.sum(np.abs(trainll / 100 / X.shape[1])) < 5)
 
@@ -234,8 +247,9 @@ class GMMTester():
         X = rng.randn(100, 1)
         #X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-7)
-        g.fit(X, n_iter=5, init_params=params)
+                       random_state=rng, min_covar=1e-7, n_iter=5,
+                       init_params=params)
+        g.fit(X)
         trainll = g.score(X)
         if isinstance(g, mixture.DPGMM):
             self.assertTrue(np.sum(np.abs(trainll / 100)) < 5)
@@ -249,21 +263,25 @@ class GMMTester():
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
     covariance_type = 'spherical'
     model = mixture.GMM
+    setUp = GMMTester._setUp
 
 
 class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
     covariance_type = 'diag'
     model = mixture.GMM
+    setUp = GMMTester._setUp
 
 
 class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
     covariance_type = 'tied'
     model = mixture.GMM
+    setUp = GMMTester._setUp
 
 
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     covariance_type = 'full'
     model = mixture.GMM
+    setUp = GMMTester._setUp
 
 
 def test_multiple_init():
@@ -271,9 +289,10 @@ def test_multiple_init():
     X = rng.randn(30, 5)
     X[:10] += 2
     g = mixture.GMM(n_components=2, covariance_type='spherical',
-                    random_state=rng, min_covar=1e-7)
-    train2 = g.fit(X, n_iter=5, n_init=5).score(X).sum()
-    train1 = g.fit(X, n_iter=5).score(X).sum()
+                    random_state=rng, min_covar=1e-7, n_iter=5)
+    train1 = g.fit(X).score(X).sum()
+    g.n_init = 5
+    train2 = g.fit(X).score(X).sum()
     assert train2 >= train1 - 1.e-2
 
 
@@ -284,8 +303,8 @@ def test_n_parameters():
     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
     for cv_type in ['full', 'tied', 'diag', 'spherical']:
         g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-                        random_state=rng, min_covar=1e-7)
-        g.fit(X, n_iter=1)
+                        random_state=rng, min_covar=1e-7, n_iter=1)
+        g.fit(X)
         assert g._n_parameters() == n_params[cv_type]
 
 

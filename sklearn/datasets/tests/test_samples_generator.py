@@ -3,8 +3,11 @@ from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_less
+
 from .. import make_classification
 from .. import make_multilabel_classification
+from .. import make_hastie_10_2
 from .. import make_regression
 from .. import make_blobs
 from .. import make_friedman1
@@ -45,6 +48,13 @@ def test_make_multilabel_classification():
         assert_true(max([len(y) for y in Y]) <= 3)
 
 
+def test_make_hastie_10_2():
+    X, y = make_hastie_10_2(n_samples=100, random_state=0)
+    assert_equal(X.shape, (100, 10), "X shape mismatch")
+    assert_equal(y.shape, (100,), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (2,), "Unexpected number of classes")
+
+
 def test_make_regression():
     X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
                               effective_rank=5, coef=True, bias=0.0,
@@ -53,6 +63,19 @@ def test_make_regression():
     assert_equal(X.shape, (100, 10), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
     assert_equal(c.shape, (10,), "coef shape mismatch")
+    assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
+
+    # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
+    assert_approx_equal(np.std(y - np.dot(X, c)), 1.0, significant=2)
+
+
+def test_make_regression_multitarget():
+    X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
+                              n_targets=3, coef=True, noise=1., random_state=0)
+
+    assert_equal(X.shape, (100, 10), "X shape mismatch")
+    assert_equal(y.shape, (100, 3), "y shape mismatch")
+    assert_equal(c.shape, (10, 3), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
@@ -111,7 +134,7 @@ def test_make_low_rank_matrix():
 
     from numpy.linalg import svd
     u, s, v = svd(X)
-    assert_true(sum(s) - 5 < 0.1, "X rank is not approximately 5")
+    assert_less(sum(s) - 5, 0.1, "X rank is not approximately 5")
 
 
 def test_make_sparse_coded_signal():

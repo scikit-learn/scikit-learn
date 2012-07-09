@@ -2,13 +2,13 @@
 # License: BSD style
 
 import warnings
-from sys import version_info
 
 import numpy as np
 
-from nose import SkipTest
 from nose.tools import assert_raises, assert_true
 from numpy.testing import assert_equal, assert_array_almost_equal
+
+from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model import orthogonal_mp, orthogonal_mp_gram, \
                                  OrthogonalMatchingPursuit
@@ -21,12 +21,6 @@ y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
-
-
-def check_warnings():
-    if version_info < (2, 6):
-        raise SkipTest("Testing for warnings is not supported in versions \
-        older than Python 2.6")
 
 
 def test_correct_shapes():
@@ -71,7 +65,6 @@ def test_with_without_gram_tol():
 
 
 def test_unreachable_accuracy():
-    check_warnings()  # Skip if unsupported Python version
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         assert_array_almost_equal(
@@ -82,7 +75,7 @@ def test_unreachable_accuracy():
             orthogonal_mp(X, y, tol=0, precompute_gram=True),
             orthogonal_mp(X, y, precompute_gram=True,
                           n_nonzero_coefs=n_features))
-        assert_true(len(w) > 0)  # warnings should be raised
+        assert_greater(len(w), 0)  # warnings should be raised
 
 
 def test_bad_input():
@@ -107,7 +100,7 @@ def test_perfect_signal_recovery():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
-def test_estimator_shapes():
+def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
     assert_equal(omp.coef_.shape, (n_features,))
@@ -119,19 +112,43 @@ def test_estimator_shapes():
     assert_equal(omp.intercept_.shape, (n_targets,))
     assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
+    omp.set_params(fit_intercept=False, normalize=False)
+
     omp.fit(X, y[:, 0], Gram=G, Xy=Xy[:, 0])
     assert_equal(omp.coef_.shape, (n_features,))
-    assert_equal(omp.intercept_.shape, ())
+    assert_equal(omp.intercept_, 0)
     assert_true(count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
     omp.fit(X, y, Gram=G, Xy=Xy)
     assert_equal(omp.coef_.shape, (n_targets, n_features))
-    assert_equal(omp.intercept_.shape, (n_targets,))
+    assert_equal(omp.intercept_, 0)
     assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
 
+def test_scaling_with_gram():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        # Use only 1 nonzero coef to be faster and to avoid warnings
+        omp1 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                         fit_intercept=False, normalize=False)
+        omp2 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                         fit_intercept=True, normalize=False)
+        omp3 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                         fit_intercept=False, normalize=True)
+        omp1.fit(X, y, Gram=G)
+        omp1.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 0)
+        omp2.fit(X, y, Gram=G)
+        assert_true(len(w) == 1)
+        omp2.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 2)
+        omp3.fit(X, y, Gram=G)
+        assert_true(len(w) == 3)
+        omp3.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 4)
+
+
 def test_identical_regressors():
-    check_warnings()  # Skip if unsupported Python version
     newX = X.copy()
     newX[:, 1] = newX[:, 0]
     gamma = np.zeros(n_features)
@@ -161,7 +178,9 @@ def test_swapped_regressors():
 def test_no_atoms():
     y_empty = np.zeros_like(y)
     Xy_empty = np.dot(X.T, y_empty)
-    gamma_empty = orthogonal_mp(X, y_empty, 1)
-    gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        gamma_empty = orthogonal_mp(X, y_empty, 1)
+        gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
     assert_equal(np.all(gamma_empty == 0), True)
     assert_equal(np.all(gamma_empty_gram == 0), True)
