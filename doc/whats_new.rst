@@ -16,6 +16,10 @@ Changelog
    - Added Huber and Quantile loss functions to
      :class:`ensemble.GradientBoostingRegressor`.
 
+   - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
+     now support multi-output classification and regression problems, by 
+     `Gilles Louppe`_.
+
    - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
@@ -28,10 +32,10 @@ Changelog
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
      decompresses them on the fly.
 
-   - A common testing framework for all estimators was added.
+   - SVMlight file format serializer now preserves double precision floating
+     point values, by `Olivier Grisel`_.
 
-   - Decision trees and forests of randomized trees now support multi-output
-     classification and regression problems, by `Gilles Louppe`
+   - A common testing framework for all estimators was added.
 
 API changes summary
 -------------------

@@ -109,7 +109,7 @@ def roc_curve(y_true, y_score):
         they are reversed upon returning them to ensure they
         correspond to both fpr and tpr, which are sorted in reversed order
         during their calculation.
-        
+
 
     Examples
     --------

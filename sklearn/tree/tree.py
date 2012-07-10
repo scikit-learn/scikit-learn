@@ -20,7 +20,6 @@ from ..utils import array2d, check_random_state
 
 from . import _tree
 
-import sys
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
