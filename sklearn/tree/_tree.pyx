@@ -9,21 +9,23 @@
 
 
 # TODO: cpdef init_value => cdef init_value
+# TODO: pickle https://groups.google.com/forum/?fromgroups#!topic/cython-users/vzG58m0Yr2Y
+# TODO: expose attributes http://docs.cython.org/src/tutorial/cdef_classes.html
 
 
+# ==============================================================================
+# Imports
+# ==============================================================================
 
 cimport cython
 
 import numpy as np
 cimport numpy as np
 
-DTYPE = np.float32
-ctypedef np.float32_t DTYPE_t
-ctypedef np.int8_t BOOL_t
-
 cdef extern from "stdlib.h":
     void* malloc(size_t size)
     void* calloc(size_t nmemb, size_t size)
+    void* realloc(void* ptr, size_t size)
     void free(void* ptr)
 
 cdef extern from "math.h":
@@ -33,14 +35,387 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
+
+# ==============================================================================
+# Types and constants
+# ==============================================================================
+
+# Dtype
+DTYPE = np.float32
+ctypedef np.float32_t DTYPE_t
+ctypedef np.int8_t BOOL_t
+
+# Constants
 cdef DTYPE_t INFINITY = np.inf
 
-
+TREE_LEAF = -1
+cdef int _TREE_LEAF = TREE_LEAF
 
 
 # ==============================================================================
 # Tree
 # ==============================================================================
+
+cdef class Tree:
+    """Struct-of-arrays representation of a binary decision tree.
+
+    The binary tree is represented as a number of parallel arrays.
+    The i-th element of each array holds information about the
+    node `i`. You can find a detailed description of all arrays
+    below. NOTE: Some of the arrays only apply to either leaves or
+    split nodes, resp. In this case the values of nodes of the other
+    type are arbitrary!
+
+    Attributes
+    ----------
+    node_count : int
+        Number of nodes (internal nodes + leaves) in the tree.
+
+    children : np.ndarray, shape=(node_count, 2), dtype=int32
+        `children[i, 0]` holds the node id of the left child of node `i`.
+        `children[i, 1]` holds the node id of the right child of node `i`.
+        For leaves `children[i, 0] == children[i, 1] == self.LEAF == -1`.
+
+    feature : np.ndarray of int32
+        The feature to split on (only for internal nodes).
+
+    threshold : np.ndarray of float64
+        The threshold of each node (only for internal nodes).
+
+    value : np.ndarray of float64, shape=(capacity, n_outputs, n_classes)
+        Contains the constant prediction value of each node.
+
+    best_error : np.ndarray of float64
+        The error of the (best) split.
+        For leaves `init_error == `best_error`.
+
+    init_error : np.ndarray of float64
+        The initial error of the node (before splitting).
+        For leaves `init_error == `best_error`.
+
+    n_samples : np.ndarray of np.int32
+        The number of samples at each node.
+    """
+
+    cdef int* n_classes
+    cdef int max_n_classes
+    cdef int n_features
+    cdef int n_outputs
+
+    cdef int node_count
+    cdef int capacity
+    cdef int* children_left
+    cdef int* children_right
+    cdef int* feature
+    cdef double* threshold
+    cdef DTYPE_t* value
+    cdef double* best_error
+    cdef double* init_error
+    cdef int* n_samples
+
+    cdef Criterion criterion
+    cdef int max_depth
+    cdef int min_samples_split
+    cdef int min_samples_leaf
+    cdef double min_density
+    cdef int max_features
+    cdef object random_state
+    cdef object find_split
+
+    def __init__(self, object n_classes, int n_features, int n_outputs, int capacity=3):
+        cdef int k
+
+        self.n_features = n_features
+        self.n_outputs = n_outputs
+        self.n_classes = <int*> calloc(n_outputs, sizeof(int))
+        self.max_n_classes = np.max(n_classes)
+
+        for k from 0 <= k < n_outputs:
+            self.n_classes[k] = n_classes[k]
+
+        self.node_count = 0
+        self.capacity = capacity
+
+        self.children_left = <int*> malloc(capacity * sizeof(int))
+        self.children_right = <int*> malloc(capacity * sizeof(int))
+        self.feature = <int*> malloc(capacity * sizeof(int))
+        self.threshold = <double*> malloc(capacity * sizeof(double))
+        self.value = <DTYPE_t*> malloc(capacity * self.n_outputs * self.max_n_classes * sizeof(DTYPE_t));
+        self.best_error = <double*> malloc(capacity * sizeof(double));
+        self.init_error = <double*> malloc(capacity * sizeof(double));
+        self.n_samples = <int*> malloc(capacity * sizeof(int));
+
+    def __del__(self):
+        free(self.n_classes)
+        free(self.children_left)
+        free(self.children_right)
+        free(self.feature)
+        free(self.threshold)
+        free(self.value)
+        free(self.best_error)
+        free(self.init_error)
+        free(self.n_samples)
+
+    cdef void resize(self, int capacity=-1):
+        """Resize tree arrays to `capacity`, if < 0 then double capacity. """
+        if capacity == self.capacity:
+            return
+
+        if capacity < 0:
+            capacity = 2 * self.capacity
+
+        self.capacity = capacity
+
+        self.children_left = <int*> realloc(self.children_left, capacity * sizeof(int))
+        self.children_right = <int*> realloc(self.children_right, capacity * sizeof(int))
+        self.feature = <int*> realloc(self.feature, capacity * sizeof(int))
+        self.value = <DTYPE_t*> realloc(self.value, capacity * self.n_outputs * self.max_n_classes * sizeof(DTYPE_t))
+        self.best_error = <double*> realloc(self.best_error, capacity * sizeof(double))
+        self.init_error = <double*> realloc(self.init_error, capacity * sizeof(double))
+        self.n_samples = <int*> realloc(self.n_samples, capacity * sizeof(int))
+
+        # if capacity smaller than node_count, adjust the counter
+        if capacity < self.node_count:
+            self.node_count = capacity
+
+    cdef int add_split_node(self, int parent, int is_left_child, int feature,
+                                  double threshold, DTYPE_t* value,
+                                  double best_error, double init_error,
+                                  int n_samples):
+        """Add a splitting node to the tree. The new node registers itself as
+           the child of its parent. """
+        cdef int node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        self.feature[node_id] = feature
+        self.threshold[node_id] = threshold
+
+        cdef int i
+        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
+
+        for i from 0 <= i < self.n_outputs * self.max_n_classes:
+            self.value[offset_node + i] = value[i]
+
+        self.init_error[node_id] = init_error
+        self.best_error[node_id] = best_error
+        self.n_samples[node_id] = n_samples
+
+        # set as left or right child of parent
+        if parent > _TREE_LEAF:
+            if is_left_child:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        self.node_count += 1
+
+        return node_id
+
+    cdef int add_leaf(self, int parent, int is_left_child, DTYPE_t* value, double error, int n_samples):
+        """Add a leaf to the tree. The new node registers itself as the
+           child of its parent. """
+        cdef int node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        cdef int i
+        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
+
+        for i from 0 <= i < self.n_outputs * self.max_n_classes:
+            self.value[offset_node + i] = value[i]
+
+        self.init_error[node_id] = error
+        self.best_error[node_id] = error
+        self.n_samples[node_id] = n_samples
+
+        if is_left_child:
+            self.children_left[parent] = node_id
+        else:
+            self.children_right[parent] = node_id
+
+        self.children_left[node_id] = _TREE_LEAF
+        self.children_right[node_id] = _TREE_LEAF
+
+        self.node_count += 1
+
+        return node_id
+
+    cdef void build(self, np.ndarray X, np.ndarray y, Criterion criterion,
+                    int max_depth, int min_samples_split, int min_samples_leaf,
+                    double min_density, int max_features, object random_state,
+                    object find_split, np.ndarray sample_mask=None,
+                    np.ndarray X_argsorted=None):
+
+        # Setup auxiliary data structures and check input before
+        # recursive partitioning
+        if X.dtype != DTYPE or not np.isfortran(X):
+            X = np.asarray(X, dtype=DTYPE, order="F")
+
+        if y.dtype != DTYPE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DTYPE, order="C")
+
+        if sample_mask is None:
+            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+        if X_argsorted is None:
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
+
+        # Pre-allocate some space
+        cdef int init_capacity
+
+        if max_depth <= 10:
+            # allocate space for complete binary tree
+            init_capacity = (2 ** (max_depth + 1)) - 1
+        else:
+            # allocate fixed size and dynamically resize later
+            init_capacity = 2047
+
+        self.resize(init_capacity)
+
+        # Build the tree by recursive partitioning
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_density = min_density
+        self.max_features = max_features
+        self.random_state = random_state
+        self.find_split = find_split
+
+        self.recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
+
+        # Compactify the tree data structure
+        self.resize(self.node_count)
+
+    # Recursive algorithm
+    cdef void recursive_partition(self,
+                                  np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
+                                  np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
+                                  np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                                  np.ndarray sample_mask,
+                                  int depth,
+                                  int parent,
+                                  int is_left_child):
+        # Count samples
+        cdef int n_node_samples = sample_mask.sum()
+
+        if n_node_samples == 0:
+            raise ValueError("Attempting to find a split "
+                             "with an empty sample_mask")
+
+        # Split samples
+        if depth < self.max_depth and \
+           n_node_samples >= self.min_samples_split and \
+           n_node_samples >= 2 * self.min_samples_leaf:
+            feature, threshold, best_error, init_error = self.find_split(
+                X, y, X_argsorted, sample_mask, n_node_samples,
+                self.min_samples_leaf, self.max_features, self.criterion, self.random_state)
+        else:
+            feature = -1
+            init_error = _error_at_leaf(y, sample_mask, self.criterion, n_node_samples)
+
+        cdef DTYPE_t* value = <DTYPE_t*> malloc(self.n_outputs * self.max_n_classes * sizeof(DTYPE_t))
+        self.criterion.init_value(value)
+
+        # Current node is leaf
+        if feature == -1:
+            self.add_leaf(parent, is_left_child, value,
+                           init_error, n_node_samples)
+            free(value)
+
+        # Current node is internal node (= split node)
+        else:
+            # Sample mask is too sparse?
+            if n_node_samples / X.shape[0] <= self.min_density:
+                X = X[sample_mask]
+                X_argsorted = np.asfortranarray(
+                    np.argsort(X.T, axis=1).astype(np.int32).T)
+                y = y[sample_mask]
+                sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+            # Split and and recurse
+            split = X[:, feature] <= threshold
+
+            node_id = self.add_split_node(parent, is_left_child, feature,
+                                           threshold, value, best_error,
+                                           init_error, n_node_samples)
+            free(value)
+
+            # left child recursion
+            self.recursive_partition(X, X_argsorted, y,
+                                np.logical_and(split, sample_mask),
+                                depth + 1, node_id, True)
+
+            # right child recursion
+            self.recursive_partition(X, X_argsorted, y,
+                                np.logical_and(np.logical_not(split),
+                                               sample_mask),
+                                depth + 1, node_id, False)
+
+
+
+    def predict(self, X):
+        out = np.empty((X.shape[0], self.n_outputs, self.max_n_classes), dtype=np.float64)
+
+        _predict_tree(X,
+                            self.children,
+                            self.feature,
+                            self.threshold,
+                            self.value,
+                            out)
+
+        return out
+
+    def compute_feature_importances(self, method="gini"):
+        """Computes the importance of each feature (aka variable).
+
+        The following `method`s are supported:
+
+          * "gini" : The difference of the initial error and the error of the
+                     split times the number of samples that passed the node.
+          * "squared" : The empirical improvement in squared error.
+
+        Parameters
+        ----------
+        method : str, optional (default="gini")
+            The method to estimate the importance of a feature. Either "gini"
+            or "squared".
+        """
+        if method == "gini":
+            method = lambda node: (self.n_samples[node] * \
+                                     (self.init_error[node] -
+                                      self.best_error[node]))
+        elif method == "squared":
+            method = lambda node: (self.init_error[node] - \
+                                   self.best_error[node]) ** 2.0
+        else:
+            raise ValueError(
+                'Invalid value for method. Allowed string '
+                'values are "gini", or "mse".')
+
+        importances = np.zeros((self.n_features,), dtype=np.float64)
+
+        for node in range(self.node_count):
+            if (self.children[node, 0]
+                == self.children[node, 1]
+                == self.LEAF):
+                continue
+            else:
+                importances[self.feature[node]] += method(node)
+
+        normalizer = np.sum(importances)
+
+        if normalizer > 0.0:
+            # Avoid dividing by zero (e.g., when root is pure)
+            importances /= normalizer
+
+        return importances
+
+
 
 
 
@@ -70,7 +445,7 @@ cdef class Criterion:
         """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef np.ndarray init_value(self):
+    cdef void init_value(self, DTYPE_t* value):
         """Get the initial value of the criterion (`init` must be called
            before)."""
         pass
@@ -246,7 +621,7 @@ cdef class ClassificationCriterion(Criterion):
         """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef np.ndarray init_value(self):
+    cdef void init_value(self, DTYPE_t* value):
         """Get the initial value of the criterion (`init` must be called
            before)."""
         cdef int n_outputs = self.n_outputs
@@ -254,15 +629,11 @@ cdef class ClassificationCriterion(Criterion):
         cdef int label_count_stride = self.label_count_stride
         cdef int* label_count_init = self.label_count_init
 
-        cdef np.ndarray[DTYPE_t, ndim=2] value = np.zeros((n_outputs, label_count_stride), dtype=DTYPE)
-
         cdef int k, c
 
         for k from 0 <= k < n_outputs:
             for c from 0 <= c < n_classes[k]:
-                value[k, c] = <DTYPE_t> (label_count_init[k * label_count_stride + c])
-
-        return value
+                value[k * label_count_stride + c] = <DTYPE_t> (label_count_init[k * label_count_stride + c])
 
 
 cdef class Gini(ClassificationCriterion):
@@ -596,19 +967,16 @@ cdef class RegressionCriterion(Criterion):
         """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef np.ndarray init_value(self):
+    cdef void init_value(self, DTYPE_t* value):
         """Get the initial value of the criterion (`init` must be called
            before)."""
         cdef int n_outputs = self.n_outputs
         cdef double* mean_init = self.mean_init
 
-        cdef np.ndarray[DTYPE_t, ndim=2] value = np.zeros((n_outputs, 1), dtype=DTYPE)
         cdef int k
 
         for k from 0 <= k < n_outputs:
-            value[k, 0] = <DTYPE_t> (mean_init[k])
-
-        return value
+            value[k] = <DTYPE_t> (mean_init[k])
 
 
 cdef class MSE(RegressionCriterion):
