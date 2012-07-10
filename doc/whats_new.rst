@@ -16,6 +16,10 @@ Changelog
    - Added Huber and Quantile loss functions to
      :class:`ensemble.GradientBoostingRegressor`.
 
+   - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
+     now support multi-output classification and regression problems, by 
+     `Gilles Louppe`_.
+
    - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
@@ -32,9 +36,6 @@ Changelog
      point values, by `Olivier Grisel`_.
 
    - A common testing framework for all estimators was added.
-
-   - Decision trees and forests of randomized trees now support multi-output
-     classification and regression problems, by `Gilles Louppe`
 
 API changes summary
 -------------------
