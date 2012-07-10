@@ -67,7 +67,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
         Individual weights for each sample
 
     solver : {'auto', 'dense_cholesky', 'sparse_cg'}, optional
-        Solver to use in the computational routines. 'delse_cholesky'
+        Solver to use in the computational routines. 'dense_cholesky'
         will use the standard scipy.linalg.solve function, 'sparse_cg'
         will use the conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -154,7 +154,7 @@ class _BaseRidge(LinearModel):
 
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
-            routines. 'delse_cholesky' will use the standard
+            routines. 'dense_cholesky' will use the standard
             scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -304,7 +304,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
 
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
-            routines. 'delse_cholesky' will use the standard
+            routines. 'dense_cholesky' will use the standard
             scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
