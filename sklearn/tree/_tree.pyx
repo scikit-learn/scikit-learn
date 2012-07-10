@@ -114,7 +114,7 @@ cdef class Tree:
     cdef int* n_samples
 
     cdef Criterion criterion
-    cdef int max_depth
+    cdef double max_depth
     cdef int min_samples_split
     cdef int min_samples_leaf
     cdef double min_density
@@ -244,7 +244,7 @@ cdef class Tree:
         return node_id
 
     cpdef build(self, np.ndarray X, np.ndarray y, Criterion criterion,
-                    int max_depth, int min_samples_split, int min_samples_leaf,
+                    double max_depth, int min_samples_split, int min_samples_leaf,
                     double min_density, int max_features, object random_state,
                     object find_split, np.ndarray sample_mask=None,
                     np.ndarray X_argsorted=None):
@@ -269,7 +269,7 @@ cdef class Tree:
 
         if max_depth <= 10:
             # allocate space for complete binary tree
-            init_capacity = (2 ** (max_depth + 1)) - 1
+            init_capacity = (2 ** (int(max_depth) + 1)) - 1
         else:
             # allocate fixed size and dynamically resize later
             init_capacity = 2047
@@ -325,7 +325,6 @@ cdef class Tree:
         if feature == -1:
             self.add_leaf(parent, is_left_child, value,
                            init_error, n_node_samples)
-            free(value)
 
         # Current node is internal node (= split node)
         else:
@@ -343,7 +342,6 @@ cdef class Tree:
             node_id = self.add_split_node(parent, is_left_child, feature,
                                            threshold, value, best_error,
                                            init_error, n_node_samples)
-            free(value)
 
             # left child recursion
             self.recursive_partition(X, X_argsorted, y,
@@ -355,6 +353,8 @@ cdef class Tree:
                                 np.logical_and(np.logical_not(split),
                                                sample_mask),
                                 depth + 1, node_id, False)
+
+        free(value)
 
 
 
@@ -377,7 +377,7 @@ cdef class Tree:
         for i from 0 <= i < n:
             node_id = 0
             # While node_id not a leaf
-            while self.children[node_id] != _TREE_LEAF and self.children_right[node_id] != _TREE_LEAF:
+            while self.children_left[node_id] != _TREE_LEAF and self.children_right[node_id] != _TREE_LEAF:
                 if X[i, self.feature[node_id]] <= self.threshold[node_id]:
                     node_id = self.children_left[node_id]
                 else:

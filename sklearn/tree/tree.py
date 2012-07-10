@@ -261,6 +261,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         # Build tree
         self.tree_ = _tree.Tree(self.n_classes_, self.n_features_, self.n_outputs_)
+
         self.tree_.build(X, y, criterion, max_depth,
                 self.min_samples_split, self.min_samples_leaf,
                 self.min_density, max_features, self.random_state,
