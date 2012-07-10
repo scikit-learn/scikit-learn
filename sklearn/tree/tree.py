@@ -313,11 +313,6 @@ class Tree(object):
         that improve the tree the least.
 
 
-        Parameters
-        ----------
-        tree : binary tree object
-            The binary tree for which to compute the complexity costs.
-
         Returns
         -------
         nodes : numpy array
