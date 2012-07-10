@@ -243,7 +243,7 @@ cdef class Tree:
 
         return node_id
 
-    cdef void build(self, np.ndarray X, np.ndarray y, Criterion criterion,
+    cpdef build(self, np.ndarray X, np.ndarray y, Criterion criterion,
                     int max_depth, int min_samples_split, int min_samples_leaf,
                     double min_density, int max_features, object random_state,
                     object find_split, np.ndarray sample_mask=None,
@@ -358,15 +358,38 @@ cdef class Tree:
 
 
 
-    def predict(self, X):
+    cpdef predict(self, np.ndarray X):
         out = np.empty((X.shape[0], self.n_outputs, self.max_n_classes), dtype=np.float64)
 
-        _predict_tree(X,
-                            self.children,
-                            self.feature,
-                            self.threshold,
-                            self.value,
-                            out)
+        # _predict_tree(X,
+        #                     self.children,
+        #                     self.feature,
+        #                     self.threshold,
+        #                     self.value,
+        #                     out)
+
+        cdef int i, k, c
+        cdef int n = X.shape[0]
+        cdef int node_id = 0
+        cdef int offset_node
+        cdef int offset_output
+
+        for i from 0 <= i < n:
+            node_id = 0
+            # While node_id not a leaf
+            while self.children[node_id] != _TREE_LEAF and self.children_right[node_id] != _TREE_LEAF:
+                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
+                    node_id = self.children_left[node_id]
+                else:
+                    node_id = self.children_right[node_id]
+
+            offset_node = node_id * self.n_outputs * self.max_n_classes
+
+            for k from 0 <= k < self.n_outputs:
+                offset_output = k * self.max_n_classes
+
+                for c from 0 <= c < self.n_classes[k]:
+                    out[i, k, c] = self.value[offset_node + offset_output + c]
 
         return out
 
