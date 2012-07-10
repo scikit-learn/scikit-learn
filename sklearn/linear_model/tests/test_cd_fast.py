@@ -21,6 +21,7 @@ def check_warnings():
 def test_line():
 
     X = np.array([[-1], [0.], [1.]])
+    X = np.asfortranarray(X)
     y = np.array([-1.0, 0.0, 1.0]) # just a straight line
     n_samples, n_features = X.shape
     rho = 0.3
@@ -53,7 +54,7 @@ def test_2d():
                                 X, y, max_iter=100, tol=1e-7, positive=False)
     w = np.zeros(n_features)
     #print result_org
-    my_result, gab, tol = enet_coordinate_descent(w, l2_reg, l1_reg,
+    my_result, gap, tol = enet_coordinate_descent(w, l2_reg, l1_reg,
                                 X, y, max_iter=100, tol=1e-7, positive=False)
     assert_array_almost_equal(my_result, old_result, 9)
     # assert_array_almost_equal(my_result,
@@ -69,8 +70,9 @@ def test_active_set():
     alpha = 10
     alpha = alpha * rho * n_samples
     beta = alpha * (1.0 - rho) * n_samples
-    w = np.zeros(n_features)
     X = np.asfortranarray(X)
+    w = np.zeros(n_features)
+
     old_result, old_gap, old_tol = cd_fast.enet_coordinate_descent_old(w, alpha, beta,
                                 X, y, max_iter=1000, tol=1e-9, positive=False)
     w = np.zeros(n_features)
@@ -152,12 +154,38 @@ def test_indexing_for_late_caching():
     old_result, old_gap, old_tol = enet_coordinate_descent_old(w, l2_reg, l1_reg,
                                 X, y, max_iter=100, tol=1e-7, positive=False)
     w = np.zeros(n_features)
+
     #memory needed to store all feature products = 2500, giving only
     # 2000 forces late caching.
-    my_result, gab, tol = enet_coordinate_descent(w, l2_reg, l1_reg,
-                                X, y, max_iter=100, tol=1e-7, positive=False, \
-                                 memory_limit=2000)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)    
+        my_result, gap, tol = enet_coordinate_descent(w, l2_reg, l1_reg,
+                                    X, y, max_iter=100, tol=1e-7, positive=False, \
+                                     memory_limit=2000)
     assert_array_almost_equal(my_result, old_result, 9)
+
+
+def test_active_set_reappearing_feature():
+    X, y = make_regression(n_samples=100, n_features=1428, n_informative=30,
+                            random_state=0)
+    rho = 0.80
+    alpha = 50
+
+
+    n_samples, n_features = X.shape
+    l1_reg = alpha * rho * n_samples
+    l2_reg= alpha * (1.0 - rho) * n_samples
+    w = np.zeros(n_features)
+    X = np.asfortranarray(X)
+
+    result, gap, tol = enet_coordinate_descent(w, l1_reg, l2_reg,
+                                    X, y, max_iter=1000, tol=1e-7, positive=False, \
+                                     memory_limit=10000000)
+    w = np.zeros(n_features)
+    old_result, old_gap, old_tol = enet_coordinate_descent_old(w, l1_reg, l2_reg,
+                                X, y, max_iter=1000, tol=1e-7, positive=False)
+    assert_array_almost_equal(result, old_result, 6)
+    assert_array_almost_equal(gap, old_gap, 6)
 
 if __name__ == '__main__':
     import nose
