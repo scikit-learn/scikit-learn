@@ -184,7 +184,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     cdef np.ndarray[DOUBLE, ndim=1] Xy = np.dot(X.T, y)
     cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features, dtype=np.float64)
-    cdef np.ndarray[INTEGER, ndim=1] nz_index
+    cdef np.ndarray[INTEGER, ndim=1] nz_index = np.arange(n_features, dtype=np.int32)
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.arange(n_features, dtype=np.int32)
     cdef np.ndarray[DOUBLE, ndim=2, mode='c'] feature_inner_product
     cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product = np.zeros(n_features, dtype=np.float64)
@@ -216,14 +216,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # resize
                 gradient = gradient[nz_index]
                 w = w[nz_index]
-                norm_cols_X = norm_cols_X[nz_index]
                 n_cached_features = n_active_features
                 use_cache = True
                 initialize_cache = True
 
         for ii in active_set:  # Loop over coordinates
 
-            if norm_cols_X[ii] == 0.0:
+            if norm_cols_X[nz_index[ii]] == 0.0:
                 continue
 
             w_ii = w[ii]  # Store previous value
@@ -252,13 +251,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                         ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
 
 
-            tmp = gradient[ii] + w_ii * norm_cols_X[ii]
+            tmp = gradient[ii] + w_ii * norm_cols_X[nz_index[ii]]
 
             if positive and tmp < 0:
                 w[ii] = 0.0
             else:
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - l1_reg, 0) \
-                    / (norm_cols_X[ii] + l2_reg)
+                    / (norm_cols_X[nz_index[ii]] + l2_reg)
 
             # update gradients, if w changed
             if w_ii != w[ii]:
@@ -749,7 +748,7 @@ def learn_dgemv():
                                 np.arange(6, dtype=float).reshape(2,3)
     cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] A_f = \
                     np.asfortranarray(np.arange(6, dtype=float).reshape(2,3))
-    cdef int n_samples = 2 
+    cdef int n_samples = 2
     cdef int n_features = 3
     print ' mode = c \n'
     print 'A = ' + str(A)
