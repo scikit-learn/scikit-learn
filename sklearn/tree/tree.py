@@ -334,20 +334,21 @@ class Tree(object):
         if y.dtype != DTYPE or not y.flags.contiguous:
             y = np.asarray(y, dtype=DTYPE, order="C")
 
+        n_samples = X.shape[0]
         if sample_mask is None:
-            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-        elif len(sample_mask) != len(y):
+            sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        elif len(sample_mask) != n_samples:
             raise ValueError(
               "Length of sample_mask=%s does not match number of samples=%s"
-              % (len(sample_mask), len(y)))
+              % (len(sample_mask), n_samples))
 
         if X_argsorted is None:
             X_argsorted = np.asfortranarray(
                 np.argsort(X.T, axis=1).astype(np.int32).T)
-        elif len(X_argsorted) != len(y):
+        elif len(X_argsorted) != n_samples:
             raise ValueError(
                 "Length of X_argsorted=%s does not match number of samples=%s"
-                % (len(X_argsorted), len(y)))
+                % (len(X_argsorted), n_samples))
 
         # Pre-allocate some space
         if max_depth <= 10:
