@@ -123,15 +123,6 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
     return gap
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef inline restore_w(np.ndarray[DOUBLE, ndim=1] w,
-                      np.ndarray[INTEGER, ndim=1] index, int n_features):
-    cdef np.ndarray[DOUBLE, ndim=1] tmp = np.zeros(n_features)
-    tmp[index] = w
-    return tmp
-
-
 def create_mapping(length, nz_index):
     map_to_ac = np.arange(length)
 
@@ -228,7 +219,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # resize
                 map_to_ac, map_back = create_mapping(n_features, nz_index)
                 gradient = gradient[map_to_ac]
-                w = w[nz_index]
+                w = w[map_to_ac]
                 n_cached_features = n_active_features
                 use_cache = True
                 initialize_cache = True
@@ -293,7 +284,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
             if use_cache:
-                gap = calculate_gap(restore_w(w, nz_index, n_features), l1_reg, l2_reg, X, y, positive)
+                gap = calculate_gap(w[map_back], l1_reg, l2_reg, X, y, positive)
             else:
                 gap = calculate_gap(w, l1_reg, l2_reg, X, y, positive)
 
@@ -304,7 +295,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         initialize_cache = False
 
     if use_cache:
-        w = restore_w(w, nz_index, n_features)
+        w = w[map_back]
     return w, gap, tol
 
 
