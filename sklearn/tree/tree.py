@@ -197,7 +197,7 @@ class Tree(object):
     LEAF = -1
     UNDEFINED = -2
 
-    def __init__(self, n_classes, n_features, n_outputs, capacity=3):
+    def __init__(self, n_classes, n_features, n_outputs=1, capacity=3):
         self.n_classes = n_classes
         self.n_features = n_features
         self.n_outputs = n_outputs
@@ -290,7 +290,7 @@ class Tree(object):
         return node_id
 
     def _copy(self):
-        new_tree = Tree(self.n_classes, self.n_features)
+        new_tree = Tree(self.n_classes, self.n_features, self.n_outputs)
         new_tree.node_count = self.node_count
         new_tree.children = self.children.copy()
         new_tree.feature = self.feature.copy()
