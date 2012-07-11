@@ -7,9 +7,6 @@
 #
 # License: BSD Style.
 
-# TODO: pickle https://groups.google.com/forum/?fromgroups#!topic/cython-users/vzG58m0Yr2Y
-# TODO: expose attributes http://docs.cython.org/src/tutorial/cdef_classes.html
-
 
 # ==============================================================================
 # Imports
@@ -1361,11 +1358,9 @@ cdef class MSE(RegressionCriterion):
         return total / n_outputs
 
 
-
-################################################################################
-# Tree util functions
-#
-
+# ==============================================================================
+# Utils
+# ==============================================================================
 
 def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
@@ -1374,8 +1369,10 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     ----------
     n_total_samples : int
         The length of the resulting mask.
+
     n_total_in_bag : int
         The number of elements in the sample mask which are set to 1.
+
     random_state : np.RandomState
         A numpy ``RandomState`` object.
 
@@ -1392,16 +1389,10 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
 
     cdef int n_bagged = 0
     cdef int i = 0
+
     for i from 0 <= i < n_total_samples:
         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
             sample_mask[i] = 1
             n_bagged += 1
 
     return sample_mask.astype(np.bool)
-
-
-
-
-
-
-

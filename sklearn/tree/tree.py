@@ -104,6 +104,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     def recurse(tree, node_id, parent=None):
         if node_id == _tree.TREE_LEAF:
             raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
+
         left_child, right_child = tree.children[node_id, :]
 
         # add node with description
