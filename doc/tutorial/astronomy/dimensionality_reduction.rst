@@ -67,22 +67,24 @@ spectra.  Let's plot a few of these to see what they look like, making sure
 to choose a representative of each of the interesting classes::
 
     >>> import pylab as pl
-    >>> pl.ion()
-    >>> X = data['X']
-    >>> y = data['y']
-    >>> wavelengths = data['wavelengths']
-    >>> labels = data['labels']
-    >>>
-    >>> for i_class in (2, 3, 4, 5, 6):
-    ...     i = np.where(y == i_class)[0][0]
-    ...     l = pl.plot(wavelengths, X[i] + 20 * i_class)
-    ...     c = l[0].get_color()
-    ...     pl.text(6800, 2 + 20 * i_class, labels[i_class, color=c)
-    ...
-    >>> pl.subplots_adjust(hspace=0)
-    >>> pl.xlabel('wavelength (Angstroms)')
-    >>> pl.ylabel('flux + offset')
-    >>> pl.title('Sample of Spectra')
+    >>> def plot_spectral_types(data):
+    ...     X = data['X']
+    ...     y = data['y']
+    ...     wavelengths = data['wavelengths']
+    ...     labels = data['labels']
+
+    ...     for i_class in (2, 3, 4, 5, 6):
+    ...         i = np.where(y == i_class)[0][0]
+    ...         l = pl.plot(wavelengths, X[i] + 20 * i_class)
+    ...        	c = l[0].get_color()
+    ...         pl.text(6800, 2 + 20 * i_class, labels[i_class], color=c)
+
+    ...     pl.subplots_adjust(hspace=0)
+    ...     pl.xlabel('wavelength (Angstroms)')
+    ...     pl.ylabel('flux + offset')
+    ...     pl.title('Sample of Spectra')
+
+calling ``plot_spectral_types(data)`` gives the following figure:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_sdss_specPCA_1.png
    :target: ../../auto_examples/tutorial/plot_sdss_specPCA.html
@@ -105,18 +107,23 @@ scikit-learn preprocessing module.  We'll then plot both the mean and standard
 deviation to give us an idea of the data we're working with::
 
     >>> from sklearn.preprocessing import normalize
-    >>> X = normalize(X)
-    >>> mu = X.mean(0)
-    >>> std = X.std(0)
-    >>> pl.plot(wavelengths, mu, color='black')
-    >>> pl.fill_between(wavelengths, mu - std, mu + std, color='#CCCCCC')
-    >>> pl.xlim(wavelengths[0], wavelengths[-1])
-    >>> pl.ylim(0, 0.06)
-    >>> pl.xlabel('wavelength (Angstroms)')
-    >>> pl.ylabel('scaled flux')
-    >>> pl.title('Mean Spectrum')
+    >>>
+    >>> def plot_mean_std(data):
+    ...     X = data['X']
+    ...     wavelengths = data['wavelengths']
+    ...
+    ...     X = normalize(X)
+    ...     mu = X.mean(0)
+    ...     std = X.std(0)
+    ...     pl.plot(wavelengths, mu, color='black')
+    ...     pl.fill_between(wavelengths, mu - std, mu + std, color='#CCCCCC')
+    ...     pl.xlim(wavelengths[0], wavelengths[-1])
+    ...     pl.ylim(0, 0.06)
+    ...     pl.xlabel('wavelength (Angstroms)')
+    ...     pl.ylabel('scaled flux')
+    ...     pl.title('Mean Spectrum')
 
-The result is shown in the following figure:
+Calling ``plot_mean_std(data)`` gives the following figure:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_sdss_specPCA_2.png
    :target: ../../auto_examples/tutorial/plot_sdss_specPCA.html
@@ -134,21 +141,29 @@ vary from the mean, and how can this variation tell us about their
 physical properties?
 One option to visualize this would be to scatter-plot random pairs of
 observations from each spectrum.
-We'll first create a formatter object to make the colorbar labels pretty::
+We'll create a function to visualize this::
 
-    >>> from matplotlib.ticker import FuncFormatter
-    >>> format = FuncFormatter(lambda i, *args: labels[i].replace(' ', '\n'))
+    >>> def plot_random_projection(data, rseed=25255):
+    ...     # rseed is chosen to emphasize correlation
+    ...     np.random.seed(rseed)  
+    ...     i1, i2 = np.random.randint(1000, size=2)
+    ...     
+    ...     # create a formatter which works for our labels
+    ...     format = pl.FuncFormatter(lambda i, *args: labels[i].replace(' ', '\n'))
+    ...     
+    ...     X = normalize(data['X'])
+    ...     y = data['y']
+    ...     labels = data['labels']
+    ...     wavelengths = data['wavelengths']
+    ...     
+    ...     pl.scatter(X[:, i1], X[:, i2], c=y, s=4, lw=0,
+    ...                vmin=2, vmax=6, cmap=pl.cm.jet)
+    ...     pl.colorbar(ticks = range(2, 7), format=format)
+    ...     pl.xlabel('wavelength = %.1f' % wavelengths[i1])
+    ...     pl.ylabel('wavelength = %.1f' % wavelengths[i2])
+    ...     pl.title('Random Pair of Spectra Bins')
 
-Now we plot the data::
-
-    >>> pl.figure()
-    >>> np.random.seed(25255)  # this seed is chosen to emphasize correlation
-    >>> i1, i2 = np.random.randint(1000, size=2)
-    >>> pl.scatter(X[:, i1], X[:, i2], c=y, s=4, lw=0, vmin=2, vmax=6, cmap=pl.cm.jet)
-    >>> pl.colorbar(ticks = range(2, 7), format=format)
-    >>> pl.xlabel('wavelength = %.1f' % wavelengths[i1])
-    >>> pl.ylabel('wavelength = %.1f' % wavelengths[i2])
-    >>> pl.title('Random Pair of Spectra Bins')
+Calling ``plot_random_projection(data)`` gives the following plot:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_sdss_specPCA_3.png
    :target: ../../auto_examples/tutorial/plot_sdss_specPCA.html
@@ -205,12 +220,23 @@ random seeds to convince yourself that the results are consistent::
 lower-index columns are the most important dimensions.  We can visualize
 the spectra now using the first two columns::
 
-    >>> pl.figure()
-    >>> pl.scatter(X_proj[:, 0], X_proj[:, 1], c=y, s=4, lw=0, vmin=2, vmax=6, cmap=pl.cm.jet)
-    >>> pl.colorbar(ticks = range(2, 7), format=format)
-    >>> pl.xlabel('coefficient 1')
-    >>> pl.ylabel('coefficient 2')
-    >>> pl.title('PCA projection of Spectra')
+    >>> def plot_PCA_projection(data, rpca):
+    ...     y = data['y']
+    ...     
+    ...     # create a formatter which works for our labels
+    ...     labels = data['labels']
+    ...     format = pl.FuncFormatter(lambda i, *args: labels[i].replace(' ', '\n'))
+    ...     
+    ...     X_proj = rpca.transform(X)
+
+    ...     pl.scatter(X_proj[:, 0], X_proj[:, 1], c=y, s=4, lw=0, vmin=2, vmax=6, cmap=pl.cm.jet)
+    ...     pl.colorbar(ticks = range(2, 7), format=format)
+    ...     pl.xlabel('coefficient 1')
+    ...     pl.ylabel('coefficient 2')
+    ...     pl.title('PCA projection of Spectra')
+
+Calling this function as ``plot_PCA_projection(data, rpca)`` gives the
+following plot:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_sdss_specPCA_4.png
    :target: ../../auto_examples/tutorial/plot_sdss_specPCA.html
@@ -230,18 +256,25 @@ and :math:`a_{i2}` where
 Visualizing the `eigenvectors` :math:`\vec{v_j}` can give insight into what
 these components mean::
 
-    >>> pl.figure()
-    >>> l = pl.plot(wavelengths, rpca.mean_ - 0.15)
-    >>> c = l[0].get_color()
-    >>> pl.text(7000, -0.16, "mean" % i, color=c)
-    >>> for i in range(4):
-    ...     l = pl.plot(wavelengths, rpca.components_[i] + 0.15 * i)
+    >>> def plot_eigenvectors(data, rpca):
+    ...     wavelengths = data['wavelengths']
+    ...     
+    ...     l = pl.plot(wavelengths, rpca.mean_ - 0.15)
     ...     c = l[0].get_color()
-    ...     pl.text(7000, -0.01 + 0.15 * i, "component %i" % (i + 1), color=c)
-    >>> pl.ylim(-0.2, 0.6)
-    >>> pl.xlabel('wavelength (Angstroms)')
-    >>> pl.ylabel('scaled flux + offset')
-    >>> pl.title('Mean Spectrum and Eigen-spectra')
+    ...     pl.text(7000, -0.16, "mean", color=c)
+    ...     
+    ...     for i in range(4):
+    ...         l = pl.plot(wavelengths, rpca.components_[i] + 0.15 * i)
+    ...         c = l[0].get_color()
+    ...         pl.text(7000, -0.01 + 0.15 * i, "component %i" % (i + 1), color=c)
+    ...         
+    ...     pl.ylim(-0.2, 0.6)
+    ...     pl.xlabel('wavelength (Angstroms)')
+    ...     pl.ylabel('scaled flux + offset')
+    ...     pl.title('Mean Spectrum and Eigen-spectra')
+
+Calling this function as ``plot_eivenvectors(data, rpca)`` gives the
+following plot:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_sdss_specPCA_5.png
    :target: ../../auto_examples/tutorial/plot_sdss_specPCA.html
@@ -272,5 +305,3 @@ References
 .. [1] C.W. Yip et al.  Spectral Classification of Quasars in the
    Sloan Digital Sky Survey: Eigenspectra, Redshift, and Luminosity Effects.
    Astronomical Journal 128:6, 2004.
-
-Next Section: `Exercises <exercises.html>`_
