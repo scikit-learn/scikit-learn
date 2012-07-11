@@ -1,3 +1,5 @@
+.. _astro_biasvariance:
+
 ======================================
 Machine Learning 102: Practical Advice
 ======================================
@@ -36,18 +38,19 @@ and ``polyval``, available in ``numpy``.  For example::
 Using a 1st-degree polynomial fit (that is, fitting a straight line 
 to ``x`` and ``y``), we predicted the value of ``y`` for a new input.
 This prediction has an absolute error of about 0.2 for the few test points
-which we tried.  We can visualize the fit this way::
+which we tried.  We can visualize the fit with the following function::
 
-    >>> xfit = np.linspace(0, 1, 10)
-    >>> yfit = np.polyval(p, xfit)
     >>> import pylab as pl
-    >>> pl.ion()  # interactive mode on
-    >>> pl.scatter(x, y, c='k')
-    >>> pl.plot(xfit, yfit)
-    >>> pl.xlabel('x')
-    >>> pl.ylabel('y')
-    >>> pl.title('Linear Regression Example')
+    >>> def plot_fit(x, y, p):
+    ...     xfit = np.linspace(0, 1, 1000)
+    ...     yfit = np.polyval(p, xfit)
+    ...     pl.scatter(x, y, c='k')
+    ...     pl.plot(xfit, yfit)
+    ...     pl.xlabel('x')
+    ...     pl.ylabel('y')
 
+Calling ``plot_fit`` with the ``x``, ``y``, and ``p`` values from above
+produces the following figure:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_bias_variance_examples_1.png
    :target: ../../auto_examples/tutorial/plot_bias_variance_examples.html

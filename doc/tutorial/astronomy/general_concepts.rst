@@ -37,15 +37,18 @@ like a database system would do.
 A very simple example of a machine learning task can be seen in the following
 figure: it shows a collection of two-dimensional data, colored according
 to two different class labels.  A classification algorithm is used to draw
-a dividing boundary between the two clusters of points.
+a dividing boundary between the two clusters of points:
 
 .. figure:: ../../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_1.png
    :target: ../../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 80%
 
-As with all figures in this tutorial, the image has a hyper-link to the python
-source code which is used to generate it.
+   Example Linear Decision Boundary
+
+As with all figures in this tutorial, the above image has a hyper-link to the
+python source code which is used to generate it.
+
 
 Features and feature extraction
 -------------------------------
@@ -757,6 +760,13 @@ with::
 
    KMeans cluster assignements on 2D PCA iris data
 
+.. topic:: **Exercise**
+   :class: green
+
+   Repeat the clustering algorithm from above, but fit the clusters to
+   the full dataset ``X`` rather than the projection ``X_pca``.  Do the
+   labels computed this way better match the true labels?
+
 
 Notable implementations of clustering models
 ++++++++++++++++++++++++++++++++++++++++++++
@@ -907,8 +917,14 @@ separable (a model with a gaussian kernel is required in that case).
   case for text classification tasks.
 
 
-Training set, test set and overfitting
---------------------------------------
+Hyperparameters, training set, test set and overfitting
+-------------------------------------------------------
+
+The above SVM example displays an example of *hyperparameters*, which are
+model parameters set before the training process.  For example, when using
+an RBF model, we choose the kernel coefficient ``gamma`` before fitting the
+data. We must be able to then evaluate the goodness-of-fit of our model
+given this choice of hyperparameter.
 
 The most common mistake beginners make when training statistical
 models is to evaluate the quality of the model on the same data
@@ -920,6 +936,21 @@ used for fitting the model:
 The overfitting issue
 ~~~~~~~~~~~~~~~~~~~~~
 
+Evaluating the quality of the model on the data used to fit the model can
+lead to *overfitting*.  Consider the following dataset, and three fits to
+the data (we'll explore this example in more detail in the
+:ref:`next section <astro_biasvariance>`).
+
+.. figure:: ../../auto_examples/tutorial/images/plot_bias_variance_examples_2.png
+   :target: ../../auto_examples/tutorial/plot_bias_variance_examples.html
+   :align: center
+   :scale: 80%
+
+   Examples of over-fitting and under-fitting a two-dimensional dataset.
+
+Evaluating the :math:`d=6` model using the training data might lead you to
+believe the model is very good, when in fact it does not do a good job of
+representing the data.
 The problem lies in the fact that some models can be subject to the
 **overfitting** issue: they can **learn the training data by heart**
 without generalizing. The symptoms are:
@@ -966,6 +997,11 @@ on the held-out part.
 
 Measuring classification performance on a test set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`05_iris_crossval.ipynb <notebooks/05_iris_crossval.ipynb>`,
+   which can be viewed using `iPython notebook`_.
 
 Here is an example on you to split the data on the iris dataset.
 
@@ -1018,6 +1054,10 @@ means that the classification model was perfectly capable of
 generalizing what was learned from the training set to the test
 set: this is rarely so easy on real life datasets as we will see
 in the following chapter.
+
+In the :ref:`next section <astro_biasvariance>`, we will explore in more
+detail the bias-variance tradeoff and the practical use of machine learning
+techniques.
 
 
 Key takeaway points

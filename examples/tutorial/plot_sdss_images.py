@@ -49,8 +49,11 @@ image_locations = dict(star=dict(RA=180.63040108,
 
 
 # Plot the images
+fig = pl.figure(figsize=(9, 3))
 
-pl.figure(figsize=(9, 3))
+# Check that PIL is installed for jpg support
+if 'jpg' not in fig.canvas.get_supported_filetypes():
+    raise ValueError("PIL required to load SDSS jpeg images")
 
 object_types = ['star', 'galaxy', 'quasar']
 
