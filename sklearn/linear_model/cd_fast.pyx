@@ -214,7 +214,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 nz_index = active_set
                 active_set = np.arange(n_active_features, dtype=np.int32)
                 feature_inner_product = \
-                    np.zeros(shape=(n_active_features, n_active_features),
+                    np.zeros(shape=(n_features, n_active_features),
                              dtype=np.float64, order='C')
                 # resize
                 map_to_ac, map_back = create_mapping(n_features, nz_index)
@@ -237,7 +237,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 dgemv(col_major, trans, n_samples, n_features,
                           1, &X[0,0], n_samples, &X[0, nz_index[ii]], 
                           1, 0, &tmp_feature_inner_product[0], 1)
-                feature_inner_product[:, ii] = tmp_feature_inner_product[nz_index]
+                feature_inner_product[:, ii] = tmp_feature_inner_product[map_to_ac]
                 #gradient[ii] = Xy[nz_index[ii]] - \
                 #        np.dot(feature_inner_product[:, ii], w)
                 gradient[ii] = Xy[nz_index[ii]] - \
