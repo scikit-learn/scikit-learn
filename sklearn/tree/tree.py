@@ -308,8 +308,7 @@ class Tree(object):
         return _get_leaves(self.children)
 
     def pruning_order(self, max_to_prune=None):
-        """
-        Compute the order for which the tree should be pruned.
+        """Compute the order for which the tree should be pruned.
 
         The algorithm used is weakest link pruning. It removes first the nodes
         that improve the tree the least.
@@ -351,9 +350,7 @@ class Tree(object):
             children[node, :] = Tree.LEAF
 
     def prune(self, n_leaves):
-        """
-        Prunes the tree in order to obtain the optimal tree with n_leaves
-        leaves.
+        """Prunes the tree to obtain the optimal subtree with n_leaves leaves.
 
 
         Parameters
@@ -585,12 +582,11 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.feature_importances_ = None
 
     def prune(self, n_leaves):
-        """
-        Prunes the decision tree
+        """Prunes the decision tree
 
         This method is necessary to avoid overfitting tree models. While broad
         decision trees should be computed in the first place, pruning them
-        allows for optimal, smaller trees.
+        allows for smaller trees.
 
         Parameters
         ----------
@@ -1135,8 +1131,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
 
 def cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=10, cv=10):
-    """
-    Cross validation of scores for different values of the decision tree.
+    """Cross validation of scores for different values of the decision tree.
 
     This function allows to test what the optimal size of the decision tree
     should be. It computes cross validated scores for different size of the
