@@ -112,7 +112,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         assume_centered: Boolean
           If True, data are not centered before computation.
-          Usefull to work with data whose mean is significantly equal to
+          Useful to work with data whose mean is significantly equal to
           zero but is not exactly zero.
           If False, data are centered before computation.
 
@@ -143,7 +143,7 @@ def ledoit_wolf(X, assume_centered=False):
 
     assume_centered: Boolean
       If True, data are not centered before computation.
-      Usefull to work with data whose mean is significantly equal to
+      Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
       If False, data are centered before computation.
 
@@ -206,7 +206,7 @@ class LedoitWolf(EmpiricalCovariance):
     """LedoitWolf Estimator
 
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
-    coefficient is computed using O.Ledoit and M.Wolf's formula as
+    coefficient is computed using O. Ledoit and M. Wolf's formula as
     described in "A Well-Conditioned Estimator for Large-Dimensional
     Covariance Matrices", Ledoit and Wolf, Journal of Multivariate
     Analysis, Volume 88, Issue 2, February 2004, pages 365-411.
@@ -258,7 +258,7 @@ class LedoitWolf(EmpiricalCovariance):
 
         assume_centered: Boolean
           If True, data are not centered before computation.
-          Usefull to work with data whose mean is significantly equal to
+          Useful to work with data whose mean is significantly equal to
           zero but is not exactly zero.
           If False, data are centered before computation.
 
@@ -288,7 +288,7 @@ def oas(X, assume_centered=False):
 
     assume_centered: boolean
       If True, data are not centered before computation.
-      Usefull to work with data whose mean is significantly equal to
+      Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
       If False, data are centered before computation.
 
@@ -350,8 +350,8 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     The formula used here does not correspond to the one given in the
-    article. It has been taken from the matlab programm available from the
-    authors webpage (https://tbayes.eecs.umich.edu/yilun/covestimation).
+    article. It has been taken from the Matlab program available from the
+    authors' webpage (https://tbayes.eecs.umich.edu/yilun/covestimation).
 
     Parameters
     ----------
@@ -399,7 +399,7 @@ class OAS(EmpiricalCovariance):
 
         assume_centered: boolean
           If True, data are not centered before computation.
-          Usefull to work with data whose mean is significantly equal to
+          Useful to work with data whose mean is significantly equal to
           zero but is not exactly zero.
           If False, data are centered before computation.
 
