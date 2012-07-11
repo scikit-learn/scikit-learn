@@ -130,9 +130,6 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-
-
-
 class BaseDecisionTree(BaseEstimator, SelectorMixin):
     """Base class for decision trees.
 
@@ -190,7 +187,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                      2 * self.min_samples_leaf)
 
         # Convert data
-        X = np.asarray(X, dtype=DTYPE, order="F")
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or not np.isfortran(X):
+            X = np.asarray(X, dtype=DTYPE, order="F")
+
         n_samples, self.n_features_ = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
@@ -260,13 +259,14 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree_ = _tree.Tree(self.n_classes_, self.n_features_, self.n_outputs_)
+        self.tree_ = _tree.Tree(self.n_classes_, self.n_features_,
+                               self.n_outputs_, criterion, max_depth,
+                               self.min_samples_split, self.min_samples_leaf,
+                               self.min_density, max_features,
+                               self.random_state)
 
-        self.tree_.build(X, y, criterion, max_depth,
-                self.min_samples_split, self.min_samples_leaf,
-                self.min_density, max_features, self.random_state,
-                self.find_split_, sample_mask=sample_mask,
-                X_argsorted=X_argsorted)
+        self.tree_.build(X, y,
+                         sample_mask=sample_mask, X_argsorted=X_argsorted)
 
         if self.compute_importances:
             self.feature_importances_ = \
