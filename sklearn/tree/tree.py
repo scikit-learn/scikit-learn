@@ -150,8 +150,6 @@ def _next_to_prune(tree, children=None):
     t_nodes = _get_terminal_nodes(children)
     g_i = tree.init_error[t_nodes] - tree.best_error[t_nodes]
 
-    #alpha_i = np.min(g_i) / len(t_nodes)
-
     return t_nodes[np.argmin(g_i)]
 
 
@@ -360,7 +358,7 @@ class Tree(object):
 
         Parameters
         ----------
-        n_leaves : binary tree object
+        n_leaves : int
             The final number of leaves the algorithm should bring
 
         Returns
@@ -592,6 +590,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         """
         self.tree_ = self.tree_.prune(n_leaves)
+        return self
 
     def fit(self, X, y, sample_mask=None, X_argsorted=None):
         """Build a decision tree from the training set (X, y).
