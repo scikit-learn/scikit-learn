@@ -180,6 +180,18 @@ def test_arrayrepr():
     clf.fit(X, y)
 
 
+def test_pure_set():
+    """Check when y is pure."""
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y = [1, 1, 1, 1, 1, 1]
+
+    clf = tree.DecisionTreeClassifier().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+    clf = tree.DecisionTreeRegressor().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+
 def test_numerical_stability():
     """Check numerical stability."""
     old_settings = np.geterr()

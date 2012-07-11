@@ -176,7 +176,6 @@ cdef class Tree:
         free(self.n_samples)
 
     cdef void resize(self, int capacity=-1):
-        """Resize tree arrays to `capacity`, if < 0 then double capacity. """
         if capacity == self.capacity:
             return
 
@@ -251,10 +250,11 @@ cdef class Tree:
         self.best_error[node_id] = error
         self.n_samples[node_id] = n_samples
 
-        if is_left_child:
-            self.children_left[parent] = node_id
-        else:
-            self.children_right[parent] = node_id
+        if parent >= 0:
+            if is_left_child:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
 
         self.children_left[node_id] = _TREE_LEAF
         self.children_right[node_id] = _TREE_LEAF

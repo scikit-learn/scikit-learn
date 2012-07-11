@@ -258,11 +258,11 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("min_density must be in [0, 1]")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if sample_mask and len(sample_mask) != n_samples:
+        if sample_mask is not None and len(sample_mask) != n_samples:
             raise ValueError("Length of sample_mask=%d does not match "
                              "number of samples=%d" % (len(sample_mask),
                                                        n_samples))
-        if X_argsorted and len(X_argsorted) != n_samples:
+        if X_argsorted is not None and len(X_argsorted) != n_samples:
             raise ValueError("Length of X_argsorted=%d does not match "
                              "number of samples=%d" % (len(X_argsorted),
                                                        n_samples))
