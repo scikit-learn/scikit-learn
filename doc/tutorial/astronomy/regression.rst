@@ -76,6 +76,11 @@ A Simple Method: Decision Tree Regression
 
 .. currentmodule:: sklearn.tree
 
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`08_regression_example.ipynb <notebooks/08_regression_example.ipynb>`,
+   which can be viewed using `iPython notebook`_.
+
 Here we'll take an extremely simple approach to the photometric redshift
 problem, using a decision tree.
 In the folder ``$TUTORIAL_HOME/data/sdss_photoz``, there is a script
@@ -113,6 +118,7 @@ train a model and predict redshifts for the test set based on a
 20-level decision tree::
 
    >>> from sklearn.tree import DecisionTreeRegressor
+   >>> clf = DecisionTreeRegressor(
    >>> clf.fit(Xtrain, ztrain)
    >>> zpred = clf.predict(Xtest)
    
@@ -149,7 +155,7 @@ the predicted redshift versus the true redshift for the test data:
    value.
 
 Later, in `Exercise #2 <exercises.html>`_, we will attempt
-to improve on this by optimizig the parameters of the decision tree.
+to improve on this by optimizing the parameters of the decision tree.
 
 In practice, the solutions to the photometric redshift problem can benefit from
 approaches that use physical intuition as well as machine learning tools.
@@ -160,4 +166,4 @@ extra information can be used either directly, in a physically motivated
 analysis, or can be used to generate a larger suite of artificial training
 instances for a pure machine learning approach.
 
-Next Section: `Dimensionality Reduction <dimensionality_reduction.html>`_
+.. _`iPython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html

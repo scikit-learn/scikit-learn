@@ -35,6 +35,7 @@ if not os.path.exists(destination):
 destination = TEST_FILE.rstrip('.dat') + '.npy'
 if not os.path.exists(destination):
     url = SDSS_COLORS_URL + TEST_FILE
+    print "downloading data from", url
     fhandle = opener.open(url)
     np.save(destination, np.loadtxt(opener.open(url), dtype=DTYPE_TEST))
 

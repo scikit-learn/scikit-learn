@@ -105,6 +105,12 @@ quasars based on multi-color photometric measurements.
 
 Star-Quasar Classification: Naive Bayes
 ---------------------------------------
+
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`07_classification_example.ipynb <notebooks/07_classification_example.ipynb>`,
+   which can be viewed using `iPython notebook`_.
+
 In the folder ``$TUTORIAL_HOME/data/sdss_colors``, there is a script
 ``fetch_data.py`` which will download the colors of over 700,000 stars
 and quasars from the Sloan Digital Sky Survey.  500,000 of them are
@@ -228,4 +234,4 @@ Later, in `Exercise #1 <exercises.html>`_, we will apply a more sophisticated
 learning method to this task, which will potentially improve on these
 results.
 
-Next Section: `Regression <regression.html>`_
+.. _`iPython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html
