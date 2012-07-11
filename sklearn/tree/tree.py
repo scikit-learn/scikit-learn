@@ -371,7 +371,7 @@ class Tree(object):
 
         """
 
-        to_remove_count = self.node_count - len(self.leaves) - n_leaves
+        to_remove_count = self.node_count - len(self.leaves) - n_leaves + 1
         nodes_to_remove = self.pruning_order(to_remove_count)
 
         out_tree = self._copy()
@@ -1130,7 +1130,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         self.find_split_ = _tree._find_best_random_split
 
 
-def cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=10, cv=10):
+def cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=10, n_iterations=10,
+                          test_size=0.1, random_state=None):
     """Cross validation of scores for different values of the decision tree.
 
     This function allows to test what the optimal size of the decision tree
@@ -1151,8 +1152,16 @@ def cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=10, cv=10):
     max_n_leaves : int, optional (default=10)
         maximum number of leaves of the tree to prune
 
-    cv : int, optional (default=10)
-        Size of the KFold cross validation generator
+    n_iterations : int, optional (default=10)
+        Number of re-shuffling & splitting iterations.
+
+    test_size : float (default=0.1) or int
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split. If
+        int, represents the absolute number of test samples.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
 
     Returns
     -------
@@ -1164,11 +1173,12 @@ def cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=10, cv=10):
     """
 
     from ..base import clone
-    from ..cross_validation import KFold
+    from ..cross_validation import ShuffleSplit
 
     scores = list()
 
-    kf = KFold(len(y), cv)
+    kf = ShuffleSplit(len(y), n_iterations, test_size,
+                      random_state=random_state)
     for train, test in kf:
         estimator = clone(clf)
         fitted = estimator.fit(X[train], y[train])
