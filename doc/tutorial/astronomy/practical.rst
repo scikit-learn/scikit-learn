@@ -4,6 +4,11 @@
 Machine Learning 102: Practical Advice
 ======================================
 
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`06_learning_curves.ipynb <notebooks/06_learning_curves.ipynb>`,
+   which can be viewed using `iPython notebook`_.
+
 In practice, much of the task of machine learning involves selecting algorithms,
 parameters, and sets of data to optimize the results of the method.  All of
 these things can affect the quality of the results, but it's not always
@@ -148,8 +153,8 @@ can be expected to perform on unlabeled data.
    expected on a new set of data.
 
 The cross-validation error of our polynomial classifier can be visualized by
-plotting the error as a function of the polynomial degree `d`.  This plot is
-shown in the following figure:
+plotting the error as a function of the polynomial degree `d`.
+This plot is shown in the following figure:
 
 .. figure:: ../../auto_examples/tutorial/images/plot_bias_variance_examples_3.png
    :target: ../../auto_examples/tutorial/plot_bias_variance_examples.html
@@ -178,7 +183,7 @@ the number of training points used.  In the previous example, there were only
 eight training points.  In this example, we have 100.  As a general rule of
 thumb, the more training points used, the more complicated model can be used.
 But how can you determine for a given model whether more training points will
-be helpful?  A useful diagnostic for this are `learning curves`
+be helpful?  A useful diagnostic for this are `learning curves`.
 
 Learning Curves
 ===============
@@ -286,4 +291,4 @@ is more important for a particular learning task can inform the observing
 strategy that the astronomer employs.  In a later exercise, we will explore
 the use of learning curves for the photometric redshift problem.
 
-Next section: `Classification <classification.html>`_
+.. _`iPython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html
