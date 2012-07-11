@@ -124,7 +124,7 @@ cdef inline double calculate_gap(np.ndarray[DOUBLE, ndim=1] w,
 
 
 def create_mapping(length, nz_index):
-    map_to_ac = np.arange(length)
+    cdef np.ndarray[INTEGER, ndim=1] map_to_ac = np.arange(length, dtype=np.int32)
 
     for (counter, nz) in enumerate(nz_index):
         tmp = map_to_ac[counter]
@@ -189,6 +189,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] Xy = np.dot(X.T, y)
     cdef np.ndarray[DOUBLE, ndim=1] gradient = np.zeros(n_features, dtype=np.float64)
     cdef np.ndarray[INTEGER, ndim=1] nz_index = np.arange(n_features, dtype=np.int32)
+    cdef np.ndarray[INTEGER, ndim=1] map_back = np.arange(n_features, dtype=np.int32)
+    cdef np.ndarray[INTEGER, ndim=1] map_to_ac = np.arange(n_features, dtype=np.int32)
     cdef np.ndarray[INTEGER, ndim=1] active_set = np.arange(n_features, dtype=np.int32)
     cdef np.ndarray[DOUBLE, ndim=2, mode='c'] feature_inner_product
     cdef np.ndarray[DOUBLE, ndim=1] tmp_feature_inner_product = np.zeros(n_features, dtype=np.float64)
@@ -219,18 +221,20 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                              dtype=np.float64, order='C')
                 # resize
                 map_to_ac, map_back = create_mapping(n_features, nz_index)
-                gradient = gradient[map_to_ac]
                 w = w[map_to_ac]
                 n_cached_features = n_active_features
                 use_cache = True
                 initialize_cache = True
+                print "nz_index" + str(nz_index)
+                print "map_to_ac" + str(map_to_ac)
+                print "map_back" + str(map_back)
 
         if search_missing_feature:
             active_set = np.arange(n_features, dtype=np.int32)
 
         for ii in active_set:  # Loop over coordinates
 
-            if norm_cols_X[nz_index[ii]] == 0.0:
+            if norm_cols_X[map_back[ii]] == 0.0:
                 continue
 
             w_ii = w[ii]  # Store previous value
@@ -239,12 +243,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if initialize_cache:
                 #tmp_feature_inner_product = np.dot(X[:, nz_index[ii]], X)
                 dgemv(col_major, trans, n_samples, n_features,
-                          1, &X[0,0], n_samples, &X[0, nz_index[ii]], 
+                          1, &X[0,0], n_samples, &X[0, map_to_ac[ii]], 
                           1, 0, &tmp_feature_inner_product[0], 1)
+                print "nz_index[ii]]" + str(nz_index[ii])
+                print "map_back[ii]" + str(map_back[ii])
                 feature_inner_product[:, ii] = tmp_feature_inner_product[map_to_ac]
                 #gradient[ii] = Xy[nz_index[ii]] - \
                 #        np.dot(feature_inner_product[:, ii], w)
-                gradient[ii] = Xy[nz_index[ii]] - \
+                gradient[ii] = Xy[map_to_ac[ii]] - \
                         ddot(n_active_features, &feature_inner_product[0,ii], n_active_features, &w[0], 1)
 
             if not use_cache:
@@ -266,7 +272,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 gradient[ii] = Xy[ii] - \
                         ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
 
-            tmp = gradient[ii] + w_ii * norm_cols_X[nz_index[ii]]
+            tmp = gradient[ii] + w_ii * norm_cols_X[map_to_ac[ii]]
 
             if positive and tmp < 0:
                 w[ii] = 0.0
