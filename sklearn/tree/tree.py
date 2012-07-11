@@ -668,7 +668,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
         the Gini importance [4]_.
@@ -848,7 +848,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
         the Gini importance [4]_.
