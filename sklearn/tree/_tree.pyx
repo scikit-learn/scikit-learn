@@ -381,7 +381,7 @@ cdef class Tree:
                 X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
                 y_stride = <int> y.strides[0] / <int> y.strides[1]
 
-            # Split and and recurse
+            # Split
             X_ptr = X_ptr + feature * X_stride
             sample_mask_left = np.zeros((n_total_samples, ), dtype=np.bool)
             sample_mask_right = np.zeros((n_total_samples, ), dtype=np.bool)
@@ -398,18 +398,18 @@ cdef class Tree:
                         n_node_samples_right += 1
 
             node_id = self.add_split_node(parent, is_left_child, feature,
-                                           threshold, buffer_value, best_error,
-                                           init_error, n_node_samples)
+                                          threshold, buffer_value, best_error,
+                                          init_error, n_node_samples)
 
-            # left child recursion
-            self.recursive_partition(X, X_argsorted, y,
-                                sample_mask_left, n_node_samples_left,
-                                depth + 1, node_id, True, buffer_value)
+            # Left child recursion
+            self.recursive_partition(X, X_argsorted, y, sample_mask_left,
+                                     n_node_samples_left, depth + 1, node_id,
+                                     True, buffer_value)
 
-            # right child recursion
-            self.recursive_partition(X, X_argsorted, y,
-                                sample_mask_right, n_node_samples_right,
-                                depth + 1, node_id, False, buffer_value)
+            # Right child recursion
+            self.recursive_partition(X, X_argsorted, y, sample_mask_right,
+                                     n_node_samples_right, depth + 1, node_id,
+                                     False, buffer_value)
 
     cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
                          int* X_argsorted_ptr, int X_argsorted_stride,
