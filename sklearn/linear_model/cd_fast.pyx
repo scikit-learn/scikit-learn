@@ -132,6 +132,18 @@ cdef inline restore_w(np.ndarray[DOUBLE, ndim=1] w,
     return tmp
 
 
+def create_mapping(length, nz_index):
+    map_to_ac = np.arange(length)
+
+    for (counter, nz) in enumerate(nz_index):
+        tmp = map_to_ac[counter]
+        map_to_ac[counter] = map_to_ac[nz]
+        map_to_ac[nz] = tmp
+
+    map_back = np.argsort(map_to_ac)
+    return map_to_ac, map_back
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -214,7 +226,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     np.zeros(shape=(n_active_features, n_active_features),
                              dtype=np.float64, order='C')
                 # resize
-                gradient = gradient[nz_index]
+                map_to_ac, map_back = create_mapping(n_features, nz_index)
+                gradient = gradient[map_to_ac]
                 w = w[nz_index]
                 n_cached_features = n_active_features
                 use_cache = True
@@ -783,12 +796,3 @@ def learn_dgemv():
            1, &A_f[0,0], n_samples, &A_f[0,1], 
            1, 0, &A_a[0], 1)
     print "\n y = A'A[:,1] \n = " + str(A_a)
-
-
-def shrink_vector(np.ndarray[DOUBLE, ndim=1] v,
-                  np.ndarray[INTEGER, ndim=1] index, int length):
-    cdef int i
-    for i in range(length):
-        v[i] = v[index[i]]
-    v = np.resize(v, length)
-    return v
