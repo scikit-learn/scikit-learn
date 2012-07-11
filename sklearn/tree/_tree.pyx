@@ -631,16 +631,16 @@ cdef class Tree:
         _best_error[0] = best_error
         _initial_error[0] = initial_error
 
-    cpdef predict(self, np.ndarray X):
-        out = np.zeros((X.shape[0], self.n_outputs, self.max_n_classes), dtype=np.float64)
-
+    cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         cdef int i, k, c
-        cdef int n = X.shape[0]
+        cdef int n_samples = X.shape[0]
         cdef int node_id = 0
         cdef int offset_node
         cdef int offset_output
 
-        for i from 0 <= i < n:
+        out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
+
+        for i from 0 <= i < n_samples:
             node_id = 0
 
             # While node_id not a leaf
@@ -657,6 +657,29 @@ cdef class Tree:
 
                 for c from 0 <= c < self.n_classes[k]:
                     out[i, k, c] = self.value[offset_node + offset_output + c]
+
+        return out
+
+    cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
+        """Finds the terminal region (=leaf node) for each sample in
+           `X` and sets the corresponding element in `out` to its node id."""
+        cdef int i = 0
+        cdef int n_samples = X.shape[0]
+        cdef int node_id = 0
+
+        out = np.zeros((n_samples, ), dtype=np.int32)
+
+        for i from 0 <= i < n_samples:
+            node_id = 0
+
+            # While node_id not a leaf
+            while self.children_left[node_id] != _TREE_LEAF and self.children_right[node_id] != _TREE_LEAF:
+                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
+                    node_id = self.children_left[node_id]
+                else:
+                    node_id = self.children_right[node_id]
+
+            out[i] = node_id
 
         return out
 
@@ -1367,25 +1390,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     return sample_mask.astype(np.bool)
 
 
-def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
-                np.ndarray[np.int32_t, ndim=2] children,
-                np.ndarray[np.int32_t, ndim=1] feature,
-                np.ndarray[np.float64_t, ndim=1] threshold,
-                np.ndarray[np.int32_t, ndim=1] out):
-    """Finds the terminal region (=leaf node) for each sample in
-    `X` and sets the corresponding element in `out` to its node id."""
-    cdef int i = 0
-    cdef int n = X.shape[0]
-    cdef int node_id = 0
-    for i from 0 <= i < n:
-        node_id = 0
-        # While node_id not a leaf
-        while children[node_id, 0] != -1 and children[node_id, 1] != -1:
-            if X[i, feature[node_id]] <= threshold[node_id]:
-                node_id = children[node_id, 0]
-            else:
-                node_id = children[node_id, 1]
-        out[i] = node_id
+
 
 
 

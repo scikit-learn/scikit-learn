@@ -303,21 +303,19 @@ def test_error():
     assert_raises(ValueError, clf.predict, Xt)
 
 
-# def test_min_samples_leaf():
-#     """Test if leaves contain more than leaf_count training examples"""
-#     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-#         clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
+def test_min_samples_leaf():
+    """Test if leaves contain more than leaf_count training examples"""
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
 
-#         # apply tree
-#         out = np.empty((iris.data.shape[0], ), dtype=np.int32)
-#         X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
-#         tree._tree._apply_tree(X, clf.tree_.children, clf.tree_.feature,
-#                 clf.tree_.threshold, out)
-#         # count node occurences
-#         node_counts = np.bincount(out)
-#         # drop inner nodes
-#         leaf_count = node_counts[node_counts != 0]
-#         assert np.min(leaf_count) >= 5
+    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
+        clf = tree_class(min_samples_leaf=5).fit(X, y)
+
+        out = clf.tree_.apply(X)
+        node_counts = np.bincount(out)
+        leaf_count = node_counts[node_counts != 0] # drop inner nodes
+
+        assert np.min(leaf_count) >= 5
 
 
 # def test_pickle():
