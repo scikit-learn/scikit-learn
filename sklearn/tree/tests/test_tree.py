@@ -199,7 +199,9 @@ def test_numerical_stability():
 
     dt = tree.DecisionTreeRegressor()
     dt.fit(X, y)
+    dt.fit(X, -y)
     dt.fit(-X, y)
+    dt.fit(-X, -y)
 
     np.seterr(**old_settings)
 

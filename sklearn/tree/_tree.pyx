@@ -44,7 +44,7 @@ ctypedef np.float32_t DTYPE_t
 ctypedef np.int8_t BOOL_t
 
 # Constants
-cdef DTYPE_t INFINITY = np.inf
+cdef double INFINITY = np.inf
 
 TREE_LEAF = -1
 cdef int _TREE_LEAF = TREE_LEAF
@@ -293,7 +293,7 @@ cdef class Tree:
         cdef double* buffer_value = <double*> malloc(self.n_outputs * self.max_n_classes * sizeof(double))
 
         # Build the tree by recursive partitioning
-        self.recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False, buffer_value)
+        self.recursive_partition(X, X_argsorted, y, sample_mask, np.sum(sample_mask), 0, -1, False, buffer_value)
 
         # Compactify
         self.resize(self.node_count)
@@ -304,6 +304,7 @@ cdef class Tree:
                                   np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
                                   np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
                                   np.ndarray sample_mask,
+                                  int n_node_samples,
                                   int depth,
                                   int parent,
                                   int is_left_child,
@@ -320,16 +321,19 @@ cdef class Tree:
         cdef int X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
         cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
 
-        cdef int n_node_samples
         cdef int n_total_samples = y.shape[0]
         cdef int feature
-        cdef DTYPE_t threshold
-        cdef DTYPE_t best_error
-        cdef DTYPE_t init_error
+        cdef double threshold
+        cdef double best_error
+        cdef double init_error
+
+        cdef int i
+        cdef np.ndarray sample_mask_left
+        cdef np.ndarray sample_mask_right
+        cdef int n_node_samples_left
+        cdef int n_node_samples_right
 
         # Count samples
-        n_node_samples = sample_mask.sum()
-
         if n_node_samples == 0:
             raise ValueError("Attempting to find a split "
                              "with an empty sample_mask")
@@ -364,10 +368,34 @@ cdef class Tree:
                 X = X[sample_mask]
                 X_argsorted = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
                 y = y[sample_mask]
-                sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+                sample_mask = np.ones((n_node_samples,), dtype=np.bool)
+
+                n_total_samples = n_node_samples
+
+                X_ptr = <DTYPE_t*> X.data
+                X_argsorted_ptr = <int*> X_argsorted.data
+                y_ptr = <DTYPE_t*> y.data
+                sample_mask_ptr = <BOOL_t*> sample_mask.data
+
+                X_stride = <int> X.strides[1] / <int> X.strides[0]
+                X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
+                y_stride = <int> y.strides[0] / <int> y.strides[1]
 
             # Split and and recurse
-            split = X[:, feature] <= threshold
+            X_ptr = X_ptr + feature * X_stride
+            sample_mask_left = np.zeros((n_total_samples, ), dtype=np.bool)
+            sample_mask_right = np.zeros((n_total_samples, ), dtype=np.bool)
+            n_node_samples_left = 0
+            n_node_samples_right = 0
+
+            for i from 0 <= i < n_total_samples:
+                if sample_mask[i]:
+                    if X_ptr[i] <= threshold:
+                        sample_mask_left[i] = 1
+                        n_node_samples_left += 1
+                    else:
+                        sample_mask_right[i] = 1
+                        n_node_samples_right += 1
 
             node_id = self.add_split_node(parent, is_left_child, feature,
                                            threshold, buffer_value, best_error,
@@ -375,60 +403,42 @@ cdef class Tree:
 
             # left child recursion
             self.recursive_partition(X, X_argsorted, y,
-                                np.logical_and(split, sample_mask),
+                                sample_mask_left, n_node_samples_left,
                                 depth + 1, node_id, True, buffer_value)
 
             # right child recursion
             self.recursive_partition(X, X_argsorted, y,
-                                np.logical_and(np.logical_not(split),
-                                               sample_mask),
+                                sample_mask_right, n_node_samples_right,
                                 depth + 1, node_id, False, buffer_value)
 
     cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
-                               int* X_argsorted_ptr, int X_argsorted_stride,
-                               DTYPE_t* y_ptr, int y_stride,
-                               BOOL_t* sample_mask_ptr,
-                               int n_node_samples,
-                               int n_total_samples,
-                               int* _best_i,
-                               DTYPE_t* _best_t,
-                               DTYPE_t* _best_error,
-                               DTYPE_t* _initial_error):
+                         int* X_argsorted_ptr, int X_argsorted_stride,
+                         DTYPE_t* y_ptr, int y_stride, BOOL_t* sample_mask_ptr,
+                         int n_node_samples, int n_total_samples, int* _best_i,
+                         double* _best_t, double* _best_error,
+                         double* _initial_error):
         """Find the best dimension and threshold that minimises the error."""
         if self.find_split_algorithm == _TREE_SPLIT_BEST:
-            self.find_best_split(X_ptr, X_stride,
-                                X_argsorted_ptr, X_argsorted_stride,
-                                y_ptr, y_stride,
-                                sample_mask_ptr,
-                                n_node_samples,
-                                n_total_samples,
-                                _best_i,
-                                _best_t,
-                                _best_error,
-                                _initial_error)
+            self.find_best_split(X_ptr, X_stride, X_argsorted_ptr,
+                                 X_argsorted_stride, y_ptr, y_stride,
+                                 sample_mask_ptr, n_node_samples,
+                                 n_total_samples, _best_i, _best_t,
+                                 _best_error, _initial_error)
 
         elif self.find_split_algorithm == _TREE_SPLIT_RANDOM:
-            self.find_random_split(X_ptr, X_stride,
-                                  X_argsorted_ptr, X_argsorted_stride,
-                                  y_ptr, y_stride,
-                                  sample_mask_ptr,
-                                  n_node_samples,
-                                  n_total_samples,
-                                  _best_i,
-                                  _best_t,
-                                  _best_error,
-                                  _initial_error)
+            self.find_random_split(X_ptr, X_stride, X_argsorted_ptr,
+                                   X_argsorted_stride, y_ptr, y_stride,
+                                   sample_mask_ptr, n_node_samples,
+                                   n_total_samples, _best_i, _best_t,
+                                   _best_error, _initial_error)
 
     cdef void find_best_split(self, DTYPE_t* X_ptr, int X_stride,
-                                    int* X_argsorted_ptr, int X_argsorted_stride,
-                                    DTYPE_t* y_ptr, int y_stride,
-                                    BOOL_t* sample_mask_ptr,
-                                    int n_node_samples,
-                                    int n_total_samples,
-                                    int* _best_i,
-                                    DTYPE_t* _best_t,
-                                    DTYPE_t* _best_error,
-                                    DTYPE_t* _initial_error):
+                              int* X_argsorted_ptr, int X_argsorted_stride,
+                              DTYPE_t* y_ptr, int y_stride,
+                              BOOL_t* sample_mask_ptr, int n_node_samples,
+                              int n_total_samples, int* _best_i,
+                              double* _best_t, double* _best_error,
+                              double* _initial_error):
         # Variables declarations
         cdef Criterion criterion = self.criterion
         cdef int n_features = self.n_features
@@ -440,8 +450,8 @@ cdef class Tree:
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
 
-        cdef DTYPE_t t, initial_error, error
-        cdef DTYPE_t best_error = INFINITY, best_t = INFINITY
+        cdef double t, initial_error, error
+        cdef double best_error = INFINITY, best_t = INFINITY
 
         cdef DTYPE_t* X_i = NULL
         cdef int* X_argsorted_i = NULL
@@ -524,15 +534,12 @@ cdef class Tree:
         _initial_error[0] = initial_error
 
     cdef void find_random_split(self, DTYPE_t* X_ptr, int X_stride,
-                                      int* X_argsorted_ptr, int X_argsorted_stride,
-                                      DTYPE_t* y_ptr, int y_stride,
-                                      BOOL_t* sample_mask_ptr,
-                                      int n_node_samples,
-                                      int n_total_samples,
-                                      int* _best_i,
-                                      DTYPE_t* _best_t,
-                                      DTYPE_t* _best_error,
-                                      DTYPE_t* _initial_error):
+                                int* X_argsorted_ptr, int X_argsorted_stride,
+                                DTYPE_t* y_ptr, int y_stride,
+                                BOOL_t* sample_mask_ptr, int n_node_samples,
+                                int n_total_samples, int* _best_i,
+                                double* _best_t, double* _best_error,
+                                double* _initial_error):
         # Variables declarations
         cdef Criterion criterion = self.criterion
         cdef int n_features = self.n_features
@@ -543,9 +550,10 @@ cdef class Tree:
         cdef int i, a, b, c, best_i = -1
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
+        cdef double random
 
-        cdef DTYPE_t t, initial_error, error
-        cdef DTYPE_t best_error = INFINITY, best_t = INFINITY
+        cdef double t, initial_error, error
+        cdef double best_error = INFINITY, best_t = INFINITY
 
         cdef DTYPE_t* X_i = NULL
         cdef int* X_argsorted_i = NULL
@@ -599,8 +607,8 @@ cdef class Tree:
                 continue
 
             # Draw a random threshold in [a, b)
-            t = X_i[X_argsorted_i[a]] + (random_state.rand() *
-                                         (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]))
+            random = random_state.rand()
+            t = X_i[X_argsorted_i[a]] + (random * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]))
             if t == X_i[X_argsorted_i[b]]:
                 t = X_i[X_argsorted_i[a]]
 
@@ -609,7 +617,7 @@ cdef class Tree:
 
             while True:
                 if sample_mask_ptr[X_argsorted_i[c]] != 0:
-                    if X_i[X_argsorted_i[c]] > t or c == b:
+                    if X_i[X_argsorted_i[c]] > (<DTYPE_t> t) or c == b:
                         break
 
                 c += 1
@@ -638,6 +646,7 @@ cdef class Tree:
         cdef int offset_node
         cdef int offset_output
 
+        cdef np.ndarray[np.float64_t, ndim=3] out
         out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
 
         for i from 0 <= i < n_samples:
@@ -667,6 +676,7 @@ cdef class Tree:
         cdef int n_samples = X.shape[0]
         cdef int node_id = 0
 
+        cdef np.ndarray[np.int32_t, ndim=1] out
         out = np.zeros((n_samples, ), dtype=np.int32)
 
         for i from 0 <= i < n_samples:
