@@ -336,10 +336,14 @@ class Tree(object):
 
         if sample_mask is None:
             sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+        elif len(sample_mask) != len(y):
+            raise ValueError("Length of sample_mask=%s does not match number of samples=%s" % (len(sample_mask), len(y)))
 
         if X_argsorted is None:
             X_argsorted = np.asfortranarray(
                 np.argsort(X.T, axis=1).astype(np.int32).T)
+        elif len(X_argsorted) != len(y):
+            raise ValueError("Length of X_argsorted=%s does not match number of samples=%s" % (len(X_argsorted), len(y)))
 
         # Pre-allocate some space
         if max_depth <= 10:
