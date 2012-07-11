@@ -172,6 +172,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_iter
     cdef bint use_cache = False
     cdef bint initialize_cache = False
+    cdef bint search_missing_feature = False
     cdef int n_active_features
     cdef int n_cached_features
 
@@ -224,6 +225,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 use_cache = True
                 initialize_cache = True
 
+        if search_missing_feature:
+            active_set = np.arange(n_features, dtype=np.int32)
+
         for ii in active_set:  # Loop over coordinates
 
             if norm_cols_X[nz_index[ii]] == 0.0:
@@ -254,6 +258,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 gradient[ii] = Xy[ii] - \
                         ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
 
+            if search_missing_feature:
+                dgemv(col_major, trans, n_samples, n_features,
+                          1, &X[0,0], n_samples, &X[0,ii], 
+                          1, 0, &tmp_feature_inner_product[0], 1)
+
+                gradient[ii] = Xy[ii] - \
+                        ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
 
             tmp = gradient[ii] + w_ii * norm_cols_X[nz_index[ii]]
 
@@ -265,6 +276,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             # update gradients, if w changed
             if w_ii != w[ii]:
+                if search_missing_feature:
+                    print "found one, ii = " + str(ii)
                 if use_cache:
                     # gradient -= feature_inner_product[ii, :] * \
                     #                                    (w[ii] - w_ii)
@@ -291,6 +304,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if gap < tol:
                 # return if we reached desired tolerance
                 break
+            else:
+                print "search missing feature"
+                search_missing_feature = True
 
         initialize_cache = False
 
@@ -693,97 +709,3 @@ def enet_coordinate_descent_old(np.ndarray[DOUBLE, ndim=1] w,
                 break
 
     return w, gap, tol
-
-def learn_ddot():
-    cdef np.ndarray[DOUBLE, ndim = 1] y = np.ones(3, np.float64)*2
-    cdef np.ndarray[DOUBLE, ndim=2, mode='c'] X = \
-                                np.arange(6, dtype=float).reshape(2,3)
-    cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] X_f = \
-                                np.asfortranarray(np.arange(6, dtype=float).reshape(2,3))
-
-    print ' mode = c \n'
-    print 'X = ' + str(X)
-    print "---- ddot between rows ---------"
-    print "ddot(n_active_features, &X[0, 0],1 , &X[0, 0], 1)"
-    print ddot(3, &X[0, 0],1 , &X[0, 0], 1)
-
-    print "ddot(3, &X[1, 0],1 , &X[1, 0], 1)"
-    print ddot(3, &X[1, 0],1 , &X[1, 0], 1)
-    
-    print "---- ddot between colums ---------"
-    print "ddot(2, &X[0, 0],3 , &X[0, 0], 3)"
-    print ddot(2, &X[0, 0],3 , &X[0, 0], 3)
-    
-    print "ddot(2, &X[0, 1],3 , &X[0, 1], 3)"
-    print ddot(2, &X[0, 1],3 , &X[0, 1], 3)
-
-
-    print '\n mode=fortran \n'
-    print 'X_f = ' + str(X_f)
-    print "ddot(2, &X[0, 0],1 , &X_f[0, 0], 1)"
-    print ddot(2, &X_f[0, 0],1 , &X_f[0, 0], 1)
-
-    print "ddot(2, &X[0, 1],1 , &X_f[0, 1], 1)"
-    print ddot(2, &X_f[0, 1],1 , &X_f[0, 1], 1)
-
-    print "ddot(2, &X[0, 2],1 , &X_f[0, 2], 1)"
-    print ddot(2, &X_f[0, 2],1 , &X_f[0, 2], 1)
-    
-    print "\n y = " + str(y) + ", X[1,:] = " + str(X[1,:])
-    print "ddot(3, &y[0], 1, &X[1,0], 1)"
-    print ddot(3, &y[0], 1, &X[1,0], 1)
-
-#    #enum CBLAS_ORDER {CblasRowMajor=101, CblasColMajor=102 };
-#    #enum CBLAS_TRANSPOSE {CblasNoTrans=111, CblasTrans=112, CblasConjTrans=113,
-#    #                      AtlasConj=114};
-#    void dgemv "cblas_dgemv"(int order, int transpose, int M, int N,
-#                             double alpha, double *A, int lda, double *X,
-#                             int incX, double beta, double *Y, int incY)
-#     y := alpha*A*x + beta*y,   or   y := alpha*A'*x + beta*y,
-
-
-def learn_dgemv():
-    cdef np.ndarray[DOUBLE, ndim = 1] x = np.ones(3, np.float64)*2
-    cdef np.ndarray[DOUBLE, ndim = 1] x_f = np.ones(2, np.float64)*2
-    cdef np.ndarray[DOUBLE, ndim = 1] y = np.zeros(2, np.float64)
-    cdef np.ndarray[DOUBLE, ndim = 1] y_f = np.zeros(3, np.float64)
-    cdef np.ndarray[DOUBLE, ndim = 1] A_a = np.zeros(3, np.float64)
-    cdef np.ndarray[DOUBLE, ndim=2, mode='c'] A = \
-                                np.arange(6, dtype=float).reshape(2,3)
-    cdef np.ndarray[DOUBLE, ndim=2, mode='fortran'] A_f = \
-                    np.asfortranarray(np.arange(6, dtype=float).reshape(2,3))
-    cdef int n_samples = 2
-    cdef int n_features = 3
-    print ' mode = c \n'
-    print 'A = ' + str(A)
-    print "x = " + str(x)
-    print "y = " + str(y)
-
-    cdef int row_major = 101
-    cdef int col_major = 102
-    cdef int no_trans = 111
-    cdef int trans = 112
-    dgemv(row_major, no_trans, n_samples, n_features,
-           1, &A[0,0], n_features, &x[0], 
-           1, 0, &y[0], 1)
-    print "y = Ax \n = " + str(y)
-
-    print 'mode=fortran \n'
-    print "A' = " + str(A.T)
-    print "x = " + str(x_f)
-    print "y = " + str(y_f)
-    dgemv(col_major, trans, n_samples, n_features,
-           1, &A_f[0,0], n_samples, &x_f[0], 
-           1, 0, &y_f[0], 1)
-    print "y = A'x \n = " + str(y_f)
-
-    dgemv(col_major, trans, n_samples, n_features,
-           1, &A_f[0,0], n_samples, &A_f[0,0], 
-           1, 0, &A_a[0], 1)
-    print "\n y = A'A[:,0] \n = " + str(A_a)
-    A_a = np.zeros(3, np.float64)
-
-    dgemv(col_major, trans, n_samples, n_features,
-           1, &A_f[0,0], n_samples, &A_f[0,1], 
-           1, 0, &A_a[0], 1)
-    print "\n y = A'A[:,1] \n = " + str(A_a)
