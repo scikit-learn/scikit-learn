@@ -302,7 +302,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, n_features = X.shape
@@ -459,7 +459,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
-        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, n_features = X.shape
