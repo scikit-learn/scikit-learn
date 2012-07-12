@@ -1,4 +1,4 @@
-.. _astronomy_exercises
+.. _astro_exercises:
 
 ===================================
 Exercises: Taking it a step further
@@ -96,7 +96,7 @@ Exercise 2: Photometric redshifts with Decision Trees
    The information in this section is available in an interactive notebook
    :download:`11_exercise02.ipynb <notebooks/11_exercise02.ipynb>`,
    which can be viewed using `iPython notebook`_.  This requires the
-   sdss colors data, which can be downloaded as described in
+   sdss photoz data, which can be downloaded as described in
    :ref:`astro_tutorial_setup`.
 
 In this exercise, you will seek to improve the results of the photometric

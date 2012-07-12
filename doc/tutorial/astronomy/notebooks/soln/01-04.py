@@ -1,4 +1,4 @@
-# 02-01.py
+# 01-04.py
 def GMMBayes(X_test, n_components, covariance_type):
     clf_0 = gmm.GMM(n_components, covariance_type, random_state=0)
     i0 = (y_train == 0)
