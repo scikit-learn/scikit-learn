@@ -44,7 +44,8 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
-from ..utils import check_random_state
+from ..tree._tree import DTYPE
+from ..utils import array2d, check_random_state
 from ..metrics import r2_score
 
 from .base import BaseEnsemble
@@ -224,7 +225,9 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             Returns self.
         """
         # Precompute some data
-        X = np.atleast_2d(X)
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+            X = array2d(X, dtype=DTYPE, order="F")
+
         n_samples, self.n_features_ = X.shape
 
         if self.bootstrap:
@@ -247,7 +250,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
             X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
-        y = np.copy(y)
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -257,11 +259,16 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.n_outputs_ = y.shape[1]
 
         if isinstance(self.base_estimator, ClassifierMixin):
+            y = np.copy(y)
+
             for k in xrange(self.n_outputs_):
                 unique = np.unique(y[:, k])
                 self.classes_.append(unique)
                 self.n_classes_.append(unique.shape[0])
                 y[:, k] = np.searchsorted(unique, y[:, k])
+
+        if not hasattr(y, "dtype") or y.dtype != DTYPE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
@@ -436,7 +443,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             ordered by arithmetical order.
         """
         # Check data
-        X = np.atleast_2d(X)
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_trees(self)
@@ -542,7 +550,8 @@ class ForestRegressor(BaseForest, RegressorMixin):
             The predicted values.
         """
         # Check data
-        X = np.atleast_2d(X)
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_trees(self)

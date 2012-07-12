@@ -189,14 +189,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                      2 * self.min_samples_leaf)
 
         # Convert data
-        if not hasattr(X, "dtype") or X.dtype != DTYPE or not np.isfortran(X):
-            X = np.asarray(X, dtype=DTYPE, order="F")
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+            X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
 
-        y = np.copy(y)
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -206,6 +205,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
+            y = np.copy(y)
+
             for k in xrange(self.n_outputs_):
                 unique = np.unique(y[:, k])
                 self.classes_.append(unique)
@@ -216,7 +217,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
-        y = np.asarray(y, dtype=DTYPE, order="C")
+        if not hasattr(y, "dtype") or y.dtype != DTYPE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DTYPE)
 
         if is_classification:
             criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
@@ -300,7 +302,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        X = array2d(X, dtype=DTYPE)
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+            X = array2d(X, dtype=DTYPE, order="F")
+
         n_samples, n_features = X.shape
 
         if self.tree_ is None:
@@ -455,7 +459,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
-        X = array2d(X, dtype=DTYPE)
+        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+            X = array2d(X, dtype=DTYPE, order="F")
+
         n_samples, n_features = X.shape
 
         if self.tree_ is None:
