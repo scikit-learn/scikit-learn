@@ -170,11 +170,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef unsigned int ii
+    cdef unsigned int m_pos
     cdef unsigned int n_iter
     cdef bint use_cache = False
     cdef bint initialize_cache = False
     cdef bint search_missing_feature = False
-    cdef int n_active_features
+    cdef is_cached
+    cdef int n_active_features = 0
     cdef int n_cached_features
 
     if l1_reg == 0:
@@ -239,16 +241,24 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             w_ii = w[ii]  # Store previous value
 
+            if use_cache:
+                m_pos = map_to_ac[ii]
+            else:
+                m_pos = ii
+            # check if this feature is located in the
+            # cache area
+            is_cached = m_pos < n_cached_features
+
             # initial calculation
             if initialize_cache:
                 #tmp_feature_inner_product = np.dot(X[:, nz_index[ii]], X)
                 dgemv(col_major, trans, n_samples, n_features,
-                          1, &X[0,0], n_samples, &X[0, map_to_ac[ii]], 
+                          1, &X[0,0], n_samples, &X[0, m_pos], 
                           1, 0, &tmp_feature_inner_product[0], 1)
                 feature_inner_product[:, ii] = tmp_feature_inner_product[map_to_ac]
                 #gradient[ii] = Xy[nz_index[ii]] - \
                 #        np.dot(feature_inner_product[:, ii], w)
-                gradient[ii] = Xy[map_to_ac[ii]] - \
+                gradient[ii] = Xy[m_pos] - \
                         ddot(n_active_features, &feature_inner_product[0,ii], n_active_features, &w[0], 1)
 
             if not use_cache:
@@ -265,17 +275,17 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if search_missing_feature:
                 # if feature is not located at the beginning of the array it's
                 # not cached
-                if map_to_ac[ii] >= n_cached_features:
+                if not is_cached:
                     dgemv(col_major, trans, n_samples, n_features,
                               1, &X[0,0], n_samples, &X[0,ii], 
                               1, 0, &tmp_feature_inner_product[0], 1)
 
-                    gradient[map_to_ac[ii]] = Xy[ii] - \
+                    gradient[m_pos] = Xy[ii] - \
                             ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
-                tmp = gradient[map_to_ac[ii]] + w_ii * norm_cols_X[ii]
+                tmp = gradient[m_pos] + w_ii * norm_cols_X[ii]
 
             if not search_missing_feature:
-                tmp = gradient[ii] + w_ii * norm_cols_X[map_to_ac[ii]]
+                tmp = gradient[ii] + w_ii * norm_cols_X[m_pos]
 
             if positive and tmp < 0:
                 w[ii] = 0.0
