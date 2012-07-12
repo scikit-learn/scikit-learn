@@ -406,7 +406,7 @@ class Tree(object):
         else:
             raise ValueError(
                 'Invalid value for method. Allowed string '
-                'values are "gini", or "mse".')
+                'values are "gini", or "squared".')
 
         importances = np.zeros((self.n_features,), dtype=np.float64)
 
