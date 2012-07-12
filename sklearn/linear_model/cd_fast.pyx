@@ -243,6 +243,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if norm_cols_X[map_back[ii]] == 0.0:
                 continue
 
+            w_ii = w[ii]  # Store previous value
+
             if use_cache:
                 m_pos = map_to_ac[ii]
             else:
@@ -252,9 +254,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 org_pos = ii
             else:
                 org_pos = map_to_ac[ii]
-
-            w_ii = w[ii]  # Store previous value
-
             # if feature is not located at the beginning of the array it's
             # not cached
             is_cached = m_pos < n_cached_features
@@ -290,8 +289,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
                     gradient[m_pos] = Xy[org_pos] - \
                             ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
-
-            tmp = gradient[m_pos] + w_ii * norm_cols_X[org_pos]
+                tmp = gradient[m_pos] + w_ii * norm_cols_X[org_pos]
+            else:
+                tmp = gradient[ii] + w_ii * norm_cols_X[org_pos]
 
             if positive and tmp < 0:
                 w[ii] = 0.0
