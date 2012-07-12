@@ -223,15 +223,16 @@ In order to plot the scores one can use the following function::
         means = np.array([np.mean(s) for s in scores])
         stds = np.array([np.std(s) for s in scores]) / np.sqrt(len(scores[1]))
 
-        x = range(len(scores)+1, 1, -1)
+        x = range(len(scores) + 1, 1, -1)
 
         plt.plot(x, means)
         if with_std:
-            plt.plot(x, means+2*stds, lw=1, c='0.7')
-            plt.plot(x, means-2*stds, lw=1, c='0.7')
+            plt.plot(x, means + 2 * stds, lw=1, c='0.7')
+            plt.plot(x, means - 2 * stds, lw=1, c='0.7')
 
         plt.xlabel('Number of leaves')
         plt.ylabel('Cross validated score')
+
 
 For instance, using the Boston dataset we obtain such a graph
 
