@@ -10,13 +10,16 @@ tasks outlined in the previous sections.
 
 Before beginning the exercises, be sure you have downloaded the tutorial
 source as described in the `setup <setup.html>`_ section.
-For each exercise, there are two files.  In ``$TUTORIAL_HOME/skeletons``,
+For each exercise, there are three files.  In ``$TUTORIAL_HOME/skeletons``,
 there is a skeleton script which can be filled-in to complete the exercise.
 In ``$TUTORIAL_HOME/solutions`` you can find a completed version of the
-exercise files.
+exercise files.  ``$TUTORIAL_HOME/notebooks`` has `iPython notebook`_
+files which can be used to interactively complete the tutorials.
 
-To work on the tutorials, begin by copying the content of the ``skeletons``
-folder to your own workspace::
+Using the notebook files is the preferred way to complete the tutorial.
+If ipython notebook is unavailable, the files in the ``skeletons`` and
+``solutions`` directory can be used.  Begin by copying the
+content of the ``skeletons`` folder to your own workspace::
 
     % cp -r skeletons workspace
 
@@ -73,6 +76,10 @@ the ipython command is::
 
     In [1]: %run workspace/exercise_01.py data/sdss_colors
 
+Althernatively, the ipython notebook file is found in
+
+    notebooks/10_exercise01.ipynb
+
 .. _astro_exercise_2:
 
 Exercise 2: Photometric redshifts with Decision Trees
@@ -112,6 +119,10 @@ The exercise is broken into the following tasks:
 the ipython command is::
 
     In [1]: %run workspace/exercise_02.py data/sdss_photoz/
+
+Althernatively, the ipython notebook file is found in
+
+    notebooks/11_exercise02.ipynb
 
 .. _astro_exercise_3:
 

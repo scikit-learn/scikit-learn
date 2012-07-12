@@ -39,6 +39,11 @@ in a meaningful way.
 SDSS Spectral Data
 ==================
 
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`09_dimensionality_example.ipynb <notebooks/09_dimensionality_example.ipynb>`,
+   which can be viewed using `iPython notebook`_.
+
 In the directory ``$TUTORIAL_HOME/data/sdss_spectra/``, you'll find the script
 which fetches a set of spectra from the Sloan Digital Sky Survey.  Each
 individual spectrum is at a particular redshift, and can have data missing
