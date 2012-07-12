@@ -748,7 +748,7 @@ cdef class Tree:
             node_id = 0
 
             # While node_id not a leaf
-            while self.children_left[node_id] != _TREE_LEAF and self.children_right[node_id] != _TREE_LEAF:
+            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
                 if X[i, self.feature[node_id]] <= self.threshold[node_id]:
                     node_id = self.children_left[node_id]
                 else:
@@ -778,7 +778,7 @@ cdef class Tree:
             node_id = 0
 
             # While node_id not a leaf
-            while self.children_left[node_id] != _TREE_LEAF and self.children_right[node_id] != _TREE_LEAF:
+            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
                 if X[i, self.feature[node_id]] <= self.threshold[node_id]:
                     node_id = self.children_left[node_id]
                 else:
@@ -788,7 +788,7 @@ cdef class Tree:
 
         return out
 
-    def compute_feature_importances(self, method="gini"):
+    cpdef compute_feature_importances(self, method="gini"):
         """Computes the importance of each feature (aka variable).
 
         The following `method`s are supported:
@@ -803,14 +803,7 @@ cdef class Tree:
             The method to estimate the importance of a feature. Either "gini"
             or "squared".
         """
-        if method == "gini":
-            method = lambda node: (self.n_samples[node] * \
-                                     (self.init_error[node] -
-                                      self.best_error[node]))
-        elif method == "squared":
-            method = lambda node: (self.init_error[node] - \
-                                   self.best_error[node]) ** 2.0
-        else:
+        if method != "gini" and method != "squared":
             raise ValueError(
                 'Invalid value for method. Allowed string '
                 'values are "gini", or "squared".')
@@ -819,14 +812,16 @@ cdef class Tree:
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,), dtype=np.float64)
 
-        for node from 0 <= node < self.node_count:
-            if (self.children_left[node]
-                == self.children_right[node]
-                == _TREE_LEAF):
-                continue
-
-            else:
-                importances[self.feature[node]] += method(node)
+        if method == "gini":
+            for node from 0 <= node < self.node_count:
+                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
+                    importances[self.feature[node]] += \
+                        self._compute_feature_importances_gini(node)
+        else:
+            for node from 0 <= node < self.node_count:
+                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
+                    importances[self.feature[node]] += \
+                        self._compute_feature_importances_squared(node)
 
         cdef double normalizer = np.sum(importances)
 
@@ -835,6 +830,13 @@ cdef class Tree:
             importances /= normalizer
 
         return importances
+
+    cdef inline double _compute_feature_importances_gini(self, int node):
+        return self.n_samples[node] * (self.init_error[node] - self.best_error[node])
+
+    cdef inline double _compute_feature_importances_squared(self, int node):
+        cdef double error = self.init_error[node] - self.best_error[node]
+        return error * error
 
 cdef int smallest_sample_larger_than(int sample_idx,
                                      DTYPE_t *X_i,
