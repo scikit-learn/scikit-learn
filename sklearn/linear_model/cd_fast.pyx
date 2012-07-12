@@ -171,10 +171,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int ii
     cdef unsigned int m_pos
+    cdef unsigned int org_pos
     cdef unsigned int n_iter
     cdef bint use_cache = False
     cdef bint initialize_cache = False
     cdef bint search_missing_feature = False
+    cdef bint over_all = True
     cdef is_cached
     cdef int n_active_features = 0
     cdef int n_cached_features
@@ -227,9 +229,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # resize
                 map_to_ac, map_back = create_mapping(n_features, nz_index)
                 w = w[map_to_ac]
+                gradient = gradient[map_to_ac]
                 n_cached_features = n_active_features
                 use_cache = True
                 initialize_cache = True
+                over_all = False
 
         if search_missing_feature:
             iter_range = np.arange(n_features, dtype=np.int32)
@@ -239,26 +243,32 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if norm_cols_X[map_back[ii]] == 0.0:
                 continue
 
-            w_ii = w[ii]  # Store previous value
-
             if use_cache:
                 m_pos = map_to_ac[ii]
             else:
                 m_pos = ii
-            # check if this feature is located in the
-            # cache area
+
+            if over_all:
+                org_pos = ii
+            else:
+                org_pos = map_to_ac[ii]
+
+            w_ii = w[ii]  # Store previous value
+
+            # if feature is not located at the beginning of the array it's
+            # not cached
             is_cached = m_pos < n_cached_features
 
             # initial calculation
             if initialize_cache:
                 #tmp_feature_inner_product = np.dot(X[:, nz_index[ii]], X)
                 dgemv(col_major, trans, n_samples, n_features,
-                          1, &X[0,0], n_samples, &X[0, m_pos], 
+                          1, &X[0,0], n_samples, &X[0, org_pos], 
                           1, 0, &tmp_feature_inner_product[0], 1)
                 feature_inner_product[:, ii] = tmp_feature_inner_product[map_to_ac]
                 #gradient[ii] = Xy[nz_index[ii]] - \
                 #        np.dot(feature_inner_product[:, ii], w)
-                gradient[ii] = Xy[m_pos] - \
+                gradient[ii] = Xy[org_pos] - \
                         ddot(n_active_features, &feature_inner_product[0,ii], n_active_features, &w[0], 1)
 
             if not use_cache:
@@ -266,37 +276,35 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 #gradient[ii] = Xy[ii] - \
                 #         np.dot(tmp_feature_inner_product, w)
                 dgemv(col_major, trans, n_samples, n_features,
-                          1, &X[0,0], n_samples, &X[0,ii], 
+                          1, &X[0,0], n_samples, &X[0,org_pos], 
                           1, 0, &tmp_feature_inner_product[0], 1)
 
-                gradient[ii] = Xy[ii] - \
+                gradient[m_pos] = Xy[org_pos] - \
                         ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
 
             if search_missing_feature:
-                # if feature is not located at the beginning of the array it's
-                # not cached
                 if not is_cached:
                     dgemv(col_major, trans, n_samples, n_features,
-                              1, &X[0,0], n_samples, &X[0,ii], 
+                              1, &X[0,0], n_samples, &X[0,org_pos], 
                               1, 0, &tmp_feature_inner_product[0], 1)
 
-                    gradient[m_pos] = Xy[ii] - \
+                    gradient[m_pos] = Xy[org_pos] - \
                             ddot(n_features, &tmp_feature_inner_product[0],1 , &w[0], 1)
-                tmp = gradient[m_pos] + w_ii * norm_cols_X[ii]
 
-            if not search_missing_feature:
-                tmp = gradient[ii] + w_ii * norm_cols_X[m_pos]
+            tmp = gradient[m_pos] + w_ii * norm_cols_X[org_pos]
 
             if positive and tmp < 0:
                 w[ii] = 0.0
             else:
                 w[ii] = fsign(tmp) * fmax(fabs(tmp) - l1_reg, 0) \
-                    / (norm_cols_X[nz_index[ii]] + l2_reg)
+                    / (norm_cols_X[org_pos] + l2_reg)
 
             # update gradients, if w changed
             if w_ii != w[ii]:
                 if search_missing_feature:
-                    print "found one, ii = " + str(ii)
+                    # add feature to the active-set that improved the objective 
+                    #  but has not bin in the set before
+                    pass
                 if use_cache:
                     # gradient -= feature_inner_product[ii, :] * \
                     #                                    (w[ii] - w_ii)
@@ -324,8 +332,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # return if we reached desired tolerance
                 break
             else:
-                print "search missing feature"
+                print "dual gap check failed"
                 search_missing_feature = True
+                over_all = True
 
         initialize_cache = False
 
