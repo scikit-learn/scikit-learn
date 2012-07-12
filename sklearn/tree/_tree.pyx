@@ -326,72 +326,6 @@ cdef class Tree:
         if capacity < self.node_count:
             self.node_count = capacity
 
-    cdef int add_split_node(self, int parent, int is_left_child, int feature,
-                                  double threshold, double* value,
-                                  double best_error, double init_error,
-                                  int n_samples):
-        """Add a splitting node to the tree. The new node registers itself as
-           the child of its parent. """
-        cdef int node_id = self.node_count
-
-        if node_id >= self.capacity:
-            self.resize()
-
-        self.feature[node_id] = feature
-        self.threshold[node_id] = threshold
-
-        cdef int i
-        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
-
-        for i from 0 <= i < self.n_outputs * self.max_n_classes:
-            self.value[offset_node + i] = value[i]
-
-        self.init_error[node_id] = init_error
-        self.best_error[node_id] = best_error
-        self.n_samples[node_id] = n_samples
-
-        # set as left or right child of parent
-        if parent > _TREE_LEAF:
-            if is_left_child:
-                self.children_left[parent] = node_id
-            else:
-                self.children_right[parent] = node_id
-
-        self.node_count += 1
-
-        return node_id
-
-    cdef int add_leaf(self, int parent, int is_left_child, double* value, double error, int n_samples):
-        """Add a leaf to the tree. The new node registers itself as the
-           child of its parent. """
-        cdef int node_id = self.node_count
-
-        if node_id >= self.capacity:
-            self.resize()
-
-        cdef int i
-        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
-
-        for i from 0 <= i < self.n_outputs * self.max_n_classes:
-            self.value[offset_node + i] = value[i]
-
-        self.init_error[node_id] = error
-        self.best_error[node_id] = error
-        self.n_samples[node_id] = n_samples
-
-        if parent >= 0:
-            if is_left_child:
-                self.children_left[parent] = node_id
-            else:
-                self.children_right[parent] = node_id
-
-        self.children_left[node_id] = _TREE_LEAF
-        self.children_right[node_id] = _TREE_LEAF
-
-        self.node_count += 1
-
-        return node_id
-
     cpdef build(self, np.ndarray X, np.ndarray y, np.ndarray sample_mask=None, np.ndarray X_argsorted=None):
         """Build a decision tree from the training set (X, y).
 
@@ -510,13 +444,14 @@ cdef class Tree:
                 n_total_samples = n_node_samples
 
                 X_ptr = <DTYPE_t*> X.data
-                X_argsorted_ptr = <int*> X_argsorted.data
-                y_ptr = <DTYPE_t*> y.data
+                X_stride = <int> X.strides[1] / <int> X.strides[0]
                 sample_mask_ptr = <BOOL_t*> sample_mask.data
 
-                X_stride = <int> X.strides[1] / <int> X.strides[0]
-                X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
-                y_stride = <int> y.strides[0] / <int> y.strides[1]
+                # !! No need to update the other variables
+                # X_argsorted_ptr = <int*> X_argsorted.data
+                # y_ptr = <DTYPE_t*> y.data
+                # X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
+                # y_stride = <int> y.strides[0] / <int> y.strides[1]
 
             # Split
             X_ptr = X_ptr + feature * X_stride
@@ -526,7 +461,7 @@ cdef class Tree:
             n_node_samples_right = 0
 
             for i from 0 <= i < n_total_samples:
-                if sample_mask[i]:
+                if sample_mask_ptr[i]:
                     if X_ptr[i] <= threshold:
                         sample_mask_left[i] = 1
                         n_node_samples_left += 1
@@ -547,6 +482,72 @@ cdef class Tree:
             self.recursive_partition(X, X_argsorted, y, sample_mask_right,
                                      n_node_samples_right, depth + 1, node_id,
                                      False, buffer_value)
+
+    cdef int add_split_node(self, int parent, int is_left_child, int feature,
+                                  double threshold, double* value,
+                                  double best_error, double init_error,
+                                  int n_samples):
+        """Add a splitting node to the tree. The new node registers itself as
+           the child of its parent. """
+        cdef int node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        self.feature[node_id] = feature
+        self.threshold[node_id] = threshold
+
+        cdef int i
+        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
+
+        for i from 0 <= i < self.n_outputs * self.max_n_classes:
+            self.value[offset_node + i] = value[i]
+
+        self.init_error[node_id] = init_error
+        self.best_error[node_id] = best_error
+        self.n_samples[node_id] = n_samples
+
+        # set as left or right child of parent
+        if parent > _TREE_LEAF:
+            if is_left_child:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        self.node_count += 1
+
+        return node_id
+
+    cdef int add_leaf(self, int parent, int is_left_child, double* value, double error, int n_samples):
+        """Add a leaf to the tree. The new node registers itself as the
+           child of its parent. """
+        cdef int node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        cdef int i
+        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
+
+        for i from 0 <= i < self.n_outputs * self.max_n_classes:
+            self.value[offset_node + i] = value[i]
+
+        self.init_error[node_id] = error
+        self.best_error[node_id] = error
+        self.n_samples[node_id] = n_samples
+
+        if parent >= 0:
+            if is_left_child:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        self.children_left[node_id] = _TREE_LEAF
+        self.children_right[node_id] = _TREE_LEAF
+
+        self.node_count += 1
+
+        return node_id
 
     cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
                          int* X_argsorted_ptr, int X_argsorted_stride,
