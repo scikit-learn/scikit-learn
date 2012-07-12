@@ -281,7 +281,6 @@ cdef class Tree:
         self.resize(d["capacity"])
         self.node_count = d["node_count"]
 
-        cdef int i
         cdef int* children_left = <int*> (<np.ndarray> d["children_left"]).data
         cdef int* children_right =  <int*> (<np.ndarray> d["children_right"]).data
         cdef int* feature = <int*> (<np.ndarray> d["feature"]).data
@@ -290,6 +289,8 @@ cdef class Tree:
         cdef double* best_error = <double*> (<np.ndarray> d["best_error"]).data
         cdef double* init_error = <double*> (<np.ndarray> d["init_error"]).data
         cdef int* n_samples = <int*> (<np.ndarray> d["n_samples"]).data
+
+        cdef int i
 
         for i from 0 <= i < self.capacity:
             self.children_left[i] = children_left[i]
