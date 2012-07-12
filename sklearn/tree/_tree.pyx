@@ -1495,13 +1495,13 @@ cdef class MSE(RegressionCriterion):
 # Utils
 # ==============================================================================
 
-cdef np.ndarray intp_to_ndarray(int* data, int size):
+cdef inline np.ndarray intp_to_ndarray(int* data, int size):
     """Encapsulate data into a 1D numpy array of int's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
 
-cdef np.ndarray doublep_to_ndarray(double* data, int size):
+cdef inline np.ndarray doublep_to_ndarray(double* data, int size):
     """Encapsulate data into a 1D numpy array of double's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
