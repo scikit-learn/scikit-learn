@@ -91,7 +91,6 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         else:
             if feature_names is not None:
                 feature = feature_names[tree.feature[node_id]]
-
             else:
                 feature = "X[%s]" % tree.feature[node_id]
 
@@ -109,15 +108,15 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         left_child = tree.children_left[node_id]
         right_child = tree.children_right[node_id]
 
-        # add node with description
+        # Add node with description
         out_file.write('%d [label="%s", shape="box"] ;\n' %
                 (node_id, node_to_str(tree, node_id)))
 
-        if not parent is None:
-            # add edge to parent
+        if parent is not None:
+            # Add edge to parent
             out_file.write('%d -> %d ;\n' % (parent, node_id))
 
-        if left_child != _tree.TREE_LEAF:
+        if left_child != _tree.TREE_LEAF: # and right_child != _tree.TREE_LEAF:
             recurse(tree, left_child, node_id)
             recurse(tree, right_child, node_id)
 
@@ -270,7 +269,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                                        n_samples))
 
         # Build tree
-        self.tree_ = _tree.Tree(self.n_classes_, self.n_features_,
+        self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
                                 self.n_outputs_, criterion, max_depth,
                                 self.min_samples_split, self.min_samples_leaf,
                                 self.min_density, max_features,

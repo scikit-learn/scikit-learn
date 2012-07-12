@@ -67,41 +67,66 @@ cdef class Tree:
     split nodes, resp. In this case the values of nodes of the other
     type are arbitrary!
 
+    Parameters
+    ----------
+    n_features : int
+        The number of features
+
+    n_classes : array-like
+        n_classes[k] is the number of classes for output k.
+
+    n_outputs : int
+        The number of outputs.
+
+    criterion : Criterion
+    max_depth : double
+    min_samples_split : int
+    min_samples_leaf : int
+    min_density : double
+    max_features : int
+    find_split_algorithm : int
+
     Attributes
     ----------
     node_count : int
-        Number of nodes (internal nodes + leaves) in the tree.
+        The number of nodes (internal nodes + leaves) in the tree.
 
-    children : np.ndarray, shape=(node_count, 2), dtype=int32
-        `children[i, 0]` holds the node id of the left child of node `i`.
-        `children[i, 1]` holds the node id of the right child of node `i`.
-        For leaves `children[i, 0] == children[i, 1] == self.LEAF == -1`.
+    capacity : int
+        The current capacity (i.e., size) of the arrays.
 
-    feature : np.ndarray of int32
-        The feature to split on (only for internal nodes).
+    children_left : int*
+        children_left[i] holds the node id of the child if node i.
+        For leaves, children_left[i] == TREE_LEAF.
 
-    threshold : np.ndarray of float64
-        The threshold of each node (only for internal nodes).
+    children_right : int*
+        children_left[i] holds the node id of the child if node i.
+        For leaves, children_left[i] == TREE_LEAF.
 
-    value : np.ndarray of float64, shape=(capacity, n_outputs, n_classes)
+    feature : int*
+        feature[i] holds the feature to split on, for the internal node i.
+
+    threshold : double*
+        threshold[i] holds the threshold for the internal node i.
+
+    value : double*
         Contains the constant prediction value of each node.
 
-    best_error : np.ndarray of float64
-        The error of the (best) split.
-        For leaves `init_error == `best_error`.
+    best_error : double*
+        best_error[i] holds the error of the (best) split at node i.
+        For leaves init_error[i] == best_error[i].
 
-    init_error : np.ndarray of float64
-        The initial error of the node (before splitting).
-        For leaves `init_error == `best_error`.
+    init_error : double*
+        init_error[i] holds the initial error at node i (before splitting).
+        For leaves init_error[i] == best_error[i].
 
-    n_samples : np.ndarray of np.int32
-        The number of samples at each node.
+    n_samples : int*
+        n_samples[i] holds the number of training samples reaching node i.
     """
 
     # Input/Output layout
+    cdef public int n_features
     cdef int* n_classes
     cdef public int max_n_classes
-    cdef public int n_features
     cdef public int n_outputs
 
     # Parameters
@@ -167,10 +192,11 @@ cdef class Tree:
         def __get__(self):
             return intp_to_ndarray(self.n_samples, self.node_count)
 
-    def __init__(self, object n_classes, int n_features, int n_outputs,
+    def __init__(self, int n_features, object n_classes, int n_outputs,
                  Criterion criterion, double max_depth, int min_samples_split,
                  int min_samples_leaf, double min_density, int max_features,
                  int find_split_algorithm, object random_state, int capacity=3):
+        """Constructor."""
         # Input/Output layout
         cdef int k
 
@@ -206,6 +232,7 @@ cdef class Tree:
         self.n_samples = <int*> malloc(capacity * sizeof(int));
 
     def __del__(self):
+        """Destructor."""
         # Free all inner structures
         free(self.n_classes)
 
@@ -219,8 +246,9 @@ cdef class Tree:
         free(self.n_samples)
 
     def __reduce__(self):
-        return (Tree, (intp_to_ndarray(self.n_classes, self.n_outputs),
-                       self.n_features,
+        """Reduce re-implementation, for pickling."""
+        return (Tree, (self.n_features,
+                       intp_to_ndarray(self.n_classes, self.n_outputs),
                        self.n_outputs,
                        self.criterion,
                        self.max_depth,
@@ -232,6 +260,7 @@ cdef class Tree:
                        self.random_state), self.__getstate__())
 
     def __getstate__(self):
+        """Getstate re-implementation, for pickling."""
         d = {}
 
         d["node_count"] = self.node_count
@@ -248,6 +277,7 @@ cdef class Tree:
         return d
 
     def __setstate__(self, d):
+        """Setstate re-implementation, for unpickling."""
         self.resize(d["capacity"])
         self.node_count = d["node_count"]
 
@@ -274,6 +304,7 @@ cdef class Tree:
             self.value[i] = value[i]
 
     cdef void resize(self, int capacity=-1):
+        """Resize all inner arrays to `capacity`, if < 0 double capacity."""
         if capacity == self.capacity:
             return
 
@@ -362,6 +393,16 @@ cdef class Tree:
         return node_id
 
     cpdef build(self, np.ndarray X, np.ndarray y, np.ndarray sample_mask=None, np.ndarray X_argsorted=None):
+        """Build a decision tree from the training set (X, y).
+
+        Parameters
+        ----------
+        X : ndarray of shape [n_samples, n_features]
+            The training input samples.
+
+        y : ndarray of shape [n_samples, n_outputs]
+            The target values.
+        """
         # Check input before recursive partitioning
         if X.dtype != DTYPE or not np.isfortran(X):
             X = np.asarray(X, dtype=DTYPE, order="F")
@@ -404,6 +445,7 @@ cdef class Tree:
                                   int parent,
                                   int is_left_child,
                                   double* buffer_value):
+        """Recursive partition algorithm for the tree construction."""
         # Variables
         cdef Criterion criterion = self.criterion
 
@@ -534,6 +576,7 @@ cdef class Tree:
                               int n_total_samples, int* _best_i,
                               double* _best_t, double* _best_error,
                               double* _initial_error):
+        """Implementation of `find_split` that looks for the best threshold."""
         # Variables declarations
         cdef Criterion criterion = self.criterion
         cdef int n_features = self.n_features
@@ -596,8 +639,8 @@ cdef class Tree:
             # Consider splits between two consecutive samples
             while True:
                 # Find the following larger sample
-                b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
-                                                sample_mask_ptr, n_total_samples)
+                b = _smallest_sample_larger_than(a, X_i, X_argsorted_i,
+                                                 sample_mask_ptr, n_total_samples)
                 if b == -1:
                     break
 
@@ -635,6 +678,8 @@ cdef class Tree:
                                 int n_total_samples, int* _best_i,
                                 double* _best_t, double* _best_error,
                                 double* _initial_error):
+        """Implementation of `find_split` that looks for the best threshold
+           among randomly drawn thresholds at each feature."""
         # Variables declarations
         cdef Criterion criterion = self.criterion
         cdef int n_features = self.n_features
@@ -735,6 +780,7 @@ cdef class Tree:
         _initial_error[0] = initial_error
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+        """Predict target for X."""
         cdef int i, k, c
         cdef int n_samples = X.shape[0]
         cdef int node_id = 0
@@ -765,8 +811,7 @@ cdef class Tree:
         return out
 
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
-        """Finds the terminal region (=leaf node) for each sample in
-           `X` and sets the corresponding element in `out` to its node id."""
+        """Finds the terminal region (=leaf node) for each sample in X."""
         cdef int i = 0
         cdef int n_samples = X.shape[0]
         cdef int node_id = 0
@@ -837,43 +882,6 @@ cdef class Tree:
     cdef inline double _compute_feature_importances_squared(self, int node):
         cdef double error = self.init_error[node] - self.best_error[node]
         return error * error
-
-cdef int smallest_sample_larger_than(int sample_idx,
-                                     DTYPE_t *X_i,
-                                     int *X_argsorted_i,
-                                     BOOL_t *sample_mask,
-                                     int n_total_samples):
-    """Find the largest next sample.
-
-    Find the index in the `X_i` array for sample who's feature
-    `i` value is just about greater than those of the sample
-    `X_argsorted_i[sample_idx]`.
-
-    Returns
-    -------
-    next_sample_idx : int
-        The index of the next smallest sample in `X_argsorted`
-        with different feature value than `sample_idx` .
-        I.e. `X_argsorted_i[sample_idx] < X_argsorted_i[next_sample_idx]`
-        -1 if no such element exists.
-    """
-    cdef int idx = 0, j
-    cdef DTYPE_t threshold = -DBL_MAX
-
-    if sample_idx > -1:
-        threshold = X_i[X_argsorted_i[sample_idx]]
-
-    for idx from sample_idx < idx < n_total_samples:
-        j = X_argsorted_i[idx]
-
-        if sample_mask[j] == 0:
-            continue
-
-        if X_i[j] > threshold + 1.e-7:
-            return idx
-
-    return -1
-
 
 
 # ==============================================================================
@@ -1486,14 +1494,52 @@ cdef class MSE(RegressionCriterion):
 # ==============================================================================
 
 cdef np.ndarray intp_to_ndarray(int* data, int size):
+    """Encapsulate data into a 1D numpy array of int's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
 
 cdef np.ndarray doublep_to_ndarray(double* data, int size):
+    """Encapsulate data into a 1D numpy array of double's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
+
+cdef inline int _smallest_sample_larger_than(int sample_idx,
+                                             DTYPE_t* X_i,
+                                             int* X_argsorted_i,
+                                             BOOL_t* sample_mask,
+                                             int n_total_samples):
+    """Find the largest next sample.
+
+    Find the index in the `X_i` array for sample who's feature
+    `i` value is just about greater than those of the sample
+    `X_argsorted_i[sample_idx]`.
+
+    Returns
+    -------
+    next_sample_idx : int
+        The index of the next smallest sample in `X_argsorted`
+        with different feature value than `sample_idx` .
+        I.e. `X_argsorted_i[sample_idx] < X_argsorted_i[next_sample_idx]`
+        -1 if no such element exists.
+    """
+    cdef int idx = 0, j
+    cdef DTYPE_t threshold = -DBL_MAX
+
+    if sample_idx > -1:
+        threshold = X_i[X_argsorted_i[sample_idx]]
+
+    for idx from sample_idx < idx < n_total_samples:
+        j = X_argsorted_i[idx]
+
+        if sample_mask[j] == 0:
+            continue
+
+        if X_i[j] > threshold + 1.e-7:
+            return idx
+
+    return -1
 
 def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
