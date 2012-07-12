@@ -12,7 +12,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, as_float_array, check_random_state, deprecated
 
 __all__ = ['fastica', 'FastICA']
@@ -319,7 +319,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return None, W, S.T
 
 
-class FastICA(BaseEstimator):
+class FastICA(BaseEstimator, TransformerMixin):
     """FastICA; a fast algorithm for Independent Component Analysis
 
     Parameters

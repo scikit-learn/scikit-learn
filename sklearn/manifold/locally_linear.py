@@ -8,7 +8,7 @@ import numpy as np
 import warnings
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state
 from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors
@@ -500,7 +500,7 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator):
+class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """Locally Linear Embedding
 
     Parameters

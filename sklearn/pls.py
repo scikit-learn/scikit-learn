@@ -5,7 +5,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD Style.
 
-from .base import BaseEstimator
+from .base import BaseEstimator, RegressorMixin, TransformerMixin
 from .utils import as_float_array
 
 import warnings
@@ -402,7 +402,7 @@ class _PLS(BaseEstimator):
         return Ypred + self.y_mean_
 
 
-class PLSRegression(_PLS):
+class PLSRegression(_PLS, RegressorMixin, TransformerMixin):
     """PLS regression
 
     PLSRegression implements the PLS 2 blocks regression known as PLS2 or PLS1
@@ -520,7 +520,7 @@ class PLSRegression(_PLS):
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSCanonical(_PLS):
+class PLSCanonical(_PLS, RegressorMixin, TransformerMixin):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
     algorithm [Tenenhaus 1998] p.204, refered as PLS-C2A in [Wegelin 2000].
 

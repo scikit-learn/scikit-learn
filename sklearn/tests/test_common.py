@@ -160,6 +160,10 @@ def test_regressors_train():
             reg.set_params(alpha=0.01)
 
         # fit
-        reg.fit(X, y)
-        reg.predict(X)
-        assert_greater(reg.score(X, y), 0.5)
+        try:
+            reg.fit(X, y)
+            reg.predict(X)
+            assert_greater(reg.score(X, y), 0.5)
+        except:
+            print(reg)
+            raise

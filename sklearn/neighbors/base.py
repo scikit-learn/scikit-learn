@@ -8,6 +8,7 @@
 import warnings
 
 import numpy as np
+from abc import ABCMeta, abstractmethod
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
 
@@ -71,6 +72,12 @@ def _get_weights(dist, weights):
 
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self):
+        pass
+
     #FIXME: include float parameter p for using different distance metrics.
     # this can be passed directly to BallTree and cKDTree.  Brute-force will
     # rely on soon-to-be-updated functionality in the pairwise module.

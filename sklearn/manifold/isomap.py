@@ -5,14 +5,14 @@
 
 import numpy as np
 import warnings
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
 
-class Isomap(BaseEstimator):
+class Isomap(BaseEstimator, TransformerMixin):
     """Isomap Embedding
 
     Non-linear dimensionality reduction through Isometric Mapping
