@@ -45,6 +45,13 @@ details of each sub-task.
 Exercise 1: Photometric Classification with GMM
 -----------------------------------------------
 
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`10_exercise01.ipynb <notebooks/10_exercise01.ipynb>`,
+   which can be viewed using `iPython notebook`_.  This requires the
+   sdss colors data, which can be downloaded as described in
+   :ref:`astro_tutorial_setup`.
+
 In this exercise, you will improve on the results of the classification
 example described in the `classification <classification.html>`_ section.
 We previously used a simple Gaussian Naive Bayes classifier to distinguish
@@ -78,12 +85,19 @@ the ipython command is::
 
 Althernatively, the ipython notebook file is found in
 
-    notebooks/10_exercise01.ipynb
+    :download:`notebooks/10_exercise01.ipynb`
 
 .. _astro_exercise_2:
 
 Exercise 2: Photometric redshifts with Decision Trees
 -----------------------------------------------------
+
+.. note::
+   The information in this section is available in an interactive notebook
+   :download:`11_exercise02.ipynb <notebooks/11_exercise02.ipynb>`,
+   which can be viewed using `iPython notebook`_.  This requires the
+   sdss colors data, which can be downloaded as described in
+   :ref:`astro_tutorial_setup`.
 
 In this exercise, you will seek to improve the results of the photometric
 redshift regression problem described in the `regression <regression.html>`_
@@ -122,7 +136,7 @@ the ipython command is::
 
 Althernatively, the ipython notebook file is found in
 
-    notebooks/11_exercise02.ipynb
+    :download:`notebooks/11_exercise02.ipynb`
 
 .. _astro_exercise_3:
 
@@ -231,3 +245,6 @@ questions:
       be used as the first step of a physically-motivated classification
       pipeline, or to flag potentially interesting objects for quick
       followup.
+
+
+.. _`iPython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html

@@ -1,3 +1,5 @@
+.. _astro_tutorial_setup:
+
 ===============================
 Tutorial Setup and Installation
 ===============================

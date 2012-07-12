@@ -310,3 +310,6 @@ References
 .. [1] C.W. Yip et al.  Spectral Classification of Quasars in the
    Sloan Digital Sky Survey: Eigenspectra, Redshift, and Luminosity Effects.
    Astronomical Journal 128:6, 2004.
+
+
+.. _`iPython notebook`: http://ipython.org/ipython-doc/stable/interactive/htmlnotebook.html
