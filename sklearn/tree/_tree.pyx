@@ -16,6 +16,7 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
+np.import_array()
 
 cdef extern from "stdlib.h":
     void* malloc(size_t size)
@@ -50,6 +51,18 @@ TREE_SPLIT_BEST = 1
 TREE_SPLIT_RANDOM = 2
 cdef int _TREE_SPLIT_BEST = TREE_SPLIT_BEST
 cdef int _TREE_SPLIT_RANDOM = TREE_SPLIT_RANDOM
+
+
+
+cdef np.ndarray intp_to_ndarray(int* data, int size):
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
+
+cdef np.ndarray doublep_to_ndarray(double* data, int size):
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
 
 # ==============================================================================
@@ -125,6 +138,63 @@ cdef class Tree:
     cdef double* init_error
     cdef int* n_samples
 
+    # Wrap for outside world
+    property n_classes:
+        def __get__(self):
+            return intp_to_ndarray(self.n_classes, self.n_outputs)
+
+    property max_n_classes:
+        def __get__(self):
+            return self.max_n_classes
+
+    property n_features:
+        def __get__(self):
+            return self.n_features
+
+    property n_outputs:
+        def __get__(self):
+            return self.n_outputs
+
+    property node_count:
+        def __get__(self):
+            return self.node_count
+
+    property children_left:
+        def __get__(self):
+            return intp_to_ndarray(self.children_left, self.node_count)
+
+    property children_right:
+        def __get__(self):
+            return intp_to_ndarray(self.children_right, self.node_count)
+
+    property feature:
+        def __get__(self):
+            return intp_to_ndarray(self.feature, self.node_count)
+
+    property threshold:
+        def __get__(self):
+            return doublep_to_ndarray(self.threshold, self.node_count)
+
+    property value:
+        def __get__(self):
+            cdef np.npy_intp shape[3]
+            shape[0] = <np.npy_intp> self.node_count
+            shape[1] = <np.npy_intp> self.n_outputs
+            shape[2] = <np.npy_intp> self.max_n_classes
+            return np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
+
+    property best_error:
+        def __get__(self):
+            return doublep_to_ndarray(self.best_error, self.node_count)
+
+    property init_error:
+        def __get__(self):
+            return doublep_to_ndarray(self.init_error, self.node_count)
+
+    property n_samples:
+        def __get__(self):
+            return intp_to_ndarray(self.n_samples, self.node_count)
+
     def __init__(self, object n_classes, int n_features, int n_outputs,
                  Criterion criterion, double max_depth, int min_samples_split,
                  int min_samples_leaf, double min_density, int max_features,
@@ -166,6 +236,7 @@ cdef class Tree:
     def __del__(self):
         # Free all inner structures
         free(self.n_classes)
+
         free(self.children_left)
         free(self.children_right)
         free(self.feature)

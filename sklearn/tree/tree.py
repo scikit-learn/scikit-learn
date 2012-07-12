@@ -79,21 +79,22 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
-        if feature_names is not None:
-            feature = feature_names[tree.feature[node_id]]
-        else:
-            feature = "X[%s]" % tree.feature[node_id]
-
         value = tree.value[node_id]
         if tree.n_outputs == 1:
             value = value[0, :]
 
-        if tree.children[node_id, 0] == _tree.TREE_LEAF:
+        if tree.children_left[node_id] == _tree.TREE_LEAF:
             return "error = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (tree.init_error[node_id],
                       tree.n_samples[node_id],
                       value)
         else:
+            if feature_names is not None:
+                feature = feature_names[tree.feature[node_id]]
+
+            else:
+                feature = "X[%s]" % tree.feature[node_id]
+
             return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
                    % (feature,
                       tree.threshold[node_id],
@@ -105,7 +106,8 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         if node_id == _tree.TREE_LEAF:
             raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
 
-        left_child, right_child = tree.children[node_id, :]
+        left_child = tree.children_left[node_id]
+        right_child = tree.children_right[node_id]
 
         # add node with description
         out_file.write('%d [label="%s", shape="box"] ;\n' %
@@ -115,7 +117,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             # add edge to parent
             out_file.write('%d -> %d ;\n' % (parent, node_id))
 
-        if not (left_child == Tree.LEAF):
+        if left_child != _tree.TREE_LEAF:
             recurse(tree, left_child, node_id)
             recurse(tree, right_child, node_id)
 
