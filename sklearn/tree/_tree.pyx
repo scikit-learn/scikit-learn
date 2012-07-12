@@ -53,18 +53,6 @@ cdef int _TREE_SPLIT_BEST = TREE_SPLIT_BEST
 cdef int _TREE_SPLIT_RANDOM = TREE_SPLIT_RANDOM
 
 
-
-cdef np.ndarray intp_to_ndarray(int* data, int size):
-    cdef np.npy_intp shape[1]
-    shape[0] = <np.npy_intp> size
-    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
-
-cdef np.ndarray doublep_to_ndarray(double* data, int size):
-    cdef np.npy_intp shape[1]
-    shape[0] = <np.npy_intp> size
-    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
-
-
 # ==============================================================================
 # Tree
 # ==============================================================================
@@ -112,23 +100,23 @@ cdef class Tree:
 
     # Input/Output layout
     cdef int* n_classes
-    cdef int max_n_classes
-    cdef int n_features
-    cdef int n_outputs
+    cdef public int max_n_classes
+    cdef public int n_features
+    cdef public int n_outputs
 
     # Parameters
-    cdef Criterion criterion
-    cdef double max_depth
-    cdef int min_samples_split
-    cdef int min_samples_leaf
-    cdef double min_density
-    cdef int max_features
-    cdef int find_split_algorithm
-    cdef object random_state
+    cdef public Criterion criterion
+    cdef public double max_depth
+    cdef public int min_samples_split
+    cdef public int min_samples_leaf
+    cdef public double min_density
+    cdef public int max_features
+    cdef public int find_split_algorithm
+    cdef public object random_state
 
     # Inner structures
-    cdef int node_count
-    cdef int capacity
+    cdef public int node_count
+    cdef public int capacity
     cdef int* children_left
     cdef int* children_right
     cdef int* feature
@@ -142,22 +130,6 @@ cdef class Tree:
     property n_classes:
         def __get__(self):
             return intp_to_ndarray(self.n_classes, self.n_outputs)
-
-    property max_n_classes:
-        def __get__(self):
-            return self.max_n_classes
-
-    property n_features:
-        def __get__(self):
-            return self.n_features
-
-    property n_outputs:
-        def __get__(self):
-            return self.n_outputs
-
-    property node_count:
-        def __get__(self):
-            return self.node_count
 
     property children_left:
         def __get__(self):
@@ -1432,6 +1404,16 @@ cdef class MSE(RegressionCriterion):
 # ==============================================================================
 # Utils
 # ==============================================================================
+
+cdef np.ndarray intp_to_ndarray(int* data, int size):
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
+
+cdef np.ndarray doublep_to_ndarray(double* data, int size):
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
 def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
