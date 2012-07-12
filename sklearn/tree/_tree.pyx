@@ -218,6 +218,61 @@ cdef class Tree:
         free(self.init_error)
         free(self.n_samples)
 
+    def __reduce__(self):
+        return (Tree, (intp_to_ndarray(self.n_classes, self.n_outputs),
+                       self.n_features,
+                       self.n_outputs,
+                       self.criterion,
+                       self.max_depth,
+                       self.min_samples_split,
+                       self.min_samples_leaf,
+                       self.min_density,
+                       self.max_features,
+                       self.find_split_algorithm,
+                       self.random_state), self.__getstate__())
+
+    def __getstate__(self):
+        d = {}
+
+        d["node_count"] = self.node_count
+        d["capacity"] = self.capacity
+        d["children_left"] = intp_to_ndarray(self.children_left, self.capacity)
+        d["children_right"] = intp_to_ndarray(self.children_right, self.capacity)
+        d["feature"] = intp_to_ndarray(self.feature, self.capacity)
+        d["threshold"] = doublep_to_ndarray(self.threshold, self.capacity)
+        d["value"] = doublep_to_ndarray(self.value, self.capacity * self.n_outputs * self.max_n_classes)
+        d["best_error"] = doublep_to_ndarray(self.best_error, self.capacity)
+        d["init_error"] = doublep_to_ndarray(self.init_error, self.capacity)
+        d["n_samples"] = intp_to_ndarray(self.n_samples, self.capacity)
+
+        return d
+
+    def __setstate__(self, d):
+        self.resize(d["capacity"])
+        self.node_count = d["node_count"]
+
+        cdef int i
+        cdef int* children_left = <int*> (<np.ndarray> d["children_left"]).data
+        cdef int* children_right =  <int*> (<np.ndarray> d["children_right"]).data
+        cdef int* feature = <int*> (<np.ndarray> d["feature"]).data
+        cdef double* threshold = <double*> (<np.ndarray> d["threshold"]).data
+        cdef double* value = <double*> (<np.ndarray> d["value"]).data
+        cdef double* best_error = <double*> (<np.ndarray> d["best_error"]).data
+        cdef double* init_error = <double*> (<np.ndarray> d["init_error"]).data
+        cdef int* n_samples = <int*> (<np.ndarray> d["n_samples"]).data
+
+        for i from 0 <= i < self.capacity:
+            self.children_left[i] = children_left[i]
+            self.children_right[i] = children_right[i]
+            self.feature[i] = feature[i]
+            self.threshold[i] = threshold[i]
+            self.best_error[i] = best_error[i]
+            self.init_error[i] = init_error[i]
+            self.n_samples[i] = n_samples[i]
+
+        for i from 0 <= i < self.capacity * self.n_outputs * self.max_n_classes:
+            self.value[i] = value[i]
+
     cdef void resize(self, int capacity=-1):
         if capacity == self.capacity:
             return
@@ -934,6 +989,18 @@ cdef class ClassificationCriterion(Criterion):
         free(self.label_count_right)
         free(self.label_count_init)
 
+    def __reduce__(self):
+        return (ClassificationCriterion,
+                (self.n_outputs, intp_to_ndarray(self.n_classes,
+                                                 self.n_outputs)),
+                self.__getstate__())
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, d):
+        pass
+
     cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t *sample_mask,
                    int n_samples, int n_total_samples):
         """Initialise the criterion."""
@@ -1239,6 +1306,17 @@ cdef class RegressionCriterion(Criterion):
         free(self.sq_sum_init)
         free(self.var_left)
         free(self.var_right)
+
+    def __reduce__(self):
+        return (RegressionCriterion,
+                (self.n_outputs,),
+                self.__getstate__())
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, d):
+        pass
 
     cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
                    int n_samples, int n_total_samples):
