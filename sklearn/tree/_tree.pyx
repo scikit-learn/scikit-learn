@@ -715,7 +715,7 @@ cdef class Tree:
         else:
             raise ValueError(
                 'Invalid value for method. Allowed string '
-                'values are "gini", or "mse".')
+                'values are "gini", or "squared".')
 
         cdef int node
         cdef np.ndarray[np.float64_t, ndim=1] importances
