@@ -225,7 +225,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             Returns self.
         """
         # Precompute some data
-        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2 or not X.flags.fortran:
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2 or not X.flags.fortran:
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
@@ -267,7 +267,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 self.n_classes_.append(unique.shape[0])
                 y[:, k] = np.searchsorted(unique, y[:, k])
 
-        if not hasattr(y, "dtype") or y.dtype != DTYPE or not y.flags.contiguous:
+        if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
@@ -443,7 +443,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             ordered by arithmetical order.
         """
         # Check data
-        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2:
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
@@ -550,7 +550,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
             The predicted values.
         """
         # Check data
-        if not hasattr(X, "dtype") or X.dtype != DTYPE or X.ndim != 2:
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs

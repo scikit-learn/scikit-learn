@@ -24,6 +24,9 @@ cdef extern from "stdlib.h":
     void* realloc(void* ptr, size_t size)
     void free(void* ptr)
 
+cdef extern from "string.h":
+    void* memcpy(void* dest, void* src, size_t n)
+
 cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double pow(double base, double exponent)
@@ -126,8 +129,10 @@ cdef class Tree:
     # Input/Output layout
     cdef public int n_features
     cdef int* n_classes
-    cdef public int max_n_classes
     cdef public int n_outputs
+
+    cdef public int max_n_classes
+    cdef public int value_stride
 
     # Parameters
     cdef public Criterion criterion
@@ -202,8 +207,10 @@ cdef class Tree:
 
         self.n_features = n_features
         self.n_outputs = n_outputs
-        self.n_classes = <int*> calloc(n_outputs, sizeof(int))
+        self.n_classes = <int*> malloc(n_outputs * sizeof(int))
+
         self.max_n_classes = np.max(n_classes)
+        self.value_stride = self.n_outputs * self.max_n_classes
 
         for k from 0 <= k < n_outputs:
             self.n_classes[k] = n_classes[k]
@@ -226,7 +233,7 @@ cdef class Tree:
         self.children_right = <int*> malloc(capacity * sizeof(int))
         self.feature = <int*> malloc(capacity * sizeof(int))
         self.threshold = <double*> malloc(capacity * sizeof(double))
-        self.value = <double*> malloc(capacity * self.n_outputs * self.max_n_classes * sizeof(double));
+        self.value = <double*> malloc(capacity * self.value_stride * sizeof(double));
         self.best_error = <double*> malloc(capacity * sizeof(double));
         self.init_error = <double*> malloc(capacity * sizeof(double));
         self.n_samples = <int*> malloc(capacity * sizeof(int));
@@ -269,7 +276,7 @@ cdef class Tree:
         d["children_right"] = intp_to_ndarray(self.children_right, self.capacity)
         d["feature"] = intp_to_ndarray(self.feature, self.capacity)
         d["threshold"] = doublep_to_ndarray(self.threshold, self.capacity)
-        d["value"] = doublep_to_ndarray(self.value, self.capacity * self.n_outputs * self.max_n_classes)
+        d["value"] = doublep_to_ndarray(self.value, self.capacity * self.value_stride)
         d["best_error"] = doublep_to_ndarray(self.best_error, self.capacity)
         d["init_error"] = doublep_to_ndarray(self.init_error, self.capacity)
         d["n_samples"] = intp_to_ndarray(self.n_samples, self.capacity)
@@ -290,19 +297,14 @@ cdef class Tree:
         cdef double* init_error = <double*> (<np.ndarray> d["init_error"]).data
         cdef int* n_samples = <int*> (<np.ndarray> d["n_samples"]).data
 
-        cdef int i
-
-        for i from 0 <= i < self.capacity:
-            self.children_left[i] = children_left[i]
-            self.children_right[i] = children_right[i]
-            self.feature[i] = feature[i]
-            self.threshold[i] = threshold[i]
-            self.best_error[i] = best_error[i]
-            self.init_error[i] = init_error[i]
-            self.n_samples[i] = n_samples[i]
-
-        for i from 0 <= i < self.capacity * self.n_outputs * self.max_n_classes:
-            self.value[i] = value[i]
+        memcpy(self.children_left, children_left, self.capacity * sizeof(int))
+        memcpy(self.children_right, children_right, self.capacity * sizeof(int))
+        memcpy(self.feature, feature, self.capacity * sizeof(int))
+        memcpy(self.threshold, threshold, self.capacity * sizeof(double))
+        memcpy(self.value, value, self.capacity * self.value_stride * sizeof(double))
+        memcpy(self.best_error, best_error, self.capacity * sizeof(double))
+        memcpy(self.init_error, init_error, self.capacity * sizeof(double))
+        memcpy(self.n_samples, n_samples, self.capacity * sizeof(int))
 
     cdef void resize(self, int capacity=-1):
         """Resize all inner arrays to `capacity`, if < 0 double capacity."""
@@ -318,7 +320,7 @@ cdef class Tree:
         self.children_right = <int*> realloc(self.children_right, capacity * sizeof(int))
         self.feature = <int*> realloc(self.feature, capacity * sizeof(int))
         self.threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
-        self.value = <double*> realloc(self.value, capacity * self.n_outputs * self.max_n_classes * sizeof(double))
+        self.value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
         self.best_error = <double*> realloc(self.best_error, capacity * sizeof(double))
         self.init_error = <double*> realloc(self.init_error, capacity * sizeof(double))
         self.n_samples = <int*> realloc(self.n_samples, capacity * sizeof(int))
@@ -361,7 +363,7 @@ cdef class Tree:
             init_capacity = 2047
 
         self.resize(init_capacity)
-        cdef double* buffer_value = <double*> malloc(self.n_outputs * self.max_n_classes * sizeof(double))
+        cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
 
         # Build the tree by recursive partitioning
         self.recursive_partition(X, X_argsorted, y, sample_mask, np.sum(sample_mask), 0, -1, False, buffer_value)
@@ -498,11 +500,9 @@ cdef class Tree:
         self.feature[node_id] = feature
         self.threshold[node_id] = threshold
 
-        cdef int i
-        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
-
-        for i from 0 <= i < self.n_outputs * self.max_n_classes:
-            self.value[offset_node + i] = value[i]
+        cdef int value_stride = self.n_outputs * self.max_n_classes
+        cdef int offset_node = node_id * self.value_stride
+        memcpy(self.value + offset_node, value, self.value_stride * sizeof(double))
 
         self.init_error[node_id] = init_error
         self.best_error[node_id] = best_error
@@ -527,11 +527,8 @@ cdef class Tree:
         if node_id >= self.capacity:
             self.resize()
 
-        cdef int i
         cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
-
-        for i from 0 <= i < self.n_outputs * self.max_n_classes:
-            self.value[offset_node + i] = value[i]
+        memcpy(self.value + offset_node, value, self.value_stride * sizeof(double))
 
         self.init_error[node_id] = error
         self.best_error[node_id] = error
@@ -595,6 +592,7 @@ cdef class Tree:
 
         cdef DTYPE_t* X_i = NULL
         cdef int* X_argsorted_i = NULL
+        cdef DTYPE_t X_a, X_b
 
         cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
 
@@ -657,10 +655,13 @@ cdef class Tree:
                 error = criterion.eval()
 
                 if error < best_error:
-                    t = X_i[X_argsorted_i[a]] + \
-                        ((X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]) / 2.0)
-                    if t == X_i[X_argsorted_i[b]]:
-                        t = X_i[X_argsorted_i[a]]
+                    X_a = X_i[X_argsorted_i[a]]
+                    X_b = X_i[X_argsorted_i[b]]
+
+                    t = X_a + (X_b - X_a) / 2.0
+                    if t == X_b:
+                        t = X_a
+
                     best_i = i
                     best_t = t
                     best_error = error
@@ -699,6 +700,7 @@ cdef class Tree:
 
         cdef DTYPE_t* X_i = NULL
         cdef int* X_argsorted_i = NULL
+        cdef DTYPE_t X_a, X_b
 
         cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
 
@@ -740,19 +742,21 @@ cdef class Tree:
             a = 0
             while sample_mask_ptr[X_argsorted_i[a]] == 0:
                 a = a + 1
+            X_a = X_i[X_argsorted_i[a]]
 
             b = n_total_samples - 1
             while sample_mask_ptr[X_argsorted_i[b]] == 0:
                 b = b - 1
+            X_b = X_i[X_argsorted_i[b]]
 
-            if b <= a or X_i[X_argsorted_i[a]] == X_i[X_argsorted_i[b]]:
+            if b <= a or X_a == X_b:
                 continue
 
             # Draw a random threshold in [a, b)
             random = random_state.rand()
-            t = X_i[X_argsorted_i[a]] + (random * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]))
-            if t == X_i[X_argsorted_i[b]]:
-                t = X_i[X_argsorted_i[a]]
+            t = X_a + (random * (X_b - X_a))
+            if t == X_b:
+                t = X_a
 
             # Find the sample just greater than t
             c = a + 1
@@ -802,7 +806,7 @@ cdef class Tree:
                 else:
                     node_id = self.children_right[node_id]
 
-            offset_node = node_id * self.n_outputs * self.max_n_classes
+            offset_node = node_id * self.value_stride
 
             for k from 0 <= k < self.n_outputs:
                 offset_output = k * self.max_n_classes
@@ -976,7 +980,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef int k = 0
 
         self.n_outputs = n_outputs
-        self.n_classes = <int*> calloc(n_outputs, sizeof(int))
+        self.n_classes = <int*> malloc(n_outputs * sizeof(int))
         cdef int label_count_stride = -1
 
         for k from 0 <= k < n_outputs:
