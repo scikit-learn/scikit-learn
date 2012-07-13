@@ -568,3 +568,29 @@ div#examples.section .figure img {
 div.body img {
     max-width:805px;
 }
+
+/* ------- alternating colors in table rows -------------------------- */
+table.docutils tr:nth-child(even) {
+    background-color: #F3F3FF;
+}
+table.docutils tr:nth-child(odd) {
+    background-color: #FFFFEE;
+}
+
+table.docutils tr {
+    border-style: solid none solid none;
+    border-width: 1px 0 1px 0;
+    border-color: #AAAAAA;
+}
+
+/* ------- tighter layout in pre -------------------------- */
+pre {
+    padding: 5px 10px 5px 10px;
+    margin: .1em 0 .5em 0;
+}
+
+div.body p {
+    margin-top: 1.2em;
+    margin-bottom: .1em;
+}
+
