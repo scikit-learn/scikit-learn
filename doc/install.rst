@@ -1,3 +1,5 @@
+.. _installing_scikit_learn:
+
 =========================
 Installing `scikit-learn`
 =========================

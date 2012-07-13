@@ -5,7 +5,7 @@
 .. include:: ../includes/big_toc_css.rst
 
 Tutorials: From the bottom up with scikit-learn
-=======================================================================
+===============================================
 
 .. topic:: Quick start
 
@@ -17,7 +17,6 @@ Tutorials: From the bottom up with scikit-learn
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    basic/tutorial.rst
 
@@ -32,18 +31,16 @@ Tutorials: From the bottom up with scikit-learn
 
    statistical_inference/index.rst
 
+.. topic:: Scikit-learn for Astronomical Data Analysis
+
+    This tutorial covers application of machine learning to scientific data,
+    using astronomical data from the Sloan Digital Sky Survey.
+
+.. toctree::
+   :maxdepth: 2
+   
+   astronomy/index.rst
+
 .. note:: **Videos**
 
     Videos with tutorials can also be found in the :ref:`videos` section.
-
-.. note:: **Doctest Mode**
-
-   The code-examples in the above tutorials are written in a
-   *python-console* format. If you wish to easily execute these examples
-   in **iPython**, use::
-   	
-	%doctest_mode
-
-   in the iPython-console. You can then simply copy and paste the examples 
-   directly into iPython without having to worry about removing the **>>>** 
-   manually.
