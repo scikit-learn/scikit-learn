@@ -500,7 +500,6 @@ cdef class Tree:
         self.feature[node_id] = feature
         self.threshold[node_id] = threshold
 
-        cdef int value_stride = self.n_outputs * self.max_n_classes
         cdef int offset_node = node_id * self.value_stride
         memcpy(self.value + offset_node, value, self.value_stride * sizeof(double))
 
