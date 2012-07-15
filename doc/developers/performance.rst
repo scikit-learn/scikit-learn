@@ -260,6 +260,85 @@ By looking at the top values of the ``% Time`` column it is really easy to
 pin-point the most expensive expressions that would deserve additional care.
 
 
+Memory usage profiling
+======================
+
+You can analyze in detail the memory usage of any Python code with the help of
+``memory_profiler``. First, install the development version::
+
+    $ pip install git+https://github.com/fabianp/memory_profiler.git
+
+Then, setup the magics in a manner similar to line_profiler.
+
+- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
+  ensure the following lines are present::
+
+    import IPython.ipapi
+    ip = IPython.ipapi.get()
+
+  Towards the end of the file, define the ``%lprun`` magic::
+
+    import memory_profiler
+    ip.expose_magic('memit', memory_profiler.magic_memit)
+    ip.expose_magic('mprun', memory_profiler.magic_mprun)
+
+- **Under IPython 0.11+**, first create a configuration profile::
+
+    $ ipython profile create
+
+  Then create a file named ``~/.ipython/extensions/memory_profiler_ext.py``
+  with the following content::
+
+    import memory_profiler
+
+    def load_ipython_extension(ip):
+        ip.define_magic('memit', memory_profiler.magic.memit)
+        ip.define_magic('mprun', memory_profiler.magic_mprun)
+
+  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
+
+    c.TerminalIPythonApp.extensions = [
+        'memory_profiler_ext',
+    ]
+    c.InteractiveShellApp.extensions = [
+        'memory_profiler_ext',
+    ]
+
+  This will register the ``%memit`` and ``%mprun`` magic commands in the
+  IPython terminal application and the other frontends such as qtconsole and
+  notebook.
+
+``%mprun`` is useful to examine, line-by-line, the memory usage of key
+functions in your program. It is very similar to ``%lprun%, discussed in the
+previous section. For example, from the ``memory_profiler`` ``examples``
+directory::
+
+    In [1] from example import my_func
+
+    In [2] %mprun -f my_func my_func()
+    Filename: example.py
+
+    Line #    Mem usage  Increment   Line Contents
+    ==============================================
+         3                           @profile
+         4      5.97 MB    0.00 MB   def my_func():
+         5     13.61 MB    7.64 MB       a = [1] * (10 ** 6)
+         6    166.20 MB  152.59 MB       b = [2] * (2 * 10 ** 7)
+         7     13.61 MB -152.59 MB       del b
+         8     13.61 MB    0.00 MB       return a
+
+Another useful magic that we define is `%memit`, which is analogous to
+`%timeit`. It can be used as follows::
+
+    In [1]: import numpy as np
+
+    In [2]: %memit np.zeros(1e7)
+    maximum of 3: 76.402344 MB per loop
+
+For more details, see the docstrings of the magics, using ``%memit?`` and
+``%mprun?``.
+
+
 Performance tips for the Cython developer
 =========================================
 
