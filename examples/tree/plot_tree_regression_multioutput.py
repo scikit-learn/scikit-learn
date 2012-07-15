@@ -1,6 +1,6 @@
 """
 ===================================================================
-Multi-output Decision Tree Regression 
+Multi-output Decision Tree Regression
 ===================================================================
 
 Multi-output regression with :ref:`decision trees <tree>`: the decision tree
@@ -20,7 +20,7 @@ import numpy as np
 rng = np.random.RandomState(1)
 X = np.sort(200 * rng.rand(100, 1) - 100, axis=0)
 y = np.array([np.pi * np.sin(X).ravel(), np.pi * np.cos(X).ravel()]).T
-y[::5,:] += (0.5 - rng.rand(20,2))
+y[::5, :] += (0.5 - rng.rand(20, 2))
 
 # Fit regression model
 from sklearn.tree import DecisionTreeRegressor
@@ -42,10 +42,10 @@ y_3 = clf_3.predict(X_test)
 import pylab as pl
 
 pl.figure()
-pl.scatter(y[:,0], y[:,1], c="k", label="data")
-pl.scatter(y_1[:,0], y_1[:,1], c="g", label="max_depth=2")
-pl.scatter(y_2[:,0], y_2[:,1], c="r", label="max_depth=5")
-pl.scatter(y_3[:,0], y_3[:,1], c="b", label="max_depth=8")
+pl.scatter(y[:, 0], y[:, 1], c="k", label="data")
+pl.scatter(y_1[:, 0], y_1[:, 1], c="g", label="max_depth=2")
+pl.scatter(y_2[:, 0], y_2[:, 1], c="r", label="max_depth=5")
+pl.scatter(y_3[:, 0], y_3[:, 1], c="b", label="max_depth=8")
 pl.xlim([-6, 6])
 pl.ylim([-6, 6])
 pl.xlabel("data")
