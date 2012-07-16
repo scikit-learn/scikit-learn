@@ -116,7 +116,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             # Add edge to parent
             out_file.write('%d -> %d ;\n' % (parent, node_id))
 
-        if left_child != _tree.TREE_LEAF: # and right_child != _tree.TREE_LEAF:
+        if left_child != _tree.TREE_LEAF:  # and right_child != _tree.TREE_LEAF
             recurse(tree, left_child, node_id)
             recurse(tree, right_child, node_id)
 
@@ -189,7 +189,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                      2 * self.min_samples_leaf)
 
         # Convert data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2 or not X.flags.fortran:
+        if getattr(X, "dtype", None) != DTYPE or \
+           X.ndim != 2 or not X.flags.fortran:
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
@@ -277,7 +278,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                 self.min_density, max_features,
                                 self.find_split_, self.random_state)
 
-        self.tree_.build(X, y, sample_mask=sample_mask, X_argsorted=X_argsorted)
+        self.tree_.build(X, y,
+                         sample_mask=sample_mask, X_argsorted=X_argsorted)
 
         if self.compute_importances:
             self.feature_importances_ = \

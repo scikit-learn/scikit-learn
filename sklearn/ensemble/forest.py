@@ -225,7 +225,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             Returns self.
         """
         # Precompute some data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2 or not X.flags.fortran:
+        if getattr(X, "dtype", None) != DTYPE or \
+           X.ndim != 2 or not X.flags.fortran:
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
