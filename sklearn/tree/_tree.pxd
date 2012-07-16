@@ -1,9 +1,20 @@
+# Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
+# License: BSD Style.
+
+# See _tree.pyx for details.
+
 cimport numpy as np
 
 ctypedef np.float32_t DTYPE_t
 ctypedef np.int8_t BOOL_t
 
+
+# ==============================================================================
+# Criterion
+# ==============================================================================
+
 cdef class Criterion:
+    # Methods
     cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
                    int n_samples, int n_total_samples)
 
@@ -15,6 +26,11 @@ cdef class Criterion:
     cdef double eval(self)
 
     cdef void init_value(self, double* buffer_value)
+
+
+# ==============================================================================
+# Tree
+# ==============================================================================
 
 cdef class Tree:
     # Input/Output layout
