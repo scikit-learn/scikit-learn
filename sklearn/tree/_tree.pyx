@@ -48,7 +48,9 @@ DTYPE = np.float32
 cdef double INFINITY = np.inf
 
 TREE_LEAF = -1
+TREE_UNDEFINED = -2
 cdef int _TREE_LEAF = TREE_LEAF
+cdef int _TREE_UNDEFINED = TREE_UNDEFINED
 
 TREE_SPLIT_BEST = 1
 TREE_SPLIT_RANDOM = 2
@@ -231,6 +233,11 @@ cdef class Tree:
 
         self.children_left = <int*> malloc(capacity * sizeof(int))
         self.children_right = <int*> malloc(capacity * sizeof(int))
+
+        for k from 0 <= k < capacity:
+            self.children_left[k] = _TREE_UNDEFINED
+            self.children_right[k] = _TREE_UNDEFINED
+
         self.feature = <int*> malloc(capacity * sizeof(int))
         self.threshold = <double*> malloc(capacity * sizeof(double))
         self.value = <double*> malloc(capacity * self.value_stride * sizeof(double));

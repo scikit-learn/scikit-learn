@@ -166,8 +166,6 @@ class LossFunction(object):
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
 
-        print tree.value.shape
-
         # update each leaf (= perform line search)
         for leaf in np.where(tree.children_left == TREE_LEAF)[0]:
             self._update_terminal_region(tree, masked_terminal_regions,
