@@ -32,12 +32,10 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d
 
-from ..tree.tree import Tree
-from ..tree._tree import _find_best_split
+from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
-from ..tree._tree import _apply_tree
 from ..tree._tree import MSE
-from ..tree._tree import DTYPE
+from ..tree._tree import DTYPE, TREE_LEAF, TREE_SPLIT_BEST
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -162,16 +160,16 @@ class LossFunction(object):
             The predictions.
         """
         # compute leaf for each sample in ``X``.
-        terminal_regions = np.empty((X.shape[0], ), dtype=np.int32)
-        _apply_tree(X, tree.children, tree.feature, tree.threshold,
-                    terminal_regions)
+        terminal_regions = tree.apply(X)
 
         # mask all which are not in sample mask.
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
 
+        print tree.value.shape
+
         # update each leaf (= perform line search)
-        for leaf in np.where(tree.children[:, 0] == Tree.LEAF)[0]:
+        for leaf in np.where(tree.children_left == TREE_LEAF)[0]:
             self._update_terminal_region(tree, masked_terminal_regions,
                                          leaf, X, y, residual,
                                          y_pred[:, k])
@@ -491,10 +489,11 @@ class BaseGradientBoosting(BaseEnsemble):
             residual = loss.negative_gradient(y, y_pred, k=k)
 
             # induce regression tree on residuals
-            tree = Tree(1, self.n_features, 1)
-            tree.build(X, residual[:, np.newaxis], MSE(1), self.max_depth,
-                       self.min_samples_split, self.min_samples_leaf, 0.0,
-                       self.max_features, self.random_state, _find_best_split,
+            tree = Tree(self.n_features, (1,), 1, MSE(1), self.max_depth,
+                        self.min_samples_split, self.min_samples_leaf, 0.0,
+                        self.max_features, TREE_SPLIT_BEST, self.random_state)
+
+            tree.build(X, residual[:, np.newaxis],
                        sample_mask, X_argsorted)
 
             # update tree leaves
