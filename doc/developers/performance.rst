@@ -264,9 +264,10 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-``memory_profiler``. First, install the development version::
+`memory_profiler <http://pypi.python.org/pypi/memory_profiler>`_. First,
+install the latest version::
 
-    $ pip install git+https://github.com/fabianp/memory_profiler.git
+    $ pip install -U memory_profiler
 
 Then, setup the magics in a manner similar to line_profiler.
 
@@ -276,7 +277,7 @@ Then, setup the magics in a manner similar to line_profiler.
     import IPython.ipapi
     ip = IPython.ipapi.get()
 
-  Towards the end of the file, define the ``%lprun`` magic::
+  Towards the end of the file, define the ``%memit`` and ``%mprun`` magics::
 
     import memory_profiler
     ip.expose_magic('memit', memory_profiler.magic_memit)
@@ -292,7 +293,7 @@ Then, setup the magics in a manner similar to line_profiler.
     import memory_profiler
 
     def load_ipython_extension(ip):
-        ip.define_magic('memit', memory_profiler.magic.memit)
+        ip.define_magic('memit', memory_profiler.magic_memit)
         ip.define_magic('mprun', memory_profiler.magic_mprun)
 
   Then register it in ``~/.ipython/profile_default/ipython_config.py``::
