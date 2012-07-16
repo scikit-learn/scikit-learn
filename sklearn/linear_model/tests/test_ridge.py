@@ -345,3 +345,27 @@ def test_class_weights_cv():
     clf.fit(X, y)
 
     assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))
+
+
+def test_ridgegcv_store_loo_values():
+    """
+    Test _RidgeGCV's store_loo_values attribute.
+    """
+    n_samples = 8
+    n_features = 5
+    x = rng.randn(n_samples, n_features)
+    alphas = [1e-1, 1e0, 1e1]
+    n_alphas = len(alphas)
+
+    r = _RidgeGCV(store_loo_values=True, alphas=alphas)
+
+    # with len(y.shape) == 1
+    y = rng.randn(n_samples)
+    r.fit(x, y)
+    assert_equal(r.loo_values_.shape, (n_samples, n_alphas))
+
+    # with len(y.shape) == 2
+    n_responses = 3
+    y = rng.randn(n_samples, n_responses)
+    r.fit(x, y)
+    assert_equal(r.loo_values_.shape, (n_samples, n_responses, n_alphas))
