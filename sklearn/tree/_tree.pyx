@@ -41,8 +41,8 @@ cdef extern from "float.h":
 
 # Dtype
 DTYPE = np.float32
-ctypedef np.float32_t DTYPE_t
-ctypedef np.int8_t BOOL_t
+# ctypedef np.float32_t DTYPE_t
+# ctypedef np.int8_t BOOL_t
 
 # Constants
 cdef double INFINITY = np.inf
@@ -126,35 +126,35 @@ cdef class Tree:
         n_samples[i] holds the number of training samples reaching node i.
     """
 
-    # Input/Output layout
-    cdef public int n_features
-    cdef int* n_classes
-    cdef public int n_outputs
+    # # Input/Output layout
+    # cdef public int n_features
+    # cdef int* n_classes
+    # cdef public int n_outputs
 
-    cdef public int max_n_classes
-    cdef public int value_stride
+    # cdef public int max_n_classes
+    # cdef public int value_stride
 
-    # Parameters
-    cdef public Criterion criterion
-    cdef public double max_depth
-    cdef public int min_samples_split
-    cdef public int min_samples_leaf
-    cdef public double min_density
-    cdef public int max_features
-    cdef public int find_split_algorithm
-    cdef public object random_state
+    # # Parameters
+    # cdef public Criterion criterion
+    # cdef public double max_depth
+    # cdef public int min_samples_split
+    # cdef public int min_samples_leaf
+    # cdef public double min_density
+    # cdef public int max_features
+    # cdef public int find_split_algorithm
+    # cdef public object random_state
 
-    # Inner structures
-    cdef public int node_count
-    cdef public int capacity
-    cdef int* children_left
-    cdef int* children_right
-    cdef int* feature
-    cdef double* threshold
-    cdef double* value
-    cdef double* best_error
-    cdef double* init_error
-    cdef int* n_samples
+    # # Inner structures
+    # cdef public int node_count
+    # cdef public int capacity
+    # cdef int* children_left
+    # cdef int* children_right
+    # cdef int* feature
+    # cdef double* threshold
+    # cdef double* value
+    # cdef double* best_error
+    # cdef double* init_error
+    # cdef int* n_samples
 
     # Wrap for outside world
     property n_classes:
@@ -329,7 +329,8 @@ cdef class Tree:
         if capacity < self.node_count:
             self.node_count = capacity
 
-    cpdef build(self, np.ndarray X, np.ndarray y, np.ndarray sample_mask=None, np.ndarray X_argsorted=None):
+    cpdef build(self, np.ndarray X, np.ndarray y,
+                np.ndarray sample_mask=None, np.ndarray X_argsorted=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -518,7 +519,8 @@ cdef class Tree:
 
         return node_id
 
-    cdef int add_leaf(self, int parent, int is_left_child, double* value, double error, int n_samples):
+    cdef int add_leaf(self, int parent, int is_left_child, double* value,
+                      double error, int n_samples):
         """Add a leaf to the tree. The new node registers itself as the
            child of its parent. """
         cdef int node_id = self.node_count
