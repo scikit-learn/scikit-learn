@@ -199,7 +199,7 @@ def test_feature_importances():
     feature_importances = clf.feature_importances_
 
     # true feature importance ranking
-    true_ranking = np.array([3, 1, 8, 10, 2, 9, 4, 11, 0, 6, 7, 5, 12])
+    true_ranking = np.array([3, 1, 8, 10, 2, 4, 9, 11, 6, 0, 7, 5, 12])
 
     assert_array_equal(true_ranking, feature_importances.argsort())
 
