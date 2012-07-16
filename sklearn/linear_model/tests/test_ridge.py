@@ -357,7 +357,7 @@ def test_ridgegcv_store_loo_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = _RidgeGCV(store_loo_values=True, alphas=alphas)
+    r = RidgeCV(alphas=alphas, store_loo_values=True)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)

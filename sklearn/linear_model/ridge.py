@@ -374,18 +374,6 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
-    Attributes
-    ----------
-    store_loo_values : boolean, default=False
-        Flag indicating if the leave-one-out values corresponding to
-        each alpha should be stored in the `loo_values_` attribute (see
-        below).
-
-    loo_values_ : array, shape = [n_samples, n_alphas] or \
-                         shape = [n_samples, n_responses, n_alphas],
-                  optional
-        Leave-one-out values for each alpha (if `store_loo_values` == True).
-
     References
     ----------
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
@@ -563,7 +551,8 @@ class _BaseRidgeCV(LinearModel):
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, score_func=None,
-                 loss_func=None, cv=None, gcv_mode=None):
+                 loss_func=None, cv=None, gcv_mode=None,
+                 store_loo_values=False):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -571,6 +560,7 @@ class _BaseRidgeCV(LinearModel):
         self.loss_func = loss_func
         self.cv = cv
         self.gcv_mode = gcv_mode
+        self.store_loo_values = store_loo_values
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -592,10 +582,17 @@ class _BaseRidgeCV(LinearModel):
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                    self.score_func, self.loss_func, gcv_mode=self.gcv_mode)
+                                  self.score_func, self.loss_func,
+                                  gcv_mode=self.gcv_mode,
+                                  store_loo_values=self.store_loo_values)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.best_alpha = estimator.best_alpha
+            if self.store_loo_values:
+                self.loo_values_ = estimator.loo_values_
         else:
+            if self.store_loo_values:
+                raise ValueError("cv!=None and store_loo_values=True "
+                                 " are incompatible")
             parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
             #        too!
@@ -621,7 +618,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Parameters
     ----------
-    alphas: numpy array of shape [n_alpha]
+    alphas: numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -650,12 +647,6 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_features] or [n_responses, n_features]
-        Weight vector(s).
-
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
@@ -666,6 +657,26 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
         The 'auto' mode is the default and is intended to pick the cheaper \
         option of the two depending upon the shape of the training data.
+
+    store_loo_values : boolean, default=False
+        Flag indicating if the leave-one-out values corresponding to
+        each alpha should be stored in the `loo_values_` attribute (see
+        below). This flag is only compatible with `cv=None` (i.e. using
+        Generalized Cross-Validation).
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+        Weight vector(s).
+
+    loo_values_ : array, shape = [n_samples, n_alphas] or \
+                         shape = [n_samples, n_responses, n_alphas],
+                  optional
+        Leave-one-out values for each alpha (if `store_loo_values=True`
+        and `cv=None`). After `fit()` has been called, this attribute
+        will contain the mean squared errors (by default) or the values
+        of the `{loss,score}_func` function (if provided in the
+        constructor).
 
     See also
     --------
@@ -685,7 +696,7 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
 
     Parameters
     ----------
-    alphas: numpy array of shape [n_alpha]
+    alphas: numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
