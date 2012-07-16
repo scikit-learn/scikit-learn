@@ -197,7 +197,7 @@ cdef class Tree:
         def __get__(self):
             return intp_to_ndarray(self.n_samples, self.node_count)
 
-    def __init__(self, int n_features, object n_classes, int n_outputs,
+    def __cinit__(self, int n_features, object n_classes, int n_outputs,
                  Criterion criterion, double max_depth, int min_samples_split,
                  int min_samples_leaf, double min_density, int max_features,
                  int find_split_algorithm, object random_state, int capacity=3):
@@ -238,7 +238,7 @@ cdef class Tree:
         self.init_error = <double*> malloc(capacity * sizeof(double));
         self.n_samples = <int*> malloc(capacity * sizeof(int));
 
-    def __del__(self):
+    def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
         free(self.n_classes)
