@@ -468,8 +468,6 @@ cdef class Tree:
             X_ptr = X_ptr + feature * X_stride
             sample_mask_left = np.zeros((n_total_samples, ), dtype=np.bool)
             sample_mask_right = np.zeros((n_total_samples, ), dtype=np.bool)
-            #sample_mask_left = np.PyArray_ZEROS(1, &n_total_samples, np.NPY_BOOL, 0)
-            #sample_mask_right = np.PyArray_ZEROS(1, &n_total_samples, np.NPY_BOOL, 0)
             n_node_samples_left = 0
             n_node_samples_right = 0
 
