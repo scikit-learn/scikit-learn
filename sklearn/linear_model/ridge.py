@@ -374,6 +374,18 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G)
 
+    Attributes
+    ----------
+    store_loo_values : boolean, default=False
+        Flag indicating if the leave-one-out values corresponding to
+        each alpha should be stored in the `loo_values_` attribute (see
+        below).
+
+    loo_values_ : array, shape = [n_samples, n_alphas] or \
+                         shape = [n_samples, n_responses, n_alphas],
+                  optional
+        Leave-one-out values for each alpha (if `store_loo_values` == True).
+
     References
     ----------
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
@@ -381,8 +393,8 @@ class _RidgeGCV(LinearModel):
     """
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, copy_X=True,
-            gcv_mode=None):
+                 normalize=False, score_func=None, loss_func=None,
+                 copy_X=True, gcv_mode=None, store_loo_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -390,6 +402,7 @@ class _RidgeGCV(LinearModel):
         self.loss_func = loss_func
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
+        self.store_loo_values = store_loo_values
 
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
@@ -537,14 +550,20 @@ class _RidgeGCV(LinearModel):
 
         self._set_intercept(X_mean, y_mean, X_std)
 
+        if self.store_loo_values:
+            if len(y.shape) == 1:
+                self.loo_values_ = M.reshape(n_samples, len(self.alphas))
+            else:
+                self.loo_values_ = M.reshape(n_samples, n_y, len(self.alphas))
+
         return self
 
 
 class _BaseRidgeCV(LinearModel):
 
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, cv=None,
-            gcv_mode=None):
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
+                 fit_intercept=True, normalize=False, score_func=None,
+                 loss_func=None, cv=None, gcv_mode=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -634,7 +653,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_classes, n_features]
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
