@@ -12,10 +12,21 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('sparsetools')
 
+    def blas_not_found(blas_info_):
+        def_macros = blas_info.get('define_macros', [])
+        if [('ATLAS_INFO', 'None')] in def_macros:
+            # this one turned up on FreeBSD
+            return True
+        for x in def_macros:
+            if x[0] == "NO_ATLAS_INFO":
+                # if x[1] != 1 we should have lapack
+                # how do we do that now?
+                return True
+        return False
+
     # cd fast needs CBLAS
     blas_info = get_info('blas_opt', 0)
-    if (not blas_info) or (
-        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
+    if (not blas_info) or blas_not_found(blas_info):
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
     else:
