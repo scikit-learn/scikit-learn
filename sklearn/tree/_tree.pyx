@@ -985,7 +985,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef int n_left
     cdef int n_right
 
-    def __init__(self, int n_outputs, object n_classes):
+    def __cinit__(self, int n_outputs, object n_classes):
         """Constructor."""
         cdef int k = 0
 
@@ -1008,7 +1008,7 @@ cdef class ClassificationCriterion(Criterion):
         self.n_left = 0
         self.n_right = 0
 
-    def __del__(self):
+    def __dealloc__(self):
         """Destructor."""
         free(self.n_classes)
         free(self.label_count_left)
@@ -1303,7 +1303,7 @@ cdef class RegressionCriterion(Criterion):
     cdef int n_right
     cdef int n_left
 
-    def __init__(self, int n_outputs):
+    def __cinit__(self, int n_outputs):
         """Constructor."""
         cdef int k = 0
 
@@ -1322,7 +1322,7 @@ cdef class RegressionCriterion(Criterion):
         self.var_left = <double*> calloc(n_outputs, sizeof(double))
         self.var_right = <double*> calloc(n_outputs, sizeof(double))
 
-    def __del__(self):
+    def __dealloc__(self):
         """Destructor."""
         free(self.mean_left)
         free(self.mean_right)
