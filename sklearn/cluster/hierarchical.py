@@ -102,9 +102,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
 
-    # Remove diagonal from connectivity matrix
-    connectivity.setdiag(np.zeros(connectivity.shape[0]))
-
     # create inertia matrix
     coord_row = []
     coord_col = []
