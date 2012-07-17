@@ -134,7 +134,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
 
-    visited = np.empty(n_nodes, dtype=bool)
+    not_visited = np.empty(n_nodes, dtype=np.int8)
 
     # recursive merge loop
     for k in xrange(n_samples, n_nodes):
@@ -153,14 +153,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
-        visited.fill(False)
-        visited[k] = True
-        for l in set(A[i]).union(A[j]):
-            l = _hierarchical._get_parent(l, parent)
-            if not visited[l]:
-                visited[l] = True
-                coord_col.append(l)
-                A[l].append(k)
+        not_visited.fill(1)
+        not_visited[k] = 0
+        _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
+        _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
+        for l in coord_col:
+            A[l].append(k)
         A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
