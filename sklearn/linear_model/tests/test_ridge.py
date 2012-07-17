@@ -351,6 +351,8 @@ def test_ridgegcv_store_cv_values():
     """
     Test _RidgeGCV's store_cv_values attribute.
     """
+    rng = rng = np.random.RandomState(42)
+
     n_samples = 8
     n_features = 5
     x = rng.randn(n_samples, n_features)
