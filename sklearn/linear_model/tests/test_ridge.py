@@ -347,9 +347,9 @@ def test_class_weights_cv():
     assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))
 
 
-def test_ridgegcv_store_loo_values():
+def test_ridgegcv_store_cv_values():
     """
-    Test _RidgeGCV's store_loo_values attribute.
+    Test _RidgeGCV's store_cv_values attribute.
     """
     n_samples = 8
     n_features = 5
@@ -357,15 +357,15 @@ def test_ridgegcv_store_loo_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeCV(alphas=alphas, store_loo_values=True)
+    r = RidgeCV(alphas=alphas, store_cv_values=True)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
     r.fit(x, y)
-    assert_equal(r.loo_values_.shape, (n_samples, n_alphas))
+    assert_equal(r.cv_values_.shape, (n_samples, n_alphas))
 
     # with len(y.shape) == 2
     n_responses = 3
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
-    assert_equal(r.loo_values_.shape, (n_samples, n_responses, n_alphas))
+    assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
