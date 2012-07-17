@@ -512,7 +512,7 @@ class _RidgeGCV(LinearModel):
 
         v, Q, QT_y = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        M = np.zeros((n_samples * n_y, len(self.alphas)))
+        loo_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
         error = self.score_func is None and self.loss_func is None
@@ -522,14 +522,14 @@ class _RidgeGCV(LinearModel):
                 out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
             else:
                 out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
-            M[:, i] = out.ravel()
+            loo_values[:, i] = out.ravel()
             C.append(c)
 
         if error:
-            best = M.mean(axis=0).argmin()
+            best = loo_values.mean(axis=0).argmin()
         else:
             func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), M[:, i]) for i in range(len(self.alphas))]
+            out = [func(y.ravel(), loo_values[:, i]) for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.best_alpha = self.alphas[best]
@@ -540,9 +540,10 @@ class _RidgeGCV(LinearModel):
 
         if self.store_loo_values:
             if len(y.shape) == 1:
-                self.loo_values_ = M.reshape(n_samples, len(self.alphas))
+                loo_values_shape = n_samples, len(self.alphas)
             else:
-                self.loo_values_ = M.reshape(n_samples, n_y, len(self.alphas))
+                loo_values_shape = n_samples, n_y, len(self.alphas)
+            self.loo_values_ = loo_values.reshape(loo_values_shape)
 
         return self
 
