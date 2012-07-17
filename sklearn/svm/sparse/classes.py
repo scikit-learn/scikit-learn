@@ -23,20 +23,21 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm.sparse import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVC(C=None, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-            gamma=0.5, kernel='rbf', probability=False, scale_C=True,
-            shrinking=True, tol=0.001)
-    >>> print clf.predict([[-0.8, -1]])
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+            gamma=0.0, kernel='rbf', probability=False, shrinking=True,
+            tol=0.001, verbose=False)
+    >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
     """
 
-    def __init__(self, C=None, kernel='rbf', degree=3, gamma=0.0,
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=True, class_weight=None):
+                 tol=1e-3, cache_size=200, class_weight=None,
+                 verbose=False):
 
         super(SVC, self).__init__('c_svc', kernel, degree, gamma, coef0, tol,
                                   C, 0., 0., shrinking, probability,
-                                  cache_size, scale_C, class_weight)
+                                  cache_size, class_weight, verbose)
 
 
 class NuSVC(SparseBaseLibSVM, ClassifierMixin):
@@ -58,20 +59,21 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm.sparse import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.5,
-            kernel='rbf', nu=0.5, probability=False, scale_C=True,
-            shrinking=True, tol=0.001)
-    >>> print clf.predict([[-0.8, -1]])
+    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+            kernel='rbf', nu=0.5, probability=False, shrinking=True, tol=0.001,
+            verbose=False)
+    >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, scale_C=True, class_weight=None):
+                 tol=1e-3, cache_size=200, class_weight=None,
+                 verbose=False):
 
         super(NuSVC, self).__init__('nu_svc', kernel, degree, gamma, coef0,
                                     tol, 0., nu, 0., shrinking, probability,
-                                    cache_size, scale_C, class_weight)
+                                    cache_size, class_weight, verbose)
 
 
 class SVR(SparseBaseLibSVM, RegressorMixin):
@@ -95,17 +97,18 @@ class SVR(SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
-      kernel='rbf', probability=False, scale_C=True, shrinking=True, tol=0.001)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.0,
+      kernel='rbf', probability=False, shrinking=True, tol=0.001,
+      verbose=False)
     """
 
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, C=None, epsilon=0.1, shrinking=True,
-                 probability=False, cache_size=200, scale_C=True):
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
+            C=1.0, epsilon=0.1, shrinking=True, probability=False,
+            cache_size=200, verbose=False):
 
         super(SVR, self).__init__('epsilon_svr', kernel, degree, gamma, coef0,
                                   tol, C, 0., epsilon, shrinking, probability,
-                                  cache_size, scale_C, class_weight=None)
+                                  cache_size, None, verbose)
 
 
 class NuSVR(SparseBaseLibSVM, RegressorMixin):
@@ -129,18 +132,18 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.2,
-       kernel='rbf', nu=0.1, probability=False, scale_C=True, shrinking=True,
-       tol=0.001)
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
+       kernel='rbf', nu=0.1, probability=False, shrinking=True, tol=0.001,
+       verbose=False)
     """
 
-    def __init__(self, nu=0.5, C=None, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, shrinking=True, epsilon=0.1,
-                 probability=False, tol=1e-3, cache_size=200, scale_C=True):
+    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3, gamma=0.0,
+            coef0=0.0, shrinking=True, epsilon=0.1, probability=False,
+            tol=1e-3, cache_size=200, verbose=False):
 
         super(NuSVR, self).__init__('nu_svr', kernel, degree, gamma, coef0,
                 tol, C, nu, epsilon, shrinking, probability, cache_size,
-                scale_C, class_weight=None)
+                None, verbose)
 
 
 class OneClassSVM(SparseBaseLibSVM):
@@ -155,13 +158,13 @@ class OneClassSVM(SparseBaseLibSVM):
     object (including other sparse representations).
     """
 
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True,
-                 probability=False, cache_size=200, scale_C=True):
+    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
+            nu=0.5, shrinking=True, probability=False, cache_size=200,
+            verbose=False):
 
         super(OneClassSVM, self).__init__('one_class', kernel, degree, gamma,
-                                          coef0, tol, 0.0, nu, 0.0, shrinking,
-                                          probability, cache_size, scale_C)
+                coef0, tol, 0.0, nu, 0.0, shrinking, probability, cache_size,
+                None, verbose)
 
     def fit(self, X, sample_weight=None):
         super(OneClassSVM, self).fit(

@@ -73,10 +73,10 @@ parameters or alternatively it uses the given parameters.
     >>> y = f(X).ravel()
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
     >>> gp = gaussian_process.GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, y)  # doctest: +ELLIPSIS
+    >>> gp.fit(X, y)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     GaussianProcess(beta0=None, corr=<function squared_exponential at 0x...>,
             normalize=True, nugget=array(2.22...-15),
-            optimizer='fmin_cobyla', random_start=1,
+            optimizer='fmin_cobyla', random_start=1, random_state=...
             regr=<function constant at 0x...>, storage_mode='full',
             theta0=array([[ 0.01]]), thetaL=array([[ 0.0001]]),
             thetaU=array([[ 0.1]]), verbose=False)

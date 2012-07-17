@@ -15,26 +15,24 @@ from .base import BaseEstimator
 # is needed in the Attributes section so as not to upset sphinx.
 
 class Pipeline(BaseEstimator):
-    """ Pipeline of transforms with a final estimator
+    """Pipeline of transforms with a final estimator.
 
-    Sequentialy apply a list of transforms and a final estimator.
-    Intermediate steps of the pipeline must be 'transforms', that
-    is that they must implements fit and transform methods
-    The final estimator need only implements fit.
+    Sequentially apply a list of transforms and a final estimator.
+    Intermediate steps of the pipeline must be 'transforms', that is, they
+    must implements fit and transform methods.
+    The final estimator needs only implements fit.
 
-    The purpose of the pipeline is to assemble several steps that can
-    be cross-validated together while setting different parameters.
-    For this, it enables to setting parameters of the various steps
-    using their names and the parameter name separated by a '__',
-    as in the example below.
+    The purpose of the pipeline is to assemble several steps that can be
+    cross-validated together while setting different parameters.
+    For this, it enables setting parameters of the various steps using their
+    names and the parameter name separated by a '__', as in the example below.
 
     Parameters
     ----------
-
     steps: list
-        List of (name, transform) object (implementing
-        fit/transform) that are chained, in the order in which
-        they are chained, with the last object an estimator.
+        List of (name, transform) tuples (implementing fit/transform) that are
+        chained, in the order in which they are chained, with the last object
+        an estimator.
 
     Attributes
     ----------
@@ -42,10 +40,8 @@ class Pipeline(BaseEstimator):
         List of the named object that compose the pipeline, in the \
         order that they are applied on the data.
 
-
     Examples
     --------
-
     >>> from sklearn import svm
     >>> from sklearn.datasets import samples_generator
     >>> from sklearn.feature_selection import SelectKBest
@@ -64,7 +60,7 @@ class Pipeline(BaseEstimator):
     >>> # You can set the parameters using the names issued
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svn
-    >>> anova_svm.set_params(anova__k=10, svc__C=10.).fit(X, y)
+    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                                              # doctest: +ELLIPSIS
     Pipeline(steps=[...])
 
@@ -78,14 +74,16 @@ class Pipeline(BaseEstimator):
     def __init__(self, steps):
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
-        self.steps = steps
         if len(self.named_steps) != len(steps):
             raise ValueError("Names provided are not unique: %s" % names)
+
+        self.steps = zip(names, estimators)     # shallow copy of steps
         transforms = estimators[:-1]
         estimator = estimators[-1]
-        for t in  transforms:
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not \
-                    hasattr(t, "transform"):
+
+        for t in transforms:
+            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) \
+              or not hasattr(t, "transform"):
                 raise TypeError("All intermediate steps a the chain should "
                         "be transforms and implement fit and transform"
                         "'%s' (type %s) doesn't)" % (t, type(t)))
@@ -146,10 +144,22 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict(Xt)
 
     def predict_proba(self, X):
+        """Applies transforms to the data, and the predict_proba method of the
+        final estimator. Valid only if the final estimator implements
+        predict_proba."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
+
+    def decision_function(self, X):
+        """Applies transforms to the data, and the decision_function method of
+        the final estimator. Valid only if the final estimator implements
+        decision_function."""
+        Xt = X
+        for name, transform in self.steps[:-1]:
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].decision_function(Xt)
 
     def predict_log_proba(self, X):
         Xt = X

@@ -13,7 +13,8 @@ import numpy as np
 from scipy import linalg
 
 
-def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
+def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
+    norm_y_weights=False):
     """Inner loop of the iterative NIPALS algorithm. Provides an alternative
     to the svd(X'Y); returns the first left and rigth singular vectors of X'Y.
     See PLS for the meaning of the parameters.
@@ -21,7 +22,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
     eigenvalues of a X'Y
     """
     y_score = Y[:, [0]]
-    u_old = 0
+    x_weights_old = 0
     ite = 1
     X_pinv = Y_pinv = None
     # Inner loop of the Wold algo.
@@ -30,37 +31,37 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06):
         if mode == "B":
             if X_pinv is None:
                 X_pinv = linalg.pinv(X)   # compute once pinv(X)
-            u = np.dot(X_pinv, y_score)
+            x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
         # Mode A regress each X column on y_score
-            u = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
+            x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
         # 1.2 Normalize u
-        u /= np.sqrt(np.dot(u.T, u))
+        x_weights /= np.sqrt(np.dot(x_weights.T, x_weights))
         # 1.3 Update x_score: the X latent scores
-        x_score = np.dot(X, u)
-
-        # 2.1 Update v: the Y weights
+        x_score = np.dot(X, x_weights)
+        # 2.1 Update y_weights
         if mode == "B":
             if Y_pinv is None:
                 Y_pinv = linalg.pinv(Y)    # compute once pinv(Y)
-            v = np.dot(Y_pinv, x_score)
+            y_weights = np.dot(Y_pinv, x_score)
         else:
-            # Mode A regress each X column on y_score
-            v = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
-        # 2.2 Normalize v
-        v /= np.sqrt(np.dot(v.T, v))
+            # Mode A regress each Y column on x_score
+            y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
+        ## 2.2 Normalize y_weights
+        if norm_y_weights:
+            y_weights /= np.sqrt(np.dot(y_weights.T, y_weights))
         # 2.3 Update y_score: the Y latent scores
-        y_score = np.dot(Y, v)
-
-        u_diff = u - u_old
-        if np.dot(u_diff.T, u_diff) < tol or Y.shape[1] == 1:
+        y_score = np.dot(Y, y_weights) / np.dot(y_weights.T, y_weights)
+        ## y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
+        x_weights_diff = x_weights - x_weights_old
+        if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
             warnings.warn('Maximum number of iterations reached')
             break
-        u_old = u
+        x_weights_old = x_weights
         ite += 1
-    return u, v
+    return x_weights, y_weights
 
 
 def _svd_cross_product(X, Y):
@@ -85,8 +86,10 @@ def _center_scale_xy(X, Y, scale=True):
     # scale
     if scale:
         x_std = X.std(axis=0, ddof=1)
+        x_std[x_std == 0.0] = 1.0
         X /= x_std
         y_std = Y.std(axis=0, ddof=1)
+        y_std[y_std == 0.0] = 1.0
         Y /= y_std
     else:
         x_std = np.ones(X.shape[1])
@@ -97,19 +100,25 @@ def _center_scale_xy(X, Y, scale=True):
 class _PLS(BaseEstimator):
     """Partial Least Squares (PLS)
 
-    We use the terminology defined by [Wegelin et al. 2000].
-    This implementation uses the PLS Wold 2 blocks algorithm or NIPALS which is
-    based on two nested loops:
-    (i) The outer loop iterate over components.
-        (ii) The inner loop estimates the loading vectors. This can be done
-        with two algo. (a) the inner loop of the original NIPALS algo or (b) a
-        SVD on residuals cross-covariance matrices.
+    This class implements the generic PLS algorithm, constructors' parameters
+    allow to obtain a specific implementation such as:
 
-    This implementation provides:
-    - PLS regression, i.e., PLS 2 blocks, mode A, with asymmetric deflation.
-      A.k.a. PLS2, with multivariate response or PLS1 with univariate response.
-    - PLS canonical, i.e., PLS 2 blocks, mode A, with symetric deflation.
-    - CCA, i.e., PLS 2 blocks, mode B, with symetric deflation.
+    - PLS2 regression, i.e., PLS 2 blocks, mode A, with asymmetric deflation
+      and unnormlized y weights such as defined by [Tenenhaus 1998] p. 132.
+      With univariate response it implements PLS1.
+
+    - PLS canonical, i.e., PLS 2 blocks, mode A, with symetric deflation and
+      normlized y weights such as defined by [Tenenhaus 1998] (p. 132) and
+      [Wegelin et al. 2000]. This parametrization implements the original Wold
+      algorithm.
+
+    We use the terminology defined by [Wegelin et al. 2000].
+    This implementation uses the PLS Wold 2 blocks algorithm based on two
+    nested loops:
+    (i) The outer loop iterate over components.
+        (ii) The inner loop estimates the weights vectors. This can be done
+        with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
+        SVD on residuals cross-covariance matrices.
 
     Parameters
     ----------
@@ -123,11 +132,13 @@ class _PLS(BaseEstimator):
 
     n_components : int, number of components to keep. (default 2).
 
+    scale : boolean, scale data? (default True)
+
     deflation_mode : str, "canonical" or "regression". See notes.
 
     mode : "A" classical PLS and "B" CCA. See notes.
 
-    scale : boolean, scale data? (default True)
+    norm_y_weights: boolean, normalize Y weights to one? (default False)
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -191,13 +202,13 @@ class _PLS(BaseEstimator):
     PLS_SVD
     """
 
-    def __init__(self, n_components=2, deflation_mode="canonical", mode="A",
-                 scale=True,
-                 algorithm="nipals",
+    def __init__(self, n_components=2, scale=True, deflation_mode="regression",
+                 mode="A", algorithm="nipals", norm_y_weights=False,
                  max_iter=500, tol=1e-06, copy=True):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
+        self.norm_y_weights = norm_y_weights
         self.scale = scale
         self.algorithm = algorithm
         self.max_iter = max_iter
@@ -226,6 +237,9 @@ class _PLS(BaseEstimator):
                 'has %s' % (X.shape[0], Y.shape[0]))
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
+        if self.algorithm not in ("svd", "nipals"):
+            raise ValueError("Got algorithm %s when only 'svd' "
+                             "and 'nipals' are known" % self.algorithm)
         if self.algorithm == "svd" and self.mode == "B":
             raise ValueError('Incompatible configuration: mode B is not '
                              'implemented with svd algorithm')
@@ -250,19 +264,21 @@ class _PLS(BaseEstimator):
             #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
-                u, v = _nipals_twoblocks_inner_loop(
+                x_weights, y_weights = _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode,
-                        max_iter=self.max_iter, tol=self.tol)
+                        max_iter=self.max_iter, tol=self.tol,
+                        norm_y_weights=self.norm_y_weights)
             elif self.algorithm == "svd":
-                u, v = _svd_cross_product(X=Xk, Y=Yk)
-            else:
-                raise ValueError("Got algorithm %s when only 'svd' "
-                                 "and 'nipals' are known" % self.algorithm)
+                x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
             # compute scores
-            x_score = np.dot(Xk, u)
-            y_score = np.dot(Yk, v)
+            x_scores = np.dot(Xk, x_weights)
+            if self.norm_y_weights:
+                y_ss = 1
+            else:
+                y_ss = np.dot(y_weights.T, y_weights)
+            y_scores = np.dot(Yk, y_weights) / y_ss
             # test for null variance
-            if np.dot(x_score.T, x_score) < np.finfo(np.double).eps:
+            if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
             #2) Deflation (in place)
             # ----------------------
@@ -272,22 +288,24 @@ class _PLS(BaseEstimator):
             # to perform a column-wise deflation.
             #
             # - regress Xk's on x_score
-            x_loadings = np.dot(Xk.T, x_score) / np.dot(x_score.T, x_score)
+            x_loadings = np.dot(Xk.T, x_scores) / np.dot(x_scores.T, x_scores)
             # - substract rank-one approximations to obtain remainder matrix
-            Xk -= np.dot(x_score, x_loadings.T)
+            Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then substract rank-one approx.
-                y_loadings = np.dot(Yk.T, y_score) / np.dot(y_score.T, y_score)
-                Yk -= np.dot(y_score, y_loadings.T)
+                y_loadings = np.dot(Yk.T, y_scores) \
+                           / np.dot(y_scores.T, y_scores)
+                Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
                 # - regress Yk's on x_score, then substract rank-one approx.
-                y_loadings = np.dot(Yk.T, x_score) / np.dot(x_score.T, x_score)
-                Yk -= np.dot(x_score, y_loadings.T)
+                y_loadings = np.dot(Yk.T, x_scores) \
+                           / np.dot(x_scores.T, x_scores)
+                Yk -= np.dot(x_scores, y_loadings.T)
             # 3) Store weights, scores and loadings # Notation:
-            self.x_scores_[:, k] = x_score.ravel()  # T
-            self.y_scores_[:, k] = y_score.ravel()  # U
-            self.x_weights_[:, k] = u.ravel()  # W
-            self.y_weights_[:, k] = v.ravel()  # C
+            self.x_scores_[:, k] = x_scores.ravel()  # T
+            self.y_scores_[:, k] = y_scores.ravel()  # U
+            self.x_weights_[:, k] = x_weights.ravel()  # W
+            self.y_weights_[:, k] = y_weights.ravel()  # C
             self.x_loadings_[:, k] = x_loadings.ravel()  # P
             self.y_loadings_[:, k] = y_loadings.ravel()  # Q
         # Such that: X = TP' + Err and Y = UQ' + Err
@@ -387,9 +405,10 @@ class _PLS(BaseEstimator):
 class PLSRegression(_PLS):
     """PLS regression
 
-    PLSRegression inherits from PLS with mode="A" and
-    deflation_mode="regression".
-    Also known PLS2 or PLS in case of one dimensional response.
+    PLSRegression implements the PLS 2 blocks regression known as PLS2 or PLS1
+    in case of one dimensional response.
+    This class inherits from _PLS with mode="A", deflation_mode="regression",
+    norm_y_weights=False and algorithm="nipals".
 
     Parameters
     ----------
@@ -406,10 +425,6 @@ class PLSRegression(_PLS):
 
     scale : boolean, (default True)
         whether to scale the data
-
-    algorithm : string, "nipals" or "svd"
-        The algorithm used to estimate the weights. It will be called
-        n_components times, i.e. once for each iteration of the outer loop.
 
     max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
@@ -454,17 +469,24 @@ class PLSRegression(_PLS):
     Notes
     -----
     For each component k, find weights u, v that optimizes:
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
+    ``max corr(Xk u, Yk v) * var(Xk u) var(Yk u)``, such that ``|u| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
 
-    The residual matrix of X (Xk+1) block is obtained by the deflation on the
-    current X score: x_score.
+    The residual matrix of X (Xk+1) block is obtained by the deflation on
+    the current X score: x_score.
 
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
     current X score. This performs the PLS regression known as PLS2. This
     mode is prediction oriented.
+
+    This implementation provides the same results that 3 PLS packages
+    provided in the R language (R-project):
+
+        - "mixOmics" with function pls(X, Y, mode = "regression")
+        - "plspm " with function plsreg2(X, Y)
+        - "pls" with function oscorespls.fit(X, Y)
 
     Examples
     --------
@@ -473,8 +495,9 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    PLSRegression(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-           scale=True, tol=1e-06)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
+            tol=1e-06)
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -489,17 +512,21 @@ class PLSRegression(_PLS):
     Editions Technic.
     """
 
-    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+    def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        _PLS.__init__(self, n_components=n_components,
+        _PLS.__init__(self, n_components=n_components, scale=scale,
                         deflation_mode="regression", mode="A",
-                        scale=scale, algorithm=algorithm,
+                        norm_y_weights=False,
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
 class PLSCanonical(_PLS):
-    """PLS canonical. PLSCanonical inherits from PLS with mode="A" and
-    deflation_mode="canonical".
+    """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
+    algorithm [Tenenhaus 1998] p.204, refered as PLS-C2A in [Wegelin 2000].
+
+    This class inherits from PLS with mode="A" and deflation_mode="canonical",
+    norm_y_weights=True and algorithm="nipals", but svd should provide similar
+    results up to numerical errors.
 
     Parameters
     ----------
@@ -572,6 +599,13 @@ class PLSCanonical(_PLS):
     regression. But slightly different than the CCA. This is mode mostly used
     for modeling.
 
+    This implementation provides the same results that the "plspm" package
+    provided in the R language (R-project), using the function plsca(X, Y).
+    Results are equal or colinear with the function
+    ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
+    relies in the fact that mixOmics implmentation does not exactly implement
+    the Wold algorithm since it does not normalize y_weights to one.
+
     Examples
     --------
     >>> from sklearn.pls import PLSCanonical, PLSRegression, CCA
@@ -579,8 +613,9 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
+    ... # doctest: +NORMALIZE_WHITESPACE
     PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-           scale=True, tol=1e-06)
+                 scale=True, tol=1e-06)
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -601,9 +636,9 @@ class PLSCanonical(_PLS):
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        _PLS.__init__(self, n_components=n_components,
+        _PLS.__init__(self, n_components=n_components, scale=scale,
                         deflation_mode="canonical", mode="A",
-                        scale=scale, algorithm=algorithm,
+                        norm_y_weights=True, algorithm=algorithm,
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
@@ -626,10 +661,6 @@ class CCA(_PLS):
 
     scale : boolean, (default True)
         whether to scale the data?
-
-    algorithm : str, "nipals" or "svd"
-        The algorithm used to estimate the weights. It will be called
-        n_components times, i.e. once for each iteration of the outer loop.
 
     max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
@@ -689,8 +720,7 @@ class CCA(_PLS):
     >>> cca = CCA(n_components=1)
     >>> cca.fit(X, Y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    CCA(algorithm='nipals', copy=True, max_iter=500, n_components=1,
-            scale=True, tol=1e-06)
+    CCA(copy=True, max_iter=500, n_components=1, scale=True, tol=1e-06)
     >>> X_c, Y_c = cca.transform(X, Y)
 
     References
@@ -710,11 +740,11 @@ class CCA(_PLS):
     PLSSVD
     """
 
-    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+    def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        _PLS.__init__(self, n_components=n_components,
+        _PLS.__init__(self, n_components=n_components, scale=scale,
                         deflation_mode="canonical", mode="B",
-                        scale=scale, algorithm=algorithm,
+                        norm_y_weights=True, algorithm="nipals",
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
@@ -764,6 +794,7 @@ class PLSSVD(BaseEstimator):
     def __init__(self, n_components=2, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
+        self.copy = copy
 
     def fit(self, X, Y):
         # copy since this will contains the centered data

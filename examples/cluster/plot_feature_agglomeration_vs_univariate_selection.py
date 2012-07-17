@@ -18,6 +18,9 @@ a BayesianRidge as supervised estimator.
 
 print __doc__
 
+import shutil
+import tempfile
+
 import numpy as np
 import pylab as pl
 from scipy import linalg, ndimage
@@ -59,7 +62,8 @@ y += noise_coef * noise  # add noise
 # Compute the coefs of a Bayesian Ridge with GridSearch
 cv = KFold(len(y), 2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
-mem = Memory(cachedir='.', verbose=1)
+cachedir = tempfile.mkdtemp()
+mem = Memory(cachedir=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 A = grid_to_graph(n_x=size, n_y=size)
@@ -99,3 +103,6 @@ pl.imshow(coef_agglomeration_, interpolation="nearest", cmap=pl.cm.RdBu_r)
 pl.title("Feature Agglomeration")
 pl.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 0.26)
 pl.show()
+
+# Attempt to remove the temporary cachedir, but don't worry if it fails
+shutil.rmtree(cachedir, ignore_errors=True)

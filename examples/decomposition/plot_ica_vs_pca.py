@@ -37,8 +37,9 @@ from sklearn.decomposition import PCA, FastICA
 
 ###############################################################################
 # Generate sample data
-S = np.random.standard_t(1.5, size=(10000, 2))
-S[0] *= 2.
+rng = np.random.RandomState(42)
+S = rng.standard_t(1.5, size=(20000, 2))
+S[:, 0] *= 2.
 
 # Mix data
 A = np.array([[1, 1], [0, 2]])  # Mixing matrix
@@ -48,7 +49,7 @@ X = np.dot(S, A.T)  # Generate observations
 pca = PCA()
 S_pca_ = pca.fit(X).transform(X)
 
-ica = FastICA()
+ica = FastICA(random_state=rng)
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
 S_ica_ /= S_ica_.std(axis=0)

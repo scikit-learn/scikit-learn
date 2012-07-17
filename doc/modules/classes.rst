@@ -22,12 +22,14 @@ uses.
 
 **User guide:** See the :ref:`clustering` section for further details.
 
+Classes
+-------
 .. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-    
+
    cluster.AffinityPropagation
    cluster.DBSCAN
    cluster.KMeans
@@ -36,11 +38,19 @@ uses.
    cluster.SpectralClustering
    cluster.Ward
 
+Functions
+---------
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
    cluster.estimate_bandwidth
+   cluster.k_means
+   cluster.ward_tree
+   cluster.affinity_propagation
+   cluster.dbscan
+   cluster.mean_shift
+   cluster.spectral_clustering
 
 .. _covariance_ref:
 
@@ -60,12 +70,13 @@ uses.
    :template: class.rst
 
    covariance.EmpiricalCovariance
-   covariance.ShrunkCovariance
-   covariance.LedoitWolf
-   covariance.OAS
+   covariance.EllipticEnvelope
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.LedoitWolf
    covariance.MinCovDet
+   covariance.OAS
+   covariance.ShrunkCovariance
 
 .. autosummary::
    :toctree: generated/
@@ -147,6 +158,7 @@ Loaders
    datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
+   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.load_sample_image
    datasets.load_sample_images
@@ -167,6 +179,7 @@ Samples generator
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
+   datasets.make_hastie_10_2
    datasets.make_low_rank_matrix
    datasets.make_moons
    datasets.make_multilabel_classification
@@ -240,6 +253,8 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
+   ensemble.GradientBoostingClassifier
+   ensemble.GradientBoostingRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -258,6 +273,12 @@ Samples generator
 **User guide:** See the :ref:`feature_extraction` section for further details.
 
 .. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   feature_extraction.DictVectorizer
 
 From images
 -----------
@@ -494,6 +515,7 @@ For dense data
    linear_model.LinearRegression
    linear_model.Ridge
    linear_model.RidgeClassifier
+   linear_model.RidgeClassifierCV
    linear_model.RidgeCV
    linear_model.Lasso
    linear_model.LassoCV
@@ -539,8 +561,8 @@ For sparse data
    :toctree: generated/
    :template: class.rst
 
-   linear_model.sparse.Lasso
-   linear_model.sparse.ElasticNet
+   linear_model.Lasso
+   linear_model.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
    linear_model.LogisticRegression
@@ -565,6 +587,7 @@ For sparse data
 
     manifold.LocallyLinearEmbedding
     manifold.Isomap
+    manifold.MDS
 
 .. autosummary::
     :toctree: generated
@@ -630,13 +653,15 @@ See the :ref:`clustering` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
-   metrics.adjusted_rand_score
    metrics.adjusted_mutual_info_score
+   metrics.adjusted_rand_score
+   metrics.completeness_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
-   metrics.completeness_score
-   metrics.v_measure_score
+   metrics.mutual_info_score
+   metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.v_measure_score
 
 Pairwise metrics
 ----------------
@@ -762,6 +787,7 @@ Pairwise metrics
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
    neighbors.BallTree
+   neighbors.NearestCentroid
 
 .. autosummary::
    :toctree: generated/

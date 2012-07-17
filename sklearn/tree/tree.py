@@ -1,6 +1,6 @@
 """
 This module gathers tree-based methods, including decision, regression and
-randomized trees.
+randomized trees. Single and multi-output problems are both handled.
 """
 
 # Code is originally adapted from MILK: Machine Learning Toolkit
@@ -12,12 +12,14 @@ randomized trees.
 
 from __future__ import division
 import numpy as np
+from abc import ABCMeta, abstractmethod
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 
 from . import _tree
+
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -34,14 +36,6 @@ CLASSIFICATION = {
 REGRESSION = {
     "mse": _tree.MSE,
 }
-
-GRAPHVIZ_TREE_TEMPLATE = """\
-%(current)s [label="%(current_gv)s"] ;
-%(left_child)s [label="%(left_child_gv)s"] ;
-%(right_child)s [label="%(right_child_gv)s"] ;
-%(current)s -> %(left_child)s ;
-%(current)s -> %(right_child)s ;
-"""
 
 
 def export_graphviz(decision_tree, out_file=None, feature_names=None):
@@ -85,42 +79,44 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     >>> out_file.close()
     """
     def node_to_str(tree, node_id):
-        if tree.children[node_id, 0] == tree.children[node_id, 1] == Tree.LEAF:
-            return "error = %s\\nsamples = %s\\nvalue = %s" \
-                % (tree.init_error[node_id], tree.n_samples[node_id],
-                   tree.value[node_id])
+        if feature_names is not None:
+            feature = feature_names[tree.feature[node_id]]
         else:
-            if feature_names is not None:
-                feature = feature_names[tree.feature[node_id]]
-            else:
-                feature = "X[%s]" % tree.feature[node_id]
+            feature = "X[%s]" % tree.feature[node_id]
 
-            return "%s <= %s\\nerror = %s\\nsamples = %s\\nvalue = %s" \
-                   % (feature, tree.threshold[node_id],
-                      tree.init_error[node_id], tree.n_samples[node_id],
-                      tree.value[node_id])
+        value = tree.value[node_id]
+        if tree.n_outputs == 1:
+            value = value[0, :]
 
-    def recurse(tree, node_id):
+        if tree.children[node_id, 0] == Tree.LEAF:
+            return "error = %.4f\\nsamples = %s\\nvalue = %s" \
+                   % (tree.init_error[node_id],
+                      tree.n_samples[node_id],
+                      value)
+        else:
+            return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+                   % (feature,
+                      tree.threshold[node_id],
+                      tree.init_error[node_id],
+                      tree.n_samples[node_id],
+                      value)
+
+    def recurse(tree, node_id, parent=None):
         if node_id == Tree.LEAF:
             raise ValueError("Invalid node_id %s" % Tree.LEAF)
         left_child, right_child = tree.children[node_id, :]
-        node_data = {
-            "current": node_id,
-            "current_gv": node_to_str(tree, node_id),
-            "left_child": left_child,
-            "left_child_gv": node_to_str(tree, left_child),
-            "right_child": right_child,
-            "right_child_gv": node_to_str(tree, right_child),
-        }
 
-        out_file.write(GRAPHVIZ_TREE_TEMPLATE % node_data)
+        # add node with description
+        out_file.write('%d [label="%s", shape="box"] ;\n' %
+                (node_id, node_to_str(tree, node_id)))
 
-        if not (tree.children[left_child, 0] == tree.children[left_child, 1] \
-                == Tree.LEAF):
-            recurse(tree, left_child)
-        if not (tree.children[right_child, 0] == \
-                tree.children[right_child, 1] == Tree.LEAF):
-            recurse(tree, right_child)
+        if not parent is None:
+            # add edge to parent
+            out_file.write('%d -> %d ;\n' % (parent, node_id))
+
+        if not (left_child == Tree.LEAF):
+            recurse(tree, left_child, node_id)
+            recurse(tree, right_child, node_id)
 
     if out_file is None:
         out_file = open("tree.dot", "w")
@@ -158,9 +154,9 @@ class Tree(object):
         The feature to split on (only for internal nodes).
 
     threshold : np.ndarray of float64
-        The threshold of each node (only for leaves).
+        The threshold of each node (only for internal nodes).
 
-    value : np.ndarray of float64, shape=(capacity, n_classes)
+    value : np.ndarray of float64, shape=(capacity, n_outputs, n_classes)
         Contains the constant prediction value of each node.
 
     best_error : np.ndarray of float64
@@ -178,7 +174,11 @@ class Tree(object):
     LEAF = -1
     UNDEFINED = -2
 
-    def __init__(self, k, capacity=3):
+    def __init__(self, n_classes, n_features, n_outputs, capacity=3):
+        self.n_classes = n_classes
+        self.n_features = n_features
+        self.n_outputs = n_outputs
+
         self.node_count = 0
 
         self.children = np.empty((capacity, 2), dtype=np.int32)
@@ -188,13 +188,14 @@ class Tree(object):
         self.feature.fill(Tree.UNDEFINED)
 
         self.threshold = np.empty((capacity,), dtype=np.float64)
-        self.value = np.empty((capacity, k), dtype=np.float64)
+        self.value = np.empty((capacity, n_outputs, np.max(n_classes)),
+                              dtype=np.float64)
 
         self.best_error = np.empty((capacity,), dtype=np.float32)
         self.init_error = np.empty((capacity,), dtype=np.float32)
         self.n_samples = np.empty((capacity,), dtype=np.int32)
 
-    def resize(self, capacity=None):
+    def _resize(self, capacity=None):
         """Resize tree arrays to `capacity`, if `None` double capacity. """
         if capacity is None:
             capacity = int(self.children.shape[0] * 2.0)
@@ -205,7 +206,8 @@ class Tree(object):
         self.children.resize((capacity, 2), refcheck=False)
         self.feature.resize((capacity,), refcheck=False)
         self.threshold.resize((capacity,), refcheck=False)
-        self.value.resize((capacity, self.value.shape[1]), refcheck=False)
+        self.value.resize((capacity, self.value.shape[1], self.value.shape[2]),
+                          refcheck=False)
         self.best_error.resize((capacity,), refcheck=False)
         self.init_error.resize((capacity,), refcheck=False)
         self.n_samples.resize((capacity,), refcheck=False)
@@ -214,13 +216,13 @@ class Tree(object):
         if capacity < self.node_count:
             self.node_count = capacity
 
-    def add_split_node(self, parent, is_left_child, feature, threshold,
-                       best_error, init_error, n_samples, value):
+    def _add_split_node(self, parent, is_left_child, feature, threshold,
+                        best_error, init_error, n_samples, value):
         """Add a splitting node to the tree. The new node registers itself as
         the child of its parent. """
         node_id = self.node_count
         if node_id >= self.children.shape[0]:
-            self.resize()
+            self._resize()
 
         self.feature[node_id] = feature
         self.threshold[node_id] = threshold
@@ -228,6 +230,7 @@ class Tree(object):
         self.init_error[node_id] = init_error
         self.best_error[node_id] = best_error
         self.n_samples[node_id] = n_samples
+
         self.value[node_id] = value
 
         # set as left or right child of parent
@@ -238,14 +241,15 @@ class Tree(object):
                 self.children[parent, 1] = node_id
 
         self.node_count += 1
+
         return node_id
 
-    def add_leaf(self, parent, is_left_child, value, error, n_samples):
+    def _add_leaf(self, parent, is_left_child, value, error, n_samples):
         """Add a leaf to the tree. The new node registers itself as the
         child of its parent. """
         node_id = self.node_count
         if node_id >= self.children.shape[0]:
-            self.resize()
+            self._resize()
 
         self.value[node_id] = value
         self.n_samples[node_id] = n_samples
@@ -258,112 +262,169 @@ class Tree(object):
             self.children[parent, 1] = node_id
 
         self.children[node_id, :] = Tree.LEAF
-
         self.node_count += 1
 
+        return node_id
+
+    def build(self, X, y, criterion, max_depth, min_samples_split,
+              min_samples_leaf, min_density, max_features, random_state,
+              find_split, sample_mask=None, X_argsorted=None):
+        # Recursive algorithm
+        def recursive_partition(X, X_argsorted, y, sample_mask, depth,
+                                parent, is_left_child):
+            # Count samples
+            n_node_samples = sample_mask.sum()
+
+            if n_node_samples == 0:
+                raise ValueError("Attempting to find a split "
+                                 "with an empty sample_mask")
+
+            # Split samples
+            if depth < max_depth and n_node_samples >= min_samples_split \
+               and n_node_samples >= 2 * min_samples_leaf:
+                feature, threshold, best_error, init_error = find_split(
+                    X, y, X_argsorted, sample_mask, n_node_samples,
+                    min_samples_leaf, max_features, criterion, random_state)
+            else:
+                feature = -1
+                init_error = _tree._error_at_leaf(y, sample_mask, criterion,
+                                                  n_node_samples)
+
+            value = criterion.init_value()
+
+            # Current node is leaf
+            if feature == -1:
+                self._add_leaf(parent, is_left_child, value,
+                               init_error, n_node_samples)
+
+            # Current node is internal node (= split node)
+            else:
+                # Sample mask is too sparse?
+                if n_node_samples / X.shape[0] <= min_density:
+                    X = X[sample_mask]
+                    X_argsorted = np.asfortranarray(
+                        np.argsort(X.T, axis=1).astype(np.int32).T)
+                    y = y[sample_mask]
+                    sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+                # Split and and recurse
+                split = X[:, feature] <= threshold
+
+                node_id = self._add_split_node(parent, is_left_child, feature,
+                                               threshold, best_error,
+                                               init_error, n_node_samples,
+                                               value)
+
+                # left child recursion
+                recursive_partition(X, X_argsorted, y,
+                                    np.logical_and(split, sample_mask),
+                                    depth + 1, node_id, True)
+
+                # right child recursion
+                recursive_partition(X, X_argsorted, y,
+                                    np.logical_and(np.logical_not(split),
+                                                   sample_mask),
+                                    depth + 1, node_id, False)
+
+        # Setup auxiliary data structures and check input before
+        # recursive partitioning
+        if X.dtype != DTYPE or not np.isfortran(X):
+            X = np.asarray(X, dtype=DTYPE, order="F")
+
+        if y.dtype != DTYPE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DTYPE, order="C")
+
+        n_samples = X.shape[0]
+        if sample_mask is None:
+            sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        elif len(sample_mask) != n_samples:
+            raise ValueError(
+              "Length of sample_mask=%s does not match number of samples=%s"
+              % (len(sample_mask), n_samples))
+
+        if X_argsorted is None:
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
+        elif len(X_argsorted) != n_samples:
+            raise ValueError(
+                "Length of X_argsorted=%s does not match number of samples=%s"
+                % (len(X_argsorted), n_samples))
+
+        # Pre-allocate some space
+        if max_depth <= 10:
+            # allocate space for complete binary tree
+            init_capacity = (2 ** (max_depth + 1)) - 1
+        else:
+            # allocate fixed size and dynamically resize later
+            init_capacity = 2047
+
+        self._resize(init_capacity)
+
+        # Build the tree by recursive partitioning
+        recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
+
+        # Compactify the tree data structure
+        self._resize(self.node_count)
+
+        return self
+
     def predict(self, X):
-        out = np.empty((X.shape[0], ), dtype=np.int32)
-        _tree._apply_tree(X, self.children, self.feature, self.threshold, out)
-        return self.value.take(out, axis=0)
+        out = np.empty((X.shape[0], self.value.shape[1], self.value.shape[2]),
+                       dtype=np.float64)
 
+        _tree._predict_tree(X,
+                            self.children,
+                            self.feature,
+                            self.threshold,
+                            self.value,
+                            out)
 
-def _build_tree(X, y, is_classification, criterion,
-                max_depth, min_samples_split, min_samples_leaf,
-                min_density, max_features, random_state, n_classes, find_split,
-                sample_mask=None, X_argsorted=None):
-    """Build a tree by recursively partitioning the data."""
+        return out
 
-    if max_depth <= 10:
-        init_capacity = (2 ** (max_depth + 1)) - 1
-    else:
-        init_capacity = 2047  # num nodes of tree with depth 10
+    def compute_feature_importances(self, method="gini"):
+        """Computes the importance of each feature (aka variable).
 
-    tree = Tree(n_classes, init_capacity)
+        The following `method`s are supported:
 
-    # Recursively partition X
-    def recursive_partition(X, X_argsorted, y, sample_mask, depth,
-                            parent, is_left_child):
-        # Count samples
-        n_node_samples = sample_mask.sum()
+          * "gini" : The difference of the initial error and the error of the
+                     split times the number of samples that passed the node.
+          * "squared" : The empirical improvement in squared error.
 
-        if n_node_samples == 0:
-            raise ValueError("Attempting to find a split "
-                             "with an empty sample_mask")
-
-        # Split samples
-        if depth < max_depth and n_node_samples >= min_samples_split \
-           and n_node_samples >= 2 * min_samples_leaf:
-            feature, threshold, best_error, init_error = find_split(X, y,
-                    X_argsorted, sample_mask, n_node_samples, min_samples_leaf,
-                    max_features, criterion, random_state)
-
+        Parameters
+        ----------
+        method : str, optional (default="gini")
+            The method to estimate the importance of a feature. Either "gini"
+            or "squared".
+        """
+        if method == "gini":
+            method = lambda node: (self.n_samples[node] * \
+                                     (self.init_error[node] -
+                                      self.best_error[node]))
+        elif method == "squared":
+            method = lambda node: (self.init_error[node] - \
+                                   self.best_error[node]) ** 2.0
         else:
-            feature = -1
+            raise ValueError(
+                'Invalid value for method. Allowed string '
+                'values are "gini", or "squared".')
 
-        # Value at this node
-        current_y = y[sample_mask]
+        importances = np.zeros((self.n_features,), dtype=np.float64)
 
-        if is_classification:
-            value = np.zeros((n_classes,))
-            t = current_y.max() + 1
-            value[:t] = np.bincount(current_y.astype(np.int))
+        for node in range(self.node_count):
+            if (self.children[node, 0]
+                == self.children[node, 1]
+                == Tree.LEAF):
+                continue
+            else:
+                importances[self.feature[node]] += method(node)
 
-        else:
-            value = np.asarray(np.mean(current_y))
+        normalizer = np.sum(importances)
 
-        # Terminal node
-        if feature == -1:
-            # compute error at leaf
-            error = _tree._error_at_leaf(y, sample_mask, criterion,
-                                         n_node_samples)
-            tree.add_leaf(parent, is_left_child, value, error, n_node_samples)
+        if normalizer > 0.0:
+            # Avoid dividing by zero (e.g., when root is pure)
+            importances /= normalizer
 
-        # Internal node
-        else:
-            # Sample mask is too sparse?
-            if n_node_samples / X.shape[0] <= min_density:
-                X = X[sample_mask]
-                X_argsorted = np.asfortranarray(
-                    np.argsort(X.T, axis=1).astype(np.int32).T)
-                y = current_y
-                sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-
-            # Split and and recurse
-            split = X[:, feature] <= threshold
-
-            node_id = tree.add_split_node(parent, is_left_child, feature,
-                                          threshold, best_error, init_error,
-                                          n_node_samples, value)
-
-            # left child recursion
-            recursive_partition(X, X_argsorted, y,
-                                np.logical_and(split, sample_mask),
-                                depth + 1, node_id, True)
-
-            # right child recursion
-            recursive_partition(X, X_argsorted, y,
-                                np.logical_and(np.logical_not(split),
-                                                sample_mask),
-                                depth + 1, node_id, False)
-
-    # Launch the construction
-    if X.dtype != DTYPE or not np.isfortran(X):
-        X = np.asanyarray(X, dtype=DTYPE, order="F")
-
-    if y.dtype != DTYPE or not y.flags.contiguous:
-        y = np.ascontiguousarray(y, dtype=DTYPE)
-
-    if sample_mask is None:
-        sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-
-    if X_argsorted is None:
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
-
-    recursive_partition(X, X_argsorted, y, sample_mask, 0, -1, False)
-    tree.resize(tree.node_count)
-
-    return tree
+        return importances
 
 
 class BaseDecisionTree(BaseEstimator, SelectorMixin):
@@ -372,6 +433,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, criterion,
                        max_depth,
                        min_samples_split,
@@ -390,6 +454,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.random_state = check_random_state(random_state)
 
         self.n_features_ = None
+        self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
         self.find_split_ = _tree._find_best_split
@@ -405,7 +470,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         X : array-like of shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -415,27 +480,42 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             Returns self.
         """
         # set min_samples_split sensibly
-        self.min_samples_split = max(self.min_samples_split, 2 *
-                self.min_samples_leaf)
+        self.min_samples_split = max(self.min_samples_split,
+                                     2 * self.min_samples_leaf)
 
         # Convert data
-        X = np.asarray(X, dtype=DTYPE, order='F')
+        X = np.asarray(X, dtype=DTYPE, order="F")
         n_samples, self.n_features_ = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
 
+        y = np.copy(y)
+        y = np.atleast_1d(y)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        self.classes_ = []
+        self.n_classes_ = []
+        self.n_outputs_ = y.shape[1]
+
         if is_classification:
-            self.classes_ = np.unique(y)
-            self.n_classes_ = self.classes_.shape[0]
-            criterion = CLASSIFICATION[self.criterion](self.n_classes_)
-            y = np.searchsorted(self.classes_, y)
+            for k in xrange(self.n_outputs_):
+                unique = np.unique(y[:, k])
+                self.classes_.append(unique)
+                self.n_classes_.append(unique.shape[0])
+                y[:, k] = np.searchsorted(unique, y[:, k])
 
         else:
-            self.classes_ = None
-            self.n_classes_ = 1
-            criterion = REGRESSION[self.criterion]()
+            self.classes_ = [None] * self.n_outputs_
+            self.n_classes_ = [1] * self.n_outputs_
 
-        y = np.ascontiguousarray(y, dtype=DTYPE)
+        y = np.asarray(y, dtype=DTYPE, order="C")
+
+        if is_classification:
+            criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
+                                                       self.n_classes_)
+        else:
+            criterion = REGRESSION[self.criterion](self.n_outputs_)
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
@@ -444,24 +524,18 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
-
                 else:
                     max_features = self.n_features_
-
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_)))
-
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_)))
-
             else:
                 raise ValueError(
                     'Invalid value for max_features. Allowed string '
                     'values are "auto", "sqrt" or "log2".')
-
         elif self.max_features is None:
             max_features = self.n_features_
-
         else:
             max_features = self.max_features
 
@@ -480,30 +554,16 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree_ = _build_tree(X, y, is_classification, criterion, max_depth,
+        self.tree_ = Tree(self.n_classes_, self.n_features_, self.n_outputs_)
+        self.tree_.build(X, y, criterion, max_depth,
                 self.min_samples_split, self.min_samples_leaf,
                 self.min_density, max_features, self.random_state,
-                self.n_classes_, self.find_split_, sample_mask=sample_mask,
+                self.find_split_, sample_mask=sample_mask,
                 X_argsorted=X_argsorted)
 
-        # Compute feature importances
         if self.compute_importances:
-            importances = np.zeros(self.n_features_)
-
-            for node in xrange(self.tree_.node_count):
-                if (self.tree_.children[node, 0]
-                        == self.tree_.children[node, 1]
-                        == Tree.LEAF):
-                    continue
-
-                else:
-                    importances[self.tree_.feature[node]] += (
-                        self.tree_.n_samples[node] *
-                            (self.tree_.init_error[node] -
-                             self.tree_.best_error[node]))
-
-            importances /= np.sum(importances)
-            self.feature_importances_ = importances
+            self.feature_importances_ = \
+                self.tree_.compute_feature_importances()
 
         return self
 
@@ -521,7 +581,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
         X = array2d(X, dtype=DTYPE)
@@ -536,11 +596,20 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
+        P = self.tree_.predict(X)
+
         if isinstance(self, ClassifierMixin):
-            predictions = self.classes_.take(np.argmax(
-                self.tree_.predict(X), axis=1), axis=0)
+            predictions = np.zeros((n_samples, self.n_outputs_))
+
+            for k in xrange(self.n_outputs_):
+                predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k],
+                                                                    axis=1),
+                                                          axis=0)
         else:
-            predictions = self.tree_.predict(X).ravel()
+            predictions = P[:, :, 0]
+
+        if self.n_outputs_ == 1:
+            predictions = predictions.reshape((n_samples, ))
 
         return predictions
 
@@ -599,14 +668,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
         the Gini importance [4]_.
 
-        .. math::
-
-            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
     See also
     --------
@@ -668,7 +734,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by arithmetical order.
         """
@@ -684,9 +751,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
+        proba = []
         P = self.tree_.predict(X)
-        P /= P.sum(axis=1)[:, np.newaxis]
-        return P
+
+        for k in xrange(self.n_outputs_):
+            P_k = P[:, k, :self.n_classes_[k]]
+            normalizer = P_k.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            P_k /= normalizer
+            proba.append(P_k)
+
+        if self.n_outputs_ == 1:
+            return proba[0]
+
+        else:
+            return proba
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.
@@ -698,11 +777,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return np.log(proba)
+
+        else:
+            for k in xrange(self.n_outputs_):
+                proba[k] = np.log(proba[k])
+
+            return proba
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
@@ -759,14 +848,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
         The importance I(f) of a feature f is computed as the (normalized)
         total reduction of error brought by that feature. It is also known as
         the Gini importance [4]_.
 
-        .. math::
-
-            I(f) = \sum_{nodes A for which f is used} n_samples(A) * \Delta err
 
     See also
     --------

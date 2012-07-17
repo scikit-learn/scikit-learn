@@ -13,11 +13,10 @@ The project is hosted on http://github.com/scikit-learn/scikit-learn
 Submitting a bug report
 =======================
 
-In case you experience issues using the package, do not hesitate
-to submit a ticket to the
-`Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_.
-
-You are also welcome to post there feature requests or links to pull-requests.
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or links to pull requests.
 
 
 .. _git_repo:
@@ -28,7 +27,7 @@ Retrieving the latest code
 We use `Git <http://git-scm.com/>`_ for version control and
 `GitHub <http://github.com/>`_ for hosting our main repository.
 
-You can check the latest sources with the command::
+You can check out the latest sources with the command::
 
     git clone git://github.com/scikit-learn/scikit-learn.git
 
@@ -36,15 +35,15 @@ or if you have write privileges::
 
     git clone git@github.com:scikit-learn/scikit-learn.git
 
-If you run the development version, it is cumbersome to re-install the
+If you run the development version, it is cumbersome to reinstall the
 package each time you update the sources. It is thus preferred that
-you add the scikit-directory to your ``PYTHONPATH`` and build the
+you add the scikit-learn directory to your ``PYTHONPATH`` and build the
 extension in place::
 
     python setup.py build_ext --inplace
 
-On Unix you can simply type ``make`` in the top-level folder to build
-in-place and launch all the tests. Have a look at the ``Makefile`` for
+On Unix-like systems, you can simply type ``make`` in the top-level folder to
+build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
 
 
@@ -53,71 +52,64 @@ Contributing code
 
 .. note::
 
-  To avoid duplicated work it is highly advised to contact the developers
-  mailing list before starting work on a non-trivial feature.
+  To avoid duplicating work, it is highly advised that you contact the
+  developers on the mailing list before starting work on a non-trivial feature.
 
   https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
 
 How to contribute
 -----------------
 
-The prefered way to contribute to Scikit-Learn is to fork the main
-repository on
-`GitHub <http://github.com/scikit-learn/scikit-learn/>`__:
+The preferred way to contribute to scikit-learn is to fork the `main
+repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub:
 
  1. `Create an account <https://github.com/signup/free>`_ on
-    GitHub if you don't have one already.
+    GitHub if you do not already have one.
 
  2. Fork the `project repository
     <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-    button, at the top, center of the page. This creates a copy of
-    the code on the GitHub server where you can work.
+    button near the top of the page. This creates a copy of the code under your
+    account on the GitHub server.
 
  3. Clone this copy to your local disk::
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
- 4. Work on this copy, on your computer, using git to do the version
-    control::
-
-        $ git add modified_files
-        $ git commit
-        $ git push origin master
-
-    and so on.
-
-If your changes are not just trivial fixes, it is better to directly
-work in a branch with the name of the feature your are working on. In
-this case, replace step 4 by step 5:
-
-  5. Create a branch to host your changes and publish it on your public
-     repo::
+ 4. Create a branch to hold your changes::
 
         $ git checkout -b my-feature
+
+    and start making changes. Never work in the ``master`` branch!
+
+ 5. Work on this copy, on your computer, using Git to do the version
+    control. When you're done editing, do::
+
         $ git add modified_files
         $ git commit
-        $ git push origin my-feature
 
-When you are ready, and you have pushed your changes on your github repo, go
-the web page of the repo, and click on 'Pull request' to send us a pull
-request. This will send an email to the commiters, but might also send an
+    to record your changes in Git, then push them to GitHub with::
+
+        $ git push -u origin my-feature
+
+Finally, go to the web page of the your fork of the scikit-learn repo,
+and click 'Pull request' to send your changes to the maintainers for review.
+request. This will send an email to the committers, but might also send an
 email to the mailing list in order to get more visibility.
 
 .. note::
 
-  In the above setup, your ``origin`` remote-repository points to 
-  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main 
-  repository instead of your `forked` one, you'll need 
-  to add another remote to use instead of ``origin``. If we choose the name
-  ``upstream`` for it, the command will be::
-  
-	$ git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+  In the above setup, your ``origin`` remote repository points to
+  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main
+  repository instead of your `forked` one, you will need to add another remote
+  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
+  command will be::
 
+        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 (If any of the above seems like magic to you, then look up the
 `Git documentation <http://git-scm.com/documentation>`_ on the web.)
 
-It is recommented to check that your contribution complies with the following
+It is recommended to check that your contribution complies with the following
 rules before submitting a pull request:
 
     * Follow the `coding-guidelines`_ (see below).
@@ -129,26 +121,27 @@ rules before submitting a pull request:
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
-    * All other tests pass when everything is rebuilt from scrath, under Unix,
-      check with (from the toplevel source folder)::
+    * All other tests pass when everything is rebuilt from scratch. On
+      Unix-like systems, check with (from the toplevel source folder)::
 
         $ make
 
-    * At least one example script in the ``examples/`` folder. Have a look at
-      other examples for reference. Example should demonstrate why this method
-      is useful in practice and if possible compare it to other methods
-      available in the scikit.
+    * When adding additional functionality, provide at least one example script
+      in the ``examples/`` folder. Have a look at other examples for reference.
+      Examples should demonstrate why the new functionality is useful in
+      practice and, if possible, compare it to other methods available in
+      scikit-learn.
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
       the example.
 
       The documentation should also include expected time and space
-      complexity of the algorithm and scalablity, e.g. "this algorithm can
+      complexity of the algorithm and scalability, e.g. "this algorithm can
       scale to a large number of samples > 100000, but does not scale in
       dimensionality: n_features is expected to be lower than 100".
 
-      To build the documentation see `documentation`_ below.
+      To build the documentation, see the `documentation`_ section below.
 
 You can also check for common programming errors with the following tools:
 
@@ -167,29 +160,35 @@ You can also check for common programming errors with the following tools:
         $ pip install pep8
         $ pep8 path/to/module.py
 
+    * AutoPEP8 can help you fix some of the easy redundant errors::
+
+        $ pip install autopep8
+        $ autopep8 path/to/pep8.py
+
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
-list or on the github wiki).
+list or on the GitHub wiki).
 
-Also check out the following guide on :ref:`performance-howto` for more
-details on profiling and cython optimizations.
+Also check out the :ref:`performance-howto` guide for more details on profiling
+and Cython optimizations.
 
 .. note::
 
   The current state of the scikit-learn code base is not compliant with
-  all of those guidelines but we expect that enforcing those constraints
+  all of those guidelines, but we expect that enforcing those constraints
   on all new contributions will get the overall code base quality in the
   right direction.
 
 EasyFix Issues
 --------------
 
-The best way to get your feet wet is
-to pick up an issue from the `issue tracker
+A great way to start contributing to scikit-learn is to pick an item from the
+list of `EasyFix issues
 <https://github.com/scikit-learn/scikit-learn/issues?labels=EasyFix>`_
-that are labeled as EasyFix. This means that the knowledge needed to solve
-the issue is low, but still you are helping the project and letting more
-experienced developers concentrate on other issues.
+in the issue tracker.  Resolving these issues allow you to start contributing
+to the project without much prior knowledge. Your assistance in this area will
+be greatly appreciated by the more experienced developers as it helps free up
+their time to concentrate on other issues.
 
 .. _contribute_documentation:
 
@@ -197,24 +196,25 @@ Documentation
 -------------
 
 We are glad to accept any sort of documentation: function docstrings,
-rst docs (like this one), tutorials, etc. Rst docs live in the source
-code repository, under directory doc/.
+reStructuredText documents (like this one), tutorials, etc. reStructuredText
+documents live in the source code repository under the doc/ directory.
 
-You can edit them using any text editor and generate the html docs by
-typing from the doc/ directory ``make html`` (or ``make html-noplot``,
-see README in that directory for more info). That should create a
-directory _build/html/ with html files that are viewable in a web
-browser.
+You can edit the documentation using any text editor, and then generate the
+HTML output by typing ``make html`` from the doc/ directory. Alternatively,
+``make html-noplot`` can be used to quickly generate the documentation without
+the example gallery. The resulting HTML files will be placed in _build/html/
+and are viewable in a web browser. See the README file in the doc/ directory
+for more information.
 
 For building the documentation, you will need `sphinx
 <http://sphinx.pocoo.org/>`_ and `matplotlib
 <http://matplotlib.sourceforge.net/>`_.
 
 When you are writing documentation, it is important to keep a good
-compromise between mathematical and algorithmic details, and giving
-intuitions to the reader on what the algorithm does. It is best to always
-start with a small paragraph with a hand waiving explanation of what the
-method does to the data and a figure (coming from an example) ilustrating
+compromise between mathematical and algorithmic details, and give
+intuition to the reader on what the algorithm does. It is best to always
+start with a small paragraph with a hand-waiving explanation of what the
+method does to the data and a figure (coming from an example) illustrating
 it.
 
 .. warning:: **Sphinx version**
@@ -227,23 +227,22 @@ it.
 Developers web site
 -------------------
 
-More information can be found at the `developer's wiki
+More information can be found on the `developer's wiki
 <https://github.com/scikit-learn/scikit-learn/wiki>`_.
 
 
 Other ways to contribute
 ========================
 
-Code is not the only way to contribute to this project. For instance,
-documentation is also a very important part of the project and ofter
+Code is not the only way to contribute to scikit-learn. For instance,
+documentation is also a very important part of the project and often
 doesn't get as much attention as it deserves. If you find a typo in
-the documentation, or have made improvements, don't hesitate to send
-an email to the mailing list or a github pull request. Full
-documentation can be found under directory doc/.
+the documentation, or have made improvements, do not hesitate to send
+an email to the mailing list or submit a GitHub pull request. Full
+documentation can be found under the doc/ directory.
 
-It also helps us if you spread the word: reference it from your blog,
-articles, link to us from your website, or simply by saying "I use
-it":
+It also helps us if you spread the word: reference the project from your blog
+and articles, link to it from your website, or simply say "I use it":
 
 .. raw:: html
 
@@ -261,9 +260,9 @@ rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
-scikit learn tries to follow closely the official Python guidelines
+scikit-learn project tries to closely follow the official Python guidelines
 detailed in `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ that
-details how code should be formatted, and indented. Please read it and
+detail how code should be formatted and indented. Please read it and
 follow it.
 
 In addition, we add the following guidelines:
@@ -283,7 +282,7 @@ In addition, we add the following guidelines:
       longer explicitly referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
       <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
-      find bugs in scikit.
+      find bugs in scikit-learn.
 
     * Use the `numpy docstring standard
       <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
@@ -299,7 +298,7 @@ Input validation
 .. currentmodule:: sklearn.utils
 
 The module :mod:`sklearn.utils` contains various functions for doing input
-validation/conversion. Sometimes, ``np.asarray`` suffices for validation;
+validation and conversion. Sometimes, ``np.asarray`` suffices for validation;
 do `not` use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
 ``np.matrix`` through, which has a different API
 (e.g., ``*`` means dot product on ``np.matrix``,
@@ -322,33 +321,31 @@ repeatability in error checking, the routine should accept a keyword
 ``numpy.random.RandomState`` object.
 See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
 
-Here's a simple example of code using some of the above guidelines:
-
-::
+Here's a simple example of code using some of the above guidelines::
 
     from sklearn.utils import array2d, check_random_state
 
     def choose_random_sample(X, random_state=0):
-      	"""
-	Choose a random point from X
+        """
+        Choose a random point from X
 
-	Parameters
-	----------
-	X : array-like, shape = (n_samples, n_features)
-	    array representing the data
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            array representing the data
         random_state : RandomState or an int seed (0 by default)
             A random number generator instance to define the state of the
             random permutations generator.
 
-	Returns
-	-------
-	x : numpy array, shape = (n_features,)
-	    A random point selected from X
-	"""
-    	X = array2d(X)
+        Returns
+        -------
+        x : numpy array, shape = (n_features,)
+            A random point selected from X
+        """
+        X = array2d(X)
         random_state = check_random_state(random_state)
-	i = random_state.randint(X.shape[0])
-	return X[i]
+        i = random_state.randint(X.shape[0])
+        return X[i]
 
 
 APIs of scikit-learn objects
@@ -357,12 +354,12 @@ APIs of scikit-learn objects
 To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
-methods an object has to implement.
+methods an object must implement.
 
 Different objects
 -----------------
 
-The main objects of the scikit learn are (one class can implement
+The main objects in scikit-learn are (one class can implement
 multiple interfaces):
 
 :Estimator:
@@ -401,7 +398,7 @@ Estimators
 
 The API has one predominant object: the estimator. A estimator is an
 object that fits a model based on some training data and is capable of
-inferring some properties on new data. It can be for instance a
+inferring some properties on new data. It can be, for instance, a
 classifier or a regressor. All estimators implement the fit method::
 
     estimator.fit(X, y)
@@ -416,29 +413,24 @@ All estimators should inherit from ``sklearn.base.BaseEstimator``.
 Instantiation
 ^^^^^^^^^^^^^
 
-This concerns the object creation. The object's ``__init__`` method might
-accept as arguments constants that determine the estimator behavior
-(like the C constant in SVMs).
-
-It should not, however, take the actual training data as argument, as
-this is left to the ``fit()`` method::
+This concerns the creation of an object. The object's ``__init__`` method
+might accept constants as arguments that determine the estimator's behavior
+(like the C constant in SVMs). It should not, however, take the actual training
+data as an argument, as this is left to the ``fit()`` method::
 
     clf2 = SVC(C=2.3)
     clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
 
 
-The arguments that go in the ``__init__`` should all be keyword arguments
-with a default value. In other words, a user should be able to instanciate
-an estimator without passing to it any arguments.
+The arguments accepted by ``__init__`` should all be keyword arguments
+with a default value. In other words, a user should be able to instantiate
+an estimator without passing any arguments to it. The arguments should all
+correspond to hyperparameters describing the model or the optimisation
+problem the estimator tries to solve.
 
-The arguments in given at instanciation of an estimator should all
-correspond to hyper parameters describing the model or the optimisation
-problem that estimator tries to solve.
-
-In addition, **every keyword argument given to the ``__init__`` should
-correspond to an attribute on the instance**. The scikit relies on this
-to find what are the relevent attributes to set on an estimator when
-doing model selection.
+In addition, **every keyword argument accepted by ``__init__`` should
+correspond to an attribute on the instance**. Scikit-learn relies on this to
+find the relevant attributes to set on an estimator when doing model selection.
 
 To summarize, a `__init__` should look like::
 
@@ -447,7 +439,7 @@ To summarize, a `__init__` should look like::
         self.param2 = param2
 
 There should be no logic, and the parameters should not be changed.
-The corresponding logic should be put when the parameters are used. The
+The corresponding logic should be put where the parameters are used. The
 following is wrong::
 
     def __init__(self, param1=1, param2=2, param3=3):
@@ -459,23 +451,23 @@ following is wrong::
         # the argument in the constructor
         self.param3 = param2
 
-Scikit-Learn relies on this mechanism to introspect object to set
+Scikit-learn relies on this mechanism to introspect objects to set
 their parameters by cross-validation.
 
 Fitting
 ^^^^^^^
 
-The next thing you'll probably want to do is to estimate some
-parameters in the model. This is implemented in the .fit() method.
+The next thing you will probably want to do is to estimate some
+parameters in the model. This is implemented in the ``fit()`` method.
 
-The fit method takes as argument the training data, which can be one
+The ``fit()`` method takes the training data as arguments, which can be one
 array in the case of unsupervised learning, or two arrays in the case
 of supervised learning.
 
-Note that the model is fitted using X and y but the object holds no
-reference to X, y. There are however some exceptions to this, as in
-the case of precomputed kernels where you need to store access these
-data in the predict method.
+Note that the model is fitted using X and y, but the object holds no
+reference to X and y. There are, however, some exceptions to this, as in
+the case of precomputed kernels where this data must be stored for use by
+the predict method.
 
 ============= ======================================================
 Parameters
@@ -486,26 +478,26 @@ X             array-like, with shape = [N, D], where N is the number
 y             array, with shape = [N], where N is the number of
               samples.
 
-kwargs        optional data dependent parameters.
+kwargs        optional data-dependent parameters.
 ============= ======================================================
 
 ``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
 is not met, an exception of type ``ValueError`` should be raised.
 
-``y`` might be ignored in the case of unsupervised learning. However to
+``y`` might be ignored in the case of unsupervised learning. However, to
 make it possible to use the estimator as part of a pipeline that can
-mix both supervised and unsupervised transformers even unsupervised
-estimators are kindly ask to accept a ``y=None`` keyword argument in
+mix both supervised and unsupervised transformers, even unsupervised
+estimators are kindly asked to accept a ``y=None`` keyword argument in
 the second position that is just ignored by the estimator.
 
 The method should return the object (``self``). This pattern is useful
-to be able to implement quick one liners in an ipython session such as::
+to be able to implement quick one liners in an IPython session such as::
 
   y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
 
-Depending on the nature of the algorithm ``fit`` can sometimes also
-accept additional keywords arguments. However any parameter that can
-have a value assigned prior having access to the data should be an
+Depending on the nature of the algorithm, ``fit`` can sometimes also
+accept additional keywords arguments. However, any parameter that can
+have a value assigned prior to having access to the data should be an
 ``__init__`` keyword argument. **fit parameters should be restricted
 to directly data dependent variables**. For instance a Gram matrix or
 an affinity matrix which are precomputed from the data matrix ``X`` are
@@ -520,27 +512,27 @@ account: **fit should be idempotent**.
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
 
-In iterative algorithms, number of iterations should be specified by
-an int called ``n_iter``.
+In iterative algorithms, the number of iterations should be specified by
+an integer called ``n_iter``.
 
 Unresolved API issues
 ----------------------
 
 Some things are must still be decided:
 
-    * what should happen when predict is called before than fit() ?
-    * which exception should be raised when arrays' shape do not match
-      in fit() ?
+    * what should happen when predict is called before ``fit()`` ?
+    * which exception should be raised when the shape of arrays do not match
+      in ``fit()`` ?
 
 Working notes
----------------
+-------------
 
-For unresolved issues, TODOs, remarks on ongoing work, developers are
-adviced to maintain notes on the github wiki:
-https://github.com/scikit-learn/scikit-learn/wiki
+For unresolved issues, TODOs, and remarks on ongoing work, developers are
+advised to maintain notes on the `GitHub wiki
+<https://github.com/scikit-learn/scikit-learn/wiki>`__.
 
 Specific models
------------------
+---------------
 
 In linear models, coefficients are stored in an array called ``coef_``,
-and independent term is stored in ``intercept_``.
+and the independent term is stored in ``intercept_``.

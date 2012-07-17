@@ -13,6 +13,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
+from sklearn.cross_validation import KFold
 
 
 class MockClassifier(BaseEstimator):
@@ -21,6 +22,7 @@ class MockClassifier(BaseEstimator):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
         return self
 
     def predict(self, T):
@@ -52,6 +54,14 @@ def test_grid_search():
     grid_search.score(X, y)
 
 
+def test_no_refit():
+    """Test that grid search can be used for model selection only"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
+    grid_search.fit(X, y)
+    assert_true(hasattr(grid_search, "best_params_"))
+
+
 def test_grid_search_error():
     """Test that grid search will capture errors on data with different
     length"""
@@ -60,6 +70,34 @@ def test_grid_search_error():
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     assert_raises(ValueError, cv.fit, X_[:180], y_)
+
+
+def test_grid_search_one_grid_point():
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+    param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
+
+    clf = SVC()
+    cv = GridSearchCV(clf, param_dict)
+    cv.fit(X_, y_)
+
+    clf = SVC(C=1.0, kernel="rbf", gamma=0.1)
+    clf.fit(X_, y_)
+
+    assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
+
+
+def test_grid_search_bad_param_grid():
+    param_dict = {"C": 1.0}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": []}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": np.ones(6).reshape(3, 2)}
+    clf = SVC()
+    assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
 def test_grid_search_sparse():
@@ -175,3 +213,15 @@ def test_refit():
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
                        score_func=precision_score, refit=True)
     clf.fit(X, y)
+
+
+def test_X_as_list():
+    """Pass X as list in GridSearchCV
+    """
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = MockClassifier()
+    cv = KFold(n=len(X), k=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X.tolist(), y).score(X, y)

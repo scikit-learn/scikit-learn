@@ -19,7 +19,7 @@ identified persons.
 
 Both Face Verification and Face Recognition are tasks that are typically
 performed on the output of a model trained to perform Face Detection. The
-most popular model for Face Detection is called Viola-Johns and is
+most popular model for Face Detection is called Viola-Jones and is
 implemented in the OpenCV library. The LFW faces were extracted by this
 face detector from various online websites.
 

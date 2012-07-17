@@ -46,11 +46,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
 def _compute_gradient_3d(edges, img):
     n_x, n_y, n_z = img.shape
-    gradient = np.abs(img[edges[0] / (n_y * n_z),
-                                (edges[0] % (n_y * n_z)) / n_z,
+    gradient = np.abs(img[edges[0] // (n_y * n_z),
+                                (edges[0] % (n_y * n_z)) // n_z,
                                 (edges[0] % (n_y * n_z)) % n_z] -
-                                img[edges[1] / (n_y * n_z),
-                                (edges[1] % (n_y * n_z)) / n_z,
+                                img[edges[1] // (n_y * n_z),
+                                (edges[1] % (n_y * n_z)) // n_z,
                                 (edges[1] % (n_y * n_z)) % n_z])
     return gradient
 
@@ -330,7 +330,7 @@ class PatchExtractor(BaseEstimator):
         Pseudo number generator state used for random sampling.
 
     """
-    def __init__(self, patch_size, max_patches=None, random_state=None):
+    def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.random_state = random_state
@@ -367,16 +367,21 @@ class PatchExtractor(BaseEstimator):
         n_images, i_h, i_w = X.shape[:3]
         X = np.reshape(X, (n_images, i_h, i_w, -1))
         n_channels = X.shape[-1]
+        if self.patch_size is None:
+            patch_size = i_h / 10, i_w / 10
+        else:
+            patch_size = self.patch_size
+
         if self.max_patches:
             n_patches = self.max_patches
         else:
-            p_h, p_w = self.patch_size
+            p_h, p_w = patch_size
             n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-        patches_shape = (n_images * n_patches,) + self.patch_size
+        patches_shape = (n_images * n_patches,) + patch_size
         if n_channels > 1:
             patches_shape += (n_channels,)
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
-                image, self.patch_size, self.max_patches, self.random_state)
+                image, patch_size, self.max_patches, self.random_state)
         return patches

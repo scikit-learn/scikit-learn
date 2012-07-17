@@ -35,7 +35,7 @@ X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
 ##############################################################################
 # Compute clustering with Means
 
-k_means = KMeans(init='k-means++', k=3, n_init=10)
+k_means = KMeans(init='k-means++', n_clusters=3, n_init=10)
 t0 = time.time()
 k_means.fit(X)
 t_batch = time.time() - t0
@@ -46,7 +46,7 @@ k_means_labels_unique = np.unique(k_means_labels)
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
 
-mbk = MiniBatchKMeans(init='k-means++', k=3, batch_size=batch_size,
+mbk = MiniBatchKMeans(init='k-means++', n_clusters=3, batch_size=batch_size,
                       n_init=10, max_no_improvement=10, verbose=0)
 t0 = time.time()
 mbk.fit(X)

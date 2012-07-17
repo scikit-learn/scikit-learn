@@ -7,11 +7,14 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from sklearn.utils.testing import assert_less, assert_greater
+
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
+from nose import SkipTest
 from nose.tools import assert_equal, assert_equals, \
             assert_false, assert_not_equal, assert_true
 from numpy.testing import assert_array_almost_equal
@@ -258,10 +261,21 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
+    # First we need to verify that numpy here provides div 0 warnings
+    with warnings.catch_warnings(record=True) as w:
+        _ = 1. / np.array([0.])
+        numpy_provides_div0_warning = len(w) == 1
+
     with warnings.catch_warnings(record=True) as w:
         tfidf = tr.fit_transform(X).toarray()
+        if not numpy_provides_div0_warning:
+            raise SkipTest("Numpy does not provide div 0 warnings.")
         assert_equal(len(w), 1)
-        assert_true("divide by zero encountered in divide" in w[0].message)
+        # For Python 3 compatibility
+        if hasattr(w[0].message, 'args'):
+            assert_true("divide by zero" in w[0].message.args[0])
+        else:
+            assert_true("divide by zero" in w[0].message)
 
 
 def test_sublinear_tf():
@@ -269,10 +283,10 @@ def test_sublinear_tf():
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
     tfidf = tr.fit_transform(X).toarray()
     assert_equal(tfidf[0], 1)
-    assert_true(tfidf[1] > tfidf[0])
-    assert_true(tfidf[2] > tfidf[1])
-    assert_true(tfidf[1] < 2)
-    assert_true(tfidf[2] < 3)
+    assert_greater(tfidf[1], tfidf[0])
+    assert_greater(tfidf[2], tfidf[1])
+    assert_less(tfidf[1], 2)
+    assert_less(tfidf[2], 3)
 
 
 def test_vectorizer():

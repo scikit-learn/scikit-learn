@@ -3,10 +3,10 @@
 Faces dataset decompositions
 ============================
 
-This example applies to :ref:`labeled_faces_in_the_wild` different
-unsupervised matrix decomposition (dimension reduction) methods  from the
-module :py:mod:`sklearn.decomposition` (see the documentation
-chapter :ref:`decompositions`) .
+This example applies to :ref:`olivetti_faces` different unsupervised
+matrix decomposition (dimension reduction) methods from the module
+:py:mod:`sklearn.decomposition` (see the documentation chapter
+:ref:`decompositions`) .
 
 """
 print __doc__
@@ -68,34 +68,34 @@ def plot_gallery(title, images):
 estimators = [
     ('Eigenfaces - RandomizedPCA',
      decomposition.RandomizedPCA(n_components=n_components, whiten=True),
-     True, False),
+     True),
 
     ('Non-negative components - NMF',
      decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
                        tol=5e-3, sparseness='components'),
-     False, False),
+     False),
 
     ('Independent components - FastICA',
      decomposition.FastICA(n_components=n_components, whiten=True,
                            max_iter=10),
-     True, True),
+     True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
      decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=0.8,
                                       n_iter=100, chunk_size=3,
                                       random_state=rng),
-     True, False),
+     True),
 
     ('MiniBatchDictionaryLearning',
     decomposition.MiniBatchDictionaryLearning(n_atoms=15, alpha=0.1,
                                               n_iter=50, chunk_size=3,
                                               random_state=rng),
-     True, False),
+     True),
 
     ('Cluster centers - MiniBatchKMeans',
-     MiniBatchKMeans(k=n_components, tol=1e-3, batch_size=20, max_iter=50,
-                     random_state=rng),
-     True, False)
+     MiniBatchKMeans(n_clusters=n_components, tol=1e-3, batch_size=20,
+         max_iter=50, random_state=rng),
+     True)
 ]
 
 ###############################################################################
@@ -106,14 +106,12 @@ plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 ###############################################################################
 # Do the estimation and plot it
 
-for name, estimator, center, transpose in estimators:
+for name, estimator, center in estimators:
     print "Extracting the top %d %s..." % (n_components, name)
     t0 = time()
     data = faces
     if center:
         data = faces_centered
-    if transpose:
-        data = data.T
     estimator.fit(data)
     train_time = (time() - t0)
     print "done in %0.3fs" % train_time
@@ -121,8 +119,6 @@ for name, estimator, center, transpose in estimators:
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
-    if transpose:
-        components_ = components_.T
     plot_gallery('%s - Train time %.1fs' % (name, train_time),
                  components_[:n_components])
 

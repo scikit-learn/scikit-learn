@@ -47,10 +47,9 @@ wa = -ww[0] / ww[1]
 wyy = wa * xx - wclf.intercept_ / ww[1]
 
 # plot separating hyperplanes and samples
-pl.set_cmap(pl.cm.Paired)
 h0 = pl.plot(xx, yy, 'k-', label='no weights')
 h1 = pl.plot(xx, wyy, 'k--', label='with weights')
-pl.scatter(X[:, 0], X[:, 1], c=y)
+pl.scatter(X[:, 0], X[:, 1], c=y, cmap=pl.cm.Paired)
 pl.legend()
 
 pl.axis('tight')

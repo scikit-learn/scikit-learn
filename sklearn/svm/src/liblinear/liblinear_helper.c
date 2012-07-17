@@ -79,11 +79,11 @@ sparse_error:
 
 
 /*
-c * Convert scipy.sparse.csr to libsvm's sparse data structure
+ * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-struct feature_node **csr_to_sparse (double *values, npy_intp *shape_indices,
-		int *indices, npy_intp *shape_indptr, int *indptr, double bias,
-                int n_features)
+static struct feature_node **csr_to_sparse(double *values,
+        npy_intp *shape_indices, int *indices, npy_intp *shape_indptr,
+        int *indptr, double bias, int n_features)
 {
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
@@ -137,7 +137,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
         problem->n = (int) dims[1];
     }
 
-    problem->y = (int *) Y;
+    problem->y = (double *) Y;
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
     if (problem->x == NULL) { 
@@ -163,7 +163,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
         problem->n = (int) n_features;
     }
 
-    problem->y = (int *) Y;
+    problem->y = (double *) Y;
     problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr, bias, n_features);
     problem->bias = bias;
@@ -186,6 +186,7 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
+    param->p = .1;  // epsilon for epsilon-SVR; TODO pass as a parameter
     param->nr_weight = (int) nr_weight;
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
@@ -387,4 +388,22 @@ int copy_label(char *data, struct model *model_, int nr_class)
 {
     memcpy(data, model_->label, nr_class * sizeof(int));
     return 0;
+}
+
+
+/* rely on built-in facility to control verbose output */
+static void print_null(const char *s) {}
+
+static void print_string_stdout(const char *s)
+{
+    fputs(s ,stdout);
+    fflush(stdout);
+}
+
+/* provide convenience wrapper */
+void set_verbosity(int verbosity_flag){
+    if (verbosity_flag)
+        set_print_string_function(&print_string_stdout);
+    else
+        set_print_string_function(&print_null);
 }

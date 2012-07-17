@@ -10,12 +10,13 @@ Dirichlet Process Gaussian Mixture Models"""
 #
 
 import numpy as np
+import warnings
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..utils import check_random_state
-from ..utils.extmath import norm
+from ..utils.extmath import norm, logsumexp
 from .. import cluster
 from .gmm import GMM
 
@@ -37,7 +38,7 @@ def log_normalize(v, axis=0):
     v = np.rollaxis(v, axis)
     v = v.copy()
     v -= v.max(axis=0)
-    out = np.log(np.sum(np.exp(v), axis=0))
+    out = logsumexp(v)
     v = np.exp(v - out)
     v += np.finfo(np.float32).eps
     v /= np.sum(v, axis=0)
@@ -146,6 +147,16 @@ class DPGMM(GMM):
 
     thresh : float, optional
         Convergence threshold.
+    n_iter : int, optional
+        Maximum number of iterations to perform before convergence.
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+    init_params : string, optional
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
     Attributes
     ----------
@@ -171,71 +182,37 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-<<<<<<< HEAD
     `converged_` : bool
         True when convergence was reached in fit(), False otherwise.
-=======
-    converged_ : bool
-        True when convergence was reached in fit(), False
-        otherwise.
-
-    Methods
-    -------
-    eval(X)
-        Compute a lower-bound of the log likelihood of X under the model
-        and an approximate posterior distribution over mixture components.
-    fit(X)
-        Estimate the posterior of themodel parameters from X using the
-        variational mean-field algorithm.
-    predict(X)
-        Find most likely mixtures components for each observation in X.
-    rvs(n=1)
-        Generate `n` samples from the posterior for the model.
-    score(X)
-<<<<<<< HEAD
-        Compute the log likelihood of `X` under the model.
->>>>>>> b4d4a9f... removed the decode
-=======
-        Compute the log likelihood of X under the model.
->>>>>>> 2826ac7... removed the decode in dpgmm and removed return_log in eval
 
     See Also
     --------
     GMM : Finite Gaussian mixture model fit with EM
 
     VBGMM : Finite Gaussian mixture model fit with a variational
-    algorithm, better for situations where there might be too little
-    data to get a good estimate of the covariance matrix.
+        algorithm, better for situations where there might be too little
+        data to get a good estimate of the covariance matrix.
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None):
+                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
         self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state,
-                                    thresh=thresh, min_covar=min_covar)
+                                    thresh=thresh, min_covar=min_covar,
+                                    n_iter=n_iter, params=params,
+                                    init_params=init_params)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
-<<<<<<< HEAD
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             return self.precs_
-        elif self._covariance_type in ['diag', 'spherical']:
+        elif self.covariance_type in ['diag', 'spherical']:
             return [np.diag(cov) for cov in self.precs_]
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             return [self.precs_] * self.n_components
-=======
-        if self.cvtype == 'full':
-            return self.precs_
-        elif self.cvtype == 'diag':
-            return [np.diag(cov) for cov in self.precs_]
-        elif self.cvtype == 'tied':
-            return [self.precs_] * self.n_components
-        elif self.cvtype == 'spherical':
-            return [np.eye(self.n_features) * f for f in self.precs_]
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
     def _get_covars(self):
         return [linalg.pinv(c) for c in self._get_precisions()]
@@ -284,19 +261,12 @@ class DPGMM(GMM):
         # Free memory and developers cognitive load:
         del dgamma1, dgamma2, sd
 
-        if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
+        if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
-<<<<<<< HEAD
-                                      % self._covariance_type)
+                                      % self.covariance_type)
         p = _bound_state_log_lik(X, self._initial_bound + self.bound_prec_,
                                  self.precs_, self.means_,
-                                 self._covariance_type)
-=======
-                                      % self.cvtype)
-
-        p = _bound_state_loglik(obs, self._initial_bound,
-                        self._bound_prec, self.precs_, self.means_)
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
+                                 self.covariance_type)
         z = p + dgamma
         z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
@@ -315,43 +285,27 @@ class DPGMM(GMM):
         """Update the variational distributions for the means"""
         n_features = X.shape[1]
         for k in xrange(self.n_components):
-<<<<<<< HEAD
-            if self._covariance_type in ['spherical', 'diag']:
+            if self.covariance_type in ['spherical', 'diag']:
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num *= self.precs_[k]
                 den = 1. + self.precs_[k] * np.sum(z.T[k])
                 self.means_[k] = num / den
-            elif self._covariance_type in ['tied', 'full']:
-                if self._covariance_type == 'tied':
+            elif self.covariance_type in ['tied', 'full']:
+                if self.covariance_type == 'tied':
                     cov = self.precs_
                 else:
                     cov = self.precs_[k]
                 den = np.identity(n_features) + cov * np.sum(z.T[k])
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
-=======
-            if self.cvtype == 'spherical' or self.cvtype == 'diag':
-                num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
-                num *= self.precs_[k]
-                den = 1. + self.precs_[k] * np.sum(self._z.T[k])
-                self.means_[k] = num / den
-            elif self.cvtype == 'tied' or self.cvtype == 'full':
-                if self.cvtype == 'tied':
-                    cov = self.precs_
-                else:
-                    cov = self.precs_[k]
-                den = np.identity(self.n_features) + cov * np.sum(self._z.T[k])
-                num = np.sum(self._z.T[k].reshape((-1, 1)) * self._X, axis=0)
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
                 num = np.dot(cov, num)
                 self.means_[k] = linalg.lstsq(den, num)[0]
 
     def _update_precisions(self, X, z):
         """Update the variational distributions for the precisions"""
         n_features = X.shape[1]
-        if self._covariance_type == 'spherical':
+        if self.covariance_type == 'spherical':
             self.dof_ = 0.5 * n_features * np.sum(z, axis=0)
             for k in xrange(self.n_components):
-<<<<<<< HEAD
                 # could be more memory efficient ?
                 sq_diff = np.sum((X - self.means_[k]) ** 2, axis=1)
                 self.scale_[k] = 1.
@@ -361,7 +315,7 @@ class DPGMM(GMM):
                         digamma(self.dof_[k]) - np.log(self.scale_[k])))
             self.precs_ = np.tile(self.dof_ / self.scale_, [n_features, 1]).T
 
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             for k in xrange(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
                 sq_diff = (X - self.means_[k]) ** 2  # see comment above
@@ -372,7 +326,7 @@ class DPGMM(GMM):
                                                     - np.log(self.scale_[k]))
                 self.bound_prec_[k] -= 0.5 * np.sum(self.precs_[k])
 
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
             for k in xrange(self.n_components):
@@ -385,7 +339,7 @@ class DPGMM(GMM):
                 self.dof_, self.scale_, self.det_scale_, n_features)
             self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
 
-        elif self._covariance_type == 'full':
+        elif self.covariance_type == 'full':
             for k in xrange(self.n_components):
                 sum_resp = np.sum(z.T[k])
                 self.dof_[k] = 2 + sum_resp + n_features
@@ -403,66 +357,6 @@ class DPGMM(GMM):
                     self.scale_[k])
 
     def _monitor(self, X, z, n, end=False):
-=======
-                # XXX: how to avoid this huge temporary matrix in memory
-                dif = (self._X - self.means_[k])
-                self._b[k] = 1.
-                d = np.sum(dif * dif, axis=1)
-                self._b[k] += 0.5 * np.sum(
-                    self._z.T[k] * (d + self.n_features))
-                self._bound_prec[k] = (
-                    0.5 * self.n_features * (
-                        digamma(self._a[k]) - np.log(self._b[k])))
-            self.precs_ = self._a / self._b
-
-        elif self.cvtype == 'diag':
-            for k in xrange(self.n_components):
-                self._a[k].fill(1. + 0.5 * np.sum(self._z.T[k], axis=0))
-                ddif = (self._X - self.means_[k])  # see comment above
-                for d in xrange(self.n_features):
-                    self._b[k, d] = 1.
-                    dd = ddif.T[d] * ddif.T[d]
-                    self._b[k, d] += 0.5 * np.sum(self._z.T[k] * (dd + 1))
-                self.precs_[k] = self._a[k] / self._b[k]
-                self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
-                                                    - np.log(self._b[k]))
-                self._bound_prec[k] -= 0.5 * np.sum(self.precs_[k])
-
-        elif self.cvtype == 'tied':
-            self._a = 2 + self._X.shape[0] + self.n_features
-            self._B = (self._X.shape[0] + 1) * np.identity(self.n_features)
-            for i in xrange(self._X.shape[0]):
-                for k in xrange(self.n_components):
-                    dif = self._X[i] - self.means_[k]
-                    self._B += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
-                                                      dif.reshape((1, -1)))
-            self._B = linalg.pinv(self._B)
-            self.precs_ = self._a * self._B
-            self._detB = linalg.det(self._B)
-            self._bound_prec = 0.5 * detlog_wishart(
-                self._a, self._B, self._detB, self.n_features)
-            self._bound_prec -= 0.5 * self._a * np.trace(self._B)
-
-        elif self.cvtype == 'full':
-            for k in xrange(self.n_components):
-                T = np.sum(self._z.T[k])
-                self._a[k] = 2 + T + self.n_features
-                self._B[k] = (T + 1) * np.identity(self.n_features)
-                for i in xrange(self._X.shape[0]):
-                    dif = self._X[i] - self.means_[k]
-                    self._B[k] += self._z[i, k] * np.dot(dif.reshape((-1, 1)),
-                                                         dif.reshape((1, -1)))
-                self._B[k] = linalg.pinv(self._B[k])
-                self.precs_[k] = self._a[k] * self._B[k]
-                self._detB[k] = linalg.det(self._B[k])
-                self._bound_prec[k] = 0.5 * detlog_wishart(self._a[k],
-                                                           self._B[k],
-                                                           self._detB[k],
-                                                           self.n_features)
-                self._bound_prec[k] -= 0.5 * self._a[k] * np.trace(self._B[k])
-
-    def _monitor(self, n, end=False):
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         """Monitor the lower bound during iteration
 
         Debug method to help see exactly when it is failing to converge as
@@ -473,7 +367,7 @@ class DPGMM(GMM):
             print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
             if end == True:
                 print "Cluster proportions:", self.gamma_.T[1]
-                print "covariance_type:", self._covariance_type
+                print "covariance_type:", self.covariance_type
 
     def _do_mstep(self, X, z, params):
         """Maximize the variational lower bound
@@ -514,57 +408,26 @@ class DPGMM(GMM):
         "The variational lower bound for the mean parameters"
         logprior = 0.
         logprior -= 0.5 * sqnorm(self.means_)
-<<<<<<< HEAD
         logprior -= 0.5 * self.means_.shape[1] * self.n_components
-=======
-        logprior -= 0.5 * self.n_features * self.n_components
-        return logprior
-
-    def _bound_wishart(self, a, B, detB):
-        logprior = wishart_logz(a, B, detB, self.n_features)
-        logprior -= wishart_logz(self.n_features,
-                                 np.identity(self.n_features),
-                                 1, self.n_features)
-        logprior += 0.5 * (a - 1) * detlog_wishart(a, B, detB, self.n_features)
-        logprior += 0.5 * a * np.trace(B)
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         return logprior
 
     def _bound_precisions(self):
         """Returns the bound term related to precisions"""
         logprior = 0.
-<<<<<<< HEAD
-        if self._covariance_type == 'spherical':
+        if self.covariance_type == 'spherical':
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
             logprior += np.sum(- np.log(self.scale_) + self.dof_ -\
                                      self.precs_[:, 0])
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             logprior += np.sum(gammaln(self.dof_))
             logprior -= np.sum(
                 (self.dof_ - 1) * digamma(np.maximum(0.5, self.dof_)))
             logprior += np.sum(- np.log(self.scale_) + self.dof_ - self.precs_)
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             logprior += _bound_wishart(self.dof_, self.scale_, self.det_scale_)
-        elif self._covariance_type == 'full':
-=======
-        if self.cvtype == 'spherical':
-            for k in xrange(self.n_components):
-                logprior += gammaln(self._a[k])
-                logprior -= (self._a[k] - 1) * digamma(max(0.5, self._a[k]))
-                logprior += - np.log(self._b[k]) + self._a[k] - self.precs_[k]
-        elif self.cvtype == 'diag':
-            for k in xrange(self.n_components):
-                for d in xrange(self.n_features):
-                    logprior += gammaln(self._a[k, d])
-                    logprior -= (self._a[k, d] - 1) * digamma(self._a[k, d])
-                    logprior -= np.log(self._b[k, d])
-                    logprior += self._a[k, d] - self.precs_[k, d]
-        elif self.cvtype == 'tied':
-            logprior += self._bound_wishart(self._a, self._B, self._detB)
-        elif self.cvtype == 'full':
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
+        elif self.covariance_type == 'full':
             for k in xrange(self.n_components):
                 logprior += _bound_wishart(self.dof_[k],
                                            self.scale_[k],
@@ -593,25 +456,20 @@ class DPGMM(GMM):
 
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
-        if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
+        if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self._covariance_type)
+                                      % self.covariance_type)
 
-<<<<<<< HEAD
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         c = np.sum(z * _bound_state_log_lik(
                 X, self._initial_bound + self.bound_prec_,
-                self.precs_, self.means_, self._covariance_type))
-=======
-        c = np.sum(self._z * _bound_state_loglik(self._X, self._initial_bound,
-                        self._bound_prec, self.precs_, self.means_))
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
+                self.precs_, self.means_, self.covariance_type))
 
         return c + self._logprior(z)
 
-    def fit(self, X, n_iter=10, params='wmc', init_params='wmc'):
+    def fit(self, X, **kwargs):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -620,27 +478,29 @@ class DPGMM(GMM):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string ''. Likewise, if you
-        would like just to do an initialization, call this method with
-        n_iter=0.
+        argument init_params to the empty string '' when when creating
+        the object. Likewise, if you would like just to do an
+        initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        n_iter : int, optional
-             Maximum number of iterations to perform before convergence.
-        params : string, optional
-            Controls which parameters are updated in the training
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-        init_params : string, optional
-            Controls which parameters are updated in the initialization
-            process.  Can contain any combination of 'w' for weights,
-            'm' for means, and 'c' for covars.  Defaults to 'wmc'.
         """
         self.random_state = check_random_state(self.random_state)
+        if kwargs:
+            warnings.warn("Setting parameters in the 'fit' method is"
+                    "deprecated. Set it on initialization instead.",
+                     DeprecationWarning)
+            # initialisations for in case the user still adds parameters to fit
+            # so things don't break
+            if 'n_iter' in kwargs:
+                self.n_iter = kwargs['n_iter']
+            if 'params' in kwargs:
+                self.params = kwargs['params']
+            if 'init_params' in kwargs:
+                self.init_params = kwargs['init_params']
 
         ## initialization step
         X = np.asarray(X)
@@ -654,26 +514,25 @@ class DPGMM(GMM):
         self._initial_bound = - 0.5 * n_features * np.log(2 * np.pi)
         self._initial_bound -= np.log(2 * np.pi * np.e)
 
-        if (init_params != '') or not hasattr(self, 'gamma_'):
+        if (self.init_params != '') or not hasattr(self, 'gamma_'):
             self._initialize_gamma()
 
-<<<<<<< HEAD
-        if 'm' in init_params or not hasattr(self, 'means_'):
+        if 'm' in self.init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
-                k=self.n_components,
+                n_clusters=self.n_components,
                 random_state=self.random_state).fit(X).cluster_centers_[::-1]
 
-        if 'w' in init_params or not hasattr(self, 'weights_'):
+        if 'w' in self.init_params or not hasattr(self, 'weights_'):
             self.weights_ = np.tile(1.0 / self.n_components, self.n_components)
 
-        if 'c' in init_params or not hasattr(self, 'precs_'):
-            if self._covariance_type == 'spherical':
+        if 'c' in self.init_params or not hasattr(self, 'precs_'):
+            if self.covariance_type == 'spherical':
                 self.dof_ = np.ones(self.n_components)
                 self.scale_ = np.ones(self.n_components)
                 self.precs_ = np.ones((self.n_components, n_features))
                 self.bound_prec_ = 0.5 * n_features * (
                     digamma(self.dof_) - np.log(self.scale_))
-            elif self._covariance_type == 'diag':
+            elif self.covariance_type == 'diag':
                 self.dof_ = 1 + 0.5 * n_features
                 self.dof_ *= np.ones((self.n_components, n_features))
                 self.scale_ = np.ones((self.n_components, n_features))
@@ -681,7 +540,7 @@ class DPGMM(GMM):
                 self.bound_prec_ = 0.5 * (np.sum(digamma(self.dof_) -
                                                  np.log(self.scale_), 1))
                 self.bound_prec_ -= 0.5 * np.sum(self.precs_, 1)
-            elif self._covariance_type == 'tied':
+            elif self.covariance_type == 'tied':
                 self.dof_ = 1.
                 self.scale_ = np.identity(n_features)
                 self.precs_ = np.identity(n_features)
@@ -689,54 +548,12 @@ class DPGMM(GMM):
                 self.bound_prec_ = 0.5 * wishart_log_det(
                     self.dof_, self.scale_, self.det_scale_, n_features)
                 self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
-            elif self._covariance_type == 'full':
+            elif self.covariance_type == 'full':
                 self.dof_ = (1 + self.n_components + X.shape[0])
                 self.dof_ *= np.ones(self.n_components)
                 self.scale_ = [2 * np.identity(n_features)
                            for i in xrange(self.n_components)]
                 self.precs_ = [np.identity(n_features)
-=======
-        if 'm' in init_params or not hasattr(self, 'means'):
-            self.means_ = cluster.KMeans(
-                k=self.n_components, random_state=self.random_state
-            ).fit(X).cluster_centers_[::-1]
-
-        if 'w' in init_params or not hasattr(self, 'weights'):
-            self.weights = np.tile(1.0 / self.n_components, self.n_components)
-
-        if 'c' in init_params or not hasattr(self, 'covars'):
-            if self.cvtype == 'spherical':
-                self._a = np.ones(self.n_components)
-                self._b = np.ones(self.n_components)
-                self.precs_ = np.ones(self.n_components)
-                self._bound_prec = (0.5 * self.n_features *
-                                     (digamma(self._a) -
-                                      np.log(self._b)))
-            elif self.cvtype == 'diag':
-                self._a = 1 + 0.5 * self.n_features
-                self._a *= np.ones((self.n_components, self.n_features))
-                self._b = np.ones((self.n_components, self.n_features))
-                self.precs_ = np.ones((self.n_components, self.n_features))
-                self._bound_prec = np.zeros(self.n_components)
-                for k in xrange(self.n_components):
-                    self._bound_prec[k] = 0.5 * np.sum(digamma(self._a[k])
-                                                        - np.log(self._b[k]))
-                    self._bound_prec[k] -= 0.5 * np.sum(self.precs_[k])
-            elif self.cvtype == 'tied':
-                self._a = 1.
-                self._B = np.identity(self.n_features)
-                self.precs_ = np.identity(self.n_features)
-                self._detB = 1.
-                self._bound_prec = 0.5 * detlog_wishart(
-                    self._a, self._B, self._detB, self.n_features)
-                self._bound_prec -= 0.5 * self._a * np.trace(self._B)
-            elif self.cvtype == 'full':
-                self._a = (1 + self.n_components + self._X.shape[0])
-                self._a *= np.ones(self.n_components)
-                self._B = [2 * np.identity(self.n_features)
-                           for i in xrange(self.n_components)]
-                self.precs_ = [np.identity(self.n_features)
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
                                 for i in xrange(self.n_components)]
                 self.det_scale_ = np.ones(self.n_components)
                 self.bound_prec_ = np.zeros(self.n_components)
@@ -751,7 +568,7 @@ class DPGMM(GMM):
         logprob = []
         # reset self.converged_ to False
         self.converged_ = False
-        for i in xrange(n_iter):
+        for i in xrange(self.n_iter):
             # Expectation step
             curr_logprob, z = self.eval(X)
             logprob.append(curr_logprob.sum() + self._logprior(z))
@@ -762,7 +579,7 @@ class DPGMM(GMM):
                 break
 
             # Maximization step
-            self._do_mstep(X, z, params)
+            self._do_mstep(X, z, self.params)
 
         return self
 
@@ -827,38 +644,20 @@ class VBGMM(DPGMM):
         True when convergence was reached in fit(), False
         otherwise.
 
-<<<<<<< HEAD
-=======
-    Methods
-    -------
-    eval(X)
-        Compute a lower-bound of the log likelihood of X under the model
-        and an approximate posterior distribution over mixture components.
-    fit(X)
-        Estimate the posterior of themodel parameters from X using the
-        variational mean-field algorithm.
-    predict(X)
-        Find most likely mixtures components for each observation in X.
-    rvs(n=1)
-        Generate `n` samples from the posterior for the model.
-    score(X)
-        Compute the log likelihood of X under the model.
-
-
->>>>>>> b4d4a9f... removed the decode
     See Also
     --------
     GMM : Finite Gaussian mixture model fit with EM
     DPGMM : Ininite Gaussian mixture model, using the dirichlet
-    process, fit with a variational algorithm
+        process, fit with a variational algorithm
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None):
+                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
-            thresh=thresh, verbose=verbose, min_covar=min_covar)
+            thresh=thresh, verbose=verbose, min_covar=min_covar,
+            n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
 
     def eval(self, X):
@@ -893,18 +692,13 @@ class VBGMM(DPGMM):
         bound = np.zeros(X.shape[0])
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))
 
-        if self._covariance_type not in ['full', 'tied', 'diag', 'spherical']:
+        if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
-                                      % self._covariance_type)
+                                      % self.covariance_type)
         p = _bound_state_log_lik(
                 X, self._initial_bound + self.bound_prec_,
-                self.precs_, self.means_, self._covariance_type)
+                self.precs_, self.means_, self.covariance_type)
 
-<<<<<<< HEAD
-=======
-        p = _bound_state_loglik(obs, self._initial_bound,
-                                self._bound_prec, self.precs_, self.means_)
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
         z = p + dg
         z = log_normalize(z, axis=-1)
         bound = np.sum(z * p, axis=-1)
@@ -947,4 +741,4 @@ class VBGMM(DPGMM):
             print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
             if end == True:
                 print "Cluster proportions:", self.gamma_
-                print "covariance_type:", self._covariance_type
+                print "covariance_type:", self.covariance_type

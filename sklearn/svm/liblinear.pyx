@@ -6,59 +6,12 @@ Author: fabian.pedregosa@inria.fr
 
 import  numpy as np
 cimport numpy as np
-
-cdef extern from "src/liblinear/linear.h":
-    cdef struct feature_node
-    cdef struct problem
-    cdef struct model
-    cdef struct parameter
-    char *check_parameter (problem *prob, parameter *param)
-    model *train (problem *prob, parameter *param)
-    int get_nr_feature (model *model)
-    int get_nr_class (model *model)
-    void free_and_destroy_model (model **)
-    void destroy_param (parameter *)
-
-cdef extern from "src/liblinear/liblinear_helper.c":
-    void copy_w(char *, model *, int)
-    parameter *set_parameter (int, double, double, int,
-                             char *, char *)
-    problem *set_problem (char *, char *, np.npy_intp *, double)
-    problem *csr_set_problem (char *values, np.npy_intp *n_indices,
-        char *indices, np.npy_intp *n_indptr, char *indptr, char *Y,
-        np.npy_intp n_features, double bias)
-    parameter *set_parameter(int, double, double, int, char *, char *)
-
-    model *set_model(parameter *, char *, np.npy_intp *, char *, double)
-    int copy_predict(char *, model *, np.npy_intp *, char *)
-
-    int csr_copy_predict(
-        np.npy_intp n_features, np.npy_intp *data_size, char *data,
-        np.npy_intp *index_size, char *index, np.npy_intp
-        *intptr_size, char *intptr, model *model, char *dec_values)
-
-    int csr_copy_predict_values(
-        np.npy_intp n_features, np.npy_intp *data_size, char *data, np.npy_intp
-        *index_size, char *index, np.npy_intp *indptr_shape, char
-        *intptr, model *model_, char *dec_values, int nr_class)
-
-
-    int csr_copy_predict_proba(
-        np.npy_intp n_features, np.npy_intp *data_size, char *data,
-        np.npy_intp *index_size, char *index, np.npy_intp
-        *indptr_shape, char *indptr, model *model_, char *dec_values)
-
-    int copy_prob_predict(char *, model *, np.npy_intp *, char *)
-    int copy_predict_values(char *, model *, np.npy_intp *, char *, int)
-    int copy_label(char *, model *, int)
-    double get_bias(model *)
-    void free_problem (problem *)
-    void free_parameter (parameter *)
+cimport liblinear
 
 
 def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-                 np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
-                 solver_type, double eps, double bias, double C, 
+                 np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+                 int solver_type, double eps, double bias, double C, 
                  np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
     """
@@ -113,8 +66,8 @@ cdef _csr_train_wrap(np.int32_t n_features,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] X_values,
                  np.ndarray[np.int32_t,   ndim=1, mode='c'] X_indices,
                  np.ndarray[np.int32_t,   ndim=1, mode='c'] X_indptr,
-                 np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
-                 solver_type, double eps, double bias, double C,
+                 np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+                 int solver_type, double eps, double bias, double C,
                  np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
     cdef parameter *param
@@ -424,3 +377,10 @@ def csr_predict_prob_wrap(X, coef, solver_type, tol, C, weight_label,
     return _csr_predict_prob_wrap(X.shape[1], X.data, X.indices, X.indptr,
                                   coef, solver_type, tol, C, weight_label,
                                   weight, label, bias)
+
+
+def set_verbosity_wrap(int verbosity):
+    """
+    Control verbosity of libsvm library
+    """
+    set_verbosity(verbosity)

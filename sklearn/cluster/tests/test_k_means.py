@@ -1,14 +1,19 @@
 """Testing for K-means"""
 
 import numpy as np
+import warnings
 from scipy import sparse as sp
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
+from nose import SkipTest
 from nose.tools import assert_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
+from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
@@ -36,6 +41,16 @@ def test_square_norms():
     x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
     assert_array_almost_equal(x_squared_norms,
                               x_squared_norms_from_csr, 5)
+
+
+def test_kmeans_dtype():
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(40, 2))
+    X = (X * 10).astype(np.uint8)
+    km = KMeans(n_init=1).fit(X)
+    with warnings.catch_warnings(record=True) as w:
+        assert_array_equal(km.labels_, km.predict(X))
+        assert_equal(len(w), 1)
 
 
 def test_labels_assignement_and_inertia():
@@ -96,13 +111,13 @@ def test_minibatch_update_consistency():
     old_inertia, incremental_diff = _mini_batch_step(
         X_mb, x_mb_squared_norms, new_centers, counts,
         buffer, 1)
-    assert_true(old_inertia > 0.0)
+    assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels, new_inertia = _labels_inertia(
         X_mb, x_mb_squared_norms, new_centers)
-    assert_true(new_inertia > 0.0)
-    assert_true(new_inertia < old_inertia)
+    assert_greater(new_inertia, 0.0)
+    assert_less(new_inertia, old_inertia)
 
     # check that the incremental difference computation is matching the
     # final observed value
@@ -113,13 +128,13 @@ def test_minibatch_update_consistency():
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
         X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
         buffer_csr, 1)
-    assert_true(old_inertia_csr > 0.0)
+    assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
         X_mb_csr, x_mb_squared_norms_csr, new_centers_csr)
-    assert_true(new_inertia_csr > 0.0)
-    assert_true(new_inertia_csr < old_inertia_csr)
+    assert_greater(new_inertia_csr, 0.0)
+    assert_less(new_inertia_csr, old_inertia_csr)
 
     # check that the incremental difference computation is matching the
     # final observed value
@@ -135,6 +150,8 @@ def test_minibatch_update_consistency():
 
 
 def _check_fitted_model(km):
+    # check that the number of clusters centers and distinct labels match
+    # the expectation
     centers = km.cluster_centers_
     assert_equal(centers.shape, (n_clusters, n_features))
 
@@ -143,94 +160,142 @@ def _check_fitted_model(km):
 
     # check that the labels assignements are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
-    assert_true(km.inertia_ > 0.0)
+    assert_greater(km.inertia_, 0.0)
 
     # check error on dataset being too small
     assert_raises(ValueError, km.fit, [[0., 1.]])
 
 
 def test_k_means_plus_plus_init():
-    k_means = KMeans(init="k-means++", k=n_clusters, random_state=42).fit(X)
+    k_means = KMeans(init="k-means++", n_clusters=n_clusters,
+            random_state=42).fit(X)
     _check_fitted_model(k_means)
 
 
+def test_k_means_new_centers():
+    # Explore the part of the code where a new center is reassigned
+    X = np.array([[0, 0, 1, 1],
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0]])
+    labels = [0, 1, 2, 1, 1, 2]
+    bad_centers = np.array([[+0,  1,  0,  0],
+                            [.2,  0, .2, .2],
+                            [+0,  0,  0,  0]])
+
+    km = KMeans(n_clusters=3, init=bad_centers, n_init=1, max_iter=10,
+                random_state=1)
+    for this_X in (X, sp.coo_matrix(X)):
+        km.fit(this_X)
+        this_labels = km.labels_
+        # Reorder the labels so that the first instance is in cluster 0,
+        # the second in cluster 1, ...
+        this_labels = unique(this_labels,
+                                return_index=True)[1][this_labels]
+        np.testing.assert_array_equal(this_labels, labels)
+
+
+def _get_mac_os_version():
+    import platform
+    mac_version, _, _ = platform.mac_ver()
+    if mac_version:
+        # turn something like '10.7.3' into '10.7'
+        return '.'.join(mac_version.split('.')[:2])
+
+
 def test_k_means_plus_plus_init_2_jobs():
-    k_means = KMeans(init="k-means++", k=n_clusters, n_jobs=2,
+    if _get_mac_os_version() == '10.7':
+        raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
+    k_means = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
     _check_fitted_model(k_means)
 
 
 def test_k_means_plus_plus_init_sparse():
-    k_means = KMeans(init="k-means++", k=n_clusters, random_state=42)
+    k_means = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42)
     k_means.fit(X_csr)
     _check_fitted_model(k_means)
 
 
 def test_k_means_random_init():
-    k_means = KMeans(init="random", k=n_clusters, random_state=42).fit(X)
+    k_means = KMeans(init="random", n_clusters=n_clusters, random_state=42)
+    k_means.fit(X)
     _check_fitted_model(k_means)
 
 
 def test_k_means_random_init_sparse():
-    k_means = KMeans(init="random", k=n_clusters, random_state=42).fit(X_csr)
+    k_means = KMeans(init="random", n_clusters=n_clusters, random_state=42)
+    k_means.fit(X_csr)
     _check_fitted_model(k_means)
 
 
 def test_k_means_plus_plus_init_not_precomputed():
-    k_means = KMeans(init="k-means++", k=n_clusters, random_state=42,
+    k_means = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
                      precompute_distances=False).fit(X)
     _check_fitted_model(k_means)
 
 
 def test_k_means_random_init_not_precomputed():
-    k_means = KMeans(init="random", k=n_clusters, random_state=42,
+    k_means = KMeans(init="random", n_clusters=n_clusters, random_state=42,
                      precompute_distances=False).fit(X)
     _check_fitted_model(k_means)
 
 
 def test_k_means_perfect_init():
-    k_means = KMeans(init=centers.copy(), k=n_clusters, random_state=42,
-                     n_init=1)
+    k_means = KMeans(init=centers.copy(), n_clusters=n_clusters,
+            random_state=42, n_init=1)
     k_means.fit(X)
     _check_fitted_model(k_means)
 
 
 def test_mb_k_means_plus_plus_init_dense_array():
-    mb_k_means = MiniBatchKMeans(init="k-means++", k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42)
     mb_k_means.fit(X)
     _check_fitted_model(mb_k_means)
 
 
 def test_mb_k_means_plus_plus_init_sparse_matrix():
-    mb_k_means = MiniBatchKMeans(init="k-means++", k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42)
     mb_k_means.fit(X_csr)
     _check_fitted_model(mb_k_means)
 
 
+def test_minibatch_init_with_large_k():
+    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
+    # Check that a warning is raised, as the number clusters is larger
+    # than the init_size
+    with warnings.catch_warnings(record=True) as warn_queue:
+        mb_k_means.fit(X)
+
+    assert_equal(len(warn_queue), 1)
+
+
 def test_minibatch_k_means_random_init_dense_array():
     # increase n_init to make random init stable enough
-    mb_k_means = MiniBatchKMeans(init="random", k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init="random", n_clusters=n_clusters,
                                  random_state=42, n_init=10).fit(X)
     _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_k_means_random_init_sparse_csr():
     # increase n_init to make random init stable enough
-    mb_k_means = MiniBatchKMeans(init="random", k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init="random", n_clusters=n_clusters,
                                  random_state=42, n_init=10).fit(X_csr)
     _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_k_means_perfect_init_dense_array():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
                                  random_state=42).fit(X)
     _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_k_means_perfect_init_sparse_csr():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
                                  random_state=42).fit(X_csr)
     _check_fitted_model(mb_k_means)
 
@@ -245,7 +310,7 @@ def test_sparse_mb_k_means_callable_init():
 
 
 def test_mini_batch_k_means_random_init_partial_fit():
-    km = MiniBatchKMeans(k=n_clusters, init="random", random_state=42)
+    km = MiniBatchKMeans(n_clusters=n_clusters, init="random", random_state=42)
 
     # use the partial_fit API for online learning
     for X_minibatch in np.array_split(X, 10):
@@ -257,28 +322,35 @@ def test_mini_batch_k_means_random_init_partial_fit():
 
 
 def test_minibatch_default_init_size():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), k=n_clusters,
-                                 random_state=42).fit(X)
-    assert_equal(mb_k_means.init_size, 3 * mb_k_means.batch_size)
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
+                                 batch_size=10, random_state=42).fit(X)
+    assert_equal(mb_k_means.init_size_, 3 * mb_k_means.batch_size)
     _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_set_init_size():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), k=n_clusters,
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
                                  init_size=666, random_state=42).fit(X)
     assert_equal(mb_k_means.init_size, 666)
+    assert_equal(mb_k_means.init_size_, n_samples)
     _check_fitted_model(mb_k_means)
 
 
 def test_k_means_invalid_init():
-    k_means = KMeans(init="invalid", n_init=1, k=n_clusters)
+    k_means = KMeans(init="invalid", n_init=1, n_clusters=n_clusters)
+    assert_raises(ValueError, k_means.fit, X)
+
+
+def test_mini_match_k_means_invalid_init():
+    k_means = MiniBatchKMeans(init="invalid", n_init=1, n_clusters=n_clusters)
     assert_raises(ValueError, k_means.fit, X)
 
 
 def test_k_means_copyx():
     """Check if copy_x=False returns nearly equal X after de-centering."""
     my_X = X.copy()
-    k_means = KMeans(copy_x=False, k=n_clusters, random_state=42).fit(my_X)
+    k_means = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
+    k_means.fit(my_X)
     _check_fitted_model(k_means)
 
     # check if my_X is centered
@@ -295,7 +367,7 @@ def test_k_means_non_collapsed():
     """
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])
-    k_means = KMeans(init=array_init, k=3, random_state=42, n_init=1)
+    k_means = KMeans(init=array_init, n_clusters=3, random_state=42, n_init=1)
     k_means.fit(my_X)
 
     # centers must not been collapsed
@@ -308,7 +380,9 @@ def test_k_means_non_collapsed():
 
 
 def test_predict():
-    k_means = KMeans(k=n_clusters, random_state=42).fit(X)
+    k_means = KMeans(n_clusters=n_clusters, random_state=42)
+
+    k_means.fit(X)
 
     # sanity check: predict centroid labels
     pred = k_means.predict(k_means.cluster_centers_)
@@ -316,17 +390,23 @@ def test_predict():
 
     # sanity check: re-predict labeling for training set samples
     pred = k_means.predict(X)
-    assert_array_equal(k_means.predict(X), k_means.labels_)
+    assert_array_equal(pred, k_means.labels_)
+
+    # re-predict labels for training set using fit_predict
+    pred = k_means.fit_predict(X)
+    assert_array_equal(pred, k_means.labels_)
 
 
 def test_score():
-    s1 = KMeans(k=n_clusters, max_iter=1, random_state=42).fit(X).score(X)
-    s2 = KMeans(k=n_clusters, max_iter=10, random_state=42).fit(X).score(X)
-    assert_true(s2 > s1)
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42)
+    s1 = km1.fit(X).score(X)
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42)
+    s2 = km2.fit(X).score(X)
+    assert_greater(s2, s1)
 
 
 def test_predict_minibatch_dense_input():
-    mb_k_means = MiniBatchKMeans(k=n_clusters, random_state=40).fit(X)
+    mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, random_state=40).fit(X)
 
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
@@ -338,7 +418,7 @@ def test_predict_minibatch_dense_input():
 
 
 def test_predict_minibatch_kmeanspp_init_sparse_input():
-    mb_k_means = MiniBatchKMeans(k=n_clusters, init='k-means++',
+    mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init='k-means++',
                                  n_init=10).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
@@ -354,7 +434,7 @@ def test_predict_minibatch_kmeanspp_init_sparse_input():
 
 
 def test_predict_minibatch_random_init_sparse_input():
-    mb_k_means = MiniBatchKMeans(k=n_clusters, init='random',
+    mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init='random',
                                  n_init=10).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
@@ -376,18 +456,19 @@ def test_input_dtypes():
     init_int = X_int[:2]
 
     fitted_models = [
-        KMeans(k=2).fit(X_list),
-        KMeans(k=2).fit(X_int),
-        KMeans(k=2, init=init_int, n_init=1).fit(X_list),
-        KMeans(k=2, init=init_int, n_init=1).fit(X_int),
+        KMeans(n_clusters=2).fit(X_list),
+        KMeans(n_clusters=2).fit(X_int),
+        KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_list),
+        KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
         # mini batch kmeans is very unstable on such a small dataset hence
         # we use many inits
-        MiniBatchKMeans(k=2, n_init=10, batch_size=2).fit(X_list),
-        MiniBatchKMeans(k=2, n_init=10, batch_size=2).fit(X_int),
-        MiniBatchKMeans(k=2, n_init=10, batch_size=2).fit(X_int_csr),
-        MiniBatchKMeans(k=2, batch_size=2, init=init_int).fit(X_list),
-        MiniBatchKMeans(k=2, batch_size=2, init=init_int).fit(X_int),
-        MiniBatchKMeans(k=2, batch_size=2, init=init_int).fit(X_int_csr),
+        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
+        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
+        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
+        MiniBatchKMeans(n_clusters=2, batch_size=2, init=init_int).fit(X_list),
+        MiniBatchKMeans(n_clusters=2, batch_size=2, init=init_int).fit(X_int),
+        MiniBatchKMeans(n_clusters=2, batch_size=2,
+            init=init_int).fit(X_int_csr),
     ]
     expected_labels = [0, 1, 1, 0, 0, 1]
     scores = np.array([v_measure_score(expected_labels, km.labels_)
@@ -396,7 +477,7 @@ def test_input_dtypes():
 
 
 def test_transform():
-    k_means = KMeans(k=n_clusters)
+    k_means = KMeans(n_clusters=n_clusters)
     k_means.fit(X)
     X_new = k_means.transform(k_means.cluster_centers_)
 
@@ -404,7 +485,7 @@ def test_transform():
         assert_equal(X_new[c, c], 0)
         for c2 in range(n_clusters):
             if c != c2:
-                assert_true(X_new[c, c2] > 0)
+                assert_greater(X_new[c, c2], 0)
 
 
 def test_n_init():
@@ -414,7 +495,7 @@ def test_n_init():
     inertia = np.zeros((len(n_init_range), n_runs))
     for i, n_init in enumerate(n_init_range):
         for j in range(n_runs):
-            km = KMeans(k=n_clusters, init="random", n_init=n_init,
+            km = KMeans(n_clusters=n_clusters, init="random", n_init=n_init,
                         random_state=j).fit(X)
             inertia[i, j] = km.inertia_
 

@@ -19,9 +19,9 @@ from sklearn.datasets import fetch_olivetti_faces
 from sklearn.ensemble import ExtraTreesClassifier
 
 # Number of cores to use to perform parallel fitting of the forest model
-n_jobs = 2
+n_jobs = 1
 
-# Loading the digits dataset
+# Load the faces dataset
 data = fetch_olivetti_faces()
 X = data.images.reshape((len(data.images), -1))
 y = data.target

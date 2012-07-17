@@ -2,7 +2,7 @@
 
 from sklearn import datasets
 from sklearn.datasets import mldata_filename, fetch_mldata
-from sklearn.utils.testing import (assert_in, mock_urllib2)
+from sklearn.utils.testing import assert_in, assert_not_in, mock_urllib2
 from nose.tools import assert_equal, assert_raises
 from nose import with_setup
 from numpy.testing import assert_array_equal
@@ -47,7 +47,8 @@ def test_download():
                                              'data': sp.ones((150, 4))}})
     try:
         mock = fetch_mldata('mock', data_home=tmpdir)
-        assert_in(mock, in_=['COL_NAMES', 'DESCR', 'target', 'data'])
+        for n in ["COL_NAMES", "DESCR", "target", "data"]:
+            assert_in(n, mock)
 
         assert_equal(mock.target.shape, (150,))
         assert_equal(mock.data.shape, (150, 4))
@@ -68,7 +69,9 @@ def test_fetch_one_column():
         datasets.mldata.urllib2 = mock_urllib2({dataname: {'x': x}})
 
         dset = fetch_mldata(dataname, data_home=tmpdir)
-        assert_in(dset, in_=['COL_NAMES', 'DESCR', 'data'], out_=['target'])
+        for n in ["COL_NAMES", "DESCR", "data"]:
+            assert_in(n, dset)
+        assert_not_in("target", dset)
 
         assert_equal(dset.data.shape, (2, 3))
         assert_array_equal(dset.data, x)
@@ -98,8 +101,10 @@ def test_fetch_multiple_column():
                                                  ['z', 'data', 'label'])})
 
         dset = fetch_mldata(dataname, data_home=tmpdir)
-        assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'z'],
-                  out_=['x', 'y'])
+        for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
+            assert_in(n, dset)
+        assert_not_in("x", dset)
+        assert_not_in("y", dset)
 
         assert_array_equal(dset.data, x)
         assert_array_equal(dset.target, y)
@@ -114,8 +119,11 @@ def test_fetch_multiple_column():
                                                  ['y', 'x', 'z'])})
 
         dset = fetch_mldata(dataname, data_home=tmpdir)
-        assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'z'],
-                  out_=['x', 'y'])
+        for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
+            assert_in(n, dset)
+        assert_not_in("x", dset)
+        assert_not_in("y", dset)
+
         assert_array_equal(dset.data, x)
         assert_array_equal(dset.target, y)
         assert_array_equal(dset.z, z.T)
@@ -130,17 +138,21 @@ def test_fetch_multiple_column():
 
         dset = fetch_mldata(dataname, target_name=2, data_name=0,
                             data_home=tmpdir)
-        assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'x'],
-                  out_=['z', 'y'])
+        for n in ["COL_NAMES", "DESCR", "target", "data", "x"]:
+            assert_in(n, dset)
+        assert_not_in("y", dset)
+        assert_not_in("z", dset)
+
         assert_array_equal(dset.data, z)
         assert_array_equal(dset.target, y)
 
         # by name
         dset = fetch_mldata(dataname, target_name='y', data_name='z',
                             data_home=tmpdir)
-        assert_in(dset, in_=['COL_NAMES', 'DESCR', 'target', 'data', 'x'],
-                  out_=['z', 'y'])
-        assert_array_equal(dset.data, z)
-        assert_array_equal(dset.target, y)
+        for n in ["COL_NAMES", "DESCR", "target", "data", "x"]:
+            assert_in(n, dset)
+        assert_not_in("y", dset)
+        assert_not_in("z", dset)
+
     finally:
         datasets.mldata.urllib2 = _urllib2_ref

@@ -77,7 +77,7 @@ Since the kernel is additive, it is possible to treat all components
 the Fourier transform in regular intervals, instead of approximating
 using Monte Carlo sampling.
 
-The class :class:`AdditiveChi2Kernel` implements this component wise
+The class :class:`AdditiveChi2Sampler` implements this component wise
 deterministic sampling. Each component is sampled `n` times, yielding
 `2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).
@@ -149,7 +149,7 @@ or store training examples.
 .. topic:: References:
 
     .. [RR2007] `"Random features for large-scale kernel machines"
-      <http://webmail.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      <http://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
       <http://sminchisescu.ins.uni-bonn.de/papers/lis_dagm10.pdf>`_

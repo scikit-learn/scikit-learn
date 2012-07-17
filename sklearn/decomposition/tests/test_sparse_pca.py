@@ -7,7 +7,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_equal
 
 from nose import SkipTest
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_false
 
 from .. import SparsePCA, MiniBatchSparsePCA
 from ...utils import check_random_state
@@ -82,6 +82,18 @@ def test_fit_transform():
                            alpha=alpha)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+
+
+def test_transform_nan():
+    """
+    Test that SparsePCA won't return NaN when there is 0 feature in all
+    samples.
+    """
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    Y[:, 0] = 0
+    estimator = SparsePCA(n_components=8)
+    assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
 
 
 def test_fit_transform_tall():

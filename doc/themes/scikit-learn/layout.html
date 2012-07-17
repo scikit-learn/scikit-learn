@@ -5,10 +5,18 @@
     Layout for scikit-learn, after a design made by Angel Soler
     (http://webylimonada.org)
 
+    Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
+    Update: Next-page button added - 16/03/2012 - Jaques Grobler
+
+
     :copyright: Fabian Pedregosa
     :license: BSD
 #}
 {% extends "basic/layout.html" %}
+
+{% if theme_collapsiblesidebar|tobool %}
+{% set script_files = script_files + ['_static/sidebar.js'] %}
+{% endif %}
 
 {% block extrahead %}
 <script type="text/javascript">
@@ -39,6 +47,7 @@
            Latest stable version</a></p></p>
      </div>
    {%- endif %}
+
     <div class="header-wrapper">
       <div class="header">
         {%- if logo %}
@@ -85,14 +94,14 @@
 {% block content %}
     <div class="content-wrapper">
 
-    <div class="sphinxsidebar">
-
-    {%- if pagename != 'index' %}
-	{%- if parents %}
-	<div class="rel">
-	{% else %}
-	<div class="rel rellarge">
-	{% endif %}
+      <div class="sphinxsidebar">
+	<div class="sphinxsidebarwrapper">
+	  {%- if pagename != 'index' %}
+	  {%- if parents %}
+	  <div class="rel">
+	   {% else %}
+	   <div class="rel rellarge">
+	     {% endif %}
 	<!-- rellinks[1:] is an ugly hack to avoid link to module
 	    index  -->
 	{%- for rellink in rellinks[1:]|reverse %}
@@ -137,22 +146,20 @@
 	</div>
     {%- endif %}
     </div>
-    <p style="text-align: center">This documentation is
+    <p style="text-align: center; background-color: #FFE4E4">This documentation is
     for {{project}} <strong>version {{ release|e }}</strong>
     &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {% else %}
     <h3>News</h3>
 
-    <p>scikit-learn 0.10 is available
+    <p>scikit-learn 0.11 is available
     for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
     See <a href="{{pathto('whats_new')}}">what's new</a> and tips
     on <a href="{{pathto('install')}}">installing</a>.</p>
 
 
-    <h3>Videos</h3>
-    <p>Watch the 2010
-    ICML <a href="http://videolectures.net/icml2010_varaquaux_scik/">Introductory
-    Video</a> by Gaël Varoquaux.</p>
+    <h3>Presentations</h3>
+    <p>Get into the spirit with <a href="{{pathto('presentations')}}">videos</a> from Scikit-Learn tutorials.</p>
 
     <h3>Participate</h3>
 
@@ -188,6 +195,8 @@
 	{{ toc }}
     {% endif %}
     </div>
+	  </div>
+
 
       <div class="content">
           {%- block document %}
@@ -196,6 +205,7 @@
         <div class="clearer"></div>
       </div>
     </div>
+  
 {% endblock %}
 
 
@@ -216,7 +226,7 @@
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
     {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://webylimonada.com">Web y Limonada</a>.
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://desgrana.es">Desgrana</a>.
     {%- endif %}
     {%- if show_source and has_source and sourcename %}
     <span style="padding-left: 5ex;">
@@ -225,4 +235,32 @@
     </span>
     {%- endif %}
     </div>
+
+    {%- if pagename != 'index' %}
+    {%- if parents %}
+     <div class="rel">
+    {% else %}
+     <div class="rel rellarge">
+    {% endif %}
+    {%- for rellink in rellinks[1:]|reverse %}
+    <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
+      <a href="{{ pathto(rellink[0]) }}">
+        {{loop.cycle('Previous', 'Next')}}
+      </a>  
+    </div>
+    {%- endfor %}
+    {% endif %}
+     </div>
+     <script type="text/javascript">
+       $("div.buttonNext, div.buttonPrevious").hover(
+           function () {
+               $(this).css('background-color', '#FF9C34');
+           },
+           function () {
+               $(this).css('background-color', '#A7D6E2');
+           }
+       );
+     </script>
 {%- endblock %}
+
+

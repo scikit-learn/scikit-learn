@@ -7,7 +7,7 @@ An example showing how the scikit-learn can be used to recognize images of
 hand-written digits.
 
 This example is commented in the
-:ref:`tutorial section of the user manual <getting_started>`.
+:ref:`tutorial section of the user manual <introduction>`.
 
 """
 print __doc__

@@ -8,6 +8,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
+from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
@@ -74,11 +75,11 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"X[0] <= 0.0\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
-    "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
+    "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -93,11 +94,11 @@ def test_graphviz_toy():
     contents1 = out.getvalue()
 
     tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"feature1 <= 0.0\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\"] ;\n"
-    "1 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 3.  0.]\"] ;\n"
-    "2 [label=\"error = 0.0\\nsamples = 3\\nvalue = [ 0.  3.]\"] ;\n"
+    "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
+    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
     "0 -> 1 ;\n"
+    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
     "0 -> 2 ;\n"
     "}")
     contents2 = tree_toy.getvalue()
@@ -224,6 +225,10 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
 
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+    assert_true(clf.feature_importances_ is None)
+
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
@@ -297,6 +302,16 @@ def test_error():
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
 
+    # wrong length of sample mask
+    clf = tree.DecisionTreeClassifier()
+    sample_mask = np.array([1])
+    assert_raises(ValueError, clf.fit, X, y, sample_mask=sample_mask)
+
+    # wrong length of X_argsorted
+    clf = tree.DecisionTreeClassifier()
+    X_argsorted = np.array([1])
+    assert_raises(ValueError, clf.fit, X, y, X_argsorted=X_argsorted)
+
 
 def test_min_samples_leaf():
     """Test if leaves contain more than leaf_count training examples"""
@@ -341,6 +356,61 @@ def test_pickle():
     score2 = obj2.score(boston.data, boston.target)
     assert score == score2, "Failed to generate same score " + \
             " after pickling (regression) "
+
+
+def test_multioutput():
+    """Check estimators on multi-output problems."""
+
+    X = [[-2, -1],
+         [-1, -1],
+         [-1, -2],
+         [1, 1],
+         [1, 2],
+         [2, 1],
+         [-2, 1],
+         [-1, 1],
+         [-1, 2],
+         [2, -1],
+         [1, -1],
+         [1, -2]]
+
+    y = [[-1, 0],
+         [-1, 0],
+         [-1, 0],
+         [1, 1],
+         [1, 1],
+         [1, 1],
+         [-1, 2],
+         [-1, 2],
+         [-1, 2],
+         [1, 3],
+         [1, 3],
+         [1, 3]]
+
+    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    # toy classification problem
+    clf = tree.DecisionTreeClassifier()
+    y_hat = clf.fit(X, y).predict(T)
+    assert_array_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+    proba = clf.predict_proba(T)
+    assert_equal(len(proba), 2)
+    assert_equal(proba[0].shape, (4, 2))
+    assert_equal(proba[1].shape, (4, 4))
+
+    log_proba = clf.predict_log_proba(T)
+    assert_equal(len(log_proba), 2)
+    assert_equal(log_proba[0].shape, (4, 2))
+    assert_equal(log_proba[1].shape, (4, 4))
+
+    # toy regression problem
+    clf = tree.DecisionTreeRegressor()
+    y_hat = clf.fit(X, y).predict(T)
+    assert_almost_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
 
 
 if __name__ == "__main__":

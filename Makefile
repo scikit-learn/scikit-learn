@@ -33,7 +33,7 @@ test-code: in
 test-doc:
 	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
 	--doctest-extension=inc --doctest-fixtures=_fixture doc/ doc/modules/ \
-	doc/developers
+	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
 
 test-coverage:
 	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \

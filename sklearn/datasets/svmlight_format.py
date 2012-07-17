@@ -15,7 +15,15 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simple BSD.
 
+from bz2 import BZ2File
+from contextlib import closing
+import gzip
+import io
+import os.path
+
 import numpy as np
+import scipy.sparse as sp
+
 from ._svmlight_format import _load_svmlight_file
 
 def _load_svmlight_file(f, n_features, dtype):
@@ -62,7 +70,7 @@ def _load_svmlight_file(f, n_features, dtype):
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
-                       multilabel=False):
+                       multilabel=False, zero_based="auto"):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -88,8 +96,11 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f: str or file-like open in binary mode.
-        (Path to) a file to load.
+    f: {str, file-like, int}
+        (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
+        be uncompressed on the fly. If an integer is passed, it is assumed to
+        be a file descriptor. A file-like or file descriptor will not be closed
+        by this function. A file-like object must be opened in binary mode.
 
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
@@ -102,6 +113,13 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
+    zero_based: boolean or "auto", optional
+        Whether column indices in f are zero-based (True) or one-based
+        (False). If set to "auto", a heuristic check is applied to determine
+        this from the file contents. Both kinds of files occur "in the wild",
+        but they are unfortunately not self-identifying. Using "auto" or True
+        should always be safe.
+
     Returns
     -------
     (X, y)
@@ -109,15 +127,41 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     where X is a scipy.sparse matrix of shape (n_samples, n_features),
           y is a ndarray of shape (n_samples,), or, in the multilabel case,
           a list of tuples of length n_samples.
+
+    See also
+    --------
+    load_svmlight_files: similar function for loading multiple files in this
+    format, enforcing the same number of features/columns on all of them.
     """
+    return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
+                                     zero_based))
+
+
+def _gen_open(f):
+    if isinstance(f, int):  # file descriptor
+        return io.open(f, "rb", closefd=False)
+    elif not isinstance(f, basestring):
+        raise TypeError("expected {str, int, file-like}, got %s" % type(f))
+
+    _, ext = os.path.splitext(f)
+    if ext == ".gz":
+        return gzip.open(f, "rb")
+    elif ext == ".bz2":
+        return BZ2File(f, "rb")
+    else:
+        return open(f, "rb")
+
+
+def _open_and_load(f, dtype, multilabel, zero_based):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, n_features, dtype, multilabel)
-    with open(f, 'rb') as f:
-        return _load_svmlight_file(f, n_features, dtype, multilabel)
+        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+    # XXX remove closing when Python 2.7+/3.1+ required
+    with closing(_gen_open(f)) as f:
+        return _load_svmlight_file(f, dtype, multilabel, zero_based)
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
-                        multilabel=False):
+                        multilabel=False, zero_based="auto"):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -127,19 +171,27 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    files : iterable over {str, file-like}
-        (Paths to) files to load.
+    files : iterable over {str, file-like, int}
+        (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
+        be uncompressed on the fly. If an integer is passed, it is assumed to
+        be a file descriptor. File-likes and file descriptors will not be
+        closed by this function. File-like objects must be opened in binary
+        mode.
 
     n_features: int or None
         The number of features to use. If None, it will be inferred from the
-        first file. This argument is useful to load several files that are
-        subsets of a bigger sliced dataset: each subset might not have
-        examples of every feature, hence the inferred shape might vary from
-        one slice to another.
+        maximum column index occurring in any of the files.
 
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+
+    zero_based: boolean or "auto", optional
+        Whether column indices in files are zero-based (True) or one-based
+        (False). If set to "auto", a heuristic check is applied to determine
+        this from the files' contents. Both kinds of files occur "in the wild",
+        but they are unfortunately not self-identifying. Using "auto" or True
+        should always be safe.
 
     Returns
     -------
@@ -152,36 +204,56 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     When fitting a model to a matrix X_train and evaluating it against a
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
-    be the case if you load them with load_svmlight_file separately.
+    be the case if you load the files individually with load_svmlight_file.
 
     See also
     --------
     load_svmlight_file
     """
-    files = iter(files)
-    result = list(load_svmlight_file(files.next(), n_features, dtype))
-    n_features = result[0].shape[1]
+    r = [_open_and_load(f, dtype, multilabel, bool(zero_based)) for f in files]
 
-    for f in files:
-        result += load_svmlight_file(f, n_features, dtype, multilabel)
+    if zero_based is False \
+     or zero_based == "auto" and all(np.min(indices) > 0
+                                     for _, indices, _, _ in r):
+        for _, indices, _, _ in r:
+            indices -= 1
+
+    if n_features is None:
+        n_features = max(indices.max() for _, indices, _, _ in r) + 1
+
+    result = []
+    for data, indices, indptr, y in r:
+        shape = (indptr.shape[0] - 1, n_features)
+        result += sp.csr_matrix((data, indices, indptr), shape), y
 
     return result
 
 
-def _dump_svmlight(X, y, f):
+def _dump_svmlight(X, y, f, zero_based):
     if X.shape[0] != y.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, "
                          "got: %r and %r instead." % (X.shape[0], y.shape[0]))
 
     is_sp = int(hasattr(X, "tocsr"))
 
+    one_based = not zero_based
+    if X.dtype == np.float64:
+        value_pattern = u"%d:%0.16e"
+    else:
+        value_pattern = u"%d:%f"
+
+    if y.dtype.kind == 'i':
+        line_pattern = u"%d %s\n"
+    else:
+        line_pattern = u"%f %s\n"
+
     for i in xrange(X.shape[0]):
-        s = u" ".join([u"%d:%f" % (j + 1, X[i, j])
+        s = u" ".join([value_pattern % (j + one_based, X[i, j])
                        for j in X[i].nonzero()[is_sp]])
-        f.write((u"%f %s\n" % (y[i], s)).encode('ascii'))
+        f.write((line_pattern % (y[i], s)).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f):
+def dump_svmlight_file(X, y, f, zero_based=True):
     """Dump the dataset in svmlight / libsvm file format.
 
     This format is a text-based format, with one sample per line. It does
@@ -202,9 +274,13 @@ def dump_svmlight_file(X, y, f):
     f : str or file-like in binary mode
         If string it specifies the path that will contain the data.
         If f is a file-like then data will be written to f.
+
+    zero_based : boolean, optional
+        Whether column indices should be written zero-based (True) or one-based
+        (False).
     """
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f)
+        _dump_svmlight(X, y, f, zero_based)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f)
+            _dump_svmlight(X, y, f, zero_based)

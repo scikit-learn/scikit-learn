@@ -5,13 +5,14 @@
 #
 # License: BSD Style.
 
-from warnings import warn
+import warnings
 
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
+from ..base import RegressorMixin
 from ..utils import array2d
 from ..utils.arrayfuncs import solve_triangular
 
@@ -75,7 +76,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         lam = np.argmax(np.abs(np.dot(X.T, residual)))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # atom already selected or inner product too small
-            warn(premature)
+            warnings.warn(premature, RuntimeWarning, stacklevel=2)
             break
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
@@ -83,7 +84,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
-                warn(premature)
+                warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
@@ -169,14 +170,14 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         lam = np.argmax(np.abs(alpha))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small
-            warn(premature)
+            warnings.warn(premature, RuntimeWarning, stacklevel=2)
             break
         if n_active > 0:
             L[n_active, :n_active] = Gram[lam, :n_active]
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
-                warn(premature)
+                warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
@@ -396,7 +397,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(LinearModel):
+class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     """Orthogonal Mathching Pursuit model (OMP)
 
     Parameters
@@ -506,8 +507,6 @@ class OrthogonalMatchingPursuit(LinearModel):
         """
         X = array2d(X)
         y = np.asarray(y)
-        if y.ndim == 1:
-            y = y[:, np.newaxis]
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -515,8 +514,20 @@ class OrthogonalMatchingPursuit(LinearModel):
                                                         self.normalize,
                                                         self.copy_X)
 
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
         if self.n_nonzero_coefs == None and self.tol is None:
             self.n_nonzero_coefs = int(0.1 * n_features)
+        if (Gram is not None or Xy is not None) and (self.fit_intercept is True
+                                                 or self.normalize is True):
+            warnings.warn('Mean subtraction (fit_intercept) and '
+                 'normalization cannot be applied on precomputed Gram '
+                 'and Xy matrices. Your precomputed values are ignored '
+                 'and recomputed. To avoid this, do the scaling yourself '
+                 'and call with fit_intercept and normalize set to False.',
+                 RuntimeWarning, stacklevel=2)
+            Gram, Xy = None, None
 
         if Gram is not None:
             Gram = array2d(Gram)

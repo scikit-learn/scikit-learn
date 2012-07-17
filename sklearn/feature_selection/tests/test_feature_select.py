@@ -2,14 +2,13 @@
 Todo: cross-check the F-value with stats model
 """
 
-from sklearn.feature_selection.univariate_selection import (f_classif,
-                                    f_regression, f_oneway,
-                                    SelectPercentile, SelectKBest,
-                                    SelectFpr, SelectFdr, SelectFwe,
-                                    GenericUnivariateSelect)
-from nose.tools import assert_true
+from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
+                                       SelectPercentile, SelectKBest,
+                                       SelectFpr, SelectFdr, SelectFwe,
+                                       GenericUnivariateSelect)
+from nose.tools import assert_equal, assert_true
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy import stats
 from sklearn.datasets.samples_generator import make_classification, \
                                                      make_regression
@@ -20,12 +19,19 @@ from sklearn.datasets.samples_generator import make_classification, \
 
 def test_f_oneway_vs_scipy_stats():
     """Test that our f_oneway gives the same result as scipy.stats"""
-    X1 = np.random.randn(10, 3)
-    X2 = 1 + np.random.randn(10, 3)
+    rng = np.random.RandomState(0)
+    X1 = rng.randn(10, 3)
+    X2 = 1 + rng.randn(10, 3)
     f, pv = stats.f_oneway(X1, X2)
     f2, pv2 = f_oneway(X1, X2)
     assert_true(np.allclose(f, f2))
     assert_true(np.allclose(pv, pv2))
+
+
+def test_f_oneway_ints():
+    # Smoke test f_oneway on integers: that it does raise casting errors
+    # with recent numpys
+    f_oneway(np.random.randint(10, size=(10, 10)), np.arange(10))
 
 
 def test_f_classif():
@@ -53,7 +59,7 @@ def test_f_regression():
     on a simple simulated regression problem
     """
     X, Y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+        n_informative=5, shuffle=False, random_state=0)
 
     F, pv = f_regression(X, Y)
     assert(F > 0).all()
@@ -61,6 +67,21 @@ def test_f_regression():
     assert(pv < 1).all()
     assert(pv[:5] < 0.05).all()
     assert(pv[5:] > 1.e-4).all()
+
+
+def test_f_regression_input_dtype():
+    """
+    Test whether f_regression returns the same value
+    for any numeric data_type
+    """
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 20)
+    y = np.arange(10).astype(np.int)
+
+    F1, pv1 = f_regression(X, y)
+    F2, pv2 = f_regression(X, y.astype(np.float))
+    assert_array_almost_equal(F1, F2, 5)
+    assert_array_almost_equal(pv1, pv2, 5)
 
 
 def test_f_classif_multi_class():
@@ -324,3 +345,18 @@ def test_select_fwe_regression():
     gtruth[:5] = 1
     assert(support[:5] == 1).all()
     assert(np.sum(support[5:] == 1) < 2)
+
+
+def test_selectkbest_tiebreaking():
+    """Test whether SelectKBest actually selects k features in case of ties.
+
+    Prior to 0.11, SelectKBest would return more features than requested.
+    """
+    X = [[1, 0, 0], [0, 1, 1]]
+    y = [0, 1]
+
+    X1 = SelectKBest(chi2, k=1).fit_transform(X, y)
+    assert_equal(X1.shape[1], 1)
+
+    X2 = SelectKBest(chi2, k=2).fit_transform(X, y)
+    assert_equal(X2.shape[1], 2)

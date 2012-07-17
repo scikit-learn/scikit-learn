@@ -17,9 +17,9 @@ def test_structured_ward_tree():
     """
     Check that we obtain the correct solution for structured ward tree.
     """
-    np.random.seed(0)
+    rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = np.random.randn(50, 100)
+    X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     children, n_components, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
@@ -30,8 +30,8 @@ def test_unstructured_ward_tree():
     """
     Check that we obtain the correct solution for unstructured ward tree.
     """
-    np.random.seed(0)
-    X = np.random.randn(50, 100)
+    rnd = np.random.RandomState(0)
+    X = rnd.randn(50, 100)
     children, n_nodes, n_leaves = ward_tree(X.T)
     n_nodes = 2 * X.shape[1] - 1
     assert_true(len(children) + n_leaves == n_nodes)
@@ -41,9 +41,9 @@ def test_height_ward_tree():
     """
     Check that the height of ward tree is sorted.
     """
-    np.random.seed(0)
+    rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = np.random.randn(50, 100)
+    X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     children, n_nodes, n_leaves = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
@@ -54,9 +54,9 @@ def test_ward_clustering():
     """
     Check that we obtain the correct number of clusters with Ward clustering.
     """
-    np.random.seed(0)
+    rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = np.random.randn(100, 50)
+    X = rnd.randn(100, 50)
     connectivity = grid_to_graph(*mask.shape)
     clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
@@ -67,9 +67,9 @@ def test_ward_agglomeration():
     """
     Check that we obtain the correct solution in a simplistic case
     """
-    np.random.seed(0)
+    rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = np.random.randn(50, 100)
+    X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
@@ -98,10 +98,11 @@ def test_scikit_vs_scipy():
     """
     from scipy.sparse import lil_matrix
     n, p, k = 10, 5, 3
+    rnd = np.random.RandomState(0)
 
     connectivity = lil_matrix(np.ones((n, n)))
     for i in range(5):
-        X = .1 * np.random.normal(size=(n, p))
+        X = .1 * rnd.normal(size=(n, p))
         X -= 4 * np.arange(n)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
@@ -134,6 +135,21 @@ def test_connectivity_popagation():
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
     ward.fit(X)
+
+
+def test_connectivity_fixing_non_lil():
+    """
+    Check non regression of a bug if a non item assignable connectivity is
+    provided with more than one component.
+    """
+    # create dummy data
+    x = np.array([[0, 0], [1, 1]])
+    # create a mask with several components to force connectivity fixing
+    m = np.array([[True, False], [False, True]])
+    c = grid_to_graph(n_x=2, n_y=2, mask=m)
+    w = Ward(connectivity=c)
+    w.fit(x)
+
 
 if __name__ == '__main__':
     import nose

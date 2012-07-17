@@ -2,12 +2,12 @@
 
 from cPickle import dumps, loads
 import nose
-from nose.tools import assert_true
 
 import numpy as np
 from numpy.testing import assert_equal
 from scipy import sparse
 
+from sklearn.utils.testing import assert_greater
 from .. import SpectralClustering
 
 
@@ -22,7 +22,7 @@ def test_spectral_clustering():
                  ])
 
     for mat in (S, sparse.csr_matrix(S)):
-        model = SpectralClustering(random_state=0, k=2).fit(mat)
+        model = SpectralClustering(random_state=0, n_clusters=2).fit(mat)
         labels = model.labels_
         if labels[0] == 0:
             labels = 1 - labels
@@ -30,7 +30,7 @@ def test_spectral_clustering():
         assert_equal(labels, [1, 1, 1, 0, 0, 0, 0])
 
         model_copy = loads(dumps(model))
-        assert_equal(model_copy.k, model.k)
+        assert_equal(model_copy.n_clusters, model.n_clusters)
         assert_equal(model_copy.mode, model.mode)
         assert_equal(model_copy.random_state.get_state(),
                      model.random_state.get_state())
@@ -55,8 +55,8 @@ def test_spectral_clustering_sparse():
 
     S = sparse.coo_matrix(S)
 
-    labels = SpectralClustering(random_state=0, k=2).fit(S).labels_
+    labels = SpectralClustering(random_state=0, n_clusters=2).fit(S).labels_
     if labels[0] == 0:
         labels = 1 - labels
 
-    assert_true(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]) > .9)
+    assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .9)

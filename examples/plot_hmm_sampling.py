@@ -33,7 +33,7 @@ means = np.array([[0.0,  0.0],
                   [11.0, -1.0],
                   ])
 # The covariance of each component
-covars = .5*np.tile(np.identity(2), (4, 1, 1))
+covars = .5 * np.tile(np.identity(2), (4, 1, 1))
 
 # Build an HMM instance and set parameters
 model = hmm.GaussianHMM(4, "full", start_prob, trans_mat,

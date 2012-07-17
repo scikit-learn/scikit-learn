@@ -3,6 +3,7 @@ cimport numpy as np
 cimport cython
 ctypedef np.float64_t DOUBLE
 ctypedef np.int_t INT
+ctypedef np.int8_t INT8
 
 
 @cython.boundscheck(False)
@@ -70,10 +71,31 @@ def _hc_get_descendent(int node, children, int n_leaves):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _get_parent(int node, np.ndarray[INT, ndim=1] parents):
-    cdef int parent
-    parent = parents[node]
-    while parent != node:
-        node = parent
+def _get_parents(nodes, heads, np.ndarray[INT, ndim=1] parents,
+                 np.ndarray[INT8, ndim=1] not_visited):
+    """ Return the heads of the given nodes, as defined by parents
+    
+    Modifies in-place 'heads' and 'not_visited'
+
+    Parameters
+    ===========
+    nodes: list of integers
+        The nodes to start from
+    heads: list of integers
+        A list to hold the results (modified inplace)
+    parents: array of integers
+        The parent structure defining the tree
+    not_visited:
+        The tree nodes to consider (modified inplace)
+
+    """
+    cdef unsigned int parent, node
+    for node in nodes:
         parent = parents[node]
-    return node
+        while parent != node:
+            node = parent
+            parent = parents[node]
+        if not_visited[node]:
+            not_visited[node] = 0
+            heads.append(node)
+    return heads
