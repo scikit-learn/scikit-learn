@@ -153,7 +153,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
-        visited[:] = False
+        visited.fill(False)
         visited[k] = True
         for l in set(A[i]).union(A[j]):
             l = _hierarchical._get_parent(l, parent)
