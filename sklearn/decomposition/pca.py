@@ -385,7 +385,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Whitening will remove some information from the transformed signal
         (the relative variance scales of the components) but can sometime
         improve the predictive accuracy of the downstream estimators by
-        making there data respect some hard-wired assumptions.
+        making their data respect some hard-wired assumptions.
 
     random_state : int or RandomState instance or None (default)
         Pseudo Random Number generator seed control. If None, use the
