@@ -8,7 +8,6 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
-import itertools
 import warnings
 
 import numpy as np
@@ -163,12 +162,13 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
         coord_row.fill(k)
-        ini = np.empty(len(coord_row), dtype=np.float)
+        n_additions = len(coord_row)
+        ini = np.empty(n_additions, dtype=np.float)
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
-                                   coord_row, coord_col, ini)
-        for tupl in itertools.izip(ini, coord_row, coord_col):
-            heappush(inertia, tupl)
+                                        coord_row, coord_col, ini)
+        for idx in xrange(n_additions):
+            heappush(inertia, (ini[idx], k, coord_col[idx]))
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
