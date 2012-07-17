@@ -193,13 +193,16 @@ def test_regression_synthetic():
 
 
 def test_feature_importances():
+    X = np.array(boston.data, dtype=np.float32)
+    y = np.array(boston.target, dtype=np.float32)
+
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
                                     min_samples_split=1, random_state=1)
-    clf.fit(boston.data, boston.target)
+    clf.fit(X, y)
     feature_importances = clf.feature_importances_
 
     # true feature importance ranking
-    true_ranking = np.array([3, 1, 8, 10, 2, 9, 4, 11, 0, 6, 7, 5, 12])
+    true_ranking = np.array([ 3,  1,  8,  2, 10,  9,  4, 11,  0,  6,  7,  5, 12])
 
     assert_array_equal(true_ranking, feature_importances.argsort())
 
