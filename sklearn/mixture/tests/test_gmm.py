@@ -118,15 +118,9 @@ def test_GMM_attributes():
     covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
     g.covars_ = covars
     assert_array_almost_equal(g.covars_, covars)
-<<<<<<< HEAD
     assert_raises(ValueError, g._set_covars, [])
     assert_raises(ValueError, g._set_covars,
                   np.zeros((n_components - 2, n_features)))
-=======
-    assert_raises(ValueError, g.__setattr__, 'covars', [])
-    assert_raises(ValueError, g.__setattr__, 'covars',
-                      np.zeros((n_components - 2, n_features)))
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
     assert_raises(ValueError, mixture.GMM, n_components=20,
                   covariance_type='badcovariance_type')
@@ -163,15 +157,9 @@ class GMMTester():
                        covariance_type=self.covariance_type, random_state=rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
-<<<<<<< HEAD
         g.means_ = 20 * self.means
         g.covars_ = self.covars[self.covariance_type]
         g.weights_ = self.weights
-=======
-        g.means = 20 * self.means
-        g.covars_ = self.covars[self.cvtype]
-        g.weights = self.weights
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
         gaussidx = np.repeat(range(self.n_components), 5)
         n_samples = len(gaussidx)
@@ -191,32 +179,19 @@ class GMMTester():
                        covariance_type=self.covariance_type, random_state=rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
-<<<<<<< HEAD
         g.means_ = 20 * self.means
         g.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
         g.weights_ = self.weights
-=======
-        g.means = 20 * self.means
-        g.covars_ = np.maximum(self.covars[self.cvtype], 0.1)
-        g.weights = self.weights
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
         samples = g.sample(n)
         self.assertEquals(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
-<<<<<<< HEAD
         g = mixture.GMM(n_components=self.n_components,
                         covariance_type=self.covariance_type)
         g.weights_ = self.weights
         g.means_ = self.means
         g.covars_ = 20 * self.covars[self.covariance_type]
-=======
-        g = mixture.GMM(n_components=self.n_components, cvtype=self.cvtype)
-        g.weights = self.weights
-        g.means = self.means
-        g.covars_ = 20 * self.covars[self.cvtype]
->>>>>>> 6a37e47...     ENH: renaming estimated variables from self._variable to self.variable_
 
         # Create a training set by sampling from the predefined distribution.
         X = g.sample(n_samples=100)
