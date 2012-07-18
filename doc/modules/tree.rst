@@ -55,10 +55,10 @@ Some advantages of decision trees are:
 The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
-      generalise the data well. This is called overfitting. Mechanisms
-      such as pruning (not currently supported), setting the minimum
-      number of samples required at a leaf node or setting the maximum
-      depth of the tree are necessary to avoid this problem.
+      generalise the data well. This is called overfitting. Mechanisms such as
+      pruning, setting the minimum number of samples required at a leaf node or
+      setting the maximum depth of the tree are necessary to avoid this
+      problem.
 
     - Decision trees can be unstable because small variations in the
       data might result in a completely different tree being generated.
@@ -181,6 +181,75 @@ instead of integer values::
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_tree_regression.py`
+
+
+
+.. _tree_pruning:
+
+Pruning
+=======
+
+A common approach to get the best possible tree is to grow a huge tree (for
+instance with ``max_depth=8``) and then prune it to an optimum size. As well as
+providing a `prune` method for both :class:`DecisionTreeRegressor` and
+:class:`DecisionTreeClassifier`, the function ``cv_scores_vs_n_leaves`` is useful
+to find what the optimum size is for a tree.
+
+The prune method just takes as argument the number of leaves the fitted tree
+should have (an int)::
+
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn import tree
+    >>> boston = load_boston()
+    >>> clf = tree.DecisionTreeRegressor(max_depth=8)
+    >>> clf = clf.fit(boston.data, boston.target)
+    >>> clf = clf.prune(8)
+
+In order to find the optimal number of leaves we can use cross validated scores
+on the data::
+
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn import tree
+    >>> boston = load_boston()
+    >>> clf = tree.DecisionTreeRegressor(max_depth=8)
+    >>> scores = tree.cv_scores_vs_n_leaves(clf, boston.data, boston.target, 
+    ...    max_n_leaves=20, n_iterations=10, random_state=0)
+
+In order to plot the scores one can use the following function::
+
+    def plot_cross_validated_scores(scores, with_std=True):
+        """Plots the cross validated scores versus the number of leaves of trees"""
+        import matplotlib.pyplot as plt
+        means = np.array([np.mean(s) for s in scores])
+        stds = np.array([np.std(s) for s in scores]) / np.sqrt(len(scores[1]))
+
+        x = range(len(scores) + 1, 1, -1)
+
+        plt.plot(x, means)
+        if with_std:
+            plt.plot(x, means + 2 * stds, lw=1, c='0.7')
+            plt.plot(x, means - 2 * stds, lw=1, c='0.7')
+
+        plt.xlabel('Number of leaves')
+        plt.ylabel('Cross validated score')
+
+
+For instance, using the Boston dataset we obtain such a graph
+
+.. figure:: ../auto_examples/tree/images/plot_prune_boston_1.png
+   :target: ../auto_examples/tree/plot_prune_boston.html
+   :align: center
+   :scale: 75
+
+Here we see clearly that the optimum number of leaves is between 6 and 9. After
+that additional leaves do not improve (or diminish) the score of the cross
+validation.
+
+.. topic:: Examples:
+
+ * :ref:`example_tree_plot_prune_boston.py`
+ * :ref:`example_tree_plot_overfitting_cv.py`
+
 
 
 .. _tree_multioutput:
