@@ -103,7 +103,13 @@ def roc_curve(y_true, y_score):
         True Positive Rates
 
     thresholds : array, shape = [>2]
-        Thresholds on y_score used to compute fpr and tpr
+        Thresholds on y_score used to compute fpr and tpr.
+
+        *Note*: Since the thresholds are sorted from low to high values,
+        they are reversed upon returning them to ensure they
+        correspond to both fpr and tpr, which are sorted in reversed order
+        during their calculation.
+
 
     Examples
     --------
@@ -172,7 +178,7 @@ def roc_curve(y_true, y_score):
         fpr = np.array([0.0, fpr[0], 1.0])
         tpr = np.array([0.0, tpr[0], 1.0])
 
-    return fpr, tpr, thresholds
+    return fpr, tpr, thresholds[::-1]
 
 
 def auc(x, y):

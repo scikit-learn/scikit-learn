@@ -39,7 +39,7 @@ def test_lle_simple_grid():
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
-            n_components=n_components)
+            n_components=n_components, random_state=rng)
     tol = .1
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
@@ -98,7 +98,7 @@ def test_pipeline():
     from sklearn import pipeline, datasets
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
-        [('filter', manifold.LocallyLinearEmbedding()),
+        [('filter', manifold.LocallyLinearEmbedding(random_state=0)),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert_less(.9, clf.score(X, y))

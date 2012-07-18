@@ -139,8 +139,6 @@ def test_classifiers_classes():
         assert_greater(zero_one_score(y, y_pred), 0.78)
 
 
-
-
 def test_regressors_train():
     estimators = all_estimators()
     regressors = [(name, E) for name, E in estimators if issubclass(E,

@@ -67,7 +67,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
         Individual weights for each sample
 
     solver : {'auto', 'dense_cholesky', 'sparse_cg'}, optional
-        Solver to use in the computational routines. 'delse_cholesky'
+        Solver to use in the computational routines. 'dense_cholesky'
         will use the standard scipy.linalg.solve function, 'sparse_cg'
         will use the conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -154,7 +154,7 @@ class _BaseRidge(LinearModel):
 
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
-            routines. 'delse_cholesky' will use the standard
+            routines. 'dense_cholesky' will use the standard
             scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -304,7 +304,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
 
         solver : {'auto', 'dense_cholesky', 'sparse_cg'}
             Solver to use in the computational
-            routines. 'delse_cholesky' will use the standard
+            routines. 'dense_cholesky' will use the standard
             scipy.linalg.solve function, 'sparse_cg' will use the
             conjugate gradient solver as found in
             scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -381,8 +381,8 @@ class _RidgeGCV(LinearModel):
     """
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, copy_X=True,
-            gcv_mode=None):
+                 normalize=False, score_func=None, loss_func=None,
+                 copy_X=True, gcv_mode=None, store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -390,6 +390,7 @@ class _RidgeGCV(LinearModel):
         self.loss_func = loss_func
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
+        self.store_cv_values = store_cv_values
 
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
@@ -511,7 +512,7 @@ class _RidgeGCV(LinearModel):
 
         v, Q, QT_y = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        M = np.zeros((n_samples * n_y, len(self.alphas)))
+        cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
         error = self.score_func is None and self.loss_func is None
@@ -521,14 +522,14 @@ class _RidgeGCV(LinearModel):
                 out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
             else:
                 out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
-            M[:, i] = out.ravel()
+            cv_values[:, i] = out.ravel()
             C.append(c)
 
         if error:
-            best = M.mean(axis=0).argmin()
+            best = cv_values.mean(axis=0).argmin()
         else:
             func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), M[:, i]) for i in range(len(self.alphas))]
+            out = [func(y.ravel(), cv_values[:, i]) for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.best_alpha = self.alphas[best]
@@ -537,14 +538,22 @@ class _RidgeGCV(LinearModel):
 
         self._set_intercept(X_mean, y_mean, X_std)
 
+        if self.store_cv_values:
+            if len(y.shape) == 1:
+                cv_values_shape = n_samples, len(self.alphas)
+            else:
+                cv_values_shape = n_samples, n_y, len(self.alphas)
+            self.cv_values_ = cv_values.reshape(cv_values_shape)
+
         return self
 
 
 class _BaseRidgeCV(LinearModel):
 
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, cv=None,
-            gcv_mode=None):
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
+                 fit_intercept=True, normalize=False, score_func=None,
+                 loss_func=None, cv=None, gcv_mode=None,
+                 store_cv_values=False):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -552,6 +561,7 @@ class _BaseRidgeCV(LinearModel):
         self.loss_func = loss_func
         self.cv = cv
         self.gcv_mode = gcv_mode
+        self.store_cv_values = store_cv_values
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -573,10 +583,17 @@ class _BaseRidgeCV(LinearModel):
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                    self.score_func, self.loss_func, gcv_mode=self.gcv_mode)
+                                  self.score_func, self.loss_func,
+                                  gcv_mode=self.gcv_mode,
+                                  store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.best_alpha = estimator.best_alpha
+            if self.store_cv_values:
+                self.cv_values_ = estimator.cv_values_
         else:
+            if self.store_cv_values:
+                raise ValueError("cv!=None and store_cv_values=True "
+                                 " are incompatible")
             parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
             #        too!
@@ -602,7 +619,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Parameters
     ----------
-    alphas: numpy array of shape [n_alpha]
+    alphas: numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -631,12 +648,6 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_features] or [n_classes, n_features]
-        Weight vector(s).
-
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
@@ -647,6 +658,26 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
         The 'auto' mode is the default and is intended to pick the cheaper \
         option of the two depending upon the shape of the training data.
+
+    store_cv_values : boolean, default=False
+        Flag indicating if the cross-validation values corresponding to
+        each alpha should be stored in the `cv_values_` attribute (see
+        below). This flag is only compatible with `cv=None` (i.e. using
+        Generalized Cross-Validation).
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+        Weight vector(s).
+
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
+                         shape = [n_samples, n_responses, n_alphas],
+                  optional
+        Cross-validation values for each alpha (if
+        `store_cv_values=True` and `cv=None`). After `fit()` has been
+        called, this attribute will contain the mean squared errors (by
+        default) or the values of the `{loss,score}_func` function (if
+        provided in the constructor).
 
     See also
     --------
@@ -666,7 +697,7 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
 
     Parameters
     ----------
-    alphas: numpy array of shape [n_alpha]
+    alphas: numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.

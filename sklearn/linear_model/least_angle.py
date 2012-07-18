@@ -221,7 +221,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             i = 0
             L_ = L[:n_active, :n_active].copy()
             while not np.isfinite(AA):
-                L_.flat[::n_active + 1] += (2 **i) * eps
+                L_.flat[::n_active + 1] += (2 ** i) * eps
                 least_squares, info = solve_cholesky(L_,
                                     sign_active[:n_active], lower=True)
                 AA = 1. / np.sqrt(np.sum(least_squares
