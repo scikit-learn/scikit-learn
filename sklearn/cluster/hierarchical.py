@@ -26,7 +26,8 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, connectivity=None, n_components=None, copy=True):
+def ward_tree(X, connectivity=None, n_components=None, copy=True,
+              n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -94,7 +95,11 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
                                             n_components, labels)
         n_components = 1
 
-    n_nodes = 2 * n_samples - n_components
+    if n_clusters is None:
+        n_nodes = 2 * n_samples - n_components
+    else:
+        assert n_clusters <= n_samples
+        n_nodes = 2*n_samples - n_clusters
 
     if (connectivity.shape[0] != n_samples or
         connectivity.shape[1] != n_samples):
@@ -174,7 +179,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     n_leaves = n_samples
     children = np.array(children)  # return numpy array for efficient caching
 
-    return children, n_components, n_leaves
+    return children, n_components, n_leaves, parent
 
 
 ###############################################################################
@@ -289,12 +294,14 @@ class Ward(BaseEstimator):
     """
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=True, n_components=None):
+                 connectivity=None, copy=True, n_components=None,
+                 compute_full_tree='auto'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
         self.n_components = n_components
         self.connectivity = connectivity
+        self.compute_full_tree = compute_full_tree
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -322,13 +329,32 @@ class Ward(BaseEstimator):
                 raise ValueError("`connectivity` does not have shape "
                         "(n_samples, n_samples)")
 
-        # Construct the tree
-        self.children_, self.n_components, self.n_leaves_ = \
-                memory.cache(ward_tree)(X, self.connectivity,
-                                n_components=self.n_components, copy=self.copy)
+        n_samples = len(X)
+        compute_full_tree = self.compute_full_tree
+        if compute_full_tree == 'auto':
+            # Early stopping is likely to give a speed up only for
+            # a large number of clusters. The actual threshold
+            # implemented here is heuristic
+            compute_full_tree = self.n_clusters > max(100, .02 * n_samples)
+        n_clusters = self.n_clusters
+        if compute_full_tree:
+            n_clusters = None
 
+        # Construct the tree
+        self.children_, self.n_components, self.n_leaves_, parents = \
+                memory.cache(ward_tree)(X, self.connectivity,
+                            n_components=self.n_components,
+                            copy=self.copy, n_clusters=n_clusters)
         # Cut the tree
-        self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
+        if compute_full_tree:
+            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+                                   self.n_leaves_)
+        else:
+            labels = _hierarchical.hc_get_heads(parents, copy=False)
+            # copy to avoid holding a reference on the original array
+            labels = np.copy(labels[:n_samples])
+            # Reasign cluster numbers
+            self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
 
 
