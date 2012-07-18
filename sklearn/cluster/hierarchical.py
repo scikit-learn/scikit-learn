@@ -72,9 +72,13 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         X = np.reshape(X, (-1, 1))
 
     if connectivity is None:
+        if n_clusters is not None:
+            raise ValueError('Early stopping is implemented only for '
+                             'structured Ward clustering (i.e. with '
+                             'explicit connectivity.')
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
-        return children_, 1, n_samples
+        return children_, 1, n_samples, None
 
     # Compute the number of nodes
     if n_components is None:
@@ -331,6 +335,8 @@ class Ward(BaseEstimator):
 
         n_samples = len(X)
         compute_full_tree = self.compute_full_tree
+        if self.connectivity is None:
+            compute_full_tree = None
         if compute_full_tree == 'auto':
             # Early stopping is likely to give a speed up only for
             # a large number of clusters. The actual threshold
