@@ -150,7 +150,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     if cluster_all:
         labels = idxs.flatten()
     else:
-        labels[:] = -1
+        labels.fill(-1)
         bool_selector = distances.flatten() <= bandwidth
         labels[bool_selector] = idxs.flatten()[bool_selector]
     return cluster_centers, labels
