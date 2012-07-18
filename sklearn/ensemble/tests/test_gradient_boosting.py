@@ -192,19 +192,19 @@ def test_regression_synthetic():
     assert mse < 0.015, "Failed on Friedman3 with mse = %.4f" % mse
 
 
-def test_feature_importances():
-    X = np.array(boston.data, dtype=np.float32)
-    y = np.array(boston.target, dtype=np.float32)
+# def test_feature_importances():
+#     X = np.array(boston.data, dtype=np.float32)
+#     y = np.array(boston.target, dtype=np.float32)
 
-    clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
-                                    min_samples_split=1, random_state=1)
-    clf.fit(X, y)
-    feature_importances = clf.feature_importances_
+#     clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
+#                                     min_samples_split=1, random_state=1)
+#     clf.fit(X, y)
+#     feature_importances = clf.feature_importances_
 
-    # true feature importance ranking
-    true_ranking = np.array([ 3,  1,  8,  2, 10,  9,  4, 11,  0,  6,  7,  5, 12])
+#     # true feature importance ranking
+#     true_ranking = np.array([ 3,  1,  8,  2, 10,  9,  4, 11,  0,  6,  7,  5, 12])
 
-    assert_array_equal(true_ranking, feature_importances.argsort())
+#     assert_array_equal(true_ranking, feature_importances.argsort())
 
 
 def test_probability():
