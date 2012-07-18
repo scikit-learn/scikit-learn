@@ -26,6 +26,7 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
+#@profile
 def ward_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Ward clustering based on a Feature matrix.
@@ -177,8 +178,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         not_visited[k] = 0
         _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
         _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
-        for l in coord_col:
-            A[l].append(k)
+        # List comprehension is faster than a for loop
+        [A[l].append(k) for l in coord_col]
         A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
@@ -188,8 +189,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)
-        for idx in xrange(n_additions):
-            heappush(inertia, (ini[idx], k, coord_col[idx]))
+        # List comprehension is faster than a for loop
+        [heappush(inertia, (ini[idx], k, coord_col[idx]))
+            for idx in xrange(n_additions)]
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
