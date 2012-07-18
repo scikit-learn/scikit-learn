@@ -1,3 +1,4 @@
+import numpy as np
 from scipy.sparse import csr_matrix
 
 from .... import datasets
@@ -27,3 +28,37 @@ def test_silhouette():
     D = pairwise_distances(X_sparse, metric='euclidean')
     silhouette = silhouette_score(D, y, metric='precomputed')
     assert(silhouette > 0)
+
+
+def test_no_nan():
+    """Assert Silhouette Coefficient != nan when there is 1 sample in a class.
+
+        This tests for the condition that caused issue 960.
+    """
+    from sklearn.cluster import KMeans
+    data = np.array([
+        [ 1.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,
+          0.,  0.,  1.,  0., 1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,
+          1.,  0.,  0.,  0.,  0.,  0.,  0.,  1., 0.,  0.,  1.,  1.,  0.,  0.,
+          0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,],
+        [ 0.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,
+          0.,  1.,  0.,  0., 0.,  0.,  0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,
+          0.,  1.,  0.,  1.,  1.,  0.,  0.,  0., 2.,  0.,  0.,  0.,  2.,  0.,
+          0.,  0.,  0.,  1.,  0.,  0.,  0.,  1.,  2.,  0.,  0.,  0.,],
+        [ 0.,  1.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,
+          1.,  0.,  0.,  1., 0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,
+          0.,  0.,  1.,  0.,  0.,  1.,  1.,  0., 0.,  0.,  0.,  0.,  0.,  0.,
+          1.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,],
+        [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  2.,  1.,  0.,  0.,  0.,  0.,  1.,
+          0.,  0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,
+          0.,  0.,  0.,  0.,  0.,  0.,  0.,  0., 0.,  1.,  0.,  0.,  0.,  1.,
+          0.,  0.,  1.,  0.,  0.,  0.,  1.,  0.,  2.,  0.,  0.,  1.,],
+        [ 0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,
+          0.,  0.,  0.,  0., 0.,  1.,  0.,  0.,  0.,  0.,  1.,  0.,  1.,  0.,
+          0.,  0.,  0.,  0.,  0.,  0.,  0.,  0., 0.,  0.,  0.,  0.,  0.,  0.,
+          0.,  0.,  0.,  0.,  1.,  1.,  0.,  0.,  0.,  0.,  1.,  0.,]
+        ], dtype=np.float)
+    kmeans = KMeans(init='k-means++', n_clusters=2)
+    kmeans.fit(data)
+    silhouette = silhouette_score(data, kmeans.labels_, metric='euclidean')
+    assert(not np.isnan(silhouette))
