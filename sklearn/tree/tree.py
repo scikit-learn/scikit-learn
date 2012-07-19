@@ -218,7 +218,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
-        if getattr(y, "dtype", None) or not y.flags.contiguous:
+        if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DTYPE)
 
         if is_classification:
