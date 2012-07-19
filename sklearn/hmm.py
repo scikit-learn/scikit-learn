@@ -540,9 +540,9 @@ class _BaseHMM(BaseEstimator):
 
     def _init(self, obs, params):
         if 's' in params:
-            self.startprob_[:] = 1.0 / self.n_components
+            self.startprob_.fill(1.0 / self.n_components)
         if 't' in params:
-            self.transmat_[:] = 1.0 / self.n_components
+            self.transmat_.fill(1.0 / self.n_components)
 
     # Methods used by self.fit()
 

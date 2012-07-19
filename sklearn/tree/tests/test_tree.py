@@ -180,6 +180,18 @@ def test_arrayrepr():
     clf.fit(X, y)
 
 
+def test_pure_set():
+    """Check when y is pure."""
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y = [1, 1, 1, 1, 1, 1]
+
+    clf = tree.DecisionTreeClassifier().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+    clf = tree.DecisionTreeRegressor().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+
 def test_numerical_stability():
     """Check numerical stability."""
     old_settings = np.geterr()
@@ -199,7 +211,9 @@ def test_numerical_stability():
 
     dt = tree.DecisionTreeRegressor()
     dt.fit(X, y)
+    dt.fit(X, -y)
     dt.fit(-X, y)
+    dt.fit(-X, -y)
 
     np.seterr(**old_settings)
 
@@ -315,18 +329,16 @@ def test_error():
 
 def test_min_samples_leaf():
     """Test if leaves contain more than leaf_count training examples"""
-    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-        clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
 
-        # apply tree
-        out = np.empty((iris.data.shape[0], ), dtype=np.int32)
-        X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
-        tree._tree._apply_tree(X, clf.tree_.children, clf.tree_.feature,
-                clf.tree_.threshold, out)
-        # count node occurences
+    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
+        clf = tree_class(min_samples_leaf=5).fit(X, y)
+
+        out = clf.tree_.apply(X)
         node_counts = np.bincount(out)
-        # drop inner nodes
-        leaf_count = node_counts[node_counts != 0]
+        leaf_count = node_counts[node_counts != 0] # drop inner nodes
+
         assert np.min(leaf_count) >= 5
 
 

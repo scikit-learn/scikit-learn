@@ -336,7 +336,7 @@ class CountVectorizer(BaseEstimator):
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
-            spmatrix.data[:] = 1
+            spmatrix.data.fill(1)
         return spmatrix
 
     def fit(self, raw_documents, y=None):
