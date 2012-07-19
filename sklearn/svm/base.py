@@ -319,7 +319,8 @@ class BaseLibSVM(BaseEstimator):
                       self.probA_, self.probB_)
 
     def predict_proba(self, X):
-        """Compute the likehoods each possible outcomes of samples in T.
+        """Compute the log likehoods of each of the possible outcomes for the
+        the samples in T.
 
         The model need to have probability information computed at training
         time: fit with attribute `probability` set to True.
@@ -428,7 +429,7 @@ class BaseLibSVM(BaseEstimator):
         -----
         The probability model is created using cross validation, so
         the results can be slightly different than those obtained by
-        predict. Also, it will meaningless results on very small
+        predict. Also, it will produce meaningless results on very small
         datasets.
         """
         return np.log(self.predict_proba(X))
