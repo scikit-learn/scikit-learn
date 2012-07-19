@@ -126,19 +126,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         labels: array
             List of class labels (one for each data sample).
         """
-        X = atleast2d_or_csr(X)
-
-        neigh_dist, neigh_ind = self.kneighbors(X)
-        pred_labels = self._y[neigh_ind]
-
-        weights = _get_weights(neigh_dist, self.weights)
-
-        if weights is None:
-            mode, _ = stats.mode(pred_labels, axis=1)
-        else:
-            mode, _ = weighted_mode(pred_labels, weights, axis=1)
-
-        return mode.flatten().astype(np.int)
+        probabilities = self.predict_proba(X)
+        return self._classes[probabilities.argmax(axis=1)].astype(np.int)
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -178,6 +167,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         for i, idx in enumerate(pred_indices.T):  # loop is O(n_neighbors)
             probabilities[all_rows, idx] += weights[:, i]
+
+        # Compute the unnormalized posterior probability, taking
+        # self.class_prior_ into consideration.
+        class_count = np.zeros(self._classes.size)
+        for k, c in enumerate(self._classes):
+            class_count[k] = np.sum(self._y == c)
+        probabilities = ((probabilities / class_count) * self.class_prior_)
 
         # normalize 'votes' into real [0,1] probabilities
         probabilities = (probabilities.T / probabilities.sum(axis=1)).T
@@ -310,13 +306,43 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                      'dataset')
 
         weights = _get_weights(neigh_dist, self.weights)
-
         if weights is None:
-            mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
-                              dtype=np.int)
-        else:
-            mode = np.asarray([weighted_mode(pl, w)[0]
-                               for (pl, w) in zip(pred_labels, weights)],
-                              dtype=np.int)
+            # `neigh_dist` is an array of objects, where each
+            # object is a 1D array of indices.
+            weights = np.array([np.ones(len(row)) for row in neigh_dist])
 
-        return mode.flatten().astype(np.int)
+        probabilities = np.zeros((X.shape[0], self._classes.size))
+
+        # We cannot vectorize the following because of the way Python handles
+        # M += 1: if a predicted index was to occur more than once (for a
+        # given tested point), the corresponding element in `probabilities` 
+        # would still be incremented only once.
+        outliers = []  # row indices of the outliers (if any)
+        for row in range(len(pred_labels)):
+            pred_indices = pred_labels[row].copy()
+            if self.outlier_label and pred_indices == outlier_label:
+                # We'll impose the label for that row later.
+                outliers.append(row)
+                continue
+            for k, c in enumerate(self._classes):
+                pred_indices[pred_labels[row] == c] = k
+            for i, idx in enumerate(pred_indices):
+                probabilities[row, idx] += weights[row][i]
+
+        # Compute the unnormalized posterior probability, taking
+        # self.class_prior_ into consideration.
+        class_count = np.zeros(self._classes.size)
+        for k, c in enumerate(self._classes):
+            class_count[k] = np.sum(self._y == c)
+        probabilities = (probabilities / class_count) * self.class_prior_
+
+        # normalize 'votes' into real [0,1] probabilities
+        probabilities = (probabilities.T / probabilities.sum(axis=1)).T
+        
+        # Predict the class of each row, based on the maximum posterior
+        # probability. If needed, correct the predictions for outliers.
+        preds = self._classes[probabilities.argmax(axis=1)].astype(np.int)
+        if self.outlier_label:
+            preds[outliers] = self.outlier_label
+
+        return preds

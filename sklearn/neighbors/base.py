@@ -567,8 +567,11 @@ class SupervisedIntegerMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
         """
-        self._y = np.asarray(y)
+        self._y = np.asarray(y, dtype=np.int)
         self._classes = np.sort(np.unique(y))
+        self.class_prior_ = np.zeros(self._classes.size)
+        for i, y_i in enumerate(self._classes):
+            self.class_prior_[i] = np.float(np.sum(y == y_i)) / len(y)
         return self._fit(X)
 
 
