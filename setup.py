@@ -84,7 +84,7 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
-          zip_safe=False, # the package can run out of an .egg file
+          zip_safe=False,  # the package can run out of an .egg file
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
