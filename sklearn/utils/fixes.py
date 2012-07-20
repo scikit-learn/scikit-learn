@@ -173,20 +173,3 @@ try:
 except ImportError:
     def count_nonzero(X):
         return len(np.flatnonzero(X))
-
-try:
-    # check whether np.dot supports the out argument
-    np.dot(np.zeros(1), np.zeros(1), out=np.empty(1))
-
-    # this is ok, just use the existing implementation
-    dot_out = np.dot
-
-except (TypeError, ValueError):
-    # old version of np.dot that does not accept the third argument, define a
-    # pure python workaround:
-    def dot_out(a, b, out=None):
-        if out is not None:
-            out[:] = np.dot(a, b)
-            return out
-        else:
-            return np.dot(a, b)
