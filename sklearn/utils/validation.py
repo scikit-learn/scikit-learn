@@ -16,7 +16,7 @@ def assert_all_finite(X):
     # there everything is finite; fall back to O(n) space np.isfinite to
     # prevent false positives from overflow in sum method.
     if X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum()) \
-      and not np.isfinite(X).all():
+      and not np.isfinite(X.data if sp.issparse(X) else X).all():
             raise ValueError("array contains NaN or infinity")
 
 
@@ -39,7 +39,7 @@ def as_float_array(X, copy=True):
 
     Parameters
     ----------
-    X : array
+    X : {array-like, sparse matrix}
 
     copy : bool, optional
         If True, a copy of X will be created. If False, a copy may still be
@@ -47,20 +47,16 @@ def as_float_array(X, copy=True):
 
     Returns
     -------
-    X : array
+    XT : {array, sparse matrix}
         An array of type np.float
     """
-    if isinstance(X, np.matrix):
-        X = X.A
-    elif not isinstance(X, np.ndarray) and not sp.issparse(X):
+    if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
+                                    and not sp.issparse(X)):
         return safe_asarray(X, dtype=np.float64)
-    if X.dtype in [np.float32, np.float64]:
+    elif X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
-    if X.dtype == np.int32:
-        X = X.astype(np.float32)
     else:
-        X = X.astype(np.float64)
-    return X
+        return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
 
 
 def array2d(X, dtype=None, order=None):
