@@ -146,21 +146,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         X = atleast2d_or_csr(X)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
-        pred_labels = self._y[neigh_ind]
+        pred_indices = self._y[neigh_ind]
 
         weights = _get_weights(neigh_dist, self.weights)
 
         if weights is None:
-            weights = np.ones_like(pred_labels)
+            weights = np.ones_like(pred_indices)
 
         probabilities = np.zeros((X.shape[0], self._classes.size))
-
-        # Translate class label to a column index in probabilities array.
-        # This may not be needed provided classes labels are guaranteed to be
-        # np.arange(n_classes) (e.g. consecutive and starting with 0)
-        pred_indices = pred_labels.copy()
-        for k, c in enumerate(self._classes):
-            pred_indices[pred_labels == c] = k
 
         # a simple ':' index doesn't work right
         all_rows = np.arange(X.shape[0])
@@ -171,8 +164,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         # Compute the unnormalized posterior probability, taking
         # self.class_prior_ into consideration.
         class_count = np.zeros(self._classes.size)
-        for k, c in enumerate(self._classes):
-            class_count[k] = np.sum(self._y == c)
+        for k in range(self._classes.size):
+            class_count[k] = np.sum(self._y == k)
         probabilities = ((probabilities / class_count) * self.class_prior_)
 
         # normalize 'votes' into real [0,1] probabilities
@@ -287,6 +280,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
+        outliers = []  # row indices of the outliers (if any)
         if self.outlier_label:
             outlier_label = np.array((self.outlier_label, ))
             small_value = np.array((1e-6, ))
@@ -295,6 +289,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 if len(pl) < 1:
                     pred_labels[i] = outlier_label
                     neigh_dist[i] = small_value
+                    # We'll impose the label for that row later.
+                    outliers.append(i)
         else:
             for pl in pred_labels:
                 # Check that all have at least 1 neighbor
@@ -317,23 +313,17 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         # M += 1: if a predicted index was to occur more than once (for a
         # given tested point), the corresponding element in `probabilities` 
         # would still be incremented only once.
-        outliers = []  # row indices of the outliers (if any)
-        for row in range(len(pred_labels)):
-            pred_indices = pred_labels[row].copy()
-            if self.outlier_label and pred_indices == outlier_label:
-                # We'll impose the label for that row later.
-                outliers.append(row)
-                continue
-            for k, c in enumerate(self._classes):
-                pred_indices[pred_labels[row] == c] = k
-            for i, idx in enumerate(pred_indices):
-                probabilities[row, idx] += weights[row][i]
+        for i, pi in enumerate(pred_labels):
+            if len(pi) < 1:
+                continue  # outlier
+            for j, idx in enumerate(pi):
+                probabilities[i, idx] += weights[i][j]
 
         # Compute the unnormalized posterior probability, taking
         # self.class_prior_ into consideration.
         class_count = np.zeros(self._classes.size)
-        for k, c in enumerate(self._classes):
-            class_count[k] = np.sum(self._y == c)
+        for k in range(self._classes.size):
+            class_count[k] = np.sum(self._y == k)
         probabilities = (probabilities / class_count) * self.class_prior_
 
         # normalize 'votes' into real [0,1] probabilities
