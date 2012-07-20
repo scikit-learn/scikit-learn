@@ -506,7 +506,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     def inverse_transform(self, X):
         """Transform data back to its original space.
-        
+
         Returns an array X_original whose transform would be X.
 
         Parameters

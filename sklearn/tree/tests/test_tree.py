@@ -337,7 +337,7 @@ def test_min_samples_leaf():
 
         out = clf.tree_.apply(X)
         node_counts = np.bincount(out)
-        leaf_count = node_counts[node_counts != 0] # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]  # drop inner nodes
 
         assert np.min(leaf_count) >= 5
 
