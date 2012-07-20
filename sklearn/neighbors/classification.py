@@ -163,10 +163,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         # Compute the unnormalized posterior probability, taking
         # self.class_prior_ into consideration.
-        class_count = np.zeros(self._classes.size)
-        for k in range(self._classes.size):
-            class_count[k] = np.sum(self._y == k)
-        probabilities = ((probabilities / class_count) * self.class_prior_)
+        class_count = np.bincount(self._y)
+        probabilities = (probabilities / class_count) * self.class_prior_
 
         # normalize 'votes' into real [0,1] probabilities
         probabilities = (probabilities.T / probabilities.sum(axis=1)).T
@@ -282,13 +280,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         outliers = []  # row indices of the outliers (if any)
         if self.outlier_label:
-            outlier_label = np.array((self.outlier_label, ))
-            small_value = np.array((1e-6, ))
             for i, pl in enumerate(pred_labels):
                 # Check that all have at least 1 neighbor
                 if len(pl) < 1:
-                    pred_labels[i] = outlier_label
-                    neigh_dist[i] = small_value
                     # We'll impose the label for that row later.
                     outliers.append(i)
         else:
@@ -316,14 +310,16 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         for i, pi in enumerate(pred_labels):
             if len(pi) < 1:
                 continue  # outlier
-            for j, idx in enumerate(pi):
-                probabilities[i, idx] += weights[i][j]
+            # When we support NumPy >= 1.6, we'll be able to simply use:
+            # np.bincount(pi, weights, minlength=self._classes.size)
+            unpadded_probs = np.bincount(pi, weights[i])
+            probabilities[i] = np.append(unpadded_probs,
+                                         np.zeros(self._classes.size -
+                                                  unpadded_probs.shape[0]))
 
         # Compute the unnormalized posterior probability, taking
         # self.class_prior_ into consideration.
-        class_count = np.zeros(self._classes.size)
-        for k in range(self._classes.size):
-            class_count[k] = np.sum(self._y == k)
+        class_count = np.bincount(self._y)
         probabilities = (probabilities / class_count) * self.class_prior_
 
         # normalize 'votes' into real [0,1] probabilities
