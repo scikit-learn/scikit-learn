@@ -100,6 +100,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     `estimators_` : list of `n_classes` estimators
         Estimators used for predictions.
 
+    `classes_` : array, shape = [`n_classes`]
+        Class labels.
     `label_binarizer_` : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
@@ -162,6 +164,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 "score is not supported for multilabel classifiers")
         else:
             return super(OneVsRestClassifier, self).score(X, y)
+
+    @property
+    def classes_(self):
+        return self.label_binarizer_.classes_
 
     @property
     def coef_(self):

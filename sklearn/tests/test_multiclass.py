@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from numpy.testing import assert_array_equal
@@ -74,20 +73,25 @@ def test_ovr_fit_predict():
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
+    y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
+         ["ham", "eggs"], ["ham"]]
+    #y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
     Y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
                   [1, 0, 1],
                   [1, 0, 0]])
 
+    classes = set("ham eggs spam".split())
+
     for base_clf in (MultinomialNB(), LinearSVC(),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
         clf = OneVsRestClassifier(base_clf).fit(X, y)
+        assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict([[0, 4, 4]])[0]
-        assert_equal(set(y_pred), set([1, 2]))
+        assert_equal(set(y_pred), set(["spam", "eggs"]))
         assert_true(clf.multilabel_)
 
         # test input as label indicator matrix
