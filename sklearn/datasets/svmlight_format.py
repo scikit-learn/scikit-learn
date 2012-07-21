@@ -189,7 +189,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     return result
 
 
-def _dump_svmlight(X, y, f, one_based):
+def _dump_svmlight(X, y, f, one_based, comment):
     is_sp = int(hasattr(X, "tocsr"))
     if X.dtype == np.float64:
         value_pattern = u"%d:%0.16e"
@@ -205,13 +205,17 @@ def _dump_svmlight(X, y, f, one_based):
             % __version__)
     f.write("# Column indices are %s-based\n" % ["zero", "one"][one_based])
 
+    if comment:
+        f.write("#\n")
+        f.writelines("# %s\n" % line for line in comment)
+
     for i in xrange(X.shape[0]):
         s = u" ".join([value_pattern % (j + one_based, X[i, j])
                        for j in X[i].nonzero()[is_sp]])
         f.write((line_pattern % (y[i], s)).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f, zero_based=True):
+def dump_svmlight_file(X, y, f, zero_based=True, comment=None):
     """Dump the dataset in svmlight / libsvm file format.
 
     This format is a text-based format, with one sample per line. It does
@@ -229,14 +233,33 @@ def dump_svmlight_file(X, y, f, zero_based=True):
     y : array-like, shape = [n_samples]
         Target values.
 
-    f : str or file-like in binary mode
-        If string it specifies the path that will contain the data.
-        If f is a file-like then data will be written to f.
+    f : string or file-like in binary mode
+        If string, specifies the path that will contain the data.
+        If file-like, data will be written to f. f should be opened in binary
+        mode.
 
     zero_based : boolean, optional
         Whether column indices should be written zero-based (True) or one-based
         (False).
+
+    comment : string, optional
+        Comment to insert at the top of the file. This should be either a
+        Unicode string, which will be encoded as UTF-8, or an ASCII byte
+        string.
     """
+    if comment is not None:
+        # Convert comment string to list of lines in UTF-8.
+        # If a byte string is passed, then check whether it's ASCII;
+        # if a user wants to get fancy, they'll have to decode themselves.
+        # Avoid mention of str and unicode types for Python 3.x compat.
+        if isinstance(comment, bytes):
+            comment.decode("ascii")     # just for the exception
+        else:
+            comment = comment.encode("utf-8")
+        if "\0" in comment:
+            raise ValueError("comment string contains NUL byte")
+        comment = comment.splitlines()
+
     y = np.asarray(y)
     if y.ndim != 1:
         raise ValueError("expected y of shape [n_samples], got %r" % y)
@@ -249,7 +272,7 @@ def dump_svmlight_file(X, y, f, zero_based=True):
     one_based = not zero_based
 
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, one_based)
+        _dump_svmlight(X, y, f, one_based, comment)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, one_based)
+            _dump_svmlight(X, y, f, one_based, comment)
