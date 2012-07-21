@@ -25,6 +25,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ._svmlight_format import _load_svmlight_file
+from ..utils import atleast2d_or_csr
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -187,14 +188,8 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     return result
 
 
-def _dump_svmlight(X, y, f, zero_based):
-    if X.shape[0] != y.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same, "
-                         "got: %r and %r instead." % (X.shape[0], y.shape[0]))
-
+def _dump_svmlight(X, y, f, one_based):
     is_sp = int(hasattr(X, "tocsr"))
-
-    one_based = not zero_based
     if X.dtype == np.float64:
         value_pattern = u"%d:%0.16e"
     else:
@@ -237,8 +232,19 @@ def dump_svmlight_file(X, y, f, zero_based=True):
         Whether column indices should be written zero-based (True) or one-based
         (False).
     """
+    y = np.asarray(y)
+    if y.ndim != 1:
+        raise ValueError("expected y of shape [n_samples], got %r" % y)
+
+    X = atleast2d_or_csr(X)
+    if X.shape[0] != y.shape[0]:
+        raise ValueError("X.shape[0] and y.shape[0] should be the same, "
+                         "got: %r and %r instead." % (X.shape[0], y.shape[0]))
+
+    one_based = not zero_based
+
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, zero_based)
+        _dump_svmlight(X, y, f, one_based)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, zero_based)
+            _dump_svmlight(X, y, f, one_based)

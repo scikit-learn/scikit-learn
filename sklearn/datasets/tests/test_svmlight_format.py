@@ -9,7 +9,7 @@ import tempfile
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
-from nose.tools import raises
+from nose.tools import assert_raises, raises
 
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
                               dump_svmlight_file)
@@ -187,3 +187,14 @@ def test_dump():
                         # allow a rounding error at the last decimal place
                         Xd.astype(dtype), X2.toarray(), 15)
                 assert_array_equal(y, y2)
+
+
+def test_dump_invalid():
+    X, y = load_svmlight_file(datafile)
+
+    f = BytesIO()
+    y2d = [y]
+    assert_raises(ValueError, dump_svmlight_file, X, y2d, f)
+
+    f = BytesIO()
+    assert_raises(ValueError, dump_svmlight_file, X, y[:-1], f)
