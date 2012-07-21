@@ -98,13 +98,13 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features]
+    `coef_` : array, shape = [n_features]
         parameter vector (w in the cost function formula)
 
-    sparse_coef_: scipy.sparse matrix, shape = [n_features, 1]
-        sparse_coef_: is a readonly property derived from coef_
+    `sparse_coef_` : scipy.sparse matrix, shape = [n_features, 1]
+        `sparse_coef_` is a readonly property derived from `coef_`
 
-    intercept_ : float
+    `intercept_` : float
         independent term in decision function.
 
     Notes
@@ -347,8 +347,8 @@ class Lasso(ElasticNet):
     `coef_` : array, shape = [n_features]
         parameter vector (w in the cost function formula)
 
-    sparse_coef_: scipy.sparse matrix, shape = [n_features, 1]
-        sparse_coef_: is a readonly property derived from coef_
+    `sparse_coef_` : scipy.sparse matrix, shape = [n_features, 1]
+        `sparse_coef_` is a readonly property derived from `coef_`
 
     `intercept_` : float
         independent term in decision function.

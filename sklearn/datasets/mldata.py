@@ -31,6 +31,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     mldata.org does not have an enforced convention for storing data or
     naming the columns in a data set. The default behavior of this function
     works well with the most common cases:
+
       1) data values are stored in the column 'data', and target values in the
          column 'label'
       2) alternatively, the first column stores target values, and the second
