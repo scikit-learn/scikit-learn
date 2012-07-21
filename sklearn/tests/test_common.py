@@ -44,7 +44,7 @@ def test_all_estimators():
             continue
         # test default-constructibility
         # get rid of deprecation warnings
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             if E in meta_estimators:
                 e = E(clf)
             else:
@@ -74,7 +74,7 @@ def test_classifiers_train():
             # TODO also test these!
             continue
         # catch deprecation warnings
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             clf = Clf()
         # fit
         clf.fit(X, y)
@@ -129,7 +129,7 @@ def test_classifiers_classes():
             continue
 
         # catch deprecation warnings
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             clf = Clf()
         # fit
         clf.fit(X, y)
@@ -154,7 +154,7 @@ def test_regressors_train():
         if Reg in dont_test or Reg in meta_estimators:
             continue
         # catch deprecation warnings
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             reg = Reg()
         if hasattr(reg, 'alpha'):
             reg.set_params(alpha=0.01)

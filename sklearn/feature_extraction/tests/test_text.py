@@ -263,7 +263,7 @@ def test_tfidf_no_smoothing():
 
     # First we need to verify that numpy here provides div 0 warnings
     with warnings.catch_warnings(record=True) as w:
-        _ = 1. / np.array([0.])
+        1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
     with warnings.catch_warnings(record=True) as w:
