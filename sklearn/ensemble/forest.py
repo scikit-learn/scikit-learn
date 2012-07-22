@@ -44,7 +44,7 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
-from ..tree._tree import DTYPE
+from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state
 from ..metrics import r2_score
 
@@ -269,7 +269,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 y[:, k] = np.searchsorted(unique, y[:, k])
 
         if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)

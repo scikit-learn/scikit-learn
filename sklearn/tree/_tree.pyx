@@ -41,7 +41,9 @@ cdef extern from "float.h":
 
 # Dtype
 DTYPE = np.float32
+DOUBLE = np.float64
 # ctypedef np.float32_t DTYPE_t
+# ctypedef np.float64_t DOUBLE_t
 # ctypedef np.int8_t BOOL_t
 
 # Constants
@@ -352,8 +354,8 @@ cdef class Tree:
         if X.dtype != DTYPE or not np.isfortran(X):
             X = np.asarray(X, dtype=DTYPE, order="F")
 
-        if y.dtype != DTYPE or not y.flags.contiguous:
-            y = np.asarray(y, dtype=DTYPE, order="C")
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
 
         if sample_mask is None:
             sample_mask = np.ones((X.shape[0],), dtype=np.bool)
@@ -383,7 +385,7 @@ cdef class Tree:
     cdef void recursive_partition(self,
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                   np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
-                                  np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                                   np.ndarray sample_mask,
                                   int n_node_samples,
                                   int depth,
@@ -396,7 +398,7 @@ cdef class Tree:
 
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
         cdef int* X_argsorted_ptr = <int*> X_argsorted.data
-        cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
+        cdef DOUBLE_t* y_ptr = <DOUBLE_t*> y.data
         cdef BOOL_t* sample_mask_ptr = <BOOL_t*> sample_mask.data
 
         cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
@@ -460,7 +462,7 @@ cdef class Tree:
 
                 # !! No need to update the other variables
                 # X_argsorted_ptr = <int*> X_argsorted.data
-                # y_ptr = <DTYPE_t*> y.data
+                # y_ptr = <DOUBLE_t*> y.data
                 # X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
                 # y_stride = <int> y.strides[0] / <int> y.strides[1]
 
@@ -557,7 +559,7 @@ cdef class Tree:
 
     cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
                          int* X_argsorted_ptr, int X_argsorted_stride,
-                         DTYPE_t* y_ptr, int y_stride, BOOL_t* sample_mask_ptr,
+                         DOUBLE_t* y_ptr, int y_stride, BOOL_t* sample_mask_ptr,
                          int n_node_samples, int n_total_samples, int* _best_i,
                          double* _best_t, double* _best_error,
                          double* _initial_error):
@@ -578,7 +580,7 @@ cdef class Tree:
 
     cdef void find_best_split(self, DTYPE_t* X_ptr, int X_stride,
                               int* X_argsorted_ptr, int X_argsorted_stride,
-                              DTYPE_t* y_ptr, int y_stride,
+                              DOUBLE_t* y_ptr, int y_stride,
                               BOOL_t* sample_mask_ptr, int n_node_samples,
                               int n_total_samples, int* _best_i,
                               double* _best_t, double* _best_error,
@@ -684,7 +686,7 @@ cdef class Tree:
 
     cdef void find_random_split(self, DTYPE_t* X_ptr, int X_stride,
                                 int* X_argsorted_ptr, int X_argsorted_stride,
-                                DTYPE_t* y_ptr, int y_stride,
+                                DOUBLE_t* y_ptr, int y_stride,
                                 BOOL_t* sample_mask_ptr, int n_node_samples,
                                 int n_total_samples, int* _best_i,
                                 double* _best_t, double* _best_error,
@@ -771,6 +773,7 @@ cdef class Tree:
 
             while True:
                 if sample_mask_ptr[X_argsorted_i[c]] != 0:
+                    # FIXME why is t cast to DTYPE_t?
                     if X_i[X_argsorted_i[c]] > (<DTYPE_t> t) or c == b:
                         break
 
@@ -905,7 +908,7 @@ cdef class Tree:
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)."""
 
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t*
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t*
                    sample_mask, int n_samples, int n_total_samples):
         """Initialise the criterion."""
         pass
@@ -914,7 +917,7 @@ cdef class Criterion:
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
                     int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -1025,7 +1028,7 @@ cdef class ClassificationCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t *sample_mask,
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t *sample_mask,
                    int n_samples, int n_total_samples):
         """Initialise the criterion."""
         cdef int n_outputs = self.n_outputs
@@ -1075,7 +1078,7 @@ cdef class ClassificationCriterion(Criterion):
                 # Reset right label counts to the initial counts
                 label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
                     int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -1342,7 +1345,7 @@ cdef class RegressionCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t* sample_mask,
                    int n_samples, int n_total_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
@@ -1372,7 +1375,7 @@ cdef class RegressionCriterion(Criterion):
         self.n_samples = n_samples
 
         cdef int j = 0
-        cdef DTYPE_t y_jk = 0.0
+        cdef DOUBLE_t y_jk = 0.0
 
         for j from 0 <= j < n_total_samples:
             if sample_mask[j] == 0:
@@ -1420,7 +1423,7 @@ cdef class RegressionCriterion(Criterion):
             var_left[k] = 0.0
             var_right[k] = sq_sum_right[k] - n_samples * (mean_right[k] * mean_right[k])
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
                     int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""

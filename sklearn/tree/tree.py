@@ -27,6 +27,7 @@ __all__ = ["DecisionTreeClassifier",
            "ExtraTreeRegressor"]
 
 DTYPE = _tree.DTYPE
+DOUBLE = _tree.DOUBLE
 
 CLASSIFICATION = {
     "gini": _tree.Gini,
@@ -173,11 +174,14 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The training input samples.
+            The training input samples. Use ``dtype=np.float32``
+            and ``order='F'`` for maximum efficiency.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
+            Use ``dtype=np.float64`` and ``order='C'`` for maximum
+            efficiency.
 
         Returns
         -------
@@ -218,8 +222,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
-        if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         if is_classification:
             criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
@@ -278,8 +282,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                 self.min_density, max_features,
                                 self.find_split_, self.random_state)
 
-        self.tree_.build(X, y,
-                         sample_mask=sample_mask, X_argsorted=X_argsorted)
+        self.tree_.build(X, y, sample_mask=sample_mask,
+                         X_argsorted=X_argsorted)
 
         if self.compute_importances:
             self.feature_importances_ = \

@@ -6,6 +6,7 @@
 cimport numpy as np
 
 ctypedef np.float32_t DTYPE_t
+ctypedef np.float64_t DOUBLE_t
 ctypedef np.int8_t BOOL_t
 
 
@@ -15,12 +16,12 @@ ctypedef np.int8_t BOOL_t
 
 cdef class Criterion:
     # Methods
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t* sample_mask,
                    int n_samples, int n_total_samples)
 
     cdef void reset(self)
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
                     int* X_argsorted_i, BOOL_t* sample_mask)
 
     cdef double eval(self)
@@ -72,7 +73,7 @@ cdef class Tree:
     cdef void recursive_partition(self,
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                   np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
-                                  np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                                   np.ndarray sample_mask,
                                   int n_node_samples,
                                   int depth,
@@ -90,14 +91,14 @@ cdef class Tree:
 
     cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
                          int* X_argsorted_ptr, int X_argsorted_stride,
-                         DTYPE_t* y_ptr, int y_stride, BOOL_t* sample_mask_ptr,
+                         DOUBLE_t* y_ptr, int y_stride, BOOL_t* sample_mask_ptr,
                          int n_node_samples, int n_total_samples, int* _best_i,
                          double* _best_t, double* _best_error,
                          double* _initial_error)
 
     cdef void find_best_split(self, DTYPE_t* X_ptr, int X_stride,
                               int* X_argsorted_ptr, int X_argsorted_stride,
-                              DTYPE_t* y_ptr, int y_stride,
+                              DOUBLE_t* y_ptr, int y_stride,
                               BOOL_t* sample_mask_ptr, int n_node_samples,
                               int n_total_samples, int* _best_i,
                               double* _best_t, double* _best_error,
@@ -105,7 +106,7 @@ cdef class Tree:
 
     cdef void find_random_split(self, DTYPE_t* X_ptr, int X_stride,
                                 int* X_argsorted_ptr, int X_argsorted_stride,
-                                DTYPE_t* y_ptr, int y_stride,
+                                DOUBLE_t* y_ptr, int y_stride,
                                 BOOL_t* sample_mask_ptr, int n_node_samples,
                                 int n_total_samples, int* _best_i,
                                 double* _best_t, double* _best_error,
