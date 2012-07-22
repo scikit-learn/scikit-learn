@@ -54,7 +54,7 @@ iris = datasets.load_iris()
 # (25%) sets.
 skf = StratifiedKFold(iris.target, k=4)
 # Only take the first fold.
-train_index, test_index = skf.__iter__().next()
+train_index, test_index = next(iter(skf))
 
 
 X_train = iris.data[train_index]

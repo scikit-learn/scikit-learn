@@ -1216,7 +1216,7 @@ def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
     Quick utility that wraps calls to ``check_arrays`` and
-    ``iter(ShuffleSplit(n_samples)).next()`` and application to input
+    ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
 
@@ -1304,7 +1304,7 @@ def train_test_split(*arrays, **options):
                       train_size=train_size,
                       random_state=random_state,
                       indices=True)
-    train, test = iter(cv).next()
+    train, test = next(iter(cv))
     splitted = []
     for a in arrays:
         splitted.append(a[train])

@@ -9,10 +9,12 @@ import tempfile
 from numpy.testing import assert_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
-from nose.tools import raises
+from nose.tools import assert_raises, raises
 
+import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
                               dump_svmlight_file)
+from sklearn.utils.testing import assert_in
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
@@ -175,6 +177,12 @@ def test_dump():
                 dump_svmlight_file(X.astype(dtype), y, f,
                                    zero_based=zero_based)
                 f.seek(0)
+
+                comment = f.readline()
+                assert_in("scikit-learn %s" % sklearn.__version__, comment)
+                comment = f.readline()
+                assert_in(["one", "zero"][zero_based] + "-based", comment)
+
                 X2, y2 = load_svmlight_file(f, dtype=dtype,
                                             zero_based=zero_based)
                 assert_equal(X2.dtype, dtype)
@@ -187,3 +195,14 @@ def test_dump():
                         # allow a rounding error at the last decimal place
                         Xd.astype(dtype), X2.toarray(), 15)
                 assert_array_equal(y, y2)
+
+
+def test_dump_invalid():
+    X, y = load_svmlight_file(datafile)
+
+    f = BytesIO()
+    y2d = [y]
+    assert_raises(ValueError, dump_svmlight_file, X, y2d, f)
+
+    f = BytesIO()
+    assert_raises(ValueError, dump_svmlight_file, X, y[:-1], f)

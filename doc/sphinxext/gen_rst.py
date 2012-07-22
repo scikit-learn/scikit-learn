@@ -101,7 +101,7 @@ def extract_docstring(filename):
 
     docstring = ''
     first_par = ''
-    tokens = tokenize.generate_tokens(lines.__iter__().next)
+    tokens = tokenize.generate_tokens(iter(lines).next)
     for tok_type, tok_content, _, (erow, _), _ in tokens:
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):

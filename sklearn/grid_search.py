@@ -389,7 +389,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         # Return early if there is only one grid point.
         if _has_one_grid_point(self.param_grid):
-            params = iter(grid).next()
+            params = next(iter(grid))
             base_clf.set_params(**params)
             base_clf.fit(X, y)
             self._best_estimator_ = base_clf

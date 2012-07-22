@@ -52,6 +52,7 @@ print __doc__
 
 from time import time
 import os
+import sys
 import numpy as np
 from optparse import OptionParser
 
@@ -182,7 +183,7 @@ sgd_parameters = {
     'alpha': 0.001,
     'n_iter': 2,
     }
-classifiers['SGD'] = SGDClassifier( **sgd_parameters)
+classifiers['SGD'] = SGDClassifier(**sgd_parameters)
 
 ######################################################################
 ## Train CART model
@@ -207,7 +208,7 @@ classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
 selected_classifiers = opts.classifiers.split(',')
 for name in selected_classifiers:
     if name not in classifiers:
-        op.error('classifier %r unknwon')
+        op.error('classifier %r unknown' % name)
         sys.exit(1)
 
 print("")
