@@ -67,9 +67,9 @@ for i in range(len(loglikelihoods)):
 # Estimate the state without using any observations.  This will let us see how
 # good we could do if we ran blind.
 n_dim_state = data.transition_matrix.shape[0]
-T = data.data.shape[0]
-blind_state_estimates = np.zeros((T, n_dim_state))
-for t in range(T - 1):
+n_timesteps = data.data.shape[0]
+blind_state_estimates = np.zeros((n_timesteps, n_dim_state))
+for t in range(n_timesteps - 1):
     if t == 0:
         blind_state_estimates[t] = kf.initial_state_mean
     blind_state_estimates[t + 1] = (
@@ -78,23 +78,22 @@ for t in range(T - 1):
     )
 
 # Estimate the hidden states using observations up to and including
-# time t for t in [0...T-1].  This method outputs the mean and covariance
-# characterizing the Multivariate Normal distribution for
+# time t for t in [0...n_timesteps-1].  This method outputs the mean and
+# covariance characterizing the Multivariate Normal distribution for
 #   P(x_t | z_{1:t})
-(filtered_state_estimates, _) = kf.filter(data.data)
+filtered_state_estimates = kf.filter(data.data)[0]
 
 # Estimate the hidden states using all observations.  These estimates
 # will be 'smoother' (and are to be preferred) to those produced by
 # simply filtering as they are made with later observations in mind.
 # Probabilistically, this method produces the mean and covariance
 # characterizing,
-#    P(x_t | z_{1:T})
+#    P(x_t | z_{1:n_timesteps})
 smoothed_state_estimates = kf.predict(data.data)
 
 # Draw the true, blind,e filtered, and smoothed state estimates for all 5
 # dimensions.
 pl.figure(figsize=(16, 6))
-pl.hold(True)
 lines_true = pl.plot(data.target, linestyle='-', color='b')
 lines_blind = pl.plot(blind_state_estimates, linestyle=':', color='m')
 lines_filt = pl.plot(filtered_state_estimates, linestyle='--', color='g')

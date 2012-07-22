@@ -41,15 +41,15 @@ kf = KalmanFilter(
 # is equivalent to
 #
 #   >>> (filter_state_means, filtered_state_covariance) = kf.filter(data)
-T = data.data.shape[0]
+n_timesteps = data.data.shape[0]
 n_dim_state = data.transition_matrix.shape[0]
-filtered_state_means = np.zeros((T, n_dim_state))
-filtered_state_covariances = np.zeros((T, n_dim_state, n_dim_state))
-for t in range(T - 1):
+filtered_state_means = np.zeros((n_timesteps, n_dim_state))
+filtered_state_covariances = np.zeros((n_timesteps, n_dim_state, n_dim_state))
+for t in range(n_timesteps - 1):
     if t == 0:
         filtered_state_means[t] = data.initial_state_mean
         filtered_state_covariances[t] = data.initial_state_covariance
-    (filtered_state_means[t + 1], filtered_state_covariances[t + 1]) = (
+    filtered_state_means[t + 1], filtered_state_covariances[t + 1] = (
         kf.filter_update(
             filtered_state_means[t], filtered_state_covariances[t],
             data.data[t + 1], transition_offset=data.transition_offsets[t],
@@ -58,7 +58,6 @@ for t in range(T - 1):
 
 # draw estimates
 pl.figure()
-pl.hold(True)
 lines_true = pl.plot(data.target, color='b')
 lines_filt = pl.plot(filtered_state_means, color='r')
 pl.legend((lines_true[0], lines_filt[0]), ('true', 'filtered'))

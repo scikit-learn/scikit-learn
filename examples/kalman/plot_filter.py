@@ -38,7 +38,10 @@ kf = KalmanFilter(
     initial_state_mean, initial_state_covariance,
     random_state=random_state
 )
-(states, observations) = kf.sample(T=50, initial_state=initial_state_mean)
+states, observations = kf.sample(
+    n_timesteps=50,
+    initial_state=initial_state_mean
+)
 
 # estimate state with filtering and smoothing
 filtered_state_estimates = kf.filter(observations)[0]
@@ -46,7 +49,6 @@ smoothed_state_estimates = kf.predict(observations)
 
 # draw estimates
 pl.figure()
-pl.hold(True)
 lines_true = pl.plot(states, color='b')
 lines_filt = pl.plot(filtered_state_estimates, color='r')
 lines_smooth = pl.plot(smoothed_state_estimates, color='g')

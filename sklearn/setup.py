@@ -48,6 +48,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
     config.add_subpackage('kalman')
+    config.add_subpackage('kalman/tests')
 
     # add cython extension module for hmm
     config.add_extension(

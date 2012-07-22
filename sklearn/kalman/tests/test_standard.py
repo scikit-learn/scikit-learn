@@ -1,9 +1,12 @@
+import pickle
+from io import BytesIO
+from StringIO import StringIO
+
 import numpy as np
 from scipy import linalg
-
 from nose.tools import assert_true
 
-from ..kalman import KalmanFilter
+from ..standard import KalmanFilter
 from sklearn.datasets import load_kalman_data
 
 data = load_kalman_data()
@@ -40,11 +43,11 @@ def test_kalman_filter_update():
     (x_filt, V_filt) = kf.filter(X=data.data)
 
     # use online Kalman Filter
-    T = data.data.shape[0]
+    n_timesteps = data.data.shape[0]
     n_dim_state = data.transition_matrix.shape[0]
-    x_filt2 = np.zeros((T, n_dim_state))
-    V_filt2 = np.zeros((T, n_dim_state, n_dim_state))
-    for t in range(T - 1):
+    x_filt2 = np.zeros((n_timesteps, n_dim_state))
+    V_filt2 = np.zeros((n_timesteps, n_dim_state, n_dim_state))
+    for t in range(n_timesteps - 1):
         if t == 0:
             x_filt2[0] = data.initial_state_mean
             V_filt2[0] = data.initial_state_covariance
@@ -117,10 +120,10 @@ def test_kalman_fit():
 
     # check that EM for all parameters is working
     kf.em_vars = 'all'
-    T = 30
+    n_timesteps = 30
     for i in range(len(scores)):
-        kf.fit(X=data.data[0:T], n_iter=1)
-        scores[i] = kf.score(data.data[0:T])
+        kf.fit(X=data.data[0:n_timesteps], n_iter=1)
+        scores[i] = kf.score(data.data[0:n_timesteps])
     for i in range(len(scores) - 1):
         assert_true(scores[i] < scores[i + 1])
 
@@ -148,3 +151,34 @@ def test_kalman_initialize_parameters():
     check_dims(1, 3, observation_offsets=np.zeros(3))
     check_dims(2, 3, transition_covariance=np.eye(2),
                observation_offsets=np.zeros(3))
+
+
+def test_kalman_pickle():
+    kf = KalmanFilter(
+        data.transition_matrix,
+        data.observation_matrix,
+        data.transition_covariance,
+        data.observation_covariance,
+        data.transition_offsets,
+        data.observation_offset,
+        data.initial_state_mean,
+        data.initial_state_covariance,
+        em_vars='all')
+
+    # train and get log likelihood
+    X = data.data[0:10]
+    kf = kf.fit(X, n_iter=5)
+    score = kf.score(X)
+
+    # pickle Kalman Filter
+    store = StringIO()
+    pickle.dump(kf, store)
+    clf = pickle.load(StringIO(store.getvalue()))
+
+    # check that parameters came out already
+    np.testing.assert_almost_equal(score, kf.score(X))
+
+    # store it as BytesIO as well
+    store = BytesIO()
+    pickle.dump(kf, store)
+    kf = pickle.load(BytesIO(store.getvalue()))

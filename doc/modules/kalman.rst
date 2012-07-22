@@ -52,9 +52,9 @@ predict the underlying hidden states of any observation sequence::
 
     >>> measurements = [[1,0], [0,0], [0,1]]
     >>> kf.fit(measurements).predict([[2,0], [2,1], [2,2]])
-    array([[ 0.64479027],
-           [ 0.99338733],
-           [ 1.18314523]])
+    array([[ 0.75617284],
+           [ 1.26661721],
+           [ 1.53838218]])
 
 The Kalman Filter is parameterized by 3 arrays for state transitions, 3 for measurements, and 2 more for initial conditions.  Their names and function are described in the next section.
 
@@ -107,7 +107,7 @@ In words, the Linear-Gaussian model assumes that for all time steps :math:`t =
 
 These assumptions imply that that :math:`x_t` is always a Gaussian
 distribution, even when :math:`z_t` is observed.  If this is the case, the
-distribution of :math:`x_t|z_{1:t}` and :math:`x_t | z_{1:T}` are completely
+distribution of :math:`x_t|z_{1:t}` and :math:`x_t | z_{1:T-1}` are completely
 specified by the parameters of the Gaussian distribution, namely its *mean* and
 *covariance*.  The Kalman Filter and Kalman Smoother calculate these values,
 respectively.

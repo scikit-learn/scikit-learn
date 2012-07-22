@@ -10,7 +10,6 @@ by :math:`z_t`.
 """
 from matplotlib.patches import Circle, Arrow
 from matplotlib import rc
-import numpy as np
 import pylab as pl
 
 boxcolor = 'w'
