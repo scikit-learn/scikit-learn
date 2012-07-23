@@ -95,7 +95,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
 
-    def _set_estimates(self, covariance):
+    def _set_covariance(self, covariance):
         """Saves the covariance and precision estimates
 
         Storage is done accordingly to `self.store_precision`.
@@ -154,7 +154,7 @@ class EmpiricalCovariance(BaseEstimator):
             self.location_ = X.mean(0)
         covariance = empirical_covariance(
             X, assume_centered=self.assume_centered)
-        self._set_estimates(covariance)
+        self._set_covariance(covariance)
 
         return self
 

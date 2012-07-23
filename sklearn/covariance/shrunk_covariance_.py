@@ -133,7 +133,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         covariance = empirical_covariance(X,
                         assume_centered=self.assume_centered)
         covariance = shrunk_covariance(covariance, self.shrinkage)
-        self._set_estimates(covariance)
+        self._set_covariance(covariance)
 
         return self
 
@@ -387,7 +387,7 @@ class LedoitWolf(EmpiricalCovariance):
         covariance, shrinkage = ledoit_wolf(X - self.location_,
                         assume_centered=True, block_size=self.block_size)
         self.shrinkage_ = shrinkage
-        self._set_estimates(covariance)
+        self._set_covariance(covariance)
 
         return self
 
@@ -534,6 +534,6 @@ class OAS(EmpiricalCovariance):
 
         covariance, shrinkage = oas(X - self.location_, assume_centered=True)
         self.shrinkage_ = shrinkage
-        self._set_estimates(covariance)
+        self._set_covariance(covariance)
 
         return self
