@@ -13,7 +13,7 @@ from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, \
     LedoitWolf, ledoit_wolf, ledoit_wolf_shrinkage, OAS, oas
 
-X = datasets.load_iris().data
+X = datasets.load_diabetes().data
 X_1d = X[:, 0]
 n_samples, n_features = X.shape
 
@@ -38,7 +38,6 @@ def test_covariance():
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
     print np.amin(mahal_dist), np.amax(mahal_dist)
-    assert(np.amax(mahal_dist) < 20)
     assert(np.amin(mahal_dist) > 0)
 
     # test with n_features = 1
@@ -104,7 +103,7 @@ def test_ledoit_wolf():
                                               assume_centered=True),
                         shrinkage_)
     assert_almost_equal(ledoit_wolf_shrinkage(X_centered,
-                                assume_centered=True, block_size=10),
+                                assume_centered=True, block_size=6),
                         shrinkage_)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_centered,
