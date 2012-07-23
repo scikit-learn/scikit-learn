@@ -186,9 +186,9 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     # number of blocks to split the covariance matrix into
     n_splits = int(n_features / block_size)
-    emp_cov_trace = np.sum(X ** 2, 0) / n_samples
-    mu = np.sum(emp_cov_trace) / n_features
     X2 = X ** 2
+    emp_cov_trace = np.sum(X2, axis=0) / n_samples
+    mu = np.sum(emp_cov_trace) / n_features
     beta_ = 0.  # sum of the coefficients of <X2.T, X2>
     delta_ = 0.  # sum of the *squared* coefficients of <X.T, X>
     # starting block computation
@@ -221,7 +221,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     beta = min(beta, delta)
     # finally get shrinkage
     shrinkage = beta / delta
-    # only return the shrunk covariance if it is not to big
 
     return shrinkage
 
