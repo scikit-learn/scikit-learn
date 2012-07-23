@@ -8,14 +8,15 @@ def get_blas_info():
 
     def atlas_not_found(blas_info_):
         def_macros = blas_info.get('define_macros', [])
-        if [('ATLAS_INFO', 'None')] in def_macros:
-            # this one turned up on FreeBSD
-            return True
         for x in def_macros:
             if x[0] == "NO_ATLAS_INFO":
                 # if x[1] != 1 we should have lapack
                 # how do we do that now?
                 return True
+            if x[0] == "ATLAS_INFO":
+                if "None" in x[1]:
+                    # this one turned up on FreeBSD
+                    return True
         return False
 
     blas_info = get_info('blas_opt', 0)
