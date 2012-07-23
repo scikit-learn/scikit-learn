@@ -124,8 +124,15 @@ class ShrunkCovariance(EmpiricalCovariance):
             Returns self.
 
         """
-        EmpiricalCovariance.fit(self, X)
-        covariance = shrunk_covariance(self.covariance_, self.shrinkage)
+        # Not calling the parent object to fit, to avoid a potential
+        # matrix inversion when setting the precision
+        if self.assume_centered:
+            self.location_ = np.zeros(X.shape[1])
+        else:
+            self.location_ = X.mean(0)
+        covariance = empirical_covariance(X,
+                        assume_centered=self.assume_centered)
+        covariance = shrunk_covariance(covariance, self.shrinkage)
         self._set_estimates(covariance)
 
         return self
@@ -371,11 +378,14 @@ class LedoitWolf(EmpiricalCovariance):
             Returns self.
 
         """
-        # only return the shrunk covariance if it is not too big
-        EmpiricalCovariance.fit(self, X)
-        covariance, shrinkage = ledoit_wolf(
-            X - self.location_, assume_centered=True,
-            block_size=self.block_size)
+        # Not calling the parent object to fit, to avoid computing the
+        # covariance matrix (and potentially the precision)
+        if self.assume_centered:
+            self.location_ = np.zeros(X.shape[1])
+        else:
+            self.location_ = X.mean(0)
+        covariance, shrinkage = ledoit_wolf(X - self.location_,
+                        assume_centered=True, block_size=self.block_size)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
 
@@ -515,7 +525,13 @@ class OAS(EmpiricalCovariance):
             Returns self.
 
         """
-        EmpiricalCovariance.fit(self, X)
+        # Not calling the parent object to fit, to avoid computing the
+        # covariance matrix (and potentially the precision)
+        if self.assume_centered:
+            self.location_ = np.zeros(X.shape[1])
+        else:
+            self.location_ = X.mean(0)
+
         covariance, shrinkage = oas(X - self.location_, assume_centered=True)
         self.shrinkage_ = shrinkage
         self._set_estimates(covariance)
