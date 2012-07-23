@@ -38,7 +38,6 @@ def _fit_binary(estimator, X, y):
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
-        print(X, y)
         estimator.fit(X, y)
     return estimator
 
