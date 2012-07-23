@@ -194,16 +194,16 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     # starting block computation
     for i in xrange(n_splits):
         for j in xrange(n_splits):
-            rows = np.arange(block_size * i, block_size * (i + 1))
-            cols = np.arange(block_size * j, block_size * (j + 1))
+            rows = slice(block_size * i, block_size * (i + 1))
+            cols = slice(block_size * j, block_size * (j + 1))
             beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
             delta_ += np.sum(np.dot(X.T[rows], X[:, cols]) ** 2)
-        rows = np.arange(block_size * i, block_size * (i + 1))
+        rows = slice(block_size * i, block_size * (i + 1))
         beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits:]))
         delta_ += np.sum(
             np.dot(X.T[rows], X[:, block_size * n_splits:]) ** 2)
     for j in xrange(n_splits):
-        cols = np.arange(block_size * j, block_size * (j + 1))
+        cols = slice(block_size * j, block_size * (j + 1))
         beta_ += np.sum(np.dot(X2.T[block_size * n_splits:], X2[:, cols]))
         delta_ += np.sum(
             np.dot(X.T[block_size * n_splits:], X[:, cols]) ** 2)
