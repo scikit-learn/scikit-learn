@@ -76,7 +76,7 @@ def test_ovr_always_present():
     X = np.ones((10, 2))
     X[:5, :] = 0
     y = [[int(i >= 5), 2, 3] for i in xrange(10)]
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
         ovr = OneVsRestClassifier(DecisionTreeClassifier())
         ovr.fit(X, y)
         y_pred = ovr.predict(X)

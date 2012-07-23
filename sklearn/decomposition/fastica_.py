@@ -227,7 +227,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         # XXX: these should be optimized, as they can be a bottleneck.
         if fun == 'logcosh':
             def g(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0) # comment it out?
+                alpha = fun_args.get('alpha', 1.0)  # comment it out?
                 gx = np.tanh(alpha * x)
                 g_x = alpha * (1 - gx ** 2)
                 return gx, g_x
