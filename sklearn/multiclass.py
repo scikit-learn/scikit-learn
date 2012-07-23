@@ -29,12 +29,12 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 
 
-def _fit_binary(estimator, X, y):
+def _fit_binary(estimator, X, y, classes):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)
     if len(unique_y) == 1:
         warnings.warn("Label %s is present in all training examples." %
-                str(unique_y))
+                str(classes[unique_y[0]]))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -65,7 +65,7 @@ def fit_ovr(estimator, X, y):
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    estimators = [_fit_binary(estimator, X, Y[:, i])
+    estimators = [_fit_binary(estimator, X, Y[:, i], classes=lb.classes_)
                   for i in range(Y.shape[1])]
     return estimators, lb
 
@@ -205,21 +205,21 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
 
-def _fit_ovo_binary(estimator, X, y, i, j):
+def _fit_ovo_binary(estimator, X, y, i, j, classes):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y)
+    return _fit_binary(estimator, X[ind[cond]], y, classes=classes)
 
 
 def fit_ovo(estimator, X, y):
     """Fit a one-vs-one strategy."""
     classes = np.unique(y)
     n_classes = classes.shape[0]
-    estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
+    estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j], classes)
                     for i in range(n_classes) for j in range(i + 1, n_classes)]
 
     return estimators, classes
@@ -359,7 +359,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
 
     Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])])
 
-    estimators = [_fit_binary(estimator, X, Y[:, i])
+    estimators = [_fit_binary(estimator, X, Y[:, i], classes=classes)
                   for i in range(Y.shape[1])]
 
     return estimators, classes, code_book
