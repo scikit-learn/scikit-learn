@@ -269,7 +269,7 @@ install the latest version::
 
     $ pip install -U memory_profiler
 
-Then, setup the magics in a manner similar to line_profiler.
+Then, setup the magics in a manner similar to ``line_profiler``.
 
 - **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
   ensure the following lines are present::
@@ -310,7 +310,7 @@ Then, setup the magics in a manner similar to line_profiler.
   notebook.
 
 ``%mprun`` is useful to examine, line-by-line, the memory usage of key
-functions in your program. It is very similar to ``%lprun%, discussed in the
+functions in your program. It is very similar to ``%lprun``, discussed in the
 previous section. For example, from the ``memory_profiler`` ``examples``
 directory::
 
@@ -328,8 +328,8 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that we define is `%memit`, which is analogous to
-`%timeit`. It can be used as follows::
+Another useful magic that ``memory_profiler`` defines is `%memit`, which is
+analogous to `%timeit`. It can be used as follows::
 
     In [1]: import numpy as np
 
