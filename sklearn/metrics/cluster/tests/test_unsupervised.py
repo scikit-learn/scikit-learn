@@ -40,6 +40,6 @@ def test_no_nan():
     # silhouette_score to return nan (see bug #960).
     labels = np.array([1, 0, 1, 1, 1])
     # The distance matrix doesn't actually matter.
-    D = np.random.rand(len(labels), len(labels))
+    D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
