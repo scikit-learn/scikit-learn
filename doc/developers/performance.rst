@@ -376,22 +376,12 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to instrospect what's happening inside the
 compiled extension it-self.
 
-In order to profile compiled Python extensions one could use ``gprof``
-after having recompiled the project with ``gcc -pg`` and using the
-``python-dbg`` variant of the interpreter on debian / ubuntu: however
-this approach requires to also have ``numpy`` and ``scipy`` recompiled
-with ``-pg`` which is rather complicated to get working.
+Using yep and google-perftools
+--------------------------------
 
-Fortunately there exist two alternative profilers that don't require you to
-recompile everything.
+Easy profiling without special compilation options use yep:
 
-
-Using google-perftools
-----------------------
-
-TODO
-
-- https://github.com/fabianp/yep
+- http://pypi.python.org/pypi/yep
 - http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
 
 .. note::
@@ -401,6 +391,20 @@ TODO
   does not seem to work correctly at the time of writing. This
   issue can be tracked on the `project issue tracker
   <https://code.google.com/p/google-perftools/issues/detail?id=326>`_.
+
+
+
+Using gprof
+-------------
+
+In order to profile compiled Python extensions one could use ``gprof``
+after having recompiled the project with ``gcc -pg`` and using the
+``python-dbg`` variant of the interpreter on debian / ubuntu: however
+this approach requires to also have ``numpy`` and ``scipy`` recompiled
+with ``-pg`` which is rather complicated to get working.
+
+Fortunately there exist two alternative profilers that don't require you to
+recompile everything.
 
 
 Using valgrind / callgrind / kcachegrind
