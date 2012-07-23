@@ -10,12 +10,12 @@ There are several ways to get in touch with the developers.
 Mailing List
 ============
 
-- The main mailing list is `scikit-learn-general
-<https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_.
+- The main mailing list is `scikit-learn-general 
+  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_.
 
 - There is also a commit list `scikit-learn-commits
-<https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_,
-where updates to the main repository and test failures get notified.
+  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_,
+  where updates to the main repository and test failures get notified.
 
 
 .. _user_questions:
@@ -24,12 +24,12 @@ User questions
 ==============
 
 - Some scikit-learn developers support users on StackOverflow using
-the `[scikit-learn] <http://stackoverflow.com/questions/tagged/scikit-learn>`
-tag.
+  the `[scikit-learn] <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+  tag.
 
 - For general theoretical or methodoligocal Machine Learning questions
-`metaoptimize.com/qa <http://metaoptimize.com/qa>` is probably a more
-suitable venue.
+  `metaoptimize.com/qa <http://metaoptimize.com/qa>`_ is probably a more
+  suitable venue.
 
 In both cases please use a descriptive question in the title field (e.g.
 no "Please help with scikit-learn!" as this is not a question) and put
