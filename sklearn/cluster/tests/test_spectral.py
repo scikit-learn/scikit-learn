@@ -42,7 +42,7 @@ def test_spectral_clustering():
 def test_spectral_amg_mode():
     # Test the amg mode of SpectralClustering
     centers = np.array([
-        [ 0.,  0.,  0.],
+        [0., 0., 0.],
         [10., 10., 10.],
         [20., 20., 20.],
     ])
