@@ -19,7 +19,6 @@ LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 VERSION = '0.12-git'
 
-import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
 
 
