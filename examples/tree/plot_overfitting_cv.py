@@ -44,11 +44,11 @@ scores = tree.prune_path(clf, X, y, max_n_leaves=20,
                                     n_iterations=100, random_state=0)
 plot_pruned_path(scores)
 
-clf = clf.fit(X, y)
+clf = tree.DecisionTreeRegressor(max_depth=20, n_leaves=15)
+clf.fit(X, y)
 X_test = np.arange(0.0, 5.0, 0.01)[:, np.newaxis]
 
 #Prepare the different pruned level
-clf = clf.prune(15)
 y_15 = clf.predict(X_test)
 
 clf = clf.prune(6)

@@ -559,6 +559,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                        max_depth,
                        min_samples_split,
                        min_samples_leaf,
+                       n_leaves,
                        min_density,
                        max_features,
                        compute_importances,
@@ -567,6 +568,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.n_leaves = n_leaves
         self.min_density = min_density
         self.max_features = max_features
         self.compute_importances = compute_importances
@@ -700,6 +702,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.feature_importances_ = \
                 self.tree_.compute_feature_importances()
 
+        if self.n_leaves is not None:
+            self.prune(self.n_leaves)
+
         return self
 
     def predict(self, X):
@@ -768,6 +773,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
+
+    n_leaves : integer, optional (default=None)
+        The number of leaves of the post-pruned tree. If None, no post-pruning
+        will be run.
 
     min_density : float, optional (default=0.1)
         This parameter controls a trade-off in an optimization heuristic. It
@@ -846,6 +855,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
+                       n_leaves=None,
                        min_density=0.1,
                        max_features=None,
                        compute_importances=False,
@@ -854,6 +864,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      max_depth,
                                                      min_samples_split,
                                                      min_samples_leaf,
+                                                     n_leaves,
                                                      min_density,
                                                      max_features,
                                                      compute_importances,
@@ -949,6 +960,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    n_leaves : integer, optional (default=None)
+        The number of leaves of the post-pruned tree. If None, no post-pruning
+        will be run.
+
     min_density : float, optional (default=0.1)
         This parameter controls a trade-off in an optimization heuristic. It
         controls the minimum density of the `sample_mask` (i.e. the
@@ -1028,6 +1043,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
+                       n_leaves=None,
                        min_density=0.1,
                        max_features=None,
                        compute_importances=False,
@@ -1036,6 +1052,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     max_depth,
                                                     min_samples_split,
                                                     min_samples_leaf,
+                                                    n_leaves,
                                                     min_density,
                                                     max_features,
                                                     compute_importances,
@@ -1068,6 +1085,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
+                       n_leaves=None,
                        min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
@@ -1076,6 +1094,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                                                   max_depth,
                                                   min_samples_split,
                                                   min_samples_leaf,
+                                                  n_leaves,
                                                   min_density,
                                                   max_features,
                                                   compute_importances,
@@ -1114,6 +1133,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
+                       n_leaves=None,
                        min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
@@ -1122,6 +1142,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                                                  max_depth,
                                                  min_samples_split,
                                                  min_samples_leaf,
+                                                 n_leaves,
                                                  min_density,
                                                  max_features,
                                                  compute_importances,
@@ -1193,3 +1214,4 @@ def prune_path(clf, X, y, max_n_leaves=10, n_iterations=10,
         scores.append(loc_scores)
 
     return zip(*scores)
+
