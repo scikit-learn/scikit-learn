@@ -69,6 +69,39 @@ def _get_weights(dist, weights):
         raise ValueError("weights not recognized: should be 'uniform', "
                             "'distance', or a callable function")
 
+def _check_class_prior(class_prior):
+    """Check to make sure class prior is valid."""
+    if class_prior in (None, 'default', 'flat'):
+        return class_prior
+    elif isinstance(class_prior, (list, np.ndarray)):
+        return class_prior
+    else:
+        raise ValueError("class prior not recognized: should be 'default', "
+                         "'flat', or a list or ndarray")
+
+def _get_class_prior(y, class_prior):
+    """Get class prior from targets ``y`` and parameter ``class_prior``
+    
+    Parameters
+    ==========
+    y : ndarray
+        The target labels, from 0 to ``n-1`` (thus ``n`` classes)
+    class_prior: {'default', 'flat' or a dict}
+        The class prior probabilities to use
+    
+    Returns
+    =======
+    class_prior_arr: array of the same shape as ``np.unique(y)``
+    """
+    if class_prior in (None, 'default'):
+        return np.bincount(y).astype(float) / len(y)
+    elif class_prior == 'flat':
+        return np.ones((len(np.unique(y)),)) / len(np.unique(y))
+    elif isinstance(class_prior, (list, np.ndarray)):
+        return class_prior
+    else:
+        raise ValueError("class prior not recognized: should be 'default', "
+                         "'flat', or a list or ndarray")
 
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""
@@ -569,7 +602,6 @@ class SupervisedIntegerMixin(object):
             Target values, array of integer values.
         """
         self._classes, self._y = unique(y, return_inverse=True)
-        self.class_prior_ = np.bincount(self._y).astype(float) / len(self._y)
         return self._fit(X)
 
 

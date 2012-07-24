@@ -13,6 +13,7 @@ from ..utils.extmath import weighted_mode
 
 from .base import \
     _check_weights, _get_weights, \
+    _check_class_prior, _get_class_prior, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
@@ -41,6 +42,18 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
           containing the weights.
 
         Uniform weights are used by default.
+
+    class_prior : str, list or ndarray, optional (default = 'default')
+        class prior probabilities used in prediction. Possible values:
+
+        - 'default': default prior probabilities. For each class, its
+          prior probability is the proportion of points in the dataset
+          that are in this class.
+        - 'flat': equiprobable prior probabilites. If there are C classes,
+          then the prior probability for every class is 1/C.
+        - [list or ndarray]: a used-defined list or ndarray, listing
+          the prior class probability for each class, in increasing order
+          of class label.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -86,6 +99,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
     [[ 0.66666667  0.33333333]]
+    >>> neigh = KNeighborsClassifier(n_neighbors=3, class_prior=[0.75, 0.25])
+    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    KNeighborsClassifier(...)
+    >>> print(neigh.predict_proba([[2.0]]))
+    [[ 0.6  0.4]]
 
     See also
     --------
@@ -100,10 +118,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    
+    References
+    ----------
+    Bishop, Christopher M. *Pattern Recognition and Machine Learning*.
+        New York: Springer, 2006, p. 124-7.
     """
 
     def __init__(self, n_neighbors=5,
                  weights='uniform',
+                 class_prior='default',
                  algorithm='auto', leaf_size=30,
                  warn_on_equidistant=True, p=2):
         self._init_params(n_neighbors=n_neighbors,
@@ -112,6 +136,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                           warn_on_equidistant=warn_on_equidistant,
                           p=p)
         self.weights = _check_weights(weights)
+        self.class_prior = _check_class_prior(class_prior)
 
     def predict(self, X):
         """Predict the class labels for the provided data
@@ -164,11 +189,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         # Compute the unnormalized posterior probability, taking
         # self.class_prior_ into consideration.
         class_count = np.bincount(self._y)
-        probabilities = (probabilities / class_count) * self.class_prior_
+        class_prior = _get_class_prior(self._y, self.class_prior)
+        probabilities = (probabilities / class_count) * class_prior
 
         # normalize 'votes' into real [0,1] probabilities
         probabilities = (probabilities.T / probabilities.sum(axis=1)).T
-
         return probabilities
 
 
@@ -195,6 +220,18 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
           containing the weights.
 
         Uniform weights are used by default.
+
+    class_prior : str, list or ndarray, optional (default = 'default')
+        class prior probabilities used in prediction. Possible values:
+
+        - 'default': default prior probabilities. For each class, its
+          prior probability is the proportion of points in the dataset
+          that are in this class.
+        - 'flat': equiprobable prior probabilites. If there are C classes,
+          then the prior probability for every class is 1/C.
+        - [list or ndarray]: a used-defined list or ndarray, listing
+          the prior class probability for each class, in increasing order
+          of class label.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -235,6 +272,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]
+    >>> neigh = RadiusNeighborsClassifier(radius=1.0, class_prior=[0.2, 0.8])
+    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    RadiusNeighborsClassifier(...)
+    >>> print(neigh.predict([[1.5]]))
+    [1]
 
     See also
     --------
@@ -249,15 +291,21 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+
+    References
+    ----------
+    Bishop, Christopher M. *Pattern Recognition and Machine Learning*.
+        New York: Springer, 2006, p. 124-7.
     """
 
-    def __init__(self, radius=1.0, weights='uniform',
+    def __init__(self, radius=1.0, weights='uniform', class_prior=None,
                  algorithm='auto', leaf_size=30, p=2, outlier_label=None):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
                           p=p)
         self.weights = _check_weights(weights)
+        self.class_prior = _check_class_prior(class_prior)
         self.outlier_label = outlier_label
 
     def predict(self, X):
@@ -320,7 +368,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         # Compute the unnormalized posterior probability, taking
         # self.class_prior_ into consideration.
         class_count = np.bincount(self._y)
-        probabilities = (probabilities / class_count) * self.class_prior_
+        class_prior = _get_class_prior(self._y, self.class_prior)
+        probabilities = (probabilities / class_count) * class_prior
 
         # normalize 'votes' into real [0,1] probabilities
         probabilities = (probabilities.T / probabilities.sum(axis=1)).T
