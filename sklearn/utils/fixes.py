@@ -17,8 +17,8 @@ from operator import itemgetter
 try:
     Counter = collections.Counter
 except AttributeError:
-# Partial replacement for Python 2.7 collections.Counter
     class Counter(collections.defaultdict):
+        """Partial replacement for Python 2.7 collections.Counter."""
         def __init__(self, iterable=(), **kwargs):
             super(Counter, self).__init__(int, **kwargs)
             self.update(iterable)
@@ -152,7 +152,10 @@ def qr_economic(A, **kwargs):
     if hasattr(scipy.linalg, 'solve_triangular'):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
-        return scipy.linalg.qr(A, econ=True, **kwargs)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return scipy.linalg.qr(A, econ=True, **kwargs)
 
 
 def savemat(file_name, mdict, oned_as="column", **kwargs):
