@@ -130,31 +130,6 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-#Helper functions for the pruning algorithm
-def _get_leaves(children):
-    """Lists the leaves from the children array of a tree object"""
-    return np.where(np.all(children == Tree.LEAF, axis=1))[0]
-
-
-def _get_terminal_nodes(children):
-    """Lists the nodes that only have leaves as children"""
-    leaves = _get_leaves(children)
-    child_is_leaf = np.in1d(children, leaves).reshape(children.shape)
-    return np.where(np.all(child_is_leaf, axis=1))[0]
-
-
-def _next_to_prune(tree, children=None):
-    """Weakest link pruning for the subtree defined by children"""
-
-    if children is None:
-        children = tree.children
-
-    t_nodes = _get_terminal_nodes(children)
-    g_i = tree.init_error[t_nodes] - tree.best_error[t_nodes]
-
-    return t_nodes[np.argmin(g_i)]
-
-
 class Tree(object):
     """Struct-of-arrays representation of a binary decision tree.
 
@@ -304,9 +279,14 @@ class Tree(object):
 
         return new_tree
 
+    @staticmethod
+    def _get_leaves(children):
+        """Lists the leaves from the children array of a tree object"""
+        return np.where(np.all(children == Tree.LEAF, axis=1))[0]
+
     @property
     def leaves(self):
-        return _get_leaves(self.children)
+        return self._get_leaves(self.children)
 
     def pruning_order(self, max_to_prune=None):
         """Compute the order for which the tree should be pruned.
@@ -332,6 +312,23 @@ class Tree(object):
         learning", 2001, section 9.2.1
 
         """
+
+        def _get_terminal_nodes(children):
+            """Lists the nodes that only have leaves as children"""
+            leaves = self._get_leaves(children)
+            child_is_leaf = np.in1d(children, leaves).reshape(children.shape)
+            return np.where(np.all(child_is_leaf, axis=1))[0]
+
+        def _next_to_prune(tree, children=None):
+            """Weakest link pruning for the subtree defined by children"""
+
+            if children is None:
+                children = tree.children
+
+            t_nodes = _get_terminal_nodes(children)
+            g_i = tree.init_error[t_nodes] - tree.best_error[t_nodes]
+
+            return t_nodes[np.argmin(g_i)]
 
         if max_to_prune is None:
             max_to_prune = self.node_count
@@ -1214,4 +1211,3 @@ def prune_path(clf, X, y, max_n_leaves=10, n_iterations=10,
         scores.append(loc_scores)
 
     return zip(*scores)
-
