@@ -728,9 +728,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 # nothing to do as y is already a label indicator matrix
                 return y
 
-            Y = np.zeros((len(y), len(self.classes_)))
+            Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
-            Y = np.zeros((len(y), 1))
+            Y = np.zeros((len(y), 1), dtype=np.int)
 
         Y += self.neg_label
 

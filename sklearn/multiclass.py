@@ -65,7 +65,8 @@ def fit_ovr(estimator, X, y):
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    estimators = [_fit_binary(estimator, X, Y[:, i], classes=lb.classes_)
+    estimators = [_fit_binary(estimator, X, Y[:, i],
+                             classes=["not %s" % str(i), i])
                   for i in range(Y.shape[1])]
     return estimators, lb
 
@@ -205,21 +206,21 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
 
-def _fit_ovo_binary(estimator, X, y, i, j, classes):
+def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y, classes=classes)
+    return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
 
 
 def fit_ovo(estimator, X, y):
     """Fit a one-vs-one strategy."""
     classes = np.unique(y)
     n_classes = classes.shape[0]
-    estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j], classes)
+    estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
                     for i in range(n_classes) for j in range(i + 1, n_classes)]
 
     return estimators, classes
@@ -357,9 +358,11 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
-    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])])
+    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
+            dtype=np.int)
 
-    estimators = [_fit_binary(estimator, X, Y[:, i], classes=classes)
+    estimators = [_fit_binary(estimator, X, Y[:, i],
+        classes=["not %s" % str(code_book[:, i]), code_book[:, i]])
                   for i in range(Y.shape[1])]
 
     return estimators, classes, code_book
