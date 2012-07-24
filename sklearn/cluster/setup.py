@@ -4,19 +4,20 @@ import os
 from os.path import join
 
 import numpy
+import imp
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
 
-    blas_info = get_info('blas_opt', 0)
-    if (not blas_info) or (
-        ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
-        cblas_libs = ['cblas']
-        blas_info.pop('libraries', None)
-    else:
-        cblas_libs = blas_info.pop('libraries', [])
+    # get the blas finding routine from sklearn/setup.py
+    parent_path = os.path.join(os.path.dirname(__file__), "../")
+    sm = imp.find_module("setup", [parent_path])
+    setup_mod = imp.load_module("setup_mod", *sm)
+    sm[0].close()
+
+    cblas_libs, blas_info = setup_mod.get_blas_info()
+
     libraries = []
     if os.name == 'posix':
         cblas_libs.append('m')
