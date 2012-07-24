@@ -571,7 +571,8 @@ def test_immutable_coef_property():
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
-        assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
+        assert_raises((RuntimeError, ValueError),
+                      clf.coef_.__setitem__, (0, 0), 0)
 
 
 def test_inheritance():
