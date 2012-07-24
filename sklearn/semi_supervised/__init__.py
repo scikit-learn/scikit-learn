@@ -6,3 +6,4 @@ Propagation.
 """
 
 from .label_propagation import LabelPropagation, LabelSpreading
+from .pu import OneDNFTransformer
