@@ -192,7 +192,7 @@ Pruning
 A common approach to get the best possible tree is to grow a huge tree (for
 instance with ``max_depth=8``) and then prune it to an optimum size. As well as
 providing a `prune` method for both :class:`DecisionTreeRegressor` and
-:class:`DecisionTreeClassifier`, the function ``cv_scores_vs_n_leaves`` is useful
+:class:`DecisionTreeClassifier`, the function ``prune_path`` is useful
 to find what the optimum size is for a tree.
 
 The prune method just takes as argument the number of leaves the fitted tree
@@ -212,12 +212,12 @@ on the data::
     >>> from sklearn import tree
     >>> boston = load_boston()
     >>> clf = tree.DecisionTreeRegressor(max_depth=8)
-    >>> scores = tree.cv_scores_vs_n_leaves(clf, boston.data, boston.target, 
+    >>> scores = tree.prune_path(clf, boston.data, boston.target, 
     ...    max_n_leaves=20, n_iterations=10, random_state=0)
 
 In order to plot the scores one can use the following function::
 
-    def plot_cross_validated_scores(scores, with_std=True):
+    def plot_pruned_path(scores, with_std=True):
         """Plots the cross validated scores versus the number of leaves of trees"""
         import matplotlib.pyplot as plt
         means = np.array([np.mean(s) for s in scores])

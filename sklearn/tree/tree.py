@@ -1130,13 +1130,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         self.find_split_ = _tree._find_best_random_split
 
 
-def cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=10, n_iterations=10,
+def prune_path(clf, X, y, max_n_leaves=10, n_iterations=10,
                           test_size=0.1, random_state=None):
     """Cross validation of scores for different values of the decision tree.
 
-    This function allows to test what the optimal size of the decision tree
-    should be. It computes cross validated scores for different size of the
-    tree.
+    This function allows to test what the optimal size of the post-pruned
+    decision tree should be. It computes cross validated scores for different
+    size of the tree.
 
     Parameters
     ----------

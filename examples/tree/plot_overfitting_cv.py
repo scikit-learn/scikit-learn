@@ -15,7 +15,7 @@ import numpy as np
 from sklearn import tree
 
 
-def plot_cross_validated_scores(scores, with_std=True):
+def plot_pruned_path(scores, with_std=True):
     """Plots the cross validated scores versus the number of leaves of trees"""
     import matplotlib.pyplot as plt
     means = np.array([np.mean(s) for s in scores])
@@ -40,9 +40,9 @@ y[1::5] += 3 * (0.5 - rng.rand(16))
 
 
 clf = tree.DecisionTreeRegressor(max_depth=20)
-scores = tree.cv_scores_vs_n_leaves(clf, X, y, max_n_leaves=20,
+scores = tree.prune_path(clf, X, y, max_n_leaves=20,
                                     n_iterations=100, random_state=0)
-plot_cross_validated_scores(scores)
+plot_pruned_path(scores)
 
 clf = clf.fit(X, y)
 X_test = np.arange(0.0, 5.0, 0.01)[:, np.newaxis]
