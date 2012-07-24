@@ -4,7 +4,8 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
+    assert_equal, assert_raises
 
 import numpy as np
 
@@ -25,16 +26,19 @@ def test_covariance():
     # test covariance fit from data
     cov = EmpiricalCovariance()
     cov.fit(X)
-    assert_array_almost_equal(empirical_covariance(X), cov.covariance_, 4)
-    assert_almost_equal(cov.error_norm(empirical_covariance(X)), 0)
+    emp_cov = empirical_covariance(X)
+    assert_array_almost_equal(emp_cov, cov.covariance_, 4)
+    assert_almost_equal(cov.error_norm(emp_cov), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), norm='spectral'), 0)
+        cov.error_norm(emp_cov, norm='spectral'), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), norm='frobenius'), 0)
+        cov.error_norm(emp_cov, norm='frobenius'), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), scaling=False), 0)
+        cov.error_norm(emp_cov, scaling=False), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), squared=False), 0)
+        cov.error_norm(emp_cov, squared=False), 0)
+    assert_raises(NotImplementedError,
+                  cov.error_norm, emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
     print np.amin(mahal_dist), np.amax(mahal_dist)
@@ -53,6 +57,11 @@ def test_covariance():
     X_integer = np.asarray([[0, 1], [1, 0]])
     result = np.asarray([[0.25, -0.25], [-0.25, 0.25]])
     assert_array_almost_equal(empirical_covariance(X_integer), result)
+
+    # test centered case
+    cov = EmpiricalCovariance(assume_centered=True)
+    cov.fit(X)
+    assert_equal(cov.location_, np.zeros(X.shape[1]))
 
 
 def test_shrunk_covariance():
