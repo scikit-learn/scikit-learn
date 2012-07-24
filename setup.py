@@ -21,6 +21,20 @@ VERSION = '0.12-git'
 
 from numpy.distutils.core import setup
 
+###############################################################################
+# Optional setuptools features
+
+# For some commands, use setuptools
+if len(set(('develop', 'sdist', 'release', 'bdist_egg', 'bdist_rpm',
+           'bdist', 'bdist_dumb', 'bdist_wininst', 'install_egg_info',
+           'build_sphinx', 'egg_info', 'easy_install', 'upload',
+            )).intersection(sys.argv)) > 0:
+    from setupegg import extra_setuptools_args
+
+# extra_setuptools_args is injected by the setupegg.py script, for
+# running the setup with setuptools.
+if not 'extra_setuptools_args' in globals():
+    extra_setuptools_args = dict()
 
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
@@ -93,5 +107,5 @@ if __name__ == "__main__":
               'Operating System :: POSIX',
               'Operating System :: Unix',
               'Operating System :: MacOS'
-             ]
-    )
+             ],
+      **extra_setuptools_args)
