@@ -29,11 +29,11 @@ if len(set(('develop', 'sdist', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist', 'bdist_dumb', 'bdist_wininst', 'install_egg_info',
            'build_sphinx', 'egg_info', 'easy_install', 'upload',
             )).intersection(sys.argv)) > 0:
-    from setupegg import extra_setuptools_args
-
-# extra_setuptools_args is injected by the setupegg.py script, for
-# running the setup with setuptools.
-if not 'extra_setuptools_args' in globals():
+    extra_setuptools_args = dict(
+            zip_safe=False, # the package can run out of an .egg file
+            include_package_data=True,
+        )
+else:
     extra_setuptools_args = dict()
 
 def configuration(parent_package='', top_path=None):
@@ -86,7 +86,6 @@ if __name__ == "__main__":
     setup(configuration=configuration,
           name=DISTNAME,
           maintainer=MAINTAINER,
-          include_package_data=True,
           maintainer_email=MAINTAINER_EMAIL,
           description=DESCRIPTION,
           license=LICENSE,
@@ -94,7 +93,6 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
-          zip_safe=False, # the package can run out of an .egg file
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
