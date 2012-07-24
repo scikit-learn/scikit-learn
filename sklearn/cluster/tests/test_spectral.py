@@ -8,7 +8,9 @@ from numpy.testing import assert_equal
 from scipy import sparse
 
 from sklearn.utils.testing import assert_greater
-from .. import SpectralClustering
+from sklearn.metrics import pairwise_distances
+from sklearn.datasets.samples_generator import make_blobs
+from .. import SpectralClustering, spectral_clustering
 
 
 def test_spectral_clustering():
@@ -35,6 +37,25 @@ def test_spectral_clustering():
         assert_equal(model_copy.random_state.get_state(),
                      model.random_state.get_state())
         assert_equal(model_copy.labels_, model.labels_)
+
+
+def test_spectral_amg_mode():
+    # Test the amg mode of SpectralClustering
+    centers = np.array([
+        [ 0.,  0.,  0.],
+        [10., 10., 10.],
+        [20., 20., 20.],
+    ])
+    X, true_labels = make_blobs(n_samples=100, centers=centers,
+                                cluster_std=1., random_state=42)
+    D = pairwise_distances(X)  # Distance matrix
+    S = np.max(D) - D  # Similarity matrix
+    S = sparse.coo_matrix(S)
+    labels = spectral_clustering(S, n_clusters=len(centers), random_state=0,
+                                 mode="amg")
+    # We don't care too much that it's good, just that it *worked*.
+    # There does have to be some lower limit on the performance though.
+    assert_greater(np.mean(labels == true_labels), .3)
 
 
 def test_spectral_clustering_sparse():
