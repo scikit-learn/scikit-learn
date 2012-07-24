@@ -272,6 +272,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]
+    >>> print(neigh.predict_proba([[1.0]]))
+    [[ 0.66666667  0.33333333]]
     >>> neigh = RadiusNeighborsClassifier(radius=1.0, class_prior=[0.2, 0.8])
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     RadiusNeighborsClassifier(...)
@@ -321,13 +323,47 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         labels: array
             List of class labels (one for each data sample).
         """
+        if self.outlier_label != None:
+            probabilities, outliers = self.predict_proba(X)
+        else:
+            probabilities = self.predict_proba(X)
+        # Predict the class of each row, based on the maximum posterior
+        # probability. If needed, correct the predictions for outliers.
+        preds = self._classes[probabilities.argmax(axis=1)].astype(np.int)
+        if self.outlier_label != None:
+            preds[outliers] = self.outlier_label
+
+        return preds
+
+    def predict_proba(self, X):
+        """Return probability estimates for the test data X.
+
+        Parameters
+        ----------
+        X: array, shape = (n_samples, n_features)
+            A 2-D array representing the test points.
+
+        Returns
+        -------
+        probabilities : array, shape = [n_samples, n_classes]
+            Probabilities of the samples for each class in the model,
+            where classes are ordered arithmetically. If an outlier label
+            has been provided and is part of the actual classes, then
+            outliers will be assigned to that label with probability 1; if
+            the outlier label (e.g. -1) is not part of the actual classes,
+            then outliers will have probability 0 for every actual class.
+        outliers : list, length = n_samples
+            List of row indices in X that are outliers. Returned only if
+            self.outlier_label is not set to None.
+        """
         X = atleast2d_or_csr(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
         outliers = []  # row indices of the outliers (if any)
-        if self.outlier_label:
+        # Test with None, since outlier_label could legitimately be 0
+        if self.outlier_label != None:
             for i, pl in enumerate(pred_labels):
                 # Check that all have at least 1 neighbor
                 if len(pl) < 1:
@@ -357,6 +393,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         # would still be incremented only once.
         for i, pi in enumerate(pred_labels):
             if len(pi) < 1:
+                probabilities[i] = 1e-6  # prevent division by zero later
                 continue  # outlier
             # When we support NumPy >= 1.6, we'll be able to simply use:
             # np.bincount(pi, weights, minlength=self._classes.size)
@@ -373,11 +410,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         # normalize 'votes' into real [0,1] probabilities
         probabilities = (probabilities.T / probabilities.sum(axis=1)).T
-        
-        # Predict the class of each row, based on the maximum posterior
-        # probability. If needed, correct the predictions for outliers.
-        preds = self._classes[probabilities.argmax(axis=1)].astype(np.int)
-        if self.outlier_label:
-            preds[outliers] = self.outlier_label
-
-        return preds
+        if self.outlier_label != None:
+            probabilities[outliers] = 0.
+            outlier_indices = np.nonzero(self._classes ==
+                                       self.outlier_label)[0]
+            if outlier_indices.size > 0:
+                probabilities[outliers, outlier_indices[0]] = 1
+            return probabilities, outliers
+        else:
+            return probabilities
