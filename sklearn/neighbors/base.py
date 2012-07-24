@@ -569,9 +569,7 @@ class SupervisedIntegerMixin(object):
             Target values, array of integer values.
         """
         self._classes, self._y = unique(y, return_inverse=True)
-        self.class_prior_ = np.zeros(self._classes.size)
-        for i, y_i in enumerate(self._classes):
-            self.class_prior_[i] = np.float(np.sum(y == y_i)) / len(y)
+        self.class_prior_ = np.bincount(self._y).astype(float) / len(self._y)
         return self._fit(X)
 
 
