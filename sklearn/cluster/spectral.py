@@ -189,9 +189,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     labels: array of integers, shape: n_samples
         The labels of the clusters.
 
-    centers: array of integers, shape: k
-        The indices of the cluster centers
-
     References
     ----------
 
