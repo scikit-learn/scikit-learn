@@ -6,7 +6,7 @@ Author : Vincent Michel, 2010
 
 import numpy as np
 from scipy.cluster import hierarchy
-from nose.tools import assert_true, assert_raises
+from nose.tools import assert_true, assert_raises, assert_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
@@ -33,9 +33,10 @@ def test_unstructured_ward_tree():
     """
     rnd = np.random.RandomState(0)
     X = rnd.randn(50, 100)
-    children, n_nodes, n_leaves, parent = ward_tree(X.T)
-    n_nodes = 2 * X.shape[1] - 1
-    assert_true(len(children) + n_leaves == n_nodes)
+    for this_X in (X, X[0]):
+        children, n_nodes, n_leaves, parent = ward_tree(this_X.T)
+        n_nodes = 2 * X.shape[1] - 1
+        assert_equal(len(children) + n_leaves, n_nodes)
 
 
 def test_height_ward_tree():

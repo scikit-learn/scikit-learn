@@ -79,9 +79,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         is specified, elsewhere 'None' is returned.
     """
     X = np.asarray(X)
-    n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
+    n_samples, n_features = X.shape
 
     if connectivity is None:
         if n_clusters is not None:
