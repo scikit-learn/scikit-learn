@@ -9,6 +9,16 @@ import sys
 import os
 import shutil
 
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
+
+# This is a bit (!) hackish: we are setting a global variable so that the main
+# sklearn __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.
+builtins.__SKLEARN_SETUP__ = True
+
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
