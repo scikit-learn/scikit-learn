@@ -69,6 +69,22 @@ def test_spectral_amg_mode():
                       n_components=len(centers), random_state=0, mode="amg")
 
 
+def test_spectral_unknown_mode():
+    # Test that SpectralClustering fails with an unknown mode set.
+    centers = np.array([
+        [0., 0., 0.],
+        [10., 10., 10.],
+        [20., 20., 20.],
+    ])
+    X, true_labels = make_blobs(n_samples=100, centers=centers,
+                                cluster_std=1., random_state=42)
+    D = pairwise_distances(X)  # Distance matrix
+    S = np.max(D) - D  # Similarity matrix
+    S = sparse.coo_matrix(S)
+    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
+                  random_state=0, mode="<unknown>")
+
+
 def test_spectral_clustering_sparse():
     # We need a large matrice, or the lobpcg solver will fallback to its
     # non-sparse and buggy mode
