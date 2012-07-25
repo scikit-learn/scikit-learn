@@ -5,12 +5,14 @@ import nose
 
 import numpy as np
 from numpy.testing import assert_equal
+from nose.tools import assert_raises
 from scipy import sparse
 
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics import pairwise_distances
 from sklearn.datasets.samples_generator import make_blobs
 from .. import SpectralClustering, spectral_clustering
+from ..spectral import spectral_embedding
 
 
 def test_spectral_clustering():
@@ -51,11 +53,20 @@ def test_spectral_amg_mode():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    labels = spectral_clustering(S, n_clusters=len(centers), random_state=0,
-                                 mode="amg")
-    # We don't care too much that it's good, just that it *worked*.
-    # There does have to be some lower limit on the performance though.
-    assert_greater(np.mean(labels == true_labels), .3)
+    try:
+        from pyamg import smoothed_aggregation_solver
+        amg_loaded = True
+    except ImportError:
+        amg_loaded = False
+    if amg_loaded:
+        labels = spectral_clustering(S, n_clusters=len(centers), random_state=0,
+                                     mode="amg")
+        # We don't care too much that it's good, just that it *worked*.
+        # There does have to be some lower limit on the performance though.
+        assert_greater(np.mean(labels == true_labels), .3)
+    else:
+        assert_raises(ValueError, spectral_embedding, S,
+                      n_components=len(centers), random_state=0, mode="amg")
 
 
 def test_spectral_clustering_sparse():
