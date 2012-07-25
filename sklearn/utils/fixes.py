@@ -154,7 +154,7 @@ def qr_economic(A, **kwargs):
     else:
         import warnings
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter("ignore", DeprecationWarning)
             return scipy.linalg.qr(A, econ=True, **kwargs)
 
 
