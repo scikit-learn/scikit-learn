@@ -7,12 +7,12 @@ import numpy as np
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from scipy import sparse
-
-from sklearn.utils.testing import assert_greater
-from sklearn.metrics import pairwise_distances
 from sklearn.datasets.samples_generator import make_blobs
-from .. import SpectralClustering, spectral_clustering
-from ..spectral import spectral_embedding
+from sklearn.utils.testing import assert_greater
+
+from sklearn.cluster import SpectralClustering, spectral_clustering
+from sklearn.cluster.spectral import spectral_embedding
+from sklearn.metrics import pairwise_distances
 
 
 def test_spectral_clustering():
