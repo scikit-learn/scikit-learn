@@ -6,7 +6,7 @@ Author : Vincent Michel, 2010
 
 import numpy as np
 from scipy.cluster import hierarchy
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_raises
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
@@ -19,6 +19,7 @@ def test_structured_ward_tree():
     """
     rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
+    mask[4:7, 4:7] = 0
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     children, n_components, n_leaves, parent = ward_tree(X.T, connectivity)
@@ -120,6 +121,9 @@ def test_scikit_vs_scipy():
         cut = _hc_cut(k, children, n_leaves)
         cut_ = _hc_cut(k, children_, n_leaves)
         assess_same_labelling(cut, cut_)
+
+    # Test error management in _hc_cut
+    assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
 def test_connectivity_popagation():
