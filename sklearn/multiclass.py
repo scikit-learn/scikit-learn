@@ -33,8 +33,12 @@ def _fit_binary(estimator, X, y, classes):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)
     if len(unique_y) == 1:
+        if y[0] == -1:
+            c = 0
+        else:
+            c = y[0]
         warnings.warn("Label %s is present in all training examples." %
-                str(classes[unique_y[0]]))
+                str(classes[c]))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -362,7 +366,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
             dtype=np.int)
 
     estimators = [_fit_binary(estimator, X, Y[:, i],
-        classes=["not %s" % str(code_book[:, i]), code_book[:, i]])
+        classes=["not ouput code %d" % i, "output code %d" % i])
                   for i in range(Y.shape[1])]
 
     return estimators, classes, code_book
