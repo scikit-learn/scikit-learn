@@ -93,26 +93,23 @@ rnd = check_random_state(1)
 
 # set up dataset
 n_samples = 100
-n_features = 1000
+n_features = 300
     
 #L1 data (only 5 informative features)
 X_1, y_1 = datasets.make_classification(n_samples=n_samples, n_features=n_features,
         n_informative=5, random_state=1)
     
-#L2 data
-X_2 = 1 + rnd.randn(n_samples, n_features)
-coef = np.ones(n_features)
-
-y_2 = np.dot(X_2, coef)
-y_2 += .1 * rnd.randn(n_samples) * np.std(y_2)
-y_2 = np.sign(y_2 - np.mean(y_2))
+#L2 data: non sparse, but less features
+y_2 = np.sign(.5 - rnd.rand(n_samples))
+X_2 = rnd.randn(n_samples, n_features/5) + y_2[:, np.newaxis]
+X_2 += 5 * rnd.randn(n_samples, n_features/5)
             
 clf_sets = [(LinearSVC(penalty='L1', loss='L2', dual=False, 
                        tol=1e-3),
-             np.logspace(-2.5, -1, 10), X_1, y_1),
-            (LinearSVC(penalty='L2', loss='L1', dual=True, 
-                       tol=1e-5, intercept_scaling=20),
-             np.logspace(-3.5, -2.5, 10), X_2, y_2)]
+             np.logspace(-2.2, -1.2, 10), X_1, y_1),
+            (LinearSVC(penalty='L2', loss='L2', dual=True, 
+                       tol=1e-4),
+             np.logspace(-4.5, -2, 10), X_2, y_2)]
     
 colors = ['b', 'g', 'r', 'c']
 
@@ -123,30 +120,32 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
     pl.xlabel('C')
     pl.ylabel('CV Score')
     
-    for k, train_size in enumerate(np.arange(0.4, 0.7, 0.1)[::-1]):
+    for k, train_size in enumerate(np.linspace(0.3, 0.7, 3)[::-1]):
         param_grid = dict(C=cs)
+        # To get nice curve, we need a large number of iterations to
+        # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
                         cv=ShuffleSplit(n=n_samples, train_size=train_size,
-                                        n_iterations=45, random_state=1))
+                                        n_iterations=250, random_state=1))
         grid.fit(X, y)
         scores = [x[1] for x in grid.grid_scores_]
         
         scales = [(1, 'No scaling'), 
-                  ((np.sqrt(n_samples * train_size)), '1/sqrt(n_samples)'),
                   ((n_samples * train_size), '1/n_samples'), 
                   ]
 
         for subplotnum, (scaler, name) in enumerate(scales):
-            pl.subplot(3, 1, subplotnum + 1)
+            pl.subplot(2, 1, subplotnum + 1)
             grid_cs =  cs * float(scaler) # scale the C's 
             pl.semilogx(grid_cs, scores, label="fraction %.2f" %
-                         train_size)
+                        train_size)
             pl.title('scaling=%s, penalty=%s, loss=%s' % (name, clf.penalty, clf.loss))
-            ymin, ymax = pl.ylim()
-            pl.axvline(grid_cs[np.argmax(scores)], 0, 1,
-                       color=colors[k])
-            pl.ylim(ymin=ymin-0.0025, ymax=ymax+0.008) # adjust the y-axis
 
-    pl.legend(loc="lower right")
+            #ymin, ymax = pl.ylim()
+            #pl.axvline(grid_cs[np.argmax(scores)], 0, 1,
+            #           color=colors[k])
+            #pl.ylim(ymin=ymin-0.0025, ymax=ymax+0.008) # adjust the y-axis
+
+    pl.legend(loc="best")
 pl.show()
     
