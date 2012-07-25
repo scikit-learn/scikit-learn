@@ -37,6 +37,7 @@ Single and multi-output problems are both handled.
 
 import itertools
 import numpy as np
+from warnings import warn
 from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
@@ -313,6 +314,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         predictions[k][mask, :] += p_estimator[k]
 
                 for k in xrange(self.n_outputs_):
+                    if (predictions[k].sum(axis=1) == 0).any():
+                        warn("Some inputs do not have OOB scores. "
+                             "This probably means too few trees were used "
+                             "to compute any reliable oob estimates.")
                     decision = predictions[k] \
                                / predictions[k].sum(axis=1)[:, np.newaxis]
                     self.oob_decision_function_.append(decision)
@@ -341,7 +346,11 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                     predictions[mask, :] += p_estimator
                     n_predictions[mask, :] += 1
-
+                if (n_predictions == 0).any():
+                    warn("Some inputs do not have OOB scores. "
+                         "This probably means too few trees were used "
+                         "to compute any reliable oob estimates.")
+                    n_predictions[n_predictions == 0] = 1
                 predictions /= n_predictions
 
                 self.oob_prediction_ = predictions
