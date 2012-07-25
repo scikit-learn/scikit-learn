@@ -26,7 +26,6 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-#@profile
 def ward_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Ward clustering based on a Feature matrix.
