@@ -64,7 +64,7 @@ corresponding cross-validation scores on the `y-axis`, for several different
 fractions of a generated data-set.
 
 In the `L1` penalty case, the results are best when scaling our `C` with
-the amount of samples, `n`, which can be seen in the third plot of the first figure.
+the amount of samples, `n`, which can be seen in the first figure.
 
 For the `L2` penalty case, the best result comes from the case where `C`
 is not scaled.
