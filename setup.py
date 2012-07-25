@@ -25,9 +25,9 @@ from numpy.distutils.core import setup
 # Optional setuptools features
 
 # For some commands, use setuptools
-if len(set(('develop', 'sdist', 'release', 'bdist_egg', 'bdist_rpm',
-           'bdist', 'bdist_dumb', 'bdist_wininst', 'install_egg_info',
-           'build_sphinx', 'egg_info', 'easy_install', 'upload',
+if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
+           'bdist_wininst', 'install_egg_info', 'build_sphinx',
+           'egg_info', 'easy_install', 'upload',
             )).intersection(sys.argv)) > 0:
     extra_setuptools_args = dict(
             zip_safe=False, # the package can run out of an .egg file
@@ -42,6 +42,13 @@ def configuration(parent_package='', top_path=None):
 
     from numpy.distutils.misc_util import Configuration
     config = Configuration(None, parent_package, top_path)
+
+    # Avoid non-useful msg:
+    # "Ignoring attempt to set 'name' (from ... "
+    config.set_options(ignore_setup_xxx_py=True,
+                       assume_default_configuration=True,
+                       delegate_options_to_subpackages=True,
+                       quiet=True)
 
     config.add_subpackage('sklearn')
 

@@ -1,11 +1,15 @@
 """
 General tests for all estimators in sklearn.
 """
+import os
 import warnings
+import sys
+
 import numpy as np
 from nose.tools import assert_raises, assert_equal
 from numpy.testing import assert_array_equal
 
+import sklearn
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin
@@ -163,3 +167,26 @@ def test_regressors_train():
         reg.fit(X, y)
         reg.predict(X)
         assert_greater(reg.score(X, y), 0.5)
+
+
+def test_configure():
+    # Smoke test the 'configure' step of setup, this tests all the
+    # 'configure' functions in the setup.pys in the scikit
+    cwd = os.getcwd()
+    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
+    setup_filename = os.path.join(setup_path, 'setup.py')
+    if not os.path.exists(setup_filename):
+        return
+    try:
+        os.chdir(setup_path)
+        old_argv = sys.argv
+        sys.argv = ['setup.py', 'config']
+        with warnings.catch_warnings():
+            # The configuration spits out warnings when not finding
+            # Blas/Atlas development headers
+            warnings.simplefilter('ignore',  UserWarning)
+            execfile('setup.py', dict(__name__='__main__'))
+    finally:
+        sys.argv = old_argv
+        os.chdir(cwd)
+
