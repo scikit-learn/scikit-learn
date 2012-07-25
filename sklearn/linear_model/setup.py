@@ -2,21 +2,15 @@ import os
 from os.path import join
 
 import numpy
-import imp
 
+from sklearn.build_utils import get_blas_info
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration('linear_model', parent_package, top_path)
 
-    # get the blas finding routine from sklearn/setup.py
-    parent_path = os.path.join(os.path.dirname(__file__), "../")
-    sm = imp.find_module("setup", [parent_path])
-    setup_mod = imp.load_module("setup_mod", *sm)
-    sm[0].close()
-
-    cblas_libs, blas_info = setup_mod.get_blas_info()
+    cblas_libs, blas_info = get_blas_info()
 
     libraries = []
     if os.name == 'posix':
