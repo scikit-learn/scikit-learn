@@ -54,17 +54,29 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         Make a copy of connectivity or work inplace. If connectivity
         is not of LIL type there will be a copy in any case.
 
+    n_clusters : int (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. In this case, the
+        complete tree is not computed, thus the 'children' output is of
+        limited use, and the 'parents' output should rather be used.
+        This option is valid only when specifying a connectivity matrix.
+
     Returns
     -------
-    children : list of pairs. Lenght of n_nodes
-               list of the children of each nodes.
-               Leaves of the tree have empty list of children.
+    children : 2D array, shape (n_nodes, 2)
+        list of the children of each nodes.
+        Leaves of the tree have empty list of children.
 
     n_components : sparse matrix.
         The number of connected components in the graph.
 
     n_leaves : int
         The number of leaves in the tree
+
+    parents : 1D array, shape (n_nodes, ) or None
+        The parent of each node. Only returned when a connectivity matrix
+        is specified, elsewhere 'None' is returned.
     """
     X = np.asarray(X)
     n_samples, n_features = X.shape
@@ -73,9 +85,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
     if connectivity is None:
         if n_clusters is not None:
-            raise ValueError('Early stopping is implemented only for '
+            warnings.warn('Early stopping is implemented only for '
                              'structured Ward clustering (i.e. with '
-                             'explicit connectivity.')
+                             'explicit connectivity.', stacklevel=2)
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
@@ -284,6 +296,15 @@ class Ward(BaseEstimator):
         The number of connected components in the graph defined by the \
         connectivity matrix. If not set, it is estimated.
 
+    compute_full_tree: bool or 'auto' (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of cluster and using caching, it may
+        be advantageous to compute the full tree.
+
+
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
@@ -392,6 +413,15 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_components : int (optional)
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
+
+    compute_full_tree: bool or 'auto' (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of cluster and using caching, it may
+        be advantageous to compute the full tree.
+
 
     Attributes
     ----------

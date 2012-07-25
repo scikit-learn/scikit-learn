@@ -60,7 +60,13 @@ def test_ward_clustering():
     connectivity = grid_to_graph(*mask.shape)
     clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
-    assert_true(np.size(np.unique(clustering.labels_)) == 10)
+    labels = clustering.labels_
+    assert_true(np.size(np.unique(labels)) == 10)
+    # Check that we obtain the same solution with early-stopping of the
+    # tree building
+    clustering.compute_full_tree = False
+    clustering.fit(X)
+    np.testing.assert_array_equal(clustering.labels_, labels)
 
 
 def test_ward_agglomeration():
