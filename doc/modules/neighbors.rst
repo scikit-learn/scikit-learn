@@ -59,7 +59,7 @@ Nearest Neighbors Classification
 Neighbors-based classification is a type of *instance-based learning* or
 *non-generalizing learning*: it does not attempt to construct a general
 internal model, but simply stores instances of the training data.
-Classification is computed from a simple majority vote of the nearest
+The basic classification is computed from a simple majority vote of the nearest
 neighbors of each point: a query point is assigned the data class which
 has the most representatives within the nearest neighbors of the point.
 
@@ -94,7 +94,19 @@ be accomplished through the ``weights`` keyword.  The default value,
 distance from the query point.  Alternatively, a user-defined function of the
 distance can be supplied which is used to compute the weights.
 
-
+The nearest neighbors classification algorithm is implicitly based on
+probability theory: a query point :math:`x` is assigned to the class
+:math:`C_k` to which it has the highest probability of belonging. This
+*posterior probability* is computed using Bayes' rule:
+:math:`P(C_k \mid  x) = \frac{P(x \mid C_k) P(C_k)}{P(x)}`.
+The basic nearest neighbors classification (when ``class_prior='default'``)
+uses a default *prior probability* :math:`P(C_k)` equal to the proportion of
+training points which belong to class :math:`C_k`. In contrast, using
+a flat prior (``class_prior='flat'``) assigns the same value (1 over the
+number of classes) to each class prior probability :math:`P(C_k)`.
+Alternatively, a user-defined list of the class prior probabilities (in
+increasing order of class labels) can be supplied which is used to classify
+the query points.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_1.png
    :target: ../auto_examples/neighbors/plot_classification.html
@@ -111,6 +123,11 @@ distance can be supplied which is used to compute the weights.
   * :ref:`example_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
 
+.. topic:: References:
+
+  *  `Pattern Recognition and Machine Learning`,
+     Bishop, C.M., New York: Springer (2006), p. 124-127
+
 .. _regression:
 
 Nearest Neighbors Regression
@@ -118,7 +135,7 @@ Nearest Neighbors Regression
 
 Neighbors-based regression can be used in cases where the data labels are
 continuous rather than discrete variables.  The label assigned to a query
-point is computed based the mean of the labels of its nearest neighbors.
+point is computed based on the mean of the labels of its nearest neighbors.
 
 scikit-learn implements two different neighbors regressors:
 :class:`KNeighborsRegressor` implements learning based on the :math:`k`

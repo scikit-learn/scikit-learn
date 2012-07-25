@@ -27,9 +27,11 @@ h = .02  # step size in the mesh
 cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
 cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 
-for weights in ['uniform', 'distance']:
+for weights, class_prior in zip(['uniform', 'distance'],
+                                ['default', [0.8, 0.1, 0.1]]):
     # we create an instance of Neighbours Classifier and fit the data.
-    clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights)
+    clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights,
+                                         class_prior=class_prior)
     clf.fit(X, y)
 
     # Plot the decision boundary. For that, we will asign a color to each
@@ -47,8 +49,8 @@ for weights in ['uniform', 'distance']:
 
     # Plot also the training points
     pl.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
-    pl.title("3-Class classification (k = %i, weights = '%s')"
-             % (n_neighbors, weights))
+    pl.title("3-Class classification (k = %i,\nweights = '%s', class_prior = '%s')"
+             % (n_neighbors, weights, class_prior))
     pl.axis('tight')
 
 pl.show()
