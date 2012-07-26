@@ -27,7 +27,11 @@ MAINTAINER_EMAIL = 'fabian.pedregosa@inria.fr'
 URL = 'http://scikit-learn.sourceforge.net'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION = '0.12-git'
+
+# We can actually import a restricted version of sklearn that
+# does not need the compiled code
+import sklearn
+VERSION = sklearn.__version__
 
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
