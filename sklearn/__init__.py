@@ -13,18 +13,23 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.sourceforge.net for complete documentation.
 """
 import sys
+__version__ = '0.12-git'
 
 try:
+    # This variable is injected in the __builtins__ by the build
+    # process. It used to enable importing subpackages of sklearn when
+    # the binaries are not built
     __SKLEARN_SETUP__
 except NameError:
     __SKLEARN_SETUP__ = False
 
 if __SKLEARN_SETUP__:
-    sys.stderr.write('Running from sklearn source directory.\n')
+    sys.stderr.write('Partial import of sklearn during the build process.\n')
+    # We are not importing the rest of the scikit during the build
+    # process, as it may not be compiled yet
 else:
     from . import __check_build
     from .base import clone
-
 
     try:
         from numpy.testing import nosetester
@@ -57,7 +62,6 @@ else:
     except:
         pass
 
-
     __all__ = ['cross_validation', 'cluster', 'covariance',
                'datasets', 'decomposition', 'feature_extraction',
                'feature_selection', 'semi_supervised',
@@ -65,4 +69,3 @@ else:
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
                'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
 
-    __version__ = '0.12-git'
