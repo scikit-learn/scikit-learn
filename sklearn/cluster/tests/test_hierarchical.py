@@ -6,9 +6,11 @@ Several basic tests for hierarchical clustering procedures
 # License: BSD-like
 import warnings
 
-import numpy as np
-from scipy.cluster import hierarchy
 from nose.tools import assert_true, assert_raises, assert_equal
+
+import numpy as np
+from scipy import sparse
+from scipy.cluster import hierarchy
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
@@ -80,10 +82,18 @@ def test_ward_clustering():
     clustering.compute_full_tree = False
     clustering.fit(X)
     np.testing.assert_array_equal(clustering.labels_, labels)
+    clustering.connectivity = None
+    clustering.fit(X)
+    assert_true(np.size(np.unique(clustering.labels_)) == 10)
     # Check that we raise a TypeError on dense matrices
     clustering = Ward(n_clusters=10,
                       connectivity=connectivity.todense())
     assert_raises(TypeError, clustering.fit, X)
+    clustering = Ward(n_clusters=10,
+                      connectivity=sparse.lil_matrix(
+                                connectivity.todense()[:10, :10]))
+    assert_raises(ValueError, clustering.fit, X)
+
 
 
 def test_ward_agglomeration():

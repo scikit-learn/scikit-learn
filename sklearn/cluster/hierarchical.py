@@ -361,7 +361,7 @@ class Ward(BaseEstimator):
         n_samples = len(X)
         compute_full_tree = self.compute_full_tree
         if self.connectivity is None:
-            compute_full_tree = None
+            compute_full_tree = True
         if compute_full_tree == 'auto':
             # Early stopping is likely to give a speed up only for
             # a large number of clusters. The actual threshold
