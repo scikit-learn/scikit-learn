@@ -80,6 +80,10 @@ def test_ward_clustering():
     clustering.compute_full_tree = False
     clustering.fit(X)
     np.testing.assert_array_equal(clustering.labels_, labels)
+    # Check that we raise a TypeError on dense matrices
+    clustering = Ward(n_clusters=10,
+                      connectivity=connectivity.todense())
+    assert_raises(TypeError, clustering.fit, X)
 
 
 def test_ward_agglomeration():
