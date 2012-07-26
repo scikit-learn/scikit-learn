@@ -26,8 +26,8 @@ from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 from .perceptron import Perceptron
 from .randomized_l1 import RandomizedLasso, RandomizedLogisticRegression, \
                            lasso_stability_path
-
 from . import sparse
+from .isotonic_regression_ import IsotonicRegression
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
