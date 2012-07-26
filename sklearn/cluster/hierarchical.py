@@ -84,6 +84,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     n_samples, n_features = X.shape
 
     if connectivity is None:
+        print "Foobar: n_clusters", n_clusters, X.shape
         if n_clusters is not None:
             warnings.warn('Early stopping is implemented only for '
                              'structured Ward clustering (i.e. with '
@@ -99,6 +100,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
         connectivity = connectivity.copy()
+    elif not sparse.isspmatrix(connectivity):
+        connectivity = sparse.lil_matrix(connectivity)
     else:
         connectivity = connectivity.tolil()
 

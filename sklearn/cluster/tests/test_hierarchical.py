@@ -1,8 +1,10 @@
 """
 Several basic tests for hierarchical clustering procedures
 
-Author : Vincent Michel, 2010
 """
+# Authors: Vincent Michel, 2010, Gael Varoquaux 2012
+# License: BSD-like
+import warnings
 
 import numpy as np
 from scipy.cluster import hierarchy
@@ -25,6 +27,9 @@ def test_structured_ward_tree():
     children, n_components, n_leaves, parent = ward_tree(X.T, connectivity)
     n_nodes = 2 * X.shape[1] - 1
     assert_true(len(children) + n_leaves == n_nodes)
+    # Check that ward_tree raises a ValueError with a connectivity matrix
+    # of the wrong shape
+    assert_raises(ValueError, ward_tree, X.T, np.ones((4, 4)))
 
 
 def test_unstructured_ward_tree():
@@ -34,7 +39,13 @@ def test_unstructured_ward_tree():
     rnd = np.random.RandomState(0)
     X = rnd.randn(50, 100)
     for this_X in (X, X[0]):
-        children, n_nodes, n_leaves, parent = ward_tree(this_X.T)
+        with warnings.catch_warnings(record=True) as warning_list:
+            warnings.simplefilter("always", UserWarning)
+            # With specified a number of clusters just for the sake of
+            # raising a warning and testing the warning code
+            children, n_nodes, n_leaves, parent = ward_tree(this_X.T,
+                                                            n_clusters=10)
+        assert_equal(len(warning_list), 1)
         n_nodes = 2 * X.shape[1] - 1
         assert_equal(len(children) + n_leaves, n_nodes)
 
