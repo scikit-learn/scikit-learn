@@ -15,7 +15,6 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('sklearn', parent_package, top_path)
 
     config.add_subpackage('__check_build')
-    config.add_subpackage('build_utils')
     config.add_subpackage('svm')
     config.add_subpackage('datasets')
     config.add_subpackage('datasets/tests')

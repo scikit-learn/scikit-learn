@@ -1,8 +1,7 @@
 import os
 from os.path import join
-import imp
 
-from sklearn.build_utils import get_blas_info
+from sklearn._build_utils import get_blas_info
 
 def configuration(parent_package='', top_path=None):
     import numpy

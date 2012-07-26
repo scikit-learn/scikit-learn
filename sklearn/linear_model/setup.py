@@ -3,7 +3,7 @@ from os.path import join
 
 import numpy
 
-from sklearn.build_utils import get_blas_info
+from sklearn._build_utils import get_blas_info
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
