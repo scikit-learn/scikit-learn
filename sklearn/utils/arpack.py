@@ -1,15 +1,15 @@
 """
-This contains a copy of the future version of
-scipy.sparse.linalg.eigen.arpack.eigsh
-It's an upgraded wrapper of the ARPACK library which
-allows the use of shift-invert mode for symmetric matrices.
+This contains a copy of the ARPACK module introduced in scipy 0.10,
+and updated in scipy 0.11 to fix rare non-convergence errors.
+Note that ARPACK support existed in scipy 0.09, but that version of the
+wrapper did not include support for shift-invert mode, which is
+used by many scikit-learn routines.
 
-
+ARPACK wrapper
+--------------
 Find a few eigenvectors and eigenvalues of a matrix.
 
-
 Uses ARPACK: http://www.caam.rice.edu/software/ARPACK/
-
 """
 # Wrapper implementation notes
 #
@@ -46,15 +46,32 @@ __docformat__ = "restructuredtext en"
 
 __all__ = ['eigs', 'eigsh', 'svds', 'ArpackError', 'ArpackNoConvergence']
 
-from scipy.sparse.linalg.eigen.arpack import _arpack
+import warnings
+
 import numpy as np
+import scipy
+from distutils.version import LooseVersion
+from scipy.sparse.linalg.eigen.arpack import _arpack
 from scipy.sparse.linalg.interface import aslinearoperator, LinearOperator
-from scipy.sparse import identity, isspmatrix, isspmatrix_csr
+from scipy.sparse import identity, csc_matrix, csr_matrix, \
+    isspmatrix, isspmatrix_csr
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.sputils import isdense
 from scipy.sparse.linalg import gmres, splu
-import scipy
-from distutils.version import LooseVersion
+from scipy.linalg.lapack import get_lapack_funcs
+
+
+def _single_precision_cast(typechar):
+    # This check is required, for now, because we have unresolved crashes
+    # occurring in single precision Veclib routines, on at least 64-bit OSX
+    # and some Linux systems.  When these crashes are resolved, this
+    # restriction can be removed.
+    if typechar in ('f', 'F'):
+        warnings.warn("Single-precision types in `eigs` and `eighs` "
+                      "are not supported currently. "
+                      "Double precision routines are used instead.")
+        return {'f': 'd', 'F': 'D'}[typechar]
+    return typechar
 
 
 _type_conv = {'f': 's', 'd': 'd', 'F': 'c', 'D': 'z'}
@@ -315,6 +332,8 @@ class _ArpackParams(object):
         if tp not in 'fdFD':
             raise ValueError("matrix type must be 'f', 'd', 'F', or 'D'")
 
+        tp = _single_precision_cast(tp)
+
         if v0 is not None:
             # ARPACK overwrites its initial resid,  make a copy
             self.resid = np.array(v0, copy=True)
@@ -362,7 +381,7 @@ class _ArpackParams(object):
         num_iter = self.iparam[2]
         try:
             ev, vec = self.extract(True)
-        except ArpackError as err:
+        except ArpackError, err:
             msg = "%s [%s]" % (msg, err)
             ev = np.zeros((0,))
             vec = np.zeros((self.n, 0))
@@ -525,7 +544,7 @@ class _SymmetricArpackParams(_ArpackParams):
         self.ipntr = np.zeros(11, "int")
 
     def iterate(self):
-        self.ido, self.resid, self.v, self.iparam, self.ipntr, self.info = \
+        self.ido, self.tol, self.resid, self.v, self.iparam, self.ipntr, self.info = \
             self._arpack_solver(self.ido, self.bmat, self.which, self.k,
                                 self.tol, self.resid, self.v, self.iparam,
                                 self.ipntr, self.workd, self.workl, self.info)
@@ -710,13 +729,13 @@ class _UnsymmetricArpackParams(_ArpackParams):
 
     def iterate(self):
         if self.tp in 'fd':
-            self.ido, self.resid, self.v, self.iparam, self.ipntr, self.info =\
+            self.ido, self.tol, self.resid, self.v, self.iparam, self.ipntr, self.info =\
                 self._arpack_solver(self.ido, self.bmat, self.which, self.k,
                                     self.tol, self.resid, self.v, self.iparam,
                                     self.ipntr,  self.workd, self.workl,
                                     self.info)
         else:
-            self.ido, self.resid, self.v, self.iparam, self.ipntr, self.info =\
+            self.ido, self.tol, self.resid, self.v, self.iparam, self.ipntr, self.info =\
                 self._arpack_solver(self.ido, self.bmat, self.which, self.k,
                                     self.tol, self.resid, self.v, self.iparam,
                                     self.ipntr, self.workd, self.workl,
@@ -888,7 +907,6 @@ def _aslinearoperator_with_dtype(m):
         m.dtype = (m * x).dtype
     return m
 
-
 class SpLuInv(LinearOperator):
     """
     SpLuInv:
@@ -904,11 +922,10 @@ class SpLuInv(LinearOperator):
         # careful here: splu.solve will throw away imaginary
         # part of x if M is real
         if self.isreal and np.issubdtype(x.dtype, np.complexfloating):
-            return (self.M_lu.solve(np.real(x))
-                    + 1j * self.M_lu.solve(np.imag(x)))
+            return (self.M_lu.solve(np.real(x).astype(self.dtype))
+                    + 1j * self.M_lu.solve(np.imag(x).astype(self.dtype)))
         else:
-            return self.M_lu.solve(x)
-
+            return self.M_lu.solve(x.astype(self.dtype))
 
 class LuInv(LinearOperator):
     """
@@ -934,7 +951,7 @@ class IterInv(LinearOperator):
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
             # by LAPACK's _LAMCH function.  We should match this
-            tol = np.finfo(M.dtype).eps
+            tol = 2 * np.finfo(M.dtype).eps
         self.M = M
         self.ifunc = ifunc
         self.tol = tol
@@ -964,7 +981,7 @@ class IterOpInv(LinearOperator):
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
             # by LAPACK's _LAMCH function.  We should match this
-            tol = np.finfo(A.dtype).eps
+            tol = 2 * np.finfo(A.dtype).eps
         self.A = A
         self.M = M
         self.sigma = sigma
@@ -997,7 +1014,6 @@ class IterOpInv(LinearOperator):
                              "%s did not converge (info = %i)."
                              % (self.ifunc.__name__, info))
         return b
-
 
 def get_inv_matvec(M, symmetric=False, tol=0):
     if isdense(M):
@@ -1048,8 +1064,8 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
 
 
 def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
-         ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
-         Minv=None, OPinv=None, OPpart=None):
+          ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
+          Minv=None, OPinv=None, OPpart=None):
     """
     Find k eigenvalues and eigenvectors of the square matrix A.
 
@@ -1062,91 +1078,96 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     Parameters
     ----------
-    A : An N x N matrix, array, sparse matrix, or LinearOperator representing
-        the operation A * x, where A is a real or complex square matrix.
-    k : integer
+    A : ndarray, sparse matrix or LinearOperator
+        An array, sparse matrix, or LinearOperator representing
+        the operation ``A * x``, where A is a real or complex square matrix.
+    k : int, optional
         The number of eigenvalues and eigenvectors desired.
         `k` must be smaller than N. It is not possible to compute all
         eigenvectors of a matrix.
-
-    Returns
-    -------
-    w : array
-        Array of k eigenvalues.
-    v : array
-        An array of `k` eigenvectors.
-        ``v[:, i]`` is the eigenvector corresponding to the eigenvalue w[i].
-
-    Other Parameters
-    ----------------
-    M : An N x N matrix, array, sparse matrix, or LinearOperator representing
+    M : ndarray, sparse matrix or LinearOperator, optional
+        An array, sparse matrix, or LinearOperator representing
         the operation M*x for the generalized eigenvalue problem
-          ``A * x = w * M * x``
-        M must represent a real symmetric matrix.  For best results, M should
-        be of the same type as A.  Additionally:
-         * If sigma==None, M is positive definite
-         * If sigma is specified, M is positive semi-definite
-        If sigma==None, eigs requires an operator to compute the solution
-        of the linear equation `M * x = b`. This is done internally via a
+          ``A * x = w * M * x``.
+        M must represent a real, symmetric matrix if A is real, and must
+        represent a complex, hermitian matrix if A is complex. For best
+        results, the data type of M should be the same as that of A.
+        Additionally:
+
+            - If `sigma` is None, M is positive definite
+            - If sigma is specified, M is positive semi-definite
+
+        If sigma is None, eigs requires an operator to compute the solution
+        of the linear equation ``M * x = b``.  This is done internally via a
         (sparse) LU decomposition for an explicit matrix M, or via an
         iterative solver for a general linear operator.  Alternatively,
         the user can supply the matrix or operator Minv, which gives
-        x = Minv * b = M^-1 * b
-    sigma : real or complex
+        ``x = Minv * b = M^-1 * b``.
+    sigma : real or complex, optional
         Find eigenvalues near sigma using shift-invert mode.  This requires
         an operator to compute the solution of the linear system
-        `[A - sigma * M] * x = b`, where M is the identity matrix if
+        ``[A - sigma * M] * x = b``, where M is the identity matrix if
         unspecified. This is computed internally via a (sparse) LU
         decomposition for explicit matrices A & M, or via an iterative
         solver if either A or M is a general linear operator.
         Alternatively, the user can supply the matrix or operator OPinv,
-        which gives x = OPinv * b = [A - sigma * M]^-1 * b.
+        which gives ``x = OPinv * b = [A - sigma * M]^-1 * b``.
         For a real matrix A, shift-invert can either be done in imaginary
         mode or real mode, specified by the parameter OPpart ('r' or 'i').
         Note that when sigma is specified, the keyword 'which' (below)
-        refers to the shifted eigenvalues w'[i] where:
-         * If A is real and OPpart == 'r' (default),
-            w'[i] = 1/2 * [ 1/(w[i]-sigma) + 1/(w[i]-conj(sigma)) ]
-         * If A is real and OPpart == 'i',
-            w'[i] = 1/2i * [ 1/(w[i]-sigma) - 1/(w[i]-conj(sigma)) ]
-         * If A is complex,
-            w'[i] = 1/(w[i]-sigma)
-    v0 : array
+        refers to the shifted eigenvalues ``w'[i]`` where:
+
+            - If A is real and OPpart == 'r' (default),
+              ``w'[i] = 1/2 * [1/(w[i]-sigma) + 1/(w[i]-conj(sigma))]``.
+            - If A is real and OPpart == 'i',
+              ``w'[i] = 1/2i * [1/(w[i]-sigma) - 1/(w[i]-conj(sigma))]``.
+            - If A is complex, ``w'[i] = 1/(w[i]-sigma)``.
+
+    v0 : ndarray, optional
         Starting vector for iteration.
-    ncv : integer
+    ncv : int, optional
         The number of Lanczos vectors generated
         `ncv` must be greater than `k`; it is recommended that ``ncv > 2*k``.
-    which : string ['LM' | 'SM' | 'LR' | 'SR' | 'LI' | 'SI']
+    which : str, ['LM' | 'SM' | 'LR' | 'SR' | 'LI' | 'SI'], optional
         Which `k` eigenvectors and eigenvalues to find:
-         - 'LM' : largest magnitude
-         - 'SM' : smallest magnitude
-         - 'LR' : largest real part
-         - 'SR' : smallest real part
-         - 'LI' : largest imaginary part
-         - 'SI' : smallest imaginary part
+
+            - 'LM' : largest magnitude
+            - 'SM' : smallest magnitude
+            - 'LR' : largest real part
+            - 'SR' : smallest real part
+            - 'LI' : largest imaginary part
+            - 'SI' : smallest imaginary part
+
         When sigma != None, 'which' refers to the shifted eigenvalues w'[i]
         (see discussion in 'sigma', above).  ARPACK is generally better
         at finding large values than small values.  If small eigenvalues are
         desired, consider using shift-invert mode for better performance.
-    maxiter : integer
+    maxiter : int, optional
         Maximum number of Arnoldi update iterations allowed
-    tol : float
+    tol : float, optional
         Relative accuracy for eigenvalues (stopping criterion)
         The default value of 0 implies machine precision.
-    return_eigenvectors : boolean
+    return_eigenvectors : bool, optional
         Return eigenvectors (True) in addition to eigenvalues
-    Minv : N x N matrix, array, sparse matrix, or linear operator
+    Minv : ndarray, sparse matrix or LinearOperator, optional
         See notes in M, above.
-    OPinv : N x N matrix, array, sparse matrix, or linear operator
+    OPinv : ndarray, sparse matrix or LinearOperator, optional
         See notes in sigma, above.
-    OPpart : 'r' or 'i'.
+    OPpart : {'r' or 'i'}, optional
         See notes in sigma, above
+
+    Returns
+    -------
+    w : ndarray
+        Array of k eigenvalues.
+    v : ndarray
+        An array of `k` eigenvectors.
+        ``v[:, i]`` is the eigenvector corresponding to the eigenvalue w[i].
 
     Raises
     ------
     ArpackNoConvergence
         When the requested convergence is not obtained.
-
         The currently converged eigenvalues and eigenvectors can be found
         as ``eigenvalues`` and ``eigenvectors`` attributes of the exception
         object.
@@ -1155,6 +1176,12 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     --------
     eigsh : eigenvalues and eigenvectors for symmetric matrix A
     svds : singular value decomposition for a matrix A
+
+    Notes
+    -----
+    This function is a wrapper to the ARPACK [1]_ SNEUPD, DNEUPD, CNEUPD,
+    ZNEUPD, functions which use the Implicitly Restarted Arnoldi Method to
+    find the eigenvalues and eigenvectors [2]_.
 
     Examples
     --------
@@ -1168,18 +1195,13 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vecs.shape
     (13, 6)
 
-    Notes
-    -----
-    This function is a wrapper to the ARPACK [1]_ SNEUPD, DNEUPD, CNEUPD,
-    ZNEUPD, functions which use the Implicitly Restarted Arnoldi Method to
-    find the eigenvalues and eigenvectors [2]_.
-
     References
     ----------
     .. [1] ARPACK Software, http://www.caam.rice.edu/software/ARPACK/
     .. [2] R. B. Lehoucq, D. C. Sorensen, and C. Yang,  ARPACK USERS GUIDE:
        Solution of Large Scale Eigenvalue Problems by Implicitly Restarted
        Arnoldi Methods. SIAM, Philadelphia, PA, 1998.
+
     """
     if A.shape[0] != A.shape[1]:
         raise ValueError('expected square matrix (shape=%s)' % (A.shape,))
@@ -1264,8 +1286,8 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
 
 def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
-          ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
-          Minv=None, OPinv=None, mode='normal'):
+           ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
+           Minv=None, OPinv=None, mode='normal'):
     """
     Find k eigenvalues and eigenvectors of the real symmetric square matrix
     or complex hermitian matrix A.
@@ -1301,17 +1323,21 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     M : An N x N matrix, array, sparse matrix, or linear operator representing
         the operation M * x for the generalized eigenvalue problem
           ``A * x = w * M * x``.
-        M must represent a real, symmetric matrix.  For best results, M should
-        be of the same type as A.  Additionally:
-         * If sigma == None, M is symmetric positive definite
-         * If sigma is specified, M is symmetric positive semi-definite
-         * In buckling mode, M is symmetric indefinite.
-        If sigma == None, eigsh requires an operator to compute the solution
-        of the linear equation `M * x = b`. This is done internally via a
+        M must represent a real, symmetric matrix if A is real, and must
+        represent a complex, hermitian matrix if A is complex. For best
+        results, the data type of M should be the same as that of A.
+        Additionally:
+
+            - If sigma is None, M is symmetric positive definite
+            - If sigma is specified, M is symmetric positive semi-definite
+            - In buckling mode, M is symmetric indefinite.
+
+        If sigma is None, eigsh requires an operator to compute the solution
+        of the linear equation ``M * x = b``. This is done internally via a
         (sparse) LU decomposition for an explicit matrix M, or via an
         iterative solver for a general linear operator.  Alternatively,
         the user can supply the matrix or operator Minv, which gives
-        x = Minv * b = M^-1 * b
+        ``x = Minv * b = M^-1 * b``.
     sigma : real
         Find eigenvalues near sigma using shift-invert mode.  This requires
         an operator to compute the solution of the linear system
@@ -1320,36 +1346,36 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         decomposition for explicit matrices A & M, or via an iterative
         solver if either A or M is a general linear operator.
         Alternatively, the user can supply the matrix or operator OPinv,
-        which gives x = OPinv * b = [A - sigma * M]^-1 * b.
+        which gives ``x = OPinv * b = [A - sigma * M]^-1 * b``.
         Note that when sigma is specified, the keyword 'which' refers to
-        the shifted eigenvalues w'[i] where:
-         - if mode == 'normal',
-             w'[i] = 1 / (w[i] - sigma)
-         - if mode == 'cayley',
-             w'[i] = (w[i] + sigma) / (w[i] - sigma)
-         - if mode == 'buckling',
-             w'[i] = w[i] / (w[i] - sigma)
+        the shifted eigenvalues ``w'[i]`` where:
+
+            - if mode == 'normal', ``w'[i] = 1 / (w[i] - sigma)``.
+            - if mode == 'cayley', ``w'[i] = (w[i] + sigma) / (w[i] - sigma)``.
+            - if mode == 'buckling', ``w'[i] = w[i] / (w[i] - sigma)``.
+
         (see further discussion in 'mode' below)
-    v0 : array
+    v0 : ndarray
         Starting vector for iteration.
-    ncv : integer
-        The number of Lanczos vectors generated
-        ncv must be greater than k and smaller than n;
-        it is recommended that ncv > 2*k
-    which : string ['LM' | 'SM' | 'LA' | 'SA' | 'BE']
+    ncv : int
+        The number of Lanczos vectors generated ncv must be greater than k and
+        smaller than n; it is recommended that ``ncv > 2*k``.
+    which : str ['LM' | 'SM' | 'LA' | 'SA' | 'BE']
         If A is a complex hermitian matrix, 'BE' is invalid.
         Which `k` eigenvectors and eigenvalues to find:
-         - 'LM' : Largest (in magnitude) eigenvalues
-         - 'SM' : Smallest (in magnitude) eigenvalues
-         - 'LA' : Largest (algebraic) eigenvalues
-         - 'SA' : Smallest (algebraic) eigenvalues
-         - 'BE' : Half (k/2) from each end of the spectrum
-                  When k is odd, return one more (k/2+1) from the high end
-        When sigma != None, 'which' refers to the shifted eigenvalues w'[i]
+
+            - 'LM' : Largest (in magnitude) eigenvalues
+            - 'SM' : Smallest (in magnitude) eigenvalues
+            - 'LA' : Largest (algebraic) eigenvalues
+            - 'SA' : Smallest (algebraic) eigenvalues
+            - 'BE' : Half (k/2) from each end of the spectrum
+              When k is odd, return one more (k/2+1) from the high end
+
+        When sigma != None, 'which' refers to the shifted eigenvalues ``w'[i]``
         (see discussion in 'sigma', above).  ARPACK is generally better
         at finding large values than small values.  If small eigenvalues are
         desired, consider using shift-invert mode for better performance.
-    maxiter : integer
+    maxiter : int
         Maximum number of Arnoldi update iterations allowed
     tol : float
         Relative accuracy for eigenvalues (stopping criterion).
@@ -1358,7 +1384,7 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         See notes in M, above
     OPinv : N x N matrix, array, sparse matrix, or LinearOperator
         See notes in sigma, above.
-    return_eigenvectors : boolean
+    return_eigenvectors : bool
         Return eigenvectors (True) in addition to eigenvalues
     mode : string ['normal' | 'buckling' | 'cayley']
         Specify strategy to use for shift-invert mode.  This argument applies
@@ -1368,16 +1394,18 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         and transforms the resulting Ritz vectors x'[i] and Ritz values w'[i]
         into the desired eigenvectors and eigenvalues of the problem
         ``A * x[i] = w[i] * M * x[i]``.
-        The modes are as follows:
-          - 'normal'   : OP = [A - sigma * M]^-1 * M
+        The modes are as follows::
+
+            - 'normal' : OP = [A - sigma * M]^-1 * M
                          B = M
                          w'[i] = 1 / (w[i] - sigma)
-          - 'buckling' : OP = [A - sigma * M]^-1 * A
+            - 'buckling' : OP = [A - sigma * M]^-1 * A
                          B = A
                          w'[i] = w[i] / (w[i] - sigma)
-          - 'cayley'   : OP = [A - sigma * M]^-1 * [A + sigma * M]
+            - 'cayley' : OP = [A - sigma * M]^-1 * [A + sigma * M]
                          B = M
                          w'[i] = (w[i] + sigma) / (w[i] - sigma)
+
         The choice of mode will affect which eigenvalues are selected by
         the keyword 'which', and can also impact the stability of
         convergence (see [2] for a discussion)
@@ -1407,8 +1435,8 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> from sklearn.utils.arpack import eigsh
     >>> id = np.identity(13)
     >>> vals, vecs = eigsh(id, k=6)
-    >>> vals # doctest: +SKIP
-    array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
+    >>> vals
+    array([ 1.,  1.,  1.,  1.,  1.,  1.])
     >>> vecs.shape
     (13, 6)
 
@@ -1540,7 +1568,7 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
 
 def _svds(A, k=6, ncv=None, tol=0):
-    """Compute k singular values/vectors for a sparse matrix using ARPACK.
+    """Compute the largest k singular values/vectors for a sparse matrix.
 
     Parameters
     ----------
@@ -1557,8 +1585,8 @@ def _svds(A, k=6, ncv=None, tol=0):
 
     Notes
     -----
-    This is a naive implementation using an eigensolver on A.H * A or
-    A * A.H, depending on which one is more efficient.
+    This is a naive implementation using an ARPACK as eigensolver on A.H * A
+    or A * A.H, depending on which one is more efficient.
 
     """
     if not (isinstance(A, np.ndarray) or isspmatrix(A)):
@@ -1603,4 +1631,4 @@ def _svds(A, k=6, ncv=None, tol=0):
 if scipy.version.version >= LooseVersion('0.10'):
     from scipy.sparse.linalg import eigs, eigsh, svds
 else:
-    eigs, eigsh, svds = _eigs, _eigsh, _svds
+    eigs, eish, svds = _eigs, _eigsh, _svds
