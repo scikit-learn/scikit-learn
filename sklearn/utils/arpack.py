@@ -1,9 +1,17 @@
 """
-This contains a copy of the ARPACK module introduced in scipy 0.10,
-and updated in scipy 0.11 to fix rare non-convergence errors.
-Note that ARPACK support existed in scipy 0.09, but that version of the
-wrapper did not include support for shift-invert mode, which is
-used by many scikit-learn routines.
+This contains a copy of the ARPACK module introduced in scipy version 0.10.
+Though ARPACK was available in scipy versions 0.7+, scipy 0.10 added
+support for shift-invert mode, which is used by several scikit-learn
+routines.
+
+This backport works with scipy versions 0.7 to 0.10 inclusive.
+The code in this module will fail under scipy 0.11 or greater.
+
+Note that scipy 0.10.1 and scipy 0.11 include several fixes for rare
+problems related to single-precision routines, memory errors with
+small matrices, and other small failures specific to particular
+computing platforms.  Because of this, it is recommended to install
+the latest stable scipy release.
 
 ARPACK wrapper
 --------------
@@ -544,10 +552,18 @@ class _SymmetricArpackParams(_ArpackParams):
         self.ipntr = np.zeros(11, "int")
 
     def iterate(self):
-        self.ido, self.tol, self.resid, self.v, self.iparam, self.ipntr, self.info = \
-            self._arpack_solver(self.ido, self.bmat, self.which, self.k,
-                                self.tol, self.resid, self.v, self.iparam,
-                                self.ipntr, self.workd, self.workl, self.info)
+        tup = self._arpack_solver(self.ido, self.bmat, self.which, self.k,
+                                  self.tol, self.resid, self.v, self.iparam,
+                                  self.ipntr, self.workd, self.workl, self.info)
+        try:
+            # wrapper behavior in scipy 0.11+
+            (self.ido, self.tol, self.resid, self.v,
+             self.iparam, self.ipntr, self.info) = tup
+        except:
+            # wrapper behavior in scipy < 0.11
+            (self.ido, self.resid, self.v,
+             self.iparam, self.ipntr, self.info) = tup
+
 
         xslice = slice(self.ipntr[0] - 1, self.ipntr[0] - 1 + self.n)
         yslice = slice(self.ipntr[1] - 1, self.ipntr[1] - 1 + self.n)
@@ -729,17 +745,24 @@ class _UnsymmetricArpackParams(_ArpackParams):
 
     def iterate(self):
         if self.tp in 'fd':
-            self.ido, self.tol, self.resid, self.v, self.iparam, self.ipntr, self.info =\
-                self._arpack_solver(self.ido, self.bmat, self.which, self.k,
-                                    self.tol, self.resid, self.v, self.iparam,
-                                    self.ipntr,  self.workd, self.workl,
-                                    self.info)
+            tup = self._arpack_solver(self.ido, self.bmat, self.which, self.k,
+                                      self.tol, self.resid, self.v, self.iparam,
+                                      self.ipntr,  self.workd, self.workl,
+                                      self.info)
         else:
-            self.ido, self.tol, self.resid, self.v, self.iparam, self.ipntr, self.info =\
-                self._arpack_solver(self.ido, self.bmat, self.which, self.k,
-                                    self.tol, self.resid, self.v, self.iparam,
-                                    self.ipntr, self.workd, self.workl,
-                                    self.rwork, self.info)
+            tup = self._arpack_solver(self.ido, self.bmat, self.which, self.k,
+                                      self.tol, self.resid, self.v, self.iparam,
+                                      self.ipntr, self.workd, self.workl,
+                                      self.rwork, self.info)
+        try:
+            # wrapper behavior in scipy 0.11+
+            (self.ido, self.tol, self.resid, self.v,
+             self.iparam, self.ipntr, self.info) = tup
+        except:
+            # wrapper behavior in scipy < 0.11
+            (self.ido, self.resid, self.v,
+             self.iparam, self.ipntr, self.info) = tup
+            
 
         xslice = slice(self.ipntr[0] - 1, self.ipntr[0] - 1 + self.n)
         yslice = slice(self.ipntr[1] - 1, self.ipntr[1] - 1 + self.n)

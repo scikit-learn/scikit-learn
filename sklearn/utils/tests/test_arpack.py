@@ -494,7 +494,9 @@ def test_eigen_bad_kwargs():
     A = csc_matrix(np.zeros((2, 2)))
     assert_raises(ValueError, eigs, A, which='XX')
 
-def test_ticket_1459_arpack_crash():
+# Add underscores so this test will not be run.
+# It will fail fatally unless we're using scipy 0.10.1 or greater.
+def __test_ticket_1459_arpack_crash():
     for dtype in [np.float32, np.float64]:
         # XXX: this test does not seem to catch the issue for float32,
         #      but we made the same fix there, just to be sure
