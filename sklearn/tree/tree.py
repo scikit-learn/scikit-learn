@@ -167,7 +167,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.tree_ = None
         self.feature_importances_ = None
 
-    def fit(self, X, y, sample_mask=None, X_argsorted=None):
+    def fit(self, X, y, sample_mask=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -266,10 +266,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("Length of sample_mask=%d does not match "
                              "number of samples=%d" % (len(sample_mask),
                                                        n_samples))
-        if X_argsorted is not None and len(X_argsorted) != n_samples:
-            raise ValueError("Length of X_argsorted=%d does not match "
-                             "number of samples=%d" % (len(X_argsorted),
-                                                       n_samples))
 
         # Build tree
         self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
@@ -278,8 +274,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                 self.min_density, max_features,
                                 self.find_split_, self.random_state)
 
-        self.tree_.build(X, y,
-                         sample_mask=sample_mask, X_argsorted=X_argsorted)
+        self.tree_.build(X, y, sample_mask=sample_mask)
 
         if self.compute_importances:
             self.feature_importances_ = \
