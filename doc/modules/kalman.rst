@@ -6,14 +6,20 @@ Kalman Filter
 
 .. currentmodule:: sklearn.kalman
 
-The **Kalman Filter** is the de facto standard algorithm for tracking a single moving object in discrete time.  Given a sequence of position observations, the Kalman Filter is automatically able to infer model parameters as well as other linearly-related variables such as velocity and acceleration.
+The **Kalman Filter** is the de facto standard algorithm for tracking a single
+moving object in discrete time.  Given a sequence of position observations, the
+Kalman Filter is automatically able to infer model parameters as well as other
+linearly-related variables such as velocity and acceleration.
 
 .. figure:: ../auto_examples/kalman/images/plot_sin_1.png
    :target: ../auto_examples/kalman/plot_sin.html
    :width: 600 px
    :align: center
 
-Like the Hidden Markov Model, the Kalman Filter estimates a sequence of hidden states by performing Bayesian Inference on a *generative probabilistic model* given a sequence of measurements.  Unlike the Hidden Markov Model, however, the Kalman Filter is designed to work with continuous state and observation spaces.
+Like the Hidden Markov Model, the Kalman Filter estimates a sequence of hidden
+states by performing Bayesian Inference on a *generative probabilistic model*
+given a sequence of measurements.  Unlike the Hidden Markov Model, however, the
+Kalman Filter is designed to work with continuous state and observation spaces.
 
 The advantages of Kalman Filter are:
 
@@ -56,7 +62,9 @@ predict the underlying hidden states of any observation sequence::
            [ 1.26661721],
            [ 1.53838218]])
 
-The Kalman Filter is parameterized by 3 arrays for state transitions, 3 for measurements, and 2 more for initial conditions.  Their names and function are described in the next section.
+The Kalman Filter is parameterized by 3 arrays for state transitions, 3 for
+measurements, and 2 more for initial conditions.  Their names and function are
+described in the next section.
 
 .. topic:: Examples:
 

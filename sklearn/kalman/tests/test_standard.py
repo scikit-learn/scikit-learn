@@ -3,10 +3,11 @@ from io import BytesIO
 from StringIO import StringIO
 
 import numpy as np
+from numpy.testing import assert_array_almost_equal
 from scipy import linalg
 from nose.tools import assert_true
 
-from ..standard import KalmanFilter
+from sklearn.kalman import KalmanFilter
 from sklearn.datasets import load_kalman_data
 
 data = load_kalman_data()
@@ -55,8 +56,8 @@ def test_kalman_filter_update():
             x_filt2[t], V_filt2[t], data.data[t + 1],
             transition_offset=data.transition_offsets[t]
         )
-    assert_true(np.all(x_filt == x_filt2))
-    assert_true(np.all(V_filt == V_filt2))
+    assert_array_almost_equal(x_filt, x_filt2)
+    assert_array_almost_equal(V_filt, V_filt2)
 
 
 def test_kalman_filter():
@@ -71,13 +72,16 @@ def test_kalman_filter():
         data.initial_state_covariance)
 
     (x_filt, V_filt) = kf.filter(X=data.data)
-    for t in range(500):
-        assert_true(
-            linalg.norm(x_filt[t] - data.filtered_state_means[t]) < 1e-3
-        )
-        assert_true(
-            linalg.norm(V_filt[t] - data.filtered_state_covariances[t]) < 1e-3
-        )
+    assert_array_almost_equal(
+        x_filt[:500],
+        data.filtered_state_means[:500],
+        decimal=3
+    )
+    assert_array_almost_equal(
+        V_filt[:500],
+        data.filtered_state_covariances[:500],
+        decimal=3
+    )
 
 
 def test_kalman_predict():
@@ -92,10 +96,11 @@ def test_kalman_predict():
         data.initial_state_covariance)
 
     x_smooth = kf.predict(X=data.data)
-    for t in reversed(range(501)):
-        assert_true(
-            linalg.norm(x_smooth[t] - data.smoothed_state_means[t]) < 1e-3
-        )
+    assert_array_almost_equal(
+        x_smooth[:501],
+        data.smoothed_state_means[:501],
+        decimal=3
+    )
 
 
 def test_kalman_fit():

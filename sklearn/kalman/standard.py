@@ -1,4 +1,4 @@
-r"""
+"""
 =====================================
 Inference for Linear-Gaussian Systems
 =====================================
@@ -293,7 +293,8 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
     transition_matrices : [n_timesteps-1,n_dim_state,n_dim_state] or
     [n_dim_state,n_dim_state] array-like
         state transition matrices
-    observation_matrices : [n_timesteps, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
+    observation_matrices : [n_timesteps, n_dim_obs, n_dim_obs] or [n_dim_obs, \
+    n_dim_obs] array-like
         observation matrix
     transition_covariance : [n_timesteps-1,n_dim_state,n_dim_state] or
     [n_dim_state,n_dim_state] array-like
@@ -301,7 +302,8 @@ def _filter(transition_matrices, observation_matrices, transition_covariance,
     observation_covariance : [n_timesteps, n_dim_obs, n_dim_obs] or [n_dim_obs,
     n_dim_obs] array-like
         observation covariance matrix
-    transition_offsets : [n_timesteps-1, n_dim_state] or [n_dim_state] array-like
+    transition_offsets : [n_timesteps-1, n_dim_state] or [n_dim_state] \
+    array-like
         state offset
     observation_offsets : [n_timesteps, n_dim_obs] or [n_dim_obs] array-like
         observations for times [0...n_timesteps-1]
@@ -453,14 +455,15 @@ def _smooth_update(transition_matrix, filtered_state_mean,
 def _smooth(transition_matrices, filtered_state_means,
             filtered_state_covariances, predicted_state_means,
             predicted_state_covariances):
-    r"""Apply the Kalman Smoother
+    """Apply the Kalman Smoother
 
     Estimate the hidden state at time for each time step given all
     observations.
 
     Parameters
     ----------
-    transition_matrices : [n_timesteps-1, n_dim_state, n_dim_state]  or [n_dim_state, n_dim_state] array
+    transition_matrices : [n_timesteps-1, n_dim_state, n_dim_state] or \
+    [n_dim_state, n_dim_state] array
         `transition_matrices[t]` = transition matrix from time t to t+1
     filtered_state_means : [n_timesteps, n_dim_state] array
         `filtered_state_means[t]` = mean state estimate for time t given
@@ -900,15 +903,15 @@ def _em_observation_offset(observation_matrices, smoothed_state_means,
 
 
 class KalmanFilter(BaseEstimator):
-    r"""Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
+    """Implements the Kalman Filter, Kalman Smoother, and EM algorithm.
 
     This class implements the Kalman Filter, Kalman Smoother, and EM Algorithm
     for a Linear Gaussian model specified by,
 
     .. math::
 
-        x_{t+1}   &= A_{t} x_{t} + b_{t} + Normal(0, Q_{t}) \\
-        z_{t}     &= C_{t} x_{t} + d_{t} + Normal(0, R_{t})
+        x_{t+1}   &= A_{t} x_{t} + b_{t} + \\text{Normal}(0, Q_{t}) \\\\
+        z_{t}     &= C_{t} x_{t} + d_{t} + \\text{Normal}(0, R_{t})
 
     The Kalman Filter is an algorithm designed to estimate
     :math:`P(x_t | z_{0:t})`.  As all state transitions and observations are
@@ -920,34 +923,36 @@ class KalmanFilter(BaseEstimator):
     :math:`P(x_t | z_{0:T-1})`.
 
     The EM algorithm aims to find for
-    :math:`\theta = (A, b, C, d, Q, R, \mu_0, \sigma_0)`
+    :math:`\\theta = (A, b, C, d, Q, R, \\mu_0, \\sigma_0)`
 
     .. math::
 
-        \max_{\theta} P(z_{0:T-1}; \theta)
+        \\max_{\\theta} P(z_{0:T-1}; \\theta)
 
-    If we define :math:`L(x_{0:t},\theta) = \log P(z_{0:T-1}, x_{0:T-1};
-    \theta)`, then the EM algorithm works by iteratively finding,
+    If we define :math:`L(x_{0:t},\\theta) = \\log P(z_{0:T-1}, x_{0:T-1};
+    \\theta)`, then the EM algorithm works by iteratively finding,
 
     .. math::
 
-        P(x_{0:T-1} | z_{0:T-1}, \theta_i)
+        P(x_{0:T-1} | z_{0:T-1}, \\theta_i)
 
     then by maximizing,
 
     .. math::
 
-        \theta_{i+1} = \arg\max_{\theta}
-            \mathbb{E}_{x_{0:T-1}} [
-                L(x_{0:t}, \theta)| z_{0:T-1}, \theta_i
+        \\theta_{i+1} = \\arg\\max_{\\theta}
+            \\mathbb{E}_{x_{0:T-1}} [
+                L(x_{0:t}, \\theta)| z_{0:T-1}, \\theta_i
             ]
 
     Parameters
     ----------
-    transition_matrices : [n_timesteps-1,n_dim_state,n_dim_state] or [n_dim_state,n_dim_state] array-like
+    transition_matrices : [n_timesteps-1, n_dim_state, n_dim_state] or \
+    [n_dim_state,n_dim_state] array-like
         Also known as :math:`A`.  state transition matrix between times t and
         t+1 for t in [0...n_timesteps-2]
-    observation_matrices : [n_timesteps, n_dim_obs, n_dim_obs] or [n_dim_obs, n_dim_obs] array-like
+    observation_matrices : [n_timesteps, n_dim_obs, n_dim_obs] or [n_dim_obs, \
+    n_dim_obs] array-like
         Also known as :math:`C`.  observation matrix for times
         [0...n_timesteps-1]
     transition_covariance : [n_dim_state, n_dim_state] array-like
@@ -956,7 +961,8 @@ class KalmanFilter(BaseEstimator):
     observation_covariance : [n_dim_obs, n_dim_obs] array-like
         Also known as :math:`R`.  observation covariance matrix for times
         [0...n_timesteps-1]
-    transition_offsets : [n_timesteps-1, n_dim_state] or [n_dim_state] array-like
+    transition_offsets : [n_timesteps-1, n_dim_state] or [n_dim_state] \
+    array-like
         Also known as :math:`b`.  state offsets for times [0...n_timesteps-2]
     observation_offsets : [n_timesteps, n_dim_obs] or [n_dim_obs] array-like
         Also known as :math:`d`.  observation offset for times
@@ -968,7 +974,10 @@ class KalmanFilter(BaseEstimator):
         distribution
     random_state : optional, numpy random state
         random number generator used in sampling
-    em_vars : optional, subset of ['transition_matrices', 'observation_matrices', 'transition_offsets', 'observation_offsets', 'transition_covariance', 'observation_covariance', 'initial_state_mean', 'initial_state_covariance'] or 'all'
+    em_vars : optional, subset of ['transition_matrices', \
+    'observation_matrices', 'transition_offsets', 'observation_offsets', \
+    'transition_covariance', 'observation_covariance', 'initial_state_mean', \
+    'initial_state_covariance'] or 'all'
         if `em_vars` is an iterable of strings only variables in `em_vars`
         will be estimated using EM.  if `em_vars` == 'all', then all
         variables will be estimated.
@@ -1075,7 +1084,7 @@ class KalmanFilter(BaseEstimator):
         return (states, np.ma.array(observations))
 
     def filter(self, X):
-        r"""Apply the Kalman Filter
+        """Apply the Kalman Filter
 
         Apply the Kalman Filter to estimate the hidden state at time :math:`t`
         for :math:`t = [0...n_timesteps-1]` given observations up to and
@@ -1096,7 +1105,8 @@ class KalmanFilter(BaseEstimator):
         filtered_state_means : [n_timesteps, n_dim_state]
             mean of hidden state distributions for times [0...n_timesteps-1]
             given observations up to and including the current time step
-        filtered_state_covariances : [n_timesteps, n_dim_state, n_dim_state] array
+        filtered_state_covariances : [n_timesteps, n_dim_state, n_dim_state] \
+        array
             covariance matrix of hidden state distributions for times
             [0...n_timesteps-1] given observations up to and including the
             current time step
@@ -1419,12 +1429,6 @@ class KalmanFilter(BaseEstimator):
     def _initialize_parameters(self):
         """Retrieve parameters if they exist, else replace with defaults"""
 
-        def initialize(var, default, transformer):
-            if var is None:
-                return default
-            else:
-                return transformer(var)
-
         # determine size of state and observation space
         n_dim_state = _determine_dimensionality(
             [(self.transition_matrices, -1),
@@ -1438,45 +1442,45 @@ class KalmanFilter(BaseEstimator):
         )
 
         # initialize parameters
-        transition_matrices = initialize(
-            self.transition_matrices,
-            np.eye(n_dim_state),
-            array2d
+        transition_matrices = (
+            np.eye(n_dim_state)
+            if self.transition_matrices is None
+            else array2d(self.transition_matrices)
         )
-        transition_offsets = initialize(
-            self.transition_offsets,
-            np.zeros(n_dim_state),
-            array1d
+        transition_offsets = (
+            np.zeros(n_dim_state)
+            if self.transition_offsets is None
+            else array1d(self.transition_offsets)
         )
-        transition_covariance = initialize(
-            self.transition_covariance,
-            np.eye(n_dim_state),
-            array2d
+        transition_covariance = (
+            np.eye(n_dim_state)
+            if self.transition_covariance is None
+            else array2d(self.transition_covariance)
         )
-        observation_matrices = initialize(
-            self.observation_matrices,
-            np.eye(n_dim_obs, n_dim_state),
-            array2d
+        observation_matrices = (
+            np.eye(n_dim_obs, n_dim_state)
+            if self.observation_matrices is None
+            else array2d(self.observation_matrices)
         )
-        observation_offsets = initialize(
-            self.observation_offsets,
-            np.zeros(n_dim_obs),
-            array1d
+        observation_offsets = (
+            np.zeros(n_dim_obs)
+            if self.observation_offsets is None
+            else array1d(self.observation_offsets)
         )
-        observation_covariance = initialize(
-            self.observation_covariance,
-            np.eye(n_dim_obs),
-            array2d
+        observation_covariance = (
+            np.eye(n_dim_obs)
+            if self.observation_covariance is None
+            else array2d(self.observation_covariance)
         )
-        initial_state_mean = initialize(
-            self.initial_state_mean,
-            np.zeros(n_dim_state),
-            array1d
+        initial_state_mean = (
+            np.zeros(n_dim_state)
+            if self.initial_state_mean is None
+            else array1d(self.initial_state_mean)
         )
-        initial_state_covariance = initialize(
-            self.initial_state_covariance,
-            np.eye(n_dim_state),
-            array2d
+        initial_state_covariance = (
+            np.eye(n_dim_state)
+            if self.initial_state_covariance is None
+            else array2d(self.initial_state_covariance)
         )
         return (transition_matrices, transition_offsets,
                 transition_covariance, observation_matrices,

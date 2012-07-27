@@ -565,6 +565,11 @@ def load_kalman_data():
     V_smooth = data['Vsmooth'][0]
     T = Z.shape[0]
 
+    # V_filt is actually an object array where each object is a 2D array.
+    # Convert it to a proper, 3D array.  Likewise for V_smooth.
+    V_filt = np.asarray([V_filt[t] for t in range(V_filt.shape[0])])
+    V_smooth = np.asarray([V_smooth[t] for t in range(V_smooth.shape[0])])
+
     return Bunch(T=T, data=Z, target=X, transition_matrix=A,
         transition_offsets=b, observation_matrix=C, observation_offset=d,
         initial_transition_covariance=Q_0, initial_observation_covariance=R_0,
