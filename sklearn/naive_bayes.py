@@ -132,13 +132,17 @@ class GaussianNB(BaseNB):
     [1]
     >>> print(clf.predict_proba([[-0.1, -0.1]]))
     [[ 0.85814893  0.14185107]]
+    >>> clf.fit(X, Y, class_prior=[0.4, 0.6])
+    GaussianNB()
+    >>> print(clf.predict_proba([[-0.1, -0.1]]))
+    [[ 0.80131523  0.19868477]]
     >>> clf.fit(X, Y, sample_weight=[0.1, 0.1, 0.1, 1, 1, 1])
     GaussianNB()
     >>> print(clf.predict_proba([[-0.1, -0.1]]))
     [[ 0.37693335  0.62306665]]
     """
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, class_prior=None):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -153,12 +157,16 @@ class GaussianNB(BaseNB):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
+        class_prior : array, shape [n_classes]
+            Custom prior probability per class.
+            Overrides the fit_prior parameter.
+
         Returns
         -------
         self : object
             Returns self.
         """
-        # TODO: Document sample_weight parameter in module doc.
+        # TODO: Document sample_weight and class_prior in module doc.
 
         X, y = check_arrays(X, y, sparse_format='dense')
 
@@ -177,7 +185,12 @@ class GaussianNB(BaseNB):
 
         self.theta_ = np.zeros((n_classes, n_features))
         self.sigma_ = np.zeros((n_classes, n_features))
-        self.class_prior_ = np.zeros(n_classes)
+        if class_prior is not None:
+            if len(class_prior) != n_classes:
+                raise ValueError("y and class_prior have incompatible shapes")
+            self.class_prior_ = np.asarray(class_prior)
+        else:
+            self.class_prior_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
             if sample_weight is not None:
@@ -187,13 +200,16 @@ class GaussianNB(BaseNB):
                                             (X[y == y_i, :] -
                                              self.theta_[i, :]) ** 2) /
                                      np.sum(sample_weight[y == y_i]))
-                self.class_prior_[i] = (np.float(np.dot(sample_weight,
-                                                        y == y_i)) /
-                                        np.sum(sample_weight))
+                if class_prior is None:
+                    self.class_prior_[i] = (np.float(np.dot(sample_weight,
+                                                            y == y_i)) /
+                                            np.sum(sample_weight))
             else:
                 self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
                 self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
-                self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
+                if class_prior is None:
+                    self.class_prior_[i] = (np.float(np.sum(y == y_i)) /
+                                            n_samples)
         return self
 
     def _joint_log_likelihood(self, X):
