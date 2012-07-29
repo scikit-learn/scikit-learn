@@ -94,8 +94,8 @@ be accomplished through the ``weights`` keyword.  The default value,
 distance from the query point.  Alternatively, a user-defined function of the
 distance can be supplied which is used to compute the weights.
 
-The nearest neighbors classification algorithm is implicitly based on
-probability theory: a query point :math:`x` is assigned to the class
+There is a probabilistic interpretation of nearest neighbors classification:
+a query point :math:`x` is assigned to the class
 :math:`C_k` to which it has the highest probability of belonging. This
 *posterior probability* is computed using Bayes' rule:
 :math:`P(C_k \mid  x) = \frac{P(x \mid C_k) P(C_k)}{P(x)}`.
@@ -107,6 +107,12 @@ number of classes) to each class prior probability :math:`P(C_k)`.
 Alternatively, a user-defined list of the class prior probabilities (in
 increasing order of class labels) can be supplied which is used to classify
 the query points.
+
+The second example below illustrates the effect of assigning a much greater
+prior probability (0.8) to the first class (in red) than the other two: in
+regions where few data points appear, for example around the point (7, 4.5), 
+the model is more biased toward the red class than it was in the first 
+example.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_1.png
    :target: ../auto_examples/neighbors/plot_classification.html

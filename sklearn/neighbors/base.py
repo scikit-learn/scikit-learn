@@ -46,14 +46,14 @@ def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
-    ===========
+    ----------
     dist: ndarray
         The input distances
     weights: {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
-    ========
+    -------
     weights_arr: array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
@@ -83,14 +83,14 @@ def _get_class_prior(y, class_prior):
     """Get class prior from targets ``y`` and parameter ``class_prior``
     
     Parameters
-    ==========
+    ----------
     y : ndarray
         The target labels, from 0 to ``n-1`` (thus ``n`` classes)
     class_prior: {'default', 'flat' or a dict}
         The class prior probabilities to use
     
     Returns
-    =======
+    -------
     class_prior_arr: array of the same shape as ``np.unique(y)``
     """
     if class_prior in (None, 'default'):
