@@ -117,7 +117,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         n_nodes = 2 * n_samples - n_components
     else:
         assert n_clusters <= n_samples
-        n_nodes = 2*n_samples - n_clusters
+        n_nodes = 2 * n_samples - n_clusters
 
     if (connectivity.shape[0] != n_samples or
         connectivity.shape[1] != n_samples):
