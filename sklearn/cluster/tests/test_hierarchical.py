@@ -23,6 +23,7 @@ def test_structured_ward_tree():
     """
     rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
+    # Avoding a mask with only 'True' entries
     mask[4:7, 4:7] = 0
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
