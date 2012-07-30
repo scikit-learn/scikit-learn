@@ -84,7 +84,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     n_samples, n_features = X.shape
 
     if connectivity is None:
-        print "Foobar: n_clusters", n_clusters, X.shape
         if n_clusters is not None:
             warnings.warn('Early stopping is implemented only for '
                              'structured Ward clustering (i.e. with '
