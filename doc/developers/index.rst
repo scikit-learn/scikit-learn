@@ -150,6 +150,8 @@ You can also check for common programming errors with the following tools:
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
 
+      see also :ref:`testing`
+
     * No pyflakes warnings, check with::
 
         $ pip install pyflakes
@@ -223,6 +225,39 @@ it.
    version of Sphinx as possible, the different versions tend to behave
    slightly differently. To get the best results, you should use version
    1.0.
+
+.. _testing:
+
+Testing and improving test coverage
+------------------------------------
+
+High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
+is a corner-stone of the sciki-learn development process. For this
+purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
+package. The tests are functions appropriately names, located in `tests`
+subdirectories, that check the validity of the algorithms and the
+different options of the code.
+
+The full scikit-learn tests can be run using 'make' in the root folder.
+Alternatively, running 'nosetests' in a folder will run all the tests of
+the corresponding subpackages.
+
+We expect code coverage of new features to be at least around 90%.
+
+.. note:: **Workflow to improve test coverage**
+
+   To test code coverage, you need to install the `coverage
+   <http://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+
+   1. Run 'make test-coverage'. The output lists for each file the line
+      numbers that are not tested.
+
+   2. Find a low hanging fruit, looking at which lines are not tested,
+      write or adapt a test specifically for these lines.
+
+   3. Loop.
+
+
 
 Developers web site
 -------------------

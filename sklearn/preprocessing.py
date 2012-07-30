@@ -660,12 +660,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
-    array([[ 1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.]])
+    array([[1, 0, 0, 0],
+           [0, 0, 0, 1]])
 
     >>> lb.fit_transform([(1, 2), (3,)])
-    array([[ 1.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1, 1, 0],
+           [0, 0, 1]])
     >>> lb.classes_
     array([1, 2, 3])
     """
@@ -728,9 +728,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 # nothing to do as y is already a label indicator matrix
                 return y
 
-            Y = np.zeros((len(y), len(self.classes_)))
+            Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
-            Y = np.zeros((len(y), 1))
+            Y = np.zeros((len(y), 1), dtype=np.int)
 
         Y += self.neg_label
 

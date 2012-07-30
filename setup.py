@@ -9,6 +9,16 @@ import sys
 import os
 import shutil
 
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
+
+# This is a bit (!) hackish: we are setting a global variable so that the main
+# sklearn __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.
+builtins.__SKLEARN_SETUP__ = True
+
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
@@ -17,7 +27,11 @@ MAINTAINER_EMAIL = 'fabian.pedregosa@inria.fr'
 URL = 'http://scikit-learn.sourceforge.net'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION = '0.12-git'
+
+# We can actually import a restricted version of sklearn that
+# does not need the compiled code
+import sklearn
+VERSION = sklearn.__version__
 
 from numpy.distutils.core import setup
 
@@ -25,9 +39,9 @@ from numpy.distutils.core import setup
 # Optional setuptools features
 
 # For some commands, use setuptools
-if len(set(('develop', 'sdist', 'release', 'bdist_egg', 'bdist_rpm',
-           'bdist', 'bdist_dumb', 'bdist_wininst', 'install_egg_info',
-           'build_sphinx', 'egg_info', 'easy_install', 'upload',
+if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
+           'bdist_wininst', 'install_egg_info', 'build_sphinx',
+           'egg_info', 'easy_install', 'upload',
             )).intersection(sys.argv)) > 0:
     extra_setuptools_args = dict(
             zip_safe=False, # the package can run out of an .egg file
@@ -42,6 +56,13 @@ def configuration(parent_package='', top_path=None):
 
     from numpy.distutils.misc_util import Configuration
     config = Configuration(None, parent_package, top_path)
+
+    # Avoid non-useful msg:
+    # "Ignoring attempt to set 'name' (from ... "
+    config.set_options(ignore_setup_xxx_py=True,
+                       assume_default_configuration=True,
+                       delegate_options_to_subpackages=True,
+                       quiet=True)
 
     config.add_subpackage('sklearn')
 
