@@ -152,13 +152,9 @@ class GaussianNB(BaseNB):
     [[ 0.37693335  0.62306665]]
     """
     def __init__(self, sample_weight=None, custom_class_prior=None):
-        self.sample_weight = None
-        if sample_weight is not None:
-            self.sample_weight = np.asarray(sample_weight)
+        self.sample_weight = sample_weight
         # Must use different name because of clash with deprecated property
-        self.custom_class_prior = None
-        if custom_class_prior is not None:
-            self.custom_class_prior = np.asarray(custom_class_prior)
+        self.custom_class_prior = custom_class_prior
 
     def fit(self, X, y):
         """Fit Gaussian Naive Bayes according to X, y
@@ -185,9 +181,11 @@ class GaussianNB(BaseNB):
 
         if n_samples != y.shape[0]:
             raise ValueError("X and y have incompatible shapes")
-        if self.sample_weight is not None and \
-                len(self.sample_weight) != n_samples:
-            raise ValueError("X and sample_weight have incompatible shapes")
+        if self.sample_weight is not None:
+            self.sample_weight = np.asarray(self.sample_weight)
+            if len(self.sample_weight) != n_samples:
+                raise ValueError("X and sample_weight have"
+                                 "incompatible shapes")
 
         self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
@@ -195,8 +193,10 @@ class GaussianNB(BaseNB):
         self.theta_ = np.zeros((n_classes, n_features))
         self.sigma_ = np.zeros((n_classes, n_features))
         if self.custom_class_prior is not None:
+            self.custom_class_prior = np.asarray(self.custom_class_prior)
             if len(self.custom_class_prior) != n_classes:
-                raise ValueError("y and class_prior have incompatible shapes")
+                raise ValueError("y and custom_class_prior have"
+                                 "incompatible shapes")
             self.class_prior_ = self.custom_class_prior
         else:
             self.class_prior_ = np.zeros(n_classes)
