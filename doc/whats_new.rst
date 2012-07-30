@@ -69,7 +69,7 @@ API changes summary
 
    - :func:`cluster.ward_tree` now also returns the parent array. This is
      necessary for early-stopping in which case the tree is not
-     completely buit.
+     completely built.
 
 .. _changes_0_11:
 
