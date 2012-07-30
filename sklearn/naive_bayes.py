@@ -193,20 +193,20 @@ class GaussianNB(BaseNB):
             self.class_prior_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
+            X_i = X[y == y_i, :]
             if sample_weight is not None:
-                self.theta_[i, :] = np.average(X[y == y_i, :], axis=0,
-                                               weights=sample_weight[y == y_i])
-                self.sigma_[i, :] = (np.dot(sample_weight[y == y_i],
-                                            (X[y == y_i, :] -
-                                             self.theta_[i, :]) ** 2) /
-                                     np.sum(sample_weight[y == y_i]))
+                weight_i = sample_weight[y == y_i]
+                self.theta_[i, :] = np.average(X_i, axis=0, weights=weight_i)
+                self.sigma_[i, :] = (np.dot(weight_i,
+                                            (X_i - self.theta_[i, :]) ** 2) /
+                                     np.sum(weight_i))
                 if class_prior is None:
                     self.class_prior_[i] = (np.float(np.dot(sample_weight,
                                                             y == y_i)) /
                                             np.sum(sample_weight))
             else:
-                self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
-                self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
+                self.theta_[i, :] = np.mean(X_i, axis=0)
+                self.sigma_[i, :] = np.var(X_i, axis=0) + epsilon
                 if class_prior is None:
                     self.class_prior_[i] = (np.float(np.sum(y == y_i)) /
                                             n_samples)
