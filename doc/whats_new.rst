@@ -40,6 +40,11 @@ Changelog
 
    - A common testing framework for all estimators was added.
 
+   - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
+     particular building the tree now supports early stopping. This is
+     useful when the number of clusters is not small compared to the
+     number of samples.
+
 API changes summary
 -------------------
 
@@ -61,6 +66,10 @@ API changes summary
 
    - All ``Base`` classes are now abstract meta classes so that they can not be
      instantiated.
+
+   - :func:`cluster.ward_tree` now also returns the parent array. This is
+     necessary for early-stopping in which case the tree is not
+     completely built.
 
 .. _changes_0_11:
 
