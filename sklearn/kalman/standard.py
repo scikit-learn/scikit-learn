@@ -41,17 +41,34 @@ def _arg_or_default(arg, default, dim, name):
     return result
 
 
-def _determine_dimensionality(variables):
-    """Derive the dimensionality of the state space"""
+def _determine_dimensionality(variables, default):
+    """Derive the dimensionality of the state space
+
+    Parameters
+    ----------
+    variables : list of ({None, array}, conversion function, index)
+        variables, functions to convert them to arrays, and indices in those
+        arrays to derive dimensionality from.
+    default : {None, int}
+        default dimensionality to return if variables is empty
+
+    Returns
+    -------
+    dim : int
+        dimensionality of state space as derived from variables or default.
+    """
+    # gather possible values based on the variables
     candidates = []
-    for (v, idx) in variables:
+    for (v, converter, idx) in variables:
         if v is not None:
-            v = np.asarray(v)
-            if (idx >= 0 and len(v.shape) > idx) \
-                    or (idx < 0 and len(v.shape) >= abs(idx)):
-                candidates.append(v.shape[idx])
-            else:
-                candidates.append(1)
+            v = converter(v)
+            candidates.append(v.shape[idx])
+
+    # also use the manually specified default
+    if default is not None:
+        candidates.append(default)
+
+    # ensure consistency of all derived values
     if len(candidates) == 0:
         return 1
     else:
@@ -981,14 +998,24 @@ class KalmanFilter(BaseEstimator):
         if `em_vars` is an iterable of strings only variables in `em_vars`
         will be estimated using EM.  if `em_vars` == 'all', then all
         variables will be estimated.
+    n_dim_state: optional, integer
+        the dimensionality of the state space. Only meaningful when you do not
+        specify initial values for `transition_matrices`, `transition_offsets`,
+        `transition_covariance`, `initial_state_mean`, or
+        `initial_state_covariance`.
+    n_dim_obs: optional, integer
+        the dimensionality of the observation space. Only meaningful when you
+        do not specify initial values for `observation_matrices`,
+        `observation_offsets`, or `observation_covariance`.
     """
     def __init__(self, transition_matrices=None, observation_matrices=None,
             transition_covariance=None, observation_covariance=None,
             transition_offsets=None, observation_offsets=None,
             initial_state_mean=None, initial_state_covariance=None,
             random_state=None,
-                 em_vars=['transition_covariance', 'observation_covariance',
-                          'initial_state_mean', 'initial_state_covariance']):
+            em_vars=['transition_covariance', 'observation_covariance',
+                     'initial_state_mean', 'initial_state_covariance'],
+            n_dim_state=None, n_dim_obs=None):
         """Initialize Kalman Filter"""
         self.transition_matrices = transition_matrices
         self.observation_matrices = observation_matrices
@@ -1000,6 +1027,8 @@ class KalmanFilter(BaseEstimator):
         self.initial_state_covariance = initial_state_covariance
         self.random_state = random_state
         self.em_vars = em_vars
+        self.n_dim_state = n_dim_state
+        self.n_dim_obs = n_dim_obs
 
     def sample(self, n_timesteps, initial_state=None, random_state=None):
         """Sample a state sequence `n_timesteps` timesteps in length.
@@ -1431,14 +1460,19 @@ class KalmanFilter(BaseEstimator):
 
         # determine size of state and observation space
         n_dim_state = _determine_dimensionality(
-            [(self.transition_matrices, -1),
-             (self.transition_offsets, -1),
-             (self.transition_covariance, -1)]
+            [(self.transition_matrices, array2d, -2),
+             (self.transition_offsets, array1d, -1),
+             (self.transition_covariance, array2d, -2),
+             (self.initial_state_mean, array1d, -1),
+             (self.initial_state_covariance, array2d, -2),
+             (self.observation_matrices, array2d, -1)],
+            self.n_dim_state
         )
         n_dim_obs = _determine_dimensionality(
-            [(self.observation_matrices, -2),
-             (self.observation_offsets, -1),
-             (self.observation_covariance, -1)]
+            [(self.observation_matrices, array2d, -2),
+             (self.observation_offsets, array1d, -1),
+             (self.observation_covariance, array2d, -2)],
+            self.n_dim_obs
         )
 
         # initialize parameters
