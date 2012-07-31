@@ -6,20 +6,11 @@ Kalman Filter
 
 .. currentmodule:: sklearn.kalman
 
-The **Kalman Filter** is the de facto standard algorithm for tracking a single
-moving object in discrete time.  Given a sequence of position observations, the
-Kalman Filter is automatically able to infer model parameters as well as other
-linearly-related variables such as velocity and acceleration.
-
-.. figure:: ../auto_examples/kalman/images/plot_sin_1.png
-   :target: ../auto_examples/kalman/plot_sin.html
-   :width: 600 px
-   :align: center
-
-Like the Hidden Markov Model, the Kalman Filter estimates a sequence of hidden
-states by performing Bayesian Inference on a *generative probabilistic model*
-given a sequence of measurements.  Unlike the Hidden Markov Model, however, the
-Kalman Filter is designed to work with continuous state and observation spaces.
+The Kalman Filter is a unsupervised algorithm for tracking a single object in a
+continuous state space.  Given a sequence of noisy measurements, the Kalman
+Filter is able to recover the "true state" of the underling object being
+tracked. Common uses for the Kalman Filter include radar and sonar tracking and
+state estimation in robotics.
 
 The advantages of Kalman Filter are:
 
@@ -31,36 +22,44 @@ The disadvantages are:
 
     + Computational complexity is cubic in the size of the state space
 
-    + Parameter optimization is non-convex and can thus only find local optima.
+    + Parameter optimization is non-convex and can thus only find local optima
 
     + Inability to cope with non-Gaussian noise
+
+.. figure:: ../auto_examples/kalman/images/plot_sin_1.png
+   :target: ../auto_examples/kalman/plot_sin.html
+   :width: 600 px
+   :align: center
+
 
 Usage
 =====
 
-While :class:`KalmanFilter` is the only class in this module, there are
-actually three different algorithms implemented.  The first two are the Kalman
-Filter and Kalman Smoother, two algorithms for estimating the hidden target
-states.  The third is the EM algorithm, which makes use the both of the above
-to estimate the model's parameters.
+This module implements two algorithms for tracking: the Kalman Filter and
+Kalman Smoother.  In addition, model parameters which are traditionally
+specified by hand can also be learned by the implemented EM algorithm without
+any labeled training data.  All three algorithms are contained in the
+:class:`KalmanFilter` class in this module.
 
-In order to make use of these algorithms, one need only supply an initial guess
-for a subset of the model's parameters, one defining the size of the state
-space and another the size of the measurement space::
+In order to apply the Kalman Smoother, one need only specify the size of the
+state and observation space.  This can be done directly by setting
+:attr:`n_dim_state` or :attr:`n_dim_obs` or indirectly by specifying an initial
+value for any of the model parameters from which the former can be derived::
 
     >>> from sklearn.kalman import KalmanFilter
     >>> import numpy as np
-    >>> kf = KalmanFilter(transition_covariance=0.1, observation_covariance=np.eye(2))
+    >>> kf = KalmanFilter(initial_state_mean=0, n_dim_obs=2)
 
-
-We may then fit the Kalman Filter to a sequence of observations, and use it to
-predict the underlying hidden states of any observation sequence::
+The traditional Kalman Filter assumes that model parameters are known
+beforehand.  The :class:`KalmanFilter` class however can learn parameters using
+:func:`KalmanFilter.fit` (fitting is optional).  Then the hidden sequence of
+states can be predicted using :func:`KalmanFilter.predict`::
 
     >>> measurements = [[1,0], [0,0], [0,1]]
     >>> kf.fit(measurements).predict([[2,0], [2,1], [2,2]])
-    array([[ 0.75617284],
-           [ 1.26661721],
-           [ 1.53838218]])
+    array([[ 0.85819709],
+           [ 1.77811829],
+           [ 2.19537816]])
 
 The Kalman Filter is parameterized by 3 arrays for state transitions, 3 for
 measurements, and 2 more for initial conditions.  Their names and function are
@@ -69,6 +68,170 @@ described in the next section.
 .. topic:: Examples:
 
  * :ref:`example_kalman_plot_sin.py`
+
+
+Parameter Selection
+-------------------
+
+Unlike most other algorithms, the Kalman Filter and Kalman Smoother are
+traditionally used with parameters already given. The :class:`KalmanFilter`
+class can thus be initialized with any subset of the usual model parameters and
+used without fitting. Sensible defaults values are given for all unspecified
+parameters (zeros for all 1-dimensional arrays and identity matrices for all
+2-dimensional arrays).
+
+A Kalman Filter/Smoother is fully specified by its initial conditions
+(:attr:`initial_state_mean` and :attr:`initial_state_covariance`), its
+transition parameters (:attr:`transition_matrices`, :attr:`transition_offsets`,
+:attr:`transition_covariance`), and its observation parameters
+(:attr:`observation_matrices`, :attr:`observation_offsets`,
+:attr:`observation_covariance`). These parameters define a probabilistic model
+from which the unobserved states and observed measurements are assumed to be
+sampled from. The following code illustrates in one dimension what this process
+is.
+
+.. code-block:: python
+
+    from scipy.states import norm
+    import numpy as np
+    states = np.zeros((n_timesteps, n_dim_state))
+    measurements = np.zeros((n_timesteps, n_dim_obs))
+    for t in range(n_timesteps-1):
+       if t == 0:
+          states[t] = norm.rvs(initial_state_mean, np.sqrt(initial_state_covariance))
+          measurements[t] = (
+              np.dot(observation_matrices, states[t])
+              + observation_offsets
+              + norm.rvs(0, np.sqrt(observation_covariance))
+          )
+      states[t+1] = (
+          np.dot(transition_matrices, states[t])
+          + transition_offsets
+          + norm.rvs(0, np.sqrt(transition_covariance))
+      )
+      measurements[t+1] = (
+          np.dot(observation_matrices, states[t+1])
+          + observation_offsets
+          + norm.rvs(np.sqrt(observation_covariance))
+      )
+
+The selection of these variables is not an easy one, and, as shall be explained
+in the section on fitting, should not be left to :func:`KalmanFilter.fit`
+alone. If one ignores the random noise, the parameters dictate that *the next
+state and the current measurement should be an affine function of the current
+state*. The additive noise term is then simply a way to deal with unaccounted
+error.
+
+A simple example to illustrate the model parameters is a free falling ball in
+one dimension. The state vector can be represented by the position, velocity,
+and acceleration of the ball, and the transition matrix is defined by the
+equation::
+
+    position[t+dt] = position[t] + velocity[t] dt + 0.5 acceleration[t] dt^2
+
+Taking the zeroth, first, and second derivative of the above equation with
+respect to `dt` gives the rows of transition matrix. We may also set the
+transition offset to zero for the position and velocity components and -9.8
+for the acceleration component in order to account for gravity's pull.
+
+It is often very difficult to guess what appropriate values are for for the
+transition and observation covariance, so it is common to use some constant
+multiplied by the identity matrix. Increasing this constant is equivalent to
+saying you believe there is more noise in the system. This constant is the
+amount of variance you expect to see along each dimensiona during state
+transitions and measurements, respectively.
+
+
+Prediction
+----------
+
+The :class:`KalmanFilter` class comes equipped with two algorithms for
+prediction: the Kalman Filter and the Kalman Smoother. While the former can be
+updated recursively (making it ideal for online state estimation), the latter
+can only be done in batch. These two algorithms are accessible via
+:func:`KalmanFilter.filter`, :func:`KalmanFilter.filter_update`, and
+:func:`KalmanFilter.predict`.
+
+Functionally, Kalman Smoother should always be preferred. Unlike the Kalman
+Filter, the Smoother is able to incorporate "future" measurements as well as
+past ones at the same computational cost of :math:`O(Td^3)` where :math:`T` is
+the number of time steps and `d` is the dimensionality of the state space. The
+only reason to prefer the Kalman Filter over the Smoother is in its ability to
+incorporate new measurements in an online manner::
+
+    means, covariances = kf.filter(measurements)
+    next_mean, next_covariance = kf.filter_update(
+        means[-1], covariances[-1], new_measurement
+    )
+
+Both the Kalman Filter and Kalman Smoother are able to use parameters which
+vary with time.  In order to use this, one need only pass in an array
+:attr:`n_timesteps` in length along its first axis::
+
+    >>> transition_offsets = [[-1], [0], [1], [2]]
+    >>> kf = KalmanFilter(transition_offsets=transition_offsets, n_dim_obs=1)
+
+.. topic:: Examples:
+
+ * :ref:`example_kalman_plot_online.py`
+ * :ref:`example_kalman_plot_filter.py`
+
+
+Fitting
+-------
+
+In addition to the Kalman Filter and Kalman Smoother, the :class:`KalmanFilter`
+class implements the Expectation-Maximization algorithm. This iterative
+algorithm is a way to maximize the likelihood of the observed measurements
+(recall the probabilistic model induced by the model parameters), which is
+unfortunately a non-convex optimization problem. This means that even when the
+EM algorithm converges, there is no guarantee that it has converged to an
+optimal value. Thus it is important to select good initial parameter values.
+
+A second consideration when using the EM algorithm is that the algorithm lacks
+regularization, meaning that parameter values may diverge to infinity in order
+to make the measurements more likely. Thus it is important to choose *which*
+parameters to optimize via the :attr:`em_vars` parameter of
+:class:`KalmanFilter`.  For example, in order to only optimize the transition
+and observation covariance matrices, one may instantiate :class:`KalmanFilter`
+like so::
+
+    >>> kf = KalmanFilter(em_vars=['transition_covariance', 'observation_covariance'])
+
+It is customary optimize only the :attr:`transition_covariance`,
+:attr:`observation_covariance`, :attr:`initial_state_mean`, and
+:attr:`initial_state_covariance`, which is the default when :attr:`em_vars` is
+unspecified. In order to avoid overfitting, it is also possible to specify the
+number of iterations of the EM algorithm to run during fitting::
+
+    >>> kf.fit(X, n_iter=5)
+
+Each iteration of the EM algorithm requires running the Kalman Smoother anew,
+so its computational complexity is :math:`O(Tnd^3)` where :math:`T` is the
+number of time steps, `n` is the number of iterations, and `d` is the size of
+the state space.
+
+.. topic:: Examples:
+
+ * :ref:`example_kalman_plot_em.py`
+
+
+Missing Measurements
+--------------------
+
+In real world systems, it is common to have sensors occasionally fail.  The
+Kalman Filter, Kalman Smoother, and EM algorithm are all equipped to handle
+this scenario. To make use of it, one only need apply a NumPy mask to the
+measurement at the missing time step::
+
+    >>> from numpy import ma
+    >>> X = ma.array([1,2,3])
+    >>> X[1] = ma.masked  # hide measurement at time step 1
+    >>> kf.fit(X).predict(X)
+
+.. topic:: Examples:
+
+ * :ref:`example_kalman_plot_missing.py`
 
 
 Mathematical Formulation
@@ -150,100 +313,3 @@ state could be, such as if a car turns one of three ways at an intersection.
    http://mlg.eng.cam.ac.uk/zoubin/course04/tr-96-2.pdf
  * Welling, Max. "The Kalman Filter".
    http://www.cs.toronto.edu/~welling/classnotes/papers_class/KF.ps.gz
-
-Filtering vs. Smoothing
-=======================
-
-Both Kalman Filtering and Kalman Smoothing aim to perform the same task:
-estimate the hidden states using the measurements.  Why then should one prefer
-one over the other?  The answer is that the Filter requires lower computational
-complexity while the Smoother gives better estimates.  Mathematically, the
-Filter calculates the mean and covariance of the Normal distribution
-representing :math:`P(x_t | z_0, \ldots, z_t)` while the Smoother calculates
-the same for :math:`P(x_t | z_0, \ldots, z_T)`; that is, all measurements.  In
-fact, the output of the Kalman Filter is necessary to implement the Kalman
-Smoother.
-
-In general, the computational complexity of the Kalman Filter and the Kalman
-Smoother are both :math:`O(Td^3)` where :math:`T` is the total number of time
-steps and :math:`d` is the dimensionality of the state space, and thus the
-Smoother should be preferred.  In practice, the Smoother takes roughly twice as
-long as the Filter as it must perform two passes over the measurements.  The
-only case where the Filter is better suited is when measurements :math:`z_t`
-come in a streaming fashion and estimates for :math:`x_t` need to be updated
-online.  If that is the case, one should look at
-:func:`KalmanFilter.filter_update`.
-
-Finally, textbook examples of the Kalman Filter and Kalman Smoother often
-assume :math:`x_t` ranges from :math:`t = 0 \ldots T` while :math:`z_t` ranges
-from :math:`t = 1 \ldots T`.  This module assumes both :math:`x_t` and
-:math:`z_t` range from :math:`t = 0 \ldots T-1`.
-
-.. topic:: Examples:
-
- * :ref:`example_kalman_plot_online.py`
- * :ref:`example_kalman_plot_filter.py`
-
-
-EM Algorithm
-============
-
-The Expectation-Maximization Algorithm, better known as the EM algorithm, is
-actually a bit of a misnomer; it is more like an algorithm *template* than an
-algorithm in and of itself.  The EM algorithm seeks to maximize the likelihood
-of all measurements by estimating the unknown variables (in this case, the
-hidden states) with a fixed set of parameters, then maximizing the expected
-value of the log likelihood of all measurements with respect to the parameters,
-and repeating.  In mathematical notation, if we define :math:`\theta = (A, b,
-C, d, Q, R, \mu_0, \Sigma_0)`, then the EM Algorithm works by finding a closed
-form expression for,
-
-.. math::
-
-    P(x_{0:T-1} | \theta_{\text{old}}, z_{0:T-1})
-
-then uses that expression to find,
-
-.. math::
-
-    \theta_{\text{new}} = \arg\max_{\theta'} \mathbb{E}_{x_{0:T-1}} [
-      \log P(x_{0:T-1}, z_{0:T-1} | \theta')  | z_{0:T-1}, \theta_{\text{old}}
-    ]
-
-:math:`\theta_{\text{new}}` then takes the place of :math:`\theta_{\text{old}}`
-and the process is repeated.  On a practical note, each iteration of the EM
-algorithm requires running the Kalman Smoother, and thus the running time is
-:math:`O(n_{\text{iter}} T d^3)` when the EM algorithm is run for
-:math:`n_{\text{iter}}` iterations.
-
-The EM algorithm is always guaranteed to converge, but not necessarily to a
-global optimum.  Thus, it is important to start with a good guess for the
-original parameter values (typically an order of magnitude is sufficient).
-Secondly, the EM algorithm implemented here does not support regularization, so
-values parameters can grow extremely out of hand with insufficient data.
-
-.. topic:: Examples:
-
- * :ref:`example_kalman_plot_em.py`
-
-
-Missing Observations
-====================
-
-A real system will often get measurements at regular points in time, but there
-will also be times when the sensor fails.  :mod:`sklearn.kalman` offers you the
-ability to continue applying all of its implemented algorithms even if this is
-the case.  In order to use this feature, one simply needs to wrap the
-measurements in :mod:`numpy.ma` and mark a timestep as masked::
-
-  >>> from sklearn.datasets import load_kalman_data
-  >>> import numpy as np
-  >>> import numpy.ma as ma
-  >>> Z = load_kalman_data().data
-  >>> Z = ma.array(Z, mask=np.zeros(Z.shape))
-  >>> Z[5] = ma.masked  # observation at time step 5 will now be ignored
-  >>> Z[5] = ma.nomask  # observation will be recognized again
-
-.. topic:: Examples:
-
- * :ref:`example_kalman_plot_missing.py`
