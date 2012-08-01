@@ -14,10 +14,10 @@ Changelog
 
    - :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
-     via the ``max_features`` argument.
+     via the ``max_features`` argument, , by `Peter Prettenhofer`_.
 
    - Added Huber and Quantile loss functions to
-     :class:`ensemble.GradientBoostingRegressor`.
+     :class:`ensemble.GradientBoostingRegressor`, by `Peter Prettenhofer`_.
 
    - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
      now support multi-output classification and regression problems, by
@@ -30,15 +30,15 @@ Changelog
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
-   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux.
 
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
-     decompresses them on the fly.
+     decompresses them on the fly, by `Lars Buitinck`_.
 
    - SVMlight file format serializer now preserves double precision floating
      point values, by `Olivier Grisel`_.
 
-   - A common testing framework for all estimators was added.
+   - A common testing framework for all estimators was added, by `Andreas Müller`_.
 
    - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
      particular building the tree now supports early stopping. This is
