@@ -85,7 +85,7 @@ def sparse_std(unsigned int n_samples,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
-                            double alpha, double beta,
+                            double l1_reg, double l2_reg,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bool positive=False):
@@ -94,7 +94,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
         We minimize
 
-        1 norm(y - X w, 2)^2 + alpha norm(w, 1) + beta norm(w, 2)^2
+        1 norm(y - X w, 2)^2 + l1_reg norm(w, 1) + l2_reg norm(w, 2)^2
         -                                         ----
         2                                           2
 
@@ -120,8 +120,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int ii
     cdef unsigned int n_iter
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if l1_reg == 0:
+        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
     R = y - np.dot(X, w)
@@ -151,8 +151,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if positive and tmp < 0:
                 w[ii] = 0.0
             else:
-                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                    / (norm_cols_X[ii] + beta)
+                w[ii] = fsign(tmp) * fmax(fabs(tmp) - l1_reg, 0) \
+                    / (norm_cols_X[ii] + l2_reg)
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
@@ -173,7 +173,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
 
-            XtA = np.dot(X.T, R) - beta * w
+            XtA = np.dot(X.T, R) - l2_reg * w
             if positive:
                 dual_norm_XtA = np.max(XtA)
             else:
@@ -182,16 +182,16 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # TODO: use squared L2 norm directly
             R_norm = linalg.norm(R)
             w_norm = linalg.norm(w, 2)
-            if (dual_norm_XtA > alpha):
-                const = alpha / dual_norm_XtA
+            if (dual_norm_XtA > l1_reg):
+                const = l1_reg / dual_norm_XtA
                 A_norm = R_norm * const
                 gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
             else:
                 const = 1.0
                 gap = R_norm ** 2
 
-            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+            gap += l1_reg * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
+                  0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
 
             if gap < tol:
                 # return if we reached desired tolerance
