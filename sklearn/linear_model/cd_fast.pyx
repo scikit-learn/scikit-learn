@@ -88,7 +88,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double l1_reg, double l2_reg,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive=False):
+                            int max_iter, double tol, bint positive=False,
+                            bint calc_dual_gap=True, iter_set=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -123,6 +124,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
+    if iter_set is None:
+        iter_set = np.arange(n_features)
 
     R = y - np.dot(X, w)
 
@@ -131,7 +134,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in xrange(n_features):  # Loop over coordinates
+        for ii in iter_set:  # Loop over coordinates
             if norm_cols_X[ii] == 0.0:
                 continue
 
@@ -168,7 +171,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if fabs(w[ii]) > w_max:
                 w_max = fabs(w[ii])
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+        if calc_dual_gap and \
+            (w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1):
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
