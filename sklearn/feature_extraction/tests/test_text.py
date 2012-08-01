@@ -21,8 +21,11 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 
+from collections import defaultdict, Mapping
+from functools import partial
 import pickle
 from StringIO import StringIO
+
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -189,20 +192,20 @@ def test_char_ngram_analyzer():
 
 
 def test_countvectorizer_custom_vocabulary():
-    what_we_like = ["pizza", "beer"]
-    vect = CountVectorizer(vocabulary=what_we_like)
-    vect.fit(JUNK_FOOD_DOCS)
-    assert_equal(set(vect.vocabulary_), set(what_we_like))
-    X = vect.transform(JUNK_FOOD_DOCS)
-    assert_equal(X.shape[1], len(what_we_like))
-
-    # try again with a dict vocabulary
     vocab = {"pizza": 0, "beer": 1}
-    vect = CountVectorizer(vocabulary=vocab)
-    vect.fit(JUNK_FOOD_DOCS)
-    assert_equal(vect.vocabulary_, vocab)
-    X = vect.transform(JUNK_FOOD_DOCS)
-    assert_equal(X.shape[1], len(what_we_like))
+    terms = set(vocab.keys())
+
+    # Try a few of the supported types.
+    for typ in [dict, list, iter, partial(defaultdict, int)]:
+        v = typ(vocab)
+        vect = CountVectorizer(vocabulary=v)
+        vect.fit(JUNK_FOOD_DOCS)
+        if isinstance(v, Mapping):
+            assert_equal(vect.vocabulary_, vocab)
+        else:
+            assert_equal(set(vect.vocabulary_), terms)
+        X = vect.transform(JUNK_FOOD_DOCS)
+        assert_equal(X.shape[1], len(terms))
 
 
 def test_countvectorizer_custom_vocabulary_pipeline():
