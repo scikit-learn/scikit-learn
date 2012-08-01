@@ -23,7 +23,7 @@ Changelog
      now support multi-output classification and regression problems, by
      `Gilles Louppe`_.
 
-   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
+   - Added :class:`preprocessing.LabelEncoder`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
    - Added the epsilon-insensitive loss and the ability to make probabilistic
