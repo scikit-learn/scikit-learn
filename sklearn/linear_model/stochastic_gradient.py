@@ -2,7 +2,7 @@
 #          Mathieu Blondel (partial_fit support)
 #
 # License: BSD Style.
-"""Implementation of Stochastic Gradient Descent (SGD)."""
+"""Classification and regression using Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
 import scipy.sparse as sp
@@ -29,7 +29,7 @@ from .sgd_fast import EpsilonInsensitive
 
 
 class BaseSGD(BaseEstimator):
-    """Base class for dense and sparse SGD."""
+    """Base class for SGD classification and regression."""
 
     __metaclass__ = ABCMeta
 
@@ -95,10 +95,6 @@ class BaseSGD(BaseEstimator):
         except KeyError:
             raise ValueError("learning rate %s"
             "is not supported. " % learning_rate)
-
-    def _set_loss_function(self, loss):
-        """Get concrete LossFunction"""
-        raise NotImplementedError("BaseSGD is an abstract class.")
 
     def _set_penalty_type(self, penalty):
         penalty_types = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
@@ -176,10 +172,11 @@ class BaseSGD(BaseEstimator):
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
-    def _check_fit_data(self, X, y):
-        n_samples, _ = X.shape
-        if n_samples != y.shape[0]:
-            raise ValueError("Shapes of X and y do not match.")
+
+def _check_fit_data(X, y):
+    n_samples, _ = X.shape
+    if n_samples != y.shape[0]:
+        raise ValueError("Shapes of X and y do not match.")
 
 
 def _make_dataset(X, y_i, sample_weight):
@@ -389,7 +386,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
-        self._check_fit_data(X, y)
+        _check_fit_data(X, y)
 
         if self.classes_ is None and classes is None:
             raise ValueError("classes must be passed on the first call "
@@ -497,7 +494,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
-        self._check_fit_data(X, y)
+        _check_fit_data(X, y)
 
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
@@ -813,7 +810,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                             check_ccontiguous=True, dtype=np.float64)
 
         n_samples, n_features = X.shape
-        self._check_fit_data(X, y)
+        _check_fit_data(X, y)
 
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
