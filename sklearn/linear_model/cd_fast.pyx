@@ -89,7 +89,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bint positive=False,
-                            bint calc_dual_gap=True, iter_set=None):
+                            bint calc_dual_gap=True,
+                            np.ndarray[INTEGER, ndim=1] iter_set=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -124,8 +125,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
+
+    cdef bint iter_full_set
     if iter_set is None:
-        iter_set = np.arange(n_features)
+        n_features_iter = n_features
+        iter_full_set = True
+    else:
+        n_features_iter = iter_set.shape[0]
+        iter_full_set = False
 
     R = y - np.dot(X, w)
 
@@ -134,7 +141,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in iter_set:  # Loop over coordinates
+        for ii in xrange(n_features_iter):  # Loop over coordinates
+
+            if not iter_full_set:
+                ii = iter_set[ii]
+
             if norm_cols_X[ii] == 0.0:
                 continue
 
