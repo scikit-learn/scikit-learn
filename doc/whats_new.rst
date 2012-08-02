@@ -1192,7 +1192,7 @@ of commits):
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
-.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
+.. _Alexandre Gramfort: http://alexandre.gramfort.net
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
