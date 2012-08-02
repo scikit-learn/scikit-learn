@@ -15,13 +15,12 @@ ctypedef np.int8_t BOOL_t
 
 cdef class Criterion:
     # Methods
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
-                   int n_samples, int n_total_samples)
+    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples)
 
     cdef void reset(self)
 
     cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
-                    int* X_argsorted_i, BOOL_t* sample_mask)
+                    int* X_argsorted_i)
 
     cdef double eval(self)
 
@@ -66,13 +65,13 @@ cdef class Tree:
     # Methods
     cdef void resize(self, int capacity=*)
 
-    cpdef build(self, np.ndarray X, np.ndarray y, np.ndarray sample_mask=*)
+    cpdef build(self, np.ndarray X, np.ndarray y)
 
     cdef void recursive_partition(self,
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                   np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
                                   np.ndarray sample_mask,
-                                  int n_node_samples,
+                                  int n_samples,
                                   int depth,
                                   int parent,
                                   int is_left_child,
@@ -89,24 +88,21 @@ cdef class Tree:
     cdef void find_split(self,
                          np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                          np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                         np.ndarray sample_mask,
-                         int n_node_samples, int n_total_samples, int* _best_i,
+                         int n_samples, int* _best_i,
                          double* _best_t, double* _best_error,
                          double* _initial_error)
 
     cdef void find_best_split(self,
                               np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                               np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                              np.ndarray sample_mask,  int n_node_samples,
-                              int n_total_samples, int* _best_i,
+                              int n_samples, int* _best_i,
                               double* _best_t, double* _best_error,
                               double* _initial_error)
 
     cdef void find_random_split(self,
                                 np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                 np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                                np.ndarray sample_mask,  int n_node_samples,
-                                int n_total_samples, int* _best_i,
+                                int n_samples, int* _best_i,
                                 double* _best_t, double* _best_error,
                                 double* _initial_error)
 

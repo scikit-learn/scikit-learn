@@ -145,7 +145,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                        max_depth,
                        min_samples_split,
                        min_samples_leaf,
-                       min_density,
                        max_features,
                        compute_importances,
                        random_state):
@@ -153,7 +152,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
         self.compute_importances = compute_importances
         self.random_state = check_random_state(random_state)
@@ -167,7 +165,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.tree_ = None
         self.feature_importances_ = None
 
-    def fit(self, X, y, sample_mask=None):
+    def fit(self, X, y):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -258,23 +256,16 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("min_samples_leaf must be greater than zero.")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
-        if self.min_density < 0.0 or self.min_density > 1.0:
-            raise ValueError("min_density must be in [0, 1]")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if sample_mask is not None and len(sample_mask) != n_samples:
-            raise ValueError("Length of sample_mask=%d does not match "
-                             "number of samples=%d" % (len(sample_mask),
-                                                       n_samples))
 
         # Build tree
         self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
                                 self.n_outputs_, criterion, max_depth,
-                                self.min_samples_split, self.min_samples_leaf,
-                                self.min_density, max_features,
+                                self.min_samples_split, self.min_samples_leaf, max_features,
                                 self.find_split_, self.random_state)
 
-        self.tree_.build(X, y, sample_mask=sample_mask)
+        self.tree_.build(X, y)
 
         if self.compute_importances:
             self.feature_importances_ = \
@@ -351,16 +342,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
-
     max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
         If "auto", then `max_features=sqrt(n_features)` on classification
@@ -428,7 +409,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features=None,
                        compute_importances=False,
                        random_state=None):
@@ -436,7 +416,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      max_depth,
                                                      min_samples_split,
                                                      min_samples_leaf,
-                                                     min_density,
                                                      max_features,
                                                      compute_importances,
                                                      random_state)
@@ -533,16 +512,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
-
     max_features : int, string or None, optional (default=None)
         The number of features to consider when looking for the best split.
         If "auto", then `max_features=sqrt(n_features)` on classification
@@ -612,7 +581,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features=None,
                        compute_importances=False,
                        random_state=None):
@@ -620,7 +588,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     max_depth,
                                                     min_samples_split,
                                                     min_samples_leaf,
-                                                    min_density,
                                                     max_features,
                                                     compute_importances,
                                                     random_state)
@@ -652,7 +619,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
                        random_state=None):
@@ -660,7 +626,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                                                   max_depth,
                                                   min_samples_split,
                                                   min_samples_leaf,
-                                                  min_density,
                                                   max_features,
                                                   compute_importances,
                                                   random_state)
@@ -698,7 +663,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
                        random_state=None):
@@ -706,7 +670,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                                                  max_depth,
                                                  min_samples_split,
                                                  min_samples_leaf,
-                                                 min_density,
                                                  max_features,
                                                  compute_importances,
                                                  random_state)

@@ -201,7 +201,7 @@ cdef class Tree:
 
     def __cinit__(self, int n_features, object n_classes, int n_outputs,
                  Criterion criterion, double max_depth, int min_samples_split,
-                 int min_samples_leaf, double min_density, int max_features,
+                 int min_samples_leaf, int max_features,
                  int find_split_algorithm, object random_state, int capacity=3):
         """Constructor."""
         # Input/Output layout
@@ -222,7 +222,6 @@ cdef class Tree:
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
         self.find_split_algorithm = find_split_algorithm
         self.random_state = random_state
@@ -268,7 +267,6 @@ cdef class Tree:
                        self.max_depth,
                        self.min_samples_split,
                        self.min_samples_leaf,
-                       self.min_density,
                        self.max_features,
                        self.find_split_algorithm,
                        self.random_state), self.__getstate__())
@@ -336,7 +334,7 @@ cdef class Tree:
         if capacity < self.node_count:
             self.node_count = capacity
 
-    cpdef build(self, np.ndarray X, np.ndarray y, np.ndarray sample_mask=None):
+    cpdef build(self, np.ndarray X, np.ndarray y):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -354,9 +352,6 @@ cdef class Tree:
         if y.dtype != DTYPE or not y.flags.contiguous:
             y = np.asarray(y, dtype=DTYPE, order="C")
 
-        if sample_mask is None:
-            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
-
         # Pre-allocate some space
         cdef int init_capacity
 
@@ -368,8 +363,11 @@ cdef class Tree:
         self.resize(init_capacity)
         cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
 
+        n_samples = X.shape[0]
+        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+
         # Build the tree by recursive partitioning
-        self.recursive_partition(X, y, sample_mask, np.sum(sample_mask), 0, -1, False, buffer_value)
+        self.recursive_partition(X, y, sample_mask, n_samples, 0, -1, False, buffer_value)
 
         # Compactify
         self.resize(self.node_count)
@@ -379,7 +377,7 @@ cdef class Tree:
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                   np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
                                   np.ndarray sample_mask,
-                                  int n_node_samples,
+                                  int n_samples,
                                   int depth,
                                   int parent,
                                   int is_left_child,
@@ -388,98 +386,88 @@ cdef class Tree:
         # Variables
         cdef Criterion criterion = self.criterion
 
-        cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
-        cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
-        cdef BOOL_t* sample_mask_ptr = <BOOL_t*> sample_mask.data
+        cdef DTYPE_t* X_ptr
+        cdef DTYPE_t* y_ptr
+        cdef BOOL_t* sample_mask_ptr    
 
-        cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
-        cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
+        cdef int X_stride
+        cdef int y_stride
 
-        cdef int n_total_samples = y.shape[0]
         cdef int feature
         cdef double threshold
         cdef double best_error
         cdef double init_error
+        cdef int n_sample_left
+        cdef int n_samples_right
+
+        cdef np.ndarray sample_mask_left = None
+        cdef np.ndarray sample_mask_right = None
+        cdef np.ndarray[DTYPE_t, ndim=2] new_X = None
+        cdef np.ndarray[DTYPE_t, ndim=2] new_y = None
 
         cdef int i
-        cdef np.ndarray sample_mask_left
-        cdef np.ndarray sample_mask_right
-        cdef int n_node_samples_left
-        cdef int n_node_samples_right
+
+        new_X = X[sample_mask, :]
+        new_y = y[sample_mask, :]
 
         # Count samples
-        if n_node_samples == 0:
+        if n_samples == 0:
             raise ValueError("Attempting to find a split "
-                             "with an empty sample_mask")
+                             "with no samples")
 
         # Split samples
         if depth < self.max_depth and \
-           n_node_samples >= self.min_samples_split and \
-           n_node_samples >= 2 * self.min_samples_leaf:
-            self.find_split(X, y, sample_mask,
-                            n_node_samples,
-                            n_total_samples,
-                            &feature, &threshold, &best_error, &init_error)
+           n_samples >= self.min_samples_split and \
+           n_samples >= 2 * self.min_samples_leaf:
+            self.find_split(new_X, new_y, n_samples, &feature, &threshold, &best_error, &init_error)
 
         else:
             feature = -1
-            criterion.init(y_ptr, y_stride, sample_mask_ptr, n_node_samples, n_total_samples)
+            y_ptr = <DTYPE_t*> new_y.data
+            y_stride = <int> new_y.strides[0] / <int> new_y.strides[1]
+            criterion.init(y_ptr, y_stride, n_samples)
             init_error = criterion.eval()
 
         criterion.init_value(buffer_value)
 
         # Current node is leaf
         if feature == -1:
-            self.add_leaf(parent, is_left_child, buffer_value, init_error, n_node_samples)
+            self.add_leaf(parent, is_left_child, buffer_value, init_error, n_samples)
 
         # Current node is internal node (= split node)
         else:
-            # Sample mask is too sparse?
-            if 1. * n_node_samples / n_total_samples <= self.min_density:
-                X = X[sample_mask]
-                y = y[sample_mask]
-                sample_mask = np.ones((n_node_samples, ), dtype=np.bool)
-
-                n_total_samples = n_node_samples
-
-                X_ptr = <DTYPE_t*> X.data
-                X_stride = <int> X.strides[1] / <int> X.strides[0]
-                sample_mask_ptr = <BOOL_t*> sample_mask.data
-
-                # !! No need to update the other variables
-                # X_argsorted_ptr = <int*> X_argsorted.data
-                # y_ptr = <DTYPE_t*> y.data
-                # X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
-                # y_stride = <int> y.strides[0] / <int> y.strides[1]
+            if not new_X.flags.fortran:
+                new_X = np.asfortranarray(new_X)
+            
+            sample_mask_ptr = <BOOL_t*> sample_mask.data
 
             # Split
+            X_ptr = <DTYPE_t*> new_X.data
+            X_stride = <int> new_X.strides[1] / <int> new_X.strides[0]
             X_ptr = X_ptr + feature * X_stride
-            sample_mask_left = np.zeros((n_total_samples, ), dtype=np.bool)
-            sample_mask_right = np.zeros((n_total_samples, ), dtype=np.bool)
-            n_node_samples_left = 0
-            n_node_samples_right = 0
+            sample_mask_left = np.zeros((n_samples, ), dtype=np.bool)
+            sample_mask_right = np.zeros((n_samples, ), dtype=np.bool)
+            n_samples_left = 0
+            n_samples_right = 0
 
-            for i from 0 <= i < n_total_samples:
-                if sample_mask_ptr[i]:
+            for i from 0 <= i < n_samples:
                     if X_ptr[i] <= threshold:
                         sample_mask_left[i] = 1
-                        n_node_samples_left += 1
+                        n_samples_left += 1
                     else:
                         sample_mask_right[i] = 1
-                        n_node_samples_right += 1
-
+                        n_samples_right += 1            
+            
             node_id = self.add_split_node(parent, is_left_child, feature,
                                           threshold, buffer_value, best_error,
-                                          init_error, n_node_samples)
+                                          init_error, n_samples)
 
             # Left child recursion
-            self.recursive_partition(X, y, sample_mask_left,
-                                     n_node_samples_left, depth + 1, node_id,
+            self.recursive_partition(new_X, new_y, sample_mask_left, n_samples_left, depth + 1, node_id,
                                      True, buffer_value)
 
             # Right child recursion
-            self.recursive_partition(X, y, sample_mask_right,
-                                     n_node_samples_right, depth + 1, node_id,
+            self.recursive_partition(new_X, new_y, sample_mask_right, n_samples_right, depth + 1, node_id,
                                      False, buffer_value)
 
     cdef int add_split_node(self, int parent, int is_left_child, int feature,
@@ -546,26 +534,22 @@ cdef class Tree:
     cdef void find_split(self,                                   
                          np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                          np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                         np.ndarray sample_mask,
-                         int n_node_samples, int n_total_samples, int* _best_i,
+                         int n_samples, int* _best_i,
                          double* _best_t, double* _best_error,
                          double* _initial_error):
         """Find the best dimension and threshold that minimises the error."""
         if self.find_split_algorithm == _TREE_SPLIT_BEST:
-            self.find_best_split(X, y, sample_mask, n_node_samples,
-                                 n_total_samples, _best_i, _best_t,
+            self.find_best_split(X, y, n_samples, _best_i, _best_t,
                                  _best_error, _initial_error)
 
         elif self.find_split_algorithm == _TREE_SPLIT_RANDOM:
-            self.find_random_split(X, y, sample_mask, n_node_samples,
-                                   n_total_samples, _best_i, _best_t,
+            self.find_random_split(X, y, n_samples, _best_i, _best_t,
                                    _best_error, _initial_error)
 
     cdef void find_best_split(self, 
                               np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                               np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                              np.ndarray sample_mask, int n_node_samples,
-                              int n_total_samples, int* _best_i,
+                              int n_samples, int* _best_i,
                               double* _best_t, double* _best_error,
                               double* _initial_error):
         """Implementation of `find_split` that looks for the best threshold."""
@@ -585,7 +569,6 @@ cdef class Tree:
 
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
         cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
-        cdef BOOL_t* sample_mask_ptr = <BOOL_t*> sample_mask.data
 
         cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
         cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
@@ -599,7 +582,7 @@ cdef class Tree:
         cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
 
         # Compute the initial criterion value in the node
-        criterion.init(y_ptr, y_stride, sample_mask_ptr, n_node_samples, n_total_samples)
+        criterion.init(y_ptr, y_stride, n_samples)
         initial_error = criterion.eval()
 
         if initial_error == 0:  # break early if the node is pure
@@ -626,11 +609,17 @@ cdef class Tree:
             i = features[feature_idx]
 
             # Get i-th col of X and X_argsorted
+#            X_i_ptr = X_ptr + i * X_stride
+#            shape[0] = <np.npy_intp> n_samples
+#            X_i = np.PyArray_SimpleNewFromData(1, shape, np.NPY_FLOAT, X_i_ptr)
+#            X_argsorted_i = np.PyArray_ArgSort(X_i, 0, np.NPY_HEAPSORT)
+#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
+            
             X_i = X[:,i]
             X_i_ptr = <DTYPE_t*> X_i.data
-            X_argsorted_i = np.argsort(X_i).astype(np.int32)
+            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
             X_argsorted_i_ptr = <int*> X_argsorted_i.data
-
+            #print "argsorted ", i
 
             # Reset the criterion for this feature
             criterion.reset()
@@ -638,22 +627,18 @@ cdef class Tree:
             # Index of smallest sample in X_argsorted_i that is in the sample mask
             a = 0
 
-            while sample_mask_ptr[X_argsorted_i_ptr[a]] == 0:
-                a = a + 1
-
             # Consider splits between two consecutive samples
             while True:
                 # Find the following larger sample
-                b = _smallest_sample_larger_than(a, X_i_ptr, X_argsorted_i_ptr,
-                                                 sample_mask_ptr, n_total_samples)
+                b = _smallest_sample_larger_than(a, X_i_ptr, X_argsorted_i_ptr, n_samples)
                 if b == -1:
                     break
 
                 # Better split than the best so far?
-                n_left = criterion.update(a, b, y_ptr, y_stride, X_argsorted_i_ptr, sample_mask_ptr)
+                n_left = criterion.update(a, b, y_ptr, y_stride, X_argsorted_i_ptr)
 
                 # Only consider splits that respect min_leaf
-                if n_left < min_samples_leaf or (n_node_samples - n_left) < min_samples_leaf:
+                if n_left < min_samples_leaf or (n_samples - n_left) < min_samples_leaf:
                     a = b
                     continue
 
@@ -682,8 +667,7 @@ cdef class Tree:
     cdef void find_random_split(self, 
                                 np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                 np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                                np.ndarray sample_mask, int n_node_samples,
-                                int n_total_samples, int* _best_i,
+                                int n_samples, int* _best_i,
                                 double* _best_t, double* _best_error,
                                 double* _initial_error):
         """Implementation of `find_split` that looks for the best threshold
@@ -705,7 +689,6 @@ cdef class Tree:
 
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
         cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
-        cdef BOOL_t* sample_mask_ptr = <BOOL_t*> sample_mask.data
 
         cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
         cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
@@ -719,7 +702,7 @@ cdef class Tree:
         cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
 
         # Compute the initial criterion value in the node
-        criterion.init(y_ptr, y_stride, sample_mask_ptr, n_node_samples, n_total_samples)
+        criterion.init(y_ptr, y_stride, n_samples)
         initial_error = criterion.eval()
 
         if initial_error == 0:  # break early if the node is pure
@@ -756,13 +739,9 @@ cdef class Tree:
 
             # Find min and max
             a = 0
-            while sample_mask_ptr[X_argsorted_i_ptr[a]] == 0:
-                a = a + 1
             X_a = X_i_ptr[X_argsorted_i_ptr[a]]
 
-            b = n_total_samples - 1
-            while sample_mask_ptr[X_argsorted_i_ptr[b]] == 0:
-                b = b - 1
+            b = n_samples - 1
             X_b = X_i_ptr[X_argsorted_i_ptr[b]]
 
             if b <= a or X_a == X_b:
@@ -778,17 +757,16 @@ cdef class Tree:
             c = a + 1
 
             while True:
-                if sample_mask_ptr[X_argsorted_i_ptr[c]] != 0:
-                    if X_i[X_argsorted_i_ptr[c]] > (<DTYPE_t> t) or c == b:
-                        break
+                if X_i[X_argsorted_i_ptr[c]] > (<DTYPE_t> t) or c == b:
+                    break
 
                 c += 1
 
             # Better than the best so far?
-            n_left = criterion.update(0, c, y_ptr, y_stride, X_argsorted_i_ptr, sample_mask_ptr)
+            n_left = criterion.update(0, c, y_ptr, y_stride, X_argsorted_i_ptr)
             error = criterion.eval()
 
-            if n_left < min_samples_leaf or (n_node_samples - n_left) < min_samples_leaf:
+            if n_left < min_samples_leaf or (n_samples - n_left) < min_samples_leaf:
                 continue
 
             if error < best_error:
@@ -913,8 +891,7 @@ cdef class Tree:
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)."""
 
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t*
-                   sample_mask, int n_samples, int n_total_samples):
+    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples):
         """Initialise the criterion."""
         pass
 
@@ -923,7 +900,7 @@ cdef class Criterion:
         pass
 
     cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
-                    int* X_argsorted_i, BOOL_t* sample_mask):
+                    int* X_argsorted_i):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         pass
@@ -1033,8 +1010,7 @@ cdef class ClassificationCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t *sample_mask,
-                   int n_samples, int n_total_samples):
+    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples):
         """Initialise the criterion."""
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
@@ -1051,9 +1027,7 @@ cdef class ClassificationCriterion(Criterion):
             for c from 0 <= c < n_classes[k]:
                 label_count_init[k * label_count_stride + c] = 0
 
-        for j from 0 <= j < n_total_samples:
-            if sample_mask[j] == 0:
-                continue
+        for j from 0 <= j < n_samples:
 
             for k from 0 <= k < n_outputs:
                 c = <int>y[j * y_stride + k]
@@ -1084,7 +1058,7 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
     cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
-                    int* X_argsorted_i, BOOL_t* sample_mask):
+                    int* X_argsorted_i):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef int n_outputs = self.n_outputs
@@ -1099,9 +1073,6 @@ cdef class ClassificationCriterion(Criterion):
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
             s = X_argsorted_i[idx]
-
-            if sample_mask[s] == 0:
-                continue
 
             for k from 0 <= k < n_outputs:
                 c = <int>y[s * y_stride + k]
@@ -1350,8 +1321,7 @@ cdef class RegressionCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DTYPE_t* y, int y_stride, BOOL_t* sample_mask,
-                   int n_samples, int n_total_samples):
+    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
            sum in `self.mean_init` and `self.sq_sum_init`. """
@@ -1382,10 +1352,7 @@ cdef class RegressionCriterion(Criterion):
         cdef int j = 0
         cdef DTYPE_t y_jk = 0.0
 
-        for j from 0 <= j < n_total_samples:
-            if sample_mask[j] == 0:
-                continue
-
+        for j from 0 <= j < n_samples:
             for k from 0 <= k < n_outputs:
                 y_jk = y[j * y_stride + k]
                 sq_sum_init[k] += y_jk * y_jk
@@ -1428,8 +1395,7 @@ cdef class RegressionCriterion(Criterion):
             var_left[k] = 0.0
             var_right[k] = sq_sum_right[k] - n_samples * (mean_right[k] * mean_right[k])
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
-                    int* X_argsorted_i, BOOL_t* sample_mask):
+    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride, int* X_argsorted_i ):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef double* mean_left = self.mean_left
@@ -1450,9 +1416,6 @@ cdef class RegressionCriterion(Criterion):
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
             j = X_argsorted_i[idx]
-
-            if sample_mask[j] == 0:
-                continue
 
             for k from 0 <= k < n_outputs:
                 y_idx = y[j * y_stride + k]
@@ -1530,8 +1493,7 @@ cdef inline np.ndarray doublep_to_ndarray(double* data, int size):
 cdef inline int _smallest_sample_larger_than(int sample_idx,
                                              DTYPE_t* X_i,
                                              int* X_argsorted_i,
-                                             BOOL_t* sample_mask,
-                                             int n_total_samples):
+                                             int n_samples):
     """Find the largest next sample.
 
     Find the index in the `X_i` array for sample who's feature
@@ -1552,11 +1514,8 @@ cdef inline int _smallest_sample_larger_than(int sample_idx,
     if sample_idx > -1:
         threshold = X_i[X_argsorted_i[sample_idx]]
 
-    for idx from sample_idx < idx < n_total_samples:
+    for idx from sample_idx < idx < n_samples:
         j = X_argsorted_i[idx]
-
-        if sample_mask[j] == 0:
-            continue
 
         if X_i[j] > threshold + 1.e-7:
             return idx
