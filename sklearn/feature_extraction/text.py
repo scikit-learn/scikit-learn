@@ -263,7 +263,9 @@ class CountVectorizer(BaseEstimator):
         return ngrams
 
     def _char_nospace_ngrams(self, text_document):
-        """Tokenize text_document into a sequence of character n-grams
+        """Whitespace sensitive char-n-gram tokenization.
+
+        Tokenize text_document into a sequence of character n-grams
         excluding any whitespace (operating only inside word boundaries)"""
         # normalize white spaces
         text_document = self._white_spaces.sub(u" ", text_document)
