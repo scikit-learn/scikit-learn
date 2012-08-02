@@ -272,6 +272,7 @@ class CountVectorizer(BaseEstimator):
 
         ngrams = []
         for w in text_document.split():
+            w = ' {} '.format(w)
             w_len = len(w)
             for n in xrange(self.min_n, self.max_n + 1):
                 offset = 0
