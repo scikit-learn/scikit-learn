@@ -116,8 +116,10 @@ class CountVectorizer(BaseEstimator):
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer: string, {'word', 'char'} or callable
+    analyzer: string, {'word', 'char', 'char_nospace'} or callable
         Whether the feature should be made of word or character n-grams.
+        Option 'char_nspace' creates character n-grams only from text inside
+        word boundaries.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -260,6 +262,25 @@ class CountVectorizer(BaseEstimator):
                 ngrams.append(text_document[i: i + n])
         return ngrams
 
+    def _char_nospace_ngrams(self, text_document):
+        """Tokenize text_document into a sequence of character n-grams
+        excluding any whitespace (operating only inside word boundaries)"""
+        # normalize white spaces
+        text_document = self._white_spaces.sub(u" ", text_document)
+
+        ngrams = []
+        for w in text_document.split():
+            w_len = len(w)
+            for n in xrange(self.min_n, self.max_n + 1):
+                offset = 0
+                ngrams.append(w[offset:offset + n])
+                while offset + n < w_len:
+                    offset += 1
+                    ngrams.append(w[offset:offset + n])
+                if offset == 0:   # count a short word (w_len < n) only once
+                    break
+        return ngrams
+
     def build_preprocessor(self):
         """Return a function to preprocess the text before tokenization"""
         if self.preprocessor is not None:
@@ -310,6 +331,10 @@ class CountVectorizer(BaseEstimator):
 
         if self.analyzer == 'char':
             return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
+
+        elif self.analyzer == 'char_nospace':
+            return lambda doc: self._char_nospace_ngrams(
+                preprocess(self.decode(doc)))
 
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
