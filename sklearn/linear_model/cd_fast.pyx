@@ -182,11 +182,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             if fabs(w[ii]) > w_max:
                 w_max = fabs(w[ii])
 
-        if calc_dual_gap and \
-            (w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1):
+        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
+
+            if not calc_dual_gap:
+                break
 
             XtA = np.dot(X.T, R) - l2_reg * w
             if positive:
