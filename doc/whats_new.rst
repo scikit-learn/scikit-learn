@@ -45,6 +45,9 @@ Changelog
      useful when the number of clusters is not small compared to the
      number of samples.
 
+   - Add MultiTaskLasso and MultiTaskElasticNet for joint feature selection,
+     by `Alexandre Gramfort`_.
+
 API changes summary
 -------------------
 
