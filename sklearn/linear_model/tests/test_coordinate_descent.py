@@ -13,9 +13,10 @@ from nose import SkipTest
 from nose.tools import assert_true
 
 from sklearn.utils.testing import assert_greater
+from sklearn.datasets.samples_generator import make_regression
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV
+    LassoCV, ElasticNet, ElasticNetCV, enet_cd
 from sklearn.linear_model import LassoLarsCV
 
 
@@ -267,6 +268,28 @@ def test_enet_positive_constraint():
     enet = ElasticNet(alpha=0.1, max_iter=1000, precompute=True, positive=True)
     enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
+
+
+def test_enet_cd():
+    X, y = make_regression(n_samples=40, n_features=20, n_informative=5,
+                    random_state=0)
+    n_samples, n_features = X.shape
+    max_iter=100
+    rho = 0.80
+    alpha = 10
+    tol=1e-6
+    l1_reg = alpha * rho * n_samples
+    l2_reg = alpha * (1.0 - rho) * n_samples
+    X = np.asfortranarray(X)
+    w = np.zeros(n_features)
+
+    clf = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
+                     max_iter=max_iter, tol=tol, precompute=False)
+    clf.fit(X, y, coef_init=w.copy())
+    coef, gap, tol = enet_cd(w, l1_reg, l2_reg, X, y, max_iter=max_iter, tol=tol)
+
+    assert_almost_equal(coef, clf.coef_, 6)
+
 
 if __name__ == '__main__':
     import nose
