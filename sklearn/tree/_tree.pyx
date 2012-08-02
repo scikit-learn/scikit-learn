@@ -567,15 +567,19 @@ cdef class Tree:
         cdef double t, initial_error, error
         cdef double best_error = INFINITY, best_t = INFINITY
 
-        cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
+        cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] X_copy = X[:,0].copy() 
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] n_samples_arange = np.arange(n_samples, dtype=np.int32)
+        cdef DTYPE_t* X_copy_ptr
+
+        cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data     
         cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
 
         cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
         cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
         
         cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] X_i = None
-        cdef DTYPE_t* X_i_ptr = NULL
-        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] X_argsorted_i = None
+        cdef DTYPE_t* X_i_ptr = NULL      
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] X_argsorted_i = np.zeros((n_samples,), dtype=np.int32)
         cdef int* X_argsorted_i_ptr = NULL
         cdef DTYPE_t X_a, X_b
 
@@ -609,16 +613,18 @@ cdef class Tree:
             i = features[feature_idx]
 
             # Get i-th col of X and X_argsorted
-#            X_i_ptr = X_ptr + i * X_stride
-#            shape[0] = <np.npy_intp> n_samples
-#            X_i = np.PyArray_SimpleNewFromData(1, shape, np.NPY_FLOAT, X_i_ptr)
-#            X_argsorted_i = np.PyArray_ArgSort(X_i, 0, np.NPY_HEAPSORT)
-#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
-            
-            X_i = X[:,i]
-            X_i_ptr = <DTYPE_t*> X_i.data
-            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+            X_i_ptr = X_ptr + i * X_stride
+            X_copy_ptr = <DTYPE_t*> X_copy.data
+            memcpy(X_copy_ptr, X_i_ptr, n_samples * sizeof(DTYPE_t))
             X_argsorted_i_ptr = <int*> X_argsorted_i.data
+            memcpy(X_argsorted_i_ptr, <int*> n_samples_arange.data, n_samples * sizeof(int))
+            _argqsort(X_copy_ptr, X_argsorted_i_ptr, 0, n_samples-1)
+#            
+            
+#            X_i = X[:,i]
+#            X_i_ptr = <DTYPE_t*> X_i.data
+#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
             #print "argsorted ", i
 
             # Reset the criterion for this feature
@@ -1556,3 +1562,41 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
             n_bagged += 1
 
     return sample_mask.astype(np.bool)
+
+# Sedgewick's version of Lomuto, with sentinel 
+cdef void _argqsort(DTYPE_t* primary, int* secondary, int l, int u):
+
+    cdef int i = u+1
+    cdef int m = u+1
+    cdef BOOL_t inner
+    cdef BOOL_t outer
+    cdef DTYPE_t temp_dtype
+    cdef int temp_int
+    
+    if (l >= u):
+        return
+    
+    outer = True
+    while outer:
+        
+        inner = True
+        while inner:
+            i -= 1
+            inner = (primary[i] < primary[l])
+        
+        m -= 1
+        # swap primary[m] and primary[i]
+        temp_dtype = primary[m]
+        primary[m] = primary[i]
+        primary[i] = temp_dtype
+        
+        # swap secondary[m] and secondary[i]
+        temp_int = secondary[m]
+        secondary[m] = secondary[i]
+        secondary[i] = temp_int
+    
+        outer = (i > l)
+    
+    _argqsort(primary, secondary, l, m-1);
+    _argqsort(primary, secondary, m+1, u);
+
