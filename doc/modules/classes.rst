@@ -535,6 +535,7 @@ For dense data
    linear_model.ARDRegression
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
+   linear_model.GroupLasso
 
 .. autosummary::
    :toctree: generated/
@@ -545,6 +546,7 @@ For dense data
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.lasso_stability_path
+   linear_model.group_lasso
 
 For sparse data
 ---------------

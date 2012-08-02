@@ -33,6 +33,7 @@ cdef extern from "cblas.h":
     void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
                              double *Y, int incY)
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
+    double dnrm2 "cblas_dnrm2"(int N, double *X, int incX)
 
 
 ctypedef np.float64_t DOUBLE
@@ -473,3 +474,119 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 break
 
     return w, gap, tol
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def group_lasso_inner_loop(
+    np.ndarray[DOUBLE, ndim=1] w,
+    np.ndarray[DOUBLE, ndim=1] w_old,
+    np.ndarray[DOUBLE, ndim=2] X,
+    double alpha,
+    np.ndarray[DOUBLE, ndim=1] Xy,
+    np.ndarray[DOUBLE, ndim=2] Q,
+    np.ndarray[DOUBLE, ndim=1] h,
+    eig,
+    np.ndarray[np.int32_t, ndim=1] inverse_idx,
+    np.ndarray[np.int32_t, ndim=1] group_start,
+    np.ndarray[DOUBLE, ndim=1] newton_solution):
+    """
+    Parameters
+    ----------
+    Q : dot(X.T, X)
+    h : dot(Q, w)
+    Xy : dot(X, y)
+
+    Returns
+    -------
+    max_inc
+    amax_w
+    """
+    # Author: Fabian Pedregosa <fabian@fseoane.net>
+
+    cdef int i, j, k, newton_iter, group_size, g_min, g_max, idx
+    cdef int n_samples = X.shape[0], n_features = X.shape[1]
+    cdef double tmp, p, newton_tol = 1e-3
+    cdef np.ndarray[DOUBLE, ndim=1] X_residual
+    cdef double max_inc = 0., delta_w, amax_w = 0.
+    cdef int NEWTON_MAXITER = 100
+
+    max_group_size = int(np.max(group_start))
+    X_residual = np.zeros((max_group_size,), dtype=np.float)
+    for i in range(group_start.size - 1):
+        # .. shrinkage operator ..
+
+        g_min = group_start[i]
+        g_max = group_start[i+1]
+        cur_group_size = g_max - g_min
+        delta_w = w[i]
+
+        if Q.shape[0]:
+            # .. don't try things like ..
+            # .. for idx in inverse_idx[g_min:g_max] ..
+            # .. cython is not smart enough ..
+
+            # h -= w_ii * Q[cur_group]
+            for j in range(g_min, g_max):
+                idx = inverse_idx[j]
+                daxpy(n_features, - w[idx], (<DOUBLE *> Q.data) + idx*n_features,
+                    1, <DOUBLE *> h.data, 1)
+        else:
+            for j in range(g_min, g_max):
+                idx = inverse_idx[j]
+                raise NotImplementedError
+
+
+        if cur_group_size < 2:
+            # for single groups we know a closed form solution
+            tmp = Xy[idx] - h[idx]
+            w[j] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) / Q[i, i]
+        else:
+            eigen_values, eigvects = eig[i]
+            for j in range(g_min, g_max):
+                idx = inverse_idx[j]
+                X_residual[j - g_min] = h[idx] - Xy[idx]
+            if alpha < dnrm2(cur_group_size, <DOUBLE *> X_residual.data, 1):
+                qp = np.dot(eigvects.T, X_residual[:cur_group_size])
+                qp2 = qp ** 2
+                newton_approx = newton_solution[i]
+                for _ in range(NEWTON_MAXITER):
+                    old_newton_approx = newton_approx
+                    # inline newton method for solving a non-linear equation
+                    # TODO: BLASify
+                    f = 1 - np.sum(qp2 /
+                           ((alpha + newton_approx * eigen_values) ** 2))
+                    fder = np.sum((2 * qp2 * eigen_values) /
+                           ((alpha + newton_approx * eigen_values) ** 3))
+                    if fabs(fder) != 0:
+                        newton_approx = newton_approx - f / fder
+                    if fabs(newton_approx - old_newton_approx) < newton_tol:
+                        break
+
+                newton_solution[i] = newton_approx
+                sol = - newton_solution[i] * np.dot(eigvects /
+                      (eigen_values * newton_solution[i] + alpha), qp)
+                for j in range(g_min, g_max):
+                    idx = inverse_idx[j]
+                    w[idx] = sol[j - g_min] / Q[idx, idx]
+            else:
+                for j in range(g_min, g_max):
+                    idx = inverse_idx[j]
+                    w[idx] = 0.
+
+        if Q.shape[0]:
+            for j in range(g_min, g_max):
+                idx = inverse_idx[j]
+                # R -=  w[ii] * X[:, ii] # Update residual
+                daxpy(n_features, w[idx],
+                    (<DOUBLE *> Q.data) + idx * n_features, 1,
+                    <DOUBLE*> h.data, 1)
+        for j in range(g_min, g_max):
+            idx = inverse_idx[j]
+            delta_w = fabs(w[idx] - w_old[idx])
+            if delta_w > max_inc:
+                max_inc = delta_w
+            if amax_w < fabs(w[idx]):
+                amax_w = fabs(w[idx])
+    return max_inc, amax_w

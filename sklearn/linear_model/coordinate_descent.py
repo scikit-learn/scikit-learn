@@ -13,6 +13,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import linalg
 
 from .base import LinearModel
 from ..base import RegressorMixin
@@ -392,6 +393,97 @@ class Lasso(ElasticNet):
                             max_iter=max_iter, tol=tol, warm_start=warm_start,
                             positive=positive)
 
+class GroupLasso(LinearModel, RegressorMixin):
+    """Linear least-squares with l2/l1 regularization solver.
+
+    Solves problem of the form:
+
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * Sum(||w_j||_2)
+
+    where bwj is the coefficients of w in the j-th group. This model is sometimes
+    known as the `group lasso`.
+
+    Parameters
+    ---------
+    alpha : float or array
+        Amount of penalization to use.
+
+    groups : array of shape (n_features,)
+        Group label. For each column, it indicates
+        its group appartenance.
+
+    fit_intercept : boolean, optional
+        True if intercept should be computed.
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    tol : float
+        Relative tolerance. ensures ||M(x) - M(x_)|| < tol,
+        where x_ is the approximate solution, x is the
+        true solution and M is the objective function.
+
+    max_iter : int, optional
+        The maximum number of iterations in the coordinate
+        descent algorithm.
+
+    verbose: boolean, optional
+       If True, additional information about convergence will
+       be printed to stdout.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        parameter vector (w in the cost function formula)
+
+    `intercept_` : float
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.GroupLasso(alpha=0.5, groups=[1, 1, 2])
+    >>> clf.fit([[0,0,0], [1,1,1], [2,2,1]], [0, 1, 2])
+    GroupLasso(alpha=0.5, fit_intercept=True, groups=[1, 1, 2], max_iter=100,
+          normalize=False, tol=0.0001, verbose=False)
+    >>> print(clf.coef_) # doctest: +ELLIPSIS
+    [ 0.117...  0.117...  0.        ]
+    >>> print(clf.intercept_) # doctest: +ELLIPSIS
+    0.765...
+
+    See also
+    --------
+    group_lasso
+    Lasso
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+    """
+
+    def __init__(self, groups=None, alpha=1.0, fit_intercept=True,
+                 normalize=False, max_iter=100, tol=1e-4, verbose=False):
+        self.alpha = alpha
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.max_iter = max_iter
+        self.tol = tol
+        self.verbose = False
+        self.groups = groups
+        self.verbose = verbose
+
+    def fit(self, X, y):
+        # .. X and y must be of type float64 ..
+        X = np.asanyarray(X, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
+
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+            self.fit_intercept, self.normalize)
+        self.coef_ = group_lasso(X, y, self.alpha, self.groups, self.max_iter,
+            tol=self.tol, verbose=self.verbose)
+        self._set_intercept(X_mean, y_mean, X_std)
+        return self
+
 
 ###############################################################################
 # Classes to store linear models along a regularization path
@@ -612,6 +704,141 @@ def _path_residuals(X, y, train, test, path, path_params, rho=1):
         y_ = model.predict(X[test])
         this_mses[i_model] = ((y_ - y[test]) ** 2).mean()
     return this_mses, rho
+
+
+def group_lasso(X, y, alpha, groups, max_iter=100, tol=1e-3, verbose=False):
+    """
+    Linear least-squares with l2/l1 regularization solver.
+
+    Solves problem of the form:
+
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * Sum(||w_j||_2)
+
+    where w_j is the coefficients of w in the j-th group. This model is
+    also known as the `group lasso`.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        Design Matrix.
+
+    y : array of shape (n_samples,)
+
+    alpha : float or array
+        Amount of penalization to use.
+
+    groups : array of shape (n_features,)
+        Group label. For each column, it indicates
+        its group appartenance.
+
+    tol : float
+        Relative tolerance. ensures ||M(x) - M(x_)|| < tol,
+        where x_ is the approximate solution, x is the
+        true solution and M is the objective function.
+
+    Returns
+    -------
+    x : array
+        vector of coefficients of the linear model.
+
+    References
+    ----------
+    "Efficient Block-coordinate Descent Algorithms for the Group Lasso",
+    Qin, Scheninberg, Goldfarb
+
+    Notes
+    -----
+    For large groups, this might be quite inefficient. Interested
+    readers could consider implementing [1], which could be
+    implemented by only changing the innermost loop.
+
+    [1] http://www-stat.stanford.edu/~nsimon/SGLpaper.pdf
+    """
+    # .. Author: Fabian Pedregosa <fabian@fseoane.net> ..
+
+    # .. local variables ..
+    X, y, groups, alpha = map(np.asanyarray, (X, y, groups, alpha))
+    if len(groups) != X.shape[1]:
+        raise ValueError("Incorrect shape for groups")
+    w_new = np.zeros(X.shape[1], dtype=X.dtype)
+    alpha = alpha * X.shape[0]
+    converged = False
+    # .. use integer indices for groups ..
+    unique_groups = np.unique(groups)
+    # .. inverse_idx[group_start[i]:group_start[i+1]] ..
+    # .. contains all indices for group i ..
+    group_start = np.zeros(unique_groups.size + 1, dtype=np.int32)
+    eig = []
+    inverse_idx = np.empty(X.shape[1], dtype=np.int32)
+
+    for i, current_group in enumerate(unique_groups):
+        # .. get position of each group ..
+        idx = np.where(groups == current_group)[0]
+        group_start[i + 1] = group_start[i] + idx.size
+        inverse_idx[group_start[i]:group_start[i + 1]] = idx
+
+        # .. eigenvalues of each group ..
+        if True:  # idx.size > 1:
+            # in the case of precomputed gram, we already have H_i
+            X_i = X[:, idx]
+            H_i = np.dot(X_i.T, X_i)
+            a, b = linalg.eig(H_i)
+            eig.append((a.real, b.real))  # or an SVD on X_i
+        else:
+            eig.append(0)
+
+    Xy = np.dot(X.T, y)
+    initial_guess = np.zeros(len(group_start), dtype=np.float)
+
+    norm = linalg.fblas.dnrm2
+
+    # .. TODO: implement without precomputed Gram ..
+    if True:  # X.shape[0] > X.shape[1]:
+        Q = np.dot(X.T, X)
+        # initial value "Q w"
+        h = np.zeros(Q.shape[0])
+    else:
+        Q = np.empty((0, 0))
+        h = np.empty(0)
+
+    for n_iter in range(max_iter):
+        w_old = w_new.copy()
+
+        max_inc, amax_w = cd_fast.group_lasso_inner_loop(
+            w_new, w_old, X, alpha, Xy, Q, h, eig, inverse_idx,
+            group_start, initial_guess)
+
+        # .. dual gap ..
+        if (not (n_iter % 10)) and (max_inc < tol * amax_w):
+            residual = y - np.dot(X, w_new)
+            b = []
+            for i in range(len(group_start) - 1):
+                g = inverse_idx[group_start[i]:group_start[i + 1]]
+                b.append(norm(w_new[g]))
+            w_norm = alpha * np.sum(b)
+
+            A = np.dot(X.T, residual)
+
+            A_norm = []
+            for i in range(len(group_start) - 1):
+                g = inverse_idx[group_start[i]:group_start[i + 1]]
+                A_norm.append(norm(A[g]) / alpha)
+            A_norm.append(1)
+
+            r_scaled = residual / np.max(A_norm)
+            primal_obj = .5 * np.dot(residual, residual) + w_norm
+            dual_obj = -.5 * np.dot(r_scaled, r_scaled) + np.dot(r_scaled, y)
+            dual_gap = primal_obj - dual_obj
+            if verbose:
+                print 'Relative error: %s' % (dual_gap / dual_obj)
+            if np.abs(dual_gap / dual_obj) < tol:
+                converged = True
+                break
+    if not converged:
+        warnings.warn(
+            "group_lasso did not converge after %s iterations\n" % n_iter)
+
+    return w_new
 
 
 class LinearModelCV(LinearModel):
