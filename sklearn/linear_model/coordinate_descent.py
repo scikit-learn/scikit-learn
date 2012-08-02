@@ -765,7 +765,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         The amount of penalization choosen by cross validation
 
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the cost function formula)
 
     `intercept_` : float
         independent term in decision function.
@@ -868,7 +868,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         cross validation
 
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the cost function formula)
 
     `intercept_` : float
         independent term in decision function.
@@ -929,22 +929,31 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 ###############################################################################
-# Multi Task Lasso model (Lasso with joint feature selection)
+# Multi Task ElasticNet and Lasso models (with joint feature selection)
 
-class MultiTaskLasso(Lasso):
-    """Linear Model trained with L1/L2 mixed-norm as regularizer
+class MultiTaskElasticNet(Lasso):
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for Lasso is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||^2_2 + alpha * ||W||_21
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * rho * ||W||_21 + 0.5 * alpha * (1 - rho) * ||W||_Fro^2
 
-    Where ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
     i.e. the sum of norm of earch row.
 
     Parameters
     ----------
     alpha : float, optional
-        Constant that multiplies the L1 term. Defaults to 1.0
+        Constant that multiplies the L1/L2 term. Defaults to 1.0
+
+    rho : float
+        The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
+        the penalty is an L1/L2 penalty. For rho = 1 it is an L2 penalty.
+        For 0 < rho < 1, the penalty is a combination of L1/L2 and L2
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -956,11 +965,6 @@ class MultiTaskLasso(Lasso):
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
-
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
-        matrix can also be passed as argument.
 
     max_iter: int, optional
         The maximum number of iterations
@@ -977,28 +981,28 @@ class MultiTaskLasso(Lasso):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+    `coef_` : array, shape = [n_tasks, n_features]
+        parameter vector (W in the cost function formula)
 
-    `intercept_` : float
+    `intercept_` : array, shape = [n_tasks]
         independent term in decision function.
 
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
+    >>> clf = linear_model.MultiTaskElasticNet(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
-    MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-            normalize=False, tol=0.0001, warm_start=False)
+    MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+              normalize=False, rho=0.5, tol=0.0001, warm_start=False)
     >>> print clf.coef_
-    [[ 0.89393398  0.        ]
-     [ 0.89393398  0.        ]]
+    [[ 0.45663524  0.45612256]
+     [ 0.45663524  0.45612256]]
     >>> print clf.intercept_
-    [ 0.10606602  0.10606602]
+    [ 0.0872422  0.0872422]
 
     See also
     --------
-    Lasso
+    ElasticNet, MultiTaskLasso
 
     Notes
     -----
@@ -1007,19 +1011,17 @@ class MultiTaskLasso(Lasso):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=1000,
-                 tol=1e-4, warm_start=False):
-         self.alpha = alpha
-         self.coef_ = None
-         self.fit_intercept = fit_intercept
-         self.normalize = normalize
-         self.max_iter = max_iter
-         self.copy_X = copy_X
-         self.tol = tol
-         self.warm_start = warm_start
-         self.rho = 1.0
+    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True, normalize=False,
+                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
+        self.alpha = alpha
+        self.coef_ = None
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.max_iter = max_iter
+        self.copy_X = copy_X
+        self.tol = tol
+        self.warm_start = warm_start
+        self.rho = rho
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit MultiTaskLasso model with coordinate descent
@@ -1028,11 +1030,8 @@ class MultiTaskLasso(Lasso):
         -----------
         X: ndarray, (n_samples, n_features)
             Data
-        y: ndarray, (n_samples)
+        y: ndarray, (n_samples, n_tasks)
             Target
-        Xy : array-like, optional
-            Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
 
@@ -1058,19 +1057,20 @@ class MultiTaskLasso(Lasso):
 
         if coef_init is None:
             if not self.warm_start or self.coef_ is None:
-                self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64, order='F')
+                self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
+                                       order='F')
         else:
             self.coef_ = coef_init
 
-        alpha = self.alpha * self.rho * n_samples
-        beta = self.alpha * (1.0 - self.rho) * n_samples
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
         X = np.asfortranarray(X)  # make data contiguous in memory
-        self.coef_ = np.asfortranarray(self.coef_)  # make coef contiguous in memory
+        self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.enet_coordinate_descent_multi_task(self.coef_, alpha, beta,
-                        X, y, self.max_iter, self.tol)
+                cd_fast.enet_coordinate_descent_multi_task(self.coef_, l1_reg,
+                        l2_reg, X, y, self.max_iter, self.tol)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -1080,3 +1080,90 @@ class MultiTaskLasso(Lasso):
 
         # return self for chaining fit and predict calls
         return self
+
+
+class MultiTaskLasso(MultiTaskElasticNet):
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+
+    The optimization objective for Lasso is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^2_Fro + alpha * ||W||_21
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of earch row.
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Constant that multiplies the L1/L2 term. Defaults to 1.0
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    max_iter: int, optional
+        The maximum number of iterations
+
+    tol: float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than 'tol', the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than tol.
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_tasks, n_features]
+        parameter vector (W in the cost function formula)
+
+    `intercept_` : array, shape = [n_tasks]
+        independent term in decision function.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+            normalize=False, tol=0.0001, warm_start=False)
+    >>> print clf.coef_
+    [[ 0.89393398  0.        ]
+     [ 0.89393398  0.        ]]
+    >>> print clf.intercept_
+    [ 0.10606602  0.10606602]
+
+    See also
+    --------
+    Lasso, MultiTaskElasticNet
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a fortran contiguous numpy array.
+    """
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
+        self.alpha = alpha
+        self.coef_ = None
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.max_iter = max_iter
+        self.copy_X = copy_X
+        self.tol = tol
+        self.warm_start = warm_start
+        self.rho = 1.0

@@ -526,7 +526,7 @@ cdef double diff_abs_max(int n, double* a, double* b):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'] W,
-                                       double alpha, double beta,
+                                       double l1_reg, double l2_reg,
                                        np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
                                        np.ndarray[DOUBLE, ndim=2] Y,
                                        int max_iter, double tol):
@@ -535,7 +535,7 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
 
         We minimize
 
-        1 norm(y - X w, 2)^2 + alpha ||w||_21 + beta norm(w, 2)^2
+        1 norm(y - X w, 2)^2 + l1_reg ||w||_21 + l2_reg norm(w, 2)^2
         -                                       ----
         2                                        2
 
@@ -563,8 +563,8 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
     cdef unsigned int ii
     cdef unsigned int n_iter
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if l1_reg == 0:
+        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
     R = Y - np.dot(X, W.T)
@@ -601,10 +601,10 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
             # nn = sqrt(np.sum(tmp ** 2))
             nn = dnrm2(n_tasks, <DOUBLE*>tmp.data, 1)
 
-            # W[:, ii] = tmp * fmax(1. - alpha / nn, 0) / (norm_cols_X[ii] + beta)
+            # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
             dcopy(n_tasks, <DOUBLE*>tmp.data,
                   1, <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)), 1)
-            dscal(n_tasks, fmax(1. - alpha / nn, 0) / (norm_cols_X[ii] + beta),
+            dscal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
                   <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)), 1)
 
             # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
@@ -632,7 +632,7 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
 
-            XtA = np.dot(X.T, R) - beta * W.T
+            XtA = np.dot(X.T, R) - l2_reg * W.T
             dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
 
             # TODO: use squared L2 norm directly
@@ -640,16 +640,16 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
             # w_norm = linalg.norm(W, ord='fro')
             R_norm = dnrm2(n_samples * n_tasks, <DOUBLE*>R.data, 1)
             w_norm = dnrm2(n_features * n_tasks, <DOUBLE*>W.data, 1)
-            if (dual_norm_XtA > alpha):
-                const =  alpha / dual_norm_XtA
+            if (dual_norm_XtA > l1_reg):
+                const =  l1_reg / dual_norm_XtA
                 A_norm = R_norm * const
                 gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
             else:
                 const = 1.0
-                gap = R_norm**2
+                gap = R_norm ** 2
 
-            gap += alpha * np.sqrt(np.sum(W ** 2, axis=0)).sum() - const * np.sum(R * Y) + \
-                  0.5 * beta * (1 + const**2) * (w_norm**2)
+            gap += l1_reg * np.sqrt(np.sum(W ** 2, axis=0)).sum() - const * np.sum(R * Y) + \
+                  0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
 
             if gap < tol:
                 # return if we reached desired tolerance

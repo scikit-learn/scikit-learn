@@ -44,10 +44,12 @@ pl.subplot(1, 2, 1)
 pl.spy(coef_lasso_)
 pl.xlabel('Feature')
 pl.ylabel('Task')
+pl.text(10, 5, 'Lasso')
 pl.subplot(1, 2, 2)
 pl.spy(coef_multi_task_lasso_)
 pl.xlabel('Feature')
 pl.ylabel('Task')
+pl.text(10, 5, 'MultiTaskLasso')
 fig.suptitle('Coefficient non-zero location')
 
 feature_to_plot = 0
