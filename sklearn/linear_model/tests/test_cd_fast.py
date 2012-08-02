@@ -27,7 +27,7 @@ def test_iteration_set():
     X = np.asfortranarray(X)
     w = np.zeros(n_features)
 
-    iter_set = np.arange(n_features / 2, (n_features / 2) + 5)
+    iter_set = np.arange(n_features / 2, (n_features / 2) + 5, dtype=np.int32)
     X_red = X[:, iter_set]
     X_red = np.asfortranarray(X_red)
     w_red = w[iter_set]
