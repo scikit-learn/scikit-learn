@@ -203,6 +203,44 @@ computes the coefficients along the full path of possible values.
       :ref:`l1_feature_selection`.
 
 
+.. _multi_task_lasso:
+
+Multi-task Lasso
+================
+
+The :class:`MultiTaskLasso` is a linear model that estimates sparse coefficients
+for multiple regression problems jointly. The constraint is that the selected
+features are the same for all the regression problems, also called tasks.
+
+Mathematically, it consists of a linear model trained with a mixed
+:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+The objective function to minimize is:
+
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+
+where;
+
+.. math:: ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+
+The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
+the algorithm to fit the coefficients.
+
+The following figure compares the location of the non-zeros in W obtained with
+a simple Lasso or a MultiTaskLasso. The Lasso estimates yields scattered non-zeros
+while the non-zeros of the MultiTaskLasso are full columns.
+
+.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_1.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 50%
+
+|multi_task_lasso_1|
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
+
+
 Setting regularization parameter
 --------------------------------
 
