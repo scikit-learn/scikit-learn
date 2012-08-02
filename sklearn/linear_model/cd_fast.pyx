@@ -84,6 +84,90 @@ def sparse_std(unsigned int n_samples,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+def enet_cd_inner_loop(np.ndarray[DOUBLE, ndim=1] w,
+                            double l1_reg, double l2_reg,
+                            np.ndarray[DOUBLE, ndim=2] X,
+                            np.ndarray[DOUBLE, ndim=1] y,
+                            np.ndarray[DOUBLE, ndim=1] norm_cols_X,
+                            np.ndarray[DOUBLE, ndim=1] R,
+                            bint positive=False,
+                            np.ndarray[INTEGER, ndim=1] iter_set=None):
+    """Cython version of the coordinate descent algorithm
+        for Elastic-Net regression
+
+        We minimize
+
+        1 norm(y - X w, 2)^2 + l1_reg norm(w, 1) + l2_reg norm(w, 2)^2
+        -                                         ----
+        2                                           2
+
+    """
+    # get the data information into easy vars
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef double tmp
+    cdef double w_ii
+    cdef double d_w_max
+    cdef double w_max
+    cdef double d_w_ii
+    cdef unsigned int ii
+
+
+    cdef bint iter_full_set
+    if iter_set is None:
+        n_features_iter = n_features
+        iter_full_set = True
+    else:
+        n_features_iter = iter_set.shape[0]
+        iter_full_set = False
+
+    for ii in xrange(n_features_iter):  # Loop over coordinates
+
+        if not iter_full_set:
+            ii = iter_set[ii]
+
+        if norm_cols_X[ii] == 0.0:
+            continue
+
+        w_ii = w[ii]  # Store previous value
+
+        if w_ii != 0.0:
+            # R += w_ii * X[:,ii]
+            daxpy(n_samples, w_ii,
+                  <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                  <DOUBLE*>R.data, 1)
+
+        # tmp = (X[:,ii]*R).sum()
+        tmp = ddot(n_samples,
+                   <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                   <DOUBLE*>R.data, 1)
+
+        if positive and tmp < 0:
+            w[ii] = 0.0
+        else:
+            w[ii] = fsign(tmp) * fmax(fabs(tmp) - l1_reg, 0) \
+                / (norm_cols_X[ii] + l2_reg)
+
+        if w[ii] != 0.0:
+            # R -=  w[ii] * X[:,ii] # Update residual
+            daxpy(n_samples, -w[ii],
+                  <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
+                  <DOUBLE*>R.data, 1)
+
+        # update the maximum absolute coefficient update
+        d_w_ii = fabs(w[ii] - w_ii)
+        if d_w_ii > d_w_max:
+            d_w_max = d_w_ii
+
+        if fabs(w[ii]) > w_max:
+            w_max = fabs(w[ii])
+    return w_max, d_w_max
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double l1_reg, double l2_reg,
                             np.ndarray[DOUBLE, ndim=2] X,
