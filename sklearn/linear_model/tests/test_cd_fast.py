@@ -37,11 +37,8 @@ def test_iteration_set():
 
     result_iter_set, _, _ = cd_fast.enet_coordinate_descent(w, l1_reg, l2_reg,
                         X, y, max_iter=1000, tol=1e-9, positive=False, iter_set=iter_set)
-    result, _, _ = cd_fast.enet_coordinate_descent(w, l1_reg, l2_reg,
-                        X, y, max_iter=1000, tol=1e-9, positive=False)
 
     assert_array_almost_equal(result_red, result_iter_set[iter_set], 7)
-    assert_array_almost_equal(result, result_iter_set, 7)
     assert_array_almost_equal(w[~iter_set], result_iter_set[~iter_set], 7)
 
 
