@@ -118,7 +118,7 @@ class CountVectorizer(BaseEstimator):
 
     analyzer: string, {'word', 'char', 'char_nospace'} or callable
         Whether the feature should be made of word or character n-grams.
-        Option 'char_nspace' creates character n-grams only from text inside
+        Option 'char_nospace' creates character n-grams only from text inside
         word boundaries.
 
         If a callable is passed it is used to extract the sequence of features
