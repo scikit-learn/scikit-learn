@@ -13,7 +13,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
-import numpy.linalg as linalg
+import scipy.linalg as linalg
 
 from .base import LinearModel
 from ..base import RegressorMixin
