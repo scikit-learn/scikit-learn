@@ -1048,6 +1048,8 @@ class MultiTaskElasticNet(Lasso):
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
 
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
