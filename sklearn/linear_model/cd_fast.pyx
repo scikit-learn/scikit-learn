@@ -44,10 +44,6 @@ cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
                 double *X, int incX, double *Y, int incY, double *A, int lda)
-    void dgemm "cblas_dgemm"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                     CBLAS_TRANSPOSE TransB, int M, int N, int K,
-                     double alpha, double *A, int lda, double *B,
-                     int ldb, double beta, double *C, int ldc)
     void dgemv "cblas_dgemv"(CBLAS_ORDER Order,
                       CBLAS_TRANSPOSE TransA, int M, int N,
                       double alpha, double *A, int lda,
