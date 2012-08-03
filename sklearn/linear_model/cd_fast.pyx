@@ -108,7 +108,7 @@ def enet_cd_inner_loop(np.ndarray[DOUBLE, ndim=1] w,
 
     cdef double tmp
     cdef double w_ii
-    cdef double d_w_max
+    cdef double d_w_max = 0
     cdef double w_max
     cdef double d_w_ii
     cdef unsigned int ii
