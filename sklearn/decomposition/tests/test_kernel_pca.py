@@ -129,8 +129,8 @@ def test_kernel_pca_invalid_kernel():
 
 
 def test_gridsearch_pipeline():
-    """Test if we can do a grid-search to find parameters to separate
-    circles with a perceptron model."""
+    # Test if we can do a grid-search to find parameters to separate
+    # circles with a perceptron model.
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
     kpca = KernelPCA(kernel="rbf", n_components=2)
@@ -142,8 +142,8 @@ def test_gridsearch_pipeline():
 
 
 def test_gridsearch_pipeline_precomputed():
-    """Test if we can do a grid-search to find parameters to separate
-    circles with a perceptron model using a precomputed kernel."""
+    # Test if we can do a grid-search to find parameters to separate
+    # circles with a perceptron model using a precomputed kernel.
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
     kpca = KernelPCA(kernel="precomputed", n_components=2)
