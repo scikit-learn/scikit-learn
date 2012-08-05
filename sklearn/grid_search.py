@@ -107,7 +107,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             raise ValueError(
                 "Cannot use a custom kernel function. "
                 "Precompute the kernel matrix instead.")
-        if clf._pairwise:
+        if getattr(clf, "_pairwise", False):
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")

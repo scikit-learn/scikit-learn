@@ -274,13 +274,6 @@ class BaseEstimator(object):
                 ),
             )
 
-    @property
-    def _pairwise(self):
-        # This property checks if an estimator
-        # was fit with "pairwise data", i.e. a precomputed
-        # kernel or dissimilarity matrix
-        return False
-
 
 ###############################################################################
 class ClassifierMixin(object):

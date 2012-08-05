@@ -106,9 +106,9 @@ def test_kernel_pca_precomputed():
                     X_fit.T)).transform(np.dot(X_pred, X_fit.T))
 
         X_kpca_train = KernelPCA(4, eigen_solver=eigen_solver,
-                kernel='precomputed').  fit_transform(np.dot(X_fit, X_fit.T))
+                kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
         X_kpca_train2 = KernelPCA(4, eigen_solver=eigen_solver,
-                kernel='precomputed').  fit(np.dot(X_fit,
+                kernel='precomputed').fit(np.dot(X_fit,
                     X_fit.T)).transform(np.dot(X_fit, X_fit.T))
 
         assert_array_almost_equal(np.abs(X_kpca),
