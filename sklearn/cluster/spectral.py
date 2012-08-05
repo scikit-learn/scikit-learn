@@ -359,7 +359,7 @@ class SpectralClustering(BaseEstimator):
 
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
-                n_clusters=self.self.n_clusters, mode=self.mode,
+                n_clusters=self.n_clusters, mode=self.mode,
                 random_state=self.random_state, n_init=self.n_init)
         return self
 
