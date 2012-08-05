@@ -99,6 +99,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.centerer = KernelCenterer()
 
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
+
     def _get_kernel(self, X, Y=None):
         params = {"gamma": self.gamma,
                   "degree": self.degree,
