@@ -40,7 +40,7 @@ def test_lle_simple_grid():
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
             n_components=n_components, random_state=rng)
-    tol = .1
+    tol = .12
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X, 'fro')
