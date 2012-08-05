@@ -20,6 +20,7 @@ currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
 multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
+invalidfile2 = os.path.join(currdir, "data", "svmlight_invalid_order.txt")
 
 
 def test_load_svmlight_file():
@@ -126,6 +127,11 @@ def test_load_compressed():
 @raises(ValueError)
 def test_load_invalid_file():
     load_svmlight_file(invalidfile)
+
+
+@raises(ValueError)
+def test_load_invalid_order_file():
+    load_svmlight_file(invalidfile2)
 
 
 @raises(ValueError)
