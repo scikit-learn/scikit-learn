@@ -108,12 +108,10 @@ class GaussianNB(BaseNB):
     y : array, shape = [n_samples]
         Target vector relative to X
 
-    sample_weight : array-like, shape = [n_samples], optional
-        Weights applied to individual samples (1. for unweighted).
-
-    custom_class_prior : array, shape [n_classes]
-        Custom prior probability per class. If not None, will be used to
-        set the value of attribute `class_prior_`.
+    class_prior_override : array, shape [n_classes]
+        Overriding prior probability per class. If not None, will be used to
+        set the value of attribute `class_prior_` and override the default
+        class prior probabilities computed from the samples.
 
     Attributes
     ----------
@@ -134,29 +132,26 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(custom_class_prior=None, sample_weight=None)
+    GaussianNB(class_prior_override=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> print(clf.predict_proba([[-0.1, -0.1]]))
     [[ 0.85814893  0.14185107]]
-    >>> clf = GaussianNB(custom_class_prior=[0.4, 0.6])
+    >>> clf = GaussianNB(class_prior_override=[0.4, 0.6])
     >>> clf.fit(X, Y)
-    GaussianNB(custom_class_prior=array([ 0.4,  0.6]), sample_weight=None)
+    GaussianNB(class_prior_override=array([ 0.4,  0.6]))
     >>> print(clf.predict_proba([[-0.1, -0.1]]))
     [[ 0.80131523  0.19868477]]
-    >>> clf = GaussianNB(sample_weight=[0.1, 0.1, 0.1, 1, 1, 1])
-    >>> clf.fit(X, Y)
-    GaussianNB(custom_class_prior=None,
-          sample_weight=array([ 0.1,  0.1,  0.1,  1. ,  1. ,  1. ]))
+    >>> clf = GaussianNB()
+    >>> clf.fit(X, Y, sample_weight=[0.1, 0.1, 0.1, 1, 1, 1])
+    GaussianNB(class_prior_override=None)
     >>> print(clf.predict_proba([[-0.1, -0.1]]))
     [[ 0.37693335  0.62306665]]
     """
-    def __init__(self, sample_weight=None, custom_class_prior=None):
-        self.sample_weight = sample_weight
-        # Must use different name because of clash with deprecated property
-        self.custom_class_prior = custom_class_prior
+    def __init__(self, class_prior_override=None):
+        self.class_prior_override = class_prior_override
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -167,6 +162,9 @@ class GaussianNB(BaseNB):
 
         y : array-like, shape = [n_samples]
             Target values.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
 
         Returns
         -------
@@ -180,9 +178,9 @@ class GaussianNB(BaseNB):
 
         if n_samples != y.shape[0]:
             raise ValueError("X and y have incompatible shapes")
-        if self.sample_weight is not None:
-            self.sample_weight = np.asarray(self.sample_weight)
-            if len(self.sample_weight) != n_samples:
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
+            if len(sample_weight) != n_samples:
                 raise ValueError("X and sample_weight have"
                                  "incompatible shapes")
 
@@ -191,31 +189,31 @@ class GaussianNB(BaseNB):
 
         self.theta_ = np.zeros((n_classes, n_features))
         self.sigma_ = np.zeros((n_classes, n_features))
-        if self.custom_class_prior is not None:
-            self.custom_class_prior = np.asarray(self.custom_class_prior)
-            if len(self.custom_class_prior) != n_classes:
-                raise ValueError("y and custom_class_prior have"
+        if self.class_prior_override is not None:
+            self.class_prior_override = np.asarray(self.class_prior_override)
+            if len(self.class_prior_override) != n_classes:
+                raise ValueError("y and class_prior_override have"
                                  "incompatible shapes")
-            self.class_prior_ = self.custom_class_prior
+            self.class_prior_ = self.class_prior_override
         else:
             self.class_prior_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
             X_i = X[y == y_i, :]
-            if self.sample_weight is not None:
-                weight_i = self.sample_weight[y == y_i]
+            if sample_weight is not None:
+                weight_i = sample_weight[y == y_i]
                 self.theta_[i, :] = np.average(X_i, axis=0, weights=weight_i)
                 self.sigma_[i, :] = (np.dot(weight_i,
                                             (X_i - self.theta_[i, :]) ** 2) /
                                      np.sum(weight_i))
-                if self.custom_class_prior is None:
-                    self.class_prior_[i] = (np.float(np.dot(self.sample_weight,
+                if self.class_prior_override is None:
+                    self.class_prior_[i] = (np.float(np.dot(sample_weight,
                                                             y == y_i)) /
-                                            np.sum(self.sample_weight))
+                                            np.sum(sample_weight))
             else:
                 self.theta_[i, :] = np.mean(X_i, axis=0)
                 self.sigma_[i, :] = np.var(X_i, axis=0) + epsilon
-                if self.custom_class_prior is None:
+                if self.class_prior_override is None:
                     self.class_prior_[i] = (np.float(np.sum(y == y_i)) /
                                             n_samples)
         return self
