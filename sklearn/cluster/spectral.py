@@ -10,7 +10,7 @@ import numpy as np
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
-from ..metrics import euclidean_distances
+from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
@@ -67,9 +67,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
-        amg_loaded = True
     except ImportError:
-        amg_loaded = False
         if mode == "amg":
             raise ValueError("The mode was set to 'amg', but pyamg is "
                              "not available.")
@@ -237,7 +235,7 @@ class SpectralClustering(BaseEstimator):
     used to find normalized graph cuts.
 
     When calling ``fit``, an affinity matrix is constructed using either the
-    Gaussian kernel of the euclidean distanced ``d(X, X)``::
+    Gaussian (aka RBF) kernel of the euclidean distanced ``d(X, X)``::
 
             np.exp(-gamma * d(X,X) ** 2)
 
@@ -292,7 +290,7 @@ class SpectralClustering(BaseEstimator):
     for which 0 means identical elements, and high values means
     very dissimilar elements, it can be transformed in a
     similarity matrix that is well suited for the algorithm by
-    applying the gaussian (heat) kernel::
+    applying the Gaussian (RBF, heat) kernel::
 
         np.exp(- X ** 2 / (2. * delta ** 2))
 
@@ -344,8 +342,7 @@ class SpectralClustering(BaseEstimator):
                     "a custom affinity matrix, set ``affinity=precomputed``.")
 
         if self.affinity == 'gaussian':
-            self.affinity_matrix_ = np.exp(- self.gamma *
-                    euclidean_distances(X, squared=True))
+            self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
 
         elif self.affinity == 'nearest_neighbors':
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
@@ -353,7 +350,7 @@ class SpectralClustering(BaseEstimator):
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X
         else:
-            raise ValueError("Invalid 'affinity'. Expecte 'gaussian', "
+            raise ValueError("Invalid 'affinity'. Expected 'gaussian', "
                 "'nearest_neighbors' or 'precomputed', got '%s'."
                 % self.affinity_matrix)
 
