@@ -53,20 +53,23 @@ def test_gnb_prior():
     # Check that the class priors sum to 1
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
+
 def test_gnb_sample_weights():
     """Test whether the sample weights are properly used. """
-    clf = GaussianNB(sample_weight=[1., 0.5, 0.5, 2., 2., 1.]).fit(X, y)
+    clf = GaussianNB().fit(X, y, sample_weight=[1., 0.5, 0.5, 2., 2., 1.])
     assert_array_almost_equal(clf.theta_,
                               np.array([[-1.5, -1.25], [1.2, 1.4]]), 8)
     assert_array_almost_equal(clf.sigma_,
                               np.array([[0.25, 0.1875], [0.16, 0.24]]), 8)
 
-def test_gnb_custom_class_prior():
-    """Test whether the custom class priors are propertly used. """
-    clf = GaussianNB(custom_class_prior=[0.3, 0.7]).fit(X, y)
+
+def test_gnb_class_prior_override():
+    """Test whether the class prior override is properly used. """
+    clf = GaussianNB(class_prior_override=[0.3, 0.7]).fit(X, y)
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
                                          0.174696337838317]]), 8)
+
 
 def test_discrete_prior():
     """Test whether class priors are properly set. """

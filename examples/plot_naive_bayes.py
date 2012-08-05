@@ -26,19 +26,19 @@ cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 
 for i in range(3):
     sample_weight = None
-    custom_class_prior = None
+    class_prior_override = None
     if i == 0:
         subtitle = "(default settings)"
     elif i == 1:
         subtitle = "(sample weights tripling the importance of red points)"
         sample_weight = [3.] * 50 + [1.] * 100
     elif i == 2:
-        custom_class_prior = [0.15, 0.15, 0.7]
-        subtitle = "(custom class priors = " + str(custom_class_prior) + ")"
+        class_prior_override = [0.15, 0.15, 0.7]
+        subtitle = "(class prior override = " + \
+            str(class_prior_override) + ")"
     # create an instance of GaussianNB and fit the data
-    clf = naive_bayes.GaussianNB(custom_class_prior=custom_class_prior,
-                                 sample_weight=sample_weight)
-    clf.fit(X, y)
+    clf = naive_bayes.GaussianNB(class_prior_override=class_prior_override)
+    clf.fit(X, y, sample_weight=sample_weight)
     # plot the decision boundary
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
