@@ -8,7 +8,6 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
-import itertools
 import warnings
 
 import numpy as np
@@ -102,9 +101,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
 
-    # Remove diagonal from connectivity matrix
-    connectivity.setdiag(np.zeros(connectivity.shape[0]))
-
     # create inertia matrix
     coord_row = []
     coord_col = []
@@ -137,7 +133,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
 
-    visited = np.empty(n_nodes, dtype=bool)
+    not_visited = np.empty(n_nodes, dtype=np.int8)
 
     # recursive merge loop
     for k in xrange(n_samples, n_nodes):
@@ -156,24 +152,23 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
         # update the structure matrix A and the inertia matrix
         coord_col = []
-        visited[:] = False
-        visited[k] = True
-        for l in set(A[i]).union(A[j]):
-            l = _hierarchical._get_parent(l, parent)
-            if not visited[l]:
-                visited[l] = True
-                coord_col.append(l)
-                A[l].append(k)
+        not_visited.fill(1)
+        not_visited[k] = 0
+        _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
+        _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
+        for l in coord_col:
+            A[l].append(k)
         A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
         coord_row.fill(k)
-        ini = np.empty(len(coord_row), dtype=np.float)
+        n_additions = len(coord_row)
+        ini = np.empty(n_additions, dtype=np.float)
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
-                                   coord_row, coord_col, ini)
-        for tupl in itertools.izip(ini, coord_row, coord_col):
-            heappush(inertia, tupl)
+                                        coord_row, coord_col, ini)
+        for idx in xrange(n_additions):
+            heappush(inertia, (ini[idx], k, coord_col[idx]))
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples

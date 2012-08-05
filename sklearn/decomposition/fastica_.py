@@ -68,8 +68,14 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
         lim = tol + 1
         while ((lim > tol) & (n_iterations < (max_iter - 1))):
             wtx = np.dot(w.T, X)
-            gwtx = g(wtx, fun_args)
-            g_wtx = gprime(wtx, fun_args)
+            nonlin = g(wtx, fun_args)
+            if isinstance(nonlin, tuple):
+                gwtx, g_wtx = nonlin
+            else:
+                # XXX: deprecation warning
+                gwtx = nonlin
+                g_wtx = gprime(wtx, fun_args)
+
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
             _gs_decorrelation(w1, W, j)
@@ -100,8 +106,15 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
     it = 0
     while ((lim > tol) and (it < (max_iter - 1))):
         wtx = np.dot(W, X)
-        gwtx = g(wtx, fun_args)
-        g_wtx = gprime(wtx, fun_args)
+
+        nonlin = g(wtx, fun_args)
+        if isinstance(nonlin, tuple):
+            gwtx, g_wtx = nonlin
+        else:
+            # XXX: deprecation warning
+            gwtx = nonlin
+            g_wtx = gprime(wtx, fun_args)
+
         W1 = np.dot(gwtx, X.T) / float(p) \
              - np.dot(np.diag(g_wtx.mean(axis=1)), W)
 
@@ -135,15 +148,18 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         preprocessed: it should be centered, normed and white.
         Otherwise you will get incorrect results.
         In this case the parameter n_components will be ignored.
-    fun : string or function, optional
+    fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
-        You can also provide your own function but in this case, its
-        derivative should be provided via argument fun_prime
-    fun_prime : empty string ('') or function, optional
+        You can also provide your own function. It should return a tuple
+        containing the value of the function, and of its derivative, in the
+        point. Supplying the derivative through the `fun_prime` attribute is
+        still supported, but deprecated.
+    fun_prime : empty string ('') or function, optional, deprecated.
         See fun.
     fun_args: dictionary, optional
+        Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
     max_iter: int, optional
@@ -155,7 +171,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used
     source_only: boolean, optional
-        if True, only the sources matrix is returned
+        If True, only the sources matrix is returned.
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
 
@@ -201,38 +217,32 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     # make interface compatible with other decompositions
     X = array2d(X).T
 
-    algorithm_funcs = {'parallel': _ica_par,
-                       'deflation': _ica_def}
-
     alpha = fun_args.get('alpha', 1.0)
     if (alpha < 1) or (alpha > 2):
         raise ValueError("alpha must be in [1,2]")
 
+    gprime = None
     if isinstance(fun, str):
         # Some standard nonlinear functions
         # XXX: these should be optimized, as they can be a bottleneck.
         if fun == 'logcosh':
             def g(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0)
-                return np.tanh(alpha * x)
-
-            def gprime(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0)
-                return alpha * (1 - (np.tanh(alpha * x)) ** 2)
+                alpha = fun_args.get('alpha', 1.0)  # comment it out?
+                gx = np.tanh(alpha * x)
+                g_x = alpha * (1 - gx ** 2)
+                return gx, g_x
 
         elif fun == 'exp':
             def g(x, fun_args):
-                return x * np.exp(-(x ** 2) / 2)
-
-            def gprime(x, fun_args):
-                return (1 - x ** 2) * np.exp(-(x ** 2) / 2)
+                exp = np.exp(-(x ** 2) / 2)
+                gx = x * exp
+                g_x = (1 - x ** 2) * exp
+                return gx, g_x
 
         elif fun == 'cube':
             def g(x, fun_args):
-                return x ** 3
+                return x ** 3, 3 * x ** 2
 
-            def gprime(x, fun_args):
-                return 3 * x ** 2
         else:
             raise ValueError(
                         'fun argument should be one of logcosh, exp or cube')
@@ -292,9 +302,13 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
               'max_iter': max_iter,
               'w_init': w_init}
 
-    func = algorithm_funcs.get(algorithm, 'parallel')
-
-    W = func(X1, **kwargs)
+    if algorithm == 'parallel':
+        W = _ica_par(X1, **kwargs)
+    elif algorithm == 'deflation':
+        W = _ica_def(X1, **kwargs)
+    else:
+        raise ValueError('Invalid algorithm: must be either `parallel` or' +
+                         ' `deflation`.')
     del X1
 
     if whiten:
@@ -317,12 +331,20 @@ class FastICA(BaseEstimator):
     whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
-    fun : {'logcosh', 'exp', or 'cube'}, or a callable
-        The non-linear function used in the FastICA loop to approximate
-        negentropy. If a function is passed, it derivative should be
-        passed as the 'fun_prime' argument.
-    fun_prime : None or a callable
-        The derivative of the non-linearity used.
+    fun : string or function, optional. Default: 'logcosh'
+        The functional form of the G function used in the
+        approximation to neg-entropy. Could be either 'logcosh', 'exp',
+        or 'cube'.
+        You can also provide your own function. It should return a tuple
+        containing the value of the function, and of its derivative, in the
+        point. Supplying the derivative through the `fun_prime` attribute is
+        still supported, but deprecated.
+    fun_prime : empty string ('') or function, optional, deprecated.
+        See fun.
+    fun_args: dictionary, optional
+        Arguments to send to the functional form.
+        If empty and if fun='logcosh', fun_args will take value
+        {'alpha' : 1.0}
     max_iter : int, optional
         Maximum number of iterations during fit
     tol : float, optional

@@ -8,8 +8,8 @@ import scipy.sparse as sp
 from tempfile import NamedTemporaryFile
 from nose.tools import assert_raises, assert_true, assert_false
 
-from .. import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
-                safe_asarray)
+from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
+                           check_arrays, safe_asarray)
 
 
 def test_as_float_array():

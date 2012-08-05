@@ -1,6 +1,6 @@
 from ..base import ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from .base import BaseLibLinear, BaseLibSVM
+from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
@@ -132,7 +132,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     pass
 
 
-class SVC(BaseLibSVM, ClassifierMixin):
+class SVC(BaseSVC):
     """C-Support Vector Classification.
 
     The implementations is a based on libsvm. The fit time complexity
@@ -260,7 +260,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
                 class_weight, verbose)
 
 
-class NuSVC(BaseLibSVM, ClassifierMixin):
+class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
 
     Similar to SVC but uses a parameter to control the number of support

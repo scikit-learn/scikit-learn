@@ -35,6 +35,12 @@ def test_additive_chi2_sampler():
 
     np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
 
+    X_sp_trans = transform.fit_transform(csr_matrix(X))
+    Y_sp_trans = transform.transform(csr_matrix(Y))
+
+    np.testing.assert_array_equal(X_trans, X_sp_trans.A)
+    np.testing.assert_array_equal(Y_trans, Y_sp_trans.A)
+
 
 def test_skewed_chi2_sampler():
     """test that RBFSampler approximates kernel on random data"""

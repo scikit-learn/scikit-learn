@@ -79,6 +79,23 @@ def test_roc_curve():
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
 
 
+def test_roc_returns_consistency():
+    """Test whether the returned threshold matches up with tpr"""
+    # make small toy dataset
+    y_true, _, probas_pred = make_prediction(binary=True)
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+
+    # use the given thresholds to determine the tpr
+    tpr_correct = []
+    for t in range(len(thresholds)):
+        tp = np.sum((probas_pred >= thresholds[t]) & y_true)
+        p = np.sum(y_true)
+        tpr_correct.append(1.0 * tp / p)
+
+    # compare tpr and tpr_correct to see if the thresholds' order was correct
+    assert_array_almost_equal(tpr, tpr_correct, decimal=2)
+
+
 @raises(ValueError)
 def test_roc_curve_multi():
     """roc_curve not applicable for multi-class problems"""

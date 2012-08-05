@@ -78,3 +78,6 @@ source directory (you will need to have nosetest installed)::
 
 See web page http://scikit-learn.sourceforge.net/install.html#testing
 for more information.
+
+    Random number generation can be controled during testing by setting
+    the SKLEARN_SEED environment variable

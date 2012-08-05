@@ -15,6 +15,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, is_classifier, clone
+from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import deprecated
@@ -84,8 +85,14 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     clf.set_params(**clf_params)
 
     if isinstance(X, list) or isinstance(X, tuple):
-        X_train = [X[i] for i, cond in enumerate(train) if cond]
-        X_test = [X[i] for i, cond in enumerate(test) if cond]
+        # train and test can be boolean mask but for list
+        # they should be indices so conversion is done if needed.
+        if isinstance(train, np.ndarray) and train.dtype == np.bool:
+            train = np.where(train)[0]
+        if isinstance(test, np.ndarray) and test.dtype == np.bool:
+            test = np.where(test)[0]
+        X_train = [X[i] for i in train]
+        X_test = [X[i] for i in test]
     else:
         if sp.issparse(X):
             # For sparse matrices, slicing only works with indices
@@ -176,7 +183,7 @@ def _has_one_grid_point(param_grid):
     return True
 
 
-class GridSearchCV(BaseEstimator):
+class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     """Grid search on the parameters of a classifier
 
     Important members are fit, predict.
@@ -385,7 +392,7 @@ class GridSearchCV(BaseEstimator):
 
         # Return early if there is only one grid point.
         if _has_one_grid_point(self.param_grid):
-            params = iter(grid).next()
+            params = next(iter(grid))
             base_clf.set_params(**params)
             base_clf.fit(X, y)
             self._best_estimator_ = base_clf

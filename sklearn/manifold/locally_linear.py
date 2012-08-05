@@ -161,9 +161,6 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
                              "ill-behaved.  method='dense' is recommended. "
                              "See online documentation for more information."
                              % msg)
-        except:
-            #let other errors pass through
-            raise
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
@@ -611,10 +608,11 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.hessian_tol = hessian_tol
         self.modified_tol = modified_tol
         self.random_state = random_state
-        self.nbrs_ = NearestNeighbors(n_neighbors,
-                                      algorithm=neighbors_algorithm)
+        self.neighbors_algorithm = neighbors_algorithm
 
     def _fit_transform(self, X):
+        self.nbrs_ = NearestNeighbors(self.n_neighbors,
+                algorithm=self.neighbors_algorithm)
         if self.out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
                 "``n_components`` and is now deprecated.", DeprecationWarning,

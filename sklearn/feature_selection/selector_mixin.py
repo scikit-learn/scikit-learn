@@ -1,3 +1,5 @@
+# Authors: Gilles Louppe, Mathieu Blondel
+# License: BSD
 
 import numpy as np
 

@@ -1,10 +1,11 @@
 from .. import LinearSVC
-from ...base import ClassifierMixin, RegressorMixin
+from ..base import BaseSVC
+from ...base import RegressorMixin
 from .base import SparseBaseLibSVM
 from ...utils import deprecated
 
 
-class SVC(SparseBaseLibSVM, ClassifierMixin):
+class SVC(SparseBaseLibSVM, BaseSVC):
     """SVC for sparse matrices (csr).
 
     See :class:`sklearn.svm.SVC` for a complete list of parameters
@@ -40,7 +41,7 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
                                   cache_size, class_weight, verbose)
 
 
-class NuSVC(SparseBaseLibSVM, ClassifierMixin):
+class NuSVC(SparseBaseLibSVM, BaseSVC):
     """NuSVC for sparse matrices (csr).
 
     See :class:`sklearn.svm.NuSVC` for a complete list of parameters
