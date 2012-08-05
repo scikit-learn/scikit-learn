@@ -26,7 +26,8 @@ from ._feature_agglomeration import AgglomerationTransform
 ###############################################################################
 # Ward's algorithm
 
-def ward_tree(X, connectivity=None, n_components=None, copy=True):
+def ward_tree(X, connectivity=None, n_components=None, copy=True,
+              n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -53,27 +54,43 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         Make a copy of connectivity or work inplace. If connectivity
         is not of LIL type there will be a copy in any case.
 
+    n_clusters : int (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. In this case, the
+        complete tree is not computed, thus the 'children' output is of
+        limited use, and the 'parents' output should rather be used.
+        This option is valid only when specifying a connectivity matrix.
+
     Returns
     -------
-    children : list of pairs. Lenght of n_nodes
-               list of the children of each nodes.
-               Leaves of the tree have empty list of children.
+    children : 2D array, shape (n_nodes, 2)
+        list of the children of each nodes.
+        Leaves of the tree have empty list of children.
 
     n_components : sparse matrix.
         The number of connected components in the graph.
 
     n_leaves : int
         The number of leaves in the tree
+
+    parents : 1D array, shape (n_nodes, ) or None
+        The parent of each node. Only returned when a connectivity matrix
+        is specified, elsewhere 'None' is returned.
     """
     X = np.asarray(X)
-    n_samples, n_features = X.shape
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
+    n_samples, n_features = X.shape
 
     if connectivity is None:
+        if n_clusters is not None:
+            warnings.warn('Early stopping is implemented only for '
+                             'structured Ward clustering (i.e. with '
+                             'explicit connectivity.', stacklevel=2)
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
-        return children_, 1, n_samples
+        return children_, 1, n_samples, None
 
     # Compute the number of nodes
     if n_components is None:
@@ -82,6 +99,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
     # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
         connectivity = connectivity.copy()
+    elif not sparse.isspmatrix(connectivity):
+        connectivity = sparse.lil_matrix(connectivity)
     else:
         connectivity = connectivity.tolil()
 
@@ -94,7 +113,11 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
                                             n_components, labels)
         n_components = 1
 
-    n_nodes = 2 * n_samples - n_components
+    if n_clusters is None:
+        n_nodes = 2 * n_samples - n_components
+    else:
+        assert n_clusters <= n_samples
+        n_nodes = 2 * n_samples - n_clusters
 
     if (connectivity.shape[0] != n_samples or
         connectivity.shape[1] != n_samples):
@@ -156,8 +179,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
         not_visited[k] = 0
         _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
         _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
-        for l in coord_col:
-            A[l].append(k)
+        # List comprehension is faster than a for loop
+        [A[l].append(k) for l in coord_col]
         A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.int)
         coord_row = np.empty_like(coord_col)
@@ -167,14 +190,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True):
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)
-        for idx in xrange(n_additions):
-            heappush(inertia, (ini[idx], k, coord_col[idx]))
+        # List comprehension is faster than a for loop
+        [heappush(inertia, (ini[idx], k, coord_col[idx]))
+            for idx in xrange(n_additions)]
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
     children = np.array(children)  # return numpy array for efficient caching
 
-    return children, n_components, n_leaves
+    return children, n_components, n_leaves, parent
 
 
 ###############################################################################
@@ -275,6 +299,15 @@ class Ward(BaseEstimator):
         The number of connected components in the graph defined by the \
         connectivity matrix. If not set, it is estimated.
 
+    compute_full_tree: bool or 'auto' (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of cluster and using caching, it may
+        be advantageous to compute the full tree.
+
+
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
@@ -289,12 +322,14 @@ class Ward(BaseEstimator):
     """
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=True, n_components=None):
+                 connectivity=None, copy=True, n_components=None,
+                 compute_full_tree='auto'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
         self.n_components = n_components
         self.connectivity = connectivity
+        self.compute_full_tree = compute_full_tree
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -322,13 +357,34 @@ class Ward(BaseEstimator):
                 raise ValueError("`connectivity` does not have shape "
                         "(n_samples, n_samples)")
 
-        # Construct the tree
-        self.children_, self.n_components, self.n_leaves_ = \
-                memory.cache(ward_tree)(X, self.connectivity,
-                                n_components=self.n_components, copy=self.copy)
+        n_samples = len(X)
+        compute_full_tree = self.compute_full_tree
+        if self.connectivity is None:
+            compute_full_tree = True
+        if compute_full_tree == 'auto':
+            # Early stopping is likely to give a speed up only for
+            # a large number of clusters. The actual threshold
+            # implemented here is heuristic
+            compute_full_tree = self.n_clusters > max(100, .02 * n_samples)
+        n_clusters = self.n_clusters
+        if compute_full_tree:
+            n_clusters = None
 
+        # Construct the tree
+        self.children_, self.n_components, self.n_leaves_, parents = \
+                memory.cache(ward_tree)(X, self.connectivity,
+                            n_components=self.n_components,
+                            copy=self.copy, n_clusters=n_clusters)
         # Cut the tree
-        self.labels_ = _hc_cut(self.n_clusters, self.children_, self.n_leaves_)
+        if compute_full_tree:
+            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+                                   self.n_leaves_)
+        else:
+            labels = _hierarchical.hc_get_heads(parents, copy=False)
+            # copy to avoid holding a reference on the original array
+            labels = np.copy(labels[:n_samples])
+            # Reasign cluster numbers
+            self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
 
 
@@ -360,6 +416,15 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_components : int (optional)
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
+
+    compute_full_tree: bool or 'auto' (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of cluster and using caching, it may
+        be advantageous to compute the full tree.
+
 
     Attributes
     ----------

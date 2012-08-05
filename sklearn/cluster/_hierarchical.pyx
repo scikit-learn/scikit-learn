@@ -71,6 +71,40 @@ def _hc_get_descendent(int node, children, int n_leaves):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def hc_get_heads(np.ndarray[INT, ndim=1] parents, copy=True):
+    """ Return the heads of the forest, as defined by parents
+    
+    Parameters
+    ===========
+    parents: array of integers
+        The parent structure defining the forest (ensemble of trees)
+    copy: boolean
+        If copy is False, the input 'parents' array is modified inplace
+
+    Returns
+    =======
+    heads: array of integers of same shape as parents
+        The indices in the 'parents' of the tree heads
+
+    """
+    cdef unsigned int parent, node0, node, size
+    if copy:
+        parents = np.copy(parents)
+    size = parents.size
+    for node0 in range(size):
+        # Start from the top of the tree and go down
+        node0 = size - node0 - 1
+        node = node0
+        parent = parents[node]
+        while parent != node:
+            parents[node0] = parent
+            node = parent
+            parent = parents[node]
+    return parents
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def _get_parents(nodes, heads, np.ndarray[INT, ndim=1] parents,
                  np.ndarray[INT8, ndim=1] not_visited):
     """ Return the heads of the given nodes, as defined by parents

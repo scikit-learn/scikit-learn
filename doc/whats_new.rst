@@ -14,31 +14,36 @@ Changelog
 
    - :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
-     via the ``max_features`` argument.
+     via the ``max_features`` argument, by `Peter Prettenhofer`_.
 
    - Added Huber and Quantile loss functions to
-     :class:`ensemble.GradientBoostingRegressor`.
+     :class:`ensemble.GradientBoostingRegressor`, by `Peter Prettenhofer`_.
 
    - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
      now support multi-output classification and regression problems, by
      `Gilles Louppe`_.
 
-   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
+   - Added :class:`preprocessing.LabelEncoder`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
    - Added the epsilon-insensitive loss and the ability to make probabilistic
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
-   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux.
 
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
-     decompresses them on the fly.
+     decompresses them on the fly, by `Lars Buitinck`_.
 
    - SVMlight file format serializer now preserves double precision floating
      point values, by `Olivier Grisel`_.
 
-   - A common testing framework for all estimators was added.
+   - A common testing framework for all estimators was added, by `Andreas Müller`_.
+
+   - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
+     particular building the tree now supports early stopping. This is
+     useful when the number of clusters is not small compared to the
+     number of samples.
 
 API changes summary
 -------------------
@@ -61,6 +66,10 @@ API changes summary
 
    - All ``Base`` classes are now abstract meta classes so that they can not be
      instantiated.
+
+   - :func:`cluster.ward_tree` now also returns the parent array. This is
+     necessary for early-stopping in which case the tree is not
+     completely built.
 
 .. _changes_0_11:
 
@@ -1183,7 +1192,7 @@ of commits):
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
-.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
+.. _Alexandre Gramfort: http://alexandre.gramfort.net
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
