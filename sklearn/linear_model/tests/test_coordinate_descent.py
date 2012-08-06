@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_regression
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV, enet_cd
+    LassoCV, ElasticNet, ElasticNetCV
 from sklearn.linear_model import LassoLarsCV
 
 
