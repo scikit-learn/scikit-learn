@@ -13,6 +13,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
+import scipy.linalg as linalg
 
 from .base import LinearModel
 from ..base import RegressorMixin
@@ -187,8 +188,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                                   "shapes.")
             self.coef_ = coef_init
 
-        alpha = self.alpha * self.rho * n_samples
-        beta = self.alpha * (1.0 - self.rho) * n_samples
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
         X = np.asfortranarray(X)  # make data contiguous in memory
 
@@ -203,14 +204,14 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if Gram is None:
             self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
+                    cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
                             X, y, self.max_iter, self.tol, self.positive)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
             self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                    beta, Gram, Xy, y, self.max_iter, self.tol, self.positive)
+                    cd_fast.enet_coordinate_descent_gram(self.coef_, l1_reg,
+                    l2_reg, Gram, Xy, y, self.max_iter, self.tol, self.positive)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -246,15 +247,15 @@ class ElasticNet(LinearModel, RegressorMixin):
                                   "shapes.")
             self.coef_ = coef_init
 
-        alpha = self.alpha * self.rho * n_samples
-        beta = self.alpha * (1.0 - self.rho) * n_samples
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
         X_data, y, X_mean, y_mean, X_std = sparse_center_data(X, y,
                                                        self.fit_intercept,
                                                        self.normalize)
 
         self.coef_, self.dual_gap_, self.eps_ = \
                 cd_fast.sparse_enet_coordinate_descent(
-                    self.coef_, alpha, beta, X_data, X.indices,
+                    self.coef_, l1_reg, l2_reg, X_data, X.indices,
                     X.indptr, y, X_mean / X_std,
                     self.max_iter, self.tol, self.positive)
 
