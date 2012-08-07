@@ -138,7 +138,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         else:
             mode, _ = weighted_mode(pred_labels, weights, axis=1)
 
-        return mode.flatten().astype(np.int)
+        return self._classes[mode.flatten().astype(np.int)]
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
