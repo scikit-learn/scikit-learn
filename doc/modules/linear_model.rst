@@ -225,13 +225,13 @@ observations, it is often faster than :class:`LassoCV`.
 
 .. |lasso_cv_1| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_2.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
-    :scale: 50%
+    :scale: 48%
 
 .. |lasso_cv_2| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_3.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
-    :scale: 50%
+    :scale: 48%
 
-|lasso_cv_1| |lasso_cv_2|
+.. centered:: |lasso_cv_1| |lasso_cv_2|
 
 
 Information-criteria based model selection
@@ -291,9 +291,33 @@ and `rho` by cross-validation.
 Multi-task Lasso
 ================
 
-The :class:`MultiTaskLasso` is a linear model that estimates sparse coefficients
-for multiple regression problems jointly. The constraint is that the selected
+The :class:`MultiTaskLasso` is a linear model that estimates sparse
+coefficients for multiple regression problems jointly: `y` is a 2D array,
+of shape (n_samples, n_tasks). The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
+
+The following figure compares the location of the non-zeros in W obtained
+with a simple Lasso or a MultiTaskLasso. The Lasso estimates yields
+scattered non-zeros while the non-zeros of the MultiTaskLasso are full
+columns.
+
+.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_1.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 48%
+
+.. |multi_task_lasso_2| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_2.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 48%
+
+.. centered:: |multi_task_lasso_1| |multi_task_lasso_2|
+
+.. centered:: Fitting a time-series model, imposing that any active feature be active at all times.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
+
+
 
 Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
@@ -308,21 +332,6 @@ where;
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
 the algorithm to fit the coefficients.
-
-The following figure compares the location of the non-zeros in W obtained with
-a simple Lasso or a MultiTaskLasso. The Lasso estimates yields scattered non-zeros
-while the non-zeros of the MultiTaskLasso are full columns.
-
-.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_1.png
-    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
-    :scale: 50%
-
-|multi_task_lasso_1|
-
-.. topic:: Examples:
-
-  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
-
 
 .. _least_angle_regression:
 
