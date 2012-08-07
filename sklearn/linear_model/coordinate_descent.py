@@ -1048,7 +1048,9 @@ class MultiTaskElasticNet(Lasso):
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
+        squeeze_me = False
         if y.ndim == 1:
+            squeeze_me = True
             y = y[:, np.newaxis]
 
         n_samples, n_features = X.shape
@@ -1075,6 +1077,11 @@ class MultiTaskElasticNet(Lasso):
                         l2_reg, X, y, self.max_iter, self.tol)
 
         self._set_intercept(X_mean, y_mean, X_std)
+
+        # Make sure that the coef_ have the same shape as the given 'y',
+        # to predict with the same shape
+        if squeeze_me:
+            self.coef_ = self.coef_.squeeze()
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
