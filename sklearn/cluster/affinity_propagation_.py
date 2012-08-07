@@ -8,9 +8,11 @@ clustering.
 # License: BSD
 
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator
 from ..utils import as_float_array
+from ..metrics import euclidean_distances
 
 
 def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
@@ -180,8 +182,19 @@ class AffinityPropagation(BaseEstimator):
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    copy: boolean, optional
+    copy : boolean, optional
         Make a copy of input data. True by default.
+
+    p : array [n_points,] or float, optional
+        Preferences for each point - points with larger values of
+        preferences are more likely to be chosen as exemplars. The number
+        of exemplars, ie of clusters, is influenced by the input
+        preferences value. If the preferences are not passed as arguments,
+        they will be set to the median of the input similarities.
+
+    precomputed : bool, optional
+        Whether a precomputed affinity matrix is used for X, instead
+        of the original data.
 
 
     Attributes
@@ -191,6 +204,9 @@ class AffinityPropagation(BaseEstimator):
 
     `labels_` : array, [n_samples]
         Labels of each point
+
+    `affinity_matrix_` : array-like, [n_samples, n_samples]
+        Stores the affinity matrix used in ``fit``.
 
     Notes
     -----
@@ -206,38 +222,41 @@ class AffinityPropagation(BaseEstimator):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True):
+    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True, p=None,
+            precomputed=False):
         self.damping = damping
         self.max_iter = max_iter
         self.convit = convit
         self.copy = copy
+        self.p = p
+        self.precomputed = precomputed
 
-    def fit(self, S, p=None):
-        """Compute affinity propagation clustering.
+    @property
+    def _pairwise(self):
+        return self.precomputed
+
+    def fit(self, X):
+        """ Create affinity matrix from negative euclidean distances, then
+        apply affinity propagation clustering.
 
         Parameters
         ----------
 
-        S: array [n_points, n_points]
+        X: array [n_points, n_points]
             Matrix of similarities between points
-
-        p: array [n_points,] or float, optional
-            Preferences for each point - points with larger values of
-            preferences are more likely to be chosen as exemplars. The number
-            of exemplars, ie of clusters, is influenced by the input
-            preferences value. If the preferences are not passed as arguments,
-            they will be set to the median of the input similarities.
-
-        damping : float, optional
-            Damping factor
-
-        copy: boolean, optional
-            If copy is False, the affinity matrix is modified inplace by the
-            algorithm, for memory efficiency
-
         """
-        self.cluster_centers_indices_, self.labels_ = affinity_propagation(S,
-                                p, max_iter=self.max_iter, convit=self.convit,
-                                damping=self.damping,
-                copy=self.copy)
+
+        if X.shape[0] == X.shape[1] and not self.precomputed:
+            warnings.warn("The API of AffinityPropagation has changed."
+                "Now ``fit`` constructs an affinity matrix from the data."
+                "To use a custom affinity matrix, set ``precomputed=True``.")
+        if self.precomputed:
+            self.affinity_matrix_ = X
+        else:
+            self.affinity_matrix_ = -euclidean_distances(X, squared=True)
+
+        self.cluster_centers_indices_, self.labels_ = affinity_propagation(
+                self.affinity_matrix_, self.p,
+                max_iter=self.max_iter, convit=self.convit,
+                damping=self.damping, copy=self.copy)
         return self

@@ -15,6 +15,7 @@ from .ball_tree import BallTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr
+from ..utils.fixes import unique
 
 
 class NeighborsWarning(UserWarning):
@@ -567,8 +568,7 @@ class SupervisedIntegerMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
         """
-        self._y = np.asarray(y)
-        self._classes = np.sort(np.unique(y))
+        self._classes, self._y = unique(y, return_inverse=True)
         return self._fit(X)
 
 
