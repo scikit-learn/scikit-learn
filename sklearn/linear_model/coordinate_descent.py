@@ -114,7 +114,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
+                 use_strong_rule=False):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -127,6 +128,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.warm_start = warm_start
         self.positive = positive
         self.intercept_ = 0.0
+        self.use_strong_rule = use_strong_rule
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -202,9 +204,13 @@ class ElasticNet(LinearModel, RegressorMixin):
             Gram = None
 
         if Gram is None:
-            self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
-                            X, y, self.max_iter, self.tol, self.positive)
+            if self.use_strong_rule:
+                self._fit_enet_with_strong_rule(self, X, y, last_alpha=None,
+                              active_set=None)
+            else:
+                self.coef_, self.dual_gap_, self.eps_ = \
+                        cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
+                                X, y, self.max_iter, self.tol, self.positive)
         else:
             if Xy is None:
                 Xy = np.dot(X.T, y)
@@ -266,6 +272,104 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # return self for chaining fit and predict calls
         return self
+
+    def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
+                              active_set=None):
+
+        n_samples = X.shape[0]
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
+
+        strong_set = self._filter_with_strong_rule(X, y, last_alpha=last_alpha)
+
+        active_set = strong_set
+        size_active_set = len(active_set)
+        pass_kkt_on_strong_set = False
+        pass_kkt_on_full_set = False
+
+        # add features to the active set till all
+        # features pass the KKT
+        while not pass_kkt_on_full_set:
+
+            # add features to the active set till
+            # all features in the strong set pass the KKT
+            while not pass_kkt_on_strong_set:
+
+                print "fit enet on active set"
+                self.coef_, self.dual_gap_, self.eps_ = \
+                        cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
+                             l2_reg, X, y, self.max_iter, self.tol, 
+                             self.positive, iter_set=active_set)
+
+                self._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
+                                         active_set, subset=strong_set)
+
+                # check if no features have been violating the KKT
+                # on the strong set
+                if len(active_set) == size_active_set:
+                    pass_kkt_on_strong_set = True
+                else:
+                    size_active_set = len(active_set)
+
+            self._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
+                                         active_set)
+
+            # check if no features have been violating the KKT
+            # on the full set of features
+            if len(active_set) == size_active_set:
+                pass_kkt_on_strong_set = True
+            else:
+                size_active_set = len(active_set)
+                strong_set = self._filter_with_strong_rule()
+                pass_kkt_on_strong_set = False
+
+        # return self for chaining fit and predict calls
+        return self
+
+    def _enet_add_kkt_violating_features(self, X, y, l1_reg, l2_reg, \
+                                     active_set, subset=None):
+        kkt_violations = False
+
+        if subset is not None:
+            print "check KKT on: " + str(subset)
+            features_to_check = xrange(X.shape[1])
+        else:
+            print "check KKT on full set"
+            features_to_check = subset
+
+        for i in features_to_check:
+            tmp = np.dot(X[:, i], y - np.dot(X, self.coef_))
+            s = np.sign(self.coef_[i])
+            if self.coef_[i] != 0 and \
+                not np.allclose(tmp, s * l1_reg + l2_reg * self.coef_[i], rtol=1e-2):
+                if i not in subset:
+                    active_set.append(i)
+                kkt_violations = True
+            if self.coef_[i] == 0 and abs(tmp) >= np.abs(l1_reg):
+                if i not in active_set:
+                    active_set.append(i)
+                kkt_violations = True
+        return kkt_violations
+
+    def _filter_with_strong_rule(self, X, y, last_alpha=None):
+
+        alpha_scaled = self.alpha * X.shape[0]
+        # use basic strong rule,
+        # since no previous alpha is given.
+        if last_alpha is None:
+            print "global strong rule"
+            tmp = np.abs(np.dot(X.T, y))
+            alpha_max = np.max(np.abs(np.dot(X.T, y)))
+            strong_set = tmp >= self.rho * (2 * alpha_scaled - alpha_max)
+            return np.where(strong_set)[0].tolist()
+        # use sequential strong rule
+        else:
+            print "sequential strong rule"
+            last_alpha_scaled = last_alpha * X.shape[0]
+            tmp = np.dot(X.T, y - np.dot(X, self.coef_))
+            tmp = np.abs(tmp)
+            strong_set = tmp >= self.rho * (2 * alpha_scaled - last_alpha_scaled)
+            return np.where(strong_set)[0].tolist()
 
     @property
     def sparse_coef_(self):
