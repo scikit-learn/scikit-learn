@@ -983,6 +983,8 @@ class MultiTaskElasticNet(Lasso):
     ----------
     `coef_` : array, shape = [n_tasks, n_features]
         parameter vector (W in the cost function formula)
+        If a 1D y is passed in at fit (non multi-task usage), `coef_` is
+        then a 1D array
 
     `intercept_` : array, shape = [n_tasks]
         independent term in decision function.
