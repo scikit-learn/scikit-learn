@@ -7,11 +7,12 @@ The :mod:`sklearn.lda` module implements Linear Discriminant Analysis (LDA).
 import warnings
 
 import numpy as np
-from scipy import linalg, ndimage
+from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
 from .utils import check_arrays
+from .utils.fixes import unique
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -94,26 +95,21 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             and stored in `self.covariance_` attribute.
         """
         X, y = check_arrays(X, y, sparse_format='dense')
-        if y.dtype.char.lower() not in ('b', 'h', 'i'):
-            # We need integer values to be able to use
-            # ndimage.measurements and np.bincount on numpy >= 2.0.
-            # We currently support (u)int8, (u)int16 and (u)int32.
-            # Note that versions of scipy >= 0.8 can also accept
-            # (u)int64. We however don't support it for backwards
-            # compatibility.
-            y = y.astype(np.int32)
+        X = np.asarray(X)
+        self.classes_, y = unique(y, return_inverse=True)
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
-        n_samples, n_features = X.shape
-        classes = np.unique(y)
-        n_classes = classes.size
+        if X.shape[0] != y.shape[0]:
+            raise ValueError(
+                'Incompatible shapes: X has %s samples, while y '
+                'has %s' % (X.shape[0], y.shape[0]))
+        n_samples = X.shape[0]
+        n_features = X.shape[1]
+        n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
-        classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array(ndimage.measurements.sum(
-                np.ones(n_samples, dtype=y.dtype), y, index=classes))
-            self.priors_ = counts / float(n_samples)
+            self.priors_ = np.bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 
@@ -123,8 +119,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         cov = None
         if store_covariance:
             cov = np.zeros((n_features, n_features))
-        for group_indices in classes_indices:
-            Xg = X[group_indices, :]
+        for ind in xrange(n_classes):
+            Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
             # centered group data
@@ -177,9 +173,13 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.coef_ = np.dot(self.means_ - self.xbar_, self.scaling)
         self.intercept_ = -0.5 * np.sum(self.coef_ ** 2, axis=1) + \
                            np.log(self.priors_)
-
-        self.classes = classes
         return self
+
+    @property
+    def classes(self):
+        warnings.warn("QDA.classes is deprecated. Use QDA.classes_ instead.",
+                DeprecationWarning)
+        return self.classes_
 
     def decision_function(self, X):
         """
@@ -233,7 +233,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         C : array, shape = [n_samples]
         """
         d = self.decision_function(X)
-        y_pred = self.classes[d.argmax(1)]
+        y_pred = self.classes_[d.argmax(1)]
         return y_pred
 
     def predict_proba(self, X):
