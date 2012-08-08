@@ -4,8 +4,10 @@ General tests for all estimators in sklearn.
 import os
 import warnings
 import sys
+import traceback
 
 import numpy as np
+from scipy import sparse
 from nose.tools import assert_raises, assert_equal
 from numpy.testing import assert_array_equal
 
@@ -57,6 +59,39 @@ def test_all_estimators():
             clone(e)
             # test __repr__
             repr(e)
+
+
+def test_estimators_sparse_data():
+    # All estimators should either deal with sparse data, or raise an
+    # intelligible error message
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+    X = sparse.csr_matrix(X)
+    y = (4*rng.rand(40)).astype(np.int)
+    estimators = all_estimators()
+    estimators = [(name, E) for name, E in estimators
+                        if issubclass(E, (ClassifierMixin, RegressorMixin))]
+    for name, Clf in estimators:
+        if Clf in dont_test or Clf in meta_estimators:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            clf = Clf()
+        # fit
+        try:
+            clf.fit(X, y)
+        except TypeError, e:
+            if not 'sparse' in repr(e):
+                print ("Estimator %s doesn't seem to fail gracefully on "
+                    "sparse data" % name)
+                traceback.print_exc(file=sys.stdout)
+                raise e
+        except Exception, exc:
+            print ("Estimator %s doesn't seem to fail gracefully on "
+                "sparse data" % name)
+            traceback.print_exc(file=sys.stdout)
+            raise exc
 
 
 def test_classifiers_train():

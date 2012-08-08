@@ -12,6 +12,7 @@ import numpy as np
 import scipy.ndimage as ndimage
 
 from .base import BaseEstimator, ClassifierMixin
+from .utils import check_arrays
 
 
 # FIXME :
@@ -78,14 +79,9 @@ class QDA(BaseEstimator, ClassifierMixin):
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
         """
-        X = np.asarray(X)
-        y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format='dense')
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
         if y.dtype.char.lower() not in ('b', 'h', 'i'):
             # We need integer values to be able to use
             # ndimage.measurements and np.bincount on numpy >= 2.0.

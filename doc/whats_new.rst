@@ -40,6 +40,9 @@ Changelog
 
    - A common testing framework for all estimators was added, by `Andreas Müller`_.
 
+   - Understandable error messages for estimators that do not accept
+     sparse input by `Gael Varoquaux`_
+
    - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
      particular building the tree now supports early stopping. This is
      useful when the number of clusters is not small compared to the
