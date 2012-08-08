@@ -364,10 +364,10 @@ cdef class Tree:
         cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
 
         n_samples = X.shape[0]
-        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        sample_indices = np.arange(n_samples, dtype=np.int)
 
         # Build the tree by recursive partitioning
-        self.recursive_partition(X, y, sample_mask, n_samples, 0, -1, False, buffer_value)
+        self.recursive_partition(X, y, sample_indices, n_samples, 0, -1, False, buffer_value)
 
         # Compactify
         self.resize(self.node_count)
@@ -376,7 +376,7 @@ cdef class Tree:
     cdef void recursive_partition(self,
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
                                   np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
-                                  np.ndarray sample_mask,
+                                  np.ndarray[np.int_t, ndim=1, mode="c"] sample_indices,
                                   int n_samples,
                                   int depth,
                                   int parent,
@@ -400,15 +400,22 @@ cdef class Tree:
         cdef int n_sample_left
         cdef int n_samples_right
 
-        cdef np.ndarray sample_mask_left = None
-        cdef np.ndarray sample_mask_right = None
-        cdef np.ndarray[DTYPE_t, ndim=2] new_X = None
-        cdef np.ndarray[DTYPE_t, ndim=2] new_y = None
+        cdef np.ndarray X_current = None
+        cdef np.ndarray y_current = None
+        cdef np.ndarray sample_indices_left = None
+        cdef np.ndarray sample_indices_right = None
 
         cdef int i
 
-        new_X = X[sample_mask, :]
-        new_y = y[sample_mask, :]
+        if depth != 0:
+            X_current = X[sample_indices, :]
+            y_current = y[sample_indices, :]
+        else:
+            X_current = X
+            y_current = y
+
+        print
+        print "depth = ", depth
 
         # Count samples
         if n_samples == 0:
@@ -419,12 +426,12 @@ cdef class Tree:
         if depth < self.max_depth and \
            n_samples >= self.min_samples_split and \
            n_samples >= 2 * self.min_samples_leaf:
-            self.find_split(new_X, new_y, n_samples, &feature, &threshold, &best_error, &init_error)
+            self.find_split(X_current, y_current, n_samples, &feature, &threshold, &best_error, &init_error)
 
         else:
             feature = -1
-            y_ptr = <DTYPE_t*> new_y.data
-            y_stride = <int> new_y.strides[0] / <int> new_y.strides[1]
+            y_ptr = <DTYPE_t*> y_current.data
+            y_stride = <int> y_current.strides[0] / <int> y_current.strides[1]
             criterion.init(y_ptr, y_stride, n_samples)
             init_error = criterion.eval()
 
@@ -436,38 +443,39 @@ cdef class Tree:
 
         # Current node is internal node (= split node)
         else:
-            if not new_X.flags.fortran:
-                new_X = np.asfortranarray(new_X)
             
-            sample_mask_ptr = <BOOL_t*> sample_mask.data
-
             # Split
-            X_ptr = <DTYPE_t*> new_X.data
-            X_stride = <int> new_X.strides[1] / <int> new_X.strides[0]
+            X_ptr = <DTYPE_t*> X.data
+            X_stride = <int> X.strides[1] / <int> X.strides[0]
             X_ptr = X_ptr + feature * X_stride
-            sample_mask_left = np.zeros((n_samples, ), dtype=np.bool)
-            sample_mask_right = np.zeros((n_samples, ), dtype=np.bool)
             n_samples_left = 0
             n_samples_right = 0
 
+            tmp_left = []
+            tmp_right = []
+
             for i from 0 <= i < n_samples:
-                    if X_ptr[i] <= threshold:
-                        sample_mask_left[i] = 1
-                        n_samples_left += 1
-                    else:
-                        sample_mask_right[i] = 1
-                        n_samples_right += 1            
+                index = sample_indices[i]
+                if X_ptr[index] <= threshold:
+                    tmp_left.append(index)
+                    n_samples_left += 1
+                else:
+                    tmp_right.append(index)
+                    n_samples_right += 1
+
+            sample_indices_left = np.array(tmp_left)
+            sample_indices_right = np.array(tmp_right)
             
             node_id = self.add_split_node(parent, is_left_child, feature,
                                           threshold, buffer_value, best_error,
                                           init_error, n_samples)
 
             # Left child recursion
-            self.recursive_partition(new_X, new_y, sample_mask_left, n_samples_left, depth + 1, node_id,
+            self.recursive_partition(X, y, sample_indices_left, n_samples_left, depth + 1, node_id,
                                      True, buffer_value)
 
             # Right child recursion
-            self.recursive_partition(new_X, new_y, sample_mask_right, n_samples_right, depth + 1, node_id,
+            self.recursive_partition(X, y, sample_indices_right, n_samples_right, depth + 1, node_id,
                                      False, buffer_value)
 
     cdef int add_split_node(self, int parent, int is_left_child, int feature,
@@ -567,10 +575,6 @@ cdef class Tree:
         cdef double t, initial_error, error
         cdef double best_error = INFINITY, best_t = INFINITY
 
-        cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] X_copy = X[:,0].copy() 
-        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] n_samples_arange = np.arange(n_samples, dtype=np.int32)
-        cdef DTYPE_t* X_copy_ptr
-
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data     
         cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
 
@@ -611,20 +615,13 @@ cdef class Tree:
         # Look for the best split
         for feature_idx from 0 <= feature_idx < max_features:
             i = features[feature_idx]
-
-            # Get i-th col of X and X_argsorted
-            X_i_ptr = X_ptr + i * X_stride
-            X_copy_ptr = <DTYPE_t*> X_copy.data
-            memcpy(X_copy_ptr, X_i_ptr, n_samples * sizeof(DTYPE_t))
-            X_argsorted_i_ptr = <int*> X_argsorted_i.data
-            memcpy(X_argsorted_i_ptr, <int*> n_samples_arange.data, n_samples * sizeof(int))
-            _argqsort(X_copy_ptr, X_argsorted_i_ptr, 0, n_samples-1)
-#            
+            print i,
             
-#            X_i = X[:,i]
-#            X_i_ptr = <DTYPE_t*> X_i.data
-#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
-#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
+            # Get i-th col of X and X_argsorted            
+            X_i = X[:, i]
+            X_i_ptr = <DTYPE_t*> X_i.data
+            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+            X_argsorted_i_ptr = <int*> X_argsorted_i.data
             #print "argsorted ", i
 
             # Reset the criterion for this feature
