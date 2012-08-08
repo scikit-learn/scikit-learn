@@ -555,7 +555,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("LabelNormalizer was not fitted yet.")
 
     def fit(self, y):
-        """Fit label normalizer
+        """Fit label encoder
 
         Parameters
         ----------
@@ -568,6 +568,30 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         self.classes_ = np.unique(y)
         return self
+
+    def fit_transform(self, y):
+        """Fit label encoder and return encoded labels
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : array-like of shape [n_samples]
+        """
+        self.fit(y)
+        return self._transform(y)
+
+    def _transform(self, y):
+        y = np.asarray(y)
+        y_new = np.zeros(len(y), dtype=int)
+
+        for i, k in enumerate(self.classes_[1:]):
+            y_new[y == k] = i + 1
+
+        return y_new
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -588,13 +612,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
 
-        y = np.asarray(y)
-        y_new = np.zeros(len(y), dtype=int)
-
-        for i, k in enumerate(self.classes_[1:]):
-            y_new[y == k] = i + 1
-
-        return y_new
+        return self._transform(y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
