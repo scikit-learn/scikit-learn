@@ -12,7 +12,7 @@ import operator
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-import scipy.sparse as sp
+from scipy import sparse
 
 from .base import LinearModel
 from ..base import RegressorMixin
@@ -21,7 +21,7 @@ from ..utils import as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
-
+from ..utils import check_arrays
 
 from . import cd_fast
 
@@ -154,7 +154,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
 
-        fit = self._sparse_fit if sp.isspmatrix(X) else self._dense_fit
+        fit = self._sparse_fit if sparse.isspmatrix(X) else self._dense_fit
         fit(X, y, Xy, coef_init)
         return self
 
@@ -223,8 +223,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def _sparse_fit(self, X, y, Xy=None, coef_init=None):
 
-        if not sp.isspmatrix_csc(X) or not np.issubdtype(np.float64, X):
-            X = sp.csc_matrix(X, dtype=np.float64)
+        if not sparse.isspmatrix_csc(X) or not np.issubdtype(np.float64, X):
+            X = sparse.csc_matrix(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
@@ -270,7 +270,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     @property
     def sparse_coef_(self):
         """ sparse representation of the fitted coef """
-        return sp.csr_matrix(self.coef_)
+        return sparse.csr_matrix(self.coef_)
 
     def decision_function(self, X):
         """Decision function of the linear model
@@ -283,7 +283,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         -------
         array, shape = [n_samples] with the predicted real values
         """
-        if sp.isspmatrix(X):
+        if sparse.isspmatrix(X):
             return np.ravel(safe_sparse_dot(self.coef_, X.T, \
                                         dense_output=True) + self.intercept_)
         else:
@@ -556,6 +556,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                                                            fit_intercept,
                                                            normalize,
                                                            copy=False)
+    X, y = check_arrays(X, y, sparse_format='dense')
     X = np.asfortranarray(X)  # make data contiguous in memory
     n_samples, n_features = X.shape
 
@@ -564,7 +565,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if X_init is not X and Xy is not None:
         Xy = None
 
-    if 'precompute' is True or \
+    if precompute is True or \
                 ((precompute == 'auto') and (n_samples > n_features)):
         precompute = np.dot(X.T, X)
 
@@ -649,7 +650,8 @@ class LinearModelCV(LinearModel):
             Target values
 
         """
-        X = np.asfortranarray(X, dtype=np.float64)
+        if not sparse.issparse(X):
+            X = np.asfortranarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable

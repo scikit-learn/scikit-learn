@@ -270,7 +270,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
-        X = array2d(np.asarray(X))
+        X = array2d(X)
         y = np.asarray(y).ravel()[:, np.newaxis]
 
         # Check shapes of DOE & observations

@@ -12,6 +12,7 @@ from scipy import linalg
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
+from ..utils import check_arrays
 
 
 ###############################################################################
@@ -136,8 +137,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X = np.asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_arrays(X, y, sparse_format='dense',
+                            dtype=np.float)
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
@@ -353,9 +354,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-
-        X = np.asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_arrays(X, y, sparse_format='dense',
+                            dtype=np.float)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
