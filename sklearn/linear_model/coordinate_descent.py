@@ -275,7 +275,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
                               ever_active_set=None):
-
         n_samples = X.shape[0]
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
@@ -301,11 +300,10 @@ class ElasticNet(LinearModel, RegressorMixin):
             # all features in the strong set pass the KKT
             while not pass_kkt_on_strong_set:
 
-                print "fit enet on active set"
                 self.coef_, self.dual_gap_, self.eps_ = \
                         cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
                              l2_reg, X, y, self.max_iter, self.tol, 
-                             self.positive, iter_set=ever_active_set)
+                             self.positive, iter_set=np.array(ever_active_set))
 
                 self._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
                                          ever_active_set, subset=strong_set)
@@ -323,11 +321,12 @@ class ElasticNet(LinearModel, RegressorMixin):
             # check if no features have been violating the KKT
             # on the full set of features
             if len(ever_active_set) == size_ever_active_set:
-                pass_kkt_on_strong_set = True
+                pass_kkt_on_full_set = True
             else:
                 size_ever_active_set = len(ever_active_set)
                 strong_set = self._filter_with_strong_rule( X, y, last_alpha=last_alpha)
                 pass_kkt_on_strong_set = False
+                pass_kkt_on_full_set = False
 
         # return self for chaining fit and predict calls
         return self
@@ -336,19 +335,18 @@ class ElasticNet(LinearModel, RegressorMixin):
                                      ever_active_set, subset=None):
         kkt_violations = False
 
-        if subset is not None:
-            print "check KKT on: " + str(subset)
+        if subset is None:
             features_to_check = xrange(X.shape[1])
         else:
-            print "check KKT on full set"
             features_to_check = subset
+
 
         for i in features_to_check:
             residual = np.dot(X[:, i], y - np.dot(X, self.coef_))
             s = np.sign(self.coef_[i])
             if self.coef_[i] != 0 and \
-                not np.allclose(residual, s * l1_reg + l2_reg * self.coef_[i], rtol=1e-2):
-                if i not in subset:
+                not np.allclose(residual, s * l1_reg + l2_reg * self.coef_[i], rtol=0.09):
+                if i not in ever_active_set:
                     ever_active_set.append(i)
                 kkt_violations = True
             if self.coef_[i] == 0 and abs(residual) >= np.abs(l1_reg):
@@ -363,14 +361,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         # use basic strong rule,
         # since no previous alpha is given.
         if last_alpha is None:
-            print "global strong rule"
             Xy = np.abs(np.dot(X.T, y))
             alpha_max = np.max(np.abs(np.dot(X.T, y)))
             strong_set = Xy >= self.rho * (2 * alpha_scaled - alpha_max)
             return np.where(strong_set)[0].tolist()
         # use sequential strong rule
         else:
-            print "sequential strong rule"
             last_alpha_scaled = last_alpha * X.shape[0]
             residual = np.dot(X.T, y - np.dot(X, self.coef_))
             residual = np.abs(residual)
