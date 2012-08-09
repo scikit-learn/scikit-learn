@@ -521,6 +521,8 @@ For dense data
    linear_model.LassoCV
    linear_model.ElasticNet
    linear_model.ElasticNetCV
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskElasticNet
    linear_model.Lars
    linear_model.LassoLars
    linear_model.LarsCV
@@ -859,6 +861,7 @@ Pairwise metrics
    preprocessing.Normalizer
    preprocessing.Binarizer
    preprocessing.LabelBinarizer
+   preprocessing.LabelEncoder
    preprocessing.KernelCenterer
 
 .. autosummary::

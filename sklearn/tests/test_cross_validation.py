@@ -6,20 +6,20 @@ from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
+from sklearn.utils.testing import assert_greater, assert_less
 
-from ..utils.testing import assert_greater, assert_less
-from ..base import BaseEstimator
-from ..datasets import make_regression
-from ..datasets import load_iris
-from ..metrics import zero_one_score
-from ..metrics import f1_score
-from ..metrics import mean_squared_error
-from ..metrics import r2_score
-from ..metrics import explained_variance_score
-from ..svm import SVC
-from ..linear_model import Ridge
-from ..svm.sparse import SVC as SparseSVC
-from .. import cross_validation as cval
+from sklearn import cross_validation as cval
+from sklearn.base import BaseEstimator
+from sklearn.datasets import make_regression
+from sklearn.datasets import load_iris
+from sklearn.metrics import zero_one_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.metrics import explained_variance_score
+from sklearn.svm import SVC
+from sklearn.linear_model import Ridge
+from sklearn.svm.sparse import SVC as SparseSVC
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal

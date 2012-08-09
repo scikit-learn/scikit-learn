@@ -68,13 +68,14 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         amg_loaded = True
     except ImportError:
         amg_loaded = False
+        if mode == "amg":
+            raise ValueError("The mode was set to 'amg', but pyamg is "
+                             "not available.")
 
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
     # XXX: Should we check that the matrices given is symmetric
-    if not amg_loaded:
-        warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
         mode = 'arpack'
     laplacian, dd = graph_laplacian(adjacency,
@@ -188,9 +189,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     -------
     labels: array of integers, shape: n_samples
         The labels of the clusters.
-
-    centers: array of integers, shape: k
-        The indices of the cluster centers
 
     References
     ----------

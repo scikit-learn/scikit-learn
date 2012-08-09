@@ -12,16 +12,19 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
+from sklearn.tree._tree cimport Tree
+
 # Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
 
 
 cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
-                                                np.int32_t *children,
-                                                np.int32_t *feature,
-                                                np.float64_t *threshold,
-                                                np.float64_t * value,
+                                                int *children_left,
+                                                int *children_right,
+                                                int *feature,
+                                                double *threshold,
+                                                double *value,
                                                 double scale,
                                                 Py_ssize_t k,
                                                 Py_ssize_t K,
@@ -34,10 +37,14 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     data structures. This is 5x faster than the variant above because
     it allows us to avoid buffer validation.
 
+    The function assumes that the ndarray that wraps ``X`` is
+    c-continuous.
+
     Parameters
     ----------
     X : DTYPE_t pointer
         The pointer to the data array of the input ``X``.
+        Assumes that the array is c-continuous.
     children : np.int32_t pointer
         The pointer to the data array of the ``children`` array attribute
         of the :class:``sklearn.tree.Tree``.
@@ -72,17 +79,16 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     cdef Py_ssize_t i
     cdef np.int32_t node_id
     cdef np.int32_t feature_idx
-    cdef int stride = 2  # children.shape[1]
     for i in range(n_samples):
         node_id = 0
         # While node_id not a leaf
-        while children[node_id * stride] != -1 and \
-                  children[(node_id * stride) + 1] != -1:
+        while children_left[node_id] != -1 and \
+                  children_right[node_id] != -1:
             feature_idx = feature[node_id]
             if X[(i * n_features) + feature_idx] <= threshold[node_id]:
-                node_id = children[node_id * stride]
+                node_id = children_left[node_id]
             else:
-                node_id = children[(node_id * stride) + 1]
+                node_id = children_right[node_id]
         out[(i * K) + k] += scale * value[node_id]
 
 
@@ -101,7 +107,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Py_ssize_t n_samples = X.shape[0]
     cdef Py_ssize_t n_features = X.shape[1]
     cdef Py_ssize_t K = estimators.shape[1]
-    cdef object tree
+    cdef Tree tree
 
     for i in range(n_estimators):
         for k in range(K):
@@ -112,10 +118,11 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
             # need brackets because of casting operator priority
             _predict_regression_tree_inplace_fast(
                 <DTYPE_t*>(X.data),
-                <np.int32_t*>((<np.ndarray>(tree.children)).data),
-                <np.int32_t*>((<np.ndarray>(tree.feature)).data),
-                <np.float64_t*>((<np.ndarray>(tree.threshold)).data),
-                <np.float64_t*>((<np.ndarray>(tree.value)).data),
+                tree.children_left,
+                tree.children_right,
+                tree.feature,
+                tree.threshold,
+                tree.value,
                 scale, k, K, n_samples, n_features,
                 <np.float64_t*>((<np.ndarray>out).data))
 
@@ -136,16 +143,17 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
     cdef Py_ssize_t n_samples = X.shape[0]
     cdef Py_ssize_t n_features = X.shape[1]
     cdef Py_ssize_t K = estimators.shape[1]
-    cdef object tree
+    cdef Tree tree
     for k in range(K):
         tree = estimators[stage, k]
 
         _predict_regression_tree_inplace_fast(
                 <DTYPE_t*>(X.data),
-                <np.int32_t*>((<np.ndarray>(tree.children)).data),
-                <np.int32_t*>((<np.ndarray>(tree.feature)).data),
-                <np.float64_t*>((<np.ndarray>(tree.threshold)).data),
-                <np.float64_t*>((<np.ndarray>(tree.value)).data),
+                tree.children_left,
+                tree.children_right,
+                tree.feature,
+                tree.threshold,
+                tree.value,
                 scale, k, K, n_samples, n_features,
                 <np.float64_t*>((<np.ndarray>out).data))
 

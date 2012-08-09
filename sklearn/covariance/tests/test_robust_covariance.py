@@ -4,7 +4,8 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
+    assert_raises
 
 import numpy as np
 
@@ -30,10 +31,10 @@ def test_mcd():
     launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50)
 
     ### Medium data set
-    launch_mcd_on_dataset(1000, 5, 450, 1e-3, 1e-3, 540)
+    launch_mcd_on_dataset(1000, 5, 450, 0.1, 0.1, 540)
 
     ### Large data set
-    launch_mcd_on_dataset(1700, 5, 800, 1e-3, 1e-3, 870)
+    launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870)
 
     ### 1D data set
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
@@ -41,9 +42,7 @@ def test_mcd():
 
 def launch_mcd_on_dataset(
     n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support):
-    """
 
-    """
     rand_gen = np.random.RandomState(0)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers
@@ -56,7 +55,7 @@ def launch_mcd_on_dataset(
 
     pure_data = data[inliers_mask]
     # compute MCD by fitting an object
-    mcd_fit = MinCovDet().fit(data)
+    mcd_fit = MinCovDet(random_state=rand_gen).fit(data)
     T = mcd_fit.location_
     S = mcd_fit.covariance_
     H = mcd_fit.support_
@@ -66,20 +65,24 @@ def launch_mcd_on_dataset(
     error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
     assert(error_cov < tol_cov)
     assert(np.sum(H) >= tol_support)
+    assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
 def test_outlier_detection():
-    """
-
-    """
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
+    print clf.threshold
+    assert_raises(Exception, clf.predict, X)
+    assert_raises(Exception, clf.decision_function, X)
     clf.fit(X)
     y_pred = clf.predict(X)
+    decision = clf.decision_function(X, raw_values=True)
+    decision_transformed = clf.decision_function(X, raw_values=False)
 
     assert_array_almost_equal(
-        clf.decision_function(X, raw_mahalanobis=True),
-        clf.mahalanobis(X - clf.location_))
+        decision, clf.mahalanobis(X))
+    assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
+    assert(sum(y_pred == -1) == sum(decision_transformed < 0))

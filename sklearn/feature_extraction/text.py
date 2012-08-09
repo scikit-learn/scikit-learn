@@ -10,9 +10,10 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
+from collections import Mapping
+from operator import itemgetter
 import re
 import unicodedata
-from operator import itemgetter
 import warnings
 
 import numpy as np
@@ -167,6 +168,11 @@ class CountVectorizer(BaseEstimator):
 
         This parameter is ignored if vocabulary is not None.
 
+    vocabulary: Mapping or iterable, optional
+        Either a Mapping (e.g., a dict) where keys are terms and values are
+        indices in the feature matrix, or an iterable over terms. If not
+        given, a vocabulary is determined from the input documents.
+
     binary: boolean, False by default.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
@@ -201,7 +207,7 @@ class CountVectorizer(BaseEstimator):
         self.max_features = max_features
         if vocabulary is not None:
             self.fixed_vocabulary = True
-            if not hasattr(vocabulary, 'get'):
+            if not isinstance(vocabulary, Mapping):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
             self.vocabulary_ = vocabulary
         else:
@@ -336,7 +342,7 @@ class CountVectorizer(BaseEstimator):
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
-            spmatrix.data[:] = 1
+            spmatrix.data.fill(1)
         return spmatrix
 
     def fit(self, raw_documents, y=None):

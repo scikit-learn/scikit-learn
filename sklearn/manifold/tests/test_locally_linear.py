@@ -39,8 +39,8 @@ def test_lle_simple_grid():
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
-            n_components=n_components)
-    tol = .1
+            n_components=n_components, random_state=rng)
+    tol = .12
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
     reconstruction_error = np.linalg.norm(np.dot(N, X) - X, 'fro')
@@ -71,24 +71,26 @@ def test_lle_manifold():
     X = np.c_[X, X[:, 0] ** 2 / 20]
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
-    clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
-            n_components=n_components, random_state=0)
-    tol = 1.5
+    for method in ["standard", "hessian", "modified", "ltsa"]:
+        clf = manifold.LocallyLinearEmbedding(n_neighbors=6,
+                n_components=n_components, method=method, random_state=0)
+        tol = 1.5 if method == "standard" else 3
 
-    N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
-    reconstruction_error = np.linalg.norm(np.dot(N, X) - X)
-    assert_less(reconstruction_error, tol)
+        N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
+        reconstruction_error = np.linalg.norm(np.dot(N, X) - X)
+        assert_less(reconstruction_error, tol)
 
-    for solver in eigen_solvers:
-        clf.set_params(eigen_solver=solver)
-        clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == n_components)
-        reconstruction_error = np.linalg.norm(
-            np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
-        details = "solver: " + solver
-        assert_less(reconstruction_error, tol, msg=details)
-        assert_less(np.abs(clf.reconstruction_error_ - reconstruction_error),
-                     tol * reconstruction_error, msg=details)
+        for solver in eigen_solvers:
+            clf.set_params(eigen_solver=solver)
+            clf.fit(X)
+            assert_true(clf.embedding_.shape[1] == n_components)
+            reconstruction_error = np.linalg.norm(
+                np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
+            details = ("solver: %s, method: %s"
+                % (solver, method))
+            assert_less(reconstruction_error, tol, msg=details)
+            assert_less(np.abs(clf.reconstruction_error_ - reconstruction_error),
+                         tol * reconstruction_error, msg=details)
 
 
 def test_pipeline():
@@ -98,7 +100,7 @@ def test_pipeline():
     from sklearn import pipeline, datasets
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
-        [('filter', manifold.LocallyLinearEmbedding()),
+        [('filter', manifold.LocallyLinearEmbedding(random_state=0)),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert_less(.9, clf.score(X, y))

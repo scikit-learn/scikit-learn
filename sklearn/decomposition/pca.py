@@ -385,7 +385,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Whitening will remove some information from the transformed signal
         (the relative variance scales of the components) but can sometime
         improve the predictive accuracy of the downstream estimators by
-        making there data respect some hard-wired assumptions.
+        making their data respect some hard-wired assumptions.
 
     random_state : int or RandomState instance or None (default)
         Pseudo Random Number generator seed control. If None, use the
@@ -456,13 +456,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
             # not a sparse matrix, ensure this is a 2D array
-            X = array2d(X)
+            X = np.atleast_2d(as_float_array(X, copy=self.copy))
 
         n_samples = X.shape[0]
 
         if not hasattr(X, 'todense'):
-            X = as_float_array(X, copy=self.copy)
-
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
@@ -475,9 +473,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  n_iterations=self.iterated_power,
                                  random_state=self.random_state)
 
-        self.explained_variance_ = (S ** 2) / n_samples
-        self.explained_variance_ratio_ = self.explained_variance_ / \
-                                        self.explained_variance_.sum()
+        self.explained_variance_ = exp_var = (S ** 2) / n_samples
+        self.explained_variance_ratio_ = exp_var / exp_var.sum()
 
         if self.whiten:
             n = X.shape[0]
@@ -488,7 +485,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Apply the dimensionality reduction on X.
+        """Apply dimensionality reduction on X.
 
         Parameters
         ----------
@@ -508,8 +505,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         return X
 
     def inverse_transform(self, X):
-        """Transform data back to its original space, i.e.,
-        return an input X_original whose transform would be X
+        """Transform data back to its original space.
+
+        Returns an array X_original whose transform would be X.
 
         Parameters
         ----------
@@ -524,7 +522,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Notes
         -----
         If whitening is enabled, inverse_transform does not compute the
-        exact inverse operation as transform.
+        exact inverse operation of transform.
         """
         X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:

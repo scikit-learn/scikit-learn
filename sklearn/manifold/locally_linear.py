@@ -161,9 +161,6 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
                              "ill-behaved.  method='dense' is recommended. "
                              "See online documentation for more information."
                              % msg)
-        except:
-            #let other errors pass through
-            raise
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':

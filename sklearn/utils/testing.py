@@ -136,7 +136,7 @@ def all_estimators():
     # get parent folder
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(path=path,
-        prefix='sklearn.', onerror=lambda x: None):
+                            prefix='sklearn.', onerror=lambda x: None):
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         # get rid of abstract base classes
@@ -147,3 +147,4 @@ def all_estimators():
     estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
     estimators = [c for c in estimators if not is_abstract(c[1])]
     return estimators
+

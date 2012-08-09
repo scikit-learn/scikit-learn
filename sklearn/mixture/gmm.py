@@ -465,7 +465,7 @@ class GMM(BaseEstimator):
                 self.n_iter = kwargs['n_iter']
             if 'n_init' in kwargs:
                 if kwargs['n_init'] < 1:
-                    raise ValueError('GMM estimation requires at least one run')
+                    raise ValueError('GMM estimation requires n_init > 0.')
                 else:
                     self.n_init = kwargs['n_init']
             if 'params' in kwargs:

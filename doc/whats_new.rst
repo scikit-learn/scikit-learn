@@ -9,26 +9,58 @@
 Changelog
 ---------
 
-   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
+   - Various speed improvements of the :ref:`decision trees <tree>` module, by
+     `Gilles Louppe`_.
+
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
+     via the ``max_features`` argument, by `Peter Prettenhofer`_.
+
+   - Added Huber and Quantile loss functions to
+     :class:`ensemble.GradientBoostingRegressor`, by `Peter Prettenhofer`_.
+
+   - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
+     now support multi-output classification and regression problems, by
+     `Gilles Louppe`_.
+
+   - Added :class:`preprocessing.LabelEncoder`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
    - Added the epsilon-insensitive loss and the ability to make probabilistic
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
-   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux.
 
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
-     decompresses them on the fly.
+     decompresses them on the fly, by `Lars Buitinck`_.
 
-   - A common testing framework for all estimators was added.
+   - SVMlight file format serializer now preserves double precision floating
+     point values, by `Olivier Grisel`_.
+
+   - A common testing framework for all estimators was added, by `Andreas Müller`_.
+
+   - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
+     particular building the tree now supports early stopping. This is
+     useful when the number of clusters is not small compared to the
+     number of samples.
+
+   - Add MultiTaskLasso and MultiTaskElasticNet for joint feature selection,
+     by `Alexandre Gramfort`_.
 
 API changes summary
 -------------------
 
-   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
-     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
-     object when initialising it and not through ``fit``. Now ``fit`` will 
+   - The old ``scikits.learn`` package has disappeared; all code should import
+     from ``sklearn`` instead, which was introduced in 0.9.
+
+   - In :class:`metrics.roc_curve`, the `thresholds` array is now returned
+     with it's order reversed, in order to keep it consistent with the order
+     of the returned `fpr` and `tpr`.
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
+     object when initialising it and not through ``fit``. Now ``fit`` will
      only accept the data as an input parameter.
 
    - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
@@ -37,6 +69,10 @@ API changes summary
 
    - All ``Base`` classes are now abstract meta classes so that they can not be
      instantiated.
+
+   - :func:`cluster.ward_tree` now also returns the parent array. This is
+     necessary for early-stopping in which case the tree is not
+     completely built.
 
 .. _changes_0_11:
 
@@ -1159,7 +1195,7 @@ of commits):
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
-.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
+.. _Alexandre Gramfort: http://alexandre.gramfort.net
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 

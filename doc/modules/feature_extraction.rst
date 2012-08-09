@@ -15,7 +15,7 @@ consisting of formats such as text and image.
 
    Feature extraction is very different from :ref:`feature_selection`:
    the former consists in transforming arbitrary data, such as text or
-   images, into numerical features usable for machine learning. The later
+   images, into numerical features usable for machine learning. The latter
    is a machine learning technique applied on these features.
 
 .. _dict_feature_extraction:
