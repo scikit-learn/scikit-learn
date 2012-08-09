@@ -1,7 +1,8 @@
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert_equal
 import numpy as np
 
-from sklearn.linear_model.coordinate_descent import ElasticNet, enet_path
+from sklearn.linear_model.coordinate_descent import ElasticNet, enet_path, \
+    elastic_net_strong_rule_active_set
 from sklearn.datasets.samples_generator import make_regression
 
 
@@ -12,40 +13,35 @@ def test_enet_basic_strong_rule_filtering():
     alpha = 110.0
     rho = 0.9
 
-    clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, max_iter=MAX_ITER, \
-                                  precompute=False, use_strong_rule=True)
+    basic_strong_set = elastic_net_strong_rule_active_set(X, y, \
+                alpha=alpha, rho=rho)
 
-    basic_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y))
-    assert_equal(basic_strong_set, [4, 33, 35] )
+    basic_strong_set = np.array(basic_strong_set)
+    assert_equal(basic_strong_set, [4, 33, 35])
 
 
 def test_enet_sequential_strong_rule_filtering():
     MAX_ITER = 1000
     X, y = make_regression(n_samples=100, n_features=50, n_informative=20,
                      random_state=0)
-    alpha_0 = 110.0
-    alpha_1 = 75.0
+    alphas = [110.0, 75]
     rho = 0.9
 
-    clf = ElasticNet(alpha=alpha_0, rho=rho, precompute=False)
+    clf = ElasticNet(alpha=alphas[0], rho=rho, precompute=False)
     clf.fit(X, y)
 
-    clf_strong_rule = ElasticNet(alpha=alpha_1, rho=rho, precompute=False, \
-                                  use_strong_rule=True)
-    # the sequential strong rule needs alpha_{n-1} and the corresponding coefs
-    #clf_strong_rule.coef_ = clf.coef_
+    sequential_strong_set = elastic_net_strong_rule_active_set(X, y, \
+                                alpha=alphas[1], rho=rho, \
+                                last_alpha=alphas[0], last_coef=clf.coef_)
 
-    sequential_strong_set = \
-        np.array(clf_strong_rule._filter_with_strong_rule(X, y, \
-                                 last_alpha=alpha_0, last_coef=clf.coef_))
+    sequential_strong_set = np.array(sequential_strong_set)
     assert_equal(sequential_strong_set, \
-                  [4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49] )
+                  [4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49])
 
 
 def test_automatic_strong_rule_selection():
     """
-    test that sequential strong rule is selected, if bigger alpha including
-    coefs is given
+    test that sequential strong rule is selected, if possible
     """
     MAX_ITER = 1000
     X, y = make_regression(n_samples=100, n_features=50, n_informative=20,
@@ -53,18 +49,16 @@ def test_automatic_strong_rule_selection():
     alphas = [110.0, 75.0]
     rho = 0.9
 
-    clf_strong_rule = ElasticNet(alpha=alphas[1], rho=rho, \
-                    max_iter=MAX_ITER, precompute=False, use_strong_rule=True)
-    basic_strong_set = \
-        np.array(clf_strong_rule._filter_with_strong_rule(X, y, \
-                                             last_alpha=None, last_coef=None))
-
     clf = ElasticNet(alpha=alphas[0], rho=rho, precompute=False)
-    clf.fit(X,y)
+    clf.fit(X, y)
 
-    clf_strong_rule = ElasticNet(alpha=alphas[1], rho=rho, precompute=False, use_strong_rule=True)
-    sequential_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=alphas[0], \
-                                                                              last_coef=clf.coef_))
+    basic_strong_set = elastic_net_strong_rule_active_set(X, y, \
+                alpha=alphas[1], rho=rho)
+
+    sequential_strong_set = elastic_net_strong_rule_active_set(X, y, \
+                                alpha=alphas[1], rho=rho, \
+                                last_alpha=alphas[0], last_coef=clf.coef_)
+
     # the sequential strong rule is expected to select less coefs
     assert(len(sequential_strong_set) < len(basic_strong_set))
 

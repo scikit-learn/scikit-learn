@@ -288,7 +288,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # the strong_set contains the features that are predicted by
         # the strong rule to have nonzero coefs
-        strong_set = self._filter_with_strong_rule(X, y, last_alpha=last_alpha, 
+        strong_set = elastic_net_strong_rule_active_set(X, y, \
+                alpha=self.alpha, rho=self.rho, last_alpha=last_alpha, \
                                                    last_coef=last_coef)
 
         # the ever_active_set contains the features that had nonzero coefs while
@@ -334,8 +335,10 @@ class ElasticNet(LinearModel, RegressorMixin):
                 pass_kkt_on_full_set = True
             else:
                 size_ever_active_set = len(self._ever_active_set)
-                strong_set = self._filter_with_strong_rule(X, y, \
-                                                    last_alpha=last_alpha)
+                strong_set = elastic_net_strong_rule_active_set(X, y, \
+                                alpha=self.alpha, rho=self.rho, \
+                                last_alpha=last_alpha, last_coef=last_coef)
+
                 pass_kkt_on_strong_set = False
                 pass_kkt_on_full_set = False
 
@@ -366,37 +369,6 @@ class ElasticNet(LinearModel, RegressorMixin):
                 kkt_violations = True
         return kkt_violations
 
-    def _filter_with_strong_rule(self, X, y, last_alpha=None, last_coef=None):
-
-        alpha_scaled = self.alpha * X.shape[0]
-
-        # use sequential strong rule if one other pair of 
-        # alpha and coefs is given
-        # this makes only sense if alpha < alpha_max
-        # therefore check if at least one coef != 0
-
-        if last_alpha is not None and last_alpha > self.alpha and \
-                        len(last_coef.nonzero()) > 0:
-            use_sequential_strong_rule = True
-        else:
-            use_sequential_strong_rule = False
-
-        # since no previous alpha is given.
-        if use_sequential_strong_rule:
-            residual = np.abs(np.dot(X.T, y - np.dot(X, last_coef)))
-            last_alpha_scaled = last_alpha * X.shape[0]
-            strong_set = residual >= self.rho * (2 * alpha_scaled - last_alpha_scaled)
-            print "sequential strong rule"
-            return np.where(strong_set)[0].tolist()
-
-        else:
-            Xy = np.abs(np.dot(X.T, y))
-            alpha_max = np.max(np.abs(Xy))
-            strong_set = Xy >= self.rho * (2 * alpha_scaled - alpha_max)
-            print "basic strong rule"
-            return np.where(strong_set)[0].tolist()
-
-
     @property
     def sparse_coef_(self):
         """ sparse representation of the fitted coef """
@@ -419,6 +391,38 @@ class ElasticNet(LinearModel, RegressorMixin):
         else:
             return super(ElasticNet, self).decision_function(X)
 
+
+def elastic_net_strong_rule_active_set(X, y, alpha, rho, \
+                              last_alpha=None, last_coef=None):
+
+    alpha_scaled = alpha * X.shape[0]
+
+    # use sequential strong rule if one other pair of 
+    # alpha and coefs is given
+    # this makes only sense if alpha < alpha_max
+    # therefore check if at least one coef != 0
+
+    if last_alpha is not None and last_alpha > alpha and \
+                    len(last_coef.nonzero()) > 0:
+        use_sequential_strong_rule = True
+    else:
+        use_sequential_strong_rule = False
+
+    # since no previous alpha is given.
+    if use_sequential_strong_rule:
+        residual = np.abs(np.dot(X.T, y - np.dot(X, last_coef)))
+        last_alpha_scaled = last_alpha * X.shape[0]
+        strong_set = residual >= rho * (2 * alpha_scaled -  \
+                                                last_alpha_scaled)
+        print "sequential strong rule"
+        return np.where(strong_set)[0].tolist()
+
+    else:
+        Xy = np.abs(np.dot(X.T, y))
+        alpha_max = np.max(np.abs(Xy))
+        strong_set = Xy >= rho * (2 * alpha_scaled - alpha_max)
+        print "basic strong rule"
+        return np.where(strong_set)[0].tolist()
 
 ###############################################################################
 # Lasso model
