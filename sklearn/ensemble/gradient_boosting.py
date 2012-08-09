@@ -31,6 +31,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d
+from ..utils.extmath import logsumexp
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -390,11 +391,12 @@ class MultinomialDeviance(LossFunction):
             Y[:, k] = y == k
 
         return np.sum(-1 * (Y * pred).sum(axis=1) +
-                      np.log(np.exp(pred).sum(axis=1)))
+                      logsumexp(pred, axis=1))
 
     def negative_gradient(self, y, pred, k=0):
         """Compute negative gradient for the ``k``-th class. """
-        return y - np.exp(pred[:, k]) / np.sum(np.exp(pred), axis=1)
+        return y - np.nan_to_num(np.exp(pred[:, k] -
+                                        logsumexp(pred, axis=1)))
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
@@ -811,7 +813,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
             proba[:, 0] -= proba[:, 1]
         else:
-            proba = np.exp(score) / np.sum(np.exp(score), axis=1)[:, np.newaxis]
+            proba = np.nan_to_num(np.exp(score - (logsumexp(score, axis=1)[:, np.newaxis])))
         return proba
 
 
