@@ -100,7 +100,7 @@ def f_classif(X, y):
     Parameters
     ----------
     X : array of shape (n_samples, n_features)
-        The set of regressors sthat will tested sequentially
+        The set of regressors that will tested sequentially
     y : array of shape(n_samples)
         The data matrix
 
@@ -174,7 +174,7 @@ def f_regression(X, y, center=True):
     Parameters
     ----------
     X : array of shape (n_samples, n_features)
-        The set of regressors sthat will tested sequentially
+        The set of regressors that will tested sequentially
     y : array of shape(n_samples)
         The data matrix
 
