@@ -273,7 +273,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # return self for chaining fit and predict calls
         return self
-    
 
     def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
                               last_coef=None, ever_active_set=None):
@@ -287,7 +286,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # the strong_set contains the features that are predicted by the strong rule
         # to have nonzero coefs
-        strong_set = self._filter_with_strong_rule(X, y, last_alpha=last_alpha)
+        strong_set = self._filter_with_strong_rule(X, y, last_alpha=last_alpha, 
+                                                   last_coef=last_coef)
 
         # the ever_active_set contains the features that had nonzero coefs while
         # fitting with a lower alpha
@@ -361,7 +361,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                 kkt_violations = True
         return kkt_violations
 
-    def _filter_with_strong_rule(self, X, y, last_alpha=None):
+    def _filter_with_strong_rule(self, X, y, last_alpha=None, last_coef=None):
 
         alpha_scaled = self.alpha * X.shape[0]
         # use basic strong rule,
@@ -374,7 +374,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # use sequential strong rule
         else:
             last_alpha_scaled = last_alpha * X.shape[0]
-            residual = np.dot(X.T, y - np.dot(X, self.coef_))
+            residual = np.dot(X.T, y - np.dot(X, last_coef))
             residual = np.abs(residual)
             strong_set = residual >= self.rho * (2 * alpha_scaled - last_alpha_scaled)
             return np.where(strong_set)[0].tolist()

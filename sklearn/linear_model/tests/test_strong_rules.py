@@ -29,9 +29,10 @@ def test_enet_sequential_strong_rule_filtering():
     
     clf_strong_rule = ElasticNet(alpha=alpha_1, rho=rho, precompute=False, use_strong_rule=True)
     # the sequential strong rule needs alpha_{n-1} and the corresponding coefs
-    clf_strong_rule.coef_ = clf.coef_
+    #clf_strong_rule.coef_ = clf.coef_
     
-    sequential_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=alpha_0))
+    sequential_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=alpha_0, 
+                                                                              last_coef=clf.coef_))
     assert_equal(sequential_strong_set, [4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49] )
 
 def test_enet_kkt_check_on_subset():
@@ -131,3 +132,4 @@ def test_enet_path():
     # flatten array and compare
     assert_array_almost_equal(coefs_sr_[1], coefs_skl_[1], 5)
     assert_array_almost_equal(coefs_sr_[3], coefs_skl_[3], 5)
+#    assert_equal(0,1)
