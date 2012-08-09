@@ -1,7 +1,7 @@
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert_equal
 import numpy as np
 
-from sklearn.linear_model.coordinate_descent import ElasticNet
+from sklearn.linear_model.coordinate_descent import ElasticNet, enet_path
 from sklearn.datasets.samples_generator import make_regression
 
 def test_enet_basic_strong_rule_filtering():
@@ -47,7 +47,6 @@ def test_enet_kkt_check_on_subset():
     clf = ElasticNet(alpha=alpha, rho=rho,tol=tol, precompute=False)
     clf.fit(X,y)    
 
-    ever_active_set = []
     subset = [0, 1, 2, 3, 4, 7]
     n_samples = X.shape[0]
     l1_reg = alpha * rho * n_samples
@@ -59,10 +58,11 @@ def test_enet_kkt_check_on_subset():
     # change two coefs
     clf_strong_rule.coef_[3] += 2
     clf_strong_rule.coef_[7] += -2
+    clf_strong_rule._ever_active_set = []
     clf_strong_rule._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
-                                     ever_active_set, subset=subset)
+                                     subset=subset)
     
-    ever_active_set = np.array(ever_active_set)
+    ever_active_set = np.array(clf_strong_rule._ever_active_set)
     assert_equal(ever_active_set, [3, 7])
     
 
@@ -79,7 +79,6 @@ def test_enet_kkt_check_on_full_set():
     clf = ElasticNet(alpha=alpha, rho=rho,tol=tol, precompute=False)
     clf.fit(X,y)    
 
-    ever_active_set = []
     n_samples = X.shape[0]
     l1_reg = alpha * rho * n_samples
     l2_reg = alpha * (1.0 - rho) * n_samples
@@ -90,10 +89,11 @@ def test_enet_kkt_check_on_full_set():
     # change two coefs
     clf_strong_rule.coef_[3] += 2
     clf_strong_rule.coef_[7] += -2
+    clf_strong_rule._ever_active_set = []
     clf_strong_rule._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
-                                     ever_active_set, subset=None)
+                                     subset=None)
     
-    ever_active_set = np.array(ever_active_set)
+    ever_active_set = np.array(clf_strong_rule._ever_active_set)
     assert_equal(ever_active_set, [3, 7])
 
 
@@ -111,3 +111,23 @@ def test_enet_strong_rule_against_standart_enet():
     
     assert_array_almost_equal(clf.coef_, clf_strong_rule.coef_)
 #    assert_equal(0,1)
+
+
+def test_enet_path():
+    MAX_ITER = 1000
+    X, y = make_regression(n_samples=100, n_features=50, n_informative=20,
+                     random_state=0)
+
+    rho = 0.9
+    alphas = np.array([0.2, 38, 75, 110])#np.linspace(.2, 150., 5)
+    
+    models = enet_path(X, y, tol=1e-8, alphas=alphas, rho=rho, fit_intercept=False, normalize=False, precompute=False, copy_X=True, max_iter=MAX_ITER, use_strong_rule=True)
+    coefs_sr_ = np.array([m.coef_ for m in models])
+
+    # compare with regular enet_path
+    models = enet_path(X, y, tol=1e-8, alphas=alphas, rho=rho, fit_intercept=False, normalize=False, precompute=False, copy_X=True, max_iter=MAX_ITER, use_strong_rule=False)
+    coefs_skl_ = np.array([m.coef_ for m in models])
+
+    # flatten array and compare
+    assert_array_almost_equal(coefs_sr_[1], coefs_skl_[1], 5)
+    assert_array_almost_equal(coefs_sr_[3], coefs_skl_[3], 5)
