@@ -50,11 +50,11 @@ def f_oneway(*args):
     1. The samples are independent
     2. Each sample is from a normally distributed population
     3. The population standard deviations of the groups are all equal. This
-       property is known as homocedasticity.
+       property is known as homoscedasticity.
 
     If these assumptions are not true for a given set of data, it may still be
-    possible to use the Kruskal-Wallis H-test (`stats.kruskal`_) although with
-    some loss of power.
+    possible to use the Kruskal-Wallis H-test (`scipy.stats.kruskal`_) although
+    with some loss of power.
 
     The algorithm is from Heiman[2], pp.394-7.
 
@@ -100,16 +100,16 @@ def f_classif(X, y):
     Parameters
     ----------
     X : array of shape (n_samples, n_features)
-        the set of regressors sthat will tested sequentially
+        The set of regressors that will tested sequentially
     y : array of shape(n_samples)
-        the data matrix
+        The data matrix
 
     Returns
     -------
     F : array of shape (m),
-        the set of F values
+        The set of F values
     pval : array of shape(m),
-        the set of p-values
+        The set of p-values
     """
     X = array2d(X)
     y = np.asarray(y).ravel()
@@ -174,9 +174,9 @@ def f_regression(X, y, center=True):
     Parameters
     ----------
     X : array of shape (n_samples, n_features)
-        the set of regressors sthat will tested sequentially
+        The set of regressors that will tested sequentially
     y : array of shape(n_samples)
-        the data matrix
+        The data matrix
 
     center : True, bool,
         If true, X and y are centered
@@ -184,9 +184,9 @@ def f_regression(X, y, center=True):
     Returns
     -------
     F : array of shape (m),
-        the set of F values
+        The set of F values
     pval : array of shape(m)
-        the set of p-values
+        The set of p-values
     """
     y = as_float_array(y, copy=False).ravel()
     X = as_float_array(X, copy=False)  # copy only if center
@@ -219,7 +219,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         Parameters
         ===========
         score_func: callable
-            function taking two arrays X and y, and returning 2 arrays:
+            Function taking two arrays X and y, and returning 2 arrays:
             both scores and pvalues
         """
         if not callable(score_func):
@@ -245,7 +245,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
 
     @property
     @deprecated('``_pvalues`` is deprecated and will be removed in '
-                'version 0.12. Please use ``scores_`` instead.')
+                'version 0.12. Please use ``pvalues_`` instead.')
     def _pvalues(self):
         return self.pvalues_
 
@@ -290,11 +290,11 @@ class SelectPercentile(_AbstractUnivariateFilter):
     Parameters
     ===========
     score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
+        Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
     percentile: int, optional
-        percent of features to keep
+        Percent of features to keep
 
     """
 
@@ -322,8 +322,8 @@ class SelectKBest(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func: callable
-        Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        Function taking two arrays X and y, and returning 2 arrays:
+        both scores and pvalues
 
     k: int, optional
         Number of top features to select.
@@ -362,11 +362,11 @@ class SelectFpr(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
+        Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
     alpha: float, optional
-        the highest p-value for features to be kept
+        The highest p-value for features to be kept
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -387,11 +387,11 @@ class SelectFdr(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
+        Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
     alpha: float, optional
-        the highest uncorrected p-value for features to keep
+        The highest uncorrected p-value for features to keep
 
     """
 
@@ -412,11 +412,11 @@ class SelectFwe(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
+        Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
     alpha: float, optional
-        the highest uncorrected p-value for features to keep
+        The highest uncorrected p-value for features to keep
 
     """
 
