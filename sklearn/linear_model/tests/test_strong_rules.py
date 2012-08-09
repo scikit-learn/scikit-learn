@@ -8,7 +8,7 @@ def test_enet_basic_strong_rule_filtering():
     MAX_ITER = 1000
     X, y = make_regression(n_samples=100, n_features=50, n_informative=20,
                      random_state=0)
-    alpha = 110
+    alpha = 110.0
     rho = 0.9
     
     clf_strong_rule = ElasticNet(alpha=alpha, rho=rho,max_iter=MAX_ITER, precompute=False, use_strong_rule=True)
@@ -31,10 +31,35 @@ def test_enet_sequential_strong_rule_filtering():
     # the sequential strong rule needs alpha_{n-1} and the corresponding coefs
     #clf_strong_rule.coef_ = clf.coef_
     
-    sequential_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=alpha_0, 
+    sequential_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=alpha_0, \
                                                                               last_coef=clf.coef_))
     assert_equal(sequential_strong_set, [4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49] )
+    
+def test_automatic_strong_rule_selection():
+    """
+    test that sequential strong rule is selected, if bigger alpha including coefs is 
+    given
+    """
+    MAX_ITER = 1000
+    X, y = make_regression(n_samples=100, n_features=50, n_informative=20,
+                     random_state=0)
+    alphas = [110.0, 75.0]
+    rho = 0.9
+    
+    clf_strong_rule = ElasticNet(alpha=alphas[1], rho=rho,max_iter=MAX_ITER, precompute=False, use_strong_rule=True)    
+    basic_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=None, last_coef=None))
 
+
+    clf = ElasticNet(alpha=alphas[0], rho=rho, precompute=False)
+    clf.fit(X,y)
+    
+    clf_strong_rule = ElasticNet(alpha=alphas[1], rho=rho, precompute=False, use_strong_rule=True)
+    sequential_strong_set = np.array(clf_strong_rule._filter_with_strong_rule(X, y, last_alpha=alphas[0], \
+                                                                              last_coef=clf.coef_))
+    # the sequential strong rule is expected to select less coefs
+    assert(len(sequential_strong_set) < len(basic_strong_set) )
+
+    
 def test_enet_kkt_check_on_subset():
     # watch out!!! this test only passed after fiddling with the tol of the
     # kkt check

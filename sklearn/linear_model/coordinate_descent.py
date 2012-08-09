@@ -364,20 +364,32 @@ class ElasticNet(LinearModel, RegressorMixin):
     def _filter_with_strong_rule(self, X, y, last_alpha=None, last_coef=None):
 
         alpha_scaled = self.alpha * X.shape[0]
-        # use basic strong rule,
+        
+        # use sequential strong rule if one other pair of 
+        # alpha and coefs is given
+        # this makes only sense if alpha < alpha_max
+        # therefore check if at least one coef != 0
+        if self.alpha < last_alpha and len(last_coef.nonzero()) > 0:
+            use_sequential_strong_rule = True
+        else:
+            use_sequential_strong_rule = False
+
         # since no previous alpha is given.
-        if last_alpha is None:
+        if use_sequential_strong_rule:                        
+            residual = np.dot(X.T, y - np.dot(X, last_coef))
+            residual = np.abs(residual)
+            last_alpha_scaled = last_alpha * X.shape[0]
+            strong_set = residual >= self.rho * (2 * alpha_scaled - last_alpha_scaled)
+            print "sequential strong rule"
+            return np.where(strong_set)[0].tolist()
+        
+        else:
             Xy = np.abs(np.dot(X.T, y))
             alpha_max = np.max(np.abs(np.dot(X.T, y)))
             strong_set = Xy >= self.rho * (2 * alpha_scaled - alpha_max)
+            print "basic strong rule"
             return np.where(strong_set)[0].tolist()
-        # use sequential strong rule
-        else:
-            last_alpha_scaled = last_alpha * X.shape[0]
-            residual = np.dot(X.T, y - np.dot(X, last_coef))
-            residual = np.abs(residual)
-            strong_set = residual >= self.rho * (2 * alpha_scaled - last_alpha_scaled)
-            return np.where(strong_set)[0].tolist()
+
 
     @property
     def sparse_coef_(self):
