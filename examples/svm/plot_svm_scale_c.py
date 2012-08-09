@@ -27,7 +27,7 @@ increase as we add more samples. The penalization term, however, will not
 increase.
 
 When using, for example, :ref:`cross validation <cross_validation>`, to
-set amount of regularization with `C`, there will be a different
+set the amount of regularization with `C`, there will be a different
 amount of samples between every problem that we are using for model
 selection, as well as for the final problem that we want to use for
 training.
@@ -38,7 +38,7 @@ The question that arises is `How do we optimally adjust C to
 account for the different training samples?`
 
 The figures below are used to illustrate the effect of scaling our
-`C` to compensate for the change in the amount of samples, in the
+`C` to compensate for the change in the number of samples, in the
 case of using an `L1` penalty, as well as the `L2` penalty.
 
 L1-penalty case
@@ -46,8 +46,8 @@ L1-penalty case
 In the `L1` case, theory says that prediction consistency
 (i.e. that under given hypothesis, the estimator
 learned predicts as well as an model knowing the true distribution)
-is not possible because of the biasof the `L1`. It does say, however,
-that model consistancy, in terms of finding the right set of non-zero
+is not possible because of the bias of the `L1`. It does say, however,
+that model consistency, in terms of finding the right set of non-zero
 parameters as well as their signs, can be achieved by scaling
 `C1`.
 
@@ -64,7 +64,7 @@ corresponding cross-validation scores on the `y-axis`, for several different
 fractions of a generated data-set.
 
 In the `L1` penalty case, the results are best when scaling our `C` with
-the amount of samples, `n`, which can be seen in the first figure.
+the number of samples, `n`, which can be seen in the first figure.
 
 For the `L2` penalty case, the best result comes from the case where `C`
 is not scaled.
