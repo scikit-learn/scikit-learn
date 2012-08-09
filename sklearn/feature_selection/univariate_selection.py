@@ -53,8 +53,8 @@ def f_oneway(*args):
        property is known as homoscedasticity.
 
     If these assumptions are not true for a given set of data, it may still be
-    possible to use the Kruskal-Wallis H-test (`stats.kruskal`_) although with
-    some loss of power.
+    possible to use the Kruskal-Wallis H-test (`scipy.stats.kruskal`_) although
+    with some loss of power.
 
     The algorithm is from Heiman[2], pp.394-7.
 
