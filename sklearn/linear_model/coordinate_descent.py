@@ -210,7 +210,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                               ever_active_set=None)
             else:
                 self.coef_, self.dual_gap_, self.eps_ = \
-                        cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
+                    cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
                                 X, y, self.max_iter, self.tol, self.positive)
         else:
             if Xy is None:
@@ -275,35 +275,35 @@ class ElasticNet(LinearModel, RegressorMixin):
         return self
 
     def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
-                              last_coef=None, ever_active_set=None, 
+                              last_coef=None, ever_active_set=None,
                               max_iter_strong=100):
         "Maximum number of smaller problems solved using strong rules."
-        
+
         if ever_active_set is not None:
             self._ever_active_set = ever_active_set
-            
+
         n_samples = X.shape[0]
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
-        # the strong_set contains the features that are predicted by the strong rule
-        # to have nonzero coefs
+        # the strong_set contains the features that are predicted by
+        # the strong rule to have nonzero coefs
         strong_set = self._filter_with_strong_rule(X, y, last_alpha=last_alpha, 
                                                    last_coef=last_coef)
-        
+
         # the ever_active_set contains the features that had nonzero coefs while
         # fitting with a higher alpha
         if self._ever_active_set is None:
             self._ever_active_set = strong_set
-            
+
         size_ever_active_set = len(self._ever_active_set)
         pass_kkt_on_strong_set = False
         pass_kkt_on_full_set = False
 
         # add features to the active set till all
         # features pass the KKT
-        for iter in range(max_iter_strong):
-            
+        for n_iter in range(max_iter_strong):
+
             if pass_kkt_on_full_set:
                 break
 
@@ -311,9 +311,9 @@ class ElasticNet(LinearModel, RegressorMixin):
             # all features in the strong set pass the KKT
             while not pass_kkt_on_strong_set:
                 self.coef_, self.dual_gap_, self.eps_ = \
-                        cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
-                             l2_reg, X, y, self.max_iter, self.tol, 
-                             self.positive, iter_set=np.array(self._ever_active_set, dtype=np.int32))
+                    cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
+                    l2_reg, X, y, self.max_iter, self.tol, self.positive,
+                    iter_set=np.array(self._ever_active_set, dtype=np.int32))
 
                 self._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
                                          subset=strong_set)
@@ -334,7 +334,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                 pass_kkt_on_full_set = True
             else:
                 size_ever_active_set = len(self._ever_active_set)
-                strong_set = self._filter_with_strong_rule( X, y, last_alpha=last_alpha)
+                strong_set = self._filter_with_strong_rule(X, y, \
+                                                    last_alpha=last_alpha)
                 pass_kkt_on_strong_set = False
                 pass_kkt_on_full_set = False
 
@@ -350,12 +351,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         else:
             features_to_check = subset
 
-
         for i in features_to_check:
             residual = np.dot(X[:, i], y - np.dot(X, self.coef_))
             s = np.sign(self.coef_[i])
             if self.coef_[i] != 0 and \
-                not np.allclose(residual, s * l1_reg + l2_reg * self.coef_[i], rtol=0.09):
+                not np.allclose(residual, s * l1_reg + \
+                                l2_reg * self.coef_[i], rtol=0.09):
                 if i not in self._ever_active_set:
                     self._ever_active_set.append(i)
                 kkt_violations = True
@@ -368,25 +369,26 @@ class ElasticNet(LinearModel, RegressorMixin):
     def _filter_with_strong_rule(self, X, y, last_alpha=None, last_coef=None):
 
         alpha_scaled = self.alpha * X.shape[0]
-        
+
         # use sequential strong rule if one other pair of 
         # alpha and coefs is given
         # this makes only sense if alpha < alpha_max
         # therefore check if at least one coef != 0
-                
-        if last_alpha is not None and last_alpha > self.alpha and len(last_coef.nonzero()) > 0:
+
+        if last_alpha is not None and last_alpha > self.alpha and \
+                        len(last_coef.nonzero()) > 0:
             use_sequential_strong_rule = True
         else:
             use_sequential_strong_rule = False
 
         # since no previous alpha is given.
-        if use_sequential_strong_rule:                        
+        if use_sequential_strong_rule:
             residual = np.abs(np.dot(X.T, y - np.dot(X, last_coef)))
             last_alpha_scaled = last_alpha * X.shape[0]
             strong_set = residual >= self.rho * (2 * alpha_scaled - last_alpha_scaled)
             print "sequential strong rule"
             return np.where(strong_set)[0].tolist()
-        
+
         else:
             Xy = np.abs(np.dot(X.T, y))
             alpha_max = np.max(np.abs(Xy))
