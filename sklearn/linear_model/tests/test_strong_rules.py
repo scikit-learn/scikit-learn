@@ -1,8 +1,9 @@
 from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert_equal
+from nose.tools import assert_true
 import numpy as np
 
 from sklearn.linear_model.coordinate_descent import ElasticNet, enet_path, \
-    elastic_net_strong_rule_active_set
+    elastic_net_strong_rule_active_set, elastic_net_kkt_violating_features
 from sklearn.datasets.samples_generator import make_regression
 
 
@@ -63,7 +64,7 @@ def test_automatic_strong_rule_selection():
     assert(len(sequential_strong_set) < len(basic_strong_set))
 
 
-def test_enet_kkt_check_on_subset():
+def test_elastic_net_find_kkt_violators():
     # watch out!!! this test only passed after fiddling with the tol of the
     # kkt check
     MAX_ITER = 1000
@@ -75,57 +76,26 @@ def test_enet_kkt_check_on_subset():
 
     clf = ElasticNet(alpha=alpha, rho=rho, tol=tol, precompute=False)
     clf.fit(X, y)
+    changed_coefs = clf.coef_
 
     subset = [0, 1, 2, 3, 4, 7]
     n_samples = X.shape[0]
     l1_reg = alpha * rho * n_samples
     l2_reg = alpha * (1.0 - rho) * n_samples
 
-    clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False, \
-                                  use_strong_rule=True)
-    clf_strong_rule.coef_ = clf.coef_.copy()
+    # change some coefs
+    changed_coefs[3] += 2
+    changed_coefs[5] += 2
+    changed_coefs[7] += -2
 
-    # change two coefs
-    clf_strong_rule.coef_[3] += 2
-    clf_strong_rule.coef_[7] += -2
-    clf_strong_rule._ever_active_set = []
-    clf_strong_rule._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
-                                     subset=subset)
+    found_violators_in_subset = elastic_net_kkt_violating_features(X, y, \
+                             l1_reg, l2_reg, changed_coefs, subset=subset)
 
-    ever_active_set = np.array(clf_strong_rule._ever_active_set)
-    assert_equal(ever_active_set, [3, 7])
+    assert_true(found_violators_in_subset == set([3, 7]))
 
-
-def test_enet_kkt_check_on_full_set():
-    # watch out!!! this test only passed after fiddling with the tol of the
-    # kkt check
-    MAX_ITER = 1000
-    X, y = make_regression(n_samples=40, n_features=10, n_informative=5,
-                     random_state=0)
-    alpha = 50
-    rho = 0.9
-    tol = 1e-6
-
-    clf = ElasticNet(alpha=alpha, rho=rho, tol=tol, precompute=False)
-    clf.fit(X, y)
-
-    n_samples = X.shape[0]
-    l1_reg = alpha * rho * n_samples
-    l2_reg = alpha * (1.0 - rho) * n_samples
-
-    clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False, \
-                                  use_strong_rule=True)
-    clf_strong_rule.coef_ = clf.coef_.copy()
-
-    # change two coefs
-    clf_strong_rule.coef_[3] += 2
-    clf_strong_rule.coef_[7] += -2
-    clf_strong_rule._ever_active_set = []
-    clf_strong_rule._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
-                                     subset=None)
-
-    ever_active_set = np.array(clf_strong_rule._ever_active_set)
-    assert_equal(ever_active_set, [3, 7])
+    found_violators_in_full_set = elastic_net_kkt_violating_features(X, y, \
+                             l1_reg, l2_reg, changed_coefs, subset=None)
+    assert_true(found_violators_in_full_set == set([3, 5, 7]))
 
 
 def test_enet_strong_rule_against_standart_enet():

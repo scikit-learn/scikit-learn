@@ -129,7 +129,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.intercept_ = 0.0
         self.use_strong_rule = use_strong_rule
-        self._ever_active_set = []
+        self._ever_active_set = set()
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit Elastic Net model with coordinate descent
@@ -277,7 +277,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
                               last_coef=None, ever_active_set=None,
                               max_iter_strong=100):
-        "Maximum number of smaller problems solved using strong rules."
+        """"max_iter:
+        Maximum number of smaller problems solved using strong rules."""
 
         if ever_active_set is not None:
             self._ever_active_set = ever_active_set
@@ -297,7 +298,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         if self._ever_active_set is None:
             self._ever_active_set = strong_set
 
-        size_ever_active_set = len(self._ever_active_set)
         pass_kkt_on_strong_set = False
         pass_kkt_on_full_set = False
 
@@ -305,69 +305,41 @@ class ElasticNet(LinearModel, RegressorMixin):
         # features pass the KKT
         for n_iter in range(max_iter_strong):
 
-            if pass_kkt_on_full_set:
-                break
-
             # add features to the active set till
             # all features in the strong set pass the KKT
             while not pass_kkt_on_strong_set:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
                     l2_reg, X, y, self.max_iter, self.tol, self.positive,
-                    iter_set=np.array(self._ever_active_set, dtype=np.int32))
+                    iter_set=np.array(list(self._ever_active_set), \
+                                                         dtype=np.int32))
 
-                self._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
-                                         subset=strong_set)
-
-                # check if no features have been violating the KKT
-                # on the strong set
-                if len(self._ever_active_set) == size_ever_active_set:
+                found_violators = elastic_net_kkt_violating_features(X, y, \
+                             l1_reg, l2_reg, self.coef_, subset=strong_set)
+                if not found_violators:
                     pass_kkt_on_strong_set = True
                 else:
-                    size_ever_active_set = len(self._ever_active_set)
+                    self._ever_active_set = \
+                            self._ever_active_set.union(found_violators)
 
-            self._enet_add_kkt_violating_features(X, y, l1_reg, l2_reg, \
-                                         self._ever_active_set)
+            found_violators = elastic_net_kkt_violating_features(X, y, \
+                         l1_reg, l2_reg, self.coef_)
 
-            # check if no features have been violating the KKT
-            # on the full set of features
-            if len(self._ever_active_set) == size_ever_active_set:
+            if not found_violators:
                 pass_kkt_on_full_set = True
             else:
-                size_ever_active_set = len(self._ever_active_set)
+                self._ever_active_set = \
+                            self._ever_active_set.union(found_violators)
                 strong_set = elastic_net_strong_rule_active_set(X, y, \
                                 alpha=self.alpha, rho=self.rho, \
                                 last_alpha=last_alpha, last_coef=last_coef)
-
                 pass_kkt_on_strong_set = False
-                pass_kkt_on_full_set = False
+
+            if pass_kkt_on_full_set:
+                break
 
         # return self for chaining fit and predict calls
         return self
-
-    def _enet_add_kkt_violating_features(self, X, y, l1_reg, l2_reg, \
-                                     subset=None):
-        kkt_violations = False
-
-        if subset is None:
-            features_to_check = xrange(X.shape[1])
-        else:
-            features_to_check = subset
-
-        for i in features_to_check:
-            residual = np.dot(X[:, i], y - np.dot(X, self.coef_))
-            s = np.sign(self.coef_[i])
-            if self.coef_[i] != 0 and \
-                not np.allclose(residual, s * l1_reg + \
-                                l2_reg * self.coef_[i], rtol=0.09):
-                if i not in self._ever_active_set:
-                    self._ever_active_set.append(i)
-                kkt_violations = True
-            if self.coef_[i] == 0 and abs(residual) >= l1_reg:
-                if i not in self._ever_active_set:
-                    self._ever_active_set.append(i)
-                kkt_violations = True
-        return kkt_violations
 
     @property
     def sparse_coef_(self):
@@ -390,6 +362,28 @@ class ElasticNet(LinearModel, RegressorMixin):
                                         dense_output=True) + self.intercept_)
         else:
             return super(ElasticNet, self).decision_function(X)
+
+
+def elastic_net_kkt_violating_features(X, y, l1_reg, l2_reg, coef, \
+                                 subset=None):
+    kkt_violating_features = set()
+
+    if subset is None:
+        features_to_check = xrange(X.shape[1])
+    else:
+        features_to_check = subset
+
+    for i in features_to_check:
+        residual = np.dot(X[:, i], y - np.dot(X, coef))
+        s = np.sign(coef[i])
+        if coef[i] != 0 and \
+            not np.allclose(residual, s * l1_reg + \
+                            l2_reg * coef[i], rtol=0.09):
+            kkt_violating_features.add(i)
+        else:
+            if coef[i] == 0 and abs(residual) >= l1_reg:
+                kkt_violating_features.add(i)
+    return kkt_violating_features
 
 
 def elastic_net_strong_rule_active_set(X, y, alpha, rho, \
