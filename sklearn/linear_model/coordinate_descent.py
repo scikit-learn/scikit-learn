@@ -1050,8 +1050,8 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         # X and y must be of type float64
-        X = np.asanyarray(X, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
+        X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float64)
+
         squeeze_me = False
         if y.ndim == 1:
             squeeze_me = True
