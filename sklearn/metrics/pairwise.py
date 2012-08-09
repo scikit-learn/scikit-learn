@@ -38,7 +38,8 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-
+from euclidean_fast import dense_euclidean_distances
+from euclidean_fast import sparse_euclidean_distances
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
@@ -80,12 +81,12 @@ def check_pairwise_arrays(X, Y):
     """
     if Y is X or Y is None:
         X = safe_asarray(X)
-        X = Y = atleast2d_or_csr(X, dtype=np.float)
+        X = Y = atleast2d_or_csr(X, dtype=np.float, order='c')
     else:
         X = safe_asarray(X)
         Y = safe_asarray(Y)
-        X = atleast2d_or_csr(X, dtype=np.float)
-        Y = atleast2d_or_csr(Y, dtype=np.float)
+        X = atleast2d_or_csr(X, dtype=np.float, order='c')
+        Y = atleast2d_or_csr(Y, dtype=np.float, order='c')
     if len(X.shape) < 2:
         raise ValueError("X is required to be at least two dimensional.")
     if len(Y.shape) < 2:
@@ -147,42 +148,17 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
-    if issparse(X):
-        XX = X.multiply(X).sum(axis=1)
+    if issparse(X) or issparse(Y):  # Treat the case when only one is sparse?
+        X = csr_matrix(X)
+        Y = csr_matrix(Y)
+        XYt = safe_sparse_dot(X, Y.T, dense_output=True)
+        return sparse_euclidean_distances(X.shape[0], Y.shape[0],
+                                          X.data, X.indices, X.indptr,
+                                          Y.data, Y.indices, Y.indptr,
+                                          XYt, squared)
     else:
-        XX = np.sum(X * X, axis=1)[:, np.newaxis]
-
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
-    elif Y_norm_squared is None:
-        if issparse(Y):
-            # scipy.sparse matrices don't have element-wise scalar
-            # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
-            YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
-            YY.data **= 2
-            YY = np.asarray(YY.sum(axis=1)).T
-        else:
-            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
-    else:
-        YY = atleast2d_or_csr(Y_norm_squared)
-        if YY.shape != (1, Y.shape[0]):
-            raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
-
-    # TODO: a faster Cython implementation would do the clipping of negative
-    # values in a single pass over the output matrix.
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, distances)
-
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
-
-    return distances if squared else np.sqrt(distances)
+        out = np.empty((X.shape[0], Y.shape[0]), dtype=np.float64)
+        return dense_euclidean_distances(X, Y, out, squared)
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
