@@ -375,16 +375,16 @@ def elastic_net_kkt_violating_features(X, y, l1_reg, l2_reg, coef, \
         features_to_check = xrange(X.shape[1])
     else:
         features_to_check = subset
-
+    residuals = y - np.dot(X, coef)
     for i in features_to_check:
-        residual = np.dot(X[:, i], y - np.dot(X, coef))
+        gradient = np.dot(X[:, i], residuals)
         s = np.sign(coef[i])
         if coef[i] != 0 and \
-            not np.allclose(residual, s * l1_reg + \
+            not np.allclose(gradient, s * l1_reg + \
                             l2_reg * coef[i], rtol=0.09):
             kkt_violating_features.add(i)
         else:
-            if coef[i] == 0 and abs(residual) >= l1_reg:
+            if coef[i] == 0 and abs(gradient) >= l1_reg:
                 kkt_violating_features.add(i)
     return kkt_violating_features
 
