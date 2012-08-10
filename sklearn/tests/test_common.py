@@ -44,6 +44,8 @@ meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
 
 
 def test_all_estimators():
+    # Test that estimators are default-constructible, clonable
+    # and have working repr.
     estimators = all_estimators()
     clf = LDA()
 
@@ -133,6 +135,49 @@ def test_transformers_sparse_data():
             raise exc
 
 
+def test_classifiers_one_label():
+    # test classifiers trained on a single label always return this label
+    # or raise an sensible error message
+    rnd = np.random.RandomState(0)
+    X_train = rnd.uniform(size=(10, 3))
+    X_test = rnd.uniform(size=(10, 3))
+    y = np.ones(10)
+    estimators = all_estimators()
+    classifiers = [(name, E) for name, E in estimators if issubclass(E,
+        ClassifierMixin)]
+    error_string_fit = "Classifier can't train when only one class is present."
+    error_string_predict = ("Classifier can't predict when only one class is "
+        "present.")
+    for name, Clf in classifiers:
+        if Clf in dont_test or Clf in meta_estimators:
+            continue
+        if Clf in [MultinomialNB]:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            clf = Clf()
+            # try to fit
+            try:
+                clf.fit(X_train, y)
+            except ValueError, e:
+                if not 'class' in repr(e):
+                    print(error_string_fit, Clf, e)
+                    traceback.print_exc(file=sys.stdout)
+                    raise e
+                else:
+                    continue
+            except Exception, exc:
+                    print(error_string_fit, Clf, exc)
+                    traceback.print_exc(file=sys.stdout)
+                    raise exc
+            # predict
+            try:
+                assert_array_equal(clf.predict(X_test), y)
+            except Exception, exc:
+                print(error_string_predict, Clf, exc)
+                traceback.print_exc(file=sys.stdout)
+
+
 def test_classifiers_train():
     # test if classifiers do something sensible on training set
     # also test all shapes / shape errors
@@ -156,6 +201,7 @@ def test_classifiers_train():
             clf = Clf()
         # raises error on malformed input for fit
         assert_raises(ValueError, clf.fit, X, y[:-1])
+
         # fit
         clf.fit(X, y)
         y_pred = clf.predict(X)
