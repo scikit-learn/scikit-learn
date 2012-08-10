@@ -39,9 +39,9 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 from euclidean_fast import dense_euclidean_distances
-from euclidean_fast import dense_euclidean_distances_self
+from euclidean_fast import dense_euclidean_distances_sym
 from euclidean_fast import sparse_euclidean_distances
-from euclidean_fast import sparse_euclidean_distances_self
+from euclidean_fast import sparse_euclidean_distances_sym
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
@@ -101,7 +101,8 @@ def check_pairwise_arrays(X, Y):
 
 
 # Distances
-def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False, out=None):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
+                        out=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -157,8 +158,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False, out=None)
         Y = csr_matrix(Y)
         out = safe_sparse_dot(X, Y.T, dense_output=True)
         if X is Y:
-            sparse_euclidean_distances_self(X_rows, X.data, X.indices,
-                                            X.indptr, out, squared)
+            sparse_euclidean_distances_sym(X_rows, X.data, X.indices,
+                                           X.indptr, out, squared)
         else:
             sparse_euclidean_distances(X_rows, Y_rows, X.data, X.indices,
                                        X.indptr, Y.data, Y.indices, Y.indptr,
@@ -167,9 +168,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False, out=None)
         if not out:
             out = np.empty((X_rows, Y_rows), dtype=np.float64)
         if X is Y:
-            dense_euclidean_distances_self(X_rows, X_cols, X, out, squared)
+            dense_euclidean_distances_sym(X_rows, X_cols, X, out, squared)
         else:
-            dense_euclidean_distances(X_rows, Y_rows, X_cols, X, Y, out, squared)
+            dense_euclidean_distances(X_rows, Y_rows, X_cols, X, Y, out,
+                                      squared)
     return out
 
 
