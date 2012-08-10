@@ -6,6 +6,7 @@ Utilities useful during the build.
 
 from numpy.distutils.system_info import get_info
 
+
 def get_blas_info():
 
     def atlas_not_found(blas_info_):

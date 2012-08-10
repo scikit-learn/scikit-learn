@@ -65,9 +65,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
-        amg_loaded = True
     except ImportError:
-        amg_loaded = False
         if mode == "amg":
             raise ValueError("The mode was set to 'amg', but pyamg is "
                              "not available.")

@@ -189,4 +189,3 @@ def test_configure():
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
-

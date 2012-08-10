@@ -268,14 +268,14 @@ def test_enet_positive_constraint():
 def test_multi_task_lasso_and_enet():
     X, y, X_test, y_test = build_dataset()
     Y = np.c_[y, y]
-    Y_test = np.c_[y_test, y_test]
+    #Y_test = np.c_[y_test, y_test]
     clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
     active_set = np.any(clf.coef_, axis=0)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
     clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
-    active_set = np.any(clf.coef_, axis=0)
+    #active_set = np.any(clf.coef_, axis=0)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
