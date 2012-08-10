@@ -386,11 +386,7 @@ cdef class Tree:
         # Variables
         cdef Criterion criterion = self.criterion
 
-        cdef DTYPE_t* X_ptr
         cdef DTYPE_t* y_ptr
-        cdef BOOL_t* sample_mask_ptr    
-
-        cdef int X_stride
         cdef int y_stride
 
         cdef int feature
@@ -414,13 +410,11 @@ cdef class Tree:
             X_current = X
             y_current = y
 
-        print
-        print "depth = ", depth
-
         # Count samples
         if n_samples == 0:
             raise ValueError("Attempting to find a split "
                              "with no samples")
+        assert( len(sample_indices) == n_samples)
 
         # Split samples
         if depth < self.max_depth and \
@@ -445,9 +439,6 @@ cdef class Tree:
         else:
             
             # Split
-            X_ptr = <DTYPE_t*> X.data
-            X_stride = <int> X.strides[1] / <int> X.strides[0]
-            X_ptr = X_ptr + feature * X_stride
             n_samples_left = 0
             n_samples_right = 0
 
@@ -456,7 +447,8 @@ cdef class Tree:
 
             for i from 0 <= i < n_samples:
                 index = sample_indices[i]
-                if X_ptr[index] <= threshold:
+                assert(index < X.shape[0])
+                if X[index, feature] <= threshold:
                     tmp_left.append(index)
                     n_samples_left += 1
                 else:
@@ -469,6 +461,9 @@ cdef class Tree:
             node_id = self.add_split_node(parent, is_left_child, feature,
                                           threshold, buffer_value, best_error,
                                           init_error, n_samples)
+
+            del X_current
+            del y_current
 
             # Left child recursion
             self.recursive_partition(X, y, sample_indices_left, n_samples_left, depth + 1, node_id,
@@ -615,14 +610,12 @@ cdef class Tree:
         # Look for the best split
         for feature_idx from 0 <= feature_idx < max_features:
             i = features[feature_idx]
-            print i,
             
             # Get i-th col of X and X_argsorted            
             X_i = X[:, i]
             X_i_ptr = <DTYPE_t*> X_i.data
             X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
             X_argsorted_i_ptr = <int*> X_argsorted_i.data
-            #print "argsorted ", i
 
             # Reset the criterion for this feature
             criterion.reset()
