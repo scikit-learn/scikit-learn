@@ -24,7 +24,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
-from .utils import deprecated
+from .utils import deprecated, check_arrays
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -150,8 +150,7 @@ class GaussianNB(BaseNB):
             Returns self.
         """
 
-        X = np.asarray(X)
-        y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format='dense')
 
         n_samples, n_features = X.shape
 

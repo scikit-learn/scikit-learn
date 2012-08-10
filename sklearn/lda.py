@@ -11,6 +11,7 @@ from scipy import linalg, ndimage
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
+from .utils import check_arrays
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -92,8 +93,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             If True the covariance matrix (shared by all classes) is computed
             and stored in `self.covariance_` attribute.
         """
-        X = np.asarray(X)
-        y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format='dense')
         if y.dtype.char.lower() not in ('b', 'h', 'i'):
             # We need integer values to be able to use
             # ndimage.measurements and np.bincount on numpy >= 2.0.
@@ -104,12 +104,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             y = y.astype(np.int32)
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         classes = np.unique(y)
         n_classes = classes.size
         if n_classes < 2:
