@@ -68,7 +68,7 @@ def test_estimators_sparse_data():
     X = rng.rand(40, 10)
     X[X < .8] = 0
     X = sparse.csr_matrix(X)
-    y = (4*rng.rand(40)).astype(np.int)
+    y = (4 * rng.rand(40)).astype(np.int)
     estimators = all_estimators()
     estimators = [(name, E) for name, E in estimators
                         if issubclass(E, (ClassifierMixin, RegressorMixin))]
@@ -115,6 +115,8 @@ def test_classifiers_train():
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             clf = Clf()
+        # raises error on malformed input for fit
+        assert_raises(ValueError, clf.fit, X, y[:-1])
         # fit
         clf.fit(X, y)
         y_pred = clf.predict(X)
@@ -198,6 +200,8 @@ def test_regressors_train():
         if hasattr(reg, 'alpha'):
             reg.set_params(alpha=0.01)
 
+        # raises error on malformed input for fit
+        assert_raises(ValueError, reg.fit, X, y[:-1])
         # fit
         reg.fit(X, y)
         reg.predict(X)
