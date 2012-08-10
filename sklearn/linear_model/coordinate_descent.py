@@ -131,7 +131,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.use_strong_rule = use_strong_rule
         self._ever_active_set = set()
 
-    def fit(self, X, y, Xy=None, coef_init=None):
+    def fit(self, X, y, Xy=None, coef_init=None, active_set_init=None,
+                                                        last_alpha=None):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -158,10 +159,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
 
         fit = self._sparse_fit if sp.isspmatrix(X) else self._dense_fit
-        fit(X, y, Xy, coef_init)
+        fit(X, y, Xy, coef_init,last_alpha, active_set_init)
         return self
 
-    def _dense_fit(self, X, y, Xy=None, coef_init=None):
+    def _dense_fit(self, X, y, Xy=None, coef_init=None, last_alpha=None, \
+                                                     active_set_init=None):
 
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
@@ -206,8 +208,9 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if Gram is None:
             if self.use_strong_rule:
-                self._fit_enet_with_strong_rule(X, y, last_alpha=None,
-                              ever_active_set=None)
+                self._fit_enet_with_strong_rule(X, y, \
+                            last_alpha=last_alpha, last_coef=coef_init,
+                              active_set_init=active_set_init)
             else:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
@@ -275,13 +278,13 @@ class ElasticNet(LinearModel, RegressorMixin):
         return self
 
     def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
-                              last_coef=None, ever_active_set=None,
+                              last_coef=None, active_set_init=None,
                               max_iter_strong=100):
         """"max_iter:
         Maximum number of smaller problems solved using strong rules."""
 
-        if ever_active_set is not None:
-            self._ever_active_set = ever_active_set
+        if active_set_init is not None:
+            self._ever_active_set = active_set_init
 
         n_samples = X.shape[0]
         l1_reg = self.alpha * self.rho * n_samples
@@ -293,8 +296,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                 alpha=self.alpha, rho=self.rho, last_alpha=last_alpha, \
                                                    last_coef=last_coef)
 
-        # the ever_active_set contains the features that had nonzero coefs while
-        # fitting with a higher alpha
+        # the ever_active_set contains the features that had nonzero coefs 
+        # while fitting with a higher alpha
         if self._ever_active_set is None:
             self._ever_active_set = strong_set
 
@@ -396,9 +399,9 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, \
     # this makes only sense if alpha < alpha_max
     # therefore check if at least one coef != 0
 
-    if last_alpha is not None and last_alpha > alpha and \
-                    len(last_coef.nonzero()) > 0:
-        use_sequential_strong_rule = True
+    if last_alpha is not None and last_coef is not None:
+        if last_alpha > alpha and len(last_coef.nonzero()) > 0:
+            use_sequential_strong_rule = True
     else:
         use_sequential_strong_rule = False
 
@@ -707,6 +710,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
+    ever_active_set_ = None
+    alpha_ = None
     models = []
 
     n_alphas = len(alphas)
@@ -714,7 +719,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
                            precompute=precompute)
         model.set_params(**params)
-        model.fit(X, y, coef_init=coef_, Xy=Xy)
+        model.fit(X, y, coef_init=coef_, active_set_init=ever_active_set_, \
+                                            last_alpha=alpha_, Xy=Xy)
         if fit_intercept:
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
@@ -725,8 +731,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print 'Path: %03i out of %03i' % (i, n_alphas)
             else:
                 sys.stderr.write('.')
+        alpha_ = alpha
         coef_ = model.coef_.copy()
-        ever_active_set = None
+        ever_active_set_ = model._ever_active_set.copy()
         models.append(model)
     return models
 

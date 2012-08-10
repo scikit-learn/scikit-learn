@@ -137,4 +137,3 @@ def test_enet_path():
     # flatten array and compare
     assert_array_almost_equal(coefs_sr_[1], coefs_skl_[1], 5)
     assert_array_almost_equal(coefs_sr_[3], coefs_skl_[3], 5)
-#    assert_equal(0,1)
