@@ -208,7 +208,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if Gram is None:
             if self.use_strong_rule:
-                self._fit_enet_with_strong_rule(X, y, \
+                self._fit_enet_with_strong_rule(X, y, Xy,\
                             last_alpha=last_alpha, last_coef=coef_init,
                               active_set_init=active_set_init)
             else:
@@ -277,7 +277,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # return self for chaining fit and predict calls
         return self
 
-    def _fit_enet_with_strong_rule(self, X, y, last_alpha=None,
+    def _fit_enet_with_strong_rule(self, X, y, Xy=None, last_alpha=None,
                               last_coef=None, active_set_init=None,
                               max_iter_strong=100):
         """"max_iter:
@@ -292,7 +292,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # the strong_set contains the features that are predicted by
         # the strong rule to have nonzero coefs
-        strong_set = elastic_net_strong_rule_active_set(X, y, \
+        strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy, \
                 alpha=self.alpha, rho=self.rho, last_alpha=last_alpha, \
                                                    last_coef=last_coef)
 
@@ -333,7 +333,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             else:
                 self._ever_active_set = \
                             self._ever_active_set.union(found_violators)
-                strong_set = elastic_net_strong_rule_active_set(X, y, \
+                strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy, \
                                 alpha=self.alpha, rho=self.rho, \
                                 last_alpha=last_alpha, last_coef=last_coef)
                 pass_kkt_on_strong_set = False
@@ -389,7 +389,7 @@ def elastic_net_kkt_violating_features(X, y, l1_reg, l2_reg, coef, \
     return kkt_violating_features
 
 
-def elastic_net_strong_rule_active_set(X, y, alpha, rho, \
+def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
                               last_alpha=None, last_coef=None):
 
     alpha_scaled = alpha * X.shape[0]
@@ -411,14 +411,15 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, \
         last_alpha_scaled = last_alpha * X.shape[0]
         strong_set = residual >= rho * (2 * alpha_scaled -  \
                                                 last_alpha_scaled)
-        print "sequential strong rule"
+#        print "sequential strong rule"
         return np.where(strong_set)[0].tolist()
 
     else:
-        Xy = np.abs(np.dot(X.T, y))
+        if Xy is None:
+            Xy = np.abs(np.dot(X.T, y))
         alpha_max = np.max(np.abs(Xy))
         strong_set = Xy >= rho * (2 * alpha_scaled - alpha_max)
-        print "basic strong rule"
+#        print "basic strong rule"
         return np.where(strong_set)[0].tolist()
 
 ###############################################################################
