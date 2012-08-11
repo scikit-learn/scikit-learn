@@ -150,6 +150,9 @@ class CountVectorizer(BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
+    lowercase: boolean, default True
+        Convert all characters to lowercase befor tokenizing.
+
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
         if `tokenize == 'word'`. The default regexp select tokens of 2
