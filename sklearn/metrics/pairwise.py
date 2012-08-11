@@ -173,7 +173,10 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
     Y_rows = Y.shape[0]
     if issparse(X) or issparse(Y):  # Treat the case when only one is sparse?
         if not issparse(X):
-            X, Y = Y, X
+            out = out.T if out else None
+            return euclidean_distances(Y, X, Y_norm_squared, X_norm_squared,
+                                       Y_norm_precomputed, X_norm_precomputed,
+                                       out, squared).T
         X = csr_matrix(X)
         if issparse(Y):
             Y = csr_matrix(Y)
