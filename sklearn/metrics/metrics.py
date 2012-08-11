@@ -181,6 +181,57 @@ def roc_curve(y_true, y_score):
     return fpr, tpr, thresholds[::-1]
 
 
+def average_precision_score(x, y):
+    """Compute average precision (AP) from prediction scores.
+
+    This score corresponds to the area under the precision-recall curve.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    auc : float
+
+    """
+    precision, recall, thresholds = precision_recall_curve(x, y)
+
+    return auc(recall, precision)
+
+
+def auc_score(x, y):
+    """Compute Area Under the Curve (AUC) from prediction scores.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    auc : float
+    """
+
+    fpr, tpr, tresholds = roc_curve(x, y)
+    return auc(fpr, tpr)
+
+
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
