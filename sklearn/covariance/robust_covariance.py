@@ -117,7 +117,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         remaining_iterations -= 1
 
     previous_dist = dist
-    dist = (np.dot(X - location, linalg.pinv(covariance)) \
+    dist = (np.dot(X - location, precision) \
                 * (X - location)).sum(axis=1)
     # Catch computation errors
     if np.isinf(det):
