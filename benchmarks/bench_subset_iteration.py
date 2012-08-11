@@ -35,9 +35,9 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                                           len(n_features)))
             print '=================='
             n_informative = nf // 10
-            X, y, coef_ = make_regression(n_samples=ns, n_features=nf,
+            X, y = make_regression(n_samples=ns, n_features=nf,
                                           n_informative=n_informative,
-                                          noise=0.1, coef=True)
+                                          noise=0.1)
 
             X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
 
@@ -46,10 +46,7 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             X = np.asfortranarray(X)
             w = np.zeros(nf)
 
-            active_set = coef_.nonzero()[0]
-            X_red = X[:, active_set]
-            X_red = np.asfortranarray(X_red)
-            w_red = w[active_set]
+
 
             gc.collect()
             print "iterate on full set of features"
@@ -59,9 +56,21 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                             X, y, max_iter=10000, tol=1e-9, positive=False)
             full_set_results.append(time() - stime)
 
+            print "# nnz: " + str(len(w.nonzero()[0]))
+            if len(w.nonzero()[0]) > 0:
+                active_set = w.nonzero()[0]
+                X_red = X[:, active_set]
+                X_red = np.asfortranarray(X_red)
+                w_red = w[active_set]
+            else:
+                active_set = None
+                X_red = X
+                w_red = w.copy()
+
             w = np.zeros(nf)
+
             gc.collect()
-            print "iterate only on true active features"
+            print "iterate only on active features"
             stime = time()
 
             enet_coordinate_descent(w, l1_reg, l2_reg,
@@ -83,7 +92,7 @@ if __name__ == '__main__':
     from sklearn.linear_model.cd_fast import enet_coordinate_descent
     import pylab as pl
 
-    alpha = 5.0  # regularization parameter
+    alpha = 0.7  # regularization parameter
     rho = 0.95
 
     n_features = 10
