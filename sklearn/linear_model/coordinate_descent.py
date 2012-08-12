@@ -318,28 +318,28 @@ class ElasticNet(LinearModel, RegressorMixin):
                     iter_set=np.array(list(active_set), \
                                                          dtype=np.int32))
 
-                found_violators = elastic_net_kkt_violating_features(X, y, \
+                kkt_violators = elastic_net_kkt_violating_features(X, y, \
                              l1_reg, l2_reg, self.coef_, subset=strong_set)
-                if not found_violators:
+                if kkt_violators:
+                    active_set.update(kkt_violators)
+                else:
                     # This only garanties that no feature is missing it's still
                     # possible that an active feature is failing kkt
                     pass_kkt_on_strong_set = True
-                else:
-                    active_set.update(found_violators)
 
-            found_violators = elastic_net_kkt_violating_features(X, y, \
+            kkt_violators = elastic_net_kkt_violating_features(X, y, \
                          l1_reg, l2_reg, self.coef_)
 
-            if not found_violators:
-                # This only garanties that no feature is missing it's still
-                # possible that an active feature is failing kkt
-                pass_kkt_on_full_set = True
-            else:
-                active_set.update(found_violators)
+            if kkt_violators:
+                active_set.update(kkt_violators)
                 strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy, \
                                 alpha=self.alpha, rho=self.rho, \
                                 last_alpha=last_alpha, last_coef=last_coef)
                 pass_kkt_on_strong_set = False
+            else:
+                # This only garanties that no feature is missing it's still
+                # possible that an active feature is failing kkt
+                pass_kkt_on_full_set = True
 
             if pass_kkt_on_full_set:
                 break
