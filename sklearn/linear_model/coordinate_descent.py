@@ -161,7 +161,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         fit(X, y, Xy, coef_init, active_set_init, last_alpha)
         return self
 
-    def _dense_fit(self, X, y, Xy=None, coef_init=None, \
+    def _dense_fit(self, X, y, Xy=None, coef_init=None, 
                                     active_set_init=None, last_alpha=None):
 
         # X and y must be of type float64
@@ -279,8 +279,6 @@ class ElasticNet(LinearModel, RegressorMixin):
     def _fit_enet_with_strong_rule(self, X, y, Xy=None, last_alpha=None,
                               active_set_init=None, last_coef=None,
                               max_iter_strong=100):
-        """"max_iter:
-        Maximum number of smaller problems solved using strong rules."""
 
         if active_set_init is not None:
             # check if the set is empty
