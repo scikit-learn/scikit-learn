@@ -11,10 +11,15 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
+from scipy.linalg.lapack import get_lapack_funcs
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state
+
+getri, getrf = get_lapack_funcs(('getri', 'getrf'),
+                                (np.empty((), dtype=np.float64),
+                                 np.empty((), dtype=np.float64)))
 
 
 ###############################################################################
@@ -85,7 +90,9 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         location = initial_estimates[0]
         covariance = initial_estimates[1]
         # run a special iteration for that case (to get an initial support)
-        precision = linalg.pinv(covariance)
+        lu, piv, _ = getrf(np.dot(covariance.T, covariance), True)
+        precision, _ = getri(lu, piv, overwrite_lu=True)
+        precision = np.dot(covariance, precision)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
@@ -98,15 +105,17 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
     while (det < previous_det) and (remaining_iterations > 0):
-        # compute a new support from the full data set mahalanobis distances
-        precision = linalg.pinv(covariance)
-        X_centered = X - location
-        dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
         previous_det = det
         previous_support = support
+        # compute a new support from the full data set mahalanobis distances
+        lu, piv, _ = getrf(np.dot(covariance.T, covariance), True)
+        precision, _ = getri(lu, piv, overwrite_lu=True)
+        precision = np.dot(covariance, precision)
+        X_centered = X - location
+        dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:n_support]] = True
@@ -343,7 +352,10 @@ def fast_mcd(X, support_fraction=None,
         support[np.argsort(np.abs(X - location), axis=0)[:n_support]] = True
         covariance = np.asarray([[np.var(X[support])]])
         location = np.array([location])
-        dist = (np.dot(X_centered, linalg.pinv(covariance)) \
+        lu, piv, _ = getrf(np.dot(covariance.T, covariance), False)
+        precision, _ = getri(lu, piv, overwrite_lu=True)
+        precision = np.dot(covariance, precision)
+        dist = (np.dot(X_centered, precision) \
                     * (X_centered)).sum(axis=1)
 
     ### Starting FastMCD algorithm for p-dimensional case
@@ -542,7 +554,10 @@ class MinCovDet(EmpiricalCovariance):
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
-            raw_dist = np.sum(np.dot(X, linalg.pinv(raw_covariance)) * X, 1)
+            lu, piv, _ = getrf(np.dot(raw_covariance.T, raw_covariance), False)
+            precision, _ = getri(lu, piv, overwrite_lu=True)
+            precision = np.dot(raw_covariance, precision)
+            raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance
         self.raw_support_ = raw_support
