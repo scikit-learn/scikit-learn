@@ -20,7 +20,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
     Given an external estimator that assigns weights to features (e.g., the
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
-    sets of features.  First, the estimator is trained on the initial set of
+    sets of features. First, the estimator is trained on the initial set of
     features and weights are assigned to each one of them. Then, features whose
     absolute weights are the smallest are pruned from the current set features.
     That procedure is recursively repeated on the pruned set until the desired
@@ -37,8 +37,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         algorithms such as Support Vector Classifiers and Generalized
         Linear Models from the `svm` and `linear_model` modules.
 
-    n_features_to_select : int
-        The number of features to select.
+    n_features_to_select : int or None (default=None)
+        The number of features to select. If `None`, half of the features
+        are selected.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then `step` corresponds to the (integer)
