@@ -113,7 +113,14 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         this_score = -loss_func(y_test, y_pred)
     elif score_func is not None:
         if score_func in [average_precision_score, auc_score]:
-            y_pred = clf.decision_function(X_test)
+            if hasattr(clf, 'decision_function'):
+                y_pred = clf.decision_function(X_test)
+            elif hasattr(clf, 'predict_proba'):
+                y_pred = clf.predict_proba(X_test)[:, 1]
+            else:
+                raise ValueError("Can't use score_func %s, classifier has"
+                        " neither decision_function nor predict_proba." %
+                        str(score_func))
         else:
             y_pred = clf.predict(X_test)
         this_score = score_func(y_test, y_pred)
