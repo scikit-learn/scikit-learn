@@ -42,15 +42,16 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
 
             gc.collect()
             print "- benching ElasticNet"
-            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False)
+            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False, 
+                             fit_intercept=False)
             tstart = time()
             clf.fit(X, Y)
             enet_results.append(time() - tstart)
 
             gc.collect()
             print "- benching ElasticNet with strong rules"
-            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False, \
-                                  use_strong_rule=True)
+            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False,
+                          fit_intercept=False, use_strong_rule=True)
             tstart = time()
             clf.fit(X, Y)
             enet_strong_rules_results.append(time() - tstart)
@@ -62,8 +63,8 @@ if __name__ == '__main__':
     from sklearn.linear_model.coordinate_descent import ElasticNet
     import pylab as pl
 
-    alpha = 5.0  # regularization parameter
-    rho = 0.95
+    alpha = 100.0  # regularization parameter
+    rho = 0.90
 
     n_features = 10
     list_n_samples = np.linspace(100, 1000000, 5).astype(np.int)
