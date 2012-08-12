@@ -158,11 +158,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
 
         fit = self._sparse_fit if sp.isspmatrix(X) else self._dense_fit
-        fit(X, y, Xy, coef_init,last_alpha, active_set_init)
+        fit(X, y, Xy, coef_init, active_set_init, last_alpha)
         return self
 
-    def _dense_fit(self, X, y, Xy=None, coef_init=None, last_alpha=None, \
-                                                     active_set_init=None):
+    def _dense_fit(self, X, y, Xy=None, coef_init=None, \
+                                    active_set_init=None, last_alpha=None):
 
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
@@ -207,9 +207,9 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if Gram is None:
             if self.use_strong_rule:
-                self._fit_enet_with_strong_rule(X, y, Xy,\
-                            last_alpha=last_alpha, last_coef=coef_init,
-                              active_set_init=active_set_init)
+                self._fit_enet_with_strong_rule(X, y, Xy,
+                        last_alpha=last_alpha, active_set_init=active_set_init,
+                                                         last_coef=coef_init)
             else:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
@@ -277,7 +277,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         return self
 
     def _fit_enet_with_strong_rule(self, X, y, Xy=None, last_alpha=None,
-                              last_coef=None, active_set_init=None,
+                              active_set_init=None, last_coef=None,
                               max_iter_strong=100):
         """"max_iter:
         Maximum number of smaller problems solved using strong rules."""
