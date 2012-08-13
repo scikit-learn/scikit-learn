@@ -616,7 +616,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, verbose=False,
-              **params):
+              use_strong_rule=False, **params):
     """Compute Elastic-Net path with coordinate descent
 
     The Elastic Net optimization function is::
@@ -722,10 +722,10 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
         model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
-                           precompute=precompute)
+            precompute=precompute,  use_strong_rule=use_strong_rule)
         model.set_params(**params)
-        model.fit(X, y, coef_init=coef_, active_set_init=ever_active_set_, \
-                                            last_alpha=alpha_, Xy=Xy)
+        model.fit(X, y, Xy=Xy, coef_init=coef_,
+                   active_set_init=ever_active_set_, last_alpha=alpha_)
         if fit_intercept:
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
@@ -736,9 +736,10 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print 'Path: %03i out of %03i' % (i, n_alphas)
             else:
                 sys.stderr.write('.')
-        alpha_ = alpha
         coef_ = model.coef_.copy()
-        ever_active_set_.update(set(coef_.nonzero()[0]))
+        if use_strong_rule:
+            ever_active_set_.update(set(coef_.nonzero()[0]))
+            alpha_ = alpha
         models.append(model)
     return models
 
