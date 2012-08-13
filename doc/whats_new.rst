@@ -87,6 +87,10 @@ API changes summary
      necessary for early-stopping in which case the tree is not
      completely built.
 
+   - In :class:`feature_extraction.text.CountVectorizer` the parameters
+     ``min_n`` and ``max_n`` were joined to the parameter ``bounds_n`` to
+     enable grid-searching both at once.
+
 .. _changes_0_11:
 
 0.11

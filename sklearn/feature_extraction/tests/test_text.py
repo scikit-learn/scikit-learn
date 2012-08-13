@@ -141,7 +141,7 @@ def test_word_analyzer_unigrams():
 
 def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
-                         min_n=1, max_n=2).build_analyzer()
+                         bounds_n=(1, 2)).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
