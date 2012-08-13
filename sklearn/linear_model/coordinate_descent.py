@@ -157,8 +157,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
 
-        fit = self._sparse_fit if sp.isspmatrix(X) else self._dense_fit
-        fit(X, y, Xy, coef_init, active_set_init, alpha_init)
+        if sp.isspmatrix(X):
+            self._sparse_fit(X, y, Xy, coef_init)
+        else:
+            self._dense_fit(X, y, Xy, coef_init, active_set_init, alpha_init)
         return self
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None,
