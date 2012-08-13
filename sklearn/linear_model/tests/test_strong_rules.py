@@ -17,8 +17,7 @@ def test_enet_basic_strong_rule_filtering():
     basic_strong_set = elastic_net_strong_rule_active_set(X, y, \
                 alpha=alpha, rho=rho)
 
-    basic_strong_set = np.array(basic_strong_set)
-    assert_equal(basic_strong_set, [4, 33, 35])
+    assert_true(basic_strong_set == set([4, 33, 35]))
 
 
 def test_enet_sequential_strong_rule_filtering():
@@ -33,11 +32,10 @@ def test_enet_sequential_strong_rule_filtering():
 
     sequential_strong_set = elastic_net_strong_rule_active_set(X, y, \
                                 alpha=alphas[1], rho=rho, \
-                                last_alpha=alphas[0], last_coef=clf.coef_)
+                                alpha_init=alphas[0], coef_init=clf.coef_)
 
-    sequential_strong_set = np.array(sequential_strong_set)
-    assert_equal(sequential_strong_set, \
-                  [4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49])
+    assert_true(sequential_strong_set == \
+                  set([4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49]))
 
 
 def test_automatic_strong_rule_selection():
@@ -58,7 +56,7 @@ def test_automatic_strong_rule_selection():
 
     sequential_strong_set = elastic_net_strong_rule_active_set(X, y, \
                                 alpha=alphas[1], rho=rho, \
-                                last_alpha=alphas[0], last_coef=clf.coef_)
+                                alpha_init=alphas[0], coef_init=clf.coef_)
 
     # the sequential strong rule is expected to select less coefs
     assert(len(sequential_strong_set) < len(basic_strong_set))
@@ -88,12 +86,14 @@ def test_elastic_net_find_kkt_violators():
     changed_coefs[5] += 2
     changed_coefs[7] += -2
 
-    found_violators_in_subset = elastic_net_kkt_violating_features(X, y, \
+    R = y - np.dot(X, changed_coefs)
+
+    found_violators_in_subset = elastic_net_kkt_violating_features(X, y, R,
                              l1_reg, l2_reg, changed_coefs, subset=subset)
 
     assert_true(found_violators_in_subset == set([3, 7]))
 
-    found_violators_in_full_set = elastic_net_kkt_violating_features(X, y, \
+    found_violators_in_full_set = elastic_net_kkt_violating_features(X, y, R,
                              l1_reg, l2_reg, changed_coefs, subset=None)
     assert_true(found_violators_in_full_set == set([3, 5, 7]))
 
