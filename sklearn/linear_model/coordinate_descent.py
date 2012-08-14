@@ -295,7 +295,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
         # calculate residuals
-        R = y - np.dot(X, self.coef_)
+        R = y.copy() - np.dot(X, self.coef_)
 #        if coef_init is None:
 #            R = y
 #        else:
@@ -326,8 +326,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
                     l2_reg, X, y, self.max_iter, self.tol, self.positive,
                                                                 R=R,
-                    iter_set=np.array(list(active_set), \
-                                                         dtype=np.int32))
+                    iter_set=np.array(list(active_set), dtype=np.int32))
 
                 kkt_violators = elastic_net_kkt_violating_features(X, y, R,
                              l1_reg, l2_reg, self.coef_, subset=strong_set)
@@ -389,9 +388,9 @@ def elastic_net_kkt_violating_features(X, y, R, l1_reg, l2_reg, coef, \
         features_to_check = xrange(X.shape[1])
     else:
         features_to_check = subset
-    residuals = y - np.dot(X, coef)
-    gradients_fast = np.dot(X.T, R)
-    gradients = np.dot(X.T, residuals)
+
+    gradients = np.dot(X.T, R)
+
     for i in features_to_check:
         s = np.sign(coef[i])
         if coef[i] != 0 and \

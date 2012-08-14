@@ -42,6 +42,25 @@ def test_iteration_set():
     assert_array_almost_equal(w[~iter_set], result_iter_set[~iter_set], 7)
 
 
+def test_residual():
+    X, y = make_regression(n_samples=40, n_features=20, n_informative=5,
+                    random_state=0)
+    n_samples, n_features = X.shape
+    rho = 0.80
+    alpha = 10
+    l1_reg = alpha * rho * n_samples
+    l2_reg = alpha * (1.0 - rho) * n_samples
+    X = np.asfortranarray(X)
+    w = np.zeros(n_features)
+    R = y - np.dot(X, w)
+
+    coef_R, _, _ = cd_fast.enet_coordinate_descent(w, l1_reg, l2_reg,
+                    X, y, max_iter=1000, tol=1e-9, positive=False, R=R)
+
+    R_kkt = y.copy() - np.dot(X, coef_R)
+    assert_almost_equal(R, R_kkt)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
