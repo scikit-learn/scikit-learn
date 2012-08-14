@@ -356,9 +356,9 @@ def fast_mcd(X, support_fraction=None,
         h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
         # b. perform a total of 500 trials
         n_trials_tot = 500
-        n_trials = n_trials_tot // n_subsets
         # c. select 10 best (location, covariance) for each subset
         n_best_sub = 10
+        n_trials = max(10, n_trials_tot // n_subsets)
         n_best_tot = n_subsets * n_best_sub
         all_best_locations = np.zeros((n_best_tot, n_features))
         all_best_covariances = np.zeros((n_best_tot, n_features, n_features))
