@@ -116,9 +116,9 @@ class CountVectorizer(BaseEstimator):
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer: string, {'word', 'char', 'char_nospace'} or callable
+    analyzer: string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
-        Option 'char_nospace' creates character n-grams only from text inside
+        Option 'char_wb' creates character n-grams only from text inside
         word boundaries.
 
         If a callable is passed it is used to extract the sequence of features
@@ -262,7 +262,7 @@ class CountVectorizer(BaseEstimator):
                 ngrams.append(text_document[i: i + n])
         return ngrams
 
-    def _char_nospace_ngrams(self, text_document):
+    def _char_wb_ngrams(self, text_document):
         """Whitespace sensitive char-n-gram tokenization.
 
         Tokenize text_document into a sequence of character n-grams
@@ -335,8 +335,8 @@ class CountVectorizer(BaseEstimator):
         if self.analyzer == 'char':
             return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
 
-        elif self.analyzer == 'char_nospace':
-            return lambda doc: self._char_nospace_ngrams(
+        elif self.analyzer == 'char_wb':
+            return lambda doc: self._char_wb_ngrams(
                 preprocess(self.decode(doc)))
 
         elif self.analyzer == 'word':
