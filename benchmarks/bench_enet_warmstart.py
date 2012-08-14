@@ -17,12 +17,14 @@ from time import time
 import numpy as np
 
 from sklearn.datasets.samples_generator import make_regression
+from numpy.testing import assert_almost_equal
 
 
 def compute_bench(alpha, rho, n_samples, n_features, precompute):
 
     cold_start_results = []
     warm_start_results = []
+    warm_start_residual_results = []
 
     n_test_samples = 0
     it = 0
@@ -50,9 +52,9 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             gc.collect()
             print "enet fit"
             stime = time()
-
+            R = y - np.dot(X, w)
             enet_coordinate_descent(w, l1_reg, l2_reg,
-                            X, y, max_iter=10000, tol=1e-9, positive=False)
+                        X, y, max_iter=10000, tol=1e-9, positive=False, R=R)
             cold_start_results.append(time() - stime)
 
             gc.collect()
@@ -64,7 +66,18 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                     X, y, max_iter=10000, tol=1e-9, positive=False)
             warm_start_results.append(time() - stime)
 
-    return cold_start_results, warm_start_results
+            gc.collect()
+            warm_start = w.copy()
+            print "warmstart with solution & residual, enet fit"
+            stime = time()
+
+            enet_coordinate_descent(warm_start, l1_reg, l2_reg,
+                    X, y, max_iter=10000, tol=1e-9, positive=False, R=R)
+            warm_start_residual_results.append(time() - stime)
+
+            assert_almost_equal(w, warm_start)
+
+    return cold_start_results, warm_start_results, warm_start_residual_results
 
 
 if __name__ == '__main__':
@@ -77,7 +90,8 @@ if __name__ == '__main__':
 
     n_features = 10
     list_n_samples = np.linspace(100, 1000000, 5).astype(np.int)
-    cold_start_results, warm_start_results = compute_bench(alpha, rho,
+    cold_start_results, warm_start_results, warm_start_residual_results =  \
+            compute_bench(alpha, rho,
                          list_n_samples, [n_features], precompute=True)
 
     pl.clf()
@@ -86,6 +100,8 @@ if __name__ == '__main__':
                             label='cold_start_results')
     pl.plot(list_n_samples, warm_start_results, 'r-',
                             label='warm_start_results')
+    pl.plot(list_n_samples, warm_start_residual_results, 'g-',
+                                 label='warm_start_residual_results')
     pl.title('Enet benchmark (%d features - alpha=%s)' % (n_features, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of samples')
@@ -94,12 +110,16 @@ if __name__ == '__main__':
 
     n_samples = 2000
     list_n_features = np.linspace(500, 3000, 5).astype(np.int)
-    cold_start_results, warm_start_results = compute_bench(alpha, rho, 
+    cold_start_results, warm_start_results, warm_start_residual_results = \
+            compute_bench(alpha, rho,
                             [n_samples], list_n_features, precompute=False)
     pl.subplot(212)
     pl.plot(list_n_features, cold_start_results, 'b-', label='cold_start_results')
     pl.plot(list_n_features, warm_start_results, 'r-',
                                  label='warm_start_results')
+    pl.plot(list_n_features, warm_start_residual_results, 'g-',
+                                 label='warm_start_residual_results')
+
     pl.title('Enet benchmark (%d samples - alpha=%s)' % (n_samples, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of features')

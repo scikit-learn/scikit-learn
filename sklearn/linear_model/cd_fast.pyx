@@ -110,9 +110,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
-    # initial value of the residuals
-#    if R is None:
-    R = y - np.dot(X, w)
+    if R is None:
+        R = y - np.dot(X, w)
 
     cdef double tmp
     cdef double w_ii
