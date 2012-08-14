@@ -82,12 +82,6 @@ class QDA(BaseEstimator, ClassifierMixin):
         X, y = check_arrays(X, y, sparse_format='dense')
         self.label_encoder_ = LabelEncoder()
         y = self.label_encoder_.fit_transform(y)
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
         n_samples, n_features = X.shape
         n_classes = len(self.label_encoder_.classes_)
         if n_classes < 2:
