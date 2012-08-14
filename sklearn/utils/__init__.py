@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilites.
 """
 
 import numpy as np
+from scipy.sparse import issparse
 import warnings
 
 from .validation import *
@@ -281,6 +282,26 @@ def shuffle(*arrays, **options):
     """
     options['replace'] = False
     return resample(*arrays, **options)
+
+
+def safe_sqr(X):
+    """Element wise squaring of array-likes and sparse matrices.
+
+    Parameters
+    ----------
+    X : array like, matrix, sparse matrix
+
+    Returns
+    -------
+    X ** 2 : element wise square
+    """
+    X = safe_asarray(X)
+    if issparse(X):
+        X_ = X.copy()
+        X_.data **= 2
+    else:
+        X_ = X ** 2
+    return X_
 
 
 def gen_even_slices(n, n_packs):
