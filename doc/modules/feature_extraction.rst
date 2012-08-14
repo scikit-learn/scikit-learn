@@ -388,8 +388,35 @@ using :ref:`NMF`:
 Limitations of the Bag of Words representation
 ----------------------------------------------
 
+A collection of unigrams (what bag of words is) cannot capture phrases
+and multi-word expressions, effectively disregarding any word order
+dependence. Additionally, bag of words model doesn't account for potential
+misspellings or word derivations.
+
+N-grams to the rescue! Instead of building a simple collection of
+unigrams (n=1), one might prefer a collection of bigrams (n=2), where
+occurances of pairs of consecutive words are counted.
+
+One might consider a collection of character n-grams instead, a
+representation resiliant against misspellings and derivations.
+
+For example, let's say we're dealing with a corpus of two documents:
+``['words', 'wprds']``. The second document contains a misspelling
+of the word 'words'.
+A simple bag of words representation would consider these two as
+very distinct documents, differing in both of the two possible features.
+A character 2-gram representation, however, would find the documents
+matching in 4 out of 8 features, which may help the preferred classifier
+decide better.
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', min_n=2, max_n=2)
+  >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
+  >>> counts.toarray().astype(int)
+  array([[1, 1, 1, 0, 1, 1, 1, 0],
+         [1, 1, 0, 1, 1, 1, 0, 1]])
+
 While some local positioning information can be preserved by extracting
-n-grams instead of individual words, Bag of Words and Bag of n-grams
+n-grams instead of individual words, bag of words and bag of n-grams
 destroy most of the inner structure of the document and hence most of
 the meaning carried by that internal structure.
 
