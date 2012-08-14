@@ -17,6 +17,7 @@ from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state
 
+# import useful Lapack function to speedup matrices inversions
 getri, getrf = get_lapack_funcs(('getri', 'getrf'),
                                 (np.empty((), dtype=np.float64),
                                  np.empty((), dtype=np.float64)))
@@ -352,6 +353,7 @@ def fast_mcd(X, support_fraction=None,
         support[np.argsort(np.abs(X - location), axis=0)[:n_support]] = True
         covariance = np.asarray([[np.var(X[support])]])
         location = np.array([location])
+        # get precision matrix an optimized way
         lu, piv, _ = getrf(np.dot(covariance.T, covariance), False)
         precision, _ = getri(lu, piv, overwrite_lu=True)
         precision = np.dot(covariance, precision)
@@ -554,6 +556,7 @@ class MinCovDet(EmpiricalCovariance):
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
+            # get precision matrix an optimized way
             lu, piv, _ = getrf(np.dot(raw_covariance.T, raw_covariance), False)
             precision, _ = getri(lu, piv, overwrite_lu=True)
             precision = np.dot(raw_covariance, precision)

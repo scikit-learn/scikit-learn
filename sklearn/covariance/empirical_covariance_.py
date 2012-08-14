@@ -20,6 +20,7 @@ from ..base import BaseEstimator
 from ..utils import array2d
 from ..utils.extmath import fast_logdet
 
+# import useful Lapack function to speedup matrices inversions
 getri, getrf = get_lapack_funcs(('getri', 'getrf'),
                                 (np.empty((), dtype=np.float64),
                                  np.empty((), dtype=np.float64)))
@@ -118,6 +119,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
+            # get precision matrix an optimized way
             lu, piv, _ = getrf(np.dot(covariance.T, covariance), True)
             self.precision_, _ = getri(lu, piv, overwrite_lu=True)
             self.precision_ = np.dot(covariance, self.precision_)
@@ -136,6 +138,7 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
+            # get precision matrix an optimized way
             lu, piv, _ = getrf(np.dot(self.covariance_.T, self.covariance_))
             precision, _ = getri(lu, piv, overwrite_lu=True)
             precision = np.dot(self.covariance_, precision)
