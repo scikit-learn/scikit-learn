@@ -38,6 +38,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+#from scipy.sparse.sparsetools import coo_todense
 from euclidean_fast import dense_euclidean_distances
 from euclidean_fast import dense_euclidean_distances_sym
 from euclidean_fast import sparse_euclidean_distances
@@ -171,16 +172,24 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
     X, Y = check_pairwise_arrays(X, Y)
     X_rows, X_cols = X.shape
     Y_rows = Y.shape[0]
-    if issparse(X) or issparse(Y):  # Treat the case when only one is sparse?
+
+    if out is None:
+        out = np.empty((X_rows, Y_rows), dtype=X.dtype)
+
+    if issparse(X) or issparse(Y):
         if not issparse(X):
-            out = out.T if out else None
+            out = out.T
             return euclidean_distances(Y, X, Y_norm_squared, X_norm_squared,
                                        Y_norm_precomputed, X_norm_precomputed,
                                        out, squared).T
         X = csr_matrix(X)
         if issparse(Y):
             Y = csr_matrix(Y)
-        out = safe_sparse_dot(X, Y.T, dense_output=True)
+
+        out[:] = (X * Y.T).todense()
+        #spout = (X * Y.T).tocoo()
+        #coo_todense(spout.shape[0], spout.shape[0], spout.nnz, spout.row,
+        #            spout.col, spout.data, out.ravel())
         if X is Y:
             sparse_euclidean_distances_sym(X_rows, X.data, X.indices,
                                            X.indptr, X_norm_squared,
@@ -199,8 +208,6 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
                                              X_norm_precomputed,
                                              Y_norm_precomputed, out, squared)
     else:
-        if not out:
-            out = np.empty((X_rows, Y_rows), dtype=np.float64)
         if X is Y:
             dense_euclidean_distances_sym(X_rows, X_cols, X,
                                           X_norm_squared, X_norm_precomputed,
