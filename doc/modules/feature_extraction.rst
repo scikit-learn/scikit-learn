@@ -415,6 +415,21 @@ decide better.
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
+In above example, ``'char_wb`` analyzer is used, which creates n-grams
+only from characters inside word boundaries (padded with space on each
+side). The ``'char'`` analyzer, alternatively, creates n-grams that
+span across words.
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', min_n=5, max_n=5)
+  >>> ngram_vectorizer.fit_transform(['jumpy fox'])
+  >>> ngram_vectorizer.vocabulary_.keys()
+  [u' fox ', u' jump', u'umpy ', u'jumpy']
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char', min_n=5, max_n=5)
+  >>> ngram_vectorizer.fit_transform(['jumpy fox'])
+  >>> ngram_vectorizer.vocabulary_.keys()
+  [u'jumpy', u'y fox', u'py fo', u'umpy ', u'mpy f']
+
+
 While some local positioning information can be preserved by extracting
 n-grams instead of individual words, bag of words and bag of n-grams
 destroy most of the inner structure of the document and hence most of
