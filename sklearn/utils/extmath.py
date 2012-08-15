@@ -6,6 +6,7 @@ Extended math utilities.
 
 import numpy as np
 from scipy import linalg
+from scipy.linalg.lapack import get_lapack_funcs
 
 from . import check_random_state
 from . import deprecated
@@ -305,3 +306,11 @@ def weighted_mode(a, w, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
+
+
+def fast_pinv(X):
+    try:
+        ret = np.dot(linalg.inv(np.dot(X.T, X), overwrite_a=True), X.T)
+    except linalg.LinAlgError:
+        ret = linalg.pinv2(X)
+    return ret
