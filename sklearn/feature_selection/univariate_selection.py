@@ -109,9 +109,9 @@ def f_classif(X, y):
 
     Returns
     -------
-    F : array shape = [n_features,],
+    F : array, shape = [n_features,]
         The set of F values
-    pval : array shape = [n_features,],
+    pval : array, shape = [n_features,]
         The set of p-values
     """
     X, y = check_arrays(X, y)
@@ -145,9 +145,9 @@ def chi2(X, y):
 
     Returns
     -------
-    chi2 : array shape = [n_features,]
+    chi2 : array, shape = [n_features,]
         chi2 statistics of each feature
-    pval : array shape = [n_features,]
+    pval : array, shape = [n_features,]
         p-values of each feature
 
     Notes
@@ -195,9 +195,9 @@ def f_regression(X, y, center=True):
 
     Returns
     -------
-    F : array of shape (m),
+    F : array, shape=[m,]
         The set of F values
-    pval : array of shape(m)
+    pval : array, shape=[m,]
         The set of p-values
     """
     if issparse(X) and center:
