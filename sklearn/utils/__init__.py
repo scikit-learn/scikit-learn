@@ -284,7 +284,7 @@ def shuffle(*arrays, **options):
     return resample(*arrays, **options)
 
 
-def safe_sqr(X):
+def safe_sqr(X, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
     Parameters
@@ -297,11 +297,15 @@ def safe_sqr(X):
     """
     X = safe_asarray(X)
     if issparse(X):
-        X_ = X.copy()
-        X_.data **= 2
+        if copy:
+            X = X.copy()
+        X.data **= 2
     else:
-        X_ = X ** 2
-    return X_
+        if copy:
+            X = X ** 2
+        else:
+            X **= 2
+    return X
 
 
 def gen_even_slices(n, n_packs):
