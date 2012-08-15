@@ -181,8 +181,78 @@ def roc_curve(y_true, y_score):
     return fpr, tpr, thresholds[::-1]
 
 
+def average_precision_score(y_true, y_score):
+    """Compute average precision (AP) from prediction scores.
+
+    This score corresponds to the area under the precision-recall curve.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    average_precision : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
+
+
+    See also
+    --------
+    auc_score: Area under the ROC curve
+    """
+    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+
+    return auc(recall, precision)
+
+
+def auc_score(y_true, y_score):
+    """Compute Area Under the Curve (AUC) from prediction scores.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    auc : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+
+    See also
+    --------
+    average_precision_score: Area under the precision-recall curve
+    """
+
+    fpr, tpr, tresholds = roc_curve(y_true, y_score)
+    return auc(fpr, tpr)
+
+
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
+
+    This is a general fuction, given points on a curve.
+    For computing the area under the ROC-curve, see auc_score.
 
     Parameters
     ----------
@@ -205,6 +275,10 @@ def auc(x, y):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> metrics.auc(fpr, tpr)
     0.75
+
+    See also
+    --------
+    auc_score Computes the area under the ROC curve
 
     """
     x, y = check_arrays(x, y)
