@@ -39,11 +39,11 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 #from scipy.sparse.sparsetools import coo_todense
-from euclidean_fast import dense_euclidean_distances
-from euclidean_fast import dense_euclidean_distances_sym
-from euclidean_fast import sparse_euclidean_distances
-from euclidean_fast import sparse_euclidean_distances_sym
-from euclidean_fast import sparse_dense_euclidean_distances
+from .euclidean_fast import dense_euclidean_distances
+from .euclidean_fast import dense_euclidean_distances_sym
+from .euclidean_fast import sparse_euclidean_distances
+from .euclidean_fast import sparse_euclidean_distances_sym
+from .euclidean_fast import sparse_dense_euclidean_distances
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
@@ -179,44 +179,43 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
     if issparse(X) or issparse(Y):
         if not issparse(X):
             out = out.T
-            return euclidean_distances(Y, X, Y_norm_squared, X_norm_squared,
-                                       Y_norm_precomputed, X_norm_precomputed,
-                                       out, squared).T
+            euclidean_distances(Y, X, Y_norm_squared, X_norm_squared,
+                                Y_norm_precomputed, X_norm_precomputed,
+                                out, squared)
+            out = out.T
+            return out
         X = csr_matrix(X)
         if issparse(Y):
             Y = csr_matrix(Y)
-
-        out[:] = (X * Y.T).todense()
+            out[:] = (X * Y.T).toarray()
+        else:
+            out[:] = X * Y.T
         #spout = (X * Y.T).tocoo()
         #coo_todense(spout.shape[0], spout.shape[0], spout.nnz, spout.row,
         #            spout.col, spout.data, out.ravel())
         if X is Y:
-            sparse_euclidean_distances_sym(X_rows, X.data, X.indices,
-                                           X.indptr, X_norm_squared,
-                                           X_norm_precomputed, out, squared)
+            sparse_euclidean_distances_sym(
+                X_rows, X.data, X.indices, X.indptr, X_norm_squared,
+                X_norm_precomputed, out, squared)
         elif issparse(Y):
-            sparse_euclidean_distances(X_rows, Y_rows, X.data, X.indices,
-                                       X.indptr, Y.data, Y.indices, Y.indptr,
-                                       X_norm_squared, Y_norm_squared,
-                                       X_norm_precomputed, Y_norm_precomputed,
-                                       out, squared)
+            sparse_euclidean_distances(
+                X_rows, Y_rows, X.data, X.indices, X.indptr, Y.data, Y.indices,
+                Y.indptr, X_norm_squared, Y_norm_squared, X_norm_precomputed,
+                Y_norm_precomputed, out, squared)
         else:
-            sparse_dense_euclidean_distances(X_rows, X_cols, Y_rows, X.data,
-                                             X.indices, X.indptr, Y,
-                                             X_norm_squared,
-                                             Y_norm_squared,
-                                             X_norm_precomputed,
-                                             Y_norm_precomputed, out, squared)
+            sparse_dense_euclidean_distances(
+                X_rows, X_cols, Y_rows, X.data, X.indices, X.indptr, Y,
+                X_norm_squared, Y_norm_squared, X_norm_precomputed,
+                Y_norm_precomputed, out, squared)
     else:
         if X is Y:
-            dense_euclidean_distances_sym(X_rows, X_cols, X,
-                                          X_norm_squared, X_norm_precomputed,
-                                          out, squared)
+            dense_euclidean_distances_sym(
+                X_rows, X_cols, X, X_norm_squared, X_norm_precomputed, out,
+                squared)
         else:
-            dense_euclidean_distances(X_rows, Y_rows, X_cols, X, Y,
-                                      X_norm_squared, Y_norm_squared,
-                                      X_norm_precomputed, Y_norm_precomputed,
-                                      out, squared)
+            dense_euclidean_distances(
+                X_rows, Y_rows, X_cols, X, Y, X_norm_squared, Y_norm_squared,
+                X_norm_precomputed, Y_norm_precomputed, out, squared)
     return out
 
 
