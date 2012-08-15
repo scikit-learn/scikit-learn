@@ -290,7 +290,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             else:
                 active_set_init = None
 
-        n_samples = X.shape[0]
+        n_samples, n_features = X.shape
 
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
@@ -337,8 +337,11 @@ class ElasticNet(LinearModel, RegressorMixin):
                     # possible that an active feature is failing kkt
                     pass_kkt_on_strong_set = True
 
+            features_not_in_strong_set = \
+                        set(range(n_features)).difference_update(strong_set)
             kkt_violators = cd_fast.elastic_net_kkt_violating_features(
-                            self.coef_, l1_reg, l2_reg, X, y, R)
+                            self.coef_, l1_reg, l2_reg, X, y, R, 
+                            subset=features_not_in_strong_set)
 
             if kkt_violators:
                 active_set.update(kkt_violators)
