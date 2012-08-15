@@ -7,6 +7,7 @@ Extended math utilities.
 import warnings
 import numpy as np
 from scipy import linalg
+from scipy.sparse.sparsetools import coo_todense
 
 from . import check_random_state
 from .fixes import qr_economic
@@ -72,9 +73,21 @@ def safe_sparse_dot(a, b, dense_output=False):
     from scipy import sparse
     if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
-        if dense_output and hasattr(ret, "toarray"):
+        if isinstance(dense_output, np.ndarray):
+            if hasattr(ret, "tocoo"):
+                # Save time and space by using the preallocated output
+                ret = ret.tocoo()
+                dense_output.fill(0.)
+                coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
+                            ret.col, ret.data, dense_output.ravel())
+            else:
+                dense_output[:] = ret
+            return dense_output
+        elif dense_output == True and hasattr(ret, "toarray"):
             ret = ret.toarray()
-        return ret
+            return ret
+        else:
+            return ret
     else:
         return np.dot(a, b)
 

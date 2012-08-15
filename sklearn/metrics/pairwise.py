@@ -38,7 +38,6 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-#from scipy.sparse.sparsetools import coo_todense
 from .euclidean_fast import dense_euclidean_distances
 from .euclidean_fast import dense_euclidean_distances_sym
 from .euclidean_fast import sparse_euclidean_distances
@@ -187,12 +186,7 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
         X = csr_matrix(X)
         if issparse(Y):
             Y = csr_matrix(Y)
-            out[:] = (X * Y.T).toarray()
-        else:
-            out[:] = X * Y.T
-        #spout = (X * Y.T).tocoo()
-        #coo_todense(spout.shape[0], spout.shape[0], spout.nnz, spout.row,
-        #            spout.col, spout.data, out.ravel())
+        safe_sparse_dot(X, Y.T, dense_output=out)
         if X is Y:
             sparse_euclidean_distances_sym(
                 X_rows, X.data, X.indices, X.indptr, X_norm_squared,
