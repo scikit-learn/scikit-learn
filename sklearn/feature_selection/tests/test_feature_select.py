@@ -46,30 +46,14 @@ def test_f_classif():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, y)
+    F_sparse,  pv_sparse = f_classif(sparse.csr_matrix(X), y)
     assert(F > 0).all()
     assert(pv > 0).all()
     assert(pv < 1).all()
     assert(pv[:5] < 0.05).all()
     assert(pv[5:] > 1.e-4).all()
-
-
-def test_f_classif_sparse():
-    """
-    Test whether the F test yields meaningful results
-    on a simple simulated classification problem
-    """
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
-
-    F, pv = f_classif(sparse.csr_matrix(X), y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-4).all()
+    assert_array_almost_equal(F_sparse, F)
+    assert_array_almost_equal(pv_sparse, pv)
 
 
 def test_f_regression():
@@ -87,21 +71,11 @@ def test_f_regression():
     assert(pv[:5] < 0.05).all()
     assert(pv[5:] > 1.e-4).all()
 
-
-def test_f_regression_sparse():
-    """
-    Test whether the F test yields meaningful results
-    on a simple simulated regression problem
-    """
-    X, y = make_regression(n_samples=200, n_features=20,
-        n_informative=5, shuffle=False, random_state=0)
-
-    F, pv = f_regression(sparse.csr_matrix(X), y, center=False)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-4).all()
+    # again without centering, compare with sparse
+    F, pv = f_regression(X, y, center=False)
+    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
+    assert_array_almost_equal(F_sparse, F)
+    assert_array_almost_equal(pv_sparse, pv)
 
 
 def test_f_regression_input_dtype():
