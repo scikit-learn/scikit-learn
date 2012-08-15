@@ -308,9 +308,63 @@ def weighted_mode(a, w, axis=0):
     return mostfrequent, oldcounts
 
 
-def fast_pinv(X):
-    try:
-        ret = np.dot(linalg.inv(np.dot(X.T, X), overwrite_a=True), X.T)
-    except linalg.LinAlgError:
-        ret = linalg.pinv2(X)
-    return ret
+def symmetric_pinv(a, cond=None, rcond=None):
+    """Compute the (Moore-Penrose) pseudo-inverse of a matrix.
+
+    Calculate a generalized inverse of a symmetric matrix using its
+    eigenvalue decomposition and including all 'large' eigenvalues.
+
+    Inspired by ``scipy.linalg.pinv2``, credited to Pearu Peterson and Travis
+    Oliphant.
+
+    Parameters
+    ----------
+    a : array, shape (N, N)
+        Symmetric matrix to be pseudo-inverted
+    cond, rcond : float or None
+        Cutoff for 'small' eigenvalues.
+        Singular values smaller than rcond * largest_eigenvalue are considered
+        zero.
+
+        If None or -1, suitable machine precision is used.
+
+    Returns
+    -------
+    B : array, shape (N, N)
+
+    Raises LinAlgError if eigenvalue does not converge
+
+    Examples
+    --------
+    >>> from numpy import *
+    >>> a = random.randn(9, 6)
+    >>> a = np.dot(a, a.T)
+    >>> B = symmetric_pinv(a)
+    >>> allclose(a, dot(a, dot(B, a)))
+    True
+    >>> allclose(B, dot(B, dot(a, B)))
+    True
+
+    """
+    a = np.asarray_chkfinite(a)
+    s, u = linalg.eigh(a)
+    # eigh returns eigvals in reverse order, but this doesn't affect anything.
+
+    t = u.dtype.char
+    if rcond is not None:
+        cond = rcond
+    if cond in [None, -1]:
+        eps = np.finfo(np.float).eps
+        feps = np.finfo(np.single).eps
+        _array_precision = {'f': 0, 'd': 1, 'F': 0, 'D': 1}
+        cond = {0: feps * 1e3, 1: eps * 1e6}[_array_precision[t]]
+    n = a.shape[0]
+    cutoff = cond * np.maximum.reduce(s)
+    psigma = np.zeros((n, n), t)
+    for i in range(len(s)):
+        if s[i] > cutoff:
+            psigma[i, i] = 1.0 / np.conjugate(s[i])
+    #XXX: use lapack/blas routines for dot
+    #XXX: above comment is from scipy, but I (@vene)'ll take a look
+    return np.transpose(np.conjugate(np.dot(np.dot(u, psigma),
+                                     u.T.conjugate())))
