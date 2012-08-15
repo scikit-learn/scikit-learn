@@ -3,8 +3,9 @@ from nose.tools import assert_true
 import numpy as np
 
 from sklearn.linear_model.coordinate_descent import ElasticNet, enet_path, \
-    elastic_net_strong_rule_active_set, elastic_net_kkt_violating_features
+    elastic_net_strong_rule_active_set
 from sklearn.datasets.samples_generator import make_regression
+from sklearn.linear_model.cd_fast import elastic_net_kkt_violating_features
 
 
 def test_enet_basic_strong_rule_filtering():
@@ -88,13 +89,13 @@ def test_elastic_net_find_kkt_violators():
 
     R = y - np.dot(X, changed_coefs)
 
-    found_violators_in_subset = elastic_net_kkt_violating_features(X, y, R,
-                             l1_reg, l2_reg, changed_coefs, subset=subset)
 
+    found_violators_in_subset = elastic_net_kkt_violating_features(
+            changed_coefs, l1_reg, l2_reg, X, y, R, subset=subset)
     assert_true(found_violators_in_subset == set([3, 7]))
 
-    found_violators_in_full_set = elastic_net_kkt_violating_features(X, y, R,
-                             l1_reg, l2_reg, changed_coefs, subset=None)
+    found_violators_in_full_set = elastic_net_kkt_violating_features(
+            changed_coefs, l1_reg, l2_reg, X, y, R, subset=None)
     assert_true(found_violators_in_full_set == set([3, 5, 7]))
 
 

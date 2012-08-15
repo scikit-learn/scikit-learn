@@ -29,6 +29,10 @@ cdef inline double fsign(double f):
     else:
         return -1.0
 
+cdef inline bint fclose(double a, double b, double rtol):
+    cdef double atol = 1e-08
+    return fabs(a - b) <= (atol + rtol * abs(b))
+
 cdef extern from "cblas.h":
     void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
                              double *Y, int incY)
@@ -79,6 +83,39 @@ def sparse_std(unsigned int n_samples,
 
         X_std[ii] = (X_sum_ii + (n_samples - nnz_ii) * X_mean_ii * X_mean_ii)
     return np.sqrt(X_std)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
+                                            double l1_reg, double l2_reg,
+                                            np.ndarray[DOUBLE, ndim=2] X,
+                                            np.ndarray[DOUBLE, ndim=1] y,
+                                            np.ndarray[DOUBLE, ndim=1] R=None,
+                                            subset=None):
+
+    kkt_violating_features = set()
+    cdef double rtol = 0.09
+
+    if subset is None:
+        features_to_check = xrange(X.shape[1])
+    else:
+        features_to_check = subset
+
+    cdef np.ndarray[DOUBLE, ndim=1] gradients
+    gradients = np.dot(X.T, R)
+
+    cdef unsigned int i
+    cdef double s
+    for i in features_to_check:
+        s = fsign(coef[i])
+        if coef[i] != 0 and \
+            not fclose(gradients[i], s * l1_reg + l2_reg * coef[i], rtol):
+            kkt_violating_features.add(i)
+        else:
+            if coef[i] == 0 and fabs(gradients[i]) >= l1_reg:
+                kkt_violating_features.add(i)
+    return kkt_violating_features
 
 
 @cython.boundscheck(False)

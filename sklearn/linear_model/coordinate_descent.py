@@ -328,8 +328,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                                                                 R=R,
                     iter_set=np.array(list(active_set), dtype=np.int32))
 
-                kkt_violators = elastic_net_kkt_violating_features(X, y, R,
-                             l1_reg, l2_reg, self.coef_, subset=strong_set)
+                kkt_violators = cd_fast.elastic_net_kkt_violating_features(
+                                self.coef_, l1_reg, l2_reg, X, y, R, 
+                                subset=strong_set)
                 if kkt_violators:
                     active_set.update(kkt_violators)
                 else:
@@ -337,8 +338,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                     # possible that an active feature is failing kkt
                     pass_kkt_on_strong_set = True
 
-            kkt_violators = elastic_net_kkt_violating_features(X, y, R,
-                         l1_reg, l2_reg, self.coef_)
+            kkt_violators = cd_fast.elastic_net_kkt_violating_features(
+                            self.coef_, l1_reg, l2_reg, X, y, R)
 
             if kkt_violators:
                 active_set.update(kkt_violators)
@@ -380,7 +381,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             return super(ElasticNet, self).decision_function(X)
 
 
-def elastic_net_kkt_violating_features(X, y, R, l1_reg, l2_reg, coef, \
+def elastic_net_kkt_violating_features_old(X, y, R, l1_reg, l2_reg, coef, \
                                  subset=None):
     kkt_violating_features = set()
 
