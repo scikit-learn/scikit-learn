@@ -31,7 +31,7 @@ cdef inline double fsign(double f):
 
 cdef inline bint fclose(double a, double b, double rtol):
     cdef double atol = 1e-08
-    return fabs(a - b) <= (atol + rtol * abs(b))
+    return fabs(a - b) <= (atol + rtol * fabs(b))
 
 cdef extern from "cblas.h":
     void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
@@ -89,16 +89,15 @@ def sparse_std(unsigned int n_samples,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
-                                            double l1_reg, double l2_reg,
-                                            np.ndarray[DOUBLE, ndim=2] X,
-                                            np.ndarray[DOUBLE, ndim=1] y,
-                                            np.ndarray[DOUBLE, ndim=1] R=None,
-                                            subset=None):
+                                       double l1_reg, double l2_reg,
+                                       np.ndarray[DOUBLE, ndim=2] X,
+                                       np.ndarray[DOUBLE, ndim=1] y,
+                                       np.ndarray[DOUBLE, ndim=1] R=None,
+                                       subset=None):
     """ Function returns features that don't satisfy the elastic-net KKT.
-        The goal is to distinguish between coefficients that pass the
-        KKT only up to a certain tolerance and features that are inactive
-        (value of zero) but should be active.
-
+    The goal is to distinguish between coefficients that pass the
+    KKT only up to a certain tolerance and features that are inactive
+    (value of zero) but should be active.
     """
     kkt_violating_features = set()
     cdef double rtol = 0.09
@@ -108,18 +107,20 @@ def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
     else:
         features_to_check = subset
 
-    cdef np.ndarray[DOUBLE, ndim=1] gradients
-    gradients = np.dot(X.T, R)
-
     cdef unsigned int i
     cdef double s
+    cdef double gradient
+    cdef unsigned int n_samples = X.shape[0]
     for i in features_to_check:
+        gradient = ddot(n_samples,
+                   <DOUBLE*>(X.data + i * n_samples * sizeof(DOUBLE)), 1,
+                   <DOUBLE*>R.data, 1)
         s = fsign(coef[i])
         if coef[i] != 0 and \
-            not fclose(gradients[i], s * l1_reg + l2_reg * coef[i], rtol):
+            not fclose(gradient, s * l1_reg + l2_reg * coef[i], rtol):
             kkt_violating_features.add(i)
         else:
-            if coef[i] == 0 and fabs(gradients[i]) >= l1_reg:
+            if coef[i] == 0 and fabs(gradient) >= l1_reg:
                 kkt_violating_features.add(i)
     return kkt_violating_features
 

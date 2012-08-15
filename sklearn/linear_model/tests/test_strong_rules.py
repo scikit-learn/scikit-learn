@@ -1,9 +1,10 @@
-from numpy.testing import assert_array_almost_equal, assert_almost_equal, assert_equal
+from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
+                          assert_equal
 from nose.tools import assert_true
 import numpy as np
 
 from sklearn.linear_model.coordinate_descent import ElasticNet, enet_path, \
-    elastic_net_strong_rule_active_set
+                                        elastic_net_strong_rule_active_set
 from sklearn.datasets.samples_generator import make_regression
 from sklearn.linear_model.cd_fast import elastic_net_kkt_violating_features
 
@@ -15,7 +16,7 @@ def test_enet_basic_strong_rule_filtering():
     alpha = 110.0
     rho = 0.9
 
-    basic_strong_set = elastic_net_strong_rule_active_set(X, y, \
+    basic_strong_set = elastic_net_strong_rule_active_set(X, y,
                 alpha=alpha, rho=rho)
 
     assert_true(basic_strong_set == set([4, 33, 35]))
@@ -31,11 +32,11 @@ def test_enet_sequential_strong_rule_filtering():
     clf = ElasticNet(alpha=alphas[0], rho=rho, precompute=False)
     clf.fit(X, y)
 
-    sequential_strong_set = elastic_net_strong_rule_active_set(X, y, \
-                                alpha=alphas[1], rho=rho, \
+    sequential_strong_set = elastic_net_strong_rule_active_set(X, y,
+                                alpha=alphas[1], rho=rho,
                                 alpha_init=alphas[0], coef_init=clf.coef_)
 
-    assert_true(sequential_strong_set == \
+    assert_true(sequential_strong_set ==
                   set([4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49]))
 
 
@@ -60,7 +61,7 @@ def test_automatic_strong_rule_selection():
                                 alpha_init=alphas[0], coef_init=clf.coef_)
 
     # the sequential strong rule is expected to select less coefs
-    assert(len(sequential_strong_set) < len(basic_strong_set))
+    assert_true(len(sequential_strong_set) < len(basic_strong_set))
 
 
 def test_elastic_net_find_kkt_violators():
@@ -88,7 +89,7 @@ def test_elastic_net_find_kkt_violators():
     changed_coefs[7] += -2
 
     R = y - np.dot(X, changed_coefs)
-
+    X = np.asfortranarray(X)
 
     found_violators_in_subset = elastic_net_kkt_violating_features(
             changed_coefs, l1_reg, l2_reg, X, y, R, subset=subset)
@@ -108,7 +109,7 @@ def test_enet_strong_rule_against_standart_enet():
     clf = ElasticNet(alpha=alpha, rho=rho)
     clf.fit(X, y)
 
-    clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False, \
+    clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False,
                                   use_strong_rule=True)
     clf_strong_rule.fit(X, y)
 
@@ -124,14 +125,14 @@ def test_enet_path():
     rho = 0.9
     alphas = np.array([0.2, 38, 75, 110])
 
-    models = enet_path(X, y, tol=1e-8, alphas=alphas, rho=rho, \
-        fit_intercept=False, normalize=False, precompute=False, copy_X=True, \
-             max_iter=MAX_ITER, use_strong_rule=True)
+    models = enet_path(X, y, tol=1e-8, alphas=alphas, rho=rho,
+        fit_intercept=False, normalize=False, precompute=False, copy_X=True,
+        max_iter=MAX_ITER, use_strong_rule=True)
     coefs_sr_ = np.array([m.coef_ for m in models])
 
     # compare with regular enet_path
-    models = enet_path(X, y, tol=1e-8, alphas=alphas, rho=rho, \
-                       fit_intercept=False, normalize=False, precompute=False, \
+    models = enet_path(X, y, tol=1e-8, alphas=alphas, rho=rho,
+                       fit_intercept=False, normalize=False, precompute=False,
                        copy_X=True, max_iter=MAX_ITER, use_strong_rule=False)
     coefs_skl_ = np.array([m.coef_ for m in models])
 
