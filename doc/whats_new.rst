@@ -53,7 +53,9 @@ Changelog
 
    - Added :func:`metrics.auc_score` and
      :func:`metrics.average_precision_score` convenience functions by `Andreas
-     Müller`_
+     Müller`_.
+
+   - Improved sparse matrix support in the :ref:`feature_selection` module by `Andreas Müller`_.
 
 API changes summary
 -------------------
@@ -1228,7 +1230,7 @@ of commits):
 
 .. _Bertrand Thirion: http://parietal.saclay.inria.fr/Members/bertrand-thirion
 
-.. _Andreas Müller: http://www.ais.uni-bonn.de/~amueller/
+.. _Andreas Müller: http://peekaboo-vision.blogspot.com
 
 .. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
 
