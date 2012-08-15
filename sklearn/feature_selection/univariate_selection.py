@@ -92,8 +92,9 @@ def f_oneway(*args):
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
     f = msb / msw
-    prob = np.asarray(stats.fprob(dfbn, dfwn, f))
-    return f, prob.ravel()
+    f = np.asarray(f).ravel()
+    prob = stats.fprob(dfbn, dfwn, f)
+    return f, prob
 
 
 def f_classif(X, y):
