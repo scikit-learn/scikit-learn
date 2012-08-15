@@ -84,6 +84,7 @@ def sparse_std(unsigned int n_samples,
         X_std[ii] = (X_sum_ii + (n_samples - nnz_ii) * X_mean_ii * X_mean_ii)
     return np.sqrt(X_std)
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -93,7 +94,12 @@ def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
                                             np.ndarray[DOUBLE, ndim=1] y,
                                             np.ndarray[DOUBLE, ndim=1] R=None,
                                             subset=None):
+    """ Function returns features that don't satisfy the elastic-net KKT.
+        The goal is to distinguish between coefficients that pass the
+        KKT only up to a certain tolerance and features that are inactive
+        (value of zero) but should be active.
 
+    """
     kkt_violating_features = set()
     cdef double rtol = 0.09
 
