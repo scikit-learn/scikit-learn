@@ -295,11 +295,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
         # calculate residuals
-        R = y.copy() - np.dot(X, self.coef_)
-#        if coef_init is None:
-#            R = y
-#        else:
-#            R = y - np.dot(X, coef_init)
+        R = y.copy()
+        if coef_init is not None:
+            R -= np.dot(X, coef_init)
 
         # the strong_set contains the features that are predicted by
         # the strong rule to have nonzero coefs
