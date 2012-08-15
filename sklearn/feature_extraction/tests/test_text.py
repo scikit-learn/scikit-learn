@@ -141,7 +141,7 @@ def test_word_analyzer_unigrams():
 
 def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
-                         bounds_n=(1, 2)).build_analyzer()
+                         ngram_range=(1, 2)).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
@@ -159,17 +159,17 @@ def test_unicode_decode_error():
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
     # because we have given it an incorrect charset.
-    wa = CountVectorizer(min_n=1, max_n=2, charset='ascii').build_analyzer()
+    wa = CountVectorizer(ngram_range=(1, 2), charset='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, wa, text_bytes)
 
-    ca = CountVectorizer(analyzer='char', min_n=3, max_n=6,
+    ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
                          charset='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
 def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
-                           min_n=3, max_n=6).build_analyzer()
+                           ngram_range=(3, 6)).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
     expected = [u"j'a", u"'ai", u'ai ', u'i m', u' ma']
@@ -185,7 +185,7 @@ def test_char_ngram_analyzer():
     assert_equal(cnga(text)[-5:], expected)
 
     cnga = CountVectorizer(input='file', analyzer='char',
-                           min_n=3, max_n=6).build_analyzer()
+                           ngram_range=(3, 6)).build_analyzer()
     text = StringIO("This is a test with a file-like object!")
     expected = [u'thi', u'his', u'is ', u's i', u' is']
     assert_equal(cnga(text)[:5], expected)
@@ -423,7 +423,7 @@ def test_vectorizer_max_features():
 
 def test_vectorizer_max_df():
     test_data = [u'abc', u'dea']  # the letter a occurs in both strings
-    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0)
+    vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
     assert_true(u'a' in vect.vocabulary_.keys())
     assert_equals(len(vect.vocabulary_.keys()), 5)
@@ -437,7 +437,7 @@ def test_vectorizer_max_df():
 def test_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = [u'aaabc', u'abbde']
-    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0)
+    vect = CountVectorizer(analyzer='char', max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
     assert_array_equal([[3, 1, 1, 0, 0],
@@ -445,14 +445,14 @@ def test_binary_occurrences():
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
-    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0,
+    vect = CountVectorizer(analyzer='char', max_df=1.0,
                            binary=True)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal([[1, 1, 1, 0, 0],
                         [1, 1, 0, 1, 1]], X)
 
     # check the ability to change the dtype
-    vect = CountVectorizer(analyzer='char', min_n=1, max_n=1, max_df=1.0,
+    vect = CountVectorizer(analyzer='char', max_df=1.0,
                            binary=True, dtype=np.float32)
     X_sparse = vect.fit_transform(test_data)
     assert_equal(X_sparse.dtype, np.float32)
@@ -494,7 +494,7 @@ def test_count_vectorizer_pipeline_grid_selection():
                          ('svc', LinearSVC())])
 
     parameters = {
-        'vect__max_n': (1, 2),
+        'vect__ngram_range': [(1, 1), (1, 2)],
         'svc__loss': ('l1', 'l2')
     }
 
@@ -512,7 +512,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     # to 100% accuracy models
     assert_equal(grid_search.best_score_, 1.0)
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
-    assert_equal(best_vectorizer.max_n, 1)
+    assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
 def test_vectorizer_pipeline_grid_selection():
@@ -532,7 +532,7 @@ def test_vectorizer_pipeline_grid_selection():
                          ('svc', LinearSVC())])
 
     parameters = {
-        'vect__max_n': (1, 2),
+        'vect__ngram_range': [(1, 1), (1, 2)],
         'vect__norm': ('l1', 'l2'),
         'svc__loss': ('l1', 'l2'),
     }
@@ -551,7 +551,7 @@ def test_vectorizer_pipeline_grid_selection():
     # to 100% accuracy models
     assert_equal(grid_search.best_score_, 1.0)
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
-    assert_equal(best_vectorizer.max_n, 1)
+    assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
     assert_false(best_vectorizer.fixed_vocabulary)
 
