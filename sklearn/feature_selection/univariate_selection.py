@@ -33,7 +33,7 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    sample1, sample2, ... : array_like
+    sample1, sample2, ... : array_like, sparse matrices
         The sample measurements should be given as arguments.
 
     Returns
@@ -102,16 +102,16 @@ def f_classif(X, y):
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} shape = [n_samples, n_features]
         The set of regressors that will tested sequentially
     y : array of shape(n_samples)
         The data matrix
 
     Returns
     -------
-    F : array of shape (m),
+    F : array shape = [n_features,],
         The set of F values
-    pval : array of shape(m),
+    pval : array shape = [n_features,],
         The set of p-values
     """
     X, y = check_arrays(X, y)
@@ -125,15 +125,15 @@ def f_classif(X, y):
 def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
-    This transformer can be used to select the n_features features with the
+    This score can be used to select the n_features features with the
     highest values for the χ² (chi-square) statistic from either boolean or
     multinomially distributed data (e.g., term counts in document
     classification) relative to the classes.
 
     Recall that the χ² statistic measures dependence between stochastic
-    variables, so a transformer based on this function "weeds out" the features
-    that are the most likely to be independent of class and therefore
-    irrelevant for classification.
+    variables, so using this function "weeds out" the features that are the
+    most likely to be independent of class and therefore irrelevant for
+    classification.
 
     Parameters
     ----------
@@ -143,8 +143,15 @@ def chi2(X, y):
     y : array-like, shape = n_samples
         Target vector (class labels).
 
+    Returns
+    -------
+    chi2 : array shape = [n_features,]
+        chi2 statistics of each feature
+    pval : array shape = [n_features,]
+        p-values of each feature
+
     Notes
-    ----------
+    -----
     Complexity of this algorithm is O(n_classes * n_features).
     """
 
@@ -178,7 +185,7 @@ def f_regression(X, y, center=True):
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : {array-like, sparse matrix}  shape = [n_samples, n_features]
         The set of regressors that will tested sequentially
     y : array of shape(n_samples)
         The data matrix
