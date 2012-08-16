@@ -623,6 +623,8 @@ Classification metrics
    metrics.recall_score
    metrics.fbeta_score
    metrics.f1_score
+   metrics.auc_score
+   metrics.average_precision_score
    metrics.precision_recall_fscore_support
    metrics.classification_report
    metrics.precision_recall_curve

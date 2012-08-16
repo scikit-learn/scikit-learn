@@ -51,6 +51,10 @@ Changelog
    - Add MultiTaskLasso and MultiTaskElasticNet for joint feature selection,
      by `Alexandre Gramfort`_.
 
+   - Added :func:`metrics.auc_score` and
+     :func:`metrics.average_precision_score` convenience functions by `Andreas
+     Müller`_
+
 API changes summary
 -------------------
 
