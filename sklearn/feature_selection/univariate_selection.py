@@ -92,6 +92,7 @@ def f_oneway(*args):
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
     f = msb / msw
+    # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
     prob = stats.fprob(dfbn, dfwn, f)
     return f, prob
@@ -202,7 +203,7 @@ def f_regression(X, y, center=True):
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_arrays(X, y, dtype=np.float, )
+    X, y = check_arrays(X, y, dtype=np.float)
     y = y.ravel()
     if center:
         y = y - np.mean(y)
@@ -210,10 +211,7 @@ def f_regression(X, y, center=True):
         X -= X.mean(axis=0)
 
     # compute the correlation
-    if issparse(X):
-        corr = y * X
-    else:
-        corr = np.dot(y, X)
+    corr = safe_sparse_dot(y, X)
     corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
     corr /= np.asarray(np.sqrt(safe_sqr(y).sum())).ravel()
 
