@@ -212,7 +212,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             if self.use_strong_rule:
                 self._fit_enet_with_strong_rule(X, y, Xy,
                     active_set_init=active_set_init, coef_init=coef_init,
-                                     alpha_init=alpha_init, R_init=R_init)
+                                     alpha_init=alpha_init, R=R_init)
             else:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
@@ -282,7 +282,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def _fit_enet_with_strong_rule(self, X, y, Xy=None,
                     active_set_init=None, coef_init=None, alpha_init=None,
-                    R_init=None, max_iter_strong=100):
+                    R=None, max_iter_strong=100):
 
         if active_set_init is not None:
             # check if the set is empty
@@ -296,13 +296,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
-        if R_init is None:
+        if R is None:
             # calculate residuals
             R = y.copy()
             if coef_init is not None:
                 R -= np.dot(X, coef_init)
-        else:
-            R = R_init
 
         if Xy is None:
             Xy = np.dot(X.T, y)
