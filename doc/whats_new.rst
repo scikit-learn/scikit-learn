@@ -55,6 +55,9 @@ Changelog
      :func:`metrics.average_precision_score` convenience functions by `Andreas
      Müller`_
 
+   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
+     returns 2d array.
+
 API changes summary
 -------------------
 
