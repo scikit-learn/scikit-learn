@@ -31,6 +31,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
+from ..cross_validation import KFold
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -174,7 +175,7 @@ class LossFunction(object):
 
         # update predictions (both in-bag and out-of-bag)
         y_pred[:, k] += learn_rate * tree.value[:, 0, 0].take(terminal_regions,
-                                                           axis=0)
+                                                              axis=0)
 
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
@@ -532,7 +533,7 @@ class BaseGradientBoosting(BaseEnsemble):
         n_samples, n_features = X.shape
         self.n_features = n_features
 
-        if self.max_features == None:
+        if self.max_features is None:
             self.max_features = n_features
 
         if not (0 < self.max_features <= n_features):
@@ -1001,3 +1002,54 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         X = array2d(X, dtype=DTYPE, order='C')
         for y in self.staged_decision_function(X):
             yield y.ravel()
+
+
+class BaseGradientBoostingCV(BaseGradientBoosting):
+
+    def __init__(self, loss, learn_rate, max_estimators, min_samples_split,
+                 min_samples_leaf, max_depth, init, subsample,
+                 max_features, random_state, alpha=0.9, cv=None):
+        super(BaseGradientBoostingCV, self).__init__(
+            loss, learn_rate, max_estimators, min_samples_split,
+            min_samples_leaf, max_depth, init, subsample, max_features,
+            random_state, alpha=alpha)
+
+        self.max_estimators = max_estimators
+        self.cv = cv
+
+    def fit(self, X, y):
+        if self.cv is None:
+            self.cv = KFold(y.shape[0], k=5)
+
+        cv_deviance = np.zeros((self.cv.k, self.max_estimators),
+                               dtype=np.float64)
+        for k, (train, test) in enumerate(self.cv):
+            super(BaseGradientBoostingCV, self).fit(X[train], y[train])
+            for i, pred in enumerate(self.staged_predict(X[test])):
+                cv_deviance[k, i] = self.loss_(y[test], pred)
+
+        mean_deviance = cv_deviance.mean(axis=1)
+        best_estimators = mean_deviance.argmin() + 1
+        print("Best number of estimators=%d - error %.4f" %
+              (best_estimators, mean_deviance[best_estimators - 1]))
+
+        self.n_estimators = best_estimators
+        self.cv_deviance = cv_deviance
+        super(BaseGradientBoostingCV, self).fit(X, y)
+        return self
+
+
+class GradientBoostingClassifierCV(GradientBoostingClassifier):
+
+    ##__metaclass__ = BaseGradientBoostingCV
+
+    ## def __init__(self, loss='deviance', learn_rate=0.1, max_estimators=1000,
+    ##              subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+    ##              max_depth=3, init=None, random_state=None,
+    ##              max_features=None, cv=None):
+    ##     super(GradientBoostingClassifierCV, self).__init__(
+    ##         loss, learn_rate, max_estimators, min_samples_split,
+    ##         min_samples_leaf, max_depth, init, subsample,
+    ##         max_features, random_state, cv=cv)
+
+
