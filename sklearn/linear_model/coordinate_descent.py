@@ -131,7 +131,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.use_strong_rule = use_strong_rule
 
     def fit(self, X, y, Xy=None, coef_init=None, active_set_init=None,
-                                                        alpha_init=None):
+                                            alpha_init=None, R_init=None):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -160,11 +160,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         if sp.isspmatrix(X):
             self._sparse_fit(X, y, Xy, coef_init)
         else:
-            self._dense_fit(X, y, Xy, coef_init, active_set_init, alpha_init)
+            self._dense_fit(X, y, Xy, coef_init, active_set_init, alpha_init,
+                                                                    R_init)
         return self
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None,
-                                    active_set_init=None, alpha_init=None):
+                        active_set_init=None, alpha_init=None, R_init=None):
 
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
@@ -210,8 +211,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         if Gram is None:
             if self.use_strong_rule:
                 self._fit_enet_with_strong_rule(X, y, Xy,
-                                        active_set_init=active_set_init,
-                                    coef_init=coef_init, alpha_init=alpha_init)
+                    active_set_init=active_set_init, coef_init=coef_init,
+                                     alpha_init=alpha_init, R_init=R_init)
             else:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
@@ -281,7 +282,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def _fit_enet_with_strong_rule(self, X, y, Xy=None,
                     active_set_init=None, coef_init=None, alpha_init=None,
-                    max_iter_strong=100):
+                    R_init=None, max_iter_strong=100):
 
         if active_set_init is not None:
             # check if the set is empty
@@ -295,10 +296,16 @@ class ElasticNet(LinearModel, RegressorMixin):
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
-        # calculate residuals
-        R = y.copy()
-        if coef_init is not None:
-            R -= np.dot(X, coef_init)
+        if R_init is None:
+            # calculate residuals
+            R = y.copy()
+            if coef_init is not None:
+                R -= np.dot(X, coef_init)
+        else:
+            R = R_init
+
+        if Xy is None:
+            Xy = np.dot(X.T, y)
 
         # the strong_set contains the features that are predicted by
         # the strong rule to have nonzero coefs
@@ -324,8 +331,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
                     l2_reg, X, y, self.max_iter, self.tol, self.positive,
-                                                                R=R,
-                    iter_set=np.array(list(active_set), dtype=np.int32))
+                    iter_set=np.array(list(active_set), dtype=np.int32),
+                                                                     R=R,)
 
                 kkt_violators = cd_fast.elastic_net_kkt_violating_features(
                                 self.coef_, l1_reg, l2_reg, X, y, R,
@@ -413,9 +420,9 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
 
     else:
         if Xy is None:
-            Xy = np.abs(np.dot(X.T, y))
+            Xy = np.dot(X.T, y)
         alpha_max = np.max(np.abs(Xy))
-        strong_set = Xy >= rho * (2 * alpha_scaled - alpha_max)
+        strong_set = np.abs(Xy) >= rho * (2 * alpha_scaled - alpha_max)
 #        print "basic strong rule"
         return set(np.where(strong_set)[0])
 
@@ -713,13 +720,16 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     alpha_ = None
     models = []
 
+    R = y.copy()    # Precompute the residual,
+                    # this is only right if coefs are all zero
+
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
         model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
                         precompute=precompute, use_strong_rule=use_strong_rule)
         model.set_params(**params)
         model.fit(X, y, Xy=Xy, coef_init=coef_,
-                   active_set_init=ever_active_set_, alpha_init=alpha_)
+                active_set_init=ever_active_set_, alpha_init=alpha_, R_init=R)
         if fit_intercept:
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
