@@ -360,11 +360,9 @@ def symmetric_pinv(a, cond=None, rcond=None):
         cond = {0: feps * 1e3, 1: eps * 1e6}[_array_precision[t]]
     n = a.shape[0]
     cutoff = cond * np.maximum.reduce(s)
-    psigma = np.zeros((n, n), t)
-    for i in range(len(s)):
-        if s[i] > cutoff:
-            psigma[i, i] = 1.0 / np.conjugate(s[i])
+    psigma = np.zeros(n, t)
+    above_cutoff = np.where(s > cutoff)
+    psigma[above_cutoff] = 1.0 / np.conjugate(s[above_cutoff])
     #XXX: use lapack/blas routines for dot
     #XXX: above comment is from scipy, but I (@vene)'ll take a look
-    return np.transpose(np.conjugate(np.dot(np.dot(u, psigma),
-                                     u.T.conjugate())))
+    return np.transpose(np.conjugate(np.dot(u * psigma, u.T.conjugate())))
