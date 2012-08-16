@@ -175,7 +175,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         X_init = X
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, copy=self.copy_X)
+                self.fit_intercept, self.normalize, copy=self.copy_X, order='F')
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
             # recompute Gram

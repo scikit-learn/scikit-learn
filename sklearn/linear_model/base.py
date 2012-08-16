@@ -67,12 +67,12 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     return X_data, y, X_mean, y_mean, X_std
 
 
-def center_data(X, y, fit_intercept, normalize=False, copy=True):
+def center_data(X, y, fit_intercept, normalize=False, copy=True, order=None):
     """
     Centers data to have mean zero along axis 0. This is here because
     nearly all linear models will want their data to be centered.
     """
-    X = as_float_array(X, copy)
+    X = as_float_array(X, copy, order)
 
     if fit_intercept:
         if sp.issparse(X):

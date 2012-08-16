@@ -30,7 +30,7 @@ def safe_asarray(X, dtype=None, order=None):
     return X
 
 
-def as_float_array(X, copy=True):
+def as_float_array(X, copy=True, order='C'):
     """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -52,9 +52,12 @@ def as_float_array(X, copy=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):
-        return safe_asarray(X, dtype=np.float64)
+        return safe_asarray(X, dtype=np.float64, order=order)
     elif X.dtype in [np.float32, np.float64]:
-        return X.copy() if copy else X
+        if isinstance(X, np.ndarray):
+            return X.copy(order=order) if copy else X
+        else:
+            return X.copy() if copy else X
     else:
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
 
