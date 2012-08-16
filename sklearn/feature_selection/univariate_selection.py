@@ -14,7 +14,7 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
 from ..utils import array2d, atleast2d_or_csr, deprecated, \
-        check_arrays, safe_asarray, safe_sqr
+        check_arrays, safe_asarray, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
@@ -116,10 +116,7 @@ def f_classif(X, y):
         The set of p-values
     """
     X, y = check_arrays(X, y)
-    if issparse(X):
-        args = [X[np.where(y == k)[0]] for k in np.unique(y)]
-    else:
-        args = [X[y == k] for k in np.unique(y)]
+    args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
 
