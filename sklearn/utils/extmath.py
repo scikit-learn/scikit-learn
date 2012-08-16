@@ -6,7 +6,6 @@ Extended math utilities.
 
 import numpy as np
 from scipy import linalg
-from scipy.linalg.lapack import get_lapack_funcs
 
 from . import check_random_state
 from . import deprecated
