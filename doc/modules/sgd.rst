@@ -106,12 +106,12 @@ training very efficient and may result in sparser models, even when L2 penalty
 is used.
 
 In the case of binary classification and `loss="log"` or
-`loss="modified_huber"` you get a probability estimate P(y=C|x) using
+`loss="modified_huber"` you get a probability estimate :math:`P(y=C|x)` using
 `predict_proba`, where `C` is the largest class label::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
-    array([ 0.99999949])
+    array([[ 0.00000051,  0.99999949]])
 
 The concrete penalty can be set via the `penalty` parameter. `SGD`
 supports the following penalties:
