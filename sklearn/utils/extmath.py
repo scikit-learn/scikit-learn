@@ -362,8 +362,7 @@ def symmetric_pinv(a, cond=None, rcond=None):
     cutoff = cond * np.maximum.reduce(s)
     psigma_diag = np.zeros(n, dtype=t)
     i_cutoff = np.searchsorted(s, cutoff)
-    psigma_diag[i_cutoff:] = 1.0 / np.conjugate(s[i_cutoff:])
+    psigma_diag[i_cutoff:] = 1.0 / s[i_cutoff:]
     #XXX: use lapack/blas routines for dot
     #XXX: above comment is from scipy, but I (@vene)'ll take a look
-    return np.transpose(np.conjugate(np.dot(u * psigma_diag,
-                                            u.T.conjugate())))
+    return np.dot(u * psigma_diag, u.T)
