@@ -629,12 +629,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         y = np.asarray(y)
-        y_new = np.zeros(len(y), dtype=self.classes_.dtype)
-
-        for i, k in enumerate(self.classes_):
-            y_new[y == i] = k
-
-        return y_new
+        return self.classes_[y]
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
