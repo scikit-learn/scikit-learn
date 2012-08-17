@@ -76,7 +76,6 @@ class ResultGrid(object):
             1d array of scores corresponding to the different settings
             of ``param``.
         """
-
         return self._accumulate(self.mean(), param, kind)
 
     def accumulated_std(self, param, kind="mean"):
@@ -367,6 +366,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `scores_`: list of ResultGrid
+        For each dict in ``param_grid`` this holds a ``ResultGrid`` that
+        provides easy analysis of the grid search scores.
 
     Notes
     ------
