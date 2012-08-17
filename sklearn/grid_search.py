@@ -20,21 +20,86 @@ from .utils import check_arrays, safe_mask
 
 
 class ResultGrid(object):
+    """Provides easy access to grid search results.
+
+    This object is constructed by GridSearchCV and
+    provides an easy interface to evaluate the grid search
+    results.
+
+    Attributes
+    ----------
+    params: list of string
+        Lists parameters adjusted during grid-search
+        This is an alphabetical sorting of the keys
+        of the ``param_grid`` used in the GridSearchCV.
+    values: dict
+        This contains the values of the parameters
+        that were used during grid search.
+    scores: ndarray
+        Contains all the scores of all runs.
+        Each axis corresponds to the setting of one
+        parameter, in the order given in params.
+        The last axis corresponds to the folds.
+    """
+
     def __init__(self, params, values, scores):
         self.scores = scores
         self.params = params
         self.values = values
 
     def mean(self):
+        """Returns mean scores over folds for the whole parameter grid."""
         return np.mean(self.scores, axis=-1)
 
     def std(self):
+        """Returns standard deviation of scores over folds for the whole
+        parameter grid."""
         return np.std(self.scores, axis=-1)
 
     def accumulated_mean(self, param, kind="mean"):
+        """Accumulates scores over all but one parameter.
+
+        Useful for grid searches in many parameters, where
+        the whole grid can not easily be visualized.
+
+        Parameters
+        ----------
+        param: string
+            Name of the parameter not to accumulate over.
+        kind: string, 'mean' or 'max'
+            Operation that is used to accumulate over all parameters
+            except ``param``.
+
+        Returns
+        -------
+        scores: ndarray
+            1d array of scores corresponding to the different settings
+            of ``param``.
+        """
+
         return self._accumulate(self.mean(), param, kind)
 
     def accumulated_std(self, param, kind="mean"):
+        """Accumulates standard deviations of scores over all but one
+        parameter.
+
+        Useful for grid searches in many parameters, where
+        the whole grid can not easily be visualized.
+
+        Parameters
+        ----------
+        param: string
+            Name of the parameter not to accumulate over.
+        kind: string, 'mean' or 'max'
+            Operation that is used to accumulate over all parameters
+            except ``param``.
+
+        Returns
+        -------
+        scores: ndarray
+            1d array of scores corresponding to the different settings
+            of ``param``.
+        """
         return self._accumulate(self.std(), param, kind)
 
     def _accumulate(self, X, param, kind):
