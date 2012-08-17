@@ -30,6 +30,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import clone
 from ..utils import check_random_state, array2d, check_arrays
 from ..cross_validation import KFold
 
@@ -598,6 +599,63 @@ class BaseGradientBoosting(BaseEnsemble):
         # we don't need _make_estimator
         raise NotImplementedError()
 
+    def _init_decision_function(self, X):
+        """Check input and compute prediction of ``init``. """
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise ValueError("Estimator not fitted, call `fit` " \
+                             "before making predictions`.")
+        if X.shape[1] != self.n_features:
+            raise ValueError("X.shape[1] should be %d, not %d." %
+                             (self.n_features, X.shape[1]))
+        score = self.init.predict(X).astype(np.float64)
+        return score
+
+    def decision_function(self, X):
+        """Compute the decision function of ``X``.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : array, shape = [n_samples, k]
+            The decision function of the input samples. Classes are
+            ordered by arithmetical order. Regression and binary
+            classification are special cases with ``k == 1``,
+            otherwise ``k==n_classes``.
+        """
+        X = array2d(X, dtype=DTYPE, order='C')
+        score = self._init_decision_function(X)
+        predict_stages(self.estimators_, X, self.learn_rate, score)
+        return score
+
+    def staged_decision_function(self, X):
+        """Compute decision function of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : generator of array, shape = [n_samples, k]
+            The decision function of the input samples. Classes are
+            ordered by arithmetical order. Regression and binary
+            classification are special cases with ``k == 1``,
+            otherwise ``k==n_classes``.
+        """
+        X = array2d(X, dtype=DTYPE, order='C')
+        score = self._init_decision_function(X)
+        for i in range(self.n_estimators):
+            predict_stage(self.estimators_, i, X, self.learn_rate, score)
+            yield score
+
     @property
     def feature_importances_(self):
         if self.estimators_ is None or len(self.estimators_) == 0:
@@ -612,38 +670,6 @@ class BaseGradientBoosting(BaseEnsemble):
         importances = total_sum / len(self.estimators_)
         return importances
 
-    def staged_decision_function(self, X):
-        """Compute decision function for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        f : array of shape = [n_samples, n_classes]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Regression and binary
-            classification are special cases with ``n_classes == 1``.
-        """
-        X = array2d(X, dtype=DTYPE, order='C')
-
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, call `fit` " \
-                             "before `staged_decision_function`.")
-        if X.shape[1] != self.n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." %
-                             (self.n_features, X.shape[1]))
-
-        score = self.init.predict(X).astype(np.float64)
-
-        for i in range(self.n_estimators):
-            predict_stage(self.estimators_, i, X, self.learn_rate, score)
-            yield score
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
@@ -775,8 +801,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        probas = self.predict_proba(X)
-        return self.classes_.take(np.argmax(probas, axis=1), axis=0)
+        proba = self.predict_proba(X)
+        return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -792,20 +818,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
-
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, " \
-                             "call `fit` before `predict_proba`.")
-        if X.shape[1] != self.n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." %
-                             (self.n_features, X.shape[1]))
-
-        proba = np.ones((X.shape[0], self.n_classes_), dtype=np.float64)
-
-        score = self.init.predict(X).astype(np.float64)
-        predict_stages(self.estimators_, X, self.learn_rate, score)
-
+        score = self.decision_function(X)
+        proba = np.ones((score.shape[0], self.n_classes_), dtype=np.float64)
         if not self.loss_.is_multi_class:
             proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
             proba[:, 0] -= proba[:, 1]
@@ -970,18 +984,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y: array of shape = [n_samples]
             The predicted values.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
-
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, " \
-                             "call `fit` before `predict`.")
-        if X.shape[1] != self.n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." %
-                             (self.n_features, X.shape[1]))
-
-        y = self.init.predict(X).astype(np.float64)
-        predict_stages(self.estimators_, X, self.learn_rate, y)
-        return y.ravel()
+        return self.decision_function(X).ravel()
 
     def staged_predict(self, X):
         """Predict regression target at each stage for X.
@@ -999,34 +1002,37 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted value of the input samples.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
         for y in self.staged_decision_function(X):
             yield y.ravel()
 
 
-class BaseGradientBoostingCV(BaseGradientBoosting):
+class BaseGradientBoostingCV(object):
 
-    def __init__(self, loss, learn_rate, max_estimators, min_samples_split,
-                 min_samples_leaf, max_depth, init, subsample,
-                 max_features, random_state, alpha=0.9, cv=None):
-        super(BaseGradientBoostingCV, self).__init__(
-            loss, learn_rate, max_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha=alpha)
+    def __init__(self, **kwargs):
+        self.cv = kwargs.pop('cv', None)
+        self.max_estimators = kwargs.pop('max_estimators', 1000)
 
-        self.max_estimators = max_estimators
-        self.cv = cv
+        kwargs['n_estimators'] = self.max_estimators
+        self._model = self._model_class(**kwargs)
 
     def fit(self, X, y):
+        """Pick best ``n_estimators`` based on cross-validation ``cv``.
+
+        Fits model on entire dataset using ``n_estimators`` found by
+        cross-validation ``cv``.
+
+        Cross-validation scores are stored in ``self.cv_deviance``.
+        """
         if self.cv is None:
             self.cv = KFold(y.shape[0], k=5)
 
         cv_deviance = np.zeros((self.cv.k, self.max_estimators),
                                dtype=np.float64)
         for k, (train, test) in enumerate(self.cv):
-            super(BaseGradientBoostingCV, self).fit(X[train], y[train])
-            for i, pred in enumerate(self.staged_predict(X[test])):
-                cv_deviance[k, i] = self.loss_(y[test], pred)
+            model = clone(self._model)
+            model.fit(X[train], y[train])
+            for i, score in enumerate(model.staged_decision_function(X[test])):
+                cv_deviance[k, i] = model.loss_(y[test], score)
 
         mean_deviance = cv_deviance.mean(axis=1)
         best_estimators = mean_deviance.argmin() + 1
@@ -1035,21 +1041,38 @@ class BaseGradientBoostingCV(BaseGradientBoosting):
 
         self.n_estimators = best_estimators
         self.cv_deviance = cv_deviance
-        super(BaseGradientBoostingCV, self).fit(X, y)
+        self._model.fit(X, y)
         return self
 
-
-class GradientBoostingClassifierCV(GradientBoostingClassifier):
-
-    ##__metaclass__ = BaseGradientBoostingCV
-
-    ## def __init__(self, loss='deviance', learn_rate=0.1, max_estimators=1000,
-    ##              subsample=1.0, min_samples_split=1, min_samples_leaf=1,
-    ##              max_depth=3, init=None, random_state=None,
-    ##              max_features=None, cv=None):
-    ##     super(GradientBoostingClassifierCV, self).__init__(
-    ##         loss, learn_rate, max_estimators, min_samples_split,
-    ##         min_samples_leaf, max_depth, init, subsample,
-    ##         max_features, random_state, cv=cv)
+    def __getattr__(self, name):
+        return getattr(self._model, name)
 
 
+class GradientBoostingClassifierCV(BaseGradientBoostingCV):
+
+    _model_class = GradientBoostingClassifier
+
+    def __init__(self, loss='deviance', learn_rate=0.1, max_estimators=1000,
+                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+                 max_depth=3, init=None, random_state=None,
+                 max_features=None, cv=None):
+        super(GradientBoostingClassifierCV, self).__init__(
+            loss=loss, learn_rate=learn_rate, max_estimators=max_estimators,
+            min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features, random_state=random_state, cv=cv)
+
+
+class GradientBoostingRegressorCV(BaseGradientBoostingCV):
+
+    _model_class = GradientBoostingRegressor
+
+    def __init__(self, loss='ls', learn_rate=0.1, max_estimators=1000,
+                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+                 max_depth=3, init=None, random_state=None,
+                 max_features=None, alpha=0.9, cv=None):
+        super(GradientBoostingClassifierCV, self).__init__(
+            loss=loss, learn_rate=learn_rate, max_estimators=max_estimators,
+            min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features, random_state=random_state, alpha=alpha, cv=cv)
