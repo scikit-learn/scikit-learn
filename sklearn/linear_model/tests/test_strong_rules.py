@@ -19,7 +19,10 @@ def test_enet_basic_strong_rule_filtering():
     basic_strong_set = elastic_net_strong_rule_active_set(X, y,
                 alpha=alpha, rho=rho)
 
-    assert_true(basic_strong_set == set([4, 33, 35]))
+    ref_strong_set = np.array([False for x in range(X.shape[1])], dtype=bool)
+    ref_strong_set[[4, 33, 35]] = True
+
+    assert_equal(basic_strong_set, ref_strong_set)
 
 
 def test_enet_sequential_strong_rule_filtering():
@@ -36,8 +39,12 @@ def test_enet_sequential_strong_rule_filtering():
                                 alpha=alphas[1], rho=rho,
                                 alpha_init=alphas[0], coef_init=clf.coef_)
 
-    assert_true(sequential_strong_set ==
-                  set([4, 8, 12, 14, 16, 22, 25, 29, 31, 33, 35, 37, 40, 49]))
+    ref_sequential_strong_set = np.array([False for x in range(X.shape[1])],
+                                                                 dtype=bool)
+    ref_sequential_strong_set[[4, 8, 12, 14, 16, 22, 25, 29, 31, \
+                                        33, 35, 37, 40, 49]] = True
+
+    assert_equal(sequential_strong_set, ref_sequential_strong_set)
 
 
 def test_automatic_strong_rule_selection():
@@ -61,7 +68,8 @@ def test_automatic_strong_rule_selection():
                                 alpha_init=alphas[0], coef_init=clf.coef_)
 
     # the sequential strong rule is expected to select less coefs
-    assert_true(len(sequential_strong_set) < len(basic_strong_set))
+    assert_true(np.count_nonzero(sequential_strong_set) <
+                np.count_nonzero(basic_strong_set))
 
 
 def test_elastic_net_find_kkt_violators():

@@ -284,12 +284,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                     active_set_init=None, coef_init=None, alpha_init=None,
                     R=None, max_iter_strong=100):
 
-        if active_set_init is not None:
-            # check if the set is empty
-            if active_set_init:
-                active_set = active_set_init
-            else:
-                active_set_init = None
+        if active_set_init is not None and \
+                 True not in active_set_init:
+            active_set_init = None
 
         n_samples, n_features = X.shape
 
@@ -307,9 +304,9 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # the strong_set contains the features that are predicted by
         # the strong rule to have nonzero coefs
-        strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy, \
-                alpha=self.alpha, rho=self.rho, alpha_init=alpha_init, \
-                                                   coef_init=coef_init, R=R)
+        strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy,
+                alpha=self.alpha, rho=self.rho, alpha_init=alpha_init,
+                                            coef_init=coef_init, R=R)
 
         # the ever_active_set contains the features that had nonzero coefs 
         # while fitting with a higher alpha
@@ -329,27 +326,28 @@ class ElasticNet(LinearModel, RegressorMixin):
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
                     l2_reg, X, y, self.max_iter, self.tol, self.positive,
-                    iter_set=np.array(list(active_set), dtype=np.int32),
-                                                                     R=R,)
-
+                    iter_set=np.where(active_set)[0], R=R)
+                # check only zero features
+                zero_coefs = self.coef_ == 0
+                subset = np.where(strong_set & zero_coefs)[0]
                 kkt_violators = cd_fast.elastic_net_kkt_violating_features(
                                 self.coef_, l1_reg, l2_reg, X, y, R,
-                                subset=strong_set)
+                                subset=subset)
                 if kkt_violators:
-                    active_set.update(kkt_violators)
+                    active_set[list(kkt_violators)] = True
                 else:
                     # This only garanties that no feature is missing it's still
                     # possible that an active feature is failing kkt
                     pass_kkt_on_strong_set = True
 
-            features_not_in_strong_set = \
-                        set(range(n_features)).difference_update(strong_set)
+            # check only on zero features
+            subset = np.where(np.logical_not(strong_set) & zero_coefs)[0]
             kkt_violators = cd_fast.elastic_net_kkt_violating_features(
-                            self.coef_, l1_reg, l2_reg, X, y, R, 
-                            subset=features_not_in_strong_set)
+                            self.coef_, l1_reg, l2_reg, X, y, R,
+                            subset=subset)
 
             if kkt_violators:
-                active_set.update(kkt_violators)
+                active_set[list(kkt_violators)] = True
                 strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy,
                             alpha=self.alpha, rho=self.rho,
                             alpha_init=alpha_init, coef_init=coef_init, R=R)
@@ -413,16 +411,16 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
         alpha_init_scaled = alpha_init * X.shape[0]
         strong_set = gradient >= rho * (2 * alpha_scaled -  \
                                                 alpha_init_scaled)
-#        print "sequential strong rule"
-        return set(np.where(strong_set)[0])
+        print "sequential strong rule"
+        return strong_set
 
     else:
         if Xy is None:
             Xy = np.dot(X.T, y)
         alpha_max = np.max(np.abs(Xy))
         strong_set = np.abs(Xy) >= rho * (2 * alpha_scaled - alpha_max)
-#        print "basic strong rule"
-        return set(np.where(strong_set)[0])
+        print "basic strong rule"
+        return strong_set
 
 
 ###############################################################################
@@ -714,7 +712,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
-    ever_active_set_ = set()
+    ever_active_set_ = np.array([False for x in range(X.shape[1])], dtype=bool)
+
     alpha_ = None
     models = []
 
@@ -740,7 +739,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
         if use_strong_rule:
-            ever_active_set_.update(set(coef_.nonzero()[0]))
+            ever_active_set_ = ever_active_set_ | (coef_ == 0)
             alpha_ = alpha
         models.append(model)
     return models

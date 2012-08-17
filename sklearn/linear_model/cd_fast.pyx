@@ -105,7 +105,10 @@ def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
     if subset is None:
         features_to_check = xrange(X.shape[1])
     else:
-        features_to_check = subset
+        if len(subset) > 0:  # check if subset is empty
+            return
+        else:
+            features_to_check = subset
 
     cdef unsigned int i
     cdef double s
