@@ -16,6 +16,8 @@ from time import time
 import numpy as np
 
 from sklearn.datasets.samples_generator import make_regression
+from numpy.testing import assert_array_almost_equal
+from sklearn.linear_model.base import center_data
 
 
 def compute_bench(alpha, rho, n_samples, n_features, precompute):
@@ -34,27 +36,32 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                                           len(n_features)))
             print '=================='
             n_informative = nf // 10
-            X, Y, coef_ = make_regression(n_samples=ns, n_features=nf,
+            X, y = make_regression(n_samples=ns, n_features=nf,
                                           n_informative=n_informative,
-                                          noise=0.1, coef=True)
+                                          noise=0.1)
 
-            X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
+            X, y, _, _, _ = center_data(X, y, fit_intercept=False,
+                                     normalize=False, copy=False)
+            X = np.asfortranarray(X)
+            Xy = np.dot(X.T, y)
 
             gc.collect()
             print "- benching ElasticNet"
-            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False, 
-                             fit_intercept=False)
+            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False,
+                             fit_intercept=False, copy_X=False)
             tstart = time()
-            clf.fit(X, Y)
+            clf.fit(X, y, Xy)
             enet_results.append(time() - tstart)
 
             gc.collect()
             print "- benching ElasticNet with strong rules"
-            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False,
-                          fit_intercept=False, use_strong_rule=True)
+            clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False,
+                                    fit_intercept=False, copy_X=False,
+                                    use_strong_rule=True)
             tstart = time()
-            clf.fit(X, Y)
+            clf_strong_rule.fit(X, y, Xy)
             enet_strong_rules_results.append(time() - tstart)
+            assert_array_almost_equal(clf_strong_rule.coef_, clf.coef_, 5)
 
     return enet_results, enet_strong_rules_results
 
@@ -67,7 +74,7 @@ if __name__ == '__main__':
     rho = 0.90
 
     n_features = 10
-    list_n_samples = np.linspace(100, 1000000, 5).astype(np.int)
+    list_n_samples = np.linspace(100, 1000000, 10).astype(np.int)
     enet_results, enet_strong_rules_results = compute_bench(alpha, rho,
                          list_n_samples, [n_features], precompute=True)
 
@@ -84,7 +91,7 @@ if __name__ == '__main__':
     pl.axis('tight')
 
     n_samples = 2000
-    list_n_features = np.linspace(500, 3000, 5).astype(np.int)
+    list_n_features = np.linspace(500, 3000, 10).astype(np.int)
     enet_results, enet_strong_rules_results = compute_bench(alpha, rho, 
                             [n_samples], list_n_features, precompute=False)
     pl.subplot(212)
