@@ -19,6 +19,41 @@ from .externals.joblib import Parallel, delayed, logger
 from .utils import check_arrays, safe_mask
 
 
+class ResultGrid(object):
+    def __init__(self, params, values, scores):
+        self.scores = scores
+        self.params = params
+        self.values = values
+
+    def mean(self):
+        return np.mean(self.scores, axis=-1)
+
+    def std(self):
+        return np.std(self.scores, axis=-1)
+
+    def accumulated_mean(self, param, kind="mean"):
+        return self._accumulate(self.mean(), param, kind)
+
+    def accumulated_std(self, param, kind="mean"):
+        return self._accumulate(self.std(), param, kind)
+
+    def _accumulate(self, X, param, kind):
+        if kind == "mean":
+            acc_func = np.mean
+        elif kind == "max":
+            acc_func = np.max
+        else:
+            raise ValueError("kind must be 'mean' or 'max', got %s." %
+                    str(kind))
+        index = self.params.index(param)
+        accumulated = self.scores
+        for i in xrange(index + 1, self.scores.ndim):
+            accumulated = acc_func(accumulated, axis=-1)
+        for i in xrange(0, index):
+            accumulated = acc_func(accumulated, axis=0)
+        return accumulated
+
+
 class IterGrid(object):
     """Generators on the combination of the various parameter lists given
 
@@ -435,9 +470,40 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             self._best_estimator_ = best_estimator
             self._set_methods()
 
-        # Store the computed scores
-        # XXX: the name is too specific, it shouldn't have
-        # 'grid' in it. Also, we should be retrieving/storing variance
+        # param grid can be a list
+        # make singleton to list for unified treatment
+        if hasattr(self.param_grid, 'items'):
+            # wrap dictionary in a singleton list
+            param_grid = [self.param_grid]
+        else:
+            param_grid = self.param_grid
+        # for each entry in the param_grid list, we build
+        # an array of scores.
+        # we don't know how long the parts are so we have
+        # to keep track of everything :-/
+        start = 0
+        self.scores_ = []
+        for one_grid in param_grid:
+            sorted_params = sorted(one_grid.keys())
+            # get the number of values for each parameter
+            grid_shape = [len(one_grid[k]) for k in sorted_params]
+            n_entries = np.prod(grid_shape)
+            grid_shape.append(n_folds)
+            # get scores
+            score_array = np.array(cv_scores[start:start + n_entries])
+            # reshape to fit the sequence of values
+            score_array = score_array.reshape(grid_shape)
+            self.scores_.append(ResultGrid(sorted_params, one_grid,
+                                           score_array))
+            start += n_entries
+        #from IPython.core.debugger import Tracer
+        #Tracer()()
+
+        # often the list is just one grid. Make access easier
+        if len(self.scores_) is 1:
+            self.scores_ = self.scores_[0]
+
+        # old interface
         self.grid_scores_ = [
             (clf_params, score, all_scores)
                     for clf_params, (score, _), all_scores

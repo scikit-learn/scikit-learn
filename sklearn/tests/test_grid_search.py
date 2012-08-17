@@ -12,6 +12,7 @@ from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm import LinearSVC, SVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import f1_score, precision_score
 from sklearn.cross_validation import KFold
 
@@ -49,7 +50,7 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
+        assert_equal(grid_search.grid_scores_[i][0], {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)
 
@@ -225,3 +226,31 @@ def test_X_as_list():
     cv = KFold(n=len(X), k=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
+
+
+def test_result_grid():
+    # make small grid search and test ResultGrid on it
+    clf = DecisionTreeClassifier()
+    X, y = make_classification()
+    param_grid = {'max_depth': np.arange(1, 5),
+                  'max_features': np.arange(1, 3)}
+    grid_search = GridSearchCV(clf, param_grid=param_grid)
+    grid_search.fit(X, y)
+    result = grid_search.scores_
+    assert_equal(result.mean().shape, (4, 2))
+    assert_equal(result.std().shape, (4, 2))
+    assert_equal(result.scores.shape, (4, 2, 3))
+    assert_equal(len(result.accumulated_mean('max_depth')), 4)
+    assert_equal(len(result.values['max_depth']), 4)
+
+
+def test_list():
+    # test that grid search can handle list of dics as param_grid
+    # smoke test!
+    clf = DecisionTreeClassifier()
+    X, y = make_classification()
+    param_grid = [{'max_depth': np.arange(1, 5)},
+                  {'max_features': np.arange(1, 3)}]
+    grid_search = GridSearchCV(clf, param_grid=param_grid)
+    grid_search.fit(X, y)
+    assert_equal(len(grid_search.scores_), 2)
