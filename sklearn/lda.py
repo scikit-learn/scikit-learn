@@ -11,7 +11,7 @@ from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
-from .preprocessing import LabelEncoder
+from .utils.fixes import unique
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -94,8 +94,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             and stored in `self.covariance_` attribute.
         """
         X = np.asarray(X)
-        self.label_encoder_ = LabelEncoder()
-        y = self.label_encoder_.fit_transform(y)
+        self.classes_, y = unique(y, return_inverse=True)
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
         if X.shape[0] != y.shape[0]:
@@ -104,7 +103,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                 'has %s' % (X.shape[0], y.shape[0]))
         n_samples = X.shape[0]
         n_features = X.shape[1]
-        n_classes = len(self.label_encoder_.classes_)
+        n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         if self.priors is None:
@@ -177,8 +176,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     @property
     def classes(self):
         warnings.warn("LDA.classes is deprecated. Use "
-                "LDA.label_encoder_.classes_ instead.", DeprecationWarning)
-        return self.label_encoder_.classes_
+                "LDA.classes_ instead.", DeprecationWarning)
+        return self.classes_
 
     def decision_function(self, X):
         """
@@ -232,7 +231,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         C : array, shape = [n_samples]
         """
         d = self.decision_function(X)
-        y_pred = self.label_encoder_.inverse_transform(d.argmax(1))
+        y_pred = self.classes_.take(d.argmax(1))
         return y_pred
 
     def predict_proba(self, X):
