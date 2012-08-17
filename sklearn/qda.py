@@ -12,6 +12,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 from .utils.fixes import unique
+from .utils import check_arrays
 
 
 class QDA(BaseEstimator, ClassifierMixin):
@@ -73,15 +74,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
         """
-        X = np.asarray(X)
-
+        X, y = check_arrays(X, y)
         self.classes_, y = unique(y, return_inverse=True)
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:

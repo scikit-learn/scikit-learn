@@ -179,7 +179,7 @@ class DBSCAN(BaseEstimator):
         """
         if params:
             warnings.warn('Passing parameters to fit methods is '
-                        'depreciated', stacklevel=2)
+                        'deprecated', stacklevel=2)
             self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
                                                          **self.get_params())

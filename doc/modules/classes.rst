@@ -861,6 +861,7 @@ Pairwise metrics
    preprocessing.Normalizer
    preprocessing.Binarizer
    preprocessing.LabelBinarizer
+   preprocessing.LabelEncoder
    preprocessing.KernelCenterer
 
 .. autosummary::

@@ -234,10 +234,10 @@ def test_check_inputs():
     from scipy import sparse
     X_sparse = sparse.csr_matrix(X)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    assert_raises(ValueError, clf.fit, X_sparse, y)
+    assert_raises(TypeError, clf.fit, X_sparse, y)
 
     clf = GradientBoostingClassifier().fit(X, y)
-    assert_raises(ValueError, clf.predict, X_sparse)
+    assert_raises(TypeError, clf.predict, X_sparse)
 
 
 def test_check_inputs_predict():

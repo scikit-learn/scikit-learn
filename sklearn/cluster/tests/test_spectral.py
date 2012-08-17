@@ -59,8 +59,8 @@ def test_spectral_amg_mode():
     except ImportError:
         amg_loaded = False
     if amg_loaded:
-        labels = spectral_clustering(S, n_clusters=len(centers), random_state=0,
-                                     mode="amg")
+        labels = spectral_clustering(S, n_clusters=len(centers),
+                                     random_state=0, mode="amg")
         # We don't care too much that it's good, just that it *worked*.
         # There does have to be some lower limit on the performance though.
         assert_greater(np.mean(labels == true_labels), .3)

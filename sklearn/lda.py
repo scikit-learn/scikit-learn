@@ -12,6 +12,7 @@ from scipy import linalg
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
 from .utils.fixes import unique
+from .utils import check_arrays
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -93,16 +94,9 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             If True the covariance matrix (shared by all classes) is computed
             and stored in `self.covariance_` attribute.
         """
-        X = np.asarray(X)
+        X, y = check_arrays(X, y, sparse_format='dense')
         self.classes_, y = unique(y, return_inverse=True)
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')

@@ -96,7 +96,6 @@ def test_ward_clustering():
     assert_raises(ValueError, clustering.fit, X)
 
 
-
 def test_ward_agglomeration():
     """
     Check that we obtain the correct solution in a simplistic case

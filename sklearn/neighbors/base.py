@@ -14,7 +14,7 @@ from scipy.spatial.ckdtree import cKDTree
 from .ball_tree import BallTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
-from ..utils import safe_asarray, atleast2d_or_csr
+from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
 
 
 class NeighborsWarning(UserWarning):
@@ -550,7 +550,8 @@ class SupervisedFloatMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of float values.
         """
-        self._y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format="csr")
+        self._y = y
         return self._fit(X)
 
 
@@ -567,7 +568,8 @@ class SupervisedIntegerMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
         """
-        self._y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format="csr")
+        self._y = y
         self._classes = np.sort(np.unique(y))
         return self._fit(X)
 
