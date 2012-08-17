@@ -407,7 +407,7 @@ A simple bag of words representation would consider these two as
 very distinct documents, differing in both of the two possible features.
 A character 2-gram representation, however, would find the documents
 matching in 4 out of 8 features, which may help the preferred classifier
-decide better.
+decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', min_n=2, max_n=2)
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
@@ -418,16 +418,23 @@ decide better.
 In above example, ``'char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
-span across words.
+span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', min_n=5, max_n=5)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  >>> ngram_vectorizer.vocabulary_.keys()
-  [u' fox ', u' jump', u'umpy ', u'jumpy']
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
+  <1x4 sparse matrix of type '<type 'numpy.int64'>'
+     with 4 stored elements in COOrdinate format>
+  >>> ngram_vectorizer.get_feature_names()
+  [u' fox ', u' jump', u'jumpy', u'umpy ']
+
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', min_n=5, max_n=5)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  >>> ngram_vectorizer.vocabulary_.keys()
-  [u'jumpy', u'y fox', u'py fo', u'umpy ', u'mpy f']
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
+  <1x5 sparse matrix of type '<type 'numpy.int64'>'
+      with 5 stored elements in COOrdinate format>
+  >>> ngram_vectorizer.get_feature_names()
+  [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
 
 
 While some local positioning information can be preserved by extracting
