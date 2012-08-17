@@ -55,7 +55,11 @@ Changelog
      :func:`metrics.average_precision_score` convenience functions by `Andreas
      Müller`_.
 
-   - Improved sparse matrix support in the :ref:`feature_selection` module by `Andreas Müller`_.
+   - Improved sparse matrix support in the :ref:`feature_selection`
+     module by `Andreas Müller`_.
+
+   - New word boundaries-aware character n-gram analyzer for the
+     :ref:`text_feature_extraction` module by `@kernc`_.
 
 API changes summary
 -------------------
@@ -63,9 +67,9 @@ API changes summary
    - The old ``scikits.learn`` package has disappeared; all code should import
      from ``sklearn`` instead, which was introduced in 0.9.
 
-   - In :class:`metrics.roc_curve`, the `thresholds` array is now returned
+   - In :class:`metrics.roc_curve`, the ``thresholds`` array is now returned
      with it's order reversed, in order to keep it consistent with the order
-     of the returned `fpr` and `tpr`.
+     of the returned ``fpr`` and ``tpr``.
 
    - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
      :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
@@ -1256,5 +1260,7 @@ of commits):
 
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
 
-.. _David Marek: http://http://www.davidmarek.cz/
+.. _David Marek: http://www.davidmarek.cz/
+
+.. _@kernc: http://github.com/kernc
 
