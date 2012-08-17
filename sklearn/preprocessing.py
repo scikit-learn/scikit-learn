@@ -9,6 +9,7 @@ import scipy.sparse as sp
 
 from .utils import check_arrays
 from .utils import warn_if_not_float
+from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
@@ -581,17 +582,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        self.fit(y)
-        return self._transform(y)
-
-    def _transform(self, y):
-        y = np.asarray(y)
-        y_new = np.zeros(len(y), dtype=int)
-
-        for i, k in enumerate(self.classes_[1:]):
-            y_new[y == k] = i + 1
-
-        return y_new
+        self.classes_, y = unique(y, return_inverse=True)
+        return y
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -612,7 +604,13 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
 
-        return self._transform(y)
+        y = np.asarray(y)
+        y_new = np.zeros(len(y), dtype=int)
+
+        for i, k in enumerate(self.classes_[1:]):
+            y_new[y == k] = i + 1
+
+        return y_new
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
