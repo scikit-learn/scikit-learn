@@ -14,6 +14,8 @@ from sklearn.utils import check_random_state
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingClassifierCV
+from sklearn.ensemble import GradientBoostingRegressorCV
 
 from sklearn import datasets
 
@@ -416,3 +418,52 @@ def test_mem_layout():
     clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
+
+
+def test_cv_attr():
+    """Test attribute access for CV classes. """
+    clf = GradientBoostingClassifierCV(max_estimators=100,
+                                       min_samples_leaf=3)
+    clf.fit(X, y)
+
+    assert clf.min_samples_leaf == 3 == clf._model.min_samples_leaf
+    clf.min_samples_leaf = 2
+    assert clf.min_samples_leaf == 2 == clf._model.min_samples_leaf
+
+
+def test_cv_clf():
+    """Test GradientBoostingClassifierCV n_estimators selection. """
+    X, y = datasets.make_hastie_10_2(n_samples=1000, random_state=1)
+
+    max_estimators = 50
+
+    clf = GradientBoostingClassifierCV(max_estimators=max_estimators)
+    clf.fit(X, y)
+    # max_estimators very small so it chooses all of them
+    assert clf.n_estimators == max_estimators
+
+    clf_prime = GradientBoostingClassifier(
+        n_estimators=max_estimators).fit(X, y)
+
+    assert_array_equal(clf_prime.train_score_, clf.train_score_)
+    assert clf.cv_score_.shape[0] == 5  # default 5-fold CV
+    assert clf.cv_score_.shape[1] == max_estimators
+
+
+def test_cv_reg():
+    """Test GradientBoostingRegressorCV n_estimators selection. """
+    X, y = datasets.make_friedman1(n_samples=1000, random_state=1)
+
+    max_estimators = 50
+
+    clf = GradientBoostingRegressorCV(max_estimators=max_estimators)
+    clf.fit(X, y)
+    # max_estimators very small so it chooses all of them
+    assert clf.n_estimators == max_estimators
+
+    clf_prime = GradientBoostingRegressor(
+        n_estimators=max_estimators).fit(X, y)
+
+    assert_array_equal(clf_prime.train_score_, clf.train_score_)
+    assert clf.cv_score_.shape[0] == 5  # default 5-fold CV
+    assert clf.cv_score_.shape[1] == max_estimators
