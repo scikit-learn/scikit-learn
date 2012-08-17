@@ -191,6 +191,24 @@ def test_char_ngram_analyzer():
     assert_equal(cnga(text)[:5], expected)
 
 
+def test_char_wb_ngram_analyzer():
+    cnga = CountVectorizer(analyzer='char_wb', strip_accents='unicode',
+                           min_n=3, max_n=6).build_analyzer()
+
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
+    expected = [u' th', u'thi', u'his', u'is ', u' thi']
+    assert_equal(cnga(text)[:5], expected)
+
+    expected = [u'yester', u'esterd', u'sterda', u'terday', u'erday ']
+    assert_equal(cnga(text)[-5:], expected)
+
+    cnga = CountVectorizer(input='file', analyzer='char_wb',
+                           min_n=3, max_n=6).build_analyzer()
+    text = StringIO("A test with a file-like object!")
+    expected = [u' a ', u' te', u'tes', u'est', u'st ', u' tes']
+    assert_equal(cnga(text)[:6], expected)
+
+
 def test_countvectorizer_custom_vocabulary():
     vocab = {"pizza": 0, "beer": 1}
     terms = set(vocab.keys())
