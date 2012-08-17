@@ -1,4 +1,4 @@
-"""Gradient Boosting methods
+"""Gradient Boosted Regression Trees
 
 This module contains methods for fitting gradient boosted regression trees for
 both classification and regression.
@@ -13,7 +13,16 @@ The module structure is the following:
   classification problems.
 
 - ``GradientBoostingRegressor`` implements gradient boosting for
+  regression problems.
+
+- The ``BaseGradientBoostingCV`` base class implements a ``fit`` method
+  to choose the best ``n_estimators`` based on cross-validation.
+
+- ``GradientBoostingClassifierCV`` implements ``BaseGradientBoostingCV`` for
   classification problems.
+
+- ``GradientBoostingRegressor`` implements ``BaseGradientBoostingCV`` for
+  regression problems.
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe
@@ -46,7 +55,8 @@ from ._gradient_boosting import predict_stage
 class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
-        assert 0 < alpha < 1.0
+        if not 0 < alpha < 1.0:
+            raise ValueError("`alpha` must be in (0, 1.0)")
         self.alpha = alpha
 
     def fit(self, X, y):
@@ -55,17 +65,6 @@ class QuantileEstimator(BaseEstimator):
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
-        return y
-
-
-class MedianEstimator(BaseEstimator):
-    """An estimator predicting the median of the training targets."""
-    def fit(self, X, y):
-        self.median = np.median(y)
-
-    def predict(self, X):
-        y = np.empty((X.shape[0], 1), dtype=np.float64)
-        y.fill(self.median)
         return y
 
 
@@ -223,7 +222,7 @@ class LeastSquaresError(RegressionLossFunction):
 class LeastAbsoluteError(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
     def init_estimator(self):
-        return MedianEstimator()
+        return QuantileEstimator(alpha=0.5)
 
     def __call__(self, y, pred):
         return np.abs(y - pred.ravel()).mean()
@@ -249,7 +248,7 @@ class HuberLossFunction(RegressionLossFunction):
         self.alpha = alpha
 
     def init_estimator(self):
-        return MedianEstimator()
+        return QuantileEstimator(alpha=0.5)
 
     def __call__(self, y, pred):
         pred = pred.ravel()
@@ -671,7 +670,6 @@ class BaseGradientBoosting(BaseEnsemble):
         return importances
 
 
-
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
 
@@ -684,11 +682,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     Parameters
     ----------
-    loss : {'deviance', 'ls'}, optional (default='deviance')
+    loss : {'deviance'}, optional (default='deviance')
         loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
-        with probabilistic outputs. 'ls' refers to least squares
-        regression.
+        with probabilistic outputs.
 
     learn_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learn_rate`.
@@ -788,21 +785,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         return super(GradientBoostingClassifier, self).fit(X, y)
 
-    def predict(self, X):
-        """Predict class for X.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        proba = self.predict_proba(X)
-        return self.classes_.take(np.argmax(proba, axis=1), axis=0)
+    def _score_to_proba(self, score):
+        """Compute class probability estimates from decision scores. """
+        proba = np.ones((score.shape[0], self.n_classes_), dtype=np.float64)
+        if not self.loss_.is_multi_class:
+            proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+            proba[:, 0] -= proba[:, 1]
+        else:
+            proba = np.exp(score) / np.sum(np.exp(score), axis=1)[:, np.newaxis]
+        return proba
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -819,13 +810,61 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             ordered by arithmetical order.
         """
         score = self.decision_function(X)
-        proba = np.ones((score.shape[0], self.n_classes_), dtype=np.float64)
-        if not self.loss_.is_multi_class:
-            proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
-            proba[:, 0] -= proba[:, 1]
-        else:
-            proba = np.exp(score) / np.sum(np.exp(score), axis=1)[:, np.newaxis]
-        return proba
+        return self._score_to_proba(score)
+
+    def staged_predict_proba(self, X):
+        """Predict class probabilities at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for score in self.staged_decision_function(X):
+            yield self._score_to_proba(X)
+
+    def predict(self, X):
+        """Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted classes.
+        """
+        proba = self.predict_proba(X)
+        return self.classes_.take(np.argmax(proba, axis=1), axis=0)
+
+    def staged_predict(self, X):
+        """Predict class probabilities at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for proba in self.staged_predict_proba(X):
+            yield self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -838,11 +877,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Parameters
     ----------
-    loss : {'ls', 'lad'}, optional (default='ls')
+    loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
         loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
         loss function soley based on order information of the input
-        variables.
+        variables. 'huber' is a combination of the two. 'quantile'
+        allows quantile regression (use `alpha` to specify the quantile).
 
     learn_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learn_rate`.
@@ -924,7 +964,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     See also
     --------
-    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
+    DecisionTreeRegressor, RandomForestRegressor, GradientBoostingRegressorCV
 
     References
     ----------
@@ -1006,73 +1046,245 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             yield y.ravel()
 
 
-class BaseGradientBoostingCV(object):
+class BaseGradientBoostingCV(BaseEstimator):
+    """Abstract base class for GB with built-in cross-validation.
 
+    This class implements the Decorator design pattern; it wraps
+    a concrete ``_model_class`` object and delegates attribute
+    access to the object. Soley the arguments ``cv``, ``max_estimators``,
+    and ``_model`` are stored in the decorator object.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, **kwargs):
-        self.cv = kwargs.pop('cv', None)
-        self.max_estimators = kwargs.pop('max_estimators', 1000)
+        # verbose syntax needed to avoid recursive __setattr__ invokation
+        BaseEstimator.__setattr__(self, 'cv', kwargs.pop('cv', None))
+        BaseEstimator.__setattr__(self, 'max_estimators',
+                                  kwargs.pop('max_estimators', 1000))
 
         kwargs['n_estimators'] = self.max_estimators
-        self._model = self._model_class(**kwargs)
+        BaseEstimator.__setattr__(self, '_model', self._model_class(**kwargs))
 
     def fit(self, X, y):
         """Pick best ``n_estimators`` based on cross-validation ``cv``.
 
-        Fits model on entire dataset using ``n_estimators`` found by
-        cross-validation ``cv``.
-
+        Finally, fits model on entire dataset using ``n_estimators``.
         Cross-validation scores are stored in ``self.cv_deviance``.
         """
-        if self.cv is None:
-            self.cv = KFold(y.shape[0], k=5)
+        X, y = check_arrays(X, y, sparse_format='dense')
+        X = np.asfortranarray(X, dtype=DTYPE)
+        y = np.ravel(y, order='C')
 
-        cv_deviance = np.zeros((self.cv.k, self.max_estimators),
+        if self.cv is None:
+            cv = KFold(y.shape[0], k=5)
+        if isinstance(self.cv, int):
+            cv = KFold(y.shape[0], k=self.cv)
+        else:
+            cv = self.cv
+
+        cv_score = np.zeros((cv.k, self.max_estimators),
                                dtype=np.float64)
-        for k, (train, test) in enumerate(self.cv):
+        for k, (train, test) in enumerate(cv):
             model = clone(self._model)
             model.fit(X[train], y[train])
             for i, score in enumerate(model.staged_decision_function(X[test])):
-                cv_deviance[k, i] = model.loss_(y[test], score)
+                cv_score[k, i] = model.loss_(y[test], score)
 
-        mean_deviance = cv_deviance.mean(axis=1)
-        best_estimators = mean_deviance.argmin() + 1
-        print("Best number of estimators=%d - error %.4f" %
-              (best_estimators, mean_deviance[best_estimators - 1]))
+        mean_score = cv_score.mean(axis=0)
+        best_estimators = mean_score.argmin() + 1
 
-        self.n_estimators = best_estimators
-        self.cv_deviance = cv_deviance
+        self._model.set_params(n_estimators=best_estimators)
+        self.cv_score_ = cv_score
+        BaseEstimator.__setattr__(self, 'cv_score_', cv_score)
         self._model.fit(X, y)
         return self
 
     def __getattr__(self, name):
         return getattr(self._model, name)
 
+    def __setattr__(self, name, value):
+        setattr(self._model, name, value)
+
 
 class GradientBoostingClassifierCV(BaseGradientBoostingCV):
+    """GB classifier with built-in cross-validation.
+
+    A ``GradientBoostingClassifier`` that optimizes ``n_estimators``
+    via cross-validation.
+
+    Parameters
+    ----------
+    loss : {'deviance'}, optional (default='deviance')
+        loss function to be optimized. 'deviance' refers to
+        deviance (= logistic regression) for classification
+        with probabilistic outputs.
+
+    learn_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learn_rate`.
+        There is a trade-off between learn_rate and n_estimators.
+
+    max_estimators : int (default=1000)
+        The maximum number of boosting stages to perform. The best number
+        of estimators ``n_estimators`` is picked based on deviance on
+        held-out data.
+
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression estimators. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples required to be at a leaf node.
+
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
+
+    max_features : int, None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        Features are choosen randomly at each split point.
+        If None, then `max_features=n_features`. Choosing
+        `max_features < n_features` leads to a reduction of variance
+        and an increase in bias.
+
+    cv : cross-validation generator or int (default=5)
+        If int, ``cv``-fold cross-valdiation will be used.
+
+    Attributes
+    ----------
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_score_` : array, shape = [n_estimators]
+        Score of the training dataset obtained using an out-of-bag estimate.
+        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the out-of-bag sample.
+
+    `train_score_` : array, shape = [n_estimators]
+        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the in-bag sample.
+        If ``subsample == 1`` this is the deviance on the training data.
+
+    `cv_score_` : array, shape = [cv.k, max_estimators]
+        The deviance scores for each fold and boosting iteration.
+
+    See also
+    --------
+    GradientBoostingClassifier
+    """
 
     _model_class = GradientBoostingClassifier
 
     def __init__(self, loss='deviance', learn_rate=0.1, max_estimators=1000,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, cv=None):
+                 max_features=None, cv=5):
         super(GradientBoostingClassifierCV, self).__init__(
             loss=loss, learn_rate=learn_rate, max_estimators=max_estimators,
-            min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features, random_state=random_state, cv=cv)
+            min_samples_split=min_samples_split, max_depth=max_depth,
+            min_samples_leaf=min_samples_leaf, init=init,
+            subsample=subsample, max_features=max_features,
+            random_state=random_state, cv=cv)
 
 
 class GradientBoostingRegressorCV(BaseGradientBoostingCV):
+    """GB regressor with built-in cross-validation.
+
+    A ``GradientBoostingRegressor`` that optimizes ``n_estimators``
+    via cross-validation.
+
+    Parameters
+    ----------
+    loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
+        loss function to be optimized. 'ls' refers to least squares
+        regression. 'lad' (least absolute deviation) is a highly robust
+        loss function soley based on order information of the input
+        variables. 'huber' is a combination of the two. 'quantile'
+        allows quantile regression (use `alpha` to specify the quantile).
+
+    learn_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learn_rate`.
+        There is a trade-off between learn_rate and n_estimators.
+
+    max_estimators : int (default=1000)
+        The maximum number of boosting stages to perform. The best number
+        of estimators ``n_estimators`` is picked based on deviance on
+        held-out data.
+
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression estimators. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples required to be at a leaf node.
+
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
+
+    max_features : int, None, optional (default=None)
+        The number of features to consider when looking for the best split.
+        Features are choosen randomly at each split point.
+        If None, then `max_features=n_features`. Choosing
+        `max_features < n_features` leads to a reduction of variance
+        and an increase in bias.
+
+    alpha : float (default=0.9)
+        The alpha-quantile of the huber loss function and the quantile
+        loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
+
+    cv : cross-validation generator or int (default=5)
+        If int, ``cv``-fold cross-valdiation will be used.
+
+    Attributes
+    ----------
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_score_` : array, shape = [n_estimators]
+        Score of the training dataset obtained using an out-of-bag estimate.
+        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the out-of-bag sample.
+
+    `train_score_` : array, shape = [n_estimators]
+        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the in-bag sample.
+        If ``subsample == 1`` this is the deviance on the training data.
+
+    `cv_score_` : array, shape = [cv.k, max_estimators]
+        The deviance scores for each fold and boosting iteration.
+
+    See also
+    --------
+    GradientBoostingRegressor
+    """
 
     _model_class = GradientBoostingRegressor
 
     def __init__(self, loss='ls', learn_rate=0.1, max_estimators=1000,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, cv=None):
-        super(GradientBoostingClassifierCV, self).__init__(
+                 max_features=None, alpha=0.9, cv=5):
+        super(GradientBoostingRegressorCV, self).__init__(
             loss=loss, learn_rate=learn_rate, max_estimators=max_estimators,
-            min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
             max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features, random_state=random_state, alpha=alpha, cv=cv)
+            max_features=max_features, random_state=random_state,
+            alpha=alpha, cv=cv)
