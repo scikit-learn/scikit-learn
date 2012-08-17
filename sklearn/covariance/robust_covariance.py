@@ -13,7 +13,7 @@ from scipy import linalg
 from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
-from ..utils.extmath import fast_logdet, symmetric_pinv
+from ..utils.extmath import fast_logdet, pinvh
 from ..utils import check_random_state
 
 
@@ -85,7 +85,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         location = initial_estimates[0]
         covariance = initial_estimates[1]
         # run a special iteration for that case (to get an initial support)
-        precision = symmetric_pinv(covariance)
+        precision = pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
@@ -104,7 +104,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         previous_det = det
         previous_support = support
         # compute a new support from the full data set mahalanobis distances
-        precision = symmetric_pinv(covariance)
+        precision = pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
@@ -344,7 +344,7 @@ def fast_mcd(X, support_fraction=None,
         covariance = np.asarray([[np.var(X[support])]])
         location = np.array([location])
         # get precision matrix an optimized way
-        precision = symmetric_pinv(covariance)
+        precision = pinvh(covariance)
         dist = (np.dot(X_centered, precision) \
                     * (X_centered)).sum(axis=1)
 
@@ -545,7 +545,7 @@ class MinCovDet(EmpiricalCovariance):
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
             # get precision matrix an optimized way
-            precision = symmetric_pinv(raw_covariance)
+            precision = pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance

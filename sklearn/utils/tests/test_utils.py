@@ -11,7 +11,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
-from sklearn.utils.extmath import symmetric_pinv
+from sklearn.utils.extmath import pinvh
 
 
 def test_make_rng():
@@ -93,7 +93,7 @@ def test_safe_mask():
     assert_equal(X_csr[mask].shape[0], 3)
 
 
-def test_symmetric_pinv():
+def test_pinvh():
     a = np.random.randn(5, 3)
     a = np.dot(a, a.T)  # symmetric singular matrix
-    assert_almost_equal(pinv2(a), symmetric_pinv(a))
+    assert_almost_equal(pinv2(a), pinvh(a))
