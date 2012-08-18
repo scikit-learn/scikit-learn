@@ -5,7 +5,9 @@
 #          L. Buitinck
 # License: BSD 3 clause
 
+
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 import numpy as np
 from scipy import stats
@@ -247,6 +249,11 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         scores = self.score_func(X, y)
         self.scores_ = scores[0]
         self.pvalues_ = scores[1]
+        if len(np.unique(scores[1])) < len(scores[1]):
+            warn("Duplicate p-values. Result may depend on feature ordering."
+                 "There are probably duplicate features, or you used a "
+                 "classification score for a regression task.")
+
         return self
 
     @property
@@ -304,13 +311,18 @@ class SelectPercentile(_AbstractUnivariateFilter):
     """Filter: Select the best percentile of the p_values
 
     Parameters
-    ===========
+    ----------
     score_func: callable
         Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
-    percentile: int, optional
+    percentile: int, optional, default=10
         Percent of features to keep
+
+    Notes
+    -----
+    Ties between features with equal p-values will be broken in an unspecified
+    way.
 
     """
 
@@ -329,7 +341,14 @@ class SelectPercentile(_AbstractUnivariateFilter):
         elif percentile == 0:
             return np.zeros(len(self.pvalues_), dtype=np.bool)
         alpha = stats.scoreatpercentile(self.pvalues_, percentile)
-        return (self.pvalues_ <= alpha)
+        # XXX refactor the indices -> mask -> indices -> mask thing
+        inds = np.where(self.pvalues_ <= alpha)[0]
+        # if we selected to many because of equal p-values,
+        # we throw them away now
+        inds = inds[:len(self.pvalues_) * percentile // 100]
+        mask = np.zeros(self.pvalues_.shape, dtype=np.bool)
+        mask[inds] = True
+        return mask
 
 
 class SelectKBest(_AbstractUnivariateFilter):
@@ -341,7 +360,7 @@ class SelectKBest(_AbstractUnivariateFilter):
         Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
-    k: int, optional
+    k: int, optional, default=10
         Number of top features to select.
 
     Notes
