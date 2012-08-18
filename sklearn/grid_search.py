@@ -56,7 +56,7 @@ class ResultGrid(object):
         parameter grid."""
         return np.std(self.scores, axis=-1)
 
-    def accumulated_mean(self, param, kind="mean"):
+    def accumulated(self, param, kind="mean"):
         """Accumulates scores over all but one parameter.
 
         Useful for grid searches in many parameters, where
@@ -76,46 +76,23 @@ class ResultGrid(object):
             1d array of scores corresponding to the different settings
             of ``param``.
         """
-        return self._accumulate(self.mean(), param, kind)
-
-    def accumulated_std(self, param, kind="mean"):
-        """Accumulates standard deviations of scores over all but one
-        parameter.
-
-        Useful for grid searches in many parameters, where
-        the whole grid can not easily be visualized.
-
-        Parameters
-        ----------
-        param: string
-            Name of the parameter not to accumulate over.
-        kind: string, 'mean' or 'max'
-            Operation that is used to accumulate over all parameters
-            except ``param``.
-
-        Returns
-        -------
-        scores: ndarray
-            1d array of scores corresponding to the different settings
-            of ``param``.
-        """
-        return self._accumulate(self.std(), param, kind)
-
-    def _accumulate(self, X, param, kind):
         if kind == "mean":
-            acc_func = np.mean
+            pass
         elif kind == "max":
-            acc_func = np.max
+            raise NotImplementedError()
         else:
             raise ValueError("kind must be 'mean' or 'max', got %s." %
                     str(kind))
         index = self.params.index(param)
-        accumulated = self.scores
-        for i in xrange(index + 1, self.scores.ndim):
-            accumulated = acc_func(accumulated, axis=-1)
+        accumulated_mean = self.mean()
+        accumulated_std = self.std()
+        for i in xrange(index + 1, self.scores.ndim - 1):
+            accumulated_mean = np.mean(accumulated_mean, axis=-1)
+            accumulated_std = np.mean(accumulated_std, axis=-1)
         for i in xrange(0, index):
-            accumulated = acc_func(accumulated, axis=0)
-        return accumulated
+            accumulated_mean = np.mean(accumulated_mean, axis=0)
+            accumulated_std = np.mean(accumulated_std, axis=0)
+        return accumulated_mean, accumulated_std
 
 
 class IterGrid(object):

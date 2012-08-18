@@ -105,7 +105,8 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     pl.axis('tight')
 
 # plot the scores of the grid
-scores = grid.scores_.mean()
+results = grid.scores_
+scores = results.mean()
 
 # draw heatmap of accuracy as a function of gamma and C
 pl.figure(figsize=(8, 6))
@@ -116,5 +117,12 @@ pl.ylabel('C')
 pl.colorbar()
 pl.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
 pl.yticks(np.arange(len(C_range)), C_range)
+
+fig, axes = pl.subplots(2, 1)
+for ax, param in zip(axes, results.params):
+    means, errors = results.accumulated(param, 'mean')
+    ax.errorbar(np.arange(len(results.values[param])), means,
+            yerr=errors)
+    ax.set_title(param)
 
 pl.show()

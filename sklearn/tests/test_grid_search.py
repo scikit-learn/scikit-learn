@@ -240,7 +240,9 @@ def test_result_grid():
     assert_equal(result.mean().shape, (4, 2))
     assert_equal(result.std().shape, (4, 2))
     assert_equal(result.scores.shape, (4, 2, 3))
-    assert_equal(len(result.accumulated_mean('max_depth')), 4)
+    means, errs = result.accumulated('max_depth')
+    assert_equal(len(means), 4)
+    assert_equal(len(errs), 4)
     assert_equal(len(result.values['max_depth']), 4)
 
 
