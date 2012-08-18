@@ -24,18 +24,17 @@ from sklearn.tree import DecisionTreeClassifier
 
 X, y = make_classification(n_samples=100, n_features=10)
 
-param_grid = {'max_depth': range(1, 8), 'min_samples_leaf': [1, 2, 3, 4],
+param_grid = {'max_depth': range(1, 8), 'min_samples_split': [1, 2, 3, 4],
         'max_features': [1, 3, 5, 8, 10]}
 
 grid_search = GridSearchCV(DecisionTreeClassifier(), param_grid=param_grid,
-                            cv=5)
+        cv=5)
 grid_search.fit(X, y)
 
 results = grid_search.scores_
 
 fig, axes = plt.subplots(1, 3)
 axes = axes.ravel()
-
 for ax, param in zip(axes, results.params):
     means, errors = results.accumulated(param, 'max')
     ax.errorbar(results.values[param], means, yerr=errors)

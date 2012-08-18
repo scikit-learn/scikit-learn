@@ -120,8 +120,8 @@ pl.yticks(np.arange(len(C_range)), C_range)
 
 fig, axes = pl.subplots(2, 1)
 for ax, param in zip(axes, results.params):
-    means, errors = results.accumulated(param, 'mean')
-    ax.errorbar(np.arange(len(results.values[param])), means,
+    maxs, errors = results.accumulated(param, 'max')
+    ax.errorbar(np.arange(len(results.values[param])), maxs,
             yerr=errors)
     ax.set_title(param)
 

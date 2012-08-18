@@ -56,7 +56,7 @@ class ResultGrid(object):
         parameter grid."""
         return np.std(self.scores, axis=-1)
 
-    def accumulated(self, param, kind="mean"):
+    def accumulated(self, param, kind="max"):
         """Accumulates scores over all but one parameter.
 
         Useful for grid searches in many parameters, where
@@ -78,24 +78,23 @@ class ResultGrid(object):
         """
         index = self.params.index(param)
         # make interesting axis the first
+        n_values = len(self.values[param])
         accumulated_mean = np.rollaxis(self.mean(), index, 0)
+        accumulated_mean = accumulated_mean.reshape(n_values, -1)
         accumulated_std = np.rollaxis(self.std(), index, 0)
+        accumulated_std = accumulated_std.reshape(n_values, -1)
         if kind == "mean":
-            for i in xrange(1, self.scores.ndim - 1):
-                accumulated_mean = np.mean(accumulated_mean, axis=-1)
-                accumulated_std = np.mean(accumulated_std, axis=-1)
+            accumulated_mean = np.mean(accumulated_mean, axis=-1)
+            accumulated_std = np.mean(accumulated_std, axis=-1)
         elif kind == "max":
-            for i in xrange(1, self.scores.ndim - 1):
-                max_inds = np.argmax(accumulated_mean, axis=-1)
-                inds = np.indices(max_inds.shape)
-                inds = np.vstack([inds, max_inds[np.newaxis]])
-                from IPython.core.debugger import Tracer
-                Tracer()()
-                accumulated_mean = accumulated_mean[gx, gy, max_inds]
-                accumulated_std = accumulated_std[gx, gy, max_inds]
+            max_inds = np.argmax(accumulated_mean, axis=-1)
+            inds = np.indices(max_inds.shape)
+            accumulated_mean = accumulated_mean[inds, max_inds].ravel()
+            accumulated_std = accumulated_std[inds, max_inds].ravel()
         else:
-            raise ValueError("kind must be 'mean' or 'max', got %s." %
+            raise ValueError("kind must be 'mean' or 'all', got %s." %
                     str(kind))
+        return accumulated_mean, accumulated_std
 
 
 class IterGrid(object):
