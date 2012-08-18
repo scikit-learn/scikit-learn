@@ -53,6 +53,7 @@ from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import Scaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.utils.extmath import pinvh
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
@@ -60,7 +61,7 @@ def mutual_incoherence(X_relevant, X_irelevant):
     """
     projector = np.dot(
                     np.dot(X_irelevant.T, X_relevant),
-                    linalg.pinv(np.dot(X_relevant.T, X_relevant))
+                    pinvh(np.dot(X_relevant.T, X_relevant))
                     )
     return np.max(np.abs(projector).sum(axis=1))
 
