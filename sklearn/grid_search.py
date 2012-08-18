@@ -545,8 +545,6 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             self.scores_.append(ResultGrid(sorted_params, one_grid,
                                            score_array))
             start += n_entries
-        #from IPython.core.debugger import Tracer
-        #Tracer()()
 
         # often the list is just one grid. Make access easier
         if len(self.scores_) is 1:
