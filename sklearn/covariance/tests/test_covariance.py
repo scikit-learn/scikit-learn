@@ -179,9 +179,9 @@ def test_ledoit_wolf():
 
     # test with one sample
     X_1sample = np.arange(5)
+    lw = LedoitWolf()
     with warnings.catch_warnings(record=True):
-        lw = LedoitWolf()
-    lw.fit(X_1sample)
+        lw.fit(X_1sample)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
