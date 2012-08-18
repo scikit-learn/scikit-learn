@@ -75,6 +75,8 @@ class ResultGrid(object):
         scores: ndarray
             1d array of scores corresponding to the different settings
             of ``param``.
+        errors: ndarray
+            1d array of standard deviations of scores.
         """
         index = self.params.index(param)
         # make interesting axis the first
