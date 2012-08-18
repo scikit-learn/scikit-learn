@@ -14,7 +14,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, deprecated
-from ..utils.extmath import logsumexp
+from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
 EPS = np.finfo(float).eps
@@ -615,7 +615,7 @@ def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
     from scipy import linalg
     n_samples, n_dim = X.shape
-    icv = linalg.pinv(covars)
+    icv = pinvh(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
                   + np.sum(X * np.dot(X, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(X, icv), means.T)
