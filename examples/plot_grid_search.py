@@ -12,7 +12,7 @@ hard.
 This example show how to visualize results of a grid search with
 many interacting parameters.
 The ``DecisionTreeClassifier`` is a good model for a complex pipeline as there
-are many parameters to tweak, but only few have significant influence.
+are many parameters to tweak, but often only few have significant influence.
 """
 print __doc__
 
@@ -24,7 +24,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 X, y = make_classification(n_samples=100, n_features=10)
 
-param_grid = {'max_depth': range(1, 8), 'min_samples_leaf': [1, 2, 3, 4, 5],
+param_grid = {'max_depth': range(1, 8), 'min_samples_leaf': [1, 2, 3, 4],
         'max_features': [1, 3, 5, 8, 10]}
 
 grid_search = GridSearchCV(DecisionTreeClassifier(), param_grid=param_grid,
@@ -37,7 +37,7 @@ fig, axes = plt.subplots(1, 3)
 axes = axes.ravel()
 
 for ax, param in zip(axes, results.params):
-    means, errors = results.accumulated(param, 'mean')
+    means, errors = results.accumulated(param, 'max')
     ax.errorbar(results.values[param], means, yerr=errors)
     ax.set_title(param)
 plt.show()

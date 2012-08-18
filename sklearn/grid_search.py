@@ -76,23 +76,26 @@ class ResultGrid(object):
             1d array of scores corresponding to the different settings
             of ``param``.
         """
+        index = self.params.index(param)
+        # make interesting axis the first
+        accumulated_mean = np.rollaxis(self.mean(), index, 0)
+        accumulated_std = np.rollaxis(self.std(), index, 0)
         if kind == "mean":
-            pass
+            for i in xrange(1, self.scores.ndim - 1):
+                accumulated_mean = np.mean(accumulated_mean, axis=-1)
+                accumulated_std = np.mean(accumulated_std, axis=-1)
         elif kind == "max":
-            raise NotImplementedError()
+            for i in xrange(1, self.scores.ndim - 1):
+                max_inds = np.argmax(accumulated_mean, axis=-1)
+                inds = np.indices(max_inds.shape)
+                inds = np.vstack([inds, max_inds[np.newaxis]])
+                from IPython.core.debugger import Tracer
+                Tracer()()
+                accumulated_mean = accumulated_mean[gx, gy, max_inds]
+                accumulated_std = accumulated_std[gx, gy, max_inds]
         else:
             raise ValueError("kind must be 'mean' or 'max', got %s." %
                     str(kind))
-        index = self.params.index(param)
-        accumulated_mean = self.mean()
-        accumulated_std = self.std()
-        for i in xrange(index + 1, self.scores.ndim - 1):
-            accumulated_mean = np.mean(accumulated_mean, axis=-1)
-            accumulated_std = np.mean(accumulated_std, axis=-1)
-        for i in xrange(0, index):
-            accumulated_mean = np.mean(accumulated_mean, axis=0)
-            accumulated_std = np.mean(accumulated_std, axis=0)
-        return accumulated_mean, accumulated_std
 
 
 class IterGrid(object):
