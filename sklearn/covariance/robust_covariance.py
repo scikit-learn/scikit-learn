@@ -343,7 +343,7 @@ def fast_mcd(X, support_fraction=None,
         support[np.argsort(np.abs(X - location), axis=0)[:n_support]] = True
         covariance = np.asarray([[np.var(X[support])]])
         location = np.array([location])
-        # get precision matrix an optimized way
+        # get precision matrix in an optimized way
         precision = pinvh(covariance)
         dist = (np.dot(X_centered, precision) \
                     * (X_centered)).sum(axis=1)
@@ -544,7 +544,7 @@ class MinCovDet(EmpiricalCovariance):
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
-            # get precision matrix an optimized way
+            # get precision matrix in an optimized way
             precision = pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
