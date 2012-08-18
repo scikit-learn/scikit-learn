@@ -621,7 +621,7 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. _Logistic_regression:
 
-Logisitic regression
+Logistic regression
 ======================
 
 If the task at hand is to choose which class a sample belongs to given
