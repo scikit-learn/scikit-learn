@@ -1,13 +1,17 @@
-from nose.tools import assert_equal, assert_raises, assert_true
 import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.linalg import pinv2
+
+from nose.tools import assert_equal, assert_raises, assert_true
+from numpy.testing import assert_almost_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
+from sklearn.utils.extmath import symmetric_pinv
 
 
 def test_make_rng():
@@ -87,3 +91,9 @@ def test_safe_mask():
 
     mask = safe_mask(X_csr, mask)
     assert_equal(X_csr[mask].shape[0], 3)
+
+
+def test_symmetric_pinv():
+    a = np.random.randn(5, 3)
+    a = np.dot(a, a.T)  # symmetric singular matrix
+    assert_almost_equal(pinv2(a), symmetric_pinv(a))
