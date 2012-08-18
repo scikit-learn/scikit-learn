@@ -94,14 +94,14 @@ def test_safe_mask():
 
 
 def test_pinvh_simple_real():
-    a = np.array([[1, 2, 3], [4, 5, 6.], [7, 8, 10]])
+    a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.float64)
     a = np.dot(a, a.T)
     a_pinv = pinvh(a)
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
 
 
 def test_pinvh_nonpositive():
-    a = np.array([[1, 2, 3], [4, 5, 6.], [7, 8, 9]])
+    a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float64)
     a = np.dot(a, a.T)
     u, s, vt = np.linalg.svd(a)
     s[0] *= -1
