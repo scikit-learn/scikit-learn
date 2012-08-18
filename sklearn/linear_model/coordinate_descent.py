@@ -312,6 +312,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         # while fitting with a higher alpha
         if active_set_init is None:
             active_set = strong_set
+        else:
+            active_set = active_set_init
 
         pass_kkt_on_strong_set = False
         pass_kkt_on_full_set = False
@@ -739,7 +741,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
         if use_strong_rule:
-            ever_active_set_ = ever_active_set_ | (coef_ == 0)
+            ever_active_set_ = ever_active_set_ | (coef_ != 0)
             alpha_ = alpha
         models.append(model)
     return models
