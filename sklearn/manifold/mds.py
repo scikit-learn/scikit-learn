@@ -87,9 +87,10 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = init
 
     old_stress = None
+    dis = np.empty((n_samples, n_samples), dtype=np.float64)
     for it in range(max_iter):
         # Compute distance and monotonic regression
-        dis = euclidean_distances(X)
+        euclidean_distances(X, out=dis)
 
         if metric:
             disparities = similarities
@@ -120,16 +121,16 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1. / n_samples * np.dot(B, X)
 
-        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
+        dis_sum = np.sqrt((X ** 2).sum(axis=1)).sum()
         if verbose == 2:
             print 'it: %d, stress %s' % (it, stress)
         if old_stress is not None:
-            if(old_stress - stress / dis) < eps:
+            if(old_stress - stress / dis_sum) < eps:
                 if verbose:
                     print 'breaking at iteration %d with stress %s' % (it,
                                                                        stress)
                 break
-        old_stress = stress / dis
+        old_stress = stress / dis_sum
 
     return X, stress
 
