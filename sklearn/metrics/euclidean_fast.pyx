@@ -18,13 +18,13 @@ cdef extern from "math.h":
     double sqrt "sqrt"(double x)
 
 cdef extern from "cblas.h":
-    void gemm "cblas_dgemm"(char storage, char transa, char transb, int m,
-                            int n, int k, double alpha, double *A, int lda,
-                            double *B, int ldb, double beta, double *C,
-                            int ldc)
-    void syrk "cblas_dsyrk"(char storage, char uplo, char trans, int n, int k,
-                            double alpha, double *A, int lda, double beta,
-                            double *C, int ldc)
+    void dgemm "cblas_dgemm"(char storage, char transa, char transb, int m,
+                             int n, int k, double alpha, double *A, int lda,
+                             double *B, int ldb, double beta, double *C,
+                             int ldc)
+    void dsyrk "cblas_dsyrk"(char storage, char uplo, char trans, int n, int k,
+                             double alpha, double *A, int lda, double beta,
+                             double *C, int ldc)
 
 
 cdef inline _euclidean_distances(int X_rows,
@@ -83,10 +83,10 @@ def dense_euclidean_distances(int X_rows,
         Y_norm_squared = np.empty(Y_rows, dtype=np.float64)
 
     # 101 = c-order, 111 = no transpose, 112 = transpose (computes XY')
-    gemm(101, 111, 112, X_rows, Y_rows, X_cols, 1.0,
-         <DTYPE_t *>X.data, X.strides[0] / sizeof(DTYPE_t),
-         <DTYPE_t *>Y.data, Y.strides[0] / sizeof(DTYPE_t), 0.0,
-         <DTYPE_t *>out.data, out.strides[0] / sizeof(DTYPE_t))
+    dgemm(101, 111, 112, X_rows, Y_rows, X_cols, 1.0,
+          <DTYPE_t *>X.data, X.strides[0] / sizeof(DTYPE_t),
+          <DTYPE_t *>Y.data, Y.strides[0] / sizeof(DTYPE_t), 0.0,
+          <DTYPE_t *>out.data, out.strides[0] / sizeof(DTYPE_t))
 
     if not X_norm_precomputed:
         dense_sum_sq(X_rows, X_cols, X, X_norm_squared)
@@ -108,9 +108,9 @@ def dense_euclidean_distances_sym(int X_rows,
 
     # 101 = c-order, 122 = lower triangular, 111 = no transpose (computes XX')
     # Attention, the upper triangle contains garbage.
-    syrk(101, 122, 111, X_rows, X_cols, 1.0, <DTYPE_t *>X.data,
-         X.strides[0] / sizeof(DTYPE_t), 0.0, <DTYPE_t *>out.data,
-         out.strides[0] / sizeof(DTYPE_t))
+    dsyrk(101, 122, 111, X_rows, X_cols, 1.0, <DTYPE_t *>X.data,
+          X.strides[0] / sizeof(DTYPE_t), 0.0, <DTYPE_t *>out.data,
+          out.strides[0] / sizeof(DTYPE_t))
 
     if not X_norm_precomputed:
         dense_sum_sq(X_rows, X_cols, X, X_norm_squared)
@@ -120,7 +120,7 @@ def dense_euclidean_distances_sym(int X_rows,
 
 
 # This function assumes the XYt parameter contains the precomputed outer dot
-def sparse_euclidean_distances(int X_rows, 
+def sparse_euclidean_distances(int X_rows,
                                int Y_rows,
                                np.ndarray[DTYPE_t, ndim=1] X_data,
                                np.ndarray[int, ndim=1] X_indices,
