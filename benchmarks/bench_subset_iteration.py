@@ -45,8 +45,8 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             l2_reg = alpha * (1.0 - rho) * ns
             X = np.asfortranarray(X)
             w = np.zeros(nf)
-
-
+            Xy = np.dot(X.T, y)
+            norm_cols_X = (X**2).sum(axis=0)
 
             gc.collect()
             print "iterate on full set of features"
@@ -68,13 +68,14 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                 w_red = w.copy()
 
             w = np.zeros(nf)
-
+            R = y - np.dot(X, w)
             gc.collect()
             print "iterate only on active features"
             stime = time()
 
             enet_coordinate_descent(w, l1_reg, l2_reg,
-                    X, y, max_iter=10000, tol=1e-9, positive=False, iter_set=active_set)
+                    X, y, max_iter=10000, tol=1e-9, positive=False,
+                    iter_set=active_set, norm_cols_X=norm_cols_X, R=R)
             active_set_results.append(time() - stime)
 
             gc.collect()
