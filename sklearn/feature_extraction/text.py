@@ -211,6 +211,8 @@ class CountVectorizer(BaseEstimator):
                 'ngram_range instead.')
             if min_n is None:
                 min_n = 1
+            if max_n is None:
+                max_n = min_n
             ngram_range = (min_n, max_n)
         self.ngram_range = ngram_range
         if vocabulary is not None:

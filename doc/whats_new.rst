@@ -88,7 +88,7 @@ API changes summary
      completely built.
 
    - In :class:`feature_extraction.text.CountVectorizer` the parameters
-     ``min_n`` and ``max_n`` were joined to the parameter ``bounds_n`` to
+     ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
 
 .. _changes_0_11:
