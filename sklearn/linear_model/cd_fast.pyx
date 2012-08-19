@@ -93,14 +93,13 @@ def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
                                        np.ndarray[DOUBLE, ndim=2] X,
                                        np.ndarray[DOUBLE, ndim=1] y,
                                        np.ndarray[DOUBLE, ndim=1] R=None,
-                                       subset=None):
+                                       subset=None, double tol=0.09):
     """ Function returns features that don't satisfy the elastic-net KKT.
     The goal is to distinguish between coefficients that pass the
     KKT only up to a certain tolerance and features that are inactive
     (value of zero) but should be active.
     """
     kkt_violating_features = set()
-    cdef double rtol = 0.09
 
     if subset is None:
         features_to_check = xrange(X.shape[1])
@@ -120,7 +119,7 @@ def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
                    <DOUBLE*>R.data, 1)
         s = fsign(coef[i])
         if coef[i] != 0 and \
-            not fclose(gradient, s * l1_reg + l2_reg * coef[i], rtol):
+            not fclose(gradient, s * l1_reg + l2_reg * coef[i], tol):
             kkt_violating_features.add(i)
         else:
             if coef[i] == 0 and fabs(gradient) >= l1_reg:
