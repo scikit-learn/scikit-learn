@@ -737,8 +737,13 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     alpha_ = None
     models = []
 
-    R = y.copy()    # Precompute the residual,
-                    # this is only right if coefs are all zero
+    if use_strong_rule:
+        R = y.copy()    # Precompute the residual,
+                        # this is only right if coefs are all zero
+        norm_cols_X = (X ** 2).sum(axis=0)
+    else:
+        R = None
+        norm_cols_X = None
 
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
@@ -746,7 +751,8 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                         precompute=precompute, use_strong_rule=use_strong_rule)
         model.set_params(**params)
         model.fit(X, y, Xy=Xy, coef_init=coef_,
-                active_set_init=ever_active_set_, alpha_init=alpha_, R_init=R)
+                active_set_init=ever_active_set_, alpha_init=alpha_, R_init=R,
+                norm_cols_X_init=norm_cols_X)
         if fit_intercept:
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
