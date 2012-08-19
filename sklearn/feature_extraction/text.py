@@ -280,11 +280,12 @@ class CountVectorizer(BaseEstimator):
         # normalize white spaces
         text_document = self._white_spaces.sub(u" ", text_document)
 
+        min_n, max_n = self.ngram_range
         ngrams = []
         for w in text_document.split():
             w = u' ' + w + u' '
             w_len = len(w)
-            for n in xrange(self.min_n, self.max_n + 1):
+            for n in xrange(min_n, max_n + 1):
                 offset = 0
                 ngrams.append(w[offset:offset + n])
                 while offset + n < w_len:
