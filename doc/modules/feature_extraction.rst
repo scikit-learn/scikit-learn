@@ -186,9 +186,10 @@ reasonable (please see  the :ref:`reference documentation
   >>> vectorizer
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
-          lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
-          preprocessor=None, stop_words=None, strip_accents=None,
-          token_pattern=u'\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+          lowercase=True, max_df=1.0, max_features=None, max_n=None,
+          min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
+          strip_accents=None, token_pattern=u'\\b\\w\\w+\\b', tokenizer=None,
+          vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -244,7 +245,7 @@ we lose the information that the last document is an interogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
-  >>> bigram_vectorizer = CountVectorizer(min_n=1, max_n=2,
+  >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
   ...                                     token_pattern=ur'\b\w+\b')
   >>> analyze = bigram_vectorizer.build_analyzer()
   >>> analyze('Bi-grams are cool!')
