@@ -138,7 +138,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             int max_iter, double tol, bint positive=False,
                             bint calc_dual_gap=True,
                             np.ndarray[INTEGER, ndim=1] iter_set=None,
-                            np.ndarray[DOUBLE, ndim=1] R=None):
+                            np.ndarray[DOUBLE, ndim=1] R=None,
+                            np.ndarray[DOUBLE, ndim=1] norm_cols_X=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -155,7 +156,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
+    if norm_cols_X is None:
+        norm_cols_X = (X**2).sum(axis=0)
 
     if R is None:
         R = y - np.dot(X, w)

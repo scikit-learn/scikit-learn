@@ -413,7 +413,7 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
         alpha_init_scaled = alpha_init * X.shape[0]
         strong_set = gradient >= rho * (2 * alpha_scaled -  \
                                                 alpha_init_scaled)
-        print "sequential strong rule"
+#        print "sequential strong rule"
         return strong_set
 
     else:
@@ -421,7 +421,7 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
             Xy = np.dot(X.T, y)
         alpha_max = np.max(np.abs(Xy))
         strong_set = np.abs(Xy) >= rho * (2 * alpha_scaled - alpha_max)
-        print "basic strong rule"
+#        print "basic strong rule"
         return strong_set
 
 
