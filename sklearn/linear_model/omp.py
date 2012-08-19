@@ -21,7 +21,8 @@ dependence in the dictionary. The requested precision might not have been met.
 """
 
 
-def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
+def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
+                  return_path=False):
     """Orthogonal Matching Pursuit step using the Cholesky decomposition.
 
     Parameters
@@ -45,12 +46,21 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
 
     Returns
     -------
+    return_path: bool, optional. Default: False
+        Whether to return every value of the nonzero coefficients along the
+        forward path. Useful for cross-validation.
+
     gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
     idx: array, shape = (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
         vector
+
+    coefs, array, shape = (n_features, n_nonzero_coefs)
+        The first k values of column k correspond to the coefficient value
+        for the active features at that step. The lower left triangle contains
+        garbage. Only returned if ``return_path=True``.
 
     """
     if copy_X:
@@ -71,6 +81,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=X.dtype)
     L[0, 0] = 1.
+    if return_path:
+        coefs = np.empty_like(L)
 
     while True:
         lam = np.argmax(np.abs(np.dot(X.T, residual)))
@@ -94,18 +106,22 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         # solves LL'x = y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
                          overwrite_b=False)
-
+        if return_path:
+            coefs[:n_active, n_active - 1] = gamma
         residual = y - np.dot(X[:, :n_active], gamma)
         if tol is not None and nrm2(residual) ** 2 <= tol:
             break
         elif n_active == max_features:
             break
 
-    return gamma, indices[:n_active]
+    if return_path:
+        return gamma, indices[:n_active], coefs[:, :n_active]
+    else:
+        return gamma, indices[:n_active]
 
 
 def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
-              copy_Gram=True, copy_Xy=True):
+              copy_Gram=True, copy_Xy=True, return_path=False):
     """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
 
     This function uses the the Cholesky decomposition method.
@@ -138,12 +154,21 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 
     Returns
     -------
+    return_path: bool, optional. Default: False
+        Whether to return every value of the nonzero coefficients along the
+        forward path. Useful for cross-validation.
+
     gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
     idx: array, shape = (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
         vector
+
+    coefs, array, shape = (n_features, n_nonzero_coefs)
+        The first k values of column k correspond to the coefficient value
+        for the active features at that step. The lower left triangle contains
+        garbage. Only returned if ``return_path=True``.
 
     """
     Gram = Gram.copy('F') if copy_Gram else np.asfortranarray(Gram)
@@ -165,6 +190,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
+    if return_path:
+        coefs = np.empty_like(L)
 
     while True:
         lam = np.argmax(np.abs(alpha))
@@ -188,7 +215,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         # solves LL'x = y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], Xy[:n_active], lower=True,
                          overwrite_b=False)
-
+        if return_path:
+            coefs[:n_active, n_active - 1] = gamma
         beta = np.dot(Gram[:, :n_active], gamma)
         alpha = Xy - beta
         if tol is not None:
@@ -200,11 +228,14 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         elif n_active == max_features:
             break
 
-    return gamma, indices[:n_active]
+    if return_path:
+        return gamma, indices[:n_active], coefs[:, :n_active]
+    else:
+        return gamma, indices[:n_active]
 
 
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
-                  copy_X=True):
+                  copy_X=True, return_path=False):
     """Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
@@ -241,10 +272,18 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
+    return_path: bool, optional. Default: False
+        Whether to return every value of the nonzero coefficients along the
+        forward path. Useful for cross-validation.
+
     Returns
     -------
     coef: array, shape = (n_features,) or (n_features, n_targets)
-        Coefficients of the OMP solution
+        Coefficients of the OMP solution. If `return_path=True`, this contains
+        the whole coefficient path. In this case its shape is
+        (n_features, n_features) or (n_features, n_targets, n_features) and
+        iterating over the last axis yields coefficients in increasing order
+        of active features.
 
     See also
     --------
@@ -297,17 +336,28 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
         return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
                                   copy_Gram=copy_X, copy_Xy=False)
 
-    coef = np.zeros((X.shape[1], y.shape[1]))
-    for k in range(y.shape[1]):
-        x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
-                               copy_X=copy_X)
-        coef[idx, k] = x
+    if return_path:
+        coef = np.zeros((X.shape[1], y.shape[1], X.shape[1]))
+    else:
+        coef = np.zeros((X.shape[1], y.shape[1]))
+
+    for k in xrange(y.shape[1]):
+        out = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
+                            copy_X=copy_X, return_path=return_path)
+        if return_path:
+            _, idx, coefs = out
+            coef = coef[:, :, :len(idx)]
+            for n_active, x in enumerate(coefs.T):
+                coef[idx[:n_active + 1], k, n_active] = x[:n_active + 1]
+        else:
+            x, idx = out
+            coef[idx, k] = x
     return np.squeeze(coef)
 
 
 def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, copy_Gram=True,
-                       copy_Xy=True):
+                       copy_Xy=True, return_path=False):
     """Gram Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
@@ -340,10 +390,18 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
+    return_path: bool, optional. Default: False
+        Whether to return every value of the nonzero coefficients along the
+        forward path. Useful for cross-validation.
+
     Returns
     -------
     coef: array, shape = (n_features,) or (n_features, n_targets)
-        Coefficients of the OMP solution
+        Coefficients of the OMP solution. If `return_path=True`, this contains
+        the whole coefficient path. In this case its shape is
+        (n_features, n_features) or (n_features, n_targets, n_features) and
+        iterating over the last axis yields coefficients in increasing order
+        of active features.
 
     See also
     --------
@@ -387,12 +445,26 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     if tol is None and n_nonzero_coefs > len(Gram):
         raise ValueError("The number of atoms cannot be more than the number "
                          "of features")
-    coef = np.zeros((len(Gram), Xy.shape[1]))
+
+    if return_path:
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+    else:
+        coef = np.zeros((len(Gram), Xy.shape[1]))
+
     for k in range(Xy.shape[1]):
-        x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
+        out = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
                            norms_squared[k] if tol is not None else None, tol,
-                           copy_Gram=copy_Gram, copy_Xy=copy_Xy)
-        coef[idx, k] = x
+                           copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+                           return_path=return_path)
+        if return_path:
+            _, idx, coefs = out
+            coef = coef[:, :, :len(idx)]
+            for n_active, x in enumerate(coefs.T):
+                coef[idx[:n_active + 1], k, n_active] = x[:n_active + 1]
+        else:
+            x, idx = out
+            coef[idx, k] = x
+
     return np.squeeze(coef)
 
 
