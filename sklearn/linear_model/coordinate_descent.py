@@ -131,7 +131,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.use_strong_rule = use_strong_rule
 
     def fit(self, X, y, Xy=None, coef_init=None, active_set_init=None,
-                                            alpha_init=None, R_init=None):
+                    alpha_init=None, R_init=None, norm_cols_X_init=None):
         """Fit Elastic Net model with coordinate descent
 
         Parameters
@@ -165,7 +165,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         return self
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None,
-                        active_set_init=None, alpha_init=None, R_init=None):
+                        active_set_init=None, alpha_init=None,
+                        R_init=None, norm_cols_X_init=None):
 
         # X and y must be of type float64
         X = np.asanyarray(X, dtype=np.float64)
@@ -212,7 +213,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             if self.use_strong_rule:
                 self._fit_enet_with_strong_rule(X, y, Xy,
                     active_set_init=active_set_init, coef_init=coef_init,
-                                     alpha_init=alpha_init, R=R_init)
+                    alpha_init=alpha_init, R=R_init, norm_cols_X_init=None)
             else:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg, l2_reg,
@@ -282,7 +283,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def _fit_enet_with_strong_rule(self, X, y, Xy=None,
                     active_set_init=None, coef_init=None, alpha_init=None,
-                    R=None, max_iter_strong=100):
+                    R=None, norm_cols_X_init=None, max_iter_strong=100):
 
         if active_set_init is not None and \
                  True not in active_set_init:
@@ -302,6 +303,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         if Xy is None:
             Xy = np.dot(X.T, y)
 
+        if norm_cols_X_init is None:
+            norm_cols_X = (X ** 2).sum(axis=0)
+        else:
+            norm_cols_X = norm_cols_X_init
+
         # the strong_set contains the features that are predicted by
         # the strong rule to have nonzero coefs
         strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy,
@@ -318,17 +324,22 @@ class ElasticNet(LinearModel, RegressorMixin):
         pass_kkt_on_strong_set = False
         pass_kkt_on_full_set = False
 
+        # tuning parameter for active-set estimation
+        sr_max_iter = 100
+        tol_kkt_check = 0.09
+
         # add features to the active set till all
-        # features pass the KKT
+        # zero features pass the KKT
         for n_iter in range(max_iter_strong):
 
             # add features to the active set till
-            # all features in the strong set pass the KKT
+            # all zero features in the strong set pass the KKT
             while not pass_kkt_on_strong_set:
                 self.coef_, self.dual_gap_, self.eps_ = \
                     cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
-                    l2_reg, X, y, self.max_iter, self.tol, self.positive,
-                    iter_set=np.where(active_set)[0], R=R)
+                    l2_reg, X, y, sr_max_iter, self.tol, self.positive,
+                    calc_dual_gap=False, iter_set=np.where(active_set)[0],
+                    R=R, norm_cols_X=norm_cols_X)
                 # check only zero features
                 zero_coefs = self.coef_ == 0
                 subset = np.where(strong_set & zero_coefs)[0]
@@ -361,6 +372,13 @@ class ElasticNet(LinearModel, RegressorMixin):
 
             if pass_kkt_on_full_set:
                 break
+
+        # now fit enet on active set up to specified tol
+        self.coef_, self.dual_gap_, self.eps_ = \
+                    cd_fast.enet_coordinate_descent(self.coef_, l1_reg,
+                    l2_reg, X, y, self.max_iter, self.tol, self.positive,
+                    iter_set=np.where(active_set)[0], R=R,
+                    norm_cols_X=norm_cols_X)
 
         # return self for chaining fit and predict calls
         return self
