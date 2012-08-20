@@ -6,11 +6,12 @@
 # License: BSD 3 clause
 
 
+from abc import ABCMeta, abstractmethod
+from warnings import warn
+
 import numpy as np
 from scipy import stats
 from scipy.sparse import issparse
-from abc import ABCMeta, abstractmethod
-from warnings import warn
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
