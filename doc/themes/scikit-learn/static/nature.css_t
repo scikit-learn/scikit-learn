@@ -232,7 +232,6 @@ div.sphinxsidebar {
     border-left-width: 0;
     border-bottom-width: 0;
     margin-top: 0;
-
 }
 
 div.sphinxsidebar h3 {
@@ -335,7 +334,6 @@ div.body h3 {
 
 div.bodywrapper {
     margin: 0 0 0 0;
-
 }
 
 
