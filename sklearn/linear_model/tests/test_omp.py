@@ -186,3 +186,14 @@ def test_no_atoms():
         gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
     assert_equal(np.all(gamma_empty == 0), True)
     assert_equal(np.all(gamma_empty_gram == 0), True)
+
+
+def test_omp_path():
+    path = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=True)
+    last = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=False)
+    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert_array_almost_equal(path[:, :, -1], last)
+    path = orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5, return_path=True)
+    last = orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5, return_path=False)
+    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert_array_almost_equal(path[:, :, -1], last)
