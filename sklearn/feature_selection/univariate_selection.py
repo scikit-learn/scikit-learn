@@ -315,6 +315,11 @@ class SelectPercentile(_AbstractUnivariateFilter):
     percentile: int, optional, default=10
         Percent of features to keep
 
+    Notes
+    -----
+    Ties between features with equal p-values will be broken in an unspecified
+    way.
+
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
@@ -332,7 +337,7 @@ class SelectPercentile(_AbstractUnivariateFilter):
         elif percentile == 0:
             return np.zeros(len(self.pvalues_), dtype=np.bool)
         alpha = stats.scoreatpercentile(self.pvalues_, percentile)
-        # XXX refactor the indices -> mask -> indices -> mask thinkg
+        # XXX refactor the indices -> mask -> indices -> mask thing
         inds = np.where(self.pvalues_ <= alpha)[0]
         # if we selected to many because of equal p-values,
         # we throw them away now
