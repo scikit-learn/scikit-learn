@@ -44,11 +44,14 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                                      normalize=False, copy=False)
             X = np.asfortranarray(X)
             Xy = np.dot(X.T, y)
+            MAX_ITER = 1000
+            tol = 1e-6
 
             gc.collect()
             print "- benching ElasticNet"
             clf = ElasticNet(alpha=alpha, rho=rho, precompute=False,
-                             fit_intercept=False, copy_X=False)
+                             fit_intercept=False, copy_X=False,
+                             tol=tol, max_iter=MAX_ITER)
             tstart = time()
             clf.fit(X, y, Xy)
             enet_results.append(time() - tstart)
@@ -56,12 +59,12 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             gc.collect()
             print "- benching ElasticNet with strong rules"
             clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False,
-                                    fit_intercept=False, copy_X=False,
-                                    use_strong_rule=True)
+                                fit_intercept=False, copy_X=False, tol=tol,
+                                max_iter=MAX_ITER, use_strong_rule=True)
             tstart = time()
             clf_strong_rule.fit(X, y, Xy)
             enet_strong_rules_results.append(time() - tstart)
-            assert_array_almost_equal(clf_strong_rule.coef_, clf.coef_, 5)
+            assert_array_almost_equal(clf_strong_rule.coef_, clf.coef_, 4)
 
     return enet_results, enet_strong_rules_results
 
@@ -70,7 +73,7 @@ if __name__ == '__main__':
     from sklearn.linear_model.coordinate_descent import ElasticNet
     import pylab as pl
 
-    alpha = 100.0  # regularization parameter
+    alpha = 100  # regularization parameter
     rho = 0.90
 
     n_features = 10

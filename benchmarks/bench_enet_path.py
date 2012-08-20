@@ -41,28 +41,35 @@ def compute_bench(n_samples, n_features, precompute):
                                           noise=0.1)
 
             X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
+            MAX_ITER = 1000
+            tol = 1e-6
 
             gc.collect()
             print "enet_path with strong-rules"
             stime = time()
-            enet_path(X, y, n_alphas=10, precompute=False,
-                            fit_intercept=False, use_strong_rule=True)
+            models_sr = enet_path(X, y, n_alphas=10, precompute=False,
+                    fit_intercept=False, tol=tol, use_strong_rule=True,
+                    max_iter=MAX_ITER)
 
             enet_path_sr_results.append(time() - stime)
 
             gc.collect()
             print "enet_path"
             stime = time()
-            enet_path(X, y, n_alphas=10, precompute=True,
-                                             fit_intercept=False)
+            models = enet_path(X, y, n_alphas=10, precompute=False,
+                    fit_intercept=False, tol=tol, max_iter=MAX_ITER)
             enet_path_results.append(time() - stime)
 
             gc.collect()
             print "enet_path (with Gram)"
             stime = time()
             enet_path(X, y, n_alphas=10, precompute=True,
-                                             fit_intercept=False)
+                fit_intercept=False, tol=tol, max_iter=MAX_ITER)
             enet_path_gram_results.append(time() - stime)
+
+            coefs_ = np.array([m.coef_ for m in models])
+            coefs_sr = np.array([m.coef_ for m in models_sr])
+            assert_almost_equal(coefs_.flatten(), coefs_sr.flatten(), 4)
 
     return enet_path_sr_results, enet_path_results, enet_path_gram_results
 
@@ -79,11 +86,11 @@ if __name__ == '__main__':
 
     pl.clf()
     pl.subplot(211)
-    pl.plot(list_n_samples, enet_path_sr_results, 'b-',
+    pl.plot(list_n_samples, enet_path_sr_results, 'r-',
                             label='enet_path_sr_results')
-    pl.plot(list_n_samples, enet_path_results, 'r-',
+    pl.plot(list_n_samples, enet_path_results, 'b-',
                             label='enet_path_results')
-    pl.plot(list_n_samples, enet_path_gram_results, 'r-',
+    pl.plot(list_n_samples, enet_path_gram_results, 'g-',
                                  label='enet_path_gram_results')
 
     pl.title('Enet benchmark (%d features )' % (n_features))
@@ -98,11 +105,11 @@ if __name__ == '__main__':
     enet_path_sr_results, enet_path_results, enet_path_gram_results = \
             compute_bench([n_samples], list_n_features, precompute=False)
     pl.subplot(212)
-    pl.plot(list_n_features, enet_path_sr_results, 'b-',
+    pl.plot(list_n_features, enet_path_sr_results, 'r-',
                             label='enet_path_sr_results')
-    pl.plot(list_n_features, enet_path_results, 'r-',
+    pl.plot(list_n_features, enet_path_results, 'b-',
                                  label='enet_path_results')
-    pl.plot(list_n_features, enet_path_gram_results, 'r-',
+    pl.plot(list_n_features, enet_path_gram_results, 'g-',
                                  label='enet_path_gram_results')
 
     pl.title('Enet benchmark (%d samples )' % (n_samples))
