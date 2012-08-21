@@ -2,10 +2,10 @@
 Tests for input validation functions
 """
 
+from tempfile import NamedTemporaryFile
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
-from tempfile import NamedTemporaryFile
 from nose.tools import assert_raises, assert_true, assert_false
 
 from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
@@ -31,6 +31,9 @@ def test_as_float_array():
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert_true(as_float_array(X, copy=False) is X)
+    # Test that if X is fortran ordered it stays
+    X = np.asfortranarray(X)
+    assert_true(np.isfortran(as_float_array(X, copy=True)))
 
 
 def test_check_arrays_exceptions():
