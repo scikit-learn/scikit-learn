@@ -892,7 +892,7 @@ class TfidfVectorizer(CountVectorizer):
 
 
 class Vectorizer(TfidfVectorizer):
-    """Vectorizer is eprecated in 0.11, use TfidfVectorizer instead"""
+    """Vectorizer is deprecated in 0.11, use TfidfVectorizer instead"""
 
     def __init__(self, input='content', charset='utf-8',
                 charset_error='strict', strip_accents=None, lowercase=True,
