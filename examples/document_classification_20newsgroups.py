@@ -63,6 +63,9 @@ op.add_option("--top10",
               action="store_true", dest="print_top10",
               help="Print ten most discriminative terms per class"
                    " for every classifier.")
+op.add_option("--all_categories",
+              action="store_true", dest="all_categories",
+              help="Whether to use all categories or not.")
 
 (opts, args) = op.parse_args()
 if len(args) > 0:
@@ -76,14 +79,15 @@ print
 
 ###############################################################################
 # Load some categories from the training set
-categories = [
-    'alt.atheism',
-    'talk.religion.misc',
-    'comp.graphics',
-    'sci.space',
-]
-# Uncomment the following to do the analysis on all the categories
-#categories = None
+if opts.all_categories:
+    categories = None
+else:
+    categories = [
+        'alt.atheism',
+        'talk.religion.misc',
+        'comp.graphics',
+        'sci.space',
+    ]
 
 print "Loading 20 newsgroups dataset for categories:"
 print categories if categories else "all"
