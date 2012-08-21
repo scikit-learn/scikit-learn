@@ -134,12 +134,16 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
         ``(Y**2).sum(axis=1)``) or simply a preallocated array of that shape.
 
     X_norm_precomputed : boolean, optional. Default: False
-        If True, assume the values in X_norm_squared are correct. Otherwise
-        it is just used instead of allocating new memory.
+        If True, assume the values in ``X_norm_squared`` are precomputed.
+        Otherwise, if an array is passed to ``X_norm_squared``, use it as
+        working buffer instead of allocating new memory, without making any
+        assumptions about its contents.
 
     Y_norm_precomputed : boolean, optional. Default: False
-        If True, assume the values in Y_norm_squared are correct. Otherwise
-        it is just used instead of allocating new memory.
+        If True, assume the values in ``Y_norm_squared`` are precomputed.
+        Otherwise, if an array is passed to ``Y_norm_squared``, use it as
+        working buffer instead of allocating new memory, without making any
+        assumptions about its contents.
 
     out : array, shape = [n_samples_1, n_samples_2], optional
         Preallocated array that will store the output.
@@ -167,7 +171,8 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    # @vene I added X_norm_squared just in case
+    # @vene The only case where X_norm_squared is useful instead of
+    # Y_norm_squared is in the sparse-dense case, so I added it.
     X, Y = check_pairwise_arrays(X, Y)
     X_rows, X_cols = X.shape
     Y_rows = Y.shape[0]
