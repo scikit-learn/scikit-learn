@@ -1,5 +1,7 @@
 import numpy as np
 
+import warnings
+
 from ..base import ClassifierMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..svm.base import BaseLibLinear
@@ -27,9 +29,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         implemented for l2 penalty. Prefer dual=False when
         n_samples > n_features.
 
-    C : float or None, optional (default=None)
+    C : float, optional (default=1.0)
         Specifies the strength of the regularization. The smaller it is
-        the bigger in the regularization. If None then C is set to n_samples.
+        the bigger is the regularization.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -92,6 +94,12 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
             fit_intercept=True, intercept_scaling=1, class_weight=None):
+
+        if C is None:
+            warnings.warn("Using 'None' for C of LogisticRegression"
+                    "is deprecated. Setting C=1.0.",
+                    DeprecationWarning)
+            C = 1.0
 
         super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,
                 loss='lr', tol=tol, C=C, fit_intercept=fit_intercept,
