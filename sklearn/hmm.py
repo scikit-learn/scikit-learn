@@ -27,6 +27,11 @@ from . import cluster
 from .utils import deprecated
 from . import _hmmc
 
+__all__ = ['GMMHMM',
+           'GaussianHMM',
+           'MultinomialHMM',
+           'decoder_algorithms',
+           'normalize']
 
 ZEROLOGPROB = -1e200
 EPS = np.finfo(float).eps

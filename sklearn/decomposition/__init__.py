@@ -12,3 +12,21 @@ from .fastica_ import FastICA, fastica
 from .dict_learning import dict_learning, dict_learning_online, sparse_encode,\
                            DictionaryLearning, MiniBatchDictionaryLearning,\
                            SparseCoder, sparse_encode_parallel
+
+__all__ = ['DictionaryLearning',
+           'FastICA',
+           'KernelPCA',
+           'MiniBatchDictionaryLearning',
+           'MiniBatchSparsePCA',
+           'NMF',
+           'PCA',
+           'ProbabilisticPCA',
+           'ProjectedGradientNMF',
+           'RandomizedPCA',
+           'SparseCoder',
+           'SparsePCA',
+           'dict_learning',
+           'dict_learning_online',
+           'fastica',
+           'sparse_encode',
+           'sparse_encode_parallel']

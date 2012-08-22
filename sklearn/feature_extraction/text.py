@@ -24,6 +24,14 @@ from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .stop_words import ENGLISH_STOP_WORDS
 
+__all__ = ['CountVectorizer',
+           'TfidfTransformer',
+           'TfidfVectorizer',
+           'Vectorizer',
+           'strip_accents_ascii',
+           'strip_accents_unicode',
+           'strip_tags']
+
 
 def strip_accents_unicode(s):
     """Transform accentuated unicode symbols into their simple counterpart

@@ -14,6 +14,8 @@ from .utils.extmath import logsumexp
 from .utils.fixes import unique
 from .utils import check_arrays
 
+__all__ = ['LDA']
+
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     """
