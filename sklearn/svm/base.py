@@ -85,8 +85,10 @@ class BaseLibSVM(BaseEstimator):
                 LIBSVM_IMPL, impl))
 
         if C is None:
-            warnings.warn("Using 'None' for C of BaseLibSVM"
-                    "is deprecated. Setting C=1.0.",
+            warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
+                    "since version 0.12, and backward compatibility "
+                    "won't be maintained from version 0.14 onward. "
+                    "Setting C=1.0.",
                     DeprecationWarning)
             C = 1.0
 
@@ -554,8 +556,10 @@ class BaseLibLinear(BaseEstimator):
             class_weight=None, verbose=0):
 
         if C is None:
-            warnings.warn("Using 'None' for C of BaseLibLinear"
-                    "is deprecated. Setting C=1.0.",
+            warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
+                    "since version 0.12, and backward compatibility "
+                    "won't be maintained from version 0.14 onward. "
+                    "Setting C=1.0.",
                     DeprecationWarning)
             C = 1.0
 
