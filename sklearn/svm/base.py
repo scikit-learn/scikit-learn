@@ -84,6 +84,14 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
+        if C is None:
+            warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
+                    "since version 0.12, and backward compatibility "
+                    "won't be maintained from version 0.14 onward. "
+                    "Setting C=1.0.",
+                    DeprecationWarning)
+            C = 1.0
+
         self.impl = impl
         self.kernel = kernel
         self.degree = degree
@@ -546,6 +554,15 @@ class BaseLibLinear(BaseEstimator):
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
             class_weight=None, verbose=0):
+
+        if C is None:
+            warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
+                    "since version 0.12, and backward compatibility "
+                    "won't be maintained from version 0.14 onward. "
+                    "Setting C=1.0.",
+                    DeprecationWarning)
+            C = 1.0
+
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
