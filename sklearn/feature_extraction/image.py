@@ -17,6 +17,11 @@ from ..utils.fixes import in1d
 from ..utils import array2d, check_random_state
 from ..base import BaseEstimator
 
+__all__ = ['PatchExtractor',
+           'extract_patches_2d',
+           'grid_to_graph',
+           'img_to_graph',
+           'reconstruct_from_patches_2d']
 
 ###############################################################################
 # From an image to a graph

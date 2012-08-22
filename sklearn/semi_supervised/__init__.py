@@ -6,3 +6,5 @@ Propagation.
 """
 
 from .label_propagation import LabelPropagation, LabelSpreading
+
+__all__ = ['LabelPropagation', 'LabelSpreading']
