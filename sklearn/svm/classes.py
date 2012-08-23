@@ -16,9 +16,8 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        Penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
@@ -150,9 +149,8 @@ class SVC(BaseSVC):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        Penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
@@ -387,9 +385,8 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
 
     epsilon : float, optional (default=0.1)
          epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -494,9 +491,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
