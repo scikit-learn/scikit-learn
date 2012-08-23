@@ -17,6 +17,16 @@ from .utils.sparsefuncs import inplace_csr_row_normalize_l2
 from .utils.sparsefuncs import inplace_csr_column_scale
 from .utils.sparsefuncs import mean_variance_axis0
 
+__all__ = ['Binarizer',
+           'KernelCenterer',
+           'LabelBinarizer',
+           'LabelEncoder',
+           'Normalizer',
+           'Scaler',
+           'binarize',
+           'normalize',
+           'scale']
+
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std dev for centering, scaling
