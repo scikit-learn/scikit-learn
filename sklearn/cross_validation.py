@@ -921,21 +921,38 @@ class StratifiedShuffleSplit(object):
 
     Examples
     --------
-    >>> from sklearn.cross_validation import StratifiedShuffleSplit
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([0, 0, 1, 1])
-    >>> sss = StratifiedShuffleSplit(y, 3, test_size=0.5, random_state=0)
-    >>> len(sss)
-    3
-    >>> print(sss)       # doctest: +ELLIPSIS
-    StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, ...)
-    >>> for train_index, test_index in sss:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0 3] TEST: [1 2]
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [1 2] TEST: [0 3]
+
+    >>> import sklearn.cross_validation
+    >>> import numpy as np
+    >>> probs = [0.3,0.3,0.4]
+    >>> sample_length = 20
+    >>> test_size = 8
+    >>> num_iter = 100
+    >>> y = np.array([np.where(np.random.multinomial(1,probs))[0][0] for i in range(sample_length)])
+    >>> observed_counts = np.bincount(y,minlength=y.max()+1)
+    >>> observed_probs = 1.*observed_counts / observed_counts.sum()
+    >>> cv = sklearn.cross_validation.StratifiedShuffleSplit(y, num_iter, test_size=test_size,indices=True)
+    >>> sample_zero_in_training = 0.0
+    >>> for train_ind, test_ind in cv:
+    ...    y_train, y_test = y[train_ind],y[test_ind]
+    ...    training_counts = np.array([sum(y_train==i) for i in range(y.max()+1)])
+    ...    test_counts = np.array([sum(y_test==i) for i in range(y.max()+1)])
+    ...    sample_zero_in_training += (0 in train_ind)
+        print("***********")
+        print("Total number of unique indices = %d, should be %d"%(len(np.unique((np.concatenate((train_ind,test_ind))))),sample_length))
+        print("Training indices")
+        print(train_ind)
+        print("Test indices")
+        print(test_ind)
+        print("Difference between desired and achieved training counts = %f, should be 0.0"%(np.linalg.norm(training_counts - cv.desired_train_counts)))
+        print("Difference between desired and achieved test counts = %f, should be 0.0"%(np.linalg.norm(test_counts - cv.desired_test_counts)))
+    
+    >>> rho = sample_zero_in_training / float(num_iter)
+    >>> rho0 = 1.0 - test_size / float(sample_length)
+    >>> sigma = np.sqrt(rho*(1-rho) / np.sqrt(num_iter))
+    >>> z = (rho - rho0) / sigma
+    >>> print("Sample 0 found in the training set %f +- %f: z = %f."%(rho,sigma,z))
+    
     """
 
     def __init__(self, y, n_iterations=10, test_size=0.1,
@@ -948,33 +965,60 @@ class StratifiedShuffleSplit(object):
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
+        
         self.n_train, self.n_test = \
             _validate_stratified_shuffle_split(y, test_size, train_size)
+            
+        self.num_classes = self.y.max()+1
+        self.class_indices = [np.where(y==i)[0] for i in xrange(self.num_classes)]
+        
+        self.class_counts = 1.0*np.bincount(self.y,minlength=self.num_classes)
+        self.class_probs = self.class_counts / self.class_counts.sum()
+
+        self.desired_train_counts = (self.class_probs * self.n_train).round()
+        self.desired_test_counts = self.class_counts - self.desired_train_counts
+
 
     def __iter__(self):
+        """Iterate over cross validation subsets.
+
+        Notes
+        --------
+        
+        The key idea of this approach is to first randomly permute the data.
+        After permutating, we iterate over the label classes.  For each 
+        label class, we put the first n_i instances in the training set,
+        while the remaining instances are put in the test set.
+        The n_i, the desired number of training instances of class i, is 
+        calculuated by n_i = p_i n_train, where p_i is the observed
+        population of class i and n_train is the desired number of training
+        examples.
+        """
         rng = check_random_state(self.random_state)
 
-        y = self.y.copy()
-        n = y.size
-        k = ceil(n / self.n_test)
-        l = floor((n - self.n_test) / self.n_train)
-
-        for i in xrange(self.n_iterations):
-            ik = i % k
+        for k in xrange(self.n_iterations):
+                        
             permutation = rng.permutation(self.n)
-            idx = np.argsort(y[permutation])
-            ind_test = permutation[idx[ik::k]]
-            inv_test = np.setdiff1d(idx, idx[ik::k])
-            train_idx = idx[np.where(in1d(idx, inv_test))[0]]
-            ind_train = permutation[train_idx[::l]][:self.n_train]
-            test_index = ind_test
-            train_index = ind_train
+            yp = self.y[permutation]
+            train_index = []
+            for state in xrange(self.num_classes):
+                ns = self.desired_train_counts[state]
+                indices = np.where(yp == state)[0][0:ns]
+                train_index.extend(indices)
+
+            train_index = np.array(train_index)
+            test_index = np.setdiff1d(np.arange(self.n),train_index)
+            
+            train_index = permutation[train_index]
+            test_index = permutation[test_index]
 
             if not self.indices:
-                test_index = np.zeros(n, dtype=np.bool)
-                test_index[ind_test] = True
-                train_index = np.zeros(n, dtype=np.bool)
-                train_index[ind_train] = True
+                a = np.zeros(self.n, dtype=np.bool)
+                a[train_index] = True
+                test_index = a
+                b = np.zeros(self.n, dtype=np.bool)
+                b[test_index] = True
+                
 
             yield train_index, test_index
 
