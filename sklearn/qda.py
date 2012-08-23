@@ -14,6 +14,8 @@ from .base import BaseEstimator, ClassifierMixin
 from .utils.fixes import unique
 from .utils import check_arrays
 
+__all__ = ['QDA']
+
 
 class QDA(BaseEstimator, ClassifierMixin):
     """
