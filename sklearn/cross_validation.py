@@ -941,8 +941,8 @@ class StratifiedShuffleSplit(object):
     def __init__(self, y, n_iterations=10, test_size=0.1,
                  train_size=None, indices=True, random_state=None):
 
-        self.y = np.asarray(y)
-        self.n = self.y.shape[0]
+        self.y = np.array(y)
+        self.n = self.y.size
         self.n_iterations = n_iterations
         self.test_size = test_size
         self.train_size = train_size
@@ -954,29 +954,23 @@ class StratifiedShuffleSplit(object):
     def __iter__(self):
         rng = check_random_state(self.random_state)
 
-        y = self.y.copy()
-        n = y.size
-        k = ceil(n / self.n_test)
-        l = floor((n - self.n_test) / self.n_train)
+        p_i = np.bincount(
+            np.unique(self.y, return_inverse=True)[1]) / float(self.n)
+        n_i = np.round(self.n_train * p_i).astype('int')
+        t_i = np.round(self.n_test * p_i).astype('int')
 
-        for i in xrange(self.n_iterations):
-            ik = i % k
-            permutation = rng.permutation(self.n)
-            idx = np.argsort(y[permutation])
-            ind_test = permutation[idx[ik::k]]
-            inv_test = np.setdiff1d(idx, idx[ik::k])
-            train_idx = idx[np.where(in1d(idx, inv_test))[0]]
-            ind_train = permutation[train_idx[::l]][:self.n_train]
-            test_index = ind_test
-            train_index = ind_train
+        for i in range(self.n_iterations):
+            train = []
+            test = []
 
-            if not self.indices:
-                test_index = np.zeros(n, dtype=np.bool)
-                test_index[ind_test] = True
-                train_index = np.zeros(n, dtype=np.bool)
-                train_index[ind_train] = True
+            for i, cls in enumerate(np.unique(self.y)):
+                permutation = rng.permutation(n_i[i] + t_i[i])
+                cls_i = np.where((self.y == cls))[0][permutation]
 
-            yield train_index, test_index
+                train.extend(cls_i[:n_i[i]])
+                test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
+
+            yield train, test
 
     def __repr__(self):
         return ('%s(labels=%s, n_iterations=%d, test_size=%s, indices=%s, '
