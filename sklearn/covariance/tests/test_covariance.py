@@ -8,6 +8,7 @@ from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
     assert_equal, assert_raises
 
 import numpy as np
+import warnings
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
@@ -56,7 +57,8 @@ def test_covariance():
     # test with one sample
     X_1sample = np.arange(5)
     cov = EmpiricalCovariance()
-    cov.fit(X_1sample)
+    with warnings.catch_warnings(record=True):
+        cov.fit(X_1sample)
 
     # test integer type
     X_integer = np.asarray([[0, 1], [1, 0]])
@@ -178,7 +180,8 @@ def test_ledoit_wolf():
     # test with one sample
     X_1sample = np.arange(5)
     lw = LedoitWolf()
-    lw.fit(X_1sample)
+    with warnings.catch_warnings(record=True):
+        lw.fit(X_1sample)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
@@ -249,7 +252,8 @@ def test_oas():
     # test with one sample
     X_1sample = np.arange(5)
     oa = OAS()
-    oa.fit(X_1sample)
+    with warnings.catch_warnings(record=True):
+        oa.fit(X_1sample)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)

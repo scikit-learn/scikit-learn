@@ -132,13 +132,10 @@ class CountVectorizer(BaseEstimator):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
-    min_n: integer
-        The lower boundary of the range of n-values for different n-grams to be
-        extracted.
-
-    max_n: integer
-        The upper boundary of the range of n-values for different n-grams to be
-        extracted. All values of n such that min_n <= n <= max_n will be used.
+    ngram_range: tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -193,7 +190,8 @@ class CountVectorizer(BaseEstimator):
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, analyzer='word',
+                 ngram_range=(1, 1),
+                 min_n=None, max_n=None, analyzer='word',
                  max_df=1.0, max_features=None,
                  vocabulary=None, binary=False, dtype=long):
         self.input = input
@@ -204,12 +202,19 @@ class CountVectorizer(BaseEstimator):
         self.tokenizer = tokenizer
         self.analyzer = analyzer
         self.lowercase = lowercase
-        self.min_n = min_n
-        self.max_n = max_n
         self.token_pattern = token_pattern
         self.stop_words = stop_words
         self.max_df = max_df
         self.max_features = max_features
+        if not (max_n is None) or not (min_n is None):
+            warnings.warn('Parameters max_n and min_n are deprecated. Use '
+                'ngram_range instead.')
+            if min_n is None:
+                min_n = 1
+            if max_n is None:
+                max_n = min_n
+            ngram_range = (min_n, max_n)
+        self.ngram_range = ngram_range
         if vocabulary is not None:
             self.fixed_vocabulary = True
             if not isinstance(vocabulary, Mapping):
@@ -242,12 +247,13 @@ class CountVectorizer(BaseEstimator):
             tokens = [w for w in tokens if w not in stop_words]
 
         # handle token n-grams
-        if self.min_n != 1 or self.max_n != 1:
+        min_n, max_n = self.ngram_range
+        if max_n != 1:
             original_tokens = tokens
             tokens = []
             n_original_tokens = len(original_tokens)
-            for n in xrange(self.min_n,
-                            min(self.max_n + 1, n_original_tokens + 1)):
+            for n in xrange(min_n,
+                            min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
                     tokens.append(u" ".join(original_tokens[i: i + n]))
 
@@ -260,7 +266,8 @@ class CountVectorizer(BaseEstimator):
 
         text_len = len(text_document)
         ngrams = []
-        for n in xrange(self.min_n, min(self.max_n + 1, text_len + 1)):
+        min_n, max_n = self.ngram_range
+        for n in xrange(min_n, min(max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
                 ngrams.append(text_document[i: i + n])
         return ngrams
@@ -273,11 +280,12 @@ class CountVectorizer(BaseEstimator):
         # normalize white spaces
         text_document = self._white_spaces.sub(u" ", text_document)
 
+        min_n, max_n = self.ngram_range
         ngrams = []
         for w in text_document.split():
             w = u' ' + w + u' '
             w_len = len(w)
-            for n in xrange(self.min_n, self.max_n + 1):
+            for n in xrange(min_n, max_n + 1):
                 offset = 0
                 ngrams.append(w[offset:offset + n])
                 while offset + n < w_len:
@@ -709,13 +717,11 @@ class TfidfVectorizer(CountVectorizer):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
-    min_n: integer
-        The lower boundary of the range of n-values for different n-grams to be
-        extracted.
 
-    max_n: integer
-        The upper boundary of the range of n-values for different n-grams to be
-        extracted. All values of n such that min_n <= n <= max_n will be used.
+    ngram_range: tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -790,10 +796,10 @@ class TfidfVectorizer(CountVectorizer):
     """
 
     def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0, max_features=None,
+                 charset_error='strict', strip_accents=None, lowercase=True,
+                 preprocessor=None, tokenizer=None, analyzer='word',
+                 stop_words=None, token_pattern=ur"\b\w\w+\b", min_n=None,
+                 max_n=None, ngram_range=(1, 1), max_df=1.0, max_features=None,
                  vocabulary=None, binary=False, dtype=long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
 
@@ -802,8 +808,9 @@ class TfidfVectorizer(CountVectorizer):
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
-            max_n=max_n, max_df=max_df, max_features=max_features,
-            vocabulary=vocabulary, binary=False, dtype=dtype)
+            max_n=max_n, ngram_range=ngram_range, max_df=max_df,
+            max_features=max_features, vocabulary=vocabulary, binary=False,
+            dtype=dtype)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
@@ -885,15 +892,15 @@ class TfidfVectorizer(CountVectorizer):
 
 
 class Vectorizer(TfidfVectorizer):
-    """Vectorizer is eprecated in 0.11, use TfidfVectorizer instead"""
+    """Vectorizer is deprecated in 0.11, use TfidfVectorizer instead"""
 
     def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, norm='l2',
-                 use_idf=True, smooth_idf=True, sublinear_tf=False):
+                charset_error='strict', strip_accents=None, lowercase=True,
+                preprocessor=None, tokenizer=None, analyzer='word',
+                stop_words=None, token_pattern=ur"\b\w\w+\b", min_n=None,
+                max_n=None, ngram_range=(1, 1), max_df=1.0, max_features=None,
+                vocabulary=None, binary=False, dtype=long, norm='l2',
+                use_idf=True, smooth_idf=True, sublinear_tf=False):
         warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
                      " in 0.13. Please use TfidfVectorizer instead.",
                       category=DeprecationWarning)

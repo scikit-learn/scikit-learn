@@ -186,9 +186,10 @@ reasonable (please see  the :ref:`reference documentation
   >>> vectorizer
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
-          lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
-          preprocessor=None, stop_words=None, strip_accents=None,
-          token_pattern=u'\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+          lowercase=True, max_df=1.0, max_features=None, max_n=None,
+          min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
+          strip_accents=None, token_pattern=u'\\b\\w\\w+\\b', tokenizer=None,
+          vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -244,7 +245,7 @@ we lose the information that the last document is an interogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
-  >>> bigram_vectorizer = CountVectorizer(min_n=1, max_n=2,
+  >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
   ...                                     token_pattern=ur'\b\w+\b')
   >>> analyze = bigram_vectorizer.build_analyzer()
   >>> analyze('Bi-grams are cool!')
@@ -395,9 +396,9 @@ misspellings or word derivations.
 
 N-grams to the rescue! Instead of building a simple collection of
 unigrams (n=1), one might prefer a collection of bigrams (n=2), where
-occurances of pairs of consecutive words are counted.
+occurences of pairs of consecutive words are counted.
 
-One might consider a collection of character n-grams instead, a
+One might alternatively consider a collection of character n-grams, a
 representation resiliant against misspellings and derivations.
 
 For example, let's say we're dealing with a corpus of two documents:
@@ -411,6 +412,8 @@ decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', min_n=2, max_n=2)
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
+  >>> ngram_vectorizer.get_feature_names()
+  [u' w', u'ds', u'or', u'pr', u'rd', u's ', u'wo', u'wp']
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
@@ -436,6 +439,13 @@ span across words::
   >>> ngram_vectorizer.get_feature_names()
   [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
 
+The word boundaries-aware variant ``char_wb`` is especially interesting
+for languages that use whitespaces for word separation as it generates
+significantly less noisy features than the raw ``char`` variant in
+that case. For such languages it can increase both the predictive
+accuracy and convergence speed of classifiers trained using such
+features while retaining the robustness w.r.t. misspellings and
+word derivations.
 
 While some local positioning information can be preserved by extracting
 n-grams instead of individual words, bag of words and bag of n-grams

@@ -184,7 +184,8 @@ def test_connectivity_fixing_non_lil():
     m = np.array([[True, False], [False, True]])
     c = grid_to_graph(n_x=2, n_y=2, mask=m)
     w = Ward(connectivity=c)
-    w.fit(x)
+    with warnings.catch_warnings(record=True):
+        w.fit(x)
 
 
 if __name__ == '__main__':

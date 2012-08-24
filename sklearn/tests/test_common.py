@@ -131,6 +131,8 @@ def test_classifiers_train():
                 # decision_function agrees with predict:
                 decision = clf.decision_function(X)
                 assert_equal(decision.shape, (n_samples, n_labels))
+                # raises error on malformed input
+                assert_raises(ValueError, clf.decision_function, X.T)
                 if not isinstance(clf, BaseLibSVM):
                     # 1on1 of LibSVM works differently
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
@@ -143,6 +145,8 @@ def test_classifiers_train():
                 # predict_proba agrees with predict:
                 y_prob = clf.predict_proba(X)
                 assert_equal(y_prob.shape, (n_samples, n_labels))
+                # raises error on malformed input
+                assert_raises(ValueError, clf.predict_proba, X.T)
                 assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
                 # raises error on malformed input for predict_proba
                 assert_raises(ValueError, clf.predict_proba, X.T)
