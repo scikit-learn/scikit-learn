@@ -977,7 +977,7 @@ class StratifiedShuffleSplit(object):
                 test_m = np.zeros(self.n, dtype='bool')
                 train_m[train] = True
                 test_m[test] = True
-                
+
                 yield train_m, test_m
 
     def __repr__(self):
