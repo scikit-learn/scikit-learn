@@ -970,7 +970,15 @@ class StratifiedShuffleSplit(object):
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
 
-            yield train, test
+            if self.indices:
+                yield train, test
+            else:
+                train_m = np.zeros(self.n, dtype='bool')
+                test_m = np.zeros(self.n, dtype='bool')
+                train_m[train] = True
+                test_m[test] = True
+                
+                yield train_m, test_m
 
     def __repr__(self):
         return ('%s(labels=%s, n_iterations=%d, test_size=%s, indices=%s, '
