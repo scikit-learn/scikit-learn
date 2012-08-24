@@ -953,11 +953,10 @@ class StratifiedShuffleSplit(object):
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-
-        p_i = np.bincount(
-            np.unique(self.y, return_inverse=True)[1]) / float(self.n)
+        cls_count = np.bincount(np.unique(self.y, return_inverse=True)[1])
+        p_i = cls_count / float(self.n)
         n_i = np.round(self.n_train * p_i).astype('int')
-        t_i = np.round(self.n_test * p_i).astype('int')
+        t_i = cls_count - n_i
 
         for i in range(self.n_iterations):
             train = []
