@@ -833,7 +833,7 @@ def precision_recall_curve(y_true, probas_pred):
         Thresholds on y_score used to compute precision and recall
 
     """
-    y_true = y_true.ravel()
+    y_true = np.ravel(y_true)
     labels = np.unique(y_true)
     if np.all(labels == np.array([-1, 1])):
         # convert {-1, 1} to boolean {0, 1} repr
@@ -842,7 +842,7 @@ def precision_recall_curve(y_true, probas_pred):
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
-    probas_pred = probas_pred.ravel()
+    probas_pred = np.ravel(probas_pred)
     thresholds = np.sort(np.unique(probas_pred))
     n_thresholds = thresholds.size + 1
     precision = np.empty(n_thresholds)
