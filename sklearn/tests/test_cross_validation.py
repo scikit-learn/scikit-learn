@@ -133,6 +133,16 @@ def test_stratified_shuffle_split():
         assert_true(train_std[i] <= np.std(np.bincount(y[train])))
         assert_true(test_std[i] <= np.std(np.bincount(y[test])))
 
+    ys = [
+        np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+        np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+        np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+        np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+        ]
+
+    for y in ys:
+        for train, test in sss:
+            assert_array_equal(np.unique(y[train]), np.unique(y[test]))
 
 def test_cross_val_score():
     clf = MockClassifier()
