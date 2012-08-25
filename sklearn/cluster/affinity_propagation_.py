@@ -15,8 +15,8 @@ from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
-            copy=True, verbose=False):
+def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
+        damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
@@ -25,14 +25,16 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     S: array [n_points, n_points]
         Matrix of similarities between points
 
-    p: array [n_points,] or float, optional
+    preference: array [n_points,] or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
-        exemplars, ie of clusters, is influenced by the input preferences
+        exemplars, i.e. of clusters, is influenced by the input preferences
         value. If the preferences are not passed as arguments, they will be
         set to the median of the input similarities (resulting in a moderate
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
+        If a scalar is passed, the preferences will be set to the median
+        of the input similarities times this scalar.
 
     damping : float, optional
         Damping factor
@@ -69,16 +71,24 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     if S.shape[0] != S.shape[1]:
         raise ValueError("S must be a square array (shape=%r)" % S.shape)
 
-    if p is None:
-        p = np.median(S)
+    if not p is None:
+        warnings.warn("p is deprecated and will be removed in version 0.14."
+                " Use ``preference`` instead.", DeprecationWarning)
+        preference = p
+
+    if np.isscalar(preference):
+        preference = np.median(S) * preference
+
+    if preference is None:
+        preference = np.median(S)
 
     if damping < 0.5 or damping >= 1:
         raise ValueError('damping must be >= 0.5 and < 1')
 
     random_state = np.random.RandomState(0)
 
-    # Place preferences on the diagonal of S
-    S.flat[::(n_points + 1)] = p
+    # Place preference on the diagonal of S
+    S.flat[::(n_points + 1)] = preference
 
     A = np.zeros((n_points, n_points))
     R = np.zeros((n_points, n_points))  # Initialize messages
@@ -185,12 +195,14 @@ class AffinityPropagation(BaseEstimator):
     copy : boolean, optional
         Make a copy of input data. True by default.
 
-    p : array [n_points,] or float, optional
+    preference : array [n_points,] or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
+        If a scalar is passed, the preferences will be set to the median
+        of the input similarities times this scalar.
 
     precomputed : bool, optional
         Whether a precomputed affinity matrix is used for X, instead
@@ -222,13 +234,18 @@ class AffinityPropagation(BaseEstimator):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True, p=None,
-            precomputed=False):
+    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True,
+            preference=None, p=None, precomputed=False):
         self.damping = damping
         self.max_iter = max_iter
         self.convit = convit
         self.copy = copy
-        self.p = p
+        if not p is None:
+            warnings.warn("p is deprecated and will be removed in version 0.14"
+                    ". Use ``preference`` instead.", DeprecationWarning)
+            preference = p
+
+        self.preference = preference
         self.precomputed = precomputed
 
     @property
