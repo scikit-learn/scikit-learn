@@ -169,6 +169,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
+        if Xy is not None and Xy.ndim == 1:
+            Xy = Xy[:, np.newaxis]
 
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
