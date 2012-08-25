@@ -206,10 +206,12 @@ class ElasticNet(LinearModel, RegressorMixin):
             else:
                 Gram = Gram.copy()
                 if Xy is None:
-                    Xy = np.dot(X.T, y[:, k])
+                    this_Xy = np.dot(X.T, y[:, k])
+                else:
+                    this_Xy = Xy[:, k]
                 coef_[k, :], dual_gap_[k], eps_[k] = \
                         cd_fast.enet_coordinate_descent_gram(coef_[k, :],
-                        l1_reg, l2_reg, Gram, Xy, y[:, k], self.max_iter,
+                        l1_reg, l2_reg, Gram, this_Xy, y[:, k], self.max_iter,
                         self.tol, self.positive)
 
             if dual_gap_[k] > eps_[k]:
