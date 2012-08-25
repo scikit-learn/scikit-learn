@@ -18,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd
-from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
+from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -85,7 +85,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if X.ndim == 1:
         X = X[:, np.newaxis]
     n_samples, n_features = X.shape
-    n_atoms = dictionary.shape[0]
     if cov is None and algorithm != 'lasso_cd':
         # overwriting cov is safe
         copy_cov = False
@@ -94,15 +93,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if algorithm == 'lasso_lars':
         alpha = float(reg_param) / n_features  # account for scaling
         try:
-            new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in range(n_samples):
-                # A huge amount of time is spent in this loop. It needs to be
-                # tight.
-                _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
-                                             Gram=gram, alpha_min=alpha,
-                                             method='lasso')
-                new_code[k] = coef_path_[:, -1]
+            lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
+                            verbose=False, normalize=False, precompute=gram)
+            lasso_lars.fit(dictionary.T, X.T, Xy=cov)
+            new_code = lasso_lars.coef_
         finally:
             np.seterr(**err_mgt)
 
@@ -115,15 +110,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lars':
         try:
-            new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in xrange(n_samples):
-                # A huge amount of time is spent in this loop. It needs to be
-                # tight.
-                _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
-                                             Gram=gram, method='lar',
-                                             max_iter=int(reg_param))
-                new_code[k] = coef_path_[:, -1]
+            lars = Lars(fit_intercept=False, verbose=False, normalize=False,
+                        precompute=gram, n_nonzero_coefs=int(reg_param))
+            lars.fit(dictionary.T, X.T, Xy=cov)
+            new_code = lars.coef_
         finally:
             np.seterr(**err_mgt)
 
