@@ -266,15 +266,11 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    X = np.asarray(X)
+    X = array2d(X, order='F', copy=copy_X)
+    copy_X = False
     y = np.asarray(y)
     if y.ndim == 1:
         y = y[:, np.newaxis]
-    if copy_X:
-        X = X.copy('F')
-        copy_X = False
-    else:
-        X = np.asfortranarray(X)
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
     if n_nonzero_coefs == None and tol == None:
@@ -367,8 +363,10 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    Gram = np.asarray(Gram)
+    Gram = array2d(Gram, order='F', copy=copy_Gram)
     Xy = np.asarray(Xy)
+    if Xy.ndim > 1 and Xy.shape[1] > 1:  # or subsequent target will be affected
+        copy_Gram = True
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
         if tol is not None:
@@ -527,19 +525,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             Gram, Xy = None, None
 
         if Gram is not None:
-            Gram = array2d(Gram)
-
-            if self.copy_Gram:
-                copy_Gram = False
-                Gram = Gram.copy('F')
-            else:
-                Gram = np.asfortranarray(Gram)
-
-            copy_Gram = self.copy_Gram
-
-            if y.shape[1] > 1:  # subsequent targets will be affected
-                copy_Gram = True
-
             if Xy is None:
                 Xy = np.dot(X.T, y)
             else:
@@ -558,7 +543,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
                                             self.tol, norms_sq,
-                                            copy_Gram, True).T
+                                            self.copy_Gram, True).T
         else:
             precompute_gram = self.precompute_gram
             if precompute_gram == 'auto':
