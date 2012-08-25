@@ -108,19 +108,12 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lasso_cd':
         alpha = float(reg_param) / n_features  # account for scaling
-        new_code = np.empty((n_samples, n_atoms))
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=max_iter)
-        for k in xrange(n_samples):
-            # A huge amount of time is spent in this loop. It needs to be
-            # tight
-            coef_init = init[k] if init is not None else None
-            clf.fit(dictionary.T, X[k], Xy=cov[:, k], coef_init=coef_init)
-            new_code[k] = clf.coef_
+        clf.fit(dictionary.T, X.T, Xy=cov, coef_init=init)
+        new_code = clf.coef_
 
     elif algorithm == 'lars':
-        if reg_param is None:
-            reg_param = max(n_features / 10, 1)
         try:
             new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
@@ -135,13 +128,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             np.seterr(**err_mgt)
 
     elif algorithm == 'threshold':
-        if reg_param is None:
-            reg_param = max(n_features / 10, 1)
         new_code = (np.sign(cov) * np.maximum(np.abs(cov) - reg_param, 0)).T
 
     elif algorithm == 'omp':
-        if reg_param is None:
-            reg_param = max(n_features / 10, 1)
         norms_squared = np.sum((X ** 2), axis=1)
         new_code = orthogonal_mp_gram(gram, cov, reg_param, reg_param,
                                       norms_squared, copy_Xy=copy_cov).T
@@ -235,13 +224,22 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     X = np.asarray(X)
     n_samples, n_features = X.shape
     n_atoms = dictionary.shape[0]
+
     if gram is None and algorithm != 'threshold':
         gram = np.dot(dictionary, dictionary.T)
     if cov is None:
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
-    reg_param = n_nonzero_coefs if algorithm in ['lars', 'omp'] else alpha
+    if algorithm in ['lars', 'omp']:
+        reg_param = n_nonzero_coefs
+        if reg_param is None:
+            reg_param = max(n_features / 10, 1)
+    else:
+        reg_param = alpha
+        if reg_param is None:
+            reg_param = 1.
+
     if n_jobs == 1 or algorithm == 'threshold':
         return _sparse_encode(X, dictionary, gram, cov=cov,
                   algorithm=algorithm, reg_param=reg_param,
@@ -258,7 +256,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         cov = StupidSliceable()
 
     code_views = Parallel(n_jobs=n_jobs)(
-                delayed(sparse_encode)(X[this_slice], dictionary, gram,
+                delayed(_sparse_encode)(X[this_slice], dictionary, gram,
                            cov[:, this_slice], algorithm,
                            reg_param=reg_param, copy_cov=copy_cov,
                            init=init[this_slice] if init is not None else None,
