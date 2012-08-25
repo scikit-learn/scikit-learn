@@ -12,6 +12,9 @@ def test_isotonic_regression():
     Y = np.array([3, 6, 6, 8, 8, 8, 10])
     assert_array_equal(Y, isotonic_regression(X))
 
+
 def assert_raises_exceptions():
     assert_raises(ValueError, IsotonicRegression.fit([5, 7, 3],
                                                      w=[0.1, 0.6]))
+    assert_raises(ValueError,
+                  IsotonicRegression.fit(np.random.randn(shape=(10, 10))))

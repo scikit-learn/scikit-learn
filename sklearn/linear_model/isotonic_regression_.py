@@ -5,6 +5,7 @@
 
 import numpy as np
 from ..base import BaseEstimator
+from ..utils import as_float_array
 
 
 def isotonic_regression(y, w=None, x_min=None, x_max=None):
@@ -85,7 +86,9 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
 
 class IsotonicRegression(BaseEstimator):
     """
-    Solve the isotonic regression model:
+    Solve the isotonic regression optimization problem
+
+    The isotonic regression optimization problem is defined by:
         min Sum w_i (y_i - x_i) ** 2
 
         subject to x_min = x_1 <= x_2 ... <= x_n = x_max
@@ -95,7 +98,7 @@ class IsotonicRegression(BaseEstimator):
 
     Attributes
     ----------
-    `X_fit`: array
+    `X_`: array
         Estimated fit
 
     Notes
@@ -110,11 +113,13 @@ class IsotonicRegression(BaseEstimator):
         if w is not None:
             if len(X) != len(w):
                 raise ValueError("Shapes of X and w do not match")
+        if len(X.shape) != 1:
+            raise ValueError("X should be a vector")
 
     def fit(self, X, w=None, x_min=None, x_max=None):
         """
         """
-        # FIXME X should be a 1D array
+        X = as_float_array(X)
         self._check_fit_data(X, w)
-        self.X_fit = isotonic_regression(X, w, x_min, x_max)
+        self.X_ = isotonic_regression(X, w, x_min, x_max)
         return self
