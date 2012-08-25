@@ -280,8 +280,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
-        raise ValueError("The number of atoms cannot be more than the number \
-                          of features")
+        raise ValueError("The number of atoms cannot be more than the number "
+                         "of features")
     if precompute_gram == 'auto':
         precompute_gram = X.shape[0] > X.shape[1]
     if precompute_gram:
@@ -375,15 +375,15 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     if n_nonzero_coefs == None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
     if tol is not None and norms_squared == None:
-        raise ValueError('Gram OMP needs the precomputed norms in order \
-                          to evaluate the error sum of squares.')
+        raise ValueError('Gram OMP needs the precomputed norms in order '
+                         'to evaluate the error sum of squares.')
     if tol is not None and tol < 0:
-        raise ValueError("Epsilon cennot be negative")
+        raise ValueError("Epsilon cannot be negative")
     if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
-        raise ValueError("The number of atoms cannot be more than the number \
-                          of features")
+        raise ValueError("The number of atoms cannot be more than the number "
+                          "of features")
     coef = np.zeros((len(Gram), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
