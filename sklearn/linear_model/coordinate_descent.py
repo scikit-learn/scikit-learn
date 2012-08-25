@@ -570,10 +570,15 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = array2d(X, dtype=np.float64, order='F',
-                copy=copy_X and fit_intercept)
-    X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
-                                              normalize, copy=False)
+    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                        copy=copy_X and fit_intercept)
+
+    if not sparse.isspmatrix(X):
+        X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
+                                                  normalize, copy=False)
+        # XXX : in the sparse case the data will be centered
+        # at each fit...
+
     n_samples, n_features = X.shape
 
     if hasattr(precompute, '__array__') \
@@ -585,10 +590,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     if precompute is True or \
                 ((precompute == 'auto') and (n_samples > n_features)):
+        if sparse.isspmatrix(X):
+            warnings.warn("precompute is ignored for sparse data")
         precompute = np.dot(X.T, X)
 
     if Xy is None:
-        Xy = np.dot(X.T, y)
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
     n_samples = X.shape[0]
     if alphas is None:
@@ -602,11 +609,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
-        model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
-                           precompute=precompute)
+        model = ElasticNet(alpha=alpha, rho=rho,
+            fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
+            precompute=precompute)
         model.set_params(**params)
         model.fit(X, y, coef_init=coef_, Xy=Xy)
-        if fit_intercept:
+        if fit_intercept and not sparse.isspmatrix(X):
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
@@ -669,8 +677,8 @@ class LinearModelCV(LinearModel):
             Target values
 
         """
-        if not sparse.issparse(X):
-            X = np.asfortranarray(X, dtype=np.float64)
+        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                             copy=self.copy_X and self.fit_intercept)
         y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
