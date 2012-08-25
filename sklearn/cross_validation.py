@@ -970,6 +970,9 @@ class StratifiedShuffleSplit(object):
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
 
+            train = np.array(train)[rng.permutation(len(train))]
+            test = np.array(test)[rng.permutation(len(test))]
+
             if self.indices:
                 yield train, test
             else:
