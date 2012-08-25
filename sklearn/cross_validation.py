@@ -959,7 +959,7 @@ class StratifiedShuffleSplit(object):
         t_i = np.array([cls_count - n_i,
                         np.round(self.n_test * p_i).astype('int')]).min(axis=0)
 
-        for i in range(self.n_iterations):
+        for n in range(self.n_iterations):
             train = []
             test = []
 
