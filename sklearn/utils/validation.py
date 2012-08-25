@@ -61,12 +61,32 @@ def as_float_array(X, copy=True):
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
 
 
-def array2d(X, dtype=None, order=None):
+def array2d(X, dtype=None, order=None, copy=False):
     """Returns at least 2-d array with data from X"""
     if sparse.issparse(X):
         raise TypeError('A sparse matrix was passed, but dense data '
                         'is required. Use X.todense() to convert to dense.')
-    return np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
+    X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
+    if X is X_2d and copy:
+        X_2d = X_2d.copy()
+    return X_2d
+
+
+def atleast2d_or_csc(X, dtype=None, order=None):
+    """Like numpy.atleast_2d, but converts sparse matrices to CSC format
+
+    Also, converts np.matrix to np.ndarray.
+    """
+    if sp.issparse(X):
+        # Note: order is ignored because CSR matrices hold data in 1-d arrays
+        if dtype is None or X.dtype == dtype:
+            X = X.tocsc()
+        else:
+            X = sp.csc_matrix(X, dtype=dtype)
+    else:
+        X = array2d(X, dtype=dtype, order=order)
+    assert_all_finite(X)
+    return X
 
 
 def atleast2d_or_csr(X, dtype=None, order=None):
