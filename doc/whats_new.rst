@@ -67,6 +67,11 @@ Changelog
    - In :class:`feature_extraction.text.CountVectorizer`, added an option to
      infrequent words, ``min_df`` by  `Andreas Müller`_.
 
+   - Add support for multiple targets in some linear models (ElasticNet, Lasso
+     and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
+     `Alexandre Gramfort`_.
+
+
 API changes summary
 -------------------
 
