@@ -21,7 +21,6 @@ from ..utils import array2d, atleast2d_or_csc
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
-from ..utils import check_arrays
 
 from . import cd_fast
 
@@ -1069,7 +1068,9 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         # X and y must be of type float64
-        X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float64)
+        X = array2d(X, dtype=np.float64, order='F',
+                    copy=self.copy_X and self.fit_intercept)
+        y = np.asarray(y, dtype=np.float64)
 
         squeeze_me = False
         if y.ndim == 1:
@@ -1080,7 +1081,7 @@ class MultiTaskElasticNet(Lasso):
         _, n_tasks = y.shape
 
         X, y, X_mean, y_mean, X_std = center_data(X, y,
-                self.fit_intercept, self.normalize, copy=self.copy_X)
+                self.fit_intercept, self.normalize, copy=False)
 
         if coef_init is None:
             if not self.warm_start or self.coef_ is None:
@@ -1092,7 +1093,6 @@ class MultiTaskElasticNet(Lasso):
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
-        X = np.asfortranarray(X)  # make data contiguous in memory
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
         self.coef_, self.dual_gap_, self.eps_ = \
