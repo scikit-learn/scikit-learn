@@ -416,7 +416,7 @@ class Lars(LinearModel, RegressorMixin):
             Gram = None
         return Gram
 
-    def fit(self, X, y):
+    def fit(self, X, y, Xy=None):
         """Fit the model using X, y as training data.
 
         parameters
@@ -426,6 +426,10 @@ class Lars(LinearModel, RegressorMixin):
 
         y : array-like, shape = [n_samples]
             target values.
+
+        Xy : array-like, shape = [n_samples], optional
+            Xy = np.dot(X.T, y) that can be precomputed. It is useful
+            only when the Gram matrix is precomputed.
 
         returns
         -------
@@ -458,16 +462,18 @@ class Lars(LinearModel, RegressorMixin):
         self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
         self.coef_ = np.zeros((n_targets, n_features))
 
-        if self.precompute == True or (
-           self.precompute == 'auto' and X.shape[0] > X.shape[1]) or (
-           self.precompute == 'auto' and y.shape[1] > 1):
+        precompute = self.precompute
+        if not hasattr(precompute, '__array__') and (precompute == True or
+           (precompute == 'auto' and X.shape[0] > X.shape[1]) or
+           (precompute == 'auto' and y.shape[1] > 1)):
             Gram = np.dot(X.T, X)
         else:
             Gram = self._get_gram()
 
         for k in xrange(n_targets):
+            this_Xy = None if Xy is None else Xy[:, k]
             alphas, active, coef_path = lars_path(X, y[:, k], Gram=Gram,
-                          copy_X=self.copy_X, copy_Gram=True,
+                          Xy=this_Xy, copy_X=self.copy_X, copy_Gram=True,
                           alpha_min=alpha, method=self.method,
                           verbose=max(0, self.verbose - 1), max_iter=max_iter,
                           eps=self.eps)
