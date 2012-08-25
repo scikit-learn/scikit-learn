@@ -141,6 +141,7 @@ def test_stratified_shuffle_split():
         ]
 
     for y in ys:
+        sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
 
