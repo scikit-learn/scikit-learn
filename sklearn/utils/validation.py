@@ -72,28 +72,32 @@ def array2d(X, dtype=None, order=None, copy=False):
     return X_2d
 
 
-def atleast2d_or_csc(X, dtype=None, order=None):
+def atleast2d_or_csc(X, dtype=None, order=None, copy=False):
     """Like numpy.atleast_2d, but converts sparse matrices to CSC format
 
     Also, converts np.matrix to np.ndarray.
     """
-    if sp.issparse(X):
+    X_init = X
+    if sparse.issparse(X):
         # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
             X = X.tocsc()
         else:
-            X = sp.csc_matrix(X, dtype=dtype)
+            X = sparse.csc_matrix(X, dtype=dtype)
     else:
         X = array2d(X, dtype=dtype, order=order)
     assert_all_finite(X)
+    if X is X_init and copy:
+        X = X.copy()
     return X
 
 
-def atleast2d_or_csr(X, dtype=None, order=None):
+def atleast2d_or_csr(X, dtype=None, order=None, copy=False):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
 
     Also, converts np.matrix to np.ndarray.
     """
+    X_init = X
     if sparse.issparse(X):
         # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
@@ -103,6 +107,8 @@ def atleast2d_or_csr(X, dtype=None, order=None):
     else:
         X = array2d(X, dtype=dtype, order=order)
     assert_all_finite(X)
+    if X is X_init and copy:
+        X = X.copy()
     return X
 
 

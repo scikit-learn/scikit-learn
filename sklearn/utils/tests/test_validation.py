@@ -67,6 +67,11 @@ def test_np_matrix():
     assert_false(isinstance(safe_asarray(np.matrix(X)), np.matrix))
     assert_false(isinstance(safe_asarray(sp.lil_matrix(X)), np.matrix))
 
+    assert_true(atleast2d_or_csr(X, copy=False) is X)
+    assert_false(atleast2d_or_csr(X, copy=True) is X)
+    assert_true(atleast2d_or_csc(X, copy=False) is X)
+    assert_false(atleast2d_or_csc(X, copy=True) is X)
+
 
 def test_memmap():
     """
