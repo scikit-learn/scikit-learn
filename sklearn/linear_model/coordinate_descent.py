@@ -169,6 +169,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         X_init = X
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, copy=self.copy_X)
+
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        n_targets = y.shape[1]
+
         precompute = self.precompute
         if X_init is not X and hasattr(precompute, '__array__'):
             # recompute Gram
@@ -180,12 +186,20 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if coef_init is None:
             if not self.warm_start or self.coef_ is None:
-                self.coef_ = np.zeros(n_features, dtype=np.float64)
+                coef_ = np.zeros((n_targets, n_features), dtype=np.float64)
+            else:
+                coef_ = self.coef_
         else:
-            if coef_init.shape[0] != X.shape[1]:
-                raise ValueError("X and coef_init have incompatible " +
-                                  "shapes.")
-            self.coef_ = coef_init
+            coef_ = coef_init
+
+        if coef_.ndim == 1:
+            coef_ = coef_[np.newaxis, :]
+        if coef_.shape != (n_targets, n_features):
+            raise ValueError("X and coef_init have incompatible " +
+                             "shapes.")
+
+        dual_gap_ = np.empty(n_targets)
+        eps_ = np.empty(n_targets)
 
         alpha = self.alpha * self.rho * n_samples
         beta = self.alpha * (1.0 - self.rho) * n_samples
@@ -200,23 +214,28 @@ class ElasticNet(LinearModel, RegressorMixin):
             Gram = np.dot(X.T, X)
         else:
             Gram = None
+        for k in xrange(n_targets):
+            if Gram is None:
+                coef_[k, :], dual_gap_[k], eps_[k] = \
+                        cd_fast.enet_coordinate_descent(coef_[k, :],
+                        alpha, beta, X, y[:, k], self.max_iter, self.tol,
+                        self.positive)
+            else:
+                Gram = Gram.copy()
+                if Xy is None:
+                    Xy = np.dot(X.T, y[:, k])
+                coef_[k, :], dual_gap_[k], eps_[k] = \
+                        cd_fast.enet_coordinate_descent_gram(coef_[k, :],
+                        alpha, beta, Gram, Xy, y[:, k], self.max_iter,
+                        self.tol, self.positive)
 
-        if Gram is None:
-            self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                            X, y, self.max_iter, self.tol, self.positive)
-        else:
-            if Xy is None:
-                Xy = np.dot(X.T, y)
-            self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                    beta, Gram, Xy, y, self.max_iter, self.tol, self.positive)
+            if dual_gap_[k] > eps_[k]:
+                warnings.warn('Objective did not converge, you might want'
+                              ' to increase the number of iterations')
 
+        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
+                                                    coef_, dual_gap_, eps_))
         self._set_intercept(X_mean, y_mean, X_std)
-
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations')
 
         # return self for chaining fit and predict calls
         return self

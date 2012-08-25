@@ -54,6 +54,20 @@ def test_simple_precomputed():
             assert_true(ocur == X.shape[1])
 
 
+def test_all_precomputed():
+    """
+    Test that lars_path with precomputed Gram and Xy gives the right answer
+    """
+    X, y = diabetes.data, diabetes.target
+    G = np.dot(X.T, X)
+    Xy = np.dot(X.T, y)
+    for method in 'lar', 'lasso':
+        output = linear_model.lars_path(X, y, method=method)
+        output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy, method=method)
+        for expected, got in zip(output, output_pre):
+            assert_array_almost_equal(expected, got)
+
+
 def test_lars_lstsq():
     """
     Test that Lars gives least square solution at the end
@@ -185,6 +199,26 @@ def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
     lars.fit(X, y)
     assert_true(len(lars.coef_.nonzero()[0]) == 6)
+
+
+def test_multitarget():
+    """
+    Assure that estimators receiving multidimensional y do the right thing
+    """
+    X = diabetes.data
+    Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
+    n_targets = Y.shape[1]
+
+    for estimator in (linear_model.LassoLars(), linear_model.Lars()):
+        estimator.fit(X, Y)
+        alphas, active, coef, path = (estimator.alphas_, estimator.active_,
+                                      estimator.coef_, estimator.coef_path_)
+        for k in xrange(n_targets):
+            estimator.fit(X, Y[:, k])
+            assert_array_almost_equal(alphas[k, :], estimator.alphas_)
+            assert_array_almost_equal(active[k, :], estimator.active_)
+            assert_array_almost_equal(coef[k, :], estimator.coef_)
+            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
 
 
 def test_lars_cv():
