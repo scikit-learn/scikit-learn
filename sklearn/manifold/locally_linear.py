@@ -141,7 +141,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     random_state: numpy.RandomState or int, optional
         The generator or seed used to determine the starting vector for arpack
         iterations.  Defaults to numpy.random.
-        
+
     """
     if eigen_solver == 'auto':
         if M.shape[0] > 200 and k + k_skip < 10:
