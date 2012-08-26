@@ -102,7 +102,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = get_bin_seeds(X, bandwidth)
         else:
             seeds = X
-    n_points, n_features = X.shape
+    n_samples, n_features = X.shape
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
     center_intensity_dict = {}
     nbrs = NearestNeighbors(radius=bandwidth).fit(X)
@@ -145,7 +145,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
-    labels = np.zeros(n_points, dtype=np.int)
+    labels = np.zeros(n_samples, dtype=np.int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
         labels = idxs.flatten()

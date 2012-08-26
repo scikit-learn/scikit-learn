@@ -239,7 +239,7 @@ class SpectralClustering(BaseEstimator):
 
             np.exp(-gamma * d(X,X) ** 2)
 
-    or a k-nearest neighbors matrix.
+    or a k-nearest neighbors connectivity matrix.
 
     Alternatively, using ``precomputed``, a user-provided affinity
     matrix can be used.

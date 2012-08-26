@@ -22,10 +22,10 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
     Parameters
     ----------
 
-    S: array [n_points, n_points]
+    S: array [n_samples, n_samples]
         Matrix of similarities between points
 
-    preference: array [n_points,] or float, optional
+    preference: array [n_samples,] or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -52,7 +52,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
     cluster_centers_indices: array [n_clusters]
         index of clusters centers
 
-    labels : array [n_points]
+    labels : array [n_samples]
         cluster labels for each point
 
     Notes
@@ -66,7 +66,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
     """
     S = as_float_array(S, copy=copy)
 
-    n_points = S.shape[0]
+    n_samples = S.shape[0]
 
     if S.shape[0] != S.shape[1]:
         raise ValueError("S must be a square array (shape=%r)" % S.shape)
@@ -88,19 +88,19 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
     random_state = np.random.RandomState(0)
 
     # Place preference on the diagonal of S
-    S.flat[::(n_points + 1)] = preference
+    S.flat[::(n_samples + 1)] = preference
 
-    A = np.zeros((n_points, n_points))
-    R = np.zeros((n_points, n_points))  # Initialize messages
+    A = np.zeros((n_samples, n_samples))
+    R = np.zeros((n_samples, n_samples))  # Initialize messages
 
     # Remove degeneracies
     S += (np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) * \
-         random_state.randn(n_points, n_points)
+         random_state.randn(n_samples, n_samples)
 
     # Execute parallel affinity propagation updates
-    e = np.zeros((n_points, convit))
+    e = np.zeros((n_samples, convit))
 
-    ind = np.arange(n_points)
+    ind = np.arange(n_samples)
 
     for it in range(max_iter):
         # Compute responsibilities
@@ -108,7 +108,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         AS = A + S
 
         I = np.argmax(AS, axis=1)
-        Y = AS[np.arange(n_points), I]  # np.max(AS, axis=1)
+        Y = AS[np.arange(n_samples), I]  # np.max(AS, axis=1)
 
         AS[ind, I[ind]] = - np.finfo(np.double).max
 
@@ -122,14 +122,14 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         # Compute availabilities
         Aold = A
         Rp = np.maximum(R, 0)
-        Rp.flat[::n_points + 1] = R.flat[::n_points + 1]
+        Rp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
 
         A = np.sum(Rp, axis=0)[np.newaxis, :] - Rp
 
         dA = np.diag(A)
         A = np.minimum(A, 0)
 
-        A.flat[::n_points + 1] = dA
+        A.flat[::n_samples + 1] = dA
 
         A = (1 - damping) * A + damping * Aold  # Damping
 
@@ -140,7 +140,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
 
         if it >= convit:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convit) + (se == 0)) != n_points
+            unconverged = np.sum((se == convit) + (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
@@ -168,7 +168,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
-        labels = np.empty((n_points, 1))
+        labels = np.empty((n_samples, 1))
         cluster_centers_indices = None
         labels.fill(np.nan)
 
@@ -195,7 +195,7 @@ class AffinityPropagation(BaseEstimator):
     copy : boolean, optional
         Make a copy of input data. True by default.
 
-    preference : array [n_points,] or float, optional
+    preference : array [n_samples,] or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
@@ -259,8 +259,9 @@ class AffinityPropagation(BaseEstimator):
         Parameters
         ----------
 
-        X: array [n_points, n_points]
-            Matrix of similarities between points
+        X: array [n_samples, n_features] or [n_samples, n_samples]
+            Data matrix or, if affinity is ``precomputed``, matrix of
+            similarities / affinities.
         """
 
         if X.shape[0] == X.shape[1] and not self._pairwise:
