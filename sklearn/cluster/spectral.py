@@ -249,15 +249,15 @@ class SpectralClustering(BaseEstimator):
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
-    affinity: string, 'nearest_neighbors', 'gaussian' or 'precomputed'
+    affinity: string, 'nearest_neighbors', 'rbf' or 'precomputed'
 
     gamma: float
-        Scaling factor of Gaussian affinity kernel. Ignored for
+        Scaling factor of Gaussian (rbf) affinity kernel. Ignored for
         ``affinity='nearest_neighbors'``.
 
     n_neighbors: integer
         Number of neighbors to use when constructing the affinity matrix using
-        the nearest neighbors method. Ignored for ``affinity='gaussian'``.
+        the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
     mode: {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
@@ -313,7 +313,7 @@ class SpectralClustering(BaseEstimator):
     """
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
-            gamma=1., affinity='gaussian', n_neighbors=10, k=None,
+            gamma=1., affinity='rbf', n_neighbors=10, k=None,
             precomputed=False):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
@@ -327,7 +327,7 @@ class SpectralClustering(BaseEstimator):
         self.n_neighbors = n_neighbors
 
     def fit(self, X):
-        """Creates an affinity matrix for X using the gaussian kernel,
+        """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.
 
         Parameters
@@ -341,7 +341,7 @@ class SpectralClustering(BaseEstimator):
                     "now constructs an affinity matrix from data. To use "
                     "a custom affinity matrix, set ``affinity=precomputed``.")
 
-        if self.affinity == 'gaussian':
+        if self.affinity == 'rbf':
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
 
         elif self.affinity == 'nearest_neighbors':
@@ -350,7 +350,7 @@ class SpectralClustering(BaseEstimator):
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X
         else:
-            raise ValueError("Invalid 'affinity'. Expected 'gaussian', "
+            raise ValueError("Invalid 'affinity'. Expected 'rbf', "
                 "'nearest_neighbors' or 'precomputed', got '%s'."
                 % self.affinity_matrix)
 
