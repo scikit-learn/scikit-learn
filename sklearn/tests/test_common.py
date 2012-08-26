@@ -14,7 +14,8 @@ from numpy.testing import assert_array_equal
 import sklearn
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
-from sklearn.base import clone, ClassifierMixin, RegressorMixin
+from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
+        TransformerMixin
 from sklearn.utils import shuffle
 from sklearn.preprocessing import Scaler
 #from sklearn.cross_validation import train_test_split
@@ -33,9 +34,11 @@ from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
-        EllipticEnvelop]
+        EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
@@ -81,6 +84,42 @@ def test_estimators_sparse_data():
         # fit
         try:
             clf.fit(X, y)
+        except TypeError, e:
+            if not 'sparse' in repr(e):
+                print ("Estimator %s doesn't seem to fail gracefully on "
+                    "sparse data" % name)
+                traceback.print_exc(file=sys.stdout)
+                raise e
+        except Exception, exc:
+            print ("Estimator %s doesn't seem to fail gracefully on "
+                "sparse data" % name)
+            traceback.print_exc(file=sys.stdout)
+            raise exc
+
+
+def test_transformers_sparse_data():
+    # All estimators should either deal with sparse data, or raise an
+    # intelligible error message
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+    X = sparse.csr_matrix(X)
+    y = (4 * rng.rand(40)).astype(np.int)
+    estimators = all_estimators()
+    estimators = [(name, E) for name, E in estimators
+                        if issubclass(E, TransformerMixin)]
+    for name, Trans in estimators:
+        if Trans in dont_test or Trans in meta_estimators:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            if Trans is Scaler:
+                trans = Trans(with_mean=False)
+            else:
+                trans = Trans()
+        # fit
+        try:
+            trans.fit(X, y)
         except TypeError, e:
             if not 'sparse' in repr(e):
                 print ("Estimator %s doesn't seem to fail gracefully on "

@@ -7,7 +7,7 @@ from collections import Sequence
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
@@ -841,7 +841,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.Scaler(with_std=False).
     """
 
-    def fit(self, K):
+    def fit(self, K, y=None):
         """Fit KernelCenterer
 
         Parameters
@@ -853,12 +853,13 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+        K = array2d(K)
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
-    def transform(self, K, copy=True):
+    def transform(self, K, y=None, copy=True):
         """Center kernel
 
         Parameters
@@ -870,7 +871,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-
+        K = array2d(K)
         if copy:
             K = K.copy()
 
