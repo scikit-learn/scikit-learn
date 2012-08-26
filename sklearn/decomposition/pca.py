@@ -44,7 +44,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
     if rank > len(spectrum):
-        raise ValueError("the tested rank cannot exceed the rank of the dataset")
+        raise ValueError("The tested rank cannot exceed the rank of the"
+                " dataset")
     from scipy.special import gammaln
 
     pu = -rank * np.log(2)
@@ -80,7 +81,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
 
 
 def _infer_dimension_(spectrum, n_samples, n_features):
-    """This method infers the dimension of a dataset of shape (n_samples, n_features)
+    """Infers the dimension of a dataset of shape (n_samples, n_features)
 
     The dataset is described by its spectrum `spectrum`.
     """
@@ -328,7 +329,10 @@ class ProbabilisticPCA(PCA):
         else:
             delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
         self.covariance_ = np.diag(delta)
-        for k in range(self.n_components):
+        n_components = self.n_components
+        if n_components is None:
+            n_components = self.dim
+        for k in range(n_components):
             add_cov = np.outer(self.components_[k], self.components_[k])
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self

@@ -7,6 +7,7 @@ sparse Logistic Regression
 #
 # License: BSD Style.
 import itertools
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
@@ -60,6 +61,11 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
     stability selection with randomized sampling, and random re-weighting of
     the penalty.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self):
+        pass
 
     _center_data = staticmethod(center_data)
 
@@ -123,7 +129,10 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
     # Should we add an intermediate base class?
     def transform(self, X):
         """Transform a new matrix using the selected features"""
-        return safe_asarray(X)[:, self.get_support(indices=issparse(X))]
+        mask = self.get_support(indices=issparse(X))
+        if len(mask) != X.shape[1]:
+            raise ValueError("X has a different shape than during fitting.")
+        return safe_asarray(X)[:, mask]
 
     def inverse_transform(self, X):
         """Transform a new matrix using the selected features"""
