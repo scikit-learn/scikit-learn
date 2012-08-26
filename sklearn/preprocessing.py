@@ -604,13 +604,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
 
-        y = np.asarray(y)
-        y_new = np.zeros(len(y), dtype=int)
-
-        for i, k in enumerate(self.classes_[1:]):
-            y_new[y == k] = i + 1
-
-        return y_new
+        return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
