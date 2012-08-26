@@ -204,9 +204,9 @@ class AffinityPropagation(BaseEstimator):
         If a scalar is passed, the preferences will be set to the median
         of the input similarities times this scalar.
 
-    precomputed : bool, optional
-        Whether a precomputed affinity matrix is used for X, instead
-        of the original data.
+    affinity : string, optional
+        Which affinity to use. At the moment ``precomputed`` and
+        ``neg_sqr_euclidean`` are supported.
 
 
     Attributes
@@ -235,7 +235,7 @@ class AffinityPropagation(BaseEstimator):
     """
 
     def __init__(self, damping=.5, max_iter=200, convit=30, copy=True,
-            preference=None, p=None, precomputed=False):
+            preference=None, p=None, affinity='neq_sqr_euclidean'):
         self.damping = damping
         self.max_iter = max_iter
         self.convit = convit
@@ -246,11 +246,11 @@ class AffinityPropagation(BaseEstimator):
             preference = p
 
         self.preference = preference
-        self.precomputed = precomputed
+        self.affinity = affinity
 
     @property
     def _pairwise(self):
-        return self.precomputed
+        return self.affinity is "precomputed"
 
     def fit(self, X):
         """ Create affinity matrix from negative euclidean distances, then
@@ -263,17 +263,21 @@ class AffinityPropagation(BaseEstimator):
             Matrix of similarities between points
         """
 
-        if X.shape[0] == X.shape[1] and not self.precomputed:
+        if X.shape[0] == X.shape[1] and not self._pairwise:
             warnings.warn("The API of AffinityPropagation has changed."
                 "Now ``fit`` constructs an affinity matrix from the data."
-                "To use a custom affinity matrix, set ``precomputed=True``.")
-        if self.precomputed:
+                "To use a custom affinity matrix, set "
+                "``affinity=precomputed``.")
+        if self.affinity is "precomputed":
             self.affinity_matrix_ = X
-        else:
+        elif self.affinity is "neq_sqr_euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
+        else:
+            raise ValueError("Affinity must be 'precomputed' or "
+                "'neg_sqr_euclidean'. Got %s instead" % str(self.affinity))
 
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
-                self.affinity_matrix_, self.p,
+                self.affinity_matrix_, self.preference,
                 max_iter=self.max_iter, convit=self.convit,
                 damping=self.damping, copy=self.copy)
         return self

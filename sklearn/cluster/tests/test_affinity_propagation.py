@@ -22,16 +22,16 @@ def test_affinity_propagation():
     # Compute similarities
     X_norms = np.sum(X ** 2, axis=1)
     S = - X_norms[:, np.newaxis] - X_norms[np.newaxis, :] + 2 * np.dot(X, X.T)
-    p = 10 * np.median(S)
+    preference = 10
 
     # Compute Affinity Propagation
-    cluster_centers_indices, labels = affinity_propagation(S, p)
+    cluster_centers_indices, labels = affinity_propagation(S, preference)
 
     n_clusters_ = len(cluster_centers_indices)
 
     assert_equal(n_clusters, n_clusters_)
 
-    af = AffinityPropagation(p=p, precomputed=True)
+    af = AffinityPropagation(p=preference, affinity="precomputed")
     labels = af.fit(S).labels_
     cluster_centers_indices = af.cluster_centers_indices_
 
@@ -40,5 +40,5 @@ def test_affinity_propagation():
     assert_equal(n_clusters, n_clusters_)
 
     # Test also with no copy
-    _, labels_no_copy = affinity_propagation(S, p, copy=False)
+    _, labels_no_copy = affinity_propagation(S, preference, copy=False)
     assert_array_equal(labels, labels_no_copy)
