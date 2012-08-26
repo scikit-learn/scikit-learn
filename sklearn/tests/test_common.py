@@ -9,7 +9,7 @@ import traceback
 import numpy as np
 from scipy import sparse
 from nose.tools import assert_raises, assert_equal
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import sklearn
 from sklearn.utils.testing import all_estimators
@@ -31,15 +31,18 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
-from sklearn.feature_selection import RFE, RFECV
+from sklearn.feature_selection import RFE, RFECV, SelectKBest
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder
-from sklearn.linear_model import RidgeClassifier, RidgeClassifierCV
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.kernel_approximation import AdditiveChi2Sampler
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
+        Normalizer
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
-        EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder]
+        EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder,
+        TfidfTransformer]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
@@ -98,6 +101,48 @@ def test_estimators_sparse_data():
                 "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
             raise exc
+
+
+def test_transformers():
+    # test if transformers do something sensible on training set
+    # also test all shapes / shape errors
+    estimators = all_estimators()
+    transformers = [(name, E) for name, E in estimators if issubclass(E,
+        TransformerMixin)]
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    X, y = X[:10], y[:10]
+    n_samples, n_features = X.shape
+    X = Scaler().fit_transform(X)
+    X -= X.min()
+    for name, Trans in transformers:
+        if Trans in dont_test or Trans in meta_estimators:
+            continue
+        # these don't actually fit the data:
+        if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            trans = Trans()
+
+        if hasattr(trans, 'compute_importances'):
+            trans.compute_importances = True
+
+        if Trans is SelectKBest:
+            trans.k = 1
+
+        # fit
+        trans.fit(X, y)
+        X_pred = trans.fit_transform(X, y=y)
+        assert_equal(X_pred.shape[0], n_samples)
+
+        if hasattr(trans, 'transform'):
+            X_pred2 = trans.transform(X)
+            assert_array_almost_equal(X_pred, X_pred2, 2)
+
+            # raises error on malformed input for predict
+            assert_raises(ValueError, trans.transform, X.T)
 
 
 def test_transformers_sparse_data():

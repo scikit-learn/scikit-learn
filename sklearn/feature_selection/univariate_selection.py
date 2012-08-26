@@ -278,7 +278,11 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         Transform a new matrix using the selected features
         """
-        return atleast2d_or_csr(X)[:, self.get_support(indices=issparse(X))]
+        X = atleast2d_or_csr(X)
+        mask = self._get_support_mask()
+        if len(mask) != X.shape[1]:
+            raise ValueError("X has a different shape than during fitting.")
+        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """
