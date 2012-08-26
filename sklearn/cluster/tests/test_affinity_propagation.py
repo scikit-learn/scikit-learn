@@ -31,7 +31,7 @@ def test_affinity_propagation():
 
     assert_equal(n_clusters, n_clusters_)
 
-    af = AffinityPropagation(p=preference, affinity="precomputed")
+    af = AffinityPropagation(preference=preference, affinity="precomputed")
     labels = af.fit(S).labels_
     cluster_centers_indices = af.cluster_centers_indices_
 

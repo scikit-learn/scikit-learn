@@ -204,9 +204,10 @@ class AffinityPropagation(BaseEstimator):
         If a scalar is passed, the preferences will be set to the median
         of the input similarities times this scalar.
 
-    affinity : string, optional
+    affinity : string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
-        ``neg_sqr_euclidean`` are supported.
+        ``euclidean`` are supported. ``euclidean`` uses the
+        negative squared euclidean distance between points.
 
 
     Attributes
@@ -271,11 +272,11 @@ class AffinityPropagation(BaseEstimator):
                 "``affinity=precomputed``.")
         if self.affinity is "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity is "neq_sqr_euclidean":
+        elif self.affinity is "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
-                "'neg_sqr_euclidean'. Got %s instead" % str(self.affinity))
+                "'euclidean'. Got %s instead" % str(self.affinity))
 
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
                 self.affinity_matrix_, self.preference,
