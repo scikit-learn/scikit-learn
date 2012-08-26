@@ -180,15 +180,18 @@ class BaseLibSVM(BaseEstimator):
             self._gamma = self.gamma
 
         kernel = self.kernel
+        self.shape_fit_ = X.shape
         if hasattr(kernel, '__call__'):
+            # you must store a reference to X to compute the kernel in predict
+            # TODO: add keyword copy to copy on demand
+            self.__Xfit = X
+            X = self._compute_kernel(X)
             kernel = 'precomputed'
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
             print '[LibSVM]',
         fit(X, y, sample_weight, solver_type, kernel)
-
-        self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
@@ -198,15 +201,6 @@ class BaseLibSVM(BaseEstimator):
         return self
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
-
-        if hasattr(self.kernel, '__call__'):
-            # you must store a reference to X to compute the kernel in predict
-            # TODO: add keyword copy to copy on demand
-            self.__Xfit = X
-            X = self._compute_kernel(X)
-
-        if hasattr(self.kernel, '__call__') and X.shape[0] != X.shape[1]:
-            raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
 
@@ -225,9 +219,7 @@ class BaseLibSVM(BaseEstimator):
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
-
         kernel_type = self._sparse_kernels.index(kernel)
-
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
@@ -331,8 +323,8 @@ class BaseLibSVM(BaseEstimator):
         if hasattr(self.kernel, '__call__'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
-            X = np.asarray(self.kernel(X, self.__Xfit),
-                           dtype=np.float64, order='C')
+            X = atleast2d_or_csr(self.kernel(X, self.__Xfit),
+                    dtype=np.float64, order='C')
         return X
 
     def decision_function(self, X):
