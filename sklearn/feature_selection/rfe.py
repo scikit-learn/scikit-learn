@@ -307,7 +307,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             ranking_ = rfe.fit(X[train], y[train]).ranking_
 
             # Score each subset of features
-            for k in xrange(1, max(ranking_)):
+            for k in xrange(1, max(ranking_) + 1):
                 mask = np.where(ranking_ <= k)[0]
                 estimator = clone(self.estimator)
                 estimator.fit(X[train][:, mask], y[train])

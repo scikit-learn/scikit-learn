@@ -27,6 +27,7 @@ def test_rfe():
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     X_r = rfe.transform(X)
+    assert_equal(len(rfe.ranking_), X.shape[1])
 
     # sparse model
     clf_sparse = SVC(kernel="linear")
@@ -52,6 +53,9 @@ def test_rfecv():
     # Test using the score function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
     rfecv.fit(X, y)
+    # non-regression test for missing worst feature:
+    assert_equal(len(rfecv.cv_scores_), X.shape[1])
+    assert_equal(len(rfecv.ranking_), X.shape[1])
     X_r = rfecv.transform(X)
 
     # same in sparse
