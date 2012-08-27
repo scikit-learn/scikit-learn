@@ -9,7 +9,7 @@ from collections import defaultdict
 import numpy as np
 
 from ..utils import extmath, check_random_state
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 
 
@@ -199,7 +199,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     return bin_seeds
 
 
-class MeanShift(BaseEstimator):
+class MeanShift(BaseEstimator, ClusterMixin):
     """MeanShift clustering
 
     Parameters

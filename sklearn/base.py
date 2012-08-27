@@ -326,6 +326,50 @@ class RegressorMixin(object):
 
 
 ###############################################################################
+class ClusterMixin(object):
+    """Mixin class for all cluster estimators in scikit-learn"""
+    #def score(self, y=None):
+    #    """Returns the adjusted Rand index between the cluster labels and y.
+    #
+    #    This function only applies the score to the training set.
+    #    The adjusted Rand index measures the agreement between to partitions.
+    #
+    #
+    #    Parameters
+    #    ----------
+    #    X : array-like, shape = [n_samples, n_features], optional
+    #        Training set. Only accepted for compatibility with other
+    #        estimators.
+    #
+    #    y : array-like, shape = [n_samples]
+    #
+    #    Returns
+    #    -------
+    #    z : float
+    #    """
+    #    if y is None:
+    #        raise ValueError("y must be provided.")
+    #    return adjusted_rand_score(y, self.labels_)
+    def fit_predict(self, X, y=None):
+        """Performs clustering on X and returns cluster labels.
+
+        This is a non-optimized default implementation.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            cluster labels
+        """
+        self.fit(X)
+        return self.labels_
+
+
+###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn"""
 

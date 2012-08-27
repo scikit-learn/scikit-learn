@@ -16,12 +16,12 @@ import sklearn
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
-        TransformerMixin
+        TransformerMixin, ClusterMixin
 from sklearn.utils import shuffle
 from sklearn.preprocessing import Scaler
 #from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_iris, load_boston
-from sklearn.metrics import zero_one_score
+from sklearn.metrics import zero_one_score, adjusted_rand_score
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
@@ -40,6 +40,8 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
         Normalizer
+from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
+        SpectralClustering
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
         EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder,
@@ -223,6 +225,48 @@ def test_classifiers_one_label():
             except Exception, exc:
                 print(error_string_predict, Clf, exc)
                 traceback.print_exc(file=sys.stdout)
+
+
+def test_clustering():
+    # test if clustering algorithms do something sensible
+    # also test all shapes / shape errors
+    estimators = all_estimators()
+    clustering = [(name, E) for name, E in estimators if issubclass(E,
+        ClusterMixin)]
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=7)
+    n_samples, n_features = X.shape
+    X = Scaler().fit_transform(X)
+    for name, Alg in clustering:
+        if Alg is WardAgglomeration:
+            # this is clustering on the features
+            # let's not test that here.
+            continue
+        # catch deprecation and neighbors warnings
+        with warnings.catch_warnings(record=True):
+            alg = Alg()
+            if hasattr(alg, "n_clusters"):
+                alg.set_params(n_clusters=3)
+            if hasattr(alg, "random_state"):
+                alg.set_params(random_state=1)
+            if Alg is AffinityPropagation:
+                alg.set_params(preference=-100)
+            # fit
+            alg.fit(X)
+
+        assert_equal(alg.labels_.shape, (n_samples,))
+        pred = alg.labels_
+        assert_greater(adjusted_rand_score(pred, y), 0.4)
+        # fit another time with ``fit_predict`` and compare results
+        if Alg is SpectralClustering:
+            # there is no way to make Spectral clustering deterministic :(
+            continue
+        if hasattr(alg, "random_state"):
+            alg.set_params(random_state=1)
+        with warnings.catch_warnings(record=True):
+            pred2 = alg.fit_predict(X)
+        assert_array_equal(pred, pred2)
 
 
 def test_classifiers_train():
