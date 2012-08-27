@@ -130,6 +130,8 @@ def test_transformers():
             trans.compute_importances = True
 
         if Trans is SelectKBest:
+            # SelectKBest has a default of k=10
+            # which is more feature than we have.
             trans.k = 1
 
         # fit
