@@ -112,38 +112,38 @@ def test_stratified_shuffle_split():
     # Check that error is raised if there is a class with only one sample
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.2)
 
+    # Check that error is raised if the test set size is smaller than n_classes
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 2)
+    # Check that error is raised if the train set size is smaller than n_classes
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 3, 2)
+
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 8, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.6, 8)
 
-    # Check if returns better balanced classes than ShuffleSplit
-    sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
-    ss = cval.ShuffleSplit(y.size, 6, 0.33, random_state=0)
-
-    train_std = []
-    test_std = []
-
-    for train, test in sss:
-        train_std.append(np.std(np.bincount(y[train])))
-        test_std.append(np.std(np.bincount(y[test])))
-
-    for i, [train, test] in enumerate(ss):
-        assert_true(train_std[i] <= np.std(np.bincount(y[train])))
-        assert_true(test_std[i] <= np.std(np.bincount(y[test])))
-
     ys = [
         np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
         np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
         np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
         np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+        np.array([-1] * 800 + [1] * 50)
         ]
 
     for y in ys:
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
+            # Checks if folds keep classes proportions
+            p_train = np.bincount(
+                np.unique(y[train], return_inverse=True)[1]
+                ) / float(len(y[train]))
+            p_test = np.bincount(
+                np.unique(y[test], return_inverse=True)[1]
+                ) / float(len(y[test]))
+            assert_array_almost_equal(p_train, p_test, 1)
+
 
 def test_cross_val_score():
     clf = MockClassifier()
