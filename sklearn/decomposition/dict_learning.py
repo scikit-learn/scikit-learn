@@ -56,8 +56,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     reg_param : int | float
         The regularization parameter. It corresponds to alpha when
-        algorithm is 'lasso_lars' or 'lasso_cd' or 'threshold'
-        else it corresponds to n_nonzero_coefs.
+        algorithm is 'lasso_lars', 'lasso_cd' or 'threshold'.
+        Otherwise it corresponds to n_nonzero_coefs.
 
     init: array of shape (n_samples, n_atoms)
         Initialization value of the sparse code. Only used if
