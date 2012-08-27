@@ -693,7 +693,7 @@ Isotonic regression
 
 The :class:`Isotonic Regression` solves the following problem:
 
-  minimize :math:`\sum w_i (y_i - x_i) ** 2`
+  minimize :math:`\sum w_i (y_i - x_i)^2`
 
   subject to :math:`x_min = x_1 <= x_2 ... <= x_n = x_max`
 
@@ -701,5 +701,6 @@ where each :math:`w_i` is strictly positive and each :math:`y_i` is an
 arbitrary real number. It yields the vector which is composed of monotonic
 elements the closest in term of least square to the data.
 
-.. figure:: ../auto_examples/linear_model/images/plot_isotonic_regression.png
+.. figure:: ../auto_examples/linear_model/images/plot_isotonic_regression_1.png
+   :target: ../auto_examples/linear_model/images/plot_isotonic_regression.html
    :align: center

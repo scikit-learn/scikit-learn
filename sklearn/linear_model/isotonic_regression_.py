@@ -96,9 +96,17 @@ class IsotonicRegression(BaseEstimator):
     where each w_i is strictly positive and each y_i is an arbitrary
     real number.
 
+    Parameters
+    ----------
+    x_min: optional, default: None
+        if not None, set the lowest value of the fit to x_min
+
+    x_max: optional, default: None
+        if not None, set the highest value of the fit to x_max
+
     Attributes
     ----------
-    `X_`: array
+    `X_`: ndarray (n, )
         Estimated fit
 
     Notes
@@ -109,6 +117,10 @@ class IsotonicRegression(BaseEstimator):
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
 
+    def ___init__(self, x_min=None, x_max=None):
+        self.x_min = x_min
+        self.x_max = x_max
+
     def _check_fit_data(self, X, w=None):
         if w is not None:
             if len(X) != len(w):
@@ -116,10 +128,32 @@ class IsotonicRegression(BaseEstimator):
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
 
-    def fit(self, X, w=None, x_min=None, x_max=None):
+    def fit(self, X, w=None):
         """
+        Fit the model using X as training data
+
+        Parameters
+        ----------
+        X: array-like, shape=(n_samples,)
+            training data
+
+        w: array-like, shape=(n_samples,)
+            weights
+
+        Returns
+        -------
+        self; object
+            returns an instance of self
         """
         X = as_float_array(X)
         self._check_fit_data(X, w)
-        self.X_ = isotonic_regression(X, w, x_min, x_max)
+        self.X_ = isotonic_regression(X, w, self.x_min, self.x_max)
         return self
+
+    def transform(self, Y):
+        """
+        """
+
+    def fit_transform(self, X, w=None):
+        """
+        """
