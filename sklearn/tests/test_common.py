@@ -143,7 +143,7 @@ def test_transformers():
             X_pred2 = trans.transform(X)
             assert_array_almost_equal(X_pred, X_pred2, 2)
 
-            # raises error on malformed input for predict
+            # raises error on malformed input for transform
             assert_raises(ValueError, trans.transform, X.T)
 
 
