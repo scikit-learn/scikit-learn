@@ -33,15 +33,18 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+from itertools import groupby, islice
+from opterator import itemgetter
 from scipy import stats
 
 from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..base import clone
 from ..utils import check_random_state, array2d, check_arrays
 from ..cross_validation import KFold
+from ..grid_search import IterGrid
+from ..externals.joblib import Parallel, delayed
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -1046,13 +1049,32 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             yield y.ravel()
 
 
+def fit_grid_point(grid_idx, cv_idx, X, y, estimator_class, params,
+                   train, test):
+    """Fit a single grid point and return staged scores. """
+    X_train, y_train = X[train], y[train]
+    X_test, y_test = X[test], y[test]
+
+    estimator = estimator_class(**params)
+    estimator.fit(X_train, y_train)
+
+    test_deviance = np.fromiter(
+        (estimator.loss_(y_test, score)
+         for score in estimator.staged_decision_function(X_test)),
+        dtype=np.float64, count=estimator.n_estimators)
+
+    return (grid_idx, cv_idx, test_deviance)
+
+
 class BaseGradientBoostingCV(BaseEstimator):
     """Abstract base class for GB with built-in cross-validation.
 
     This class implements the Decorator design pattern; it wraps
-    a concrete ``_model_class`` object and delegates attribute
-    access to the object. Soley the arguments ``cv``, ``max_estimators``,
-    and ``_model`` are stored in the decorator object.
+    a concrete ``_estimator_class`` object and delegates attribute
+    access to the object.
+
+    XXX Soley the arguments ``cv``, ``max_estimators``,
+    and ``_estimator`` are stored in the decorator object.
     """
     __metaclass__ = ABCMeta
 
@@ -1064,7 +1086,7 @@ class BaseGradientBoostingCV(BaseEstimator):
                                   kwargs.pop('max_estimators', 1000))
 
         kwargs['n_estimators'] = self.max_estimators
-        BaseEstimator.__setattr__(self, '_model', self._model_class(**kwargs))
+        BaseEstimator.__setattr__(self, '_params', kwargs)
 
     def fit(self, X, y):
         """Pick best ``n_estimators`` based on cross-validation ``cv``.
@@ -1083,28 +1105,57 @@ class BaseGradientBoostingCV(BaseEstimator):
         else:
             cv = self.cv
 
-        cv_score = np.zeros((cv.k, self.max_estimators),
-                               dtype=np.float64)
-        for k, (train, test) in enumerate(cv):
-            model = clone(self._model)
-            model.fit(X[train], y[train])
-            for i, score in enumerate(model.staged_decision_function(X[test])):
-                cv_score[k, i] = model.loss_(y[test], score)
+        params_grid = IterGrid(self._params)
 
-        mean_score = cv_score.mean(axis=0)
-        best_estimators = mean_score.argmin() + 1
+        tasks = ((grid_idx, cv_idx, X, y, self._estimator_class,
+                  params, train, test)
+                 for grid_idx, params in enumerate(params_grid)
+                 for cv_idx, (train, test) in enumerate(cv))
 
-        self._model.set_params(n_estimators=best_estimators)
-        self.cv_score_ = cv_score
-        BaseEstimator.__setattr__(self, 'cv_score_', cv_score)
+        grid = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                        pre_dispatch="2*n_jobs")(
+            delayed(fit_grid_point)(tasks))
+
+        out = []
+
+        for grid_idx, grid_points in groupby(grid, itemgetter(0)):
+            grid_points = list(grid_points)
+            assert len(grid_points) == cv.k
+
+            A = np.row_stack([fold[2] for fold in grid_points])
+            scores = A.mean(axis=0)
+            best_iter = np.argmin(scores)
+            best_score = scores[best_iter]
+
+            out.append((best_score, grid_idx))
+
+        out = sorted(out)
+        best_score, best_grid_idx = out[0]
+
+        # get best params setting
+        best_params = next(islice(params_grid, best_grid_idx,
+                                  best_grid_idx + 1))
+
+        print("best_score: %.4f; params: %s" % (best_score, best_params))
+
+        self._model = self._model_class(**best_params)
         self._model.fit(X, y)
+
+        #BaseEstimator.__setattr__(self, 'cv_score_', cv_score)
         return self
 
     def __getattr__(self, name):
-        return getattr(self._model, name)
+        if self._model:
+            return getattr(self._model, name)
+        else:
+            raise AttributeError("type object '' has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
-        setattr(self._model, name, value)
+        if self._model:
+            setattr(self._model, name, value)
+        else:
+            BaseEstimator.__setattr__(self, name, value)
 
 
 class GradientBoostingClassifierCV(BaseGradientBoostingCV):
@@ -1181,7 +1232,7 @@ class GradientBoostingClassifierCV(BaseGradientBoostingCV):
     GradientBoostingClassifier
     """
 
-    _model_class = GradientBoostingClassifier
+    _estimator_class = GradientBoostingClassifier
 
     def __init__(self, loss='deviance', learn_rate=0.1, max_estimators=1000,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
@@ -1275,7 +1326,7 @@ class GradientBoostingRegressorCV(BaseGradientBoostingCV):
     GradientBoostingRegressor
     """
 
-    _model_class = GradientBoostingRegressor
+    _estimator_class = GradientBoostingRegressor
 
     def __init__(self, loss='ls', learn_rate=0.1, max_estimators=1000,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
