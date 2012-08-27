@@ -27,10 +27,9 @@ increase as we add more samples. The penalization term, however, will not
 increase.
 
 When using, for example, :ref:`cross validation <cross_validation>`, to
-set the amount of regularization with `C`, there will be a different
-amount of samples between every problem that we are using for model
-selection, as well as for the final problem that we want to use for
-training.
+set the amount of regularization with `C`, there will be a different a
+different amount of samples between the main problem and the smaller problems
+withing the folds of the cross validation.
 
 Since our loss function is dependant on the amount of samples, the latter
 will influence the selected value of `C`.
@@ -63,8 +62,9 @@ The two figures below plot the values of `C` on the `x-axis` and the
 corresponding cross-validation scores on the `y-axis`, for several different
 fractions of a generated data-set.
 
-In the `L1` penalty case, the results are best when scaling our `C` with
-the number of samples, `n`, which can be seen in the first figure.
+In the `L1` penalty case, the cross-validation-error correlates best with
+the test-error, when scaling our `C` with the number of samples, `n`,
+which can be seen in the first figure.
 
 For the `L2` penalty case, the best result comes from the case where `C`
 is not scaled.
