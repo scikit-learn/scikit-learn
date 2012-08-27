@@ -202,6 +202,9 @@ class AffinityPropagation(BaseEstimator):
         ``euclidean`` are supported. ``euclidean`` uses the
         negative squared euclidean distance between points.
 
+    verbose: boolean, optional
+        Whether to be verbose.
+
 
     Attributes
     ----------
@@ -229,11 +232,12 @@ class AffinityPropagation(BaseEstimator):
     """
 
     def __init__(self, damping=.5, max_iter=200, convit=30, copy=True,
-            preference=None, p=None, affinity='euclidean'):
+            preference=None, p=None, affinity='euclidean', verbose=False):
         self.damping = damping
         self.max_iter = max_iter
         self.convit = convit
         self.copy = copy
+        self.verbose = verbose
         if not p is None:
             warnings.warn("p is deprecated and will be removed in version 0.14"
                     ". Use ``preference`` instead.", DeprecationWarning)
@@ -274,5 +278,5 @@ class AffinityPropagation(BaseEstimator):
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
                 self.affinity_matrix_, self.preference,
                 max_iter=self.max_iter, convit=self.convit,
-                damping=self.damping, copy=self.copy)
+                damping=self.damping, copy=self.copy, verbose=self.verbose)
         return self
