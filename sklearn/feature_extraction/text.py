@@ -10,9 +10,10 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
+from collections import Mapping
+from operator import itemgetter
 import re
 import unicodedata
-from operator import itemgetter
 import warnings
 
 import numpy as np
@@ -115,8 +116,10 @@ class CountVectorizer(BaseEstimator):
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer: string, {'word', 'char'} or callable
+    analyzer: string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -129,13 +132,10 @@ class CountVectorizer(BaseEstimator):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
-    min_n: integer
-        The lower boundary of the range of n-values for different n-grams to be
-        extracted.
-
-    max_n: integer
-        The upper boundary of the range of n-values for different n-grams to be
-        extracted. All values of n such that min_n <= n <= max_n will be used.
+    ngram_range: tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -148,6 +148,9 @@ class CountVectorizer(BaseEstimator):
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
+
+    lowercase: boolean, default True
+        Convert all characters to lowercase befor tokenizing.
 
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
@@ -167,6 +170,11 @@ class CountVectorizer(BaseEstimator):
 
         This parameter is ignored if vocabulary is not None.
 
+    vocabulary: Mapping or iterable, optional
+        Either a Mapping (e.g., a dict) where keys are terms and values are
+        indices in the feature matrix, or an iterable over terms. If not
+        given, a vocabulary is determined from the input documents.
+
     binary: boolean, False by default.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
@@ -182,7 +190,8 @@ class CountVectorizer(BaseEstimator):
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, analyzer='word',
+                 ngram_range=(1, 1),
+                 min_n=None, max_n=None, analyzer='word',
                  max_df=1.0, max_features=None,
                  vocabulary=None, binary=False, dtype=long):
         self.input = input
@@ -193,15 +202,22 @@ class CountVectorizer(BaseEstimator):
         self.tokenizer = tokenizer
         self.analyzer = analyzer
         self.lowercase = lowercase
-        self.min_n = min_n
-        self.max_n = max_n
         self.token_pattern = token_pattern
         self.stop_words = stop_words
         self.max_df = max_df
         self.max_features = max_features
+        if not (max_n is None) or not (min_n is None):
+            warnings.warn('Parameters max_n and min_n are deprecated. Use '
+                'ngram_range instead.')
+            if min_n is None:
+                min_n = 1
+            if max_n is None:
+                max_n = min_n
+            ngram_range = (min_n, max_n)
+        self.ngram_range = ngram_range
         if vocabulary is not None:
             self.fixed_vocabulary = True
-            if not hasattr(vocabulary, 'get'):
+            if not isinstance(vocabulary, Mapping):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
             self.vocabulary_ = vocabulary
         else:
@@ -231,12 +247,13 @@ class CountVectorizer(BaseEstimator):
             tokens = [w for w in tokens if w not in stop_words]
 
         # handle token n-grams
-        if self.min_n != 1 or self.max_n != 1:
+        min_n, max_n = self.ngram_range
+        if max_n != 1:
             original_tokens = tokens
             tokens = []
             n_original_tokens = len(original_tokens)
-            for n in xrange(self.min_n,
-                            min(self.max_n + 1, n_original_tokens + 1)):
+            for n in xrange(min_n,
+                            min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
                     tokens.append(u" ".join(original_tokens[i: i + n]))
 
@@ -249,9 +266,33 @@ class CountVectorizer(BaseEstimator):
 
         text_len = len(text_document)
         ngrams = []
-        for n in xrange(self.min_n, min(self.max_n + 1, text_len + 1)):
+        min_n, max_n = self.ngram_range
+        for n in xrange(min_n, min(max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
                 ngrams.append(text_document[i: i + n])
+        return ngrams
+
+    def _char_wb_ngrams(self, text_document):
+        """Whitespace sensitive char-n-gram tokenization.
+
+        Tokenize text_document into a sequence of character n-grams
+        excluding any whitespace (operating only inside word boundaries)"""
+        # normalize white spaces
+        text_document = self._white_spaces.sub(u" ", text_document)
+
+        min_n, max_n = self.ngram_range
+        ngrams = []
+        for w in text_document.split():
+            w = u' ' + w + u' '
+            w_len = len(w)
+            for n in xrange(min_n, max_n + 1):
+                offset = 0
+                ngrams.append(w[offset:offset + n])
+                while offset + n < w_len:
+                    offset += 1
+                    ngrams.append(w[offset:offset + n])
+                if offset == 0:   # count a short word (w_len < n) only once
+                    break
         return ngrams
 
     def build_preprocessor(self):
@@ -304,6 +345,10 @@ class CountVectorizer(BaseEstimator):
 
         if self.analyzer == 'char':
             return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
+
+        elif self.analyzer == 'char_wb':
+            return lambda doc: self._char_wb_ngrams(
+                preprocess(self.decode(doc)))
 
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
@@ -628,6 +673,116 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
 
+    Parameters
+    ----------
+    input: string {'filename', 'file', 'content'}
+        If filename, the sequence passed as an argument to fit is
+        expected to be a list of filenames that need reading to fetch
+        the raw content to analyze.
+
+        If 'file', the sequence items must have 'read' method (file-like
+        object) it is called to fetch the bytes in memory.
+
+        Otherwise the input is expected to be the sequence strings or
+        bytes items are expected to be analyzed directly.
+
+    charset: string, 'utf-8' by default.
+        If bytes or files are given to analyze, this charset is used to
+        decode.
+
+    charset_error: {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
+
+    strip_accents: {'ascii', 'unicode', None}
+        Remove accents during the preprocessing step.
+        'ascii' is a fast method that only works on characters that have
+        an direct ASCII mapping.
+        'unicode' is a slightly slower method that works on any characters.
+        None (default) does nothing.
+
+    analyzer: string, {'word', 'char'} or callable
+        Whether the feature should be made of word or character n-grams.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
+
+    preprocessor: callable or None (default)
+        Override the preprocessing (string transformation) stage while
+        preserving the tokenizing and n-grams generation steps.
+
+    tokenizer: callable or None (default)
+        Override the string tokenization step while preserving the
+        preprocessing and n-grams generation steps.
+
+
+    ngram_range: tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
+
+    stop_words: string {'english'}, list, or None (default)
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned is currently the only
+        supported string value.
+
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+
+        If None, no stop words will be used. max_df can be set to a value
+        in the range [0.7, 1.0) to automatically detect and filter stop
+        words based on intra corpus document frequency of terms.
+
+    lowercase: boolean, default True
+        Convert all characters to lowercase befor tokenizing.
+
+    token_pattern: string
+        Regular expression denoting what constitutes a "token", only used
+        if `tokenize == 'word'`. The default regexp select tokens of 2
+        or more letters characters (punctuation is completely ignored
+        and always treated as a token separator).
+
+    max_df : float in range [0.0, 1.0], optional, 1.0 by default
+        When building the vocabulary ignore terms that have a term frequency
+        strictly higher than the given threshold (corpus specific stop words).
+
+        This parameter is ignored if vocabulary is not None.
+
+    max_features : optional, None by default
+        If not None, build a vocabulary that only consider the top
+        max_features ordered by term frequency across the corpus.
+
+        This parameter is ignored if vocabulary is not None.
+
+    vocabulary: Mapping or iterable, optional
+        Either a Mapping (e.g., a dict) where keys are terms and values are
+        indices in the feature matrix, or an iterable over terms. If not
+        given, a vocabulary is determined from the input documents.
+
+    binary: boolean, False by default.
+        If True, all non zero counts are set to 1. This is useful for discrete
+        probabilistic models that model binary events rather than integer
+        counts.
+
+    dtype: type, optional
+        Type of the matrix returned by fit_transform() or transform().
+
+    norm : 'l1', 'l2' or None, optional
+        Norm used to normalize term vectors. None for no normalization.
+
+    use_idf : boolean, optional
+        Enable inverse-document-frequency reweighting.
+
+    smooth_idf : boolean, optional
+        Smooth idf weights by adding one to document frequencies, as if an
+        extra document was seen containing every term in the collection
+        exactly once. Prevents zero divisions.
+
+    sublinear_tf : boolean, optional
+        Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
     See also
     --------
     CountVectorizer
@@ -641,10 +796,10 @@ class TfidfVectorizer(CountVectorizer):
     """
 
     def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0, max_features=None,
+                 charset_error='strict', strip_accents=None, lowercase=True,
+                 preprocessor=None, tokenizer=None, analyzer='word',
+                 stop_words=None, token_pattern=ur"\b\w\w+\b", min_n=None,
+                 max_n=None, ngram_range=(1, 1), max_df=1.0, max_features=None,
                  vocabulary=None, binary=False, dtype=long, norm='l2',
                  use_idf=True, smooth_idf=True, sublinear_tf=False):
 
@@ -653,8 +808,9 @@ class TfidfVectorizer(CountVectorizer):
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
-            max_n=max_n, max_df=max_df, max_features=max_features,
-            vocabulary=vocabulary, binary=False, dtype=dtype)
+            max_n=max_n, ngram_range=ngram_range, max_df=max_df,
+            max_features=max_features, vocabulary=vocabulary, binary=False,
+            dtype=dtype)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
@@ -736,15 +892,15 @@ class TfidfVectorizer(CountVectorizer):
 
 
 class Vectorizer(TfidfVectorizer):
-    """Vectorizer is eprecated in 0.11, use TfidfVectorizer instead"""
+    """Vectorizer is deprecated in 0.11, use TfidfVectorizer instead"""
 
     def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 analyzer='word', stop_words=None, token_pattern=ur"\b\w\w+\b",
-                 min_n=1, max_n=1, max_df=1.0, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, norm='l2',
-                 use_idf=True, smooth_idf=True, sublinear_tf=False):
+                charset_error='strict', strip_accents=None, lowercase=True,
+                preprocessor=None, tokenizer=None, analyzer='word',
+                stop_words=None, token_pattern=ur"\b\w\w+\b", min_n=None,
+                max_n=None, ngram_range=(1, 1), max_df=1.0, max_features=None,
+                vocabulary=None, binary=False, dtype=long, norm='l2',
+                use_idf=True, smooth_idf=True, sublinear_tf=False):
         warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
                      " in 0.13. Please use TfidfVectorizer instead.",
                       category=DeprecationWarning)

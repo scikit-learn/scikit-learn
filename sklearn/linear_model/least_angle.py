@@ -745,7 +745,7 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
-        X = np.asarray(X)
+        X = array2d(X)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)

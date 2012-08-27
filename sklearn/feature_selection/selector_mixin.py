@@ -4,7 +4,7 @@
 import numpy as np
 
 from ..base import TransformerMixin
-from ..utils import safe_mask
+from ..utils import safe_mask, atleast2d_or_csr
 
 
 class SelectorMixin(TransformerMixin):
@@ -36,6 +36,7 @@ class SelectorMixin(TransformerMixin):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        X = atleast2d_or_csr(X)
         # Retrieve importance vector
         if hasattr(self, "feature_importances_"):
             importances = self.feature_importances_

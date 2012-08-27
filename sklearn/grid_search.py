@@ -107,7 +107,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             raise ValueError(
                 "Cannot use a custom kernel function. "
                 "Precompute the kernel matrix instead.")
-        if getattr(base_clf, 'kernel', '') == 'precomputed':
+        if getattr(clf, "_pairwise", False):
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")
@@ -367,6 +367,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         """
         self._set_params(**params)
+        return self._fit(X, y)
+
+    def _fit(self, X, y):
         estimator = self.estimator
         cv = self.cv
 

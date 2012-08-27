@@ -146,5 +146,5 @@ def all_estimators():
 
     estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
     estimators = [c for c in estimators if not is_abstract(c[1])]
-    return estimators
-
+    # We sort in order to have reproducible test failures
+    return sorted(estimators)

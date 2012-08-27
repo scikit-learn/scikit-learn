@@ -186,9 +186,10 @@ reasonable (please see  the :ref:`reference documentation
   >>> vectorizer
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
-          lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
-          preprocessor=None, stop_words=None, strip_accents=None,
-          token_pattern=u'\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+          lowercase=True, max_df=1.0, max_features=None, max_n=None,
+          min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
+          strip_accents=None, token_pattern=u'\\b\\w\\w+\\b', tokenizer=None,
+          vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -244,7 +245,7 @@ we lose the information that the last document is an interogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
-  >>> bigram_vectorizer = CountVectorizer(min_n=1, max_n=2,
+  >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
   ...                                     token_pattern=ur'\b\w+\b')
   >>> analyze = bigram_vectorizer.build_analyzer()
   >>> analyze('Bi-grams are cool!')
@@ -388,8 +389,66 @@ using :ref:`NMF`:
 Limitations of the Bag of Words representation
 ----------------------------------------------
 
+A collection of unigrams (what bag of words is) cannot capture phrases
+and multi-word expressions, effectively disregarding any word order
+dependence. Additionally, bag of words model doesn't account for potential
+misspellings or word derivations.
+
+N-grams to the rescue! Instead of building a simple collection of
+unigrams (n=1), one might prefer a collection of bigrams (n=2), where
+occurences of pairs of consecutive words are counted.
+
+One might alternatively consider a collection of character n-grams, a
+representation resiliant against misspellings and derivations.
+
+For example, let's say we're dealing with a corpus of two documents:
+``['words', 'wprds']``. The second document contains a misspelling
+of the word 'words'.
+A simple bag of words representation would consider these two as
+very distinct documents, differing in both of the two possible features.
+A character 2-gram representation, however, would find the documents
+matching in 4 out of 8 features, which may help the preferred classifier
+decide better::
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
+  >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
+  >>> ngram_vectorizer.get_feature_names()
+  [u' w', u'ds', u'or', u'pr', u'rd', u's ', u'wo', u'wp']
+  >>> counts.toarray().astype(int)
+  array([[1, 1, 1, 0, 1, 1, 1, 0],
+         [1, 1, 0, 1, 1, 1, 0, 1]])
+
+In above example, ``'char_wb`` analyzer is used, which creates n-grams
+only from characters inside word boundaries (padded with space on each
+side). The ``'char'`` analyzer, alternatively, creates n-grams that
+span across words::
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
+  >>> ngram_vectorizer.fit_transform(['jumpy fox'])
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
+  <1x4 sparse matrix of type '<type 'numpy.int64'>'
+     with 4 stored elements in COOrdinate format>
+  >>> ngram_vectorizer.get_feature_names()
+  [u' fox ', u' jump', u'jumpy', u'umpy ']
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
+  >>> ngram_vectorizer.fit_transform(['jumpy fox'])
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
+  <1x5 sparse matrix of type '<type 'numpy.int64'>'
+      with 5 stored elements in COOrdinate format>
+  >>> ngram_vectorizer.get_feature_names()
+  [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
+
+The word boundaries-aware variant ``char_wb`` is especially interesting
+for languages that use whitespaces for word separation as it generates
+significantly less noisy features than the raw ``char`` variant in
+that case. For such languages it can increase both the predictive
+accuracy and convergence speed of classifiers trained using such
+features while retaining the robustness w.r.t. misspellings and
+word derivations.
+
 While some local positioning information can be preserved by extracting
-n-grams instead of individual words, Bag of Words and Bag of n-grams
+n-grams instead of individual words, bag of words and bag of n-grams
 destroy most of the inner structure of the document and hence most of
 the meaning carried by that internal structure.
 

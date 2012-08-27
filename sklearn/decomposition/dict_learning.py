@@ -967,7 +967,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the object itself
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
         if self.n_atoms is None:
             n_atoms = X.shape[1]
         else:
@@ -1119,7 +1119,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
         if self.n_atoms is None:
             n_atoms = X.shape[1]
         else:

@@ -127,7 +127,10 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         out_file = open(out_file, "w")
 
     out_file.write("digraph Tree {\n")
-    recurse(decision_tree.tree_, 0)
+    if isinstance(decision_tree, _tree.Tree):
+        recurse(decision_tree, 0)
+    else:
+        recurse(decision_tree.tree_, 0)
     out_file.write("}")
 
     return out_file
