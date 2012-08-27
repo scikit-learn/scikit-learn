@@ -432,6 +432,22 @@ From text
    hmm.MultinomialHMM
    hmm.GMMHMM
 
+:mod:`sklearn.kalman`: Kalman Filters
+========================================
+
+.. automodule:: sklearn.kalman
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kalman` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kalman.KalmanFilter
 
 .. _kernel_approximation_ref:
 

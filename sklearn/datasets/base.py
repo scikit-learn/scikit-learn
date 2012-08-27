@@ -20,6 +20,8 @@ from os import listdir
 from os import makedirs
 
 import numpy as np
+from numpy import ma
+from scipy import io
 
 from ..utils import check_random_state
 
@@ -503,3 +505,76 @@ def load_sample_image(image_name):
     if index is None:
         raise AttributeError("Cannot find sample image: %s" % image_name)
     return images.images[index]
+
+
+def load_kalman_data():
+    """Load and return synthetic robot state data (state estimation)
+
+    ==============     ==============
+    Samples total                 500
+    Dimensionality                  2
+    Features           real, positive
+    Targets                       501
+    ==============     ==============
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the observed state of the robot, 'target', the true state of
+        the robot, 'DESCR', a complete description of the dataset, and
+        'transition_matrix', 'transition_offsets', 'observation_matrix',
+        'observation_offset', 'transition_covariance',
+        'observation_covariance', 'initial_state_mean', and
+        'initial_state_covariance', the parameters of the model
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_kalman_data
+    >>> kalman_data = load_kalman_data()
+    >>> kalman_data.data.shape
+    (501, 2)
+    """
+    def pad_and_mask(X):
+        """Pad X's first index with zeros and mask it"""
+        zeros = np.zeros(X.shape[1:])[np.newaxis]
+        X = np.vstack([zeros, X])
+        mask = np.zeros(X.shape)
+        mask[0] = True
+        return ma.array(X, mask=mask)
+
+    module_path = dirname(__file__)
+    data = io.loadmat(join(module_path, 'data', 'kf_vars.mat'))
+    descr = open(join(module_path, 'descr', 'kf.rst')).read()
+    Z = pad_and_mask(data['y'].T)
+    X = data['x'].T
+    A = data['A']
+    b = data['b'].T
+    C = data['C']
+    d = data['d'][:, 0]
+    Q_0 = 10.0 * np.eye(5)
+    R_0 = 10.0 * np.eye(2)
+    Q = data['Q']
+    R = data['R']
+    x_0 = data['x0'][:, 0]
+    V_0 = data['P_0']
+    X_filt = data['xfilt'].T
+    V_filt = data['Vfilt'][0]
+    ll = data['ll'][0]
+    X_smooth = data['xsmooth'].T
+    V_smooth = data['Vsmooth'][0]
+    T = Z.shape[0]
+
+    # V_filt is actually an object array where each object is a 2D array.
+    # Convert it to a proper, 3D array.  Likewise for V_smooth.
+    V_filt = np.asarray([V_filt[t] for t in range(V_filt.shape[0])])
+    V_smooth = np.asarray([V_smooth[t] for t in range(V_smooth.shape[0])])
+
+    return Bunch(T=T, data=Z, target=X, transition_matrix=A,
+        transition_offsets=b, observation_matrix=C, observation_offset=d,
+        initial_transition_covariance=Q_0, initial_observation_covariance=R_0,
+        transition_covariance=Q, observation_covariance=R,
+        initial_state_mean=x_0, initial_state_covariance=V_0,
+        filtered_state_means=X_filt, filtered_state_covariances=V_filt,
+        loglikelihoods=ll, smoothed_state_means=X_smooth,
+        smoothed_state_covariances=V_smooth, DESCR=descr)

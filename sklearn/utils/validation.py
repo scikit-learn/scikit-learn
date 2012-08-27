@@ -61,6 +61,11 @@ def as_float_array(X, copy=True):
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
 
 
+def array1d(X, dtype=None, order=None):
+    """Returns at least 1-d array with data from X"""
+    return np.asarray(np.atleast_1d(X), dtype=dtype, order=order)
+
+
 def array2d(X, dtype=None, order=None):
     """Returns at least 2-d array with data from X"""
     if sparse.issparse(X):
