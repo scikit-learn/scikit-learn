@@ -151,8 +151,6 @@ def test_classifiers_one_label():
     for name, Clf in classifiers:
         if Clf in dont_test or Clf in meta_estimators:
             continue
-        if Clf in [MultinomialNB]:
-            continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             clf = Clf()
