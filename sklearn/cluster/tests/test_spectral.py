@@ -130,6 +130,6 @@ def test_isotropic():
     # test that no cluster with a single point is created
     X, y = make_blobs(n_samples=40, random_state=1, centers=[[1, 1]],
             cluster_std=0.1)
-    sp = SpectralClustering(n_clusters=2)
+    sp = SpectralClustering(n_clusters=2, gamma=0.1)
     labels = sp.fit(X).labels_
     assert_greater(np.min(np.bincount(labels)), 10)
