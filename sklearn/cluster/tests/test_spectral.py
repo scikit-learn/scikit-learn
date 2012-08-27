@@ -123,4 +123,4 @@ def test_affinities():
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
-    assert_greater(adjusted_rand_score(y, labels), 0.8)
+    assert_equal(adjusted_rand_score(y, labels), 1)

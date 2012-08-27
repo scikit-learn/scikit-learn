@@ -61,6 +61,9 @@ Changelog
    - New word boundaries-aware character n-gram analyzer for the
      :ref:`text_feature_extraction` module by `@kernc`_.
 
+   - Fixed bug in spectral clustering that led to single point clusters
+     by `Andreas Müller`_.
+
 API changes summary
 -------------------
 
