@@ -66,7 +66,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     random_state = check_random_state(random_state)
 
     if similarities.shape[0] != similarities.shape[1]:
-        raise ValueError("similarities must be a square array (shape=%d)" % \
+        raise ValueError("similarities must be a square array (shape=%d)" %
                             n_samples)
     res = 100 * np.finfo(np.float).resolution
     if np.any((similarities - similarities.T) > res):
@@ -82,7 +82,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         # overrides the parameter p
         n_components = init.shape[1]
         if n_samples != init.shape[0]:
-            raise ValueError("init matrix should be of shape (%d, %d)" % \
+            raise ValueError("init matrix should be of shape (%d, %d)" %
                                  (n_samples, n_components))
         X = init
 
@@ -107,11 +107,11 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) / \
+            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
                            (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() - \
+        stress = ((dis.ravel() -
                     disparities.ravel()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
