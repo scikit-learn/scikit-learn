@@ -99,6 +99,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.centerer = KernelCenterer()
 
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
+
     def _get_kernel(self, X, Y=None):
         params = {"gamma": self.gamma,
                   "degree": self.degree,
@@ -111,9 +115,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                              "rbf, poly, sigmoid, linear and precomputed."
                              % self.kernel)
 
-    def _fit_transform(self, X):
-        # compute kernel
-        K = self.centerer.fit_transform(self._get_kernel(X))
+    def _fit_transform(self, K):
+        """ Fit's using kernel K"""
+        # center kernel
+        K = self.centerer.fit_transform(K)
 
         if self.n_components is None:
             n_components = K.shape[0]
@@ -147,8 +152,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
         self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
 
-        self.X_fit_ = X
-
         return K
 
     def _fit_inverse_transform(self, X_transformed, X):
@@ -176,13 +179,15 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._fit_transform(X)
+        K = self._get_kernel(X)
+        self._fit_transform(K)
 
         if self.fit_inverse_transform:
             sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
             X_transformed = np.dot(self.alphas_, sqrt_lambdas)
             self._fit_inverse_transform(X_transformed, X)
 
+        self.X_fit_ = X
         return self
 
     def fit_transform(self, X, y=None, **params):

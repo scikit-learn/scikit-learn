@@ -108,6 +108,11 @@ class BaseLibSVM(BaseEstimator):
         self.class_weight = class_weight
         self.verbose = verbose
 
+    @property
+    def _pairwise(self):
+        kernel = self.kernel
+        return kernel == "precomputed" or hasattr(kernel, "__call__")
+
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
@@ -137,6 +142,7 @@ class BaseLibSVM(BaseEstimator):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+
         if self.sparse == "auto":
             self._sparse = sp.isspmatrix(X)
         else:
@@ -264,7 +270,7 @@ class BaseLibSVM(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y_pred : array, shape = [n_samples]
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -278,7 +284,9 @@ class BaseLibSVM(BaseEstimator):
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
 
-        if hasattr(self.kernel, '__call__'):
+        kernel = self.kernel
+        if hasattr(self.kernel, "__call__"):
+            kernel = 'precomputed'
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
@@ -287,10 +295,6 @@ class BaseLibSVM(BaseEstimator):
         C = 0.0  # C is not useful here
 
         svm_type = LIBSVM_IMPL.index(self.impl)
-
-        kernel = self.kernel
-        if hasattr(kernel, '__call__'):
-            kernel = 'precomputed'
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
