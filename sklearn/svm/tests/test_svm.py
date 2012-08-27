@@ -375,7 +375,6 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y)
 
     Xt = np.array(X).T
-    clf = svm.SVC(kernel='precomputed')
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 

@@ -27,9 +27,9 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         implemented for l2 penalty. Prefer dual=False when
         n_samples > n_features.
 
-    C : float or None, optional (default=None)
+    C : float, optional (default=1.0)
         Specifies the strength of the regularization. The smaller it is
-        the bigger in the regularization. If None then C is set to n_samples.
+        the bigger is the regularization.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be

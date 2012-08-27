@@ -270,13 +270,13 @@ div.buttonPrevious, div.buttonNext {
 }
 
 div.buttonPrevious {
-    border-top-right-radius: .8em;		
-    right: 1; 
+    border-top-right-radius: .8em;
+    right: 1;
 }
 
 div.buttonNext {
-    border-top-left-radius: .8em;		
-    right: 0; 
+    border-top-left-radius: .8em;
+    right: 0;
 }
 
 
@@ -298,6 +298,7 @@ div.sphinxsidebar input[type=text]{
 a {
     color: #355F7C;
     text-decoration: none;
+    word-wrap: break-word;
 }
 
 a:hover {
@@ -323,6 +324,7 @@ div.body h3 {
     text-align: center;
     border-radius: 10px;
     font-weight: bold;
+    word-wrap: break-word;
 }
 
 div.body h2,
@@ -332,7 +334,6 @@ div.body h3 {
 
 div.bodywrapper {
     margin: 0 0 0 0;
-    
 }
 
 
@@ -341,7 +342,7 @@ div.bodywrapper h1 {
     text-align: center;
     background-color: #cde8ef;
     font-family: Helvetica, Arial, sans-serif;
-    font-size: 250%;
+    font-size: 190%;
     border-radius: 0 15px 0 15px;
     -moz-border-radius: 0 15px 0 15px;
 }

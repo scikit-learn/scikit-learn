@@ -1,6 +1,5 @@
 include *.rst
-include test.py
 recursive-include doc *
 recursive-include examples *
 recursive-include sklearn *.c *.h *.pyx
-recursive-include sklearn/datasets *.csv *.csv.gz *.TXT *.rst *.jpg *.txt
+recursive-include sklearn/datasets *.csv *.csv.gz *.rst *.jpg *.txt

@@ -14,7 +14,8 @@ from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import as_float_array, check_random_state, safe_asarray
+from ..utils import as_float_array, check_random_state, safe_asarray, \
+        check_arrays
 from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
@@ -78,11 +79,9 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
         self : object
             returns an instance of self.
         """
-        X = np.atleast_2d(X)
-        n_samples, n_features = X.shape
-        y = np.atleast_1d(y)
-
+        X, y = check_arrays(X, y, sparse_format='dense')
         X = as_float_array(X, copy=False)
+        n_samples, n_features = X.shape
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
