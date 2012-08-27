@@ -133,3 +133,8 @@ def test_isotropic():
     sp = SpectralClustering(n_clusters=2, gamma=0.1)
     labels = sp.fit(X).labels_
     assert_greater(np.min(np.bincount(labels)), 10)
+
+    X = np.ones((10, 10))
+    sp = SpectralClustering(n_clusters=2, gamma=0.1)
+    labels = sp.fit(X).labels_
+    assert_greater(np.min(np.bincount(labels)), 3)
