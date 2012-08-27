@@ -342,7 +342,7 @@ div.bodywrapper h1 {
     text-align: center;
     background-color: #cde8ef;
     font-family: Helvetica, Arial, sans-serif;
-    font-size: 250%;
+    font-size: 190%;
     border-radius: 0 15px 0 15px;
     -moz-border-radius: 0 15px 0 15px;
 }
