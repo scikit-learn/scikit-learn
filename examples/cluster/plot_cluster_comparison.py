@@ -76,7 +76,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     spectral = cluster.SpectralClustering(n_clusters=2, mode='arpack',
             affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=.2)
-    affinity_propagation = cluster.AffinityPropagation(damping=.9, p=-200)
+    affinity_propagation = cluster.AffinityPropagation(damping=.9,
+            preference=-200)
 
     for algorithm in [two_means, affinity_propagation, ms, spectral,
                       ward_five, dbscan]:

@@ -33,8 +33,6 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         set to the median of the input similarities (resulting in a moderate
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
-        If a scalar is passed, the preferences will be set to the median
-        of the input similarities times this scalar.
 
     damping : float, optional
         Damping factor
@@ -75,9 +73,6 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         warnings.warn("p is deprecated and will be removed in version 0.14."
                 " Use ``preference`` instead.", DeprecationWarning)
         preference = p
-
-    if np.isscalar(preference):
-        preference = np.median(S) * preference
 
     if preference is None:
         preference = np.median(S)
@@ -201,8 +196,6 @@ class AffinityPropagation(BaseEstimator):
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
-        If a scalar is passed, the preferences will be set to the median
-        of the input similarities times this scalar.
 
     affinity : string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
@@ -236,7 +229,7 @@ class AffinityPropagation(BaseEstimator):
     """
 
     def __init__(self, damping=.5, max_iter=200, convit=30, copy=True,
-            preference=None, p=None, affinity='neq_sqr_euclidean'):
+            preference=None, p=None, affinity='euclidean'):
         self.damping = damping
         self.max_iter = max_iter
         self.convit = convit
