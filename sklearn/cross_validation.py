@@ -873,13 +873,26 @@ def _validate_shuffle_split(n, test_size, train_size):
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
     y = unique(y, return_inverse=True)[1]
+    n_cls = unique(y).size
+
     if np.min(np.bincount(y)) < 2:
         raise ValueError("The least populated class in y has only 1"
                          " member, which is too few. The minimum"
                          " number of labels for any class cannot"
                          " be less than 2.")
 
-    return _validate_shuffle_split(y.size, test_size, train_size)
+    n_train, n_test = _validate_shuffle_split(y.size, test_size, train_size)
+
+    if n_train < n_cls:
+        raise ValueError('The train_size = %d should be greater or '
+                         'equal to the number of classes = %d' %
+                         (n_train, n_cls))
+    if n_test < n_cls:
+        raise ValueError('The test_size = %d should be greater or '
+                         'equal to the number of classes = %d' %
+                         (n_test, n_cls))
+
+    return n_train, n_test
 
 
 class StratifiedShuffleSplit(object):
