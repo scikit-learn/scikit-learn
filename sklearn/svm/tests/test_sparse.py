@@ -208,8 +208,13 @@ def test_sparse_svc_clone_with_callable_kernel():
     b = base.clone(a)
 
     b.fit(X_sp, Y)
-    b.predict(X_sp)
+    pred = b.predict(X_sp)
     b.predict_proba(X_sp)
+
+    dense_svm = svm.SVC(C=1, kernel=lambda x, y: np.dot(x, y.T),
+            probability=True)
+    pred_dense = dense_svm.fit(X, Y).predict(X)
+    assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
 
 
