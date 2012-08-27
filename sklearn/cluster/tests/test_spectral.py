@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_greater
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import pairwise_distances, adjusted_rand_score
 
 
 def test_spectral_clustering():
@@ -60,8 +60,8 @@ def test_spectral_amg_mode():
     except ImportError:
         amg_loaded = False
     if amg_loaded:
-        labels = spectral_clustering(S, n_clusters=len(centers), random_state=0,
-                                     mode="amg")
+        labels = spectral_clustering(S, n_clusters=len(centers),
+                random_state=0, mode="amg")
         # We don't care too much that it's good, just that it *worked*.
         # There does have to be some lower limit on the performance though.
         assert_greater(np.mean(labels == true_labels), .3)
@@ -110,3 +110,17 @@ def test_spectral_clustering_sparse():
         labels = 1 - labels
 
     assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .9)
+
+
+def test_affinities():
+    X, y = make_blobs(n_samples=40, random_state=1, centers=[[1, 1], [-1, -1]],
+            cluster_std=0.4)
+    # nearest neighbors affinity
+    sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
+            random_state=0)
+    labels = sp.fit(X).labels_
+    assert_equal(adjusted_rand_score(y, labels), 1)
+
+    sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
+    labels = sp.fit(X).labels_
+    assert_greater(adjusted_rand_score(y, labels), 0.8)
