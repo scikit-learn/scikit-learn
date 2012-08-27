@@ -34,7 +34,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from itertools import groupby, islice
-from opterator import itemgetter
+from operator import itemgetter
 from scipy import stats
 
 from .base import BaseEnsemble
@@ -1084,6 +1084,9 @@ class BaseGradientBoostingCV(BaseEstimator):
         BaseEstimator.__setattr__(self, 'cv', kwargs.pop('cv', None))
         BaseEstimator.__setattr__(self, 'max_estimators',
                                   kwargs.pop('max_estimators', 1000))
+        BaseEstimator.__setattr__(self, 'n_jobs', kwargs.pop('n_jobs', 1))
+        BaseEstimator.__setattr__(self, 'verbose', kwargs.pop('verbose',
+                                                              0))
 
         kwargs['n_estimators'] = self.max_estimators
         BaseEstimator.__setattr__(self, '_params', kwargs)
@@ -1114,7 +1117,7 @@ class BaseGradientBoostingCV(BaseEstimator):
 
         grid = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                         pre_dispatch="2*n_jobs")(
-            delayed(fit_grid_point)(tasks))
+            delayed(fit_grid_point)(tasks)
 
         out = []
 
@@ -1138,21 +1141,21 @@ class BaseGradientBoostingCV(BaseEstimator):
 
         print("best_score: %.4f; params: %s" % (best_score, best_params))
 
-        self._model = self._model_class(**best_params)
-        self._model.fit(X, y)
+        estimator = self._estimator_class(**best_params)
+        estimator.fit(X, y)
 
-        #BaseEstimator.__setattr__(self, 'cv_score_', cv_score)
+        BaseEstimator.__setattr__(self, '_estimator', estimator)
         return self
 
     def __getattr__(self, name):
-        if self._model:
+        if hasattr(self, '_estimator'):
             return getattr(self._model, name)
         else:
-            raise AttributeError("type object '' has no attribute '%s'" %
+            raise AttributeError("type object '%s' has no attribute '%s'" %
                                  (self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
-        if self._model:
+        if hasattr(self, '_estimator'):
             setattr(self._model, name, value)
         else:
             BaseEstimator.__setattr__(self, name, value)
