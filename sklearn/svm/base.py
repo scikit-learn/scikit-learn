@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
-from ..utils import atleast2d_or_csr
+from ..utils import atleast2d_or_csr, array2d
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -143,7 +143,7 @@ class BaseLibSVM(BaseEstimator):
         """
 
         if self.sparse == "auto":
-            self._sparse = sp.isspmatrix(X)
+            self._sparse = sp.isspmatrix(X) and not self._pairwise
         else:
             self._sparse = self.sparse
 
@@ -281,12 +281,10 @@ class BaseLibSVM(BaseEstimator):
         return predict(X)
 
     def _dense_predict(self, X):
-        X = np.asarray(X, dtype=np.float64, order='C')
-        if X.ndim == 1:
-            # don't use np.atleast_2d, it doesn't guarantee C-contiguity
-            X = np.reshape(X, (1, -1), order='C')
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
+        if X.ndim == 1:
+            X = array2d(X, order='C')
 
         kernel = self.kernel
         if hasattr(self.kernel, "__call__"):
@@ -339,8 +337,10 @@ class BaseLibSVM(BaseEstimator):
         if hasattr(self.kernel, '__call__'):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
-            X = np.asarray(self.kernel(X, self.__Xfit),
-                           dtype=np.float64, order='C')
+            kernel = self.kernel(X, self.__Xfit)
+            if sp.issparse(kernel):
+                kernel = kernel.toarray()
+            X = np.asarray(kernel, dtype=np.float64, order='C')
         return X
 
     def decision_function(self, X):
@@ -389,7 +389,8 @@ class BaseLibSVM(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
-        if sp.issparse(X) and not self._sparse:
+        if (sp.issparse(X) and not self._sparse and
+                not hasattr(self.kernel, '__call__')):
             raise ValueError(
                 "cannot use sparse input in %r trained on dense data"
                 % type(self).__name__)
