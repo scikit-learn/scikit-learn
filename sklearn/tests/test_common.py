@@ -9,7 +9,8 @@ import traceback
 import numpy as np
 from scipy import sparse
 from nose.tools import assert_raises, assert_equal
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_array_equal, \
+        assert_array_almost_equal
 
 import sklearn
 from sklearn.utils.testing import all_estimators
@@ -323,6 +324,40 @@ def test_classifiers_classes():
         # training set performance
         assert_array_equal(np.unique(y), np.unique(y_pred))
         assert_greater(zero_one_score(y, y_pred), 0.78)
+
+
+def test_regressors_int():
+    # test if regressors can cope with integer labels (by converting them to
+    # float)
+    estimators = all_estimators()
+    regressors = [(name, E) for name, E in estimators if issubclass(E,
+        RegressorMixin)]
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    X, y = shuffle(X, y, random_state=0)
+    X = Scaler().fit_transform(X)
+    y = np.random.randint(2, size=X.shape[0])
+    for name, Reg in regressors:
+        if Reg in dont_test or Reg in meta_estimators:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            # separate estimators to control random seeds
+            reg1 = Reg()
+            reg2 = Reg()
+        if hasattr(reg1, 'alpha'):
+            reg1.set_params(alpha=0.01)
+            reg2.set_params(alpha=0.01)
+        if hasattr(reg1, 'random_state'):
+            reg1.set_params(random_state=0)
+            reg2.set_params(random_state=0)
+
+        # fit
+        reg1.fit(X, y)
+        pred1 = reg1.predict(X)
+        reg2.fit(X, y.astype(np.float))
+        pred2 = reg2.predict(X)
+        assert_array_almost_equal(pred1, pred2, 2)
 
 
 def test_regressors_train():
