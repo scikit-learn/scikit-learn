@@ -87,7 +87,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
         # We need to put the diagonal at zero
         if not sparse.isspmatrix(laplacian):
-            laplacian[::n_nodes + 1] = 0
+            laplacian.flat[::n_nodes + 1] = 0
         else:
             laplacian = laplacian.tocoo()
             diag_idx = (laplacian.row == laplacian.col)

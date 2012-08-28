@@ -113,7 +113,7 @@ def test_spectral_clustering_sparse():
 
 
 def test_affinities():
-    X, y = make_blobs(n_samples=40, random_state=3, centers=[[1, 1], [-1, -1]],
+    X, y = make_blobs(n_samples=40, random_state=1, centers=[[1, 1], [-1, -1]],
             cluster_std=0.4)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
