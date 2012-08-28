@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
@@ -222,7 +222,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     return labels
 
 
-class SpectralClustering(BaseEstimator):
+class SpectralClustering(BaseEstimator, ClusterMixin):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of

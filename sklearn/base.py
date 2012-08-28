@@ -326,6 +326,28 @@ class RegressorMixin(object):
 
 
 ###############################################################################
+class ClusterMixin(object):
+    """Mixin class for all cluster estimators in scikit-learn"""
+    def fit_predict(self, X, y=None):
+        """Performs clustering on X and returns cluster labels.
+
+        This is a non-optimized default implementation.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            cluster labels
+        """
+        self.fit(X)
+        return self.labels_
+
+
+###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn"""
 
