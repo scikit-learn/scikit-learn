@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.fixes import unique
 
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
@@ -135,13 +136,13 @@ def test_stratified_shuffle_split():
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0, indices=True)
         for train, test in sss:
-            assert_array_equal(np.unique(y[train]), np.unique(y[test]))
+            assert_array_equal(unique(y[train]), unique(y[test]))
             # Checks if folds keep classes proportions
             p_train = np.bincount(
-                np.unique(y[train], return_inverse=True)[1]
+                unique(y[train], return_inverse=True)[1]
                 ) / float(len(y[train]))
             p_test = np.bincount(
-                np.unique(y[test], return_inverse=True)[1]
+                unique(y[test], return_inverse=True)[1]
                 ) / float(len(y[test]))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
