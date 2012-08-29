@@ -202,6 +202,11 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
+.. note:: **Randomized sparsity**
+
+      For feature selection or sparse recovery, it may be interesting to
+      use :ref:`randomized_l1`.
+
 
 Setting regularization parameter
 --------------------------------
