@@ -64,9 +64,6 @@ Changelog
    - Fixed bug in spectral clustering that led to single point clusters
      by `Andreas Müller`_.
 
-   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
-     returns 2d array.
-
 API changes summary
 -------------------
 
@@ -96,6 +93,13 @@ API changes summary
    - In :class:`feature_extraction.text.CountVectorizer` the parameters
      ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
+
+   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
+     returns 2d array when fit on two classes.
+
+   - Fixed API inconsistency: :meth:`QDA.decision_function` and
+     :meth:`QDA.decision_function` now return 1d arrays when fit on two
+     classes.
 
 .. _changes_0_11:
 
