@@ -120,19 +120,7 @@ class QDA(BaseEstimator, ClassifierMixin):
                 "QDA.classes_ instead.", DeprecationWarning)
         return self.classes_
 
-    def decision_function(self, X):
-        """Apply decision function to an array of samples.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Array of samples (test vectors).
-
-        Returns
-        -------
-        C : array, shape = [n_samples, n_classes]
-            Decision function values related to each class, per sample.
-        """
+    def _decision_function(self, X):
         X = np.asarray(X)
         norm2 = []
         for i in range(len(self.classes_)):
@@ -144,6 +132,27 @@ class QDA(BaseEstimator, ClassifierMixin):
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
         return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
                 + np.log(self.priors_))
+
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes] or [n_samples,]
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is [n_samples,], giving the
+            log likelihood ratio of the positive class.
+        """
+        dec_func = self._decision_function(X)
+        # handle special case of two classes
+        if len(self.classes_) is 2:
+            return dec_func[:, 1] - dec_func[:, 0]
+        return dec_func
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -158,7 +167,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
-        d = self.decision_function(X)
+        d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
 
@@ -175,7 +184,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
             Posterior probabilities of classification per class.
         """
-        values = self.decision_function(X)
+        values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
