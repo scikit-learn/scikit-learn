@@ -995,20 +995,23 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test):
+def _cross_val_score(estimator, X, y, score_func, train, test, verbose):
     """Inner loop for cross validation"""
     if y is None:
         estimator.fit(X[train])
         if score_func is None:
-            return estimator.score(X[test])
+            score = estimator.score(X[test])
         else:
-            return score_func(X[test])
+            score = score_func(X[test])
     else:
         estimator.fit(X[train], y[train])
         if score_func is None:
-            return estimator.score(X[test], y[test])
+            score = estimator.score(X[test], y[test])
         else:
-            return score_func(y[test], estimator.predict(X[test]))
+            score = score_func(y[test], estimator.predict(X[test]))
+    if verbose > 1:
+        print("score: %f" % score)
+    return score
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
@@ -1057,7 +1060,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                          train, test)
+                                          train, test, verbose)
                 for train, test in cv)
     return np.array(scores)
 

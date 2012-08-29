@@ -588,7 +588,7 @@ Automatic Relevance Determination - ARD
 :class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
 but can lead to sparser weights :math:`w` [1]_.
 :class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
-assuption of the Gaussian being spherical.
+assumption of the Gaussian being spherical.
 
 Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
 elliptical Gaussian distribution.
@@ -621,16 +621,16 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. _Logistic_regression:
 
-Logisitic regression
-======================
+Logistic regression
+===================
 
-If the task at hand is to choose which class a sample belongs to given
-a finite (hopefuly small) set of choices, the learning problem is a
-classification, rather than regression. Linear models can be used for
-such a decision, but it is best to use what is called a
-`logistic regression <http://en.wikipedia.org/wiki/Logistic_regression>`__,
-that doesn't try to minimize the sum of square residuals, as in regression,
-but rather a "hit or miss" cost.
+Logistic regression, despite its name, is a linear model for classification
+rather than regression.
+As such, it minimizes a "hit or miss" cost function
+rather than the sum of square residuals (as in ordinary regression).
+Logistic regression is also known in the literature as
+logit regression, maximum-entropy classification (MaxEnt)
+or the log-linear classifier.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
 logistic regression. L1 penalization yields sparse predicting weights.

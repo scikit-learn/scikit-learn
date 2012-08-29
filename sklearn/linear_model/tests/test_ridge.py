@@ -160,7 +160,7 @@ def _test_ridge_loo(filter_):
     ret = []
 
     ridge_gcv = _RidgeGCV(fit_intercept=False)
-    ridge = Ridge(fit_intercept=False)
+    ridge = Ridge(alpha=1.0, fit_intercept=False)
 
     # generalized cross-validation (efficient leave-one-out)
     decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
@@ -187,8 +187,8 @@ def _test_ridge_loo(filter_):
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
     decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
-    errors3, c = ridge_gcv._errors_svd(1.0, y_diabetes, *decomp)
-    values3, c = ridge_gcv._values_svd(1.0, y_diabetes, *decomp)
+    errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
+    values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
     assert_almost_equal(errors, errors3)
@@ -200,9 +200,15 @@ def _test_ridge_loo(filter_):
     ret.append(best_alpha)
 
     # check that we get same best alpha with custom loss_func
-    ridge_gcv2 = _RidgeGCV(fit_intercept=False, loss_func=mean_squared_error)
+    ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
     ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.best_alpha, best_alpha)
+
+    # check that we get same best alpha with custom score_func
+    func = lambda x, y: -mean_squared_error(x, y)
+    ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
+    ridge_gcv3.fit(filter_(X_diabetes), y_diabetes)
+    assert_equal(ridge_gcv3.best_alpha, best_alpha)
 
     # check that we get same best alpha with sample weights
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
@@ -347,9 +353,9 @@ def test_class_weights_cv():
     assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))
 
 
-def test_ridgegcv_store_cv_values():
+def test_ridgecv_store_cv_values():
     """
-    Test _RidgeGCV's store_cv_values attribute.
+    Test _RidgeCV's store_cv_values attribute.
     """
     rng = rng = np.random.RandomState(42)
 

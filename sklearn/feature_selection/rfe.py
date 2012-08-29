@@ -7,6 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -102,6 +103,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The target values.
         """
+        X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -118,7 +120,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
-
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
@@ -129,9 +130,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
             estimator.fit(X[:, features], y)
 
             if estimator.coef_.ndim > 1:
-                ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+                ranks = np.argsort(safe_sqr(estimator.coef_).sum(axis=0))
             else:
-                ranks = np.argsort(estimator.coef_ ** 2)
+                ranks = np.argsort(safe_sqr(estimator.coef_))
+
+            # for sparse case ranks is matrix
+            ranks = np.asarray(ranks).ravel()
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
@@ -190,7 +194,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
             The input samples with only the features selected during the \
             elimination.
         """
-        return X[:, self.support_]
+        return X[:, np.where(self.support_)[0]]
 
 
 class RFECV(RFE, MetaEstimatorMixin):
@@ -303,8 +307,8 @@ class RFECV(RFE, MetaEstimatorMixin):
             ranking_ = rfe.fit(X[train], y[train]).ranking_
 
             # Score each subset of features
-            for k in xrange(1, max(ranking_)):
-                mask = ranking_ <= k
+            for k in xrange(1, max(ranking_) + 1):
+                mask = np.where(ranking_ <= k)[0]
                 estimator = clone(self.estimator)
                 estimator.fit(X[train][:, mask], y[train])
 

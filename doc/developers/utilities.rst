@@ -262,6 +262,9 @@ Helper Functions
   matrices support integer indices only while numpy arrays support both
   boolean masks and integer indices).
 
+- :func:`safe_sqr`: Helper function for unified squaring (``**2``) of
+  array-likes, matrices and sparse matrices.
+
 
 Hash Functions
 ==============
