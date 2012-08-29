@@ -36,6 +36,7 @@ from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.linear_model import RidgeClassifier, RidgeClassifierCV
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
         EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder]
@@ -219,13 +220,13 @@ def test_classifiers_train():
                     # decision_function agrees with predict:
                     decision = clf.decision_function(X)
                     if n_labels is 2:
-                        try:
-                            assert_equal(decision.ravel().shape, (n_samples,))
+                        assert_equal(decision.ravel().shape, (n_samples,))
+                        if Clf in [RidgeClassifier, RidgeClassifierCV]:
+                            # TODO: fix ridge decision threshold
+                            dec_pred = (decision.ravel() > 0.5).astype(np.int)
+                        else:
                             dec_pred = (decision.ravel() > 0).astype(np.int)
-                            assert_array_equal(dec_pred, y_pred)
-                        except Exception, exc:
-                            print(clf)
-                            print(exc)
+                        assert_array_equal(dec_pred, y_pred)
                     if n_labels is 3 and not isinstance(clf, BaseLibSVM):
                         # 1on1 of LibSVM works differently
                         assert_equal(decision.shape, (n_samples, n_labels))
