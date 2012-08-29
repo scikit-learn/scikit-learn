@@ -26,7 +26,7 @@ from ..externals.joblib import Parallel, delayed
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=False):
+              copy_Gram=True, verbose=False, return_path=True):
     """Compute Least Angle Regression and Lasso path
 
     The optimization objective for Lasso is::
@@ -99,8 +99,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     n_samples = y.size
     max_features = min(max_iter, n_features)
 
-    coefs = np.zeros((max_features + 1, n_features))
-    alphas = np.zeros(max_features + 1)
+    if return_path:
+        coefs = np.zeros((max_features + 1, n_features))
+        alphas = np.zeros(max_features + 1)
+    else:
+        coef, prev_coef = np.zeros(n_features), np.zeros(n_features)
+        alpha, prev_alpha = np.array([0.]), np.array([0.])  # better ideas?
+
     n_iter, n_active = 0, 0
     active, indices = list(), np.arange(n_features)
     # holds the sign of covariance
@@ -149,17 +154,23 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         else:
             C = 0.
 
-        alphas[n_iter] = C / n_samples
-        if alphas[n_iter] < alpha_min:  # early stopping
+        if return_path:
+            alpha = alphas[n_iter, np.newaxis]
+            coef = coefs[n_iter]
+            prev_alpha = alphas[n_iter - 1, np.newaxis]
+            prev_coef = coefs[n_iter - 1]
+
+        alpha[0] = C / n_samples
+        if alpha[0] < alpha_min:  # early stopping
             # interpolation factor 0 <= ss < 1
             if n_iter > 0:
                 # In the first iteration, all alphas are zero, the formula
                 # below would make ss a NaN
-                ss = (alphas[n_iter - 1] - alpha_min) / (alphas[n_iter - 1] -
-                                                    alphas[n_iter])
-                coefs[n_iter] = coefs[n_iter - 1] + ss * (coefs[n_iter] -
-                                coefs[n_iter - 1])
-            alphas[n_iter] = alpha_min
+                ss = (prev_alpha[0] - alpha_min) / (prev_alpha[0] - alpha[0])
+                coef[:] = prev_coef + ss * (coef - prev_coef)
+            alpha[0] = alpha_min
+            if return_path:
+                coefs[n_iter] = coef
             break
 
         if n_iter >= max_iter or n_active >= n_features:
@@ -248,7 +259,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # TODO: better names for these variables: z
         drop = False
-        z = -coefs[n_iter, active] / (least_squares + tiny32)
+        z = -coef[active] / (least_squares + tiny32)
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
@@ -263,14 +274,24 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         n_iter += 1
 
-        if n_iter >= coefs.shape[0]:
-            # resize the coefs and alphas array
-            add_features = 2 * max(1, (max_features - n_active))
-            coefs.resize((n_iter + add_features, n_features))
-            alphas.resize(n_iter + add_features)
+        if return_path:
+            if n_iter >= coefs.shape[0]:
+                del coef, alpha, prev_alpha, prev_coef
+                # resize the coefs and alphas array
+                add_features = 2 * max(1, (max_features - n_active))
+                coefs.resize((n_iter + add_features, n_features))
+                alphas.resize(n_iter + add_features)
+            coef = coefs[n_iter]
+            prev_coef = coefs[n_iter - 1]
+            alpha = alphas[n_iter, np.newaxis]
+            prev_alpha = alphas[n_iter - 1, np.newaxis]
+        else:
+            # mimic the effect of incrementing n_iter on the array references
+            prev_coef = coef
+            prev_alpha[0] = alpha[0]
+            coef = np.zeros_like(coef)
 
-        coefs[n_iter, active] = coefs[n_iter - 1, active] + \
-                                gamma_ * least_squares
+        coef[active] = prev_coef[active] + gamma_ * least_squares
 
         # update correlations
         Cov -= gamma_ * corr_eq_dir
@@ -292,8 +313,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                             indices[i + 1], indices[i]  # yeah this is stupid
 
                 # TODO: this could be updated
-                residual = y - np.dot(X[:, :n_active],
-                                      coefs[n_iter, active])
+                residual = y - np.dot(X[:, :n_active], coef[active])
                 temp = np.dot(X.T[n_active], residual)
 
                 Cov = np.r_[temp, Cov]
@@ -312,7 +332,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # wrong as Xy is not swapped with the rest of variables
 
                 # TODO: this could be updated
-                residual = y - np.dot(X, coefs[n_iter])
+                residual = y - np.dot(X, coef)
                 temp = np.dot(X.T[drop_idx], residual)
                 Cov = np.r_[temp, Cov]
 
@@ -322,11 +342,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp))
 
-    # resize coefs in case of early stop
-    alphas = alphas[:n_iter + 1]
-    coefs = coefs[:n_iter + 1]
+    if return_path:
+        # resize coefs in case of early stop
+        alphas = alphas[:n_iter + 1]
+        coefs = coefs[:n_iter + 1]
 
-    return alphas, active, coefs.T
+        return alphas, active, coefs.T
+    else:
+        return alpha, active, coef
 
 
 ###############################################################################
