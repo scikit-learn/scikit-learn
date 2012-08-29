@@ -969,8 +969,8 @@ class StratifiedShuffleSplit(object):
         cls_count = np.bincount(np.unique(self.y, return_inverse=True)[1])
         p_i = cls_count / float(self.n)
         n_i = np.round(self.n_train * p_i).astype('int')
-        t_i = np.array([cls_count - n_i,
-                        np.round(self.n_test * p_i).astype('int')]).min(axis=0)
+        t_i = np.minimum(cls_count - n_i,
+                         np.round(self.n_test * p_i).astype('int'))
 
         for n in range(self.n_iterations):
             train = []
@@ -983,8 +983,8 @@ class StratifiedShuffleSplit(object):
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
 
-            train = np.array(train)[rng.permutation(len(train))]
-            test = np.array(test)[rng.permutation(len(test))]
+            train = rng.permutation(train)
+            test = rng.permutation(test)
 
             if self.indices:
                 yield train, test
