@@ -218,12 +218,19 @@ def test_classifiers_train():
                 try:
                     # decision_function agrees with predict:
                     decision = clf.decision_function(X)
-                    if n_labels > 2:
+                    if n_labels is 2:
+                        try:
+                            assert_equal(decision.ravel().shape, (n_samples,))
+                            dec_pred = (decision.ravel() > 0).astype(np.int)
+                            assert_array_equal(dec_pred, y_pred)
+                        except Exception, exc:
+                            print(clf)
+                            print(exc)
+                    if n_labels is 3 and not isinstance(clf, BaseLibSVM):
+                        # 1on1 of LibSVM works differently
                         assert_equal(decision.shape, (n_samples, n_labels))
-                        if not isinstance(clf, BaseLibSVM):
-                            # 1on1 of LibSVM works differently
-                            assert_array_equal(np.argmax(decision, axis=1),
-                                    y_pred)
+                        assert_array_equal(np.argmax(decision, axis=1), y_pred)
+
                     # raises error on malformed input
                     assert_raises(ValueError, clf.decision_function, X.T)
                     # raises error on malformed input for decision_function
