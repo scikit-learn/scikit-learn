@@ -418,7 +418,7 @@ class Lars(LinearModel, RegressorMixin):
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -427,6 +427,7 @@ class Lars(LinearModel, RegressorMixin):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.eps = eps
         self.copy_X = copy_X
+        self.fit_path = fit_path
 
     def _get_gram(self):
         # precompute if n_samples > n_features
@@ -480,9 +481,6 @@ class Lars(LinearModel, RegressorMixin):
         else:
             max_iter = self.max_iter
 
-        self.alphas_ = np.ones((n_targets, max_iter + 1))
-        self.active_ = np.ones((n_targets, max_iter))
-        self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
         self.coef_ = np.zeros((n_targets, n_features))
 
         precompute = self.precompute
@@ -493,22 +491,36 @@ class Lars(LinearModel, RegressorMixin):
         else:
             Gram = self._get_gram()
 
-        for k in xrange(n_targets):
-            this_Xy = None if Xy is None else Xy[:, k]
-            alphas, active, coef_path = lars_path(X, y[:, k], Gram=Gram,
-                          Xy=this_Xy, copy_X=self.copy_X, copy_Gram=True,
-                          alpha_min=alpha, method=self.method,
-                          verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                          eps=self.eps)
-            self.alphas_[k, :len(alphas)] = alphas
-            self.active_[k, :len(active)] = active
-            self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
-            self.coef_[k, :] = coef_path[:, -1]
+        if self.fit_path:
+            self.alphas_ = np.ones((n_targets, max_iter + 1))
+            self.active_ = np.ones((n_targets, max_iter))
+            self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
+            for k in xrange(n_targets):
+                this_Xy = None if Xy is None else Xy[:, k]
+                alphas, active, coef_path = lars_path(
+                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
+                    copy_Gram=True, alpha_min=alpha, method=self.method,
+                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
+                    eps=self.eps, return_path=True)
+                self.alphas_[k, :len(alphas)] = alphas
+                self.active_[k, :len(active)] = active
+                self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
+                self.coef_[k, :] = coef_path[:, -1]
 
-        self.alphas_, self.active_, self.coef_path_, self.coef_ = (
-            np.squeeze(a) for a in (self.alphas_, self.active_,
-                                    self.coef_path_, self.coef_))
-
+            self.alphas_, self.active_, self.coef_path_, self.coef_ = (
+                np.squeeze(a) for a in (self.alphas_, self.active_,
+                                        self.coef_path_, self.coef_))
+        else:
+            self.alphas_ = np.empty(n_targets)
+            for k in xrange(n_targets):
+                this_Xy = None if Xy is None else Xy[:, k]
+                self.alphas_[k], _, self.coef_[k, :] = lars_path(
+                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
+                    copy_Gram=True, alpha_min=alpha, method=self.method,
+                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
+                    eps=self.eps, return_path=False)
+            self.alphas_, self.coef_ = (np.squeeze(a) for a in (self.alphas_,
+                                                                self.coef_))
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -587,7 +599,7 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -597,6 +609,7 @@ class LassoLars(Lars):
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
+        self.fit_path = fit_path
 
 
 ###############################################################################
@@ -787,6 +800,7 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
+        self.fit_path = True
         X = array2d(X)
 
         # init cross-validation generator
@@ -1051,6 +1065,7 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
+        self.fit_path = True
         X = array2d(X)
         y = np.asarray(y)
 

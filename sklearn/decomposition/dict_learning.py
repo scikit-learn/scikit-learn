@@ -95,7 +95,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
-                            verbose=False, normalize=False, precompute=gram)
+                            verbose=False, normalize=False, precompute=gram,
+                            fit_path=False)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
         finally:
@@ -112,7 +113,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
             lars = Lars(fit_intercept=False, verbose=False, normalize=False,
-                        precompute=gram, n_nonzero_coefs=int(reg_param))
+                        precompute=gram, n_nonzero_coefs=int(reg_param),
+                        fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lars.coef_
         finally:
