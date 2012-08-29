@@ -80,6 +80,7 @@ def test_inconsistent_input():
     rng = np.random.RandomState(0)
     X_ = rng.random_sample((5, 10))
     y_ = np.ones(X_.shape[0])
+    y_[0] = 0
 
     clf = logistic.LogisticRegression()
 
