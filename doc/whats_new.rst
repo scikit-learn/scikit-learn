@@ -64,6 +64,9 @@ Changelog
    - Fixed bug in spectral clustering that led to single point clusters
      by `Andreas Müller`_.
 
+   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
+     returns 2d array.
+
 API changes summary
 -------------------
 
