@@ -41,7 +41,7 @@ Classification
 .. warning::
 
   Make sure you permute (shuffle) your training data before fitting the
-  model or use `shuffle=True` to shuffle after each iterations.
+  model or use ``shuffle=True`` to shuffle after each iterations.
 
 The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
@@ -73,31 +73,31 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-SGD fits a linear model to the training data. The member `coef_` holds
+SGD fits a linear model to the training data. The member ``coef_`` holds
 the model parameters::
 
     >>> clf.coef_
     array([[ 9.90090187,  9.90090187]])
 
-Member `intercept_` holds the intercept (aka offset or bias)::
+Member ``intercept_`` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_                                    # doctest: +ELLIPSIS
     array([-9.990...])
 
 Whether or not the model should use an intercept, i.e. a biased
-hyperplane, is controlled by the parameter `fit_intercept`.
+hyperplane, is controlled by the parameter ``fit_intercept``.
 
-To get the signed distance to the hyperplane use `decision_function`::
+To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
     array([ 29.61357756])
 
-The concrete loss function can be set via the `loss`
+The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
 
-  * `loss="hinge"`: (soft-margin) linear Support Vector Machine,
-  * `loss="modified_huber"`: smoothed hinge loss,
-  * `loss="log"`: Logistic Regression,
+  * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
+  * ``loss="modified_huber"``: smoothed hinge loss,
+  * ``loss="log"``: Logistic Regression,
   * and all regression losses below.
 
 The first two loss functions are lazy, they only update the model
@@ -105,25 +105,25 @@ parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models, even when L2 penalty
 is used.
 
-In the case of binary classification and `loss="log"` or
-`loss="modified_huber"` you get a probability estimate P(y=C|x) using
-`predict_proba`, where `C` is the largest class label::
+In the case of binary classification and ``loss="log"`` or
+``loss="modified_huber"`` you get a probability estimate :math:`P(y=C|x)` using
+:meth:`SGDClassifier.predict_proba`, where `C` is the largest class label::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
-    array([ 0.99999949])
+    array([[ 0.00000051,  0.99999949]])
 
-The concrete penalty can be set via the `penalty` parameter. `SGD`
-supports the following penalties:
+The concrete penalty can be set via the ``penalty`` parameter.
+SGD supports the following penalties:
 
-  * `penalty="l2"`: L2 norm penalty on `coef_`.
-  * `penalty="l1"`: L1 norm penalty on `coef_`.
-  * `penalty="elasticnet"`: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
+  * ``penalty="l2"``: L2 norm penalty on ``coef_``.
+  * ``penalty="l1"``: L1 norm penalty on ``coef_``.
+  * ``penalty="elasticnet"``: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
 
-The default setting is `penalty="l2"`. The L1 penalty leads to sparse
+The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
 some deficiencies of the L1 penalty in the presence of highly correlated
-attributes. The parameter `rho` has to be specified by the user.
+attributes. The parameter ``rho`` has to be specified by the user.
 
 :class:`SGDClassifier` supports multi-class classification by combining
 multiple binary classifiers in a "one versus all" (OVA) scheme. For each
@@ -140,17 +140,17 @@ the decision surface induced by the three classifiers.
    :align: center
    :scale: 75
 
-In the case of multi-class classification `coef_` is a two-dimensionaly
-array of shape [n_classes, n_features] and `intercept_` is a one
-dimensional array of shape [n_classes]. The i-th row of `coef_` holds
+In the case of multi-class classification ``coef_`` is a two-dimensionaly
+array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a one
+dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are
-indexed in ascending order (see attribute `classes`).
+indexed in ascending order (see attribute ``classes_``).
 Note that, in principle, since they allow to create a probability model,
-`loss="log"` and `loss="modified_huber"` are more suitable for
+``loss="log"`` and ``loss="modified_huber"`` are more suitable for
 one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
-instances via the fit parameters `class_weight` and `sample_weight`. See
+instances via the fit parameters ``class_weight`` and ``sample_weight``. See
 the examples below and the doc string of :meth:`SGDClassifier.fit` for
 further information.
 
@@ -176,16 +176,16 @@ samples (> 10.000), for other problems we recommend :class:`Ridge`,
    :align: center
    :scale: 75
 
-The concrete loss function can be set via the `loss`
+The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  * `loss="squared_loss"`: Ordinary least squares,
-  * `loss="huber"`: Huber loss for robust regression,
-  * `loss="epsilon_insensitive"`: linear Support Vector Regression.
+  * ``loss="squared_loss"``: Ordinary least squares,
+  * ``loss="huber"``: Huber loss for robust regression,
+  * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
 
 The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
-specified via the parameter `epsilon`. This parameter depends on the
+specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
 .. topic:: Examples:
@@ -203,7 +203,7 @@ Stochastic Gradient Descent for sparse data
   intercept.
 
 There is built-in support for sparse data given in any matrix in a format
-supported by scipy.sparse. For maximum efficiency, however, use the CSR
+supported by `scipy.sparse <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.html>`_. For maximum efficiency, however, use the CSR
 matrix format as defined in `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
@@ -244,12 +244,12 @@ Tips on Practical Use
 
   * Finding a reasonable regularization term :math:`\alpha` is
     best done using :class:`GridSearchCV`, usually in the
-    range `10.0**-np.arange(1,7)`.
+    range ``10.0**-np.arange(1,7)``.
 
   * Empirically, we found that SGD converges after observing
     approx. 10^6 training samples. Thus, a reasonable first guess
-    for the number of iterations is `n_iter = np.ceil(10**6 / n)`,
-    where `n` is the size of the training set.
+    for the number of iterations is ``n_iter = np.ceil(10**6 / n)``,
+    where ``n`` is the size of the training set.
 
   * If you apply SGD to features extracted using PCA we found that
     it is often wise to scale the feature values by some constant `c`
@@ -333,7 +333,7 @@ the parameter space.  The intercept :math:`b` is updated similarly but
 without regularization.
 
 The learning rate :math:`\eta` can be either constant or gradually decaying. For
-classification, the default learning rate schedule (`learning_rate='optimal'`)
+classification, the default learning rate schedule (``learning_rate='optimal'``)
 is given by
 
 .. math::
@@ -348,24 +348,24 @@ approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`
 
 
 For regression, the default learning rate schedule, inverse scaling
-(`learning_rate='invscaling'`), is given by
+(``learning_rate='invscaling'``), is given by
 
 .. math::
 
     \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
 
 where :math:`eta_0` and :math:`power\_t` are hyperparameters choosen by the
-user via `eta0` and `power_t`, resp.
+user via ``eta0`` and ``power_t``, resp.
 
-For a constant learning rate use `learning_rate='constant'` and use `eta0`
+For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
-The model parameters can be accessed through the members `coef\_` and
-`intercept\_`:
+The model parameters can be accessed through the members ``coef_`` and
+``intercept\_``:
 
-     - Member `coef\_` holds the weights :math:`w`
+     - Member ``coef_`` holds the weights :math:`w`
 
-     - Member `intercept\_` holds :math:`b`
+     - Member ``intercept_`` holds :math:`b`
 
 .. topic:: References:
 
