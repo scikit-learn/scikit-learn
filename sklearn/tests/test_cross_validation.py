@@ -132,7 +132,7 @@ def test_stratified_shuffle_split():
         ]
 
     for y in ys:
-        sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33, 
+        sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0, indices=True)
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
@@ -146,6 +146,7 @@ def test_stratified_shuffle_split():
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+
 
 def test_cross_val_score():
     clf = MockClassifier()

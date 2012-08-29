@@ -20,7 +20,7 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
-from .utils.fixes import unique, in1d
+from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
 
@@ -946,9 +946,9 @@ class StratifiedShuffleSplit(object):
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0 3] TEST: [1 2]
+    TRAIN: [1 2] TEST: [3 0]
     TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 2] TEST: [3 1]
     """
 
     def __init__(self, y, n_iterations=10, test_size=0.1,
