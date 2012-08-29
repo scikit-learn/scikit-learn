@@ -97,6 +97,9 @@ API changes summary
      ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
 
+   - :class:`feature_selection.SelectPercentile` now breaks ties deterministically
+     instead of returning all equally ranked features.
+
 .. _changes_0_11:
 
 0.11
