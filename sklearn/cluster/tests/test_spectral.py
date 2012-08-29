@@ -124,17 +124,3 @@ def test_affinities():
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
-
-
-def test_isotropic():
-    # test that no cluster with a single point is created
-    X, y = make_blobs(n_samples=40, random_state=1, centers=[[1, 1]],
-            cluster_std=0.1)
-    sp = SpectralClustering(n_clusters=2, gamma=0.2, random_state=0)
-    labels = sp.fit(X).labels_
-    assert_greater(np.min(np.bincount(labels)), 10)
-
-    X = np.ones((10, 9))
-    sp = SpectralClustering(n_clusters=2, gamma=0.2, random_state=0)
-    labels = sp.fit(X).labels_
-    assert_greater(np.min(np.bincount(labels)), 3)
