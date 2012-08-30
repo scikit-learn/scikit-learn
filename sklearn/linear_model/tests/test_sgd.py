@@ -135,6 +135,13 @@ class CommonTest(object):
         clf.fit(X[:, :-1], Y)
         assert_true(True)
 
+    def test_input_format(self):
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        Y_ = np.array(Y)[:, np.newaxis]
+        clf.fit(X, Y_)
+        assert_true(True)
+
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
