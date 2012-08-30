@@ -494,7 +494,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         y = np.asarray(y)
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
 
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
