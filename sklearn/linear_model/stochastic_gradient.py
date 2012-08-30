@@ -190,14 +190,6 @@ def _make_dataset(X, y_i, sample_weight):
     return dataset, intercept_decay
 
 
-def _tocsr(X):
-    """Convert X to CSR matrix, preventing a copy if possible"""
-    if sp.isspmatrix_csr(X) and X.dtype == np.float64:
-        return X
-    else:
-        return sp.csr_matrix(X, dtype=np.float64)
-
-
 class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
@@ -595,9 +587,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return proba
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            X = _tocsr(X)
-
         coef, intercept = fit_binary(self, 1, X, y, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
@@ -614,9 +603,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        if sp.issparse(X):
-            X = _tocsr(X)
-
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, n_iter,
