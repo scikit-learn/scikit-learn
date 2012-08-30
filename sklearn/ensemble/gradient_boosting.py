@@ -24,8 +24,6 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from itertools import groupby, islice
-from operator import itemgetter
 from scipy import stats
 
 from .base import BaseEnsemble
@@ -33,9 +31,6 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
-from ..cross_validation import KFold
-from ..grid_search import IterGrid
-from ..externals.joblib import Parallel, delayed
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -716,6 +711,21 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    Attributes
+    ----------
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_score_` : array, shape = [n_estimators]
+        Score of the training dataset obtained using an out-of-bag estimate.
+        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the out-of-bag sample.
+
+    `train_score_` : array, shape = [n_estimators]
+        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the in-bag sample.
+        If ``subsample == 1`` this is the deviance on the training data.
+
     Examples
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0]]
@@ -932,21 +942,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
 
-    Attributes
-    ----------
-    `feature_importances_` : array, shape = [n_features]
-        The feature importances (the higher, the more important the feature).
-
-    `oob_score_` : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-
-    `train_score_` : array, shape = [n_estimators]
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
-
     Examples
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0]]
@@ -958,7 +953,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     See also
     --------
-    DecisionTreeRegressor, RandomForestRegressor, GradientBoostingRegressorCV
+    DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
@@ -1038,298 +1033,3 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
         for y in self.staged_decision_function(X):
             yield y.ravel()
-
-
-def fit_grid_point(grid_idx, cv_idx, X, y, estimator_class, params,
-                   train, test):
-    """Fit a single grid point and return staged scores. """
-    X_train, y_train = X[train], y[train]
-    X_test, y_test = X[test], y[test]
-
-    estimator = estimator_class(**params)
-    estimator.fit(X_train, y_train)
-
-    test_deviance = np.fromiter(
-        (estimator.loss_(y_test, score)
-         for score in estimator.staged_decision_function(X_test)),
-        dtype=np.float64, count=estimator.n_estimators)
-
-    return (grid_idx, cv_idx, test_deviance)
-
-
-class BaseGradientBoostingCV(BaseEstimator):
-    """Abstract base class for GB with built-in cross-validation.
-
-    This class implements the Decorator design pattern; it wraps
-    a concrete ``_estimator_class`` object and delegates attribute
-    access to the object.
-
-    XXX Soley the arguments ``cv``, ``max_estimators``,
-    and ``_estimator`` are stored in the decorator object.
-    """
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def __init__(self, **kwargs):
-        # verbose syntax needed to avoid recursive __setattr__ invokation
-        BaseEstimator.__setattr__(self, 'cv', kwargs.pop('cv', None))
-        BaseEstimator.__setattr__(self, 'max_estimators',
-                                  kwargs.pop('max_estimators', 1000))
-        BaseEstimator.__setattr__(self, 'n_jobs', kwargs.pop('n_jobs', 1))
-        BaseEstimator.__setattr__(self, 'verbose', kwargs.pop('verbose',
-                                                              0))
-
-        kwargs['n_estimators'] = self.max_estimators
-        BaseEstimator.__setattr__(self, '_params', kwargs)
-
-    def fit(self, X, y):
-        """Pick best ``n_estimators`` based on cross-validation ``cv``.
-
-        Finally, fits model on entire dataset using ``n_estimators``.
-        Cross-validation scores are stored in ``self.cv_deviance``.
-        """
-        X, y = check_arrays(X, y, sparse_format='dense')
-        X = np.asfortranarray(X, dtype=DTYPE)
-        y = np.ravel(y, order='C')
-
-        if self.cv is None:
-            cv = KFold(y.shape[0], k=5)
-        if isinstance(self.cv, int):
-            cv = KFold(y.shape[0], k=self.cv)
-        else:
-            cv = self.cv
-
-        params_grid = IterGrid(self._params)
-
-        tasks = ((grid_idx, cv_idx, X, y, self._estimator_class,
-                  params, train, test)
-                 for grid_idx, params in enumerate(params_grid)
-                 for cv_idx, (train, test) in enumerate(cv))
-
-        grid = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                        pre_dispatch="2*n_jobs")(
-            delayed(fit_grid_point)(tasks)
-
-        out = []
-
-        for grid_idx, grid_points in groupby(grid, itemgetter(0)):
-            grid_points = list(grid_points)
-            assert len(grid_points) == cv.k
-
-            A = np.row_stack([fold[2] for fold in grid_points])
-            scores = A.mean(axis=0)
-            best_iter = np.argmin(scores)
-            best_score = scores[best_iter]
-
-            out.append((best_score, grid_idx))
-
-        out = sorted(out)
-        best_score, best_grid_idx = out[0]
-
-        # get best params setting
-        best_params = next(islice(params_grid, best_grid_idx,
-                                  best_grid_idx + 1))
-
-        print("best_score: %.4f; params: %s" % (best_score, best_params))
-
-        estimator = self._estimator_class(**best_params)
-        estimator.fit(X, y)
-
-        BaseEstimator.__setattr__(self, '_estimator', estimator)
-        return self
-
-    def __getattr__(self, name):
-        if hasattr(self, '_estimator'):
-            return getattr(self._model, name)
-        else:
-            raise AttributeError("type object '%s' has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
-
-    def __setattr__(self, name, value):
-        if hasattr(self, '_estimator'):
-            setattr(self._model, name, value)
-        else:
-            BaseEstimator.__setattr__(self, name, value)
-
-
-class GradientBoostingClassifierCV(BaseGradientBoostingCV):
-    """GB classifier with built-in cross-validation.
-
-    A ``GradientBoostingClassifier`` that optimizes ``n_estimators``
-    via cross-validation.
-
-    Parameters
-    ----------
-    loss : {'deviance'}, optional (default='deviance')
-        loss function to be optimized. 'deviance' refers to
-        deviance (= logistic regression) for classification
-        with probabilistic outputs.
-
-    learn_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_estimators.
-
-    max_estimators : int (default=1000)
-        The maximum number of boosting stages to perform. The best number
-        of estimators ``n_estimators`` is picked based on deviance on
-        held-out data.
-
-    max_depth : integer, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
-        depth limits the number of nodes in the tree. Tune this parameter
-        for best performance; the best value depends on the interaction
-        of the input variables.
-
-    min_samples_split : integer, optional (default=1)
-        The minimum number of samples required to split an internal node.
-
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
-
-    subsample : float, optional (default=1.0)
-        The fraction of samples to be used for fitting the individual base
-        learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
-        and an increase in bias.
-
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
-        and an increase in bias.
-
-    cv : cross-validation generator or int (default=5)
-        If int, ``cv``-fold cross-valdiation will be used.
-
-    Attributes
-    ----------
-    `feature_importances_` : array, shape = [n_features]
-        The feature importances (the higher, the more important the feature).
-
-    `oob_score_` : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-
-    `train_score_` : array, shape = [n_estimators]
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
-
-    `cv_score_` : array, shape = [cv.k, max_estimators]
-        The deviance scores for each fold and boosting iteration.
-
-    See also
-    --------
-    GradientBoostingClassifier
-    """
-
-    _estimator_class = GradientBoostingClassifier
-
-    def __init__(self, loss='deviance', learn_rate=0.1, max_estimators=1000,
-                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, cv=5):
-        super(GradientBoostingClassifierCV, self).__init__(
-            loss=loss, learn_rate=learn_rate, max_estimators=max_estimators,
-            min_samples_split=min_samples_split, max_depth=max_depth,
-            min_samples_leaf=min_samples_leaf, init=init,
-            subsample=subsample, max_features=max_features,
-            random_state=random_state, cv=cv)
-
-
-class GradientBoostingRegressorCV(BaseGradientBoostingCV):
-    """GB regressor with built-in cross-validation.
-
-    A ``GradientBoostingRegressor`` that optimizes ``n_estimators``
-    via cross-validation.
-
-    Parameters
-    ----------
-    loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
-        loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
-        loss function soley based on order information of the input
-        variables. 'huber' is a combination of the two. 'quantile'
-        allows quantile regression (use `alpha` to specify the quantile).
-
-    learn_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_estimators.
-
-    max_estimators : int (default=1000)
-        The maximum number of boosting stages to perform. The best number
-        of estimators ``n_estimators`` is picked based on deviance on
-        held-out data.
-
-    max_depth : integer, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
-        depth limits the number of nodes in the tree. Tune this parameter
-        for best performance; the best value depends on the interaction
-        of the input variables.
-
-    min_samples_split : integer, optional (default=1)
-        The minimum number of samples required to split an internal node.
-
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
-
-    subsample : float, optional (default=1.0)
-        The fraction of samples to be used for fitting the individual base
-        learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
-        and an increase in bias.
-
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
-        and an increase in bias.
-
-    alpha : float (default=0.9)
-        The alpha-quantile of the huber loss function and the quantile
-        loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
-
-    cv : cross-validation generator or int (default=5)
-        If int, ``cv``-fold cross-valdiation will be used.
-
-    Attributes
-    ----------
-    `feature_importances_` : array, shape = [n_features]
-        The feature importances (the higher, the more important the feature).
-
-    `oob_score_` : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-
-    `train_score_` : array, shape = [n_estimators]
-        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the in-bag sample.
-        If ``subsample == 1`` this is the deviance on the training data.
-
-    `cv_score_` : array, shape = [cv.k, max_estimators]
-        The deviance scores for each fold and boosting iteration.
-
-    See also
-    --------
-    GradientBoostingRegressor
-    """
-
-    _estimator_class = GradientBoostingRegressor
-
-    def __init__(self, loss='ls', learn_rate=0.1, max_estimators=1000,
-                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, cv=5):
-        super(GradientBoostingRegressorCV, self).__init__(
-            loss=loss, learn_rate=learn_rate, max_estimators=max_estimators,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features, random_state=random_state,
-            alpha=alpha, cv=cv)
