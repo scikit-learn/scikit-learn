@@ -966,7 +966,7 @@ class StratifiedShuffleSplit(object):
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        cls_count = np.bincount(np.unique(self.y, return_inverse=True)[1])
+        cls_count = np.bincount(unique(self.y, return_inverse=True)[1])
         p_i = cls_count / float(self.n)
         n_i = np.round(self.n_train * p_i).astype('int')
         t_i = np.minimum(cls_count - n_i,
@@ -976,7 +976,7 @@ class StratifiedShuffleSplit(object):
             train = []
             test = []
 
-            for i, cls in enumerate(np.unique(self.y)):
+            for i, cls in enumerate(unique(self.y)):
                 permutation = rng.permutation(n_i[i] + t_i[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
@@ -1099,7 +1099,7 @@ def _shuffle(y, labels, random_state):
         ind = random_state.permutation(y.size)
     else:
         ind = np.arange(labels.size)
-        for label in np.unique(labels):
+        for label in unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]
