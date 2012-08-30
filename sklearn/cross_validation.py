@@ -1027,16 +1027,18 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test, verbose):
+def _cross_val_score(estimator, X, y, score_func, train, test, verbose, **fit_kwargs):
     """Inner loop for cross validation"""
+    n_samples = X.shape[0] if sp.issparse(X) else len(X)
+    fit_kwargs = dict([(k, np.array(v)[train] if len(v) == n_samples else v) for k, v in fit_kwargs.items()])
     if y is None:
-        estimator.fit(X[train])
+        estimator.fit(X[train], **fit_kwargs)
         if score_func is None:
             score = estimator.score(X[test])
         else:
             score = score_func(X[test])
     else:
-        estimator.fit(X[train], y[train])
+        estimator.fit(X[train], y[train], **fit_kwargs)
         if score_func is None:
             score = estimator.score(X[test], y[test])
         else:
@@ -1047,7 +1049,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose):
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
-                    verbose=0):
+                    verbose=0, **fit_kwargs):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1079,6 +1081,9 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
     verbose: integer, optional
         The verbosity level
+
+    fit_kwargs: the optional keyword arguments to pass to the estimator's fit
+        method
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -1092,7 +1097,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                          train, test, verbose)
+                                          train, test, verbose, **fit_kwargs)
                 for train, test in cv)
     return np.array(scores)
 
