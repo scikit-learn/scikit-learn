@@ -382,8 +382,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     def _partial_fit(self, X, y, n_iter, classes=None, sample_weight=None,
                      coef_init=None, intercept_init=None):
-        X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y)
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y = np.asarray(y).ravel()
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -489,12 +489,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                     DeprecationWarning)
             self.class_weight = class_weight
 
-        X = safe_asarray(X, dtype=np.float64, order="C")
-        # labels can be encoded as float, int, or string literals
-        y = np.asarray(y)
-
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         n_samples, n_features = X.shape
 
+        # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
@@ -810,6 +808,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                      coef_init=None, intercept_init=None):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
+        y = y.ravel()
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
