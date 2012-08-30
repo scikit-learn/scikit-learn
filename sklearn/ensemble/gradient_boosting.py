@@ -14,15 +14,6 @@ The module structure is the following:
 
 - ``GradientBoostingRegressor`` implements gradient boosting for
   regression problems.
-
-- The ``BaseGradientBoostingCV`` base class implements a ``fit`` method
-  to choose the best ``n_estimators`` based on cross-validation.
-
-- ``GradientBoostingClassifierCV`` implements ``BaseGradientBoostingCV`` for
-  classification problems.
-
-- ``GradientBoostingRegressor`` implements ``BaseGradientBoostingCV`` for
-  regression problems.
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe
