@@ -320,7 +320,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
             class_weight = self.class_weight
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidge.fit(self, X, Y, solver=solver,
                        sample_weight=sample_weight_classes)
@@ -791,7 +791,7 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
             self.class_weight_ = {}
 
         sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidgeCV.fit(self, X, Y,
                          sample_weight=sample_weight * sample_weight2)
