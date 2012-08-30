@@ -18,21 +18,10 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-cdef extern from "stdlib.h":
-    void* malloc(size_t size)
-    void* calloc(size_t nmemb, size_t size)
-    void* realloc(void* ptr, size_t size)
-    void free(void* ptr)
-
-cdef extern from "string.h":
-    void* memcpy(void* dest, void* src, size_t n)
-
-cdef extern from "math.h":
-    cdef extern double log(double x)
-    cdef extern double pow(double base, double exponent)
-
-cdef extern from "float.h":
-    cdef extern double DBL_MAX
+from libc.float cimport DBL_MAX
+from libc.math cimport log, pow
+from libc.stdlib cimport calloc, free, malloc, realloc
+from libc.string cimport memcpy
 
 
 # ==============================================================================
@@ -216,7 +205,7 @@ cdef class Tree:
         self.max_n_classes = np.max(n_classes)
         self.value_stride = self.n_outputs * self.max_n_classes
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             self.n_classes[k] = n_classes[k]
 
         # Parameters
@@ -236,7 +225,7 @@ cdef class Tree:
         self.children_left = <int*> malloc(capacity * sizeof(int))
         self.children_right = <int*> malloc(capacity * sizeof(int))
 
-        for k from 0 <= k < capacity:
+        for k in xrange(capacity):
             self.children_left[k] = _TREE_UNDEFINED
             self.children_right[k] = _TREE_UNDEFINED
 
@@ -473,7 +462,7 @@ cdef class Tree:
             n_node_samples_left = 0
             n_node_samples_right = 0
 
-            for i from 0 <= i < n_total_samples:
+            for i in xrange(n_total_samples):
                 if sample_mask_ptr[i]:
                     if X_ptr[i] <= threshold:
                         sample_mask_left[i] = 1
@@ -630,7 +619,7 @@ cdef class Tree:
             features = random_state.permutation(features)[:max_features]
 
         # Look for the best split
-        for feature_idx from 0 <= feature_idx < max_features:
+        for feature_idx in xrange(max_features):
             i = features[feature_idx]
 
             # Get i-th col of X and X_sorted
@@ -738,7 +727,7 @@ cdef class Tree:
             features = random_state.permutation(features)[:max_features]
 
         # Look for the best split
-        for feature_idx from 0 <= feature_idx < max_features:
+        for feature_idx in xrange(max_features):
             i = features[feature_idx]
 
             # Get i-th col of X and X_sorted
@@ -807,7 +796,7 @@ cdef class Tree:
         cdef np.ndarray[np.float64_t, ndim=3] out
         out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
 
-        for i from 0 <= i < n_samples:
+        for i in xrange(n_samples):
             node_id = 0
 
             # While node_id not a leaf
@@ -819,10 +808,10 @@ cdef class Tree:
 
             offset_node = node_id * self.value_stride
 
-            for k from 0 <= k < self.n_outputs:
+            for k in xrange(self.n_outputs):
                 offset_output = k * self.max_n_classes
 
-                for c from 0 <= c < self.n_classes[k]:
+                for c in xrange(self.n_classes[k]):
                     out[i, k, c] = self.value[offset_node + offset_output + c]
 
         return out
@@ -836,7 +825,7 @@ cdef class Tree:
         cdef np.ndarray[np.int32_t, ndim=1] out
         out = np.zeros((n_samples, ), dtype=np.int32)
 
-        for i from 0 <= i < n_samples:
+        for i in xrange(n_samples):
             node_id = 0
 
             # While node_id not a leaf
@@ -875,12 +864,12 @@ cdef class Tree:
         importances = np.zeros((self.n_features,), dtype=np.float64)
 
         if method == "gini":
-            for node from 0 <= node < self.node_count:
+            for node in xrange(self.node_count):
                 if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
                     importances[self.feature[node]] += \
                         self._compute_feature_importances_gini(node)
         else:
-            for node from 0 <= node < self.node_count:
+            for node in xrange(self.node_count):
                 if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
                     importances[self.feature[node]] += \
                         self._compute_feature_importances_squared(node)
@@ -994,7 +983,7 @@ cdef class ClassificationCriterion(Criterion):
         self.n_classes = <int*> malloc(n_outputs * sizeof(int))
         cdef int label_count_stride = -1
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             self.n_classes[k] = n_classes[k]
 
             if n_classes[k] > label_count_stride:
@@ -1042,15 +1031,15 @@ cdef class ClassificationCriterion(Criterion):
 
         self.n_samples = n_samples
 
-        for k from 0 <= k < n_outputs:
-            for c from 0 <= c < n_classes[k]:
+        for k in xrange(n_outputs):
+            for c in xrange(n_classes[k]):
                 label_count_init[k * label_count_stride + c] = 0
 
-        for j from 0 <= j < n_total_samples:
+        for j in xrange(n_total_samples):
             if sample_mask[j] == 0:
                 continue
 
-            for k from 0 <= k < n_outputs:
+            for k in xrange(n_outputs):
                 c = <int>y[j * y_stride + k]
                 label_count_init[k * label_count_stride + c] += 1
 
@@ -1070,8 +1059,8 @@ cdef class ClassificationCriterion(Criterion):
         self.n_left = 0
         self.n_right = self.n_samples
 
-        for k from 0 <= k < n_outputs:
-            for c from 0 <= c < n_classes[k]:
+        for k in xrange(n_outputs):
+            for c in xrange(n_classes[k]):
                 # Reset left label counts to 0
                 label_count_left[k * label_count_stride + c] = 0
 
@@ -1092,13 +1081,13 @@ cdef class ClassificationCriterion(Criterion):
         cdef int idx, k, c, s
 
         # post condition: all samples from [0:b) are on the left side
-        for idx from a <= idx < b:
+        for idx in xrange(a, b):
             s = X_argsorted_i[idx]
 
             if sample_mask[s] == 0:
                 continue
 
-            for k from 0 <= k < n_outputs:
+            for k in xrange(n_outputs):
                 c = <int>y[s * y_stride + k]
                 label_count_right[k * label_count_stride + c] -= 1
                 label_count_left[k * label_count_stride + c] += 1
@@ -1125,8 +1114,8 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef int k, c
 
-        for k from 0 <= k < n_outputs:
-            for c from 0 <= c < n_classes[k]:
+        for k in xrange(n_outputs):
+            for c in xrange(n_classes[k]):
                 buffer_value[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
 
@@ -1162,11 +1151,11 @@ cdef class Gini(ClassificationCriterion):
         cdef double H_right
         cdef int k, c, count_left, count_right
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             H_left = n_left * n_left
             H_right = n_right * n_right
 
-            for c from 0 <= c < n_classes[k]:
+            for c in xrange(n_classes[k]):
                 count_left = label_count_left[k * label_count_stride + c]
                 if count_left > 0:
                     H_left -= (count_left * count_left)
@@ -1222,11 +1211,11 @@ cdef class Entropy(ClassificationCriterion):
         cdef int k, c
         cdef double e1, e2
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             H_left = 0.0
             H_right = 0.0
 
-            for c from 0 <= c < n_classes[k]:
+            for c in xrange(n_classes[k]):
                 if label_count_left[k * label_count_stride + c] > 0:
                     H_left -= ((label_count_left[k * label_count_stride + c] / n_left) * log(label_count_left[k * label_count_stride + c] / n_left))
 
@@ -1362,7 +1351,7 @@ cdef class RegressionCriterion(Criterion):
 
         cdef int k = 0
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             mean_left[k] = 0.0
             mean_right[k] = 0.0
             mean_init[k] = 0.0
@@ -1377,16 +1366,16 @@ cdef class RegressionCriterion(Criterion):
         cdef int j = 0
         cdef DOUBLE_t y_jk = 0.0
 
-        for j from 0 <= j < n_total_samples:
+        for j in xrange(n_total_samples):
             if sample_mask[j] == 0:
                 continue
 
-            for k from 0 <= k < n_outputs:
+            for k in xrange(n_outputs):
                 y_jk = y[j * y_stride + k]
                 sq_sum_init[k] += y_jk * y_jk
                 mean_init[k] += y_jk
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             mean_init[k] /= n_samples
 
         self.reset()
@@ -1415,7 +1404,7 @@ cdef class RegressionCriterion(Criterion):
         self.n_right = self.n_samples
         self.n_left = 0
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             mean_right[k] = mean_init[k]
             mean_left[k] = 0.0
             sq_sum_right[k] = sq_sum_init[k]
@@ -1443,13 +1432,13 @@ cdef class RegressionCriterion(Criterion):
         cdef int idx, j, k
 
         # post condition: all samples from [0:b) are on the left side
-        for idx from a <= idx < b:
+        for idx in xrange(a, b):
             j = X_argsorted_i[idx]
 
             if sample_mask[j] == 0:
                 continue
 
-            for k from 0 <= k < n_outputs:
+            for k in xrange(n_outputs):
                 y_idx = y[j * y_stride + k]
                 sq_sum_left[k] += (y_idx * y_idx)
                 sq_sum_right[k] -= (y_idx * y_idx)
@@ -1462,7 +1451,7 @@ cdef class RegressionCriterion(Criterion):
             n_right -= 1
             self.n_right = n_right
 
-            for k from 0 <= k < n_outputs:
+            for k in xrange(n_outputs):
                 var_left[k] = sq_sum_left[k] - n_left * (mean_left[k] * mean_left[k])
                 var_right[k] = sq_sum_right[k] - n_right * (mean_right[k] * mean_right[k])
 
@@ -1480,7 +1469,7 @@ cdef class RegressionCriterion(Criterion):
 
         cdef int k
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             buffer_value[k] = mean_init[k]
 
 
@@ -1499,7 +1488,7 @@ cdef class MSE(RegressionCriterion):
         cdef int k
         cdef double total = 0.0
 
-        for k from 0 <= k < n_outputs:
+        for k in xrange(n_outputs):
             total += var_left[k]
             total += var_right[k]
 
@@ -1547,7 +1536,7 @@ cdef inline int _smallest_sample_larger_than(int sample_idx,
     if sample_idx > -1:
         threshold = X_i[X_argsorted_i[sample_idx]]
 
-    for idx from sample_idx < idx < n_total_samples:
+    for idx in xrange(sample_idx + 1, n_total_samples):
         j = X_argsorted_i[idx]
 
         if sample_mask[j] == 0:
@@ -1586,7 +1575,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     cdef int n_bagged = 0
     cdef int i = 0
 
-    for i from 0 <= i < n_total_samples:
+    for i in xrange(n_total_samples):
         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
             sample_mask[i] = 1
             n_bagged += 1
