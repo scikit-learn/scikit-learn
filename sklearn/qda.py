@@ -150,7 +150,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         """
         dec_func = self._decision_function(X)
         # handle special case of two classes
-        if len(self.classes_) is 2:
+        if len(self.classes_) == 2:
             return dec_func[:, 1] - dec_func[:, 0]
         return dec_func
 
