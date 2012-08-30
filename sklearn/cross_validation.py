@@ -872,8 +872,8 @@ def _validate_shuffle_split(n, test_size, train_size):
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
-    y = unique(y, return_inverse=True)[1]
-    n_cls = unique(y).size
+    classes, y = unique(y, return_inverse=True)
+    n_cls = classes.shape[0]
 
     if np.min(np.bincount(y)) < 2:
         raise ValueError("The least populated class in y has only 1"
@@ -892,7 +892,7 @@ def _validate_stratified_shuffle_split(y, test_size, train_size):
                          'equal to the number of classes = %d' %
                          (n_test, n_cls))
 
-    return n_train, n_test
+    return n_train, n_test, classes, y
 
 
 class StratifiedShuffleSplit(object):
@@ -961,22 +961,22 @@ class StratifiedShuffleSplit(object):
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        self.n_train, self.n_test = \
+        self.n_train, self.n_test, self.classes, self.y_indices = \
             _validate_stratified_shuffle_split(y, test_size, train_size)
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        cls_count = np.bincount(unique(self.y, return_inverse=True)[1])
+        cls_count = np.bincount(self.y_indices)
         p_i = cls_count / float(self.n)
-        n_i = np.round(self.n_train * p_i).astype('int')
+        n_i = np.round(self.n_train * p_i).astype(int)
         t_i = np.minimum(cls_count - n_i,
-                         np.round(self.n_test * p_i).astype('int'))
+                         np.round(self.n_test * p_i).astype(int))
 
         for n in range(self.n_iterations):
             train = []
             test = []
 
-            for i, cls in enumerate(unique(self.y)):
+            for i, cls in enumerate(self.classes):
                 permutation = rng.permutation(n_i[i] + t_i[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
@@ -989,8 +989,8 @@ class StratifiedShuffleSplit(object):
             if self.indices:
                 yield train, test
             else:
-                train_m = np.zeros(self.n, dtype='bool')
-                test_m = np.zeros(self.n, dtype='bool')
+                train_m = np.zeros(self.n, dtype=bool)
+                test_m = np.zeros(self.n, dtype=bool)
                 train_m[train] = True
                 test_m[test] = True
 
