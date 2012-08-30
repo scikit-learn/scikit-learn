@@ -587,11 +587,11 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return proba
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
+        """Fit a binary classifier on X and y. """
         coef, intercept = fit_binary(self, 1, X, y, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
                                      sample_weight)
-
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
