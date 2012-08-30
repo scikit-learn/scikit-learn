@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..utils import array2d, atleast2d_or_csr, check_arrays, safe_asarray
+from ..utils import array2d, atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
 from ..utils import deprecated
 
@@ -26,6 +26,15 @@ from .sgd_fast import ModifiedHuber
 from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
+
+
+LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3}
+
+PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
+
+SPARSE_INTERCEPT_DECAY = 0.01
+"""For sparse data intercept updates are scaled by this decay factor to avoid
+intercept osscilation."""
 
 
 class BaseSGD(BaseEstimator):
@@ -89,17 +98,15 @@ class BaseSGD(BaseEstimator):
             self.t_ = 1.0 / (eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
-        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
         try:
-            self.learning_rate_code = learning_rate_codes[learning_rate]
+            self.learning_rate_type = LEARNING_RATE_TYPES[learning_rate]
         except KeyError:
             raise ValueError("learning rate %s"
                              "is not supported. " % learning_rate)
 
     def _set_penalty_type(self, penalty):
-        penalty_types = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
         try:
-            self.penalty_type = penalty_types[penalty]
+            self.penalty_type = PENALTY_TYPES[penalty]
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
@@ -174,16 +181,21 @@ class BaseSGD(BaseEstimator):
 
 
 def _check_fit_data(X, y):
+    """Check if shape of input data matches. """
     n_samples, _ = X.shape
     if n_samples != y.shape[0]:
         raise ValueError("Shapes of X and y do not match.")
 
 
 def _make_dataset(X, y_i, sample_weight):
-    """Returns Dataset object + intercept_decay"""
+    """Create ``Dataset`` abstraction for sparse and dense inputs.
+
+    This also returns the ``intercept_decay`` which is different
+    for sparse datasets.
+    """
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
-        intercept_decay = 0.01
+        intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
         intercept_decay = 1.0
@@ -648,7 +660,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      dataset, n_iter, est.fit_intercept,
                      est.verbose, est.shuffle, est.seed,
                      pos_weight, neg_weight,
-                     est.learning_rate_code, est.eta0,
+                     est.learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
 
@@ -918,7 +930,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           int(self.shuffle),
                                           self.seed,
                                           1.0, 1.0,
-                                          self.learning_rate_code,
+                                          self.learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
                                           intercept_decay)
 
