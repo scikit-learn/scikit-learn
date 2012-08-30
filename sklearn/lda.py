@@ -196,7 +196,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             log likelihood ratio of the positive class.
         """
         dec_func = self._decision_function(X)
-        if len(self.classes_) is 2:
+        if len(self.classes_) == 2:
             return dec_func[:, 1] - dec_func[:, 0]
         return dec_func
 

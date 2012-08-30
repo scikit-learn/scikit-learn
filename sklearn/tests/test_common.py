@@ -221,11 +221,7 @@ def test_classifiers_train():
                     decision = clf.decision_function(X)
                     if n_labels is 2:
                         assert_equal(decision.ravel().shape, (n_samples,))
-                        if Clf in [RidgeClassifier, RidgeClassifierCV]:
-                            # TODO: fix ridge decision threshold
-                            dec_pred = (decision.ravel() > 0.5).astype(np.int)
-                        else:
-                            dec_pred = (decision.ravel() > 0).astype(np.int)
+                        dec_pred = (decision.ravel() > 0).astype(np.int)
                         assert_array_equal(dec_pred, y_pred)
                     if n_labels is 3 and not isinstance(clf, BaseLibSVM):
                         # 1on1 of LibSVM works differently
