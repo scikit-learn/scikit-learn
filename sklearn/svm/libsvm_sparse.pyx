@@ -104,10 +104,9 @@ def libsvm_sparse_train ( int n_features,
                "sample_weight has %s samples while X has %s" % \
                (sample_weight.shape[0], indptr.shape[0] - 1)
 
-    if kernel_type == 4:
-        # precomputed kernel
-        raise ValueError("Can not use sparse SVMs with precomputed kernels."
-                " This is probably not what you want any way! ")
+    # we should never end up here with a precomputed kernel matrix,
+    # as this is always dense.
+    assert(kernel_type != 4)
 
     # set libsvm problem
     problem = csr_set_problem(values.data, indices.shape, indices.data,
