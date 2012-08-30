@@ -150,26 +150,6 @@ cdef class Tree:
     # cdef int* n_samples
 
     # Wrap for outside world
-    property n_classes:
-        def __get__(self):
-            return intp_to_ndarray(self.n_classes, self.n_outputs)
-
-    property children_left:
-        def __get__(self):
-            return intp_to_ndarray(self.children_left, self.node_count)
-
-    property children_right:
-        def __get__(self):
-            return intp_to_ndarray(self.children_right, self.node_count)
-
-    property feature:
-        def __get__(self):
-            return intp_to_ndarray(self.feature, self.node_count)
-
-    property threshold:
-        def __get__(self):
-            return doublep_to_ndarray(self.threshold, self.node_count)
-
     property value:
         def __get__(self):
             cdef np.npy_intp shape[3]
@@ -177,18 +157,6 @@ cdef class Tree:
             shape[1] = <np.npy_intp> self.n_outputs
             shape[2] = <np.npy_intp> self.max_n_classes
             return np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
-
-    property best_error:
-        def __get__(self):
-            return doublep_to_ndarray(self.best_error, self.node_count)
-
-    property init_error:
-        def __get__(self):
-            return doublep_to_ndarray(self.init_error, self.node_count)
-
-    property n_samples:
-        def __get__(self):
-            return intp_to_ndarray(self.n_samples, self.node_count)
 
     def __cinit__(self, int n_features, object n_classes, int n_outputs,
                  Criterion criterion, double max_depth, int min_samples_split,
@@ -200,7 +168,7 @@ cdef class Tree:
 
         self.n_features = n_features
         self.n_outputs = n_outputs
-        self.n_classes = <int*> malloc(n_outputs * sizeof(int))
+        self.n_classes = np.empty(n_outputs, dtype=np.int32)
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = self.n_outputs * self.max_n_classes
@@ -222,38 +190,28 @@ cdef class Tree:
         self.node_count = 0
         self.capacity = capacity
 
-        self.children_left = <int*> malloc(capacity * sizeof(int))
-        self.children_right = <int*> malloc(capacity * sizeof(int))
+        self.children_left = np.empty(capacity, dtype=np.int32)
+        self.children_left[:] = _TREE_UNDEFINED
+        self.children_right = np.empty(capacity, dtype=np.int32)
+        self.children_right[:] = _TREE_UNDEFINED
 
-        for k in xrange(capacity):
-            self.children_left[k] = _TREE_UNDEFINED
-            self.children_right[k] = _TREE_UNDEFINED
-
-        self.feature = <int*> malloc(capacity * sizeof(int))
-        self.threshold = <double*> malloc(capacity * sizeof(double))
+        self.feature = np.empty(capacity, dtype=np.int32)
+        self.threshold = np.empty(capacity, dtype=np.float64)
+        #self.value = np.empty(capacity * self.value_stride, dtype=np.float64)
         self.value = <double*> malloc(capacity * self.value_stride * sizeof(double));
-        self.best_error = <double*> malloc(capacity * sizeof(double));
-        self.init_error = <double*> malloc(capacity * sizeof(double));
-        self.n_samples = <int*> malloc(capacity * sizeof(int));
+        self.best_error = np.empty(capacity, dtype=np.float64)
+        self.init_error = np.empty(capacity, dtype=np.float64)
+        self.n_samples = np.empty(capacity, dtype=np.int32)
 
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
-        free(self.n_classes)
-
-        free(self.children_left)
-        free(self.children_right)
-        free(self.feature)
-        free(self.threshold)
         free(self.value)
-        free(self.best_error)
-        free(self.init_error)
-        free(self.n_samples)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         return (Tree, (self.n_features,
-                       intp_to_ndarray(self.n_classes, self.n_outputs),
+                       self.n_classes,
                        self.n_outputs,
                        self.criterion,
                        self.max_depth,
@@ -270,14 +228,14 @@ cdef class Tree:
 
         d["node_count"] = self.node_count
         d["capacity"] = self.capacity
-        d["children_left"] = intp_to_ndarray(self.children_left, self.capacity)
-        d["children_right"] = intp_to_ndarray(self.children_right, self.capacity)
-        d["feature"] = intp_to_ndarray(self.feature, self.capacity)
-        d["threshold"] = doublep_to_ndarray(self.threshold, self.capacity)
+        d["children_left"] = self.children_left
+        d["children_right"] = self.children_right
+        d["feature"] = self.feature
+        d["threshold"] = self.threshold
         d["value"] = doublep_to_ndarray(self.value, self.capacity * self.value_stride)
-        d["best_error"] = doublep_to_ndarray(self.best_error, self.capacity)
-        d["init_error"] = doublep_to_ndarray(self.init_error, self.capacity)
-        d["n_samples"] = intp_to_ndarray(self.n_samples, self.capacity)
+        d["best_error"] = self.best_error
+        d["init_error"] = self.init_error
+        d["n_samples"] = self.n_samples
 
         return d
 
@@ -286,23 +244,23 @@ cdef class Tree:
         self.resize(d["capacity"])
         self.node_count = d["node_count"]
 
-        cdef int* children_left = <int*> (<np.ndarray> d["children_left"]).data
-        cdef int* children_right =  <int*> (<np.ndarray> d["children_right"]).data
-        cdef int* feature = <int*> (<np.ndarray> d["feature"]).data
-        cdef double* threshold = <double*> (<np.ndarray> d["threshold"]).data
+        #cdef int* children_left = <int*> (<np.ndarray> d["children_left"]).data
+        #cdef int* children_right =  <int*> (<np.ndarray> d["children_right"]).data
+        #cdef int* feature = <int*> (<np.ndarray> d["feature"]).data
+        #cdef double* threshold = <double*> (<np.ndarray> d["threshold"]).data
         cdef double* value = <double*> (<np.ndarray> d["value"]).data
-        cdef double* best_error = <double*> (<np.ndarray> d["best_error"]).data
-        cdef double* init_error = <double*> (<np.ndarray> d["init_error"]).data
-        cdef int* n_samples = <int*> (<np.ndarray> d["n_samples"]).data
+        #cdef double* best_error = <double*> (<np.ndarray> d["best_error"]).data
+        #cdef double* init_error = <double*> (<np.ndarray> d["init_error"]).data
+        #cdef int* n_samples = <int*> (<np.ndarray> d["n_samples"]).data
 
-        memcpy(self.children_left, children_left, self.capacity * sizeof(int))
-        memcpy(self.children_right, children_right, self.capacity * sizeof(int))
-        memcpy(self.feature, feature, self.capacity * sizeof(int))
-        memcpy(self.threshold, threshold, self.capacity * sizeof(double))
+        #memcpy(self.children_left, children_left, self.capacity * sizeof(int))
+        #memcpy(self.children_right, children_right, self.capacity * sizeof(int))
+        #memcpy(self.feature, feature, self.capacity * sizeof(int))
+        #memcpy(self.threshold, threshold, self.capacity * sizeof(double))
         memcpy(self.value, value, self.capacity * self.value_stride * sizeof(double))
-        memcpy(self.best_error, best_error, self.capacity * sizeof(double))
-        memcpy(self.init_error, init_error, self.capacity * sizeof(double))
-        memcpy(self.n_samples, n_samples, self.capacity * sizeof(int))
+        #memcpy(self.best_error, best_error, self.capacity * sizeof(double))
+        #memcpy(self.init_error, init_error, self.capacity * sizeof(double))
+        #memcpy(self.n_samples, n_samples, self.capacity * sizeof(int))
 
     cdef void resize(self, int capacity=-1):
         """Resize all inner arrays to `capacity`, if < 0 double capacity."""
@@ -314,14 +272,14 @@ cdef class Tree:
 
         self.capacity = capacity
 
-        self.children_left = <int*> realloc(self.children_left, capacity * sizeof(int))
-        self.children_right = <int*> realloc(self.children_right, capacity * sizeof(int))
-        self.feature = <int*> realloc(self.feature, capacity * sizeof(int))
-        self.threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
+        self.children_left = np.resize(self.children_left, capacity)
+        self.children_right = np.resize(self.children_right, capacity)
+        self.feature = np.resize(self.feature, capacity)
+        self.threshold = np.resize(self.threshold, capacity)
         self.value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
-        self.best_error = <double*> realloc(self.best_error, capacity * sizeof(double))
-        self.init_error = <double*> realloc(self.init_error, capacity * sizeof(double))
-        self.n_samples = <int*> realloc(self.n_samples, capacity * sizeof(int))
+        self.best_error = np.resize(self.best_error, capacity)
+        self.init_error = np.resize(self.init_error, capacity)
+        self.n_samples = np.resize(self.n_samples, capacity)
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
@@ -362,14 +320,15 @@ cdef class Tree:
             init_capacity = 2047
 
         self.resize(init_capacity)
-        cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
+        cdef np.ndarray[np.float64_t, ndim=1] buffer_value
+        buffer_value = np.empty(self.value_stride, dtype=np.float64)
+        #cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
 
         # Build the tree by recursive partitioning
-        self.recursive_partition(X, X_argsorted, y, sample_mask, np.sum(sample_mask), 0, -1, False, buffer_value)
+        self.recursive_partition(X, X_argsorted, y, sample_mask, np.sum(sample_mask), 0, -1, False, <double*>(buffer_value.data))
 
         # Compactify
         self.resize(self.node_count)
-        free(buffer_value)
 
     cdef void recursive_partition(self,
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
@@ -796,22 +755,28 @@ cdef class Tree:
         cdef np.ndarray[np.float64_t, ndim=3] out
         out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
 
+        cdef np.ndarray[np.int32_t, ndim=1] children_left = self.children_left
+        cdef np.ndarray[np.int32_t, ndim=1] children_right = self.children_right
+        cdef np.ndarray[np.int32_t, ndim=1] feature = self.feature
+        cdef np.ndarray[np.int32_t, ndim=1] n_classes = self.n_classes
+        cdef np.ndarray[np.float64_t, ndim=1] threshold = self.threshold
+
         for i in xrange(n_samples):
             node_id = 0
 
             # While node_id not a leaf
-            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
-                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
-                    node_id = self.children_left[node_id]
+            while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                if X[i, feature[node_id]] <= threshold[node_id]:
+                    node_id = children_left[node_id]
                 else:
-                    node_id = self.children_right[node_id]
+                    node_id = children_right[node_id]
 
             offset_node = node_id * self.value_stride
 
             for k in xrange(self.n_outputs):
                 offset_output = k * self.max_n_classes
 
-                for c in xrange(self.n_classes[k]):
+                for c in xrange(n_classes[k]):
                     out[i, k, c] = self.value[offset_node + offset_output + c]
 
         return out
@@ -825,15 +790,20 @@ cdef class Tree:
         cdef np.ndarray[np.int32_t, ndim=1] out
         out = np.zeros((n_samples, ), dtype=np.int32)
 
+        cdef np.ndarray[np.int32_t, ndim=1] children_left = self.children_left
+        cdef np.ndarray[np.int32_t, ndim=1] children_right = self.children_right
+        cdef np.ndarray[np.int32_t, ndim=1] feature = self.feature
+        cdef np.ndarray[np.float64_t, ndim=1] threshold = self.threshold
+
         for i in xrange(n_samples):
             node_id = 0
 
             # While node_id not a leaf
-            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
-                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
-                    node_id = self.children_left[node_id]
+            while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                if X[i, feature[node_id]] <= threshold[node_id]:
+                    node_id = children_left[node_id]
                 else:
-                    node_id = self.children_right[node_id]
+                    node_id = children_right[node_id]
 
             out[i] = node_id
 
@@ -863,16 +833,25 @@ cdef class Tree:
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,), dtype=np.float64)
 
+        cdef np.ndarray[np.int32_t, ndim=1] children_left = self.children_left
+        cdef np.ndarray[np.int32_t, ndim=1] children_right = self.children_right
+        cdef np.ndarray[np.int32_t, ndim=1] feature = self.feature
+        cdef np.ndarray[np.float64_t, ndim=1] threshold = self.threshold
+        cdef np.ndarray[np.float64_t, ndim=1] best_error = self.best_error
+        cdef np.ndarray[np.float64_t, ndim=1] init_error = self.init_error
+        cdef np.ndarray[np.int32_t, ndim=1] n_samples = self.n_samples
+
         if method == "gini":
             for node in xrange(self.node_count):
-                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
-                    importances[self.feature[node]] += \
-                        self._compute_feature_importances_gini(node)
+                if children_left[node] != _TREE_LEAF: # and children_right[node] != _TREE_LEAF:
+                    importances[feature[node]] += (n_samples[node]
+                                                 * (init_error[node]
+                                                  - best_error[node]))
         else:
             for node in xrange(self.node_count):
-                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
-                    importances[self.feature[node]] += \
-                        self._compute_feature_importances_squared(node)
+                if children_left[node] != _TREE_LEAF: # and children_right[node] != _TREE_LEAF:
+                    importances[feature[node]] += (init_error[node]
+                                                 - best_error[node])
 
         cdef double normalizer = np.sum(importances)
 
@@ -881,13 +860,6 @@ cdef class Tree:
             importances /= normalizer
 
         return importances
-
-    cdef inline double _compute_feature_importances_gini(self, int node):
-        return self.n_samples[node] * (self.init_error[node] - self.best_error[node])
-
-    cdef inline double _compute_feature_importances_squared(self, int node):
-        cdef double error = self.init_error[node] - self.best_error[node]
-        return error * error
 
 
 # ==============================================================================

@@ -36,7 +36,8 @@ cdef class Criterion:
 cdef class Tree:
     # Input/Output layout
     cdef public int n_features
-    cdef int* n_classes
+    cdef object n_classes
+    #cdef int* n_classes
     cdef public int n_outputs
 
     cdef public int max_n_classes
@@ -55,14 +56,21 @@ cdef class Tree:
     # Inner structures
     cdef public int node_count
     cdef public int capacity
-    cdef int* children_left
-    cdef int* children_right
-    cdef int* feature
-    cdef double* threshold
+    cdef public object children_left
+    cdef public object children_right
+    cdef public object feature
+    cdef public object threshold
+    #cdef int* children_left
+    #cdef int* children_right
+    #cdef int* feature
+    #cdef double* threshold
     cdef double* value
-    cdef double* best_error
-    cdef double* init_error
-    cdef int* n_samples
+    cdef object best_error
+    cdef public object init_error
+    cdef public object n_samples
+    #cdef double* best_error
+    #cdef double* init_error
+    #cdef int* n_samples
 
     # Methods
     cdef void resize(self, int capacity=*)
@@ -117,7 +125,3 @@ cdef class Tree:
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
 
     cpdef compute_feature_importances(self, method=*)
-
-    cdef inline double _compute_feature_importances_gini(self, int node)
-
-    cdef inline double _compute_feature_importances_squared(self, int node)
