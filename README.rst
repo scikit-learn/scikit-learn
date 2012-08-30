@@ -76,7 +76,7 @@ source directory (you will need to have nosetest installed)::
 
     python -c "import sklearn; sklearn.test()"
 
-See web page http://scikit-learn.sourceforge.net/install.html#testing
+See web page http://scikit-learn.org/stable/install.html#testing
 for more information.
 
     Random number generation can be controled during testing by setting

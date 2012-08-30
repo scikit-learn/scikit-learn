@@ -151,6 +151,10 @@ class BaseLibSVM(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = np.asarray(y, dtype=np.float64, order='C')
 
+        if self.impl != "one_class" and len(np.unique(y)) < 2:
+            raise ValueError("The number of classes has to be greater than"
+                    " one.")
+
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
                     "Using it in the 'fit' method is deprecated.",
@@ -635,6 +639,9 @@ class BaseLibLinear(BaseEstimator):
         self : object
             Returns self.
         """
+        if len(np.unique(y)) < 2:
+            raise ValueError("The number of classes has to be greater than"
+                    " one.")
 
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."

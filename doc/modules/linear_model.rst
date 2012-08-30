@@ -202,6 +202,11 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
+.. note:: **Randomized sparsity**
+
+      For feature selection or sparse recovery, it may be interesting to
+      use :ref:`randomized_l1`.
+
 
 Setting regularization parameter
 --------------------------------
@@ -588,7 +593,7 @@ Automatic Relevance Determination - ARD
 :class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
 but can lead to sparser weights :math:`w` [1]_.
 :class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
-assuption of the Gaussian being spherical.
+assumption of the Gaussian being spherical.
 
 Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
 elliptical Gaussian distribution.

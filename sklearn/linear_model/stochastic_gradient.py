@@ -94,7 +94,7 @@ class BaseSGD(BaseEstimator):
             self.learning_rate_code = learning_rate_codes[learning_rate]
         except KeyError:
             raise ValueError("learning rate %s"
-            "is not supported. " % learning_rate)
+                             "is not supported. " % learning_rate)
 
     def _set_penalty_type(self, penalty):
         penalty_types = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
@@ -105,7 +105,7 @@ class BaseSGD(BaseEstimator):
 
     def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
-        if sample_weight == None:
+        if sample_weight is None:
             # uniform sample weights
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
@@ -167,7 +167,7 @@ class BaseSGD(BaseEstimator):
                 intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init " \
-                                 "does not match dataset.")
+                                     "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
@@ -449,7 +449,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        if class_weight != None:
+        if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                     "method is deprecated. Set it on initialization instead.",
                     DeprecationWarning)
@@ -483,7 +483,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        if class_weight != None:
+        if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                     "method is deprecated. Set it on initialization instead.",
                     DeprecationWarning)
@@ -582,17 +582,20 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
 
+        proba = np.ones((len(X), 2), dtype=np.float64)
         if self.loss == "log":
-            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+            proba[:, 1] = 1.0 / (1.0 + np.exp(-self.decision_function(X)))
         elif self.loss == "modified_huber":
-            ret = np.minimum(1, np.maximum(-1, self.decision_function(X)))
-            ret += 1
-            ret /= 2
-            return ret
+            proba[:, 1] = np.minimum(1, np.maximum(-1,
+                                                   self.decision_function(X)))
+            proba[:, 1] += 1
+            proba[:, 1] /= 2
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
                                       "(%s given)" % self.loss)
+        proba[:, 0] -= proba[:, 1]
+        return proba
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         if sp.issparse(X):
