@@ -73,11 +73,14 @@ def _parallel_build_trees(n_trees, forest, X, y, seed, verbose):
         tree.set_params(compute_importances=forest.compute_importances)
         tree.set_params(random_state=check_random_state(seed))
 
-        n_samples = X.shape[0]
-        indices = random_state.randint(0, n_samples, n_samples)
-        tree.fit(X[indices], y[indices])
-        tree.indices_ = indices
+        if forest.bootstrap:
+            n_samples = X.shape[0]
+            indices = random_state.randint(0, n_samples, n_samples)
+            tree.fit(X[indices], y[indices])
+            tree.indices_ = indices
 
+        else:
+            tree.fit(X, y)
 
         trees.append(tree)
 
@@ -172,6 +175,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
+                       bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -182,6 +186,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
+        self.bootstrap = bootstrap
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
@@ -352,6 +357,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
+                       bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -361,6 +367,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
+            bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -492,6 +499,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
     def __init__(self, base_estimator,
                        n_estimators=10,
                        estimator_params=[],
+                       bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -501,6 +509,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
+            bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -586,6 +595,9 @@ class RandomForestClassifier(ForestClassifier):
 
         Note: this parameter is tree-specific.
 
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
@@ -638,6 +650,7 @@ class RandomForestClassifier(ForestClassifier):
                        min_samples_split=1,
                        min_samples_leaf=1,
                        max_features="auto",
+                       bootstrap=True,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -649,6 +662,7 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                 "min_samples_leaf", "max_features",
                 "random_state"),
+            bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -706,6 +720,9 @@ class RandomForestRegressor(ForestRegressor):
 
         Note: this parameter is tree-specific.
 
+    bootstrap : boolean, optional (default=True)
+        Whether bootstrap samples are used when building trees.
+
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
@@ -758,6 +775,7 @@ class RandomForestRegressor(ForestRegressor):
                        min_samples_split=1,
                        min_samples_leaf=1,
                        max_features="auto",
+                       bootstrap=True,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -769,6 +787,7 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                 "min_samples_leaf", "max_features",
                 "random_state"),
+            bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -827,6 +846,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Note: this parameter is tree-specific.
 
+    bootstrap : boolean, optional (default=False)
+        Whether bootstrap samples are used when building trees.
+
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
@@ -881,6 +903,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        min_samples_split=1,
                        min_samples_leaf=1,
                        max_features="auto",
+                       bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -892,6 +915,7 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                 "min_samples_leaf", "max_features",
                 "random_state"),
+            bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -950,6 +974,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
         Note: this parameter is tree-specific.
 
+    bootstrap : boolean, optional (default=False)
+        Whether bootstrap samples are used when building trees.
+        Note: this parameter is tree-specific.
+
     compute_importances : boolean, optional (default=True)
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
@@ -1002,6 +1030,7 @@ class ExtraTreesRegressor(ForestRegressor):
                        min_samples_split=1,
                        min_samples_leaf=1,
                        max_features="auto",
+                       bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
@@ -1013,6 +1042,7 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                 "min_samples_leaf", "max_features",
                 "random_state"),
+            bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
