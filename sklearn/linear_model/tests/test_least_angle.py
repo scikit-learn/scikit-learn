@@ -114,7 +114,7 @@ def test_no_path():
         diabetes.data, diabetes.target, method="lar", return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert alpha_ == alphas_[-1]
+    assert_true(alpha_ == alphas_[-1])
 
 
 def test_no_path_precomputed():
@@ -131,7 +131,7 @@ def test_no_path_precomputed():
         return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert alpha_ == alphas_[-1]
+    assert_true(alpha_ == alphas_[-1])
 
 
 def test_no_path_all_precomputed():
@@ -149,7 +149,7 @@ def test_no_path_all_precomputed():
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
-    assert alpha_ == alphas_[-1]
+    assert_true(alpha_ == alphas_[-1])
 
 
 def test_singular_matrix():
