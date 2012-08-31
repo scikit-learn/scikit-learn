@@ -631,10 +631,10 @@ class Bootstrap(object):
                 "n_test is deprecated in 0.11 and scheduled for "
                 "removal in 0.12, use test_size instead",
                 DeprecationWarning, stacklevel=2)
-        if (isinstance(train_size, float) and train_size >= 0.0
+        if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
-        elif isinstance(train_size, int):
+        elif isinstance(train_size, (int, np.integer)):
             self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
@@ -643,10 +643,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if (isinstance(test_size, float) and test_size >= 0.0
+        if (isinstance(test_size, (float, np.floating)) and test_size >= 0.0
                     and test_size <= 1.0):
             self.test_size = ceil(test_size * n)
-        elif isinstance(test_size, int):
+        elif isinstance(test_size, (int, np.integer)):
             self.test_size = test_size
         elif test_size is None:
             self.test_size = self.n - self.train_size

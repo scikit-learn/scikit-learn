@@ -216,7 +216,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     random_state = check_random_state(random_state)
     n_samples, n_features = X.shape
 
-    if isinstance(n_trials, int):
+    if isinstance(n_trials, (int, np.integer)):
         run_from_estimates = False
     elif isinstance(n_trials, tuple):
         run_from_estimates = True
