@@ -67,6 +67,9 @@ Changelog
    - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
      returns 2d array.
 
+   - Fixed feature importance computation in
+     :ref:`ensemble.gradient_boosting`.
+
 API changes summary
 -------------------
 
@@ -96,6 +99,10 @@ API changes summary
    - In :class:`feature_extraction.text.CountVectorizer` the parameters
      ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
+
+   - :class:`ensemble.GradientBoostingClassifier` now supports
+     :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
+     :meth:`ensemble.GradientBoostingClassifier.staged_predict`.
 
 .. _changes_0_11:
 
