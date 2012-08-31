@@ -129,13 +129,18 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def build_dataset():
-    # build an ill-posed linear regression problem with many noisy features and
-    # comparatively few samples
-    n_samples, n_features = 50, 200
+def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
+                  n_targets=1):
+    """
+    build an ill-posed linear regression problem with many noisy features and
+    comparatively few samples
+    """
     random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features)
-    w[10:] = 0.0  # only the top 10 features are impacting the model
+    if n_targets > 1:
+        w = random_state.randn(n_features, n_targets)
+    else:
+        w = random_state.randn(n_features)
+    w[n_informative_features:] = 0.0
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
     X_test = random_state.randn(n_samples, n_features)
@@ -280,12 +285,10 @@ def test_multi_task_lasso_and_enet():
 
 
 def test_enet_multitarget():
-    rng = np.random.RandomState(0)
-    X, y = rng.randn(10, 8), rng.randn(10, 3)
-    n_targets = y.shape[1]
-
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
-    # XXX: There is a bug when precompute is not None!
+    n_targets = 3
+    X, y, _, _ = build_dataset(n_samples=10, n_features=8,
+                               n_informative_features=10, n_targets=n_targets)
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True)
     estimator.fit(X, y)
     coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
                                       estimator.dual_gap_, estimator.eps_)
