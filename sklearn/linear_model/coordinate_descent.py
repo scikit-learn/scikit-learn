@@ -154,6 +154,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                              copy=self.copy_X and self.fit_intercept)
+        # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
         # now all computation with X can be done inplace
         fit = self._sparse_fit if sparse.isspmatrix(X) else self._dense_fit
@@ -216,7 +217,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                         self.tol, self.positive)
 
             if dual_gap_[k] > eps_[k]:
-                warnings.warn('Objective did not converge, you might want'
+                warnings.warn('Objective did not converge for ' +
+                              'target %d, you might want' % k +
                               ' to increase the number of iterations')
 
         self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
@@ -260,7 +262,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                         self.max_iter, self.tol, self.positive)
 
             if dual_gap_[k] > eps_[k]:
-                warnings.warn('Objective did not converge, you might want'
+                warnings.warn('Objective did not converge for ' +
+                              'target %d, you might want' % k +
                               ' to increase the number of iterations')
 
         self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
@@ -572,7 +575,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     """
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                         copy=copy_X and fit_intercept)
-
+    # From now on X can be touched inplace
     if not sparse.isspmatrix(X):
         X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
                                                   normalize, copy=False)
@@ -679,6 +682,7 @@ class LinearModelCV(LinearModel):
         """
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                              copy=self.copy_X and self.fit_intercept)
+        # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
 
         # All LinearModelCV parameters except 'cv' are acceptable
