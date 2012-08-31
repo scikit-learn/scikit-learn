@@ -73,6 +73,8 @@ Changelog
 
    - Fixes in :class:`decomposition.ProbabilisticPCA` score function by Wei Li.
 
+   - Fixed feature importance computation in
+     :ref:`ensemble.gradient_boosting`.
 
 API changes summary
 -------------------
@@ -123,6 +125,11 @@ API changes summary
    - Linear models when alpha is estimated by cross-validation store
      the estimated value in the `alpha_` attribute rather than just
      `alpha` or `best_alpha`.
+
+   - :class:`ensemble.GradientBoostingClassifier` now supports
+     :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
+     :meth:`ensemble.GradientBoostingClassifier.staged_predict`.
+
 
 .. _changes_0_11:
 
