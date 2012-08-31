@@ -612,20 +612,18 @@ cdef class Tree:
         for feature_idx from 0 <= feature_idx < max_features:
             i = features[feature_idx]
 
+#            X_i = X[:,i]
+#            X_i_ptr = <DTYPE_t*> X_i.data
+#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
+
             # Get i-th col of X and X_argsorted
             X_i_ptr = X_ptr + i * X_stride
             X_copy_ptr = <DTYPE_t*> X_copy.data
             memcpy(X_copy_ptr, X_i_ptr, n_samples * sizeof(DTYPE_t))
             X_argsorted_i_ptr = <int*> X_argsorted_i.data
             memcpy(X_argsorted_i_ptr, <int*> n_samples_arange.data, n_samples * sizeof(int))
-            _argqsort(X_copy_ptr, X_argsorted_i_ptr, 0, n_samples-1)
-#            
-            
-#            X_i = X[:,i]
-#            X_i_ptr = <DTYPE_t*> X_i.data
-#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
-#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
-            #print "argsorted ", i
+            _argqsort(X_copy_ptr, X_argsorted_i_ptr, 0, n_samples-1)     
 
             # Reset the criterion for this feature
             criterion.reset()
@@ -693,6 +691,10 @@ cdef class Tree:
         cdef double t, initial_error, error
         cdef double best_error = INFINITY, best_t = INFINITY
 
+        cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] X_copy = X[:,0].copy() 
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] n_samples_arange = np.arange(n_samples, dtype=np.int32)
+        cdef DTYPE_t* X_copy_ptr
+
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
         cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
 
@@ -734,11 +736,18 @@ cdef class Tree:
         for feature_idx from 0 <= feature_idx < max_features:
             i = features[feature_idx]
 
+#            X_i = X[:,i]
+#            X_i_ptr = <DTYPE_t*> X_i.data
+#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
+
             # Get i-th col of X and X_argsorted
-            X_i = X[:,i]
-            X_i_ptr = <DTYPE_t*> X_i.data
-            X_argsorted_i = np.argsort(X_i).astype(np.int32)
+            X_i_ptr = X_ptr + i * X_stride
+            X_copy_ptr = <DTYPE_t*> X_copy.data
+            memcpy(X_copy_ptr, X_i_ptr, n_samples * sizeof(DTYPE_t))
             X_argsorted_i_ptr = <int*> X_argsorted_i.data
+            memcpy(X_argsorted_i_ptr, <int*> n_samples_arange.data, n_samples * sizeof(int))
+            _argqsort(X_copy_ptr, X_argsorted_i_ptr, 0, n_samples-1)    
 
             # Reset the criterion for this feature
             criterion.reset()
