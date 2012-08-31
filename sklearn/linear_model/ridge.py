@@ -320,7 +320,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
             class_weight = self.class_weight
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidge.fit(self, X, Y, solver=solver,
                        sample_weight=sample_weight_classes)
@@ -582,8 +582,11 @@ class _BaseRidgeCV(LinearModel):
         self : Returns self.
         """
         if self.cv is None:
-            estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                                  self.score_func, self.loss_func,
+            estimator = _RidgeGCV(self.alphas,
+                                  fit_intercept=self.fit_intercept,
+                                  normalize=self.normalize,
+                                  score_func=self.score_func,
+                                  loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
@@ -788,7 +791,7 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
             self.class_weight_ = {}
 
         sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidgeCV.fit(self, X, Y,
                          sample_weight=sample_weight * sample_weight2)

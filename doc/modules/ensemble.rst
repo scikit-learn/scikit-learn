@@ -101,7 +101,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.978...
+    0.97...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -399,7 +399,8 @@ the parameter ``loss``:
       details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
-      can be used to create prediction intervals.
+      can be used to create prediction intervals
+      (see :ref:`example_ensemble_plot_gradient_boosting_quantile.py`).
 
   * Classification
 
@@ -477,6 +478,7 @@ can be controled via the ``max_features`` parameter.
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
 
 
 .. topic:: References

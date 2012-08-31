@@ -41,10 +41,10 @@ Y_train = Y[:n / 2]
 X_test = X[n / 2:]
 Y_test = Y[n / 2:]
 
-print "Corr(X)"
-print np.round(np.corrcoef(X.T), 2)
-print "Corr(Y)"
-print np.round(np.corrcoef(Y.T), 2)
+print("Corr(X)")
+print(np.round(np.corrcoef(X.T), 2))
+print("Corr(Y)")
+print(np.round(np.corrcoef(Y.T), 2))
 
 ###############################################################################
 # Canonical (symetric) PLS
@@ -59,6 +59,7 @@ X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 # Scatter plot of scores
 # ~~~~~~~~~~~~~~~~~~~~~~
 # 1) On diagonal plot X vs Y scores on each components
+pl.figure(figsize=(12, 8))
 pl.subplot(221)
 pl.plot(X_train_r[:, 0], Y_train_r[:, 0], "ob", label="train")
 pl.plot(X_test_r[:, 0], Y_test_r[:, 0], "or", label="test")
@@ -66,7 +67,9 @@ pl.xlabel("x scores")
 pl.ylabel("y scores")
 pl.title('Comp. 1: X vs Y (test corr = %.2f)' %
          np.corrcoef(X_test_r[:, 0], Y_test_r[:, 0])[0, 1])
-pl.legend()
+pl.xticks(())
+pl.yticks(())
+pl.legend(loc="best")
 
 pl.subplot(224)
 pl.plot(X_train_r[:, 1], Y_train_r[:, 1], "ob", label="train")
@@ -75,7 +78,9 @@ pl.xlabel("x scores")
 pl.ylabel("y scores")
 pl.title('Comp. 2: X vs Y (test corr = %.2f)' %
          np.corrcoef(X_test_r[:, 1], Y_test_r[:, 1])[0, 1])
-pl.legend()
+pl.xticks(())
+pl.yticks(())
+pl.legend(loc="best")
 
 # 2) Off diagonal plot components 1 vs 2 for X and Y
 pl.subplot(222)
@@ -85,7 +90,9 @@ pl.xlabel("X comp. 1")
 pl.ylabel("X comp. 2")
 pl.title('X comp. 1 vs X comp. 2 (test corr = %.2f)' % \
     np.corrcoef(X_test_r[:, 0], X_test_r[:, 1])[0, 1])
-pl.legend()
+pl.legend(loc="best")
+pl.xticks(())
+pl.yticks(())
 
 pl.subplot(223)
 pl.plot(Y_train_r[:, 0], Y_train_r[:, 1], "*b", label="train")
@@ -94,7 +101,9 @@ pl.xlabel("Y comp. 1")
 pl.ylabel("Y comp. 2")
 pl.title('Y comp. 1 vs Y comp. 2 , (test corr = %.2f)' % \
     np.corrcoef(Y_test_r[:, 0], Y_test_r[:, 1])[0, 1])
-pl.legend()
+pl.legend(loc="best")
+pl.xticks(())
+pl.yticks(())
 pl.show()
 
 ###############################################################################
@@ -110,11 +119,11 @@ Y = np.dot(X, B) + np.random.normal(size=n * q).reshape((n, q)) + 5
 
 pls2 = PLSRegression(n_components=3)
 pls2.fit(X, Y)
-print "True B (such that: Y = XB + Err)"
-print B
+print("True B (such that: Y = XB + Err)")
+print(B)
 # compare pls2.coefs with B
-print "Estimated B"
-print np.round(pls2.coefs, 1)
+print("Estimated B")
+print(np.round(pls2.coefs, 1))
 pls2.predict(X)
 
 ###############################################################################
@@ -127,8 +136,8 @@ y = X[:, 0] + 2 * X[:, 1] + np.random.normal(size=n * 1) + 5
 pls1 = PLSRegression(n_components=3)
 pls1.fit(X, y)
 # note that the number of compements exceeds 1 (the dimension of y)
-print "Estimated betas"
-print np.round(pls1.coefs, 1)
+print("Estimated betas")
+print(np.round(pls1.coefs, 1))
 
 ###############################################################################
 # CCA (PLS mode B with symetric deflation)

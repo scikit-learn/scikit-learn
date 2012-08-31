@@ -27,6 +27,7 @@ __all__ = ["DecisionTreeClassifier",
            "ExtraTreeRegressor"]
 
 DTYPE = _tree.DTYPE
+DOUBLE = _tree.DOUBLE
 
 CLASSIFICATION = {
     "gini": _tree.Gini,
@@ -126,7 +127,10 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
         out_file = open(out_file, "w")
 
     out_file.write("digraph Tree {\n")
-    recurse(decision_tree.tree_, 0)
+    if isinstance(decision_tree, _tree.Tree):
+        recurse(decision_tree, 0)
+    else:
+        recurse(decision_tree.tree_, 0)
     out_file.write("}")
 
     return out_file
@@ -154,7 +158,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
         self.compute_importances = compute_importances
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -171,17 +175,22 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The training input samples.
+            The training input samples. Use ``dtype=np.float32``
+            and ``order='F'`` for maximum efficiency.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
+            Use ``dtype=np.float64`` and ``order='C'`` for maximum
+            efficiency.
 
         Returns
         -------
         self : object
             Returns self.
         """
+        self.random_state = check_random_state(self.random_state)
+        
         # set min_samples_split sensibly
         self.min_samples_split = max(self.min_samples_split,
                                      2 * self.min_samples_leaf)
@@ -216,8 +225,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
-        if getattr(y, "dtype", None) or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         if is_classification:
             criterion = CLASSIFICATION[self.criterion](self.n_outputs_,

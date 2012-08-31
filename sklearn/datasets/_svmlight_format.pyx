@@ -61,14 +61,19 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
             labels.append(float(target))
         indptr.append(len(data))
 
+        prev_idx = -1
         for i in xrange(1, len(line_parts)):
             idx, value = line_parts[i].split(COLON, 1)
             idx = int(idx)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
-                        "invalid index %d in SVMlight/LibSVM data file" % idx)
+                        "Invalid index %d in SVMlight/LibSVM data file." % idx)
+            if idx <= prev_idx:
+                raise ValueError("Feature ndices in SVMlight/LibSVM data "
+                                 "file should be sorted and unique.")
             indices.append(idx)
             data.append(dtype(value))
+            prev_idx = idx
 
     indptr.append(len(data))
 

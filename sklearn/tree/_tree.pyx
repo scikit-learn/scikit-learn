@@ -41,7 +41,9 @@ cdef extern from "float.h":
 
 # Dtype
 DTYPE = np.float32
+DOUBLE = np.float64
 # ctypedef np.float32_t DTYPE_t
+# ctypedef np.float64_t DOUBLE_t
 # ctypedef np.int8_t BOOL_t
 
 # Constants
@@ -349,8 +351,8 @@ cdef class Tree:
         if X.dtype != DTYPE or not np.isfortran(X):
             X = np.asarray(X, dtype=DTYPE, order="F")
 
-        if y.dtype != DTYPE or not y.flags.contiguous:
-            y = np.asarray(y, dtype=DTYPE, order="C")
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
 
         # Pre-allocate some space
         cdef int init_capacity
@@ -375,7 +377,7 @@ cdef class Tree:
 
     cdef void recursive_partition(self,
                                   np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                                  np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                                   np.ndarray[np.int_t, ndim=1, mode="c"] sample_indices,
                                   int n_samples,
                                   int depth,
@@ -386,7 +388,7 @@ cdef class Tree:
         # Variables
         cdef Criterion criterion = self.criterion
 
-        cdef DTYPE_t* y_ptr
+        cdef DOUBLE_t* y_ptr
         cdef int y_stride
 
         cdef int feature
@@ -424,7 +426,7 @@ cdef class Tree:
 
         else:
             feature = -1
-            y_ptr = <DTYPE_t*> y_current.data
+            y_ptr = <DOUBLE_t*> y_current.data
             y_stride = <int> y_current.strides[0] / <int> y_current.strides[1]
             criterion.init(y_ptr, y_stride, n_samples)
             init_error = criterion.eval()
@@ -536,7 +538,7 @@ cdef class Tree:
 
     cdef void find_split(self,                                   
                          np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                         np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          int n_samples, int* _best_i,
                          double* _best_t, double* _best_error,
                          double* _initial_error):
@@ -551,7 +553,7 @@ cdef class Tree:
 
     cdef void find_best_split(self, 
                               np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                              np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                              np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                               int n_samples, int* _best_i,
                               double* _best_t, double* _best_error,
                               double* _initial_error):
@@ -575,7 +577,7 @@ cdef class Tree:
         cdef DTYPE_t* X_copy_ptr
 
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data     
-        cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
+        cdef DOUBLE_t* y_ptr = <DOUBLE_t*> y.data
 
         cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
         cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
@@ -615,10 +617,10 @@ cdef class Tree:
         for feature_idx from 0 <= feature_idx < max_features:
             i = features[feature_idx]
 
-#            X_i = X[:,i]
-#            X_i_ptr = <DTYPE_t*> X_i.data
-#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
-#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
+            #X_i = X[:,i]
+            #X_i_ptr = <DTYPE_t*> X_i.data
+            #X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+            #X_argsorted_i_ptr = <int*> X_argsorted_i.data
 
             # Get i-th col of X and X_argsorted
             X_i_ptr = X_ptr + i * X_stride
@@ -673,7 +675,7 @@ cdef class Tree:
 
     cdef void find_random_split(self, 
                                 np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                                np.ndarray[DTYPE_t, ndim=2, mode="c"] y,
+                                np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                                 int n_samples, int* _best_i,
                                 double* _best_t, double* _best_error,
                                 double* _initial_error):
@@ -699,14 +701,14 @@ cdef class Tree:
         cdef DTYPE_t* X_copy_ptr
 
         cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
-        cdef DTYPE_t* y_ptr = <DTYPE_t*> y.data
+        cdef DOUBLE_t* y_ptr = <DOUBLE_t*> y.data
 
         cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
         cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
         
         cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] X_i = None
-        cdef DTYPE_t* X_i_ptr = NULL
-        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] X_argsorted_i = None
+        cdef DTYPE_t* X_i_ptr = NULL      
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] X_argsorted_i = np.zeros((n_samples,), dtype=np.int32)
         cdef int* X_argsorted_i_ptr = NULL
         cdef DTYPE_t X_a, X_b
 
@@ -739,10 +741,10 @@ cdef class Tree:
         for feature_idx from 0 <= feature_idx < max_features:
             i = features[feature_idx]
 
-#            X_i = X[:,i]
-#            X_i_ptr = <DTYPE_t*> X_i.data
-#            X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
-#            X_argsorted_i_ptr = <int*> X_argsorted_i.data
+            #X_i = X[:,i]
+            #X_i_ptr = <DTYPE_t*> X_i.data
+            #X_argsorted_i = np.argsort(X_i, kind='heapsort').astype(np.int32)
+            #X_argsorted_i_ptr = <int*> X_argsorted_i.data
 
             # Get i-th col of X and X_argsorted
             X_i_ptr = X_ptr + i * X_stride
@@ -775,7 +777,7 @@ cdef class Tree:
             c = a + 1
 
             while True:
-                if X_i[X_argsorted_i_ptr[c]] > (<DTYPE_t> t) or c == b:
+                if X_i_ptr[X_argsorted_i_ptr[c]] > (<DTYPE_t> t) or c == b:
                     break
 
                 c += 1
@@ -909,7 +911,7 @@ cdef class Tree:
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)."""
 
-    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples):
+    cdef void init(self, DOUBLE_t* y, int y_stride, int n_samples):
         """Initialise the criterion."""
         pass
 
@@ -917,7 +919,7 @@ cdef class Criterion:
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
                     int* X_argsorted_i):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -1028,7 +1030,7 @@ cdef class ClassificationCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples):
+    cdef void init(self, DOUBLE_t* y, int y_stride, int n_samples):
         """Initialise the criterion."""
         cdef int n_outputs = self.n_outputs
         cdef int* n_classes = self.n_classes
@@ -1075,7 +1077,7 @@ cdef class ClassificationCriterion(Criterion):
                 # Reset right label counts to the initial counts
                 label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride,
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
                     int* X_argsorted_i):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
@@ -1339,7 +1341,7 @@ cdef class RegressionCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DTYPE_t* y, int y_stride, int n_samples):
+    cdef void init(self, DOUBLE_t* y, int y_stride, int n_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
            sum in `self.mean_init` and `self.sq_sum_init`. """
@@ -1368,7 +1370,7 @@ cdef class RegressionCriterion(Criterion):
         self.n_samples = n_samples
 
         cdef int j = 0
-        cdef DTYPE_t y_jk = 0.0
+        cdef DOUBLE_t y_jk = 0.0
 
         for j from 0 <= j < n_samples:
             for k from 0 <= k < n_outputs:
@@ -1413,7 +1415,7 @@ cdef class RegressionCriterion(Criterion):
             var_left[k] = 0.0
             var_right[k] = sq_sum_right[k] - n_samples * (mean_right[k] * mean_right[k])
 
-    cdef int update(self, int a, int b, DTYPE_t* y, int y_stride, int* X_argsorted_i ):
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride, int* X_argsorted_i ):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef double* mean_left = self.mean_left

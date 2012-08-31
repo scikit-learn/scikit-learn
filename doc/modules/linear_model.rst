@@ -202,6 +202,11 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
+.. note:: **Randomized sparsity**
+
+      For feature selection or sparse recovery, it may be interesting to
+      use :ref:`randomized_l1`.
+
 
 Setting regularization parameter
 --------------------------------
@@ -225,13 +230,13 @@ observations, it is often faster than :class:`LassoCV`.
 
 .. |lasso_cv_1| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_2.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
-    :scale: 50%
+    :scale: 48%
 
 .. |lasso_cv_2| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_3.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
-    :scale: 50%
+    :scale: 48%
 
-|lasso_cv_1| |lasso_cv_2|
+.. centered:: |lasso_cv_1| |lasso_cv_2|
 
 
 Information-criteria based model selection
@@ -285,6 +290,53 @@ and `rho` by cross-validation.
   * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
+
+.. _multi_task_lasso:
+
+Multi-task Lasso
+================
+
+The :class:`MultiTaskLasso` is a linear model that estimates sparse
+coefficients for multiple regression problems jointly: `y` is a 2D array,
+of shape (n_samples, n_tasks). The constraint is that the selected
+features are the same for all the regression problems, also called tasks.
+
+The following figure compares the location of the non-zeros in W obtained
+with a simple Lasso or a MultiTaskLasso. The Lasso estimates yields
+scattered non-zeros while the non-zeros of the MultiTaskLasso are full
+columns.
+
+.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_1.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 48%
+
+.. |multi_task_lasso_2| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_2.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 48%
+
+.. centered:: |multi_task_lasso_1| |multi_task_lasso_2|
+
+.. centered:: Fitting a time-series model, imposing that any active feature be active at all times.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
+
+
+
+Mathematically, it consists of a linear model trained with a mixed
+:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+The objective function to minimize is:
+
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+
+where;
+
+.. math:: ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+
+The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
+the algorithm to fit the coefficients.
 
 .. _least_angle_regression:
 
@@ -541,7 +593,7 @@ Automatic Relevance Determination - ARD
 :class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
 but can lead to sparser weights :math:`w` [1]_.
 :class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
-assuption of the Gaussian being spherical.
+assumption of the Gaussian being spherical.
 
 Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
 elliptical Gaussian distribution.
@@ -574,16 +626,16 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. _Logistic_regression:
 
-Logisitic regression
-======================
+Logistic regression
+===================
 
-If the task at hand is to choose which class a sample belongs to given
-a finite (hopefuly small) set of choices, the learning problem is a
-classification, rather than regression. Linear models can be used for
-such a decision, but it is best to use what is called a
-`logistic regression <http://en.wikipedia.org/wiki/Logistic_regression>`__,
-that doesn't try to minimize the sum of square residuals, as in regression,
-but rather a "hit or miss" cost.
+Logistic regression, despite its name, is a linear model for classification
+rather than regression.
+As such, it minimizes a "hit or miss" cost function
+rather than the sum of square residuals (as in ordinary regression).
+Logistic regression is also known in the literature as
+logit regression, maximum-entropy classification (MaxEnt)
+or the log-linear classifier.
 
 The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
 logistic regression. L1 penalization yields sparse predicting weights.

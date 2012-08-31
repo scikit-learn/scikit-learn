@@ -448,7 +448,7 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         """
         ## initialization step
-        X = np.asarray(X)
+        X = np.asarray(X, dtype=np.float)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.shape[0] < self.n_components:
@@ -465,7 +465,7 @@ class GMM(BaseEstimator):
                 self.n_iter = kwargs['n_iter']
             if 'n_init' in kwargs:
                 if kwargs['n_init'] < 1:
-                    raise ValueError('GMM estimation requires at least one run')
+                    raise ValueError('GMM estimation requires n_init > 0.')
                 else:
                     self.n_init = kwargs['n_init']
             if 'params' in kwargs:
@@ -473,7 +473,7 @@ class GMM(BaseEstimator):
             if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
 
-        max_log_prob = - np.infty
+        max_log_prob = -np.infty
 
         for _ in range(self.n_init):
             if 'm' in self.init_params or not hasattr(self, 'means_'):
