@@ -398,6 +398,10 @@ class Lars(LinearModel, RegressorMixin):
     `intercept_` : float
         independent term in decision function.
 
+    `coef_path_`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path.
+        It is not present if fit_path parameter is False.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -573,6 +577,10 @@ class LassoLars(Lars):
 
     `intercept_` : float
         independent term in decision function.
+
+    `coef_path_`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path.
+        It is not present if fit_path parameter is False.
 
     Examples
     --------
@@ -760,8 +768,8 @@ class LarsCV(Lars):
     `intercept_` : float
         independent term in decision function.
 
-    `coef_path`: array, shape = [n_features, n_alpha]
-        the varying values of the coefficients along the path
+    `coef_path_`: array, shape = [n_features, n_alpha]
+        the varying values of the coefficients along the path.
 
     See also
     --------
@@ -915,7 +923,7 @@ class LassoLarsCV(LarsCV):
     `intercept_` : float
         independent term in decision function.
 
-    `coef_path`: array, shape = [n_features, n_alpha]
+    `coef_path_`: array, shape = [n_features, n_alpha]
         the varying values of the coefficients along the path
 
     `alphas_`: array, shape = [n_alpha]
