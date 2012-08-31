@@ -622,8 +622,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         If Y is not None, then K_{i, j} is the kernel between the ith array
         from X and the jth array from Y.
 
-    Note
-    ----
+    Notes
+    -----
     If metric is 'precomputed', Y is ignored and X is returned.
 
     """
