@@ -179,7 +179,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         """
         if params:
             warnings.warn('Passing parameters to fit methods is '
-                        'deprecated', stacklevel=2)
+                          'deprecated and will be removed in 0.14',
+                          DeprecationWarning, stacklevel=2)
             self.set_params(**params)
         self.core_sample_indices_, self.labels_ = dbscan(X,
                                                          **self.get_params())

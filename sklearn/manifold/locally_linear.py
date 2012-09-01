@@ -277,8 +277,8 @@ def locally_linear_embedding(
 
     if out_dim:
         warnings.warn("Parameter ``out_dim`` was renamed to ``n_components`` "
-                "and is now deprecated.", DeprecationWarning,
-                stacklevel=2)
+                      "and is now deprecated. This will be removed in 0.13.",
+                      DeprecationWarning, stacklevel=2)
         n_components = out_dim
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
@@ -602,8 +602,9 @@ class LocallyLinearEmbedding(BaseEstimator):
 
         if out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=2)
+                          "``n_components`` and is now deprecated. This will "
+                          "be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
         self.out_dim = out_dim
 
         self.n_neighbors = n_neighbors
@@ -623,8 +624,9 @@ class LocallyLinearEmbedding(BaseEstimator):
                 algorithm=self.neighbors_algorithm)
         if self.out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=3)
+                          "``n_components`` and is now deprecated. This will "
+                          "be removed in 0.13.", DeprecationWarning,
+                          stacklevel=3)
             self.n_components = self.out_dim
             self.out_dim = None
 

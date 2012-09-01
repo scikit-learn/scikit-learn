@@ -16,7 +16,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .utils import deprecated, check_arrays, safe_mask
+from .utils import check_arrays, safe_mask
 
 
 class IterGrid(object):
@@ -349,7 +349,6 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             None for unsupervised learning.
 
         """
-        self._set_params(**params)
         return self._fit(X, y)
 
     def _fit(self, X, y):
@@ -465,17 +464,3 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                 " to make predictions or obtain an instance  of the best "
                 " estimator. To obtain the best parameter settings, "
                 " use ``best_params_``.")
-
-    @property
-    @deprecated('GridSearchCV.best_estimator is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GridSearchCV.best_estimator_`` instead.')
-    def best_estimator(self):
-        return self.best_estimator_
-
-    @property
-    @deprecated('GridSearchCV.best_score is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GridSearchCV.best_score_`` instead.')
-    def best_score(self):
-        return self.best_score_

@@ -116,8 +116,9 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     @property
     def classes(self):
-        warnings.warn("QDA.classes is deprecated. Use "
-                "QDA.classes_ instead.", DeprecationWarning)
+        warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
+                      "Use QDA.classes_ instead.", DeprecationWarning,
+                      stacklevel=2)
         return self.classes_
 
     def _decision_function(self, X):

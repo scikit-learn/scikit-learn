@@ -169,8 +169,9 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     @property
     def classes(self):
-        warnings.warn("LDA.classes is deprecated. Use "
-                "LDA.classes_ instead.", DeprecationWarning)
+        warnings.warn("LDA.classes is deprecated and will be removed in 0.14. "
+                      "Use LDA.classes_ instead.", DeprecationWarning,
+                      stacklevel=2)
         return self.classes_
 
     def _decision_function(self, X):
