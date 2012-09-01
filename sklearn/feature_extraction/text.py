@@ -25,6 +25,7 @@ from ..utils.fixes import Counter
 from .stop_words import ENGLISH_STOP_WORDS
 
 __all__ = ['CountVectorizer',
+           'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
            'Vectorizer',
