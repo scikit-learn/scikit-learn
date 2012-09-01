@@ -6,10 +6,8 @@ import copy
 import inspect
 import numpy as np
 from scipy import sparse
-import warnings
 
 from .metrics import r2_score
-from .utils import deprecated
 
 
 ###############################################################################
@@ -185,10 +183,6 @@ class BaseEstimator(object):
             args = []
         args.sort()
         return args
-
-    @deprecated("to be removed in v0.12; use get_params() instead")
-    def _get_params(self, deep=True):
-        return self.get_params(deep)
 
     def get_params(self, deep=True):
         """Get parameters for the estimator
