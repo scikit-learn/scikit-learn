@@ -243,7 +243,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 
     Returns
     -------
-    labels : array [n_points]
+    labels : array [n_samples]
         cluster labels for each point
 
     """
@@ -313,7 +313,7 @@ class Ward(BaseEstimator):
     `children_` : array-like, shape = [n_nodes, 2]
         List of the children of each nodes.  Leaves of the tree do not appear.
 
-    `labels_` : array [n_points]
+    `labels_` : array [n_samples]
         cluster labels for each point
 
     `n_leaves_` : int
@@ -432,7 +432,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         List of the children of each nodes.
         Leaves of the tree do not appear.
 
-    `labels_` : array [n_points]
+    `labels_` : array [n_samples]
         cluster labels for each point
 
     `n_leaves_` : int

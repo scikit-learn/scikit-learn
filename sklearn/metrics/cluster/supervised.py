@@ -687,7 +687,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_information_score: Adjusted Mutual Information (adjusted
+    adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
         against chance)
 
     Examples

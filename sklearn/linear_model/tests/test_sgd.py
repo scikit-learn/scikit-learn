@@ -273,9 +273,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         for loss in ("log", "modified_huber"):
             clf = self.factory(loss=loss, alpha=0.01, n_iter=10).fit(X, Y)
             p = clf.predict_proba([3, 2])
-            assert_true(p > 0.5)
+            assert_true(p[0, 1] > 0.5)
             p = clf.predict_proba([-1, -1])
-            assert_true(p < 0.5)
+            assert_true(p[0, 1] < 0.5)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""

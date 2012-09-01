@@ -61,6 +61,9 @@ Changelog
    - New word boundaries-aware character n-gram analyzer for the
      :ref:`text_feature_extraction` module by `@kernc`_.
 
+   - Fixed bug in spectral clustering that led to single point clusters
+     by `Andreas Müller`_.
+
 API changes summary
 -------------------
 
@@ -90,6 +93,13 @@ API changes summary
    - In :class:`feature_extraction.text.CountVectorizer` the parameters
      ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
+
+   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
+     returns 2d array when fit on two classes.
+
+   - Fixed API inconsistency: :meth:`QDA.decision_function` and
+     :meth:`QDA.decision_function` now return 1d arrays when fit on two
+     classes.
 
 .. _changes_0_11:
 
@@ -358,7 +368,7 @@ Changelog
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods; Enhanced test time performance by converting model
-     paramters to fortran-style arrays after fitting (only multi-class).
+     parameters to fortran-style arrays after fitting (only multi-class).
 
    - Adjusted Mutual Information metric added as
      :func:`sklearn.metrics.adjusted_mutual_info_score` by Robert Layton.

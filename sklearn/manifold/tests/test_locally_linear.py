@@ -56,7 +56,7 @@ def test_lle_simple_grid():
         assert_true(clf.embedding_.shape[1] == n_components)
         reconstruction_error = np.linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
-       
+
         assert_less(reconstruction_error, tol)
         assert_almost_equal(clf.reconstruction_error_,
                             reconstruction_error, decimal=1)
@@ -92,8 +92,9 @@ def test_lle_manifold():
             details = ("solver: %s, method: %s"
                 % (solver, method))
             assert_less(reconstruction_error, tol, msg=details)
-            assert_less(np.abs(clf.reconstruction_error_ - reconstruction_error),
-                         tol * reconstruction_error, msg=details)
+            assert_less(np.abs(clf.reconstruction_error_ -
+                               reconstruction_error),
+                        tol * reconstruction_error, msg=details)
 
 
 def test_pipeline():

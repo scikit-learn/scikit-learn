@@ -9,6 +9,9 @@ from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
 from sklearn.utils.testing import assert_less
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
+from sklearn.metrics.pairwise import rbf_kernel
 
 
 def test_kernel_pca():
@@ -59,7 +62,7 @@ def test_kernel_pca_sparse():
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
             assert_equal(X_pred_transformed.shape[1],
-                         X_fit_transformed.shape[1])
+                    X_fit_transformed.shape[1])
 
             # inverse transform
             #X_pred2 = kpca.inverse_transform(X_pred_transformed)
@@ -101,13 +104,21 @@ def test_kernel_pca_precomputed():
     for eigen_solver in ("dense", "arpack"):
         X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
             fit(X_fit).transform(X_pred)
-        X_kpca2 = KernelPCA(4, kernel="precomputed",
-                            eigen_solver=eigen_solver).\
-                            fit(np.dot(X_fit, X_fit.T)).\
-                            transform(np.dot(X_pred, X_fit.T))
+        X_kpca2 = KernelPCA(4, eigen_solver=eigen_solver,
+                kernel='precomputed').fit(np.dot(X_fit,
+                    X_fit.T)).transform(np.dot(X_pred, X_fit.T))
+
+        X_kpca_train = KernelPCA(4, eigen_solver=eigen_solver,
+                kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
+        X_kpca_train2 = KernelPCA(4, eigen_solver=eigen_solver,
+                kernel='precomputed').fit(np.dot(X_fit,
+                    X_fit.T)).transform(np.dot(X_fit, X_fit.T))
 
         assert_array_almost_equal(np.abs(X_kpca),
                                   np.abs(X_kpca2))
+
+        assert_array_almost_equal(np.abs(X_kpca_train),
+                                  np.abs(X_kpca_train2))
 
 
 def test_kernel_pca_invalid_kernel():
@@ -115,6 +126,33 @@ def test_kernel_pca_invalid_kernel():
     X_fit = rng.random_sample((2, 4))
     kpca = KernelPCA(kernel="tototiti")
     assert_raises(ValueError, kpca.fit, X_fit)
+
+
+def test_gridsearch_pipeline():
+    # Test if we can do a grid-search to find parameters to separate
+    # circles with a perceptron model.
+    X, y = make_circles(n_samples=400, factor=.3, noise=.05,
+                        random_state=0)
+    kpca = KernelPCA(kernel="rbf", n_components=2)
+    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
+    param_grid = dict(kernel_pca__gamma=10. ** np.arange(-2, 2))
+    grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
+    grid_search.fit(X, y)
+    assert_equal(grid_search.best_score_, 1)
+
+
+def test_gridsearch_pipeline_precomputed():
+    # Test if we can do a grid-search to find parameters to separate
+    # circles with a perceptron model using a precomputed kernel.
+    X, y = make_circles(n_samples=400, factor=.3, noise=.05,
+                        random_state=0)
+    kpca = KernelPCA(kernel="precomputed", n_components=2)
+    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
+    param_grid = dict(Perceptron__n_iter=np.arange(5))
+    grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
+    X_kernel = rbf_kernel(X, gamma=10)
+    grid_search.fit(X_kernel, y)
+    assert_equal(grid_search.best_score_, 1)
 
 
 def test_nested_circles():

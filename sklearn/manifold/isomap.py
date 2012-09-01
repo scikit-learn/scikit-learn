@@ -105,9 +105,8 @@ class Isomap(BaseEstimator):
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
-                                     eigen_solver=self.eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter)
+                kernel="precomputed", eigen_solver=self.eigen_solver,
+                tol=self.tol, max_iter=self.max_iter)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')
