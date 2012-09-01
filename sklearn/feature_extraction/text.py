@@ -23,6 +23,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .stop_words import ENGLISH_STOP_WORDS
+from ._term_counter import term_counts
 
 
 def strip_accents_unicode(s):
@@ -372,24 +373,7 @@ class CountVectorizer(BaseEstimator):
                              self.tokenize)
 
     def _term_count_dicts_to_matrix(self, term_count_dicts):
-        i_indices = []
-        j_indices = []
-        values = []
-        vocabulary = self.vocabulary_
-
-        for i, term_count_dict in enumerate(term_count_dicts):
-            for term, count in term_count_dict.iteritems():
-                j = vocabulary.get(term)
-                if j is not None:
-                    i_indices.append(i)
-                    j_indices.append(j)
-                    values.append(count)
-            # free memory as we go
-            term_count_dict.clear()
-
-        shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
-        spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
-                                 shape=shape, dtype=self.dtype)
+        spmatrix = term_counts(self.vocabulary_, term_count_dicts, self.dtype)
         if self.binary:
             spmatrix.data.fill(1)
         return spmatrix
