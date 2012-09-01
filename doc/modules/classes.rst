@@ -145,7 +145,6 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
-   datasets.load_20newsgroups
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
