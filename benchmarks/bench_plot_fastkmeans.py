@@ -42,7 +42,7 @@ def compute_bench(samples_range, features_range):
             # let's prepare the data in small chunks
             mbkmeans = MiniBatchKMeans(init='k-means++',
                                       k=10,
-                                      chunk_size=chunk)
+                                      batch_size=chunk)
             tstart = time()
             mbkmeans.fit(data)
             delta = time() - tstart
@@ -78,7 +78,7 @@ def compute_bench_2(chunks):
         tstart = time()
         mbkmeans = MiniBatchKMeans(init='k-means++',
                                     k=8,
-                                    chunk_size=chunk)
+                                    batch_size=chunk)
 
         mbkmeans.fit(X)
         delta = time() - tstart
