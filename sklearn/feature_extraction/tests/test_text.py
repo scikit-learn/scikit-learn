@@ -514,7 +514,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', CountVectorizer()),
+    pipeline = Pipeline([('vect', CountVectorizer(min_df=1)),
                          ('svc', LinearSVC())])
 
     parameters = {
