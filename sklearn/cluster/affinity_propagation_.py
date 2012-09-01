@@ -10,7 +10,7 @@ clustering.
 import numpy as np
 import warnings
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
@@ -172,7 +172,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
 
 ###############################################################################
 
-class AffinityPropagation(BaseEstimator):
+class AffinityPropagation(BaseEstimator, ClusterMixin):
     """Perform Affinity Propagation Clustering of data
 
     Parameters

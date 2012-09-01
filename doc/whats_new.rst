@@ -64,6 +64,9 @@ Changelog
    - Fixed bug in spectral clustering that led to single point clusters
      by `Andreas Müller`_.
 
+   - In :class:`feature_extraction.text.CountVectorizer`, added an option to
+     infrequent words, ``min_df`` by  `Andreas Müller`_.
+
 API changes summary
 -------------------
 
@@ -94,11 +97,15 @@ API changes summary
      ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
 
-   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
+   - In :class:`feature_extraction.text.CountVectorizer`, words that appear
+     only in one document are now ignored by default. To reproduce
+     the previous behavior, set ``min_df=1``.
+
+   - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
      returns 2d array when fit on two classes.
 
-   - Fixed API inconsistency: :meth:`QDA.decision_function` and
-     :meth:`QDA.decision_function` now return 1d arrays when fit on two
+   - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
+     :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
      classes.
 
 .. _changes_0_11:

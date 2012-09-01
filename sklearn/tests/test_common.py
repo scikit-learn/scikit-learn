@@ -9,18 +9,19 @@ import traceback
 import numpy as np
 from scipy import sparse
 from nose.tools import assert_raises, assert_equal
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, \
+        assert_array_almost_equal
 
 import sklearn
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
-        TransformerMixin
+        TransformerMixin, ClusterMixin
 from sklearn.utils import shuffle
 from sklearn.preprocessing import Scaler
 #from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_iris, load_boston
-from sklearn.metrics import zero_one_score
+from sklearn.metrics import zero_one_score, adjusted_rand_score
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
@@ -31,15 +32,20 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
-from sklearn.feature_selection import RFE, RFECV
+from sklearn.feature_selection import RFE, RFECV, SelectKBest
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder
-from sklearn.linear_model import RidgeClassifier, RidgeClassifierCV
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.kernel_approximation import AdditiveChi2Sampler
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
+        Normalizer
+from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
+        SpectralClustering
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
-        EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder]
+        EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder,
+        TfidfTransformer]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
@@ -98,6 +104,50 @@ def test_estimators_sparse_data():
                 "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
             raise exc
+
+
+def test_transformers():
+    # test if transformers do something sensible on training set
+    # also test all shapes / shape errors
+    estimators = all_estimators()
+    transformers = [(name, E) for name, E in estimators if issubclass(E,
+        TransformerMixin)]
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    X, y = X[:10], y[:10]
+    n_samples, n_features = X.shape
+    X = Scaler().fit_transform(X)
+    X -= X.min()
+    for name, Trans in transformers:
+        if Trans in dont_test or Trans in meta_estimators:
+            continue
+        # these don't actually fit the data:
+        if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            trans = Trans()
+
+        if hasattr(trans, 'compute_importances'):
+            trans.compute_importances = True
+
+        if Trans is SelectKBest:
+            # SelectKBest has a default of k=10
+            # which is more feature than we have.
+            trans.k = 1
+
+        # fit
+        trans.fit(X, y)
+        X_pred = trans.fit_transform(X, y=y)
+        assert_equal(X_pred.shape[0], n_samples)
+
+        if hasattr(trans, 'transform'):
+            X_pred2 = trans.transform(X)
+            assert_array_almost_equal(X_pred, X_pred2, 2)
+
+            # raises error on malformed input for transform
+            assert_raises(ValueError, trans.transform, X.T)
 
 
 def test_transformers_sparse_data():
@@ -175,6 +225,48 @@ def test_classifiers_one_label():
             except Exception, exc:
                 print(error_string_predict, Clf, exc)
                 traceback.print_exc(file=sys.stdout)
+
+
+def test_clustering():
+    # test if clustering algorithms do something sensible
+    # also test all shapes / shape errors
+    estimators = all_estimators()
+    clustering = [(name, E) for name, E in estimators if issubclass(E,
+        ClusterMixin)]
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=7)
+    n_samples, n_features = X.shape
+    X = Scaler().fit_transform(X)
+    for name, Alg in clustering:
+        if Alg is WardAgglomeration:
+            # this is clustering on the features
+            # let's not test that here.
+            continue
+        # catch deprecation and neighbors warnings
+        with warnings.catch_warnings(record=True):
+            alg = Alg()
+            if hasattr(alg, "n_clusters"):
+                alg.set_params(n_clusters=3)
+            if hasattr(alg, "random_state"):
+                alg.set_params(random_state=1)
+            if Alg is AffinityPropagation:
+                alg.set_params(preference=-100)
+            # fit
+            alg.fit(X)
+
+        assert_equal(alg.labels_.shape, (n_samples,))
+        pred = alg.labels_
+        assert_greater(adjusted_rand_score(pred, y), 0.4)
+        # fit another time with ``fit_predict`` and compare results
+        if Alg is SpectralClustering:
+            # there is no way to make Spectral clustering deterministic :(
+            continue
+        if hasattr(alg, "random_state"):
+            alg.set_params(random_state=1)
+        with warnings.catch_warnings(record=True):
+            pred2 = alg.fit_predict(X)
+        assert_array_equal(pred, pred2)
 
 
 def test_classifiers_train():
@@ -276,6 +368,40 @@ def test_classifiers_classes():
         # training set performance
         assert_array_equal(np.unique(y), np.unique(y_pred))
         assert_greater(zero_one_score(y, y_pred), 0.78)
+
+
+def test_regressors_int():
+    # test if regressors can cope with integer labels (by converting them to
+    # float)
+    estimators = all_estimators()
+    regressors = [(name, E) for name, E in estimators if issubclass(E,
+        RegressorMixin)]
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    X, y = shuffle(X, y, random_state=0)
+    X = Scaler().fit_transform(X)
+    y = np.random.randint(2, size=X.shape[0])
+    for name, Reg in regressors:
+        if Reg in dont_test or Reg in meta_estimators:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            # separate estimators to control random seeds
+            reg1 = Reg()
+            reg2 = Reg()
+        if hasattr(reg1, 'alpha'):
+            reg1.set_params(alpha=0.01)
+            reg2.set_params(alpha=0.01)
+        if hasattr(reg1, 'random_state'):
+            reg1.set_params(random_state=0)
+            reg2.set_params(random_state=0)
+
+        # fit
+        reg1.fit(X, y)
+        pred1 = reg1.predict(X)
+        reg2.fit(X, y.astype(np.float))
+        pred2 = reg2.predict(X)
+        assert_array_almost_equal(pred1, pred2, 2)
 
 
 def test_regressors_train():

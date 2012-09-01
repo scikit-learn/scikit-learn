@@ -180,9 +180,9 @@ def test_train_test_split_errors():
 
 def test_shuffle_split_warnings():
     expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
-                        "for removal in 0.12, use test_size instead",
+                        "for removal in 0.13, use test_size instead",
                         "train_fraction is deprecated in 0.11 and scheduled "
-                        "for removal in 0.12, use train_size instead")
+                        "for removal in 0.13, use train_size instead")
 
     with warnings.catch_warnings(record=True) as warn_queue:
         cval.ShuffleSplit(10, 3, test_fraction=0.1)

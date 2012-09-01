@@ -172,7 +172,7 @@ class OneClassSVM(SparseBaseLibSVM):
             X, [], sample_weight=sample_weight)
 
 
-@deprecated("""to be removed in v0.12;
+@deprecated("""to be removed in v0.13;
 use sklearn.svm.LinearSVC instead""")
 class LinearSVC(LinearSVC):
     pass

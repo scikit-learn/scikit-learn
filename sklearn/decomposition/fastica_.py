@@ -72,7 +72,9 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
             if isinstance(nonlin, tuple):
                 gwtx, g_wtx = nonlin
             else:
-                # XXX: deprecation warning
+                warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
                 gwtx = nonlin
                 g_wtx = gprime(wtx, fun_args)
 
@@ -111,7 +113,9 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
         if isinstance(nonlin, tuple):
             gwtx, g_wtx = nonlin
         else:
-            # XXX: deprecation warning
+            warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
             gwtx = nonlin
             g_wtx = gprime(wtx, fun_args)
 
@@ -412,6 +416,6 @@ class FastICA(BaseEstimator):
         return linalg.pinv(self.components_)
 
     @property
-    @deprecated("Renamed to ``components_``")
+    @deprecated("Renamed to ``components_``. This will be removed in 0.14.")
     def unmixing_matrix_(self):
         return self.components_

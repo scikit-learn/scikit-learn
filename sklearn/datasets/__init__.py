@@ -21,7 +21,6 @@ from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import fetch_20newsgroups_vectorized
-from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
@@ -45,7 +44,6 @@ from .svmlight_format import load_svmlight_files
 from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
-from ..utils import deprecated
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',
@@ -57,11 +55,9 @@ __all__ = ['clear_data_home',
            'fetch_olivetti_faces',
            'fetch_species_distributions',
            'get_data_home',
-           'load_20newsgroups',
            'load_boston',
            'load_diabetes',
            'load_digits',
-           'load_filenames',
            'load_files',
            'load_iris',
            'load_lfw_pairs',
@@ -91,11 +87,3 @@ __all__ = ['clear_data_home',
            'make_swiss_roll',
            'mldata_filename',
            'samples_generator']
-
-
-# backward compatibility
-@deprecated("to be removed in 0.9;"
-            " use sklearn.datasets.load_files instead")
-def load_filenames(*args, **kwargs):
-    """Deprecated, use ``sklearn.datasets.load_files`` instead"""
-    return load_files(*args, **kwargs)
