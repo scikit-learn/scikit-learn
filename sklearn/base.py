@@ -248,13 +248,6 @@ class BaseEstimator(object):
                 setattr(self, key, value)
         return self
 
-    def _set_params(self, **params):
-        if params != {}:
-            warnings.warn("Passing estimator parameters to fit is deprecated;"
-                          " use set_params instead",
-                          category=DeprecationWarning)
-        return self.set_params(**params)
-
     def __repr__(self):
         class_name = self.__class__.__name__
         return '%s(%s)' % (

@@ -349,7 +349,6 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             None for unsupervised learning.
 
         """
-        self._set_params(**params)
         return self._fit(X, y)
 
     def _fit(self, X, y):
