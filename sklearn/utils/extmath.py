@@ -8,7 +8,6 @@ import numpy as np
 from scipy import linalg
 
 from . import check_random_state
-from . import deprecated
 from .fixes import qr_economic
 
 
@@ -198,13 +197,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
         return U[:, :n_components], s[:n_components], V[:n_components, :]
-
-
-@deprecated("fast_svd is deprecated in 0.10 and will be removed in 0.12: "
-            "use randomized_svd instead")
-def fast_svd(M, k, p=10, n_iterations=0, transpose='auto', random_state=0):
-    return randomized_svd(M, k, n_oversamples=p, n_iterations=n_iterations,
-                          transpose=transpose, random_state=random_state)
 
 
 def logsumexp(arr, axis=0):
