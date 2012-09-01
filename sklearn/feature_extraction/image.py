@@ -247,7 +247,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         if (isinstance(max_patches, (int, np.integer))
                 and max_patches < all_patches):
             n_patches = max_patches
-        elif isinstance((max_patches, (float, np.floating))
+        elif (isinstance(max_patches, (float, np.floating))
                 and 0 < max_patches < 1):
             n_patches = int(max_patches * all_patches)
         else:
