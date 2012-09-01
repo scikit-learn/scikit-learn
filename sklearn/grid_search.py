@@ -17,6 +17,7 @@ from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import deprecated, check_arrays, safe_mask
+from .metrics import average_precision_score, auc_score
 
 
 class IterGrid(object):
@@ -111,7 +112,13 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         y_pred = clf.predict(X_test)
         this_score = -loss_func(y_test, y_pred)
     elif score_func is not None:
-        y_pred = clf.predict(X_test)
+        if score_func in [average_precision_score, auc_score]:
+            try:
+                y_pred = clf.decision_function(X_test)
+            except (AttributeError, NotImplementedError):
+                y_pred = clf.predict_proba(X_test)[:, 1]
+        else:
+            y_pred = clf.predict(X_test)
         this_score = score_func(y_test, y_pred)
     else:
         this_score = clf.score(X_test, y_test)
@@ -452,7 +459,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        y_predicted = self.predict(X)
+        if self.score_func in [average_precision_score, auc_score]:
+            y_predicted = self.decision_function(X)
+        else:
+            y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
 
     # TODO around 0.13: remove this property, make it an attribute
