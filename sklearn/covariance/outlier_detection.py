@@ -180,6 +180,6 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
 
 
 # Deprecated classes
-@deprecated("Use EllipticEnvelope instead")
+@deprecated("Use EllipticEnvelope instead. To be removed in 0.13.")
 class EllipticEnvelop(EllipticEnvelope):
     pass

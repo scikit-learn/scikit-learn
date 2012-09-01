@@ -308,12 +308,12 @@ class GMM(BaseEstimator):
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
 
-    @deprecated("""will be removed in v0.12;
+    @deprecated("""will be removed in v0.13;
     use the score or predict method instead, depending on the question""")
     def decode(self, X):
         """Find most likely mixture components for each point in X.
 
-        DEPRECATED IN VERSION 0.10; WILL BE REMOVED IN VERSION 0.12
+        DEPRECATED IN VERSION 0.11; WILL BE REMOVED IN VERSION 0.13.
         use the score or predict method instead, depending on the question.
 
         Parameters
@@ -381,7 +381,7 @@ class GMM(BaseEstimator):
         logprob, responsibilities = self.eval(X)
         return responsibilities
 
-    @deprecated("""will be removed in v0.12;
+    @deprecated("""will be removed in v0.13;
     use the score or predict method instead, depending on the question""")
     def rvs(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
@@ -457,8 +457,9 @@ class GMM(BaseEstimator):
                 (self.n_components, X.shape[0]))
         if kwargs:
             warnings.warn("Setting parameters in the 'fit' method is"
-                    "deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "deprecated and will be removed in 0.13. Set it on "
+                          "initialization instead.", DeprecationWarning,
+                          stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:
