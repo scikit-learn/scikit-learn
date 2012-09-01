@@ -529,7 +529,8 @@ class _RidgeGCV(LinearModel):
             best = cv_values.mean(axis=0).argmin()
         else:
             func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), cv_values[:, i]) for i in range(len(self.alphas))]
+            out = [func(y.ravel(), cv_values[:, i])
+                    for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.best_alpha = self.alphas[best]
@@ -670,17 +671,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
+    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+        shape = [n_samples, n_responses, n_alphas], optional
+        Cross-validation values for each alpha (if `store_cv_values=True` and
+        `cv=None`). After `fit()` has been called, this attribute will contain
+        the mean squared errors (by default) or the values of the
+        `{loss,score}_func` function (if provided in the constructor).
+
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
-
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-                         shape = [n_samples, n_responses, n_alphas],
-                  optional
-        Cross-validation values for each alpha (if
-        `store_cv_values=True` and `cv=None`). After `fit()` has been
-        called, this attribute will contain the mean squared errors (by
-        default) or the values of the `{loss,score}_func` function (if
-        provided in the constructor).
 
     See also
     --------
