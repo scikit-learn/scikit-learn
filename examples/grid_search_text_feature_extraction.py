@@ -119,8 +119,8 @@ if __name__ == "__main__":
     print "done in %0.3fs" % (time() - t0)
     print
 
-    print "Best score: %0.3f" % grid_search.best_score
+    print "Best score: %0.3f" % grid_search.best_score_
     print "Best parameters set:"
-    best_parameters = grid_search.best_estimator.get_params()
+    best_parameters = grid_search.best_estimator_.get_params()
     for param_name in sorted(parameters.keys()):
         print "\t%s: %r" % (param_name, best_parameters[param_name])
