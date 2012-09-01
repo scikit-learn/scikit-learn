@@ -3,9 +3,8 @@
 Lasso on dense and sparse data
 ==============================
 
-We show that linear_model.Lasso and linear_model.sparse.Lasso
-provide the same results and that in the case of
-sparse data linear_model.sparse.Lasso improves the speed.
+We show that linear_model.Lasso provides the same results for dense and sparse
+data and that in the case of sparse data the speed is improved.
 
 """
 print __doc__
@@ -15,8 +14,7 @@ from scipy import sparse
 from scipy import linalg
 
 from sklearn.datasets.samples_generator import make_regression
-from sklearn.linear_model.sparse import Lasso as SparseLasso
-from sklearn.linear_model import Lasso as DenseLasso
+from sklearn.linear_model import Lasso
 
 
 ###############################################################################
@@ -24,13 +22,14 @@ from sklearn.linear_model import Lasso as DenseLasso
 print "--- Dense matrices"
 
 X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
+X_sp = sparse.coo_matrix(X)
 
 alpha = 1
-sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False, max_iter=1000)
-dense_lasso = DenseLasso(alpha=alpha, fit_intercept=False, max_iter=1000)
+sparse_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=1000)
+dense_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=1000)
 
 t0 = time()
-sparse_lasso.fit(X, y)
+sparse_lasso.fit(X_sp, y)
 print "Sparse Lasso done in %fs" % (time() - t0)
 
 t0 = time()
@@ -52,8 +51,8 @@ Xs = Xs.tocsc()
 print "Matrix density : %s %%" % (Xs.nnz / float(X.size) * 100)
 
 alpha = 0.1
-sparse_lasso = SparseLasso(alpha=alpha, fit_intercept=False, max_iter=10000)
-dense_lasso = DenseLasso(alpha=alpha, fit_intercept=False, max_iter=10000)
+sparse_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=10000)
+dense_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=10000)
 
 t0 = time()
 sparse_lasso.fit(Xs, y)
