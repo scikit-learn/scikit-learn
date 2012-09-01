@@ -252,7 +252,6 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     orthogonal_mp_gram
     lars_path
     decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
 
     Notes
     -----
@@ -354,7 +353,6 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     orthogonal_mp
     lars_path
     decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
 
     Notes
     -----
@@ -466,7 +464,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Lars
     LassoLars
     decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
 
     """
     def __init__(self, copy_X=True, copy_Gram=True,

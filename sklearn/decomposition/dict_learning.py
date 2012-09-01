@@ -290,11 +290,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     return code
 
 
-@deprecated('Use sparse_encode instead')
-def sparse_encode_parallel():
-    pass
-
-
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                  random_state=None):
     """Update the dense dictionary factor in place.
