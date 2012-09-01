@@ -88,8 +88,7 @@ class BaseLibSVM(BaseEstimator):
             warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
                     "since version 0.12, and backward compatibility "
                     "won't be maintained from version 0.14 onward. "
-                    "Setting C=1.0.",
-                    DeprecationWarning)
+                    "Setting C=1.0.", DeprecationWarning, stacklevel=2)
             C = 1.0
 
         self.impl = impl
@@ -157,8 +156,9 @@ class BaseLibSVM(BaseEstimator):
 
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
-                    "Using it in the 'fit' method is deprecated.",
-                    DeprecationWarning)
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
             self.class_weight = class_weight
 
         sample_weight = np.asarray([] if sample_weight is None
@@ -567,8 +567,7 @@ class BaseLibLinear(BaseEstimator):
             warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
                     "since version 0.12, and backward compatibility "
                     "won't be maintained from version 0.14 onward. "
-                    "Setting C=1.0.",
-                    DeprecationWarning)
+                    "Setting C=1.0.", DeprecationWarning, stacklevel=2)
             C = 1.0
 
         self.penalty = penalty
@@ -645,8 +644,9 @@ class BaseLibLinear(BaseEstimator):
 
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
-                    "Using it in the 'fit' method is deprecated.",
-                    DeprecationWarning)
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
             self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")

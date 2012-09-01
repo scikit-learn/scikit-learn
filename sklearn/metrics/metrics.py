@@ -994,7 +994,7 @@ def mean_squared_error(y_true, y_pred):
 
 
 @deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
-            instead; to be removed in v0.12""")
+            instead; to be removed in v0.13""")
 def mean_square_error(y_true, y_pred):
     """Cumulated square error regression loss
 

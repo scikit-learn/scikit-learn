@@ -647,21 +647,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return reduced_likelihood_function_value, par
 
-    @deprecated("to be removed;"
-            " access ``self.theta_`` etc. directly after fit")
+    @deprecated("to be removed in 0.14, access ``self.theta_`` etc. directly "
+                " after fit.")
     def arg_max_reduced_likelihood_function(self):
         return self._arg_max_reduced_likelihood_function()
 
     @property
-    @deprecated('``theta`` is deprecated and will be removed'
-        'please use ``theta_`` instead.')
+    @deprecated('``theta`` is deprecated and will be removed in 0.14, '
+                'please use ``theta_`` instead.')
     def theta(self):
         return self.theta_
 
     @property
     @deprecated("``reduced_likelihood_function_value`` is deprecated and will"
-            "be removed' 'please use ``reduced_likelihood_function_value_`` "
-            "instead.")
+                "be removed in 0.14, please use "
+                "``reduced_likelihood_function_value_`` instead.")
     def reduced_likelihood_function_value(self):
         return self.reduced_likelihood_function_value_
 

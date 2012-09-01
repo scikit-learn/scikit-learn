@@ -251,13 +251,13 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
 
     @property
     @deprecated('``_scores`` is deprecated and will be removed in '
-                'version 0.12. Please use ``scores_`` instead.')
+                'version 0.13. Please use ``scores_`` instead.')
     def _scores(self):
         return self.scores_
 
     @property
     @deprecated('``_pvalues`` is deprecated and will be removed in '
-                'version 0.12. Please use ``pvalues_`` instead.')
+                'version 0.13. Please use ``pvalues_`` instead.')
     def _pvalues(self):
         return self.pvalues_
 

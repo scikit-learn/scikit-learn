@@ -218,7 +218,8 @@ class CountVectorizer(BaseEstimator):
         self.max_features = max_features
         if not (max_n is None) or not (min_n is None):
             warnings.warn('Parameters max_n and min_n are deprecated. Use '
-                'ngram_range instead.')
+                          'ngram_range instead. This will be removed in 0.14.',
+                          DeprecationWarning, stacklevel=2)
             if min_n is None:
                 min_n = 1
             if max_n is None:
@@ -925,7 +926,7 @@ class Vectorizer(TfidfVectorizer):
             norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
         warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
                      " in 0.13. Please use TfidfVectorizer instead.",
-                      category=DeprecationWarning)
+                      category=DeprecationWarning, stacklevel=2)
         super(Vectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
             strip_accents=strip_accents, lowercase=lowercase,
