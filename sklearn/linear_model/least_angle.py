@@ -18,7 +18,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, deprecated, as_float_array
+from ..utils import array2d, arrayfuncs, as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -546,17 +546,6 @@ class LassoLars(Lars):
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
-
-
-# Deprecated classes
-@deprecated("Use Lars instead")
-class LARS(Lars):
-    pass
-
-
-@deprecated("Use LassoLars instead")
-class LassoLARS(LassoLars):
-    pass
 
 
 ###############################################################################
