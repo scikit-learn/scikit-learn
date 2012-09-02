@@ -15,7 +15,7 @@ from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
+def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
         convit=None, max_iter=200,
         damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
@@ -35,7 +35,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convergence_iteration: int, optional, default: 15
+    convergence_iter: int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
@@ -73,9 +73,9 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
     S = as_float_array(S, copy=copy)
     if convit is not None:
         warnings.warn("``convit`` is deprecated and will be removed in"
-                      "version 0.14. Use ``convergence_iteration`` instead",
+                      "version 0.14. Use ``convergence_iter`` instead",
                       DeprecationWarning)
-        convergence_iteration = convit
+        convergence_iter = convit
 
     n_samples = S.shape[0]
 
@@ -106,7 +106,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
          random_state.randn(n_samples, n_samples)
 
     # Execute parallel affinity propagation updates
-    e = np.zeros((n_samples, convergence_iteration))
+    e = np.zeros((n_samples, convergence_iter))
 
     ind = np.arange(n_samples)
 
@@ -143,12 +143,12 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
-        e[:, it % convergence_iteration] = E
+        e[:, it % convergence_iter] = E
         K = np.sum(E, axis=0)
 
-        if it >= convergence_iteration:
+        if it >= convergence_iter:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convergence_iteration) +\
+            unconverged = np.sum((se == convergence_iter) +\
                                  (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
@@ -194,7 +194,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     damping: float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
-    convergence_iteration: int, optional, default: 15
+    convergence_iter: int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
@@ -245,19 +245,19 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convergence_iteration=15,
+    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
             convit=None, copy=True,
             preference=None, p=None, affinity='euclidean', verbose=False):
 
         if convit is not None:
             warnings.warn("``convit`` is deprectaed and will be removed in "
-                          "version 0.14. Use ``convergence_iteration`` "
+                          "version 0.14. Use ``convergence_iter`` "
                           "instead", DeprecationWarning)
-            convergence_iteration = convit
+            convergence_iter = convit
 
         self.damping = damping
         self.max_iter = max_iter
-        self.convergence_iteration = convergence_iteration
+        self.convergence_iter = convergence_iter
         self.copy = copy
         self.verbose = verbose
         if not p is None:
@@ -300,6 +300,6 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
                 self.affinity_matrix_, self.preference,
                 max_iter=self.max_iter,
-                convergence_iteration=self.convergence_iteration,
+                convergence_iter=self.convergence_iter,
                 damping=self.damping, copy=self.copy, verbose=self.verbose)
         return self
