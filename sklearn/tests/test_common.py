@@ -29,7 +29,7 @@ from sklearn.svm.base import BaseLibSVM
 from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
 from sklearn.pipeline import Pipeline
-from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA
+from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
 from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
@@ -143,7 +143,7 @@ def test_transformers():
 
         # fit
 
-        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA):
+        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
             y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
             y_ = y_.T
         else:
@@ -164,7 +164,7 @@ def test_transformers():
             succeeded = False
 
         if hasattr(trans, 'transform'):
-            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA):
+            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 X_pred2 = trans.transform(X, y_)
             else:
                 X_pred2 = trans.transform(X)

@@ -6,7 +6,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # License: BSD Style.
 
 from .base import BaseEstimator, RegressorMixin, TransformerMixin
-from .utils import as_float_array
+from .utils import check_arrays
 
 import warnings
 import numpy as np
@@ -217,8 +217,8 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def fit(self, X, Y):
         # copy since this will contains the residuals (deflated) matrices
-        X = as_float_array(X, copy=self.copy)
-        Y = as_float_array(Y, copy=self.copy)
+        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
+                            sparse_format='dense')
 
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
@@ -820,12 +820,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     def fit(self, X, Y):
         # copy since this will contains the centered data
-        if self.copy:
-            X = np.asarray(X).copy()
-            Y = np.asarray(Y).copy()
-        else:
-            X = np.asarray(X)
-            Y = np.asarray(Y)
+        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
+                            sparse_format='dense')
 
         n = X.shape[0]
         p = X.shape[1]
