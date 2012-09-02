@@ -320,7 +320,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
             class_weight = self.class_weight
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidge.fit(self, X, Y, solver=solver,
                        sample_weight=sample_weight_classes)
@@ -529,7 +529,8 @@ class _RidgeGCV(LinearModel):
             best = cv_values.mean(axis=0).argmin()
         else:
             func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), cv_values[:, i]) for i in range(len(self.alphas))]
+            out = [func(y.ravel(), cv_values[:, i])
+                    for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.best_alpha = self.alphas[best]
@@ -582,8 +583,11 @@ class _BaseRidgeCV(LinearModel):
         self : Returns self.
         """
         if self.cv is None:
-            estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                                  self.score_func, self.loss_func,
+            estimator = _RidgeGCV(self.alphas,
+                                  fit_intercept=self.fit_intercept,
+                                  normalize=self.normalize,
+                                  score_func=self.score_func,
+                                  loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
@@ -667,17 +671,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
+    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+        shape = [n_samples, n_responses, n_alphas], optional
+        Cross-validation values for each alpha (if `store_cv_values=True` and
+        `cv=None`). After `fit()` has been called, this attribute will contain
+        the mean squared errors (by default) or the values of the
+        `{loss,score}_func` function (if provided in the constructor).
+
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
-
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-                         shape = [n_samples, n_responses, n_alphas],
-                  optional
-        Cross-validation values for each alpha (if
-        `store_cv_values=True` and `cv=None`). After `fit()` has been
-        called, this attribute will contain the mean squared errors (by
-        default) or the values of the `{loss,score}_func` function (if
-        provided in the constructor).
 
     See also
     --------
@@ -778,8 +780,9 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
         """
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
-                    "Using it in the 'fit' method is deprecated.",
-                    DeprecationWarning)
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
             self.class_weight_ = class_weight
         else:
             self.class_weight_ = self.class_weight
@@ -788,7 +791,7 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
             self.class_weight_ = {}
 
         sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidgeCV.fit(self, X, Y,
                          sample_weight=sample_weight * sample_weight2)

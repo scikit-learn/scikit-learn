@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 from numpy.testing import assert_array_equal
 from nose.tools import assert_equal
@@ -68,6 +69,18 @@ def test_ovr_fit_predict():
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_true(np.mean(iris.target == pred) >= 0.65)
+
+
+def test_ovr_always_present():
+    # Test that ovr works with classes that are always present or absent
+    X = np.ones((10, 2))
+    X[:5, :] = 0
+    y = [[int(i >= 5), 2, 3] for i in xrange(10)]
+    with warnings.catch_warnings(record=True):
+        ovr = OneVsRestClassifier(DecisionTreeClassifier())
+        ovr.fit(X, y)
+        y_pred = ovr.predict(X)
+        assert_array_equal(np.array(y_pred), np.array(y))
 
 
 def test_ovr_multilabel():
@@ -191,18 +204,18 @@ def test_ecoc_exceptions():
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(), code_size=2)
+    ecoc = OutputCodeClassifier(LinearSVC(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
     # A classifier which implements predict_proba.
-    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
+    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC())
+    ecoc = OutputCodeClassifier(LinearSVC(), random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)

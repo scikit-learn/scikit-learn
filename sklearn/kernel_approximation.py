@@ -198,8 +198,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     -----
     See `"Efficient additive kernels via explicit feature maps"
     <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
-    Vedaldi, A. and Zisserman, A.
-    - Computer Vision and Pattern Recognition 2010
+    Vedaldi, A. and Zisserman, A., Computer Vision and Pattern Recognition 2010
+
     """
 
     def __init__(self, sample_steps=2, sample_interval=None):
@@ -230,7 +230,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new: {array, sparse matrix},
+        X_new: {array, sparse matrix}, \
                shape = (n_samples, n_features × (2×sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.

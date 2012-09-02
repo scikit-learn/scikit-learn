@@ -30,7 +30,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, array2d
+from ..utils import check_random_state, array2d, check_arrays
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -525,13 +525,11 @@ class BaseGradientBoosting(BaseEnsemble):
         self : object
             Returns self.
         """
+        X, y = check_arrays(X, y, sparse_format='dense')
         X = np.asfortranarray(X, dtype=DTYPE)
         y = np.ravel(y, order='C')
 
         n_samples, n_features = X.shape
-        if y.shape[0] != n_samples:
-            raise ValueError("Number of labels does not match " \
-                             "number of samples.")
         self.n_features = n_features
 
         if self.max_features == None:
@@ -906,8 +904,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> gb = GradientBoostingRegressor().fit(samples, labels)
-    >>> print gb.predict([[0, 0, 0]])    # doctest: +ELLIPSIS
-    [  1.32806997e-05]
+    >>> print gb.predict([[0, 0, 0]])  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    [  1.32806...
 
     See also
     --------

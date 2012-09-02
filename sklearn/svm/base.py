@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClassifierMixin
 from ..utils import atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
@@ -84,6 +84,13 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
+        if C is None:
+            warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
+                    "since version 0.12, and backward compatibility "
+                    "won't be maintained from version 0.14 onward. "
+                    "Setting C=1.0.", DeprecationWarning, stacklevel=2)
+            C = 1.0
+
         self.impl = impl
         self.kernel = kernel
         self.degree = degree
@@ -99,6 +106,11 @@ class BaseLibSVM(BaseEstimator):
         self.sparse = sparse
         self.class_weight = class_weight
         self.verbose = verbose
+
+    @property
+    def _pairwise(self):
+        kernel = self.kernel
+        return kernel == "precomputed" or hasattr(kernel, "__call__")
 
     def fit(self, X, y, class_weight=None, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -129,6 +141,7 @@ class BaseLibSVM(BaseEstimator):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+
         if self.sparse == "auto":
             self._sparse = sp.isspmatrix(X)
         else:
@@ -137,10 +150,15 @@ class BaseLibSVM(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = np.asarray(y, dtype=np.float64, order='C')
 
+        if self.impl != "one_class" and len(np.unique(y)) < 2:
+            raise ValueError("The number of classes has to be greater than"
+                    " one.")
+
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
-                    "Using it in the 'fit' method is deprecated.",
-                    DeprecationWarning)
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
             self.class_weight = class_weight
 
         sample_weight = np.asarray([] if sample_weight is None
@@ -256,7 +274,7 @@ class BaseLibSVM(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y_pred : array, shape = [n_samples]
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -270,7 +288,9 @@ class BaseLibSVM(BaseEstimator):
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
 
-        if hasattr(self.kernel, '__call__'):
+        kernel = self.kernel
+        if hasattr(self.kernel, "__call__"):
+            kernel = 'precomputed'
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
@@ -279,10 +299,6 @@ class BaseLibSVM(BaseEstimator):
         C = 0.0  # C is not useful here
 
         svm_type = LIBSVM_IMPL.index(self.impl)
-
-        kernel = self.kernel
-        if hasattr(kernel, '__call__'):
-            kernel = 'precomputed'
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
@@ -318,65 +334,6 @@ class BaseLibSVM(BaseEstimator):
                       self.probability, self.n_support_, self.label_,
                       self.probA_, self.probB_)
 
-    def predict_proba(self, X):
-        """Compute the log likehoods of each of the possible outcomes for the
-        the samples in T.
-
-        The model need to have probability information computed at training
-        time: fit with attribute `probability` set to True.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        X : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-
-        Notes
-        -----
-        The probability model is created using cross validation, so
-        the results can be slightly different than those obtained by
-        predict. Also, it will produce meaningless results on very small
-        datasets.
-        """
-        if not self.probability:
-            raise NotImplementedError(
-                    "probability estimates must be enabled to use this method")
-
-        if self.impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC "
-                                      "and NuSVC")
-
-        X = self._validate_for_predict(X)
-        pred_proba = self._sparse_predict_proba if self._sparse \
-                                                else self._dense_predict_proba
-        return pred_proba(X)
-
-    def _dense_predict_proba(self, X):
-        X = self._compute_kernel(X)
-
-        C = 0.0  # C is not useful here
-
-        kernel = self.kernel
-        if hasattr(kernel, '__call__'):
-            kernel = 'precomputed'
-
-        svm_type = LIBSVM_IMPL.index(self.impl)
-        pprob = libsvm.predict_proba(
-            X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self.label_,
-            self.probA_, self.probB_,
-            svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
-
-        return pprob
-
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
         if hasattr(self.kernel, '__call__'):
@@ -385,54 +342,6 @@ class BaseLibSVM(BaseEstimator):
             X = np.asarray(self.kernel(X, self.__Xfit),
                            dtype=np.float64, order='C')
         return X
-
-    def _sparse_predict_proba(self, X):
-        X.data = np.asarray(X.data, dtype=np.float64, order='C')
-
-        kernel = self.kernel
-        if hasattr(kernel, '__call__'):
-            kernel = 'precomputed'
-
-        kernel_type = self._sparse_kernels.index(kernel)
-
-        return libsvm_sparse.libsvm_sparse_predict_proba(
-            X.data, X.indices, X.indptr,
-            self.support_vectors_.data,
-            self.support_vectors_.indices,
-            self.support_vectors_.indptr,
-            self.dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self.impl), kernel_type,
-            self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_label_, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_,
-            self.probA_, self.probB_)
-
-    def predict_log_proba(self, X):
-        """Compute the log likehoods each possible outcomes of samples in X.
-
-        The model need to have probability information computed at training
-        time: fit with attribute `probability` set to True.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        X : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
-
-        Notes
-        -----
-        The probability model is created using cross validation, so
-        the results can be slightly different than those obtained by
-        predict. Also, it will produce meaningless results on very small
-        datasets.
-        """
-        return np.log(self.predict_proba(X))
 
     def decision_function(self, X):
         """Distance of the samples X to the separating hyperplane.
@@ -526,6 +435,116 @@ class BaseLibSVM(BaseEstimator):
         return coef
 
 
+class BaseSVC(BaseLibSVM, ClassifierMixin):
+    """ABC for LibSVM-based classifiers."""
+
+    def predict_proba(self, X):
+        """Compute probabilities of possible outcomes for samples in X.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will produce meaningless results on very small
+        datasets.
+        """
+        if not self.probability:
+            raise NotImplementedError(
+                    "probability estimates must be enabled to use this method")
+
+        if self.impl not in ('c_svc', 'nu_svc'):
+            raise NotImplementedError("predict_proba only implemented for SVC "
+                                      "and NuSVC")
+
+        X = self._validate_for_predict(X)
+        pred_proba = self._sparse_predict_proba if self._sparse \
+                                                else self._dense_predict_proba
+        return pred_proba(X)
+
+    def predict_log_proba(self, X):
+        """Compute log probabilities of possible outcomes for samples in X.
+
+        The model need to have probability information computed at training
+        time: fit with attribute `probability` set to True.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X : array-like, shape = [n_samples, n_classes]
+            Returns the log-probabilities of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+
+        Notes
+        -----
+        The probability model is created using cross validation, so
+        the results can be slightly different than those obtained by
+        predict. Also, it will produce meaningless results on very small
+        datasets.
+        """
+        return np.log(self.predict_proba(X))
+
+    def _dense_predict_proba(self, X):
+        X = self._compute_kernel(X)
+
+        C = 0.0  # C is not useful here
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        svm_type = LIBSVM_IMPL.index(self.impl)
+        pprob = libsvm.predict_proba(
+            X, self.support_, self.support_vectors_, self.n_support_,
+            self.dual_coef_, self._intercept_, self.label_,
+            self.probA_, self.probB_,
+            svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
+            probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+
+        return pprob
+
+    def _sparse_predict_proba(self, X):
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        kernel_type = self._sparse_kernels.index(kernel)
+
+        return libsvm_sparse.libsvm_sparse_predict_proba(
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
+            self.dual_coef_.data, self._intercept_,
+            LIBSVM_IMPL.index(self.impl), kernel_type,
+            self.degree, self._gamma, self.coef0, self.tol,
+            self.C, self.class_weight_label_, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_, self.label_,
+            self.probA_, self.probB_)
+
+
 class BaseLibLinear(BaseEstimator):
     """Base for classes binding liblinear (dense and sparse versions)"""
 
@@ -543,6 +562,14 @@ class BaseLibLinear(BaseEstimator):
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
             class_weight=None, verbose=0):
+
+        if C is None:
+            warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
+                    "since version 0.12, and backward compatibility "
+                    "won't be maintained from version 0.14 onward. "
+                    "Setting C=1.0.", DeprecationWarning, stacklevel=2)
+            C = 1.0
+
         self.penalty = penalty
         self.loss = loss
         self.dual = dual
@@ -611,11 +638,15 @@ class BaseLibLinear(BaseEstimator):
         self : object
             Returns self.
         """
+        if len(np.unique(y)) < 2:
+            raise ValueError("The number of classes has to be greater than"
+                    " one.")
 
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
-                    "Using it in the 'fit' method is deprecated.",
-                    DeprecationWarning)
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
             self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")

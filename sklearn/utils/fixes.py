@@ -17,8 +17,8 @@ from operator import itemgetter
 try:
     Counter = collections.Counter
 except AttributeError:
-# Partial replacement for Python 2.7 collections.Counter
     class Counter(collections.defaultdict):
+        """Partial replacement for Python 2.7 collections.Counter."""
         def __init__(self, iterable=(), **kwargs):
             super(Counter, self).__init__(int, **kwargs)
             self.update(iterable)
@@ -152,7 +152,10 @@ def qr_economic(A, **kwargs):
     if hasattr(scipy.linalg, 'solve_triangular'):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
-        return scipy.linalg.qr(A, econ=True, **kwargs)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            return scipy.linalg.qr(A, econ=True, **kwargs)
 
 
 def savemat(file_name, mdict, oned_as="column", **kwargs):
@@ -173,20 +176,3 @@ try:
 except ImportError:
     def count_nonzero(X):
         return len(np.flatnonzero(X))
-
-try:
-    # check whether np.dot supports the out argument
-    np.dot(np.zeros(1), np.zeros(1), out=np.empty(1))
-
-    # this is ok, just use the existing implementation
-    dot_out = np.dot
-
-except (TypeError, ValueError):
-    # old version of np.dot that does not accept the third argument, define a
-    # pure python workaround:
-    def dot_out(a, b, out=None):
-        if out is not None:
-            out[:] = np.dot(a, b)
-            return out
-        else:
-            return np.dot(a, b)

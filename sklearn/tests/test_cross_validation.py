@@ -6,20 +6,21 @@ from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
+from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.fixes import unique
 
-from ..utils.testing import assert_greater, assert_less
-from ..base import BaseEstimator
-from ..datasets import make_regression
-from ..datasets import load_iris
-from ..metrics import zero_one_score
-from ..metrics import f1_score
-from ..metrics import mean_squared_error
-from ..metrics import r2_score
-from ..metrics import explained_variance_score
-from ..svm import SVC
-from ..linear_model import Ridge
-from ..svm.sparse import SVC as SparseSVC
-from .. import cross_validation as cval
+from sklearn import cross_validation as cval
+from sklearn.base import BaseEstimator
+from sklearn.datasets import make_regression
+from sklearn.datasets import load_iris
+from sklearn.metrics import zero_one_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.metrics import explained_variance_score
+from sklearn.svm import SVC
+from sklearn.linear_model import Ridge
+from sklearn.svm.sparse import SVC as SparseSVC
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -112,26 +113,40 @@ def test_stratified_shuffle_split():
     # Check that error is raised if there is a class with only one sample
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.2)
 
+    # Check that error is raised if the test set size is smaller than n_classes
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 2)
+    # Check that error is raised if the train set size is smaller than n_classes
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 3, 2)
+
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 8, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.6, 8)
 
-    # Check if returns better balanced classes than ShuffleSplit
-    sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
-    ss = cval.ShuffleSplit(y.size, 6, 0.33, random_state=0)
+    ys = [
+        np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+        np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+        np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+        np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+        np.array([-1] * 800 + [1] * 50)
+        ]
 
-    train_std = []
-    test_std = []
-
-    for train, test in sss:
-        train_std.append(np.std(np.bincount(y[train])))
-        test_std.append(np.std(np.bincount(y[test])))
-
-    for i, [train, test] in enumerate(ss):
-        assert_true(train_std[i] <= np.std(np.bincount(y[train])))
-        assert_true(test_std[i] <= np.std(np.bincount(y[test])))
+    for y in ys:
+        sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
+                                          random_state=0, indices=True)
+        for train, test in sss:
+            assert_array_equal(unique(y[train]), unique(y[test]))
+            # Checks if folds keep classes proportions
+            p_train = np.bincount(
+                unique(y[train], return_inverse=True)[1]
+                ) / float(len(y[train]))
+            p_test = np.bincount(
+                unique(y[test], return_inverse=True)[1]
+                ) / float(len(y[test]))
+            assert_array_almost_equal(p_train, p_test, 1)
+            assert_equal(y[train].size + y[test].size, y.size)
+            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
 def test_cross_val_score():
@@ -165,9 +180,9 @@ def test_train_test_split_errors():
 
 def test_shuffle_split_warnings():
     expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
-                        "for removal in 0.12, use test_size instead",
+                        "for removal in 0.13, use test_size instead",
                         "train_fraction is deprecated in 0.11 and scheduled "
-                        "for removal in 0.12, use train_size instead")
+                        "for removal in 0.13, use train_size instead")
 
     with warnings.catch_warnings(record=True) as warn_queue:
         cval.ShuffleSplit(10, 3, test_fraction=0.1)

@@ -47,19 +47,16 @@ from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
 lw = LedoitWolf()
-loglik_lw = lw.fit(X_train, assume_centered=True).score(
-    X_test, assume_centered=True)
+loglik_lw = lw.fit(X_train).score(X_test)
 
 # OAS coefficient estimate
 oa = OAS()
-loglik_oa = oa.fit(X_train, assume_centered=True).score(
-    X_test, assume_centered=True)
+loglik_oa = oa.fit(X_train).score(X_test)
 
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-3, 0, 30)
-negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(
-        X_train, assume_centered=True).score(X_test, assume_centered=True) \
-                         for s in shrinkages]
+negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test)
+                     for s in shrinkages]
 
 # getting the likelihood under the real model
 real_cov = np.dot(coloring_matrix.T, coloring_matrix)

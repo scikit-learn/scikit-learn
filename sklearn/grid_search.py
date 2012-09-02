@@ -7,18 +7,16 @@ of an estimator.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
-import copy
 from itertools import product
 import time
 
 import numpy as np
-import scipy.sparse as sp
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .utils import deprecated
+from .utils import check_arrays, safe_mask
 
 
 class IterGrid(object):
@@ -79,46 +77,30 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
 
+    X, y = check_arrays(X, y)
     # update parameters of the classifier after a copy of its base structure
-    # FIXME we should be doing a clone here
-    clf = copy.deepcopy(base_clf)
+    clf = clone(base_clf)
     clf.set_params(**clf_params)
 
-    if isinstance(X, list) or isinstance(X, tuple):
-        # train and test can be boolean mask but for list
-        # they should be indices so conversion is done if needed.
-        if isinstance(train, np.ndarray) and train.dtype == np.bool:
-            train = np.where(train)[0]
-        if isinstance(test, np.ndarray) and test.dtype == np.bool:
-            test = np.where(test)[0]
-        X_train = [X[i] for i in train]
-        X_test = [X[i] for i in test]
+    if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
+        # cannot compute the kernel values with custom function
+        raise ValueError(
+            "Cannot use a custom kernel function. "
+            "Precompute the kernel matrix instead.")
+
+    if getattr(base_clf, "_pairwise", False):
+        # X is a precomputed square kernel matrix
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X should be a square kernel matrix")
+        X_train = X[np.ix_(train, train)]
+        X_test = X[np.ix_(test, train)]
     else:
-        if sp.issparse(X):
-            # For sparse matrices, slicing only works with indices
-            # (no masked array). Convert to CSR format for efficiency and
-            # because some sparse formats don't support row slicing.
-            X = sp.csr_matrix(X)
-            ind = np.arange(X.shape[0])
-            train = ind[train]
-            test = ind[test]
-        if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
-            # cannot compute the kernel values with custom function
-            raise ValueError(
-                "Cannot use a custom kernel function. "
-                "Precompute the kernel matrix instead.")
-        if getattr(base_clf, 'kernel', '') == 'precomputed':
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[train]
-            X_test = X[test]
+        X_train = X[safe_mask(X, train)]
+        X_test = X[safe_mask(X, test)]
+
     if y is not None:
-        y_test = y[test]
-        y_train = y[train]
+        y_test = y[safe_mask(y, test)]
+        y_train = y[safe_mask(y, train)]
     else:
         y_test = None
         y_train = None
@@ -168,7 +150,8 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter values should be a list.")
 
             if len(v) == 0:
-                raise ValueError("Parameter values should be a non-empty list.")
+                raise ValueError("Parameter values should be a non-empty "
+                        "list.")
 
 
 def _has_one_grid_point(param_grid):
@@ -366,7 +349,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             None for unsupervised learning.
 
         """
-        self._set_params(**params)
+        return self._fit(X, y)
+
+    def _fit(self, X, y):
         estimator = self.estimator
         cv = self.cv
 
@@ -389,7 +374,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         # Return early if there is only one grid point.
         if _has_one_grid_point(self.param_grid):
-            params = iter(grid).next()
+            params = next(iter(grid))
             base_clf.set_params(**params)
             base_clf.fit(X, y)
             self._best_estimator_ = base_clf
@@ -479,17 +464,3 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                 " to make predictions or obtain an instance  of the best "
                 " estimator. To obtain the best parameter settings, "
                 " use ``best_params_``.")
-
-    @property
-    @deprecated('GridSearchCV.best_estimator is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GridSearchCV.best_estimator_`` instead.')
-    def best_estimator(self):
-        return self.best_estimator_
-
-    @property
-    @deprecated('GridSearchCV.best_score is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GridSearchCV.best_score_`` instead.')
-    def best_score(self):
-        return self.best_score_

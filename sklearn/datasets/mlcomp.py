@@ -3,6 +3,7 @@
 """Glue code to load http://mlcomp.org data as a scikit.learn dataset"""
 
 import os
+import numpy as np
 from sklearn.datasets.base import load_files
 
 
@@ -66,7 +67,7 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
         raise ValueError("Could not find folder: " + mlcomp_root)
 
     # dataset lookup
-    if isinstance(name_or_id, int):
+    if isinstance(name_or_id, (int, np.integer)):
         # id lookup
         dataset_path = os.path.join(mlcomp_root, str(name_or_id))
     else:

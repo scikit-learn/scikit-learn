@@ -37,10 +37,14 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     data structures. This is 5x faster than the variant above because
     it allows us to avoid buffer validation.
 
+    The function assumes that the ndarray that wraps ``X`` is
+    c-continuous.
+
     Parameters
     ----------
     X : DTYPE_t pointer
         The pointer to the data array of the input ``X``.
+        Assumes that the array is c-continuous.
     children : np.int32_t pointer
         The pointer to the data array of the ``children`` array attribute
         of the :class:``sklearn.tree.Tree``.

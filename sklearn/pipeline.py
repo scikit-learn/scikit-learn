@@ -192,3 +192,8 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
+
+    @property
+    def _pairwise(self):
+        # check if first estimator expects pairwise input
+        return getattr(self.steps[0][1], '_pairwise', False)

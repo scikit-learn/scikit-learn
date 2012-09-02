@@ -18,7 +18,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, deprecated
+from ..utils import array2d, arrayfuncs, as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -548,17 +548,6 @@ class LassoLars(Lars):
         self.eps = eps
 
 
-# Deprecated classes
-@deprecated("Use Lars instead")
-class LARS(Lars):
-    pass
-
-
-@deprecated("Use LassoLars instead")
-class LassoLARS(LassoLars):
-    pass
-
-
 ###############################################################################
 # Cross-validated estimator classes
 
@@ -632,7 +621,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         X_train -= X_mean
         X_test -= X_mean
         y_mean = y_train.mean(axis=0)
+        y_train = as_float_array(y_train, copy=False)
         y_train -= y_mean
+        y_test = as_float_array(y_test, copy=False)
         y_test -= y_mean
 
     if normalize:
@@ -745,7 +736,7 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
-        X = np.asarray(X)
+        X = array2d(X)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)

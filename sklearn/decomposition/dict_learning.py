@@ -16,7 +16,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
-from ..utils import array2d, check_random_state, gen_even_slices, deprecated
+from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
 
@@ -253,7 +253,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     """
     if copy_gram is not None:
         warnings.warn("copy_gram in sparse_encode is deprecated: it"
-            "lead to errors.", DeprecationWarning, stacklevel=2)
+                      "lead to errors. To be removed in 0.13.",
+                      DeprecationWarning, stacklevel=2)
     dictionary = np.asarray(dictionary)
     X = np.asarray(X)
     n_samples, n_features = X.shape
@@ -288,11 +289,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
     return code
-
-
-@deprecated('Use sparse_encode instead')
-def sparse_encode_parallel():
-    pass
 
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
@@ -967,7 +963,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the object itself
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
         if self.n_atoms is None:
             n_atoms = X.shape[1]
         else:
@@ -1119,7 +1115,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
         if self.n_atoms is None:
             n_atoms = X.shape[1]
         else:

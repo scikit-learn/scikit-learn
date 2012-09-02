@@ -20,6 +20,7 @@ improves.
 # License: BSD Style.
 
 import numpy as np
+import warnings
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
@@ -28,10 +29,21 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 
 
-def _fit_binary(estimator, X, y):
+def _fit_binary(estimator, X, y, classes=None):
     """Fit a single binary estimator."""
-    estimator = clone(estimator)
-    estimator.fit(X, y)
+    unique_y = np.unique(y)
+    if len(unique_y) == 1:
+        if classes is not None:
+            if y[0] == -1:
+                c = 0
+            else:
+                c = y[0]
+            warnings.warn("Label %s is present in all training examples." %
+                    str(classes[c]))
+        estimator = _ConstantPredictor().fit(X, unique_y)
+    else:
+        estimator = clone(estimator)
+        estimator.fit(X, y)
     return estimator
 
 
@@ -58,7 +70,8 @@ def fit_ovr(estimator, X, y):
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    estimators = [_fit_binary(estimator, X, Y[:, i])
+    estimators = [_fit_binary(estimator, X, Y[:, i],
+                             classes=["not %s" % str(i), i])
                   for i in range(Y.shape[1])]
     return estimators, lb
 
@@ -69,6 +82,18 @@ def predict_ovr(estimators, label_binarizer, X):
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
+
+
+class _ConstantPredictor(BaseEstimator):
+    def fit(self, X, y):
+        self.y_ = y
+        return self
+
+    def predict(self, X):
+        return np.repeat(self.y_, X.shape[0])
+
+    def decision_function(self, X):
+        return np.repeat(self.y_, X.shape[0])
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -193,7 +218,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y)
+    return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
 
 
 def fit_ovo(estimator, X, y):
@@ -338,7 +363,8 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
-    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])])
+    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
+            dtype=np.int)
 
     estimators = [_fit_binary(estimator, X, Y[:, i])
                   for i in range(Y.shape[1])]

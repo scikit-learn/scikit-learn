@@ -82,8 +82,9 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         if out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=2)
+                          "``n_components`` and is now deprecated. This will "
+                          "be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
         self.out_dim = out_dim
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -98,16 +99,16 @@ class Isomap(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
         if self.out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=3)
+                          "``n_components`` and is now deprecated. This will "
+                          "be removed in 0.13.", DeprecationWarning,
+                          stacklevel=3)
             self.n_components = self.out_dim
             self.out_dim = None
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
-                                     eigen_solver=self.eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter)
+                kernel="precomputed", eigen_solver=self.eigen_solver,
+                tol=self.tol, max_iter=self.max_iter)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')

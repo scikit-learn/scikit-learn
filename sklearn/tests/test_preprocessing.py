@@ -442,6 +442,17 @@ def test_label_encoder():
     assert_raises(ValueError, le.transform, [0, 6])
 
 
+def test_label_encoder_fit_transform():
+    """Test fit_transform"""
+    le = LabelEncoder()
+    ret = le.fit_transform([1, 1, 4, 5, -1, 0])
+    assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
+
+    le = LabelEncoder()
+    ret = le.fit_transform(["paris", "paris", "tokyo", "amsterdam"])
+    assert_array_equal(ret, [1, 1, 2, 0])
+
+
 def test_label_encoder_string_labels():
     """Test LabelEncoder's transform and inverse_transform methods with
     non-numeric labels"""

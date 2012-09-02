@@ -72,7 +72,9 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
             if isinstance(nonlin, tuple):
                 gwtx, g_wtx = nonlin
             else:
-                # XXX: deprecation warning
+                warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
                 gwtx = nonlin
                 g_wtx = gprime(wtx, fun_args)
 
@@ -111,7 +113,9 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
         if isinstance(nonlin, tuple):
             gwtx, g_wtx = nonlin
         else:
-            # XXX: deprecation warning
+            warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
             gwtx = nonlin
             g_wtx = gprime(wtx, fun_args)
 
@@ -227,7 +231,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         # XXX: these should be optimized, as they can be a bottleneck.
         if fun == 'logcosh':
             def g(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0) # comment it out?
+                alpha = fun_args.get('alpha', 1.0)  # comment it out?
                 gx = np.tanh(alpha * x)
                 g_x = alpha * (1 - gx ** 2)
                 return gx, g_x
@@ -412,6 +416,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         return linalg.pinv(self.components_)
 
     @property
-    @deprecated("Renamed to ``components_``")
+    @deprecated("Renamed to ``components_``. This will be removed in 0.14.")
     def unmixing_matrix_(self):
         return self.components_

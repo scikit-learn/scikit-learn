@@ -14,38 +14,68 @@ Changelog
 
    - :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
-     via the ``max_features`` argument.
+     via the ``max_features`` argument, by `Peter Prettenhofer`_.
 
    - Added Huber and Quantile loss functions to
-     :class:`ensemble.GradientBoostingRegressor`.
+     :class:`ensemble.GradientBoostingRegressor`, by `Peter Prettenhofer`_.
 
    - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
      now support multi-output classification and regression problems, by
      `Gilles Louppe`_.
 
-   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
+   - Added :class:`preprocessing.LabelEncoder`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
    - Added the epsilon-insensitive loss and the ability to make probabilistic
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
-   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux.
 
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
-     decompresses them on the fly.
+     decompresses them on the fly, by `Lars Buitinck`_.
 
    - SVMlight file format serializer now preserves double precision floating
      point values, by `Olivier Grisel`_.
 
-   - A common testing framework for all estimators was added.
+   - A common testing framework for all estimators was added, by `Andreas Müller`_.
+
+   - Understandable error messages for estimators that do not accept
+     sparse input by `Gael Varoquaux`_
+
+   - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
+     particular building the tree now supports early stopping. This is
+     useful when the number of clusters is not small compared to the
+     number of samples.
+
+   - Add MultiTaskLasso and MultiTaskElasticNet for joint feature selection,
+     by `Alexandre Gramfort`_.
+
+   - Added :func:`metrics.auc_score` and
+     :func:`metrics.average_precision_score` convenience functions by `Andreas
+     Müller`_.
+
+   - Improved sparse matrix support in the :ref:`feature_selection`
+     module by `Andreas Müller`_.
+
+   - New word boundaries-aware character n-gram analyzer for the
+     :ref:`text_feature_extraction` module by `@kernc`_.
+
+   - Fixed bug in spectral clustering that led to single point clusters
+     by `Andreas Müller`_.
+
+   - In :class:`feature_extraction.text.CountVectorizer`, added an option to
+     infrequent words, ``min_df`` by  `Andreas Müller`_.
 
 API changes summary
 -------------------
 
-   - In :class:`metrics.roc_curve`, the `thresholds` array is now returned
+   - The old ``scikits.learn`` package has disappeared; all code should import
+     from ``sklearn`` instead, which was introduced in 0.9.
+
+   - In :class:`metrics.roc_curve`, the ``thresholds`` array is now returned
      with it's order reversed, in order to keep it consistent with the order
-     of the returned `fpr` and `tpr`.
+     of the returned ``fpr`` and ``tpr``.
 
    - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
      :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
@@ -58,6 +88,25 @@ API changes summary
 
    - All ``Base`` classes are now abstract meta classes so that they can not be
      instantiated.
+
+   - :func:`cluster.ward_tree` now also returns the parent array. This is
+     necessary for early-stopping in which case the tree is not
+     completely built.
+
+   - In :class:`feature_extraction.text.CountVectorizer` the parameters
+     ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
+     enable grid-searching both at once.
+
+   - In :class:`feature_extraction.text.CountVectorizer`, words that appear
+     only in one document are now ignored by default. To reproduce
+     the previous behavior, set ``min_df=1``.
+
+   - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
+     returns 2d array when fit on two classes.
+
+   - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
+     :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
+     classes.
 
 .. _changes_0_11:
 
@@ -326,7 +375,7 @@ Changelog
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods; Enhanced test time performance by converting model
-     paramters to fortran-style arrays after fitting (only multi-class).
+     parameters to fortran-style arrays after fitting (only multi-class).
 
    - Adjusted Mutual Information metric added as
      :func:`sklearn.metrics.adjusted_mutual_info_score` by Robert Layton.
@@ -1180,7 +1229,7 @@ of commits):
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
-.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
+.. _Alexandre Gramfort: http://alexandre.gramfort.net
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
@@ -1206,7 +1255,7 @@ of commits):
 
 .. _Bertrand Thirion: http://parietal.saclay.inria.fr/Members/bertrand-thirion
 
-.. _Andreas Müller: http://www.ais.uni-bonn.de/~amueller/
+.. _Andreas Müller: http://peekaboo-vision.blogspot.com
 
 .. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
 
@@ -1232,5 +1281,7 @@ of commits):
 
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
 
-.. _David Marek: http://http://www.davidmarek.cz/
+.. _David Marek: http://www.davidmarek.cz/
+
+.. _@kernc: http://github.com/kernc
 

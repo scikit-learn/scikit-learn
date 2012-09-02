@@ -296,7 +296,7 @@ class GaussianHMMBaseTester(object):
         samples = h.sample(n)[0]
         self.assertEquals(samples.shape, (n, self.n_features))
 
-    def test_fit(self, params='stmc', n_iter=25, verbose=False, **kwargs):
+    def test_fit(self, params='stmc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
         h.transmat_ = hmm.normalize(self.transmat
@@ -337,7 +337,7 @@ class GaussianHMMBaseTester(object):
         # ValueError: setting an array element with a sequence.
         h.fit(obs)
 
-    def test_fit_with_priors(self, params='stmc', n_iter=10, verbose=False):
+    def test_fit_with_priors(self, params='stmc', n_iter=5, verbose=False):
         startprob_prior = 10 * self.startprob + 2.0
         transmat_prior = 10 * self.transmat + 2.0
         means_prior = self.means
@@ -471,7 +471,7 @@ class MultinomialHMMTestCase(TestCase):
         self.assertEquals(len(samples), n)
         self.assertEquals(len(np.unique(samples)), self.n_symbols)
 
-    def test_fit(self, params='ste', n_iter=15, verbose=False, **kwargs):
+    def test_fit(self, params='ste', n_iter=5, verbose=False, **kwargs):
         h = self.h
 
         # Create training data by sampling from the HMM.

@@ -37,6 +37,7 @@ Single and multi-output problems are both handled.
 
 import itertools
 import numpy as np
+from warnings import warn
 from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
@@ -44,8 +45,8 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
-from ..tree._tree import DTYPE
-from ..utils import array2d, check_random_state
+from ..tree._tree import DTYPE, DOUBLE
+from ..utils import array2d, check_random_state, check_arrays
 from ..metrics import r2_score
 
 from .base import BaseEnsemble
@@ -197,7 +198,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -224,7 +225,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self : object
             Returns self.
         """
+        self.random_state = check_random_state(self.random_state)
+        
         # Precompute some data
+        X, y = check_arrays(X, y, sparse_format="dense")
         if getattr(X, "dtype", None) != DTYPE or \
            X.ndim != 2 or not X.flags.fortran:
             X = array2d(X, dtype=DTYPE, order="F")
@@ -269,7 +273,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 y[:, k] = np.searchsorted(unique, y[:, k])
 
         if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DTYPE)
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
@@ -313,6 +317,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         predictions[k][mask, :] += p_estimator[k]
 
                 for k in xrange(self.n_outputs_):
+                    if (predictions[k].sum(axis=1) == 0).any():
+                        warn("Some inputs do not have OOB scores. "
+                             "This probably means too few trees were used "
+                             "to compute any reliable oob estimates.")
                     decision = predictions[k] \
                                / predictions[k].sum(axis=1)[:, np.newaxis]
                     self.oob_decision_function_.append(decision)
@@ -341,7 +349,11 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                     predictions[mask, :] += p_estimator
                     n_predictions[mask, :] += 1
-
+                if (n_predictions == 0).any():
+                    warn("Some inputs do not have OOB scores. "
+                         "This probably means too few trees were used "
+                         "to compute any reliable oob estimates.")
+                    n_predictions[n_predictions == 0] = 1
                 predictions /= n_predictions
 
                 self.oob_prediction_ = predictions

@@ -20,7 +20,7 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state
-from .utils.fixes import unique, in1d
+from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
 
@@ -623,18 +623,18 @@ class Bootstrap(object):
             train_size = n_train
             warnings.warn(
                 "n_train is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead",
+                "removal in 0.13, use train_size instead",
                 DeprecationWarning, stacklevel=2)
         if n_test is not None:
             test_size = n_test
             warnings.warn(
                 "n_test is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead",
+                "removal in 0.13, use test_size instead",
                 DeprecationWarning, stacklevel=2)
-        if (isinstance(train_size, float) and train_size >= 0.0
+        if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
-        elif isinstance(train_size, int):
+        elif isinstance(train_size, (int, np.integer)):
             self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
@@ -643,10 +643,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if (isinstance(test_size, float) and test_size >= 0.0
+        if (isinstance(test_size, (float, np.floating)) and test_size >= 0.0
                     and test_size <= 1.0):
             self.test_size = ceil(test_size * n)
-        elif isinstance(test_size, int):
+        elif isinstance(test_size, (int, np.integer)):
             self.test_size = test_size
         elif test_size is None:
             self.test_size = self.n - self.train_size
@@ -765,13 +765,13 @@ class ShuffleSplit(object):
         if test_fraction is not None:
             warnings.warn(
                 "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead",
+                "removal in 0.13, use test_size instead",
                 DeprecationWarning, stacklevel=2)
             test_size = test_fraction
         if train_fraction is not None:
             warnings.warn(
                 "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead",
+                "removal in 0.13, use train_size instead",
                 DeprecationWarning, stacklevel=2)
             train_size = train_fraction
 
@@ -872,14 +872,27 @@ def _validate_shuffle_split(n, test_size, train_size):
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
-    y = unique(y, return_inverse=True)[1]
+    classes, y = unique(y, return_inverse=True)
+    n_cls = classes.shape[0]
+
     if np.min(np.bincount(y)) < 2:
         raise ValueError("The least populated class in y has only 1"
                          " member, which is too few. The minimum"
                          " number of labels for any class cannot"
                          " be less than 2.")
 
-    return _validate_shuffle_split(y.size, test_size, train_size)
+    n_train, n_test = _validate_shuffle_split(y.size, test_size, train_size)
+
+    if n_train < n_cls:
+        raise ValueError('The train_size = %d should be greater or '
+                         'equal to the number of classes = %d' %
+                         (n_train, n_cls))
+    if n_test < n_cls:
+        raise ValueError('The test_size = %d should be greater or '
+                         'equal to the number of classes = %d' %
+                         (n_test, n_cls))
+
+    return n_train, n_test, classes, y
 
 
 class StratifiedShuffleSplit(object):
@@ -933,50 +946,55 @@ class StratifiedShuffleSplit(object):
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0 3] TEST: [1 2]
+    TRAIN: [1 2] TEST: [3 0]
     TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 2] TEST: [3 1]
     """
 
     def __init__(self, y, n_iterations=10, test_size=0.1,
                  train_size=None, indices=True, random_state=None):
 
-        self.y = np.asarray(y)
-        self.n = self.y.shape[0]
+        self.y = np.array(y)
+        self.n = self.y.size
         self.n_iterations = n_iterations
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        self.n_train, self.n_test = \
+        self.n_train, self.n_test, self.classes, self.y_indices = \
             _validate_stratified_shuffle_split(y, test_size, train_size)
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
+        cls_count = np.bincount(self.y_indices)
+        p_i = cls_count / float(self.n)
+        n_i = np.round(self.n_train * p_i).astype(int)
+        t_i = np.minimum(cls_count - n_i,
+                         np.round(self.n_test * p_i).astype(int))
 
-        y = self.y.copy()
-        n = y.size
-        k = ceil(n / self.n_test)
-        l = floor((n - self.n_test) / self.n_train)
+        for n in range(self.n_iterations):
+            train = []
+            test = []
 
-        for i in xrange(self.n_iterations):
-            ik = i % k
-            permutation = rng.permutation(self.n)
-            idx = np.argsort(y[permutation])
-            ind_test = permutation[idx[ik::k]]
-            inv_test = np.setdiff1d(idx, idx[ik::k])
-            train_idx = idx[np.where(in1d(idx, inv_test))[0]]
-            ind_train = permutation[train_idx[::l]][:self.n_train]
-            test_index = ind_test
-            train_index = ind_train
+            for i, cls in enumerate(self.classes):
+                permutation = rng.permutation(n_i[i] + t_i[i])
+                cls_i = np.where((self.y == cls))[0][permutation]
 
-            if not self.indices:
-                test_index = np.zeros(n, dtype=np.bool)
-                test_index[ind_test] = True
-                train_index = np.zeros(n, dtype=np.bool)
-                train_index[ind_train] = True
+                train.extend(cls_i[:n_i[i]])
+                test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
 
-            yield train_index, test_index
+            train = rng.permutation(train)
+            test = rng.permutation(test)
+
+            if self.indices:
+                yield train, test
+            else:
+                train_m = np.zeros(self.n, dtype=bool)
+                test_m = np.zeros(self.n, dtype=bool)
+                train_m[train] = True
+                test_m[test] = True
+
+                yield train_m, test_m
 
     def __repr__(self):
         return ('%s(labels=%s, n_iterations=%d, test_size=%s, indices=%s, '
@@ -995,20 +1013,23 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test):
+def _cross_val_score(estimator, X, y, score_func, train, test, verbose):
     """Inner loop for cross validation"""
     if y is None:
         estimator.fit(X[train])
         if score_func is None:
-            return estimator.score(X[test])
+            score = estimator.score(X[test])
         else:
-            return score_func(X[test])
+            score = score_func(X[test])
     else:
         estimator.fit(X[train], y[train])
         if score_func is None:
-            return estimator.score(X[test], y[test])
+            score = estimator.score(X[test], y[test])
         else:
-            return score_func(y[test], estimator.predict(X[test]))
+            score = score_func(y[test], estimator.predict(X[test]))
+    if verbose > 1:
+        print("score: %f" % score)
+    return score
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
@@ -1057,7 +1078,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                          train, test)
+                                          train, test, verbose)
                 for train, test in cv)
     return np.array(scores)
 
@@ -1078,7 +1099,7 @@ def _shuffle(y, labels, random_state):
         ind = random_state.permutation(y.size)
     else:
         ind = np.arange(labels.size)
-        for label in np.unique(labels):
+        for label in unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]
@@ -1216,7 +1237,7 @@ def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
     Quick utility that wraps calls to ``check_arrays`` and
-    ``iter(ShuffleSplit(n_samples)).next()`` and application to input
+    ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
 
@@ -1281,7 +1302,7 @@ def train_test_split(*arrays, **options):
     if test_fraction is not None:
         warnings.warn(
                 "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead",
+                "removal in 0.13, use test_size instead",
                 DeprecationWarning, stacklevel=2)
     else:
         test_fraction = 0.25
@@ -1290,7 +1311,7 @@ def train_test_split(*arrays, **options):
     if train_fraction is not None:
         warnings.warn(
                 "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead",
+                "removal in 0.13, use train_size instead",
                 DeprecationWarning, stacklevel=2)
 
     test_size = options.pop('test_size', test_fraction)
@@ -1304,7 +1325,7 @@ def train_test_split(*arrays, **options):
                       train_size=train_size,
                       random_state=random_state,
                       indices=True)
-    train, test = iter(cv).next()
+    train, test = next(iter(cv))
     splitted = []
     for a in arrays:
         splitted.append(a[train])
