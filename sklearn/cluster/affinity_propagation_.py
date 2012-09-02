@@ -15,7 +15,7 @@ from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
+def affinity_propagation(S, preference=None, p=None, convit=15, max_iter=200,
         damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
@@ -33,6 +33,10 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         set to the median of the input similarities (resulting in a moderate
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
+
+    convit : int, default: 15, optional
+        Number of iterations with no change in the number
+        of estimated clusters that stops the convergence.
 
     damping : float, optional
         Damping factor
@@ -183,7 +187,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     max_iter : int, optional
         Maximum number of iterations
 
-    convit : int, optional
+    convit : int, default: 15, optional
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
@@ -231,7 +235,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True,
+    def __init__(self, damping=.5, max_iter=200, convit=15, copy=True,
             preference=None, p=None, affinity='euclidean', verbose=False):
         self.damping = damping
         self.max_iter = max_iter
