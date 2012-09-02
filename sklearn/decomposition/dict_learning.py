@@ -22,7 +22,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
-                   reg_param=None, copy_cov=True,
+                   regularization=None, copy_cov=True,
                    init=None, max_iter=1000):
     """Generic sparse coding
 
@@ -51,10 +51,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Lasso solution (linear_model.Lasso). lasso_lars will be faster if
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than reg_param from
+        threshold: squashes to zero all coefficients less than regularization from
         the projection dictionary * data'
 
-    reg_param : int | float
+    regularization : int | float
         The regularization parameter. It corresponds to alpha when
         algorithm is 'lasso_lars', 'lasso_cd' or 'threshold'.
         Otherwise it corresponds to n_nonzero_coefs.
@@ -91,7 +91,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         cov = np.dot(dictionary, X.T)
 
     if algorithm == 'lasso_lars':
-        alpha = float(reg_param) / n_features  # account for scaling
+        alpha = float(regularization) / n_features  # account for scaling
         try:
             err_mgt = np.seterr(all='ignore')
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
@@ -103,7 +103,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             np.seterr(**err_mgt)
 
     elif algorithm == 'lasso_cd':
-        alpha = float(reg_param) / n_features  # account for scaling
+        alpha = float(regularization) / n_features  # account for scaling
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=max_iter)
         clf.fit(dictionary.T, X.T, Xy=cov, coef_init=init)
@@ -113,7 +113,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
             lars = Lars(fit_intercept=False, verbose=False, normalize=False,
-                        precompute=gram, n_nonzero_coefs=int(reg_param),
+                        precompute=gram, n_nonzero_coefs=int(regularization),
                         fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lars.coef_
@@ -121,11 +121,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             np.seterr(**err_mgt)
 
     elif algorithm == 'threshold':
-        new_code = (np.sign(cov) * np.maximum(np.abs(cov) - reg_param, 0)).T
+        new_code = (np.sign(cov) * np.maximum(np.abs(cov) - regularization, 0)).T
 
     elif algorithm == 'omp':
         norms_squared = np.sum((X ** 2), axis=1)
-        new_code = orthogonal_mp_gram(gram, cov, reg_param, None,
+        new_code = orthogonal_mp_gram(gram, cov, regularization, None,
                                       norms_squared, copy_Xy=copy_cov).T
     else:
         raise NotImplemented('Sparse coding method %s not implemented' %
@@ -133,6 +133,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     return new_code
 
 
+# XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_gram=None,
                   copy_cov=True, init=None, max_iter=1000, n_jobs=1):
@@ -213,8 +214,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         warnings.warn("copy_gram in sparse_encode is deprecated: it"
                       "lead to errors. To be removed in 0.13.",
                       DeprecationWarning, stacklevel=2)
-    dictionary = np.asarray(dictionary)
-    X = np.asarray(X)
+    dictionary = array2d(dictionary)
+    X = array2d(X)
     n_samples, n_features = X.shape
     n_atoms = dictionary.shape[0]
 
@@ -224,18 +225,18 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
-    if algorithm in ['lars', 'omp']:
-        reg_param = n_nonzero_coefs
-        if reg_param is None:
-            reg_param = max(n_features / 10, 1)
+    if algorithm in ('lars', 'omp'):
+        regularization = n_nonzero_coefs
+        if regularization is None:
+            regularization = max(n_features / 10, 1)
     else:
-        reg_param = alpha
-        if reg_param is None:
-            reg_param = 1.
+        regularization = alpha
+        if regularization is None:
+            regularization = 1.
 
     if n_jobs == 1 or algorithm == 'threshold':
         return _sparse_encode(X, dictionary, gram, cov=cov,
-                  algorithm=algorithm, reg_param=reg_param,
+                  algorithm=algorithm, regularization=regularization,
                   copy_cov=copy_cov, init=init, max_iter=max_iter)
 
     # Enter parallel code block
@@ -251,7 +252,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(_sparse_encode)(X[this_slice], dictionary, gram,
                            cov[:, this_slice], algorithm,
-                           reg_param=reg_param, copy_cov=copy_cov,
+                           regularization=regularization, copy_cov=copy_cov,
                            init=init[this_slice] if init is not None else None,
                            max_iter=max_iter)
                 for this_slice in slices)

@@ -390,6 +390,8 @@ class Lars(LinearModel, RegressorMixin):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    fit_path : boolean
+        If True the full path is stored in the coef_path_ attribute.
 
     Attributes
     ----------
@@ -453,10 +455,10 @@ class Lars(LinearModel, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             training data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_targets]
             target values.
 
-        Xy : array-like, shape = [n_samples], optional
+        Xy : array-like, shape = [n_samples] or [n_samples, n_targets], optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
 
@@ -570,6 +572,8 @@ class LassoLars(Lars):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    fit_path : boolean
+        If True the full path is stored in the coef_path_ attribute.
 
     Attributes
     ----------
