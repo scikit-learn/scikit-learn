@@ -595,7 +595,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 ((precompute == 'auto') and (n_samples > n_features)):
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
-        precompute = np.dot(X.T, X)
+            precompute = False
+        else:
+            precompute = np.dot(X.T, X)
 
     if Xy is None:
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
