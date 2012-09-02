@@ -23,4 +23,5 @@ class SparseBaseLibSVM(BaseLibSVM):
 
     def fit(self, X, y, sample_weight=None):
         X = scipy.sparse.csr_matrix(X, dtype=np.float64)
-        return super(SparseBaseLibSVM, self).fit(X, y, sample_weight)
+        return super(SparseBaseLibSVM, self).fit(X, y,
+                                                 sample_weight=sample_weight)
