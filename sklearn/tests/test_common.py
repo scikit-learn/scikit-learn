@@ -150,7 +150,7 @@ def test_transformers():
             y_ = y
 
         try:
-            trans.fit(X, y_)
+            trans.fit(X, y=y_)
             X_pred = trans.fit_transform(X, y=y_)
             if isinstance(X_pred, tuple):
                 for x_pred in X_pred:
