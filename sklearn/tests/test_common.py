@@ -120,6 +120,9 @@ def test_transformers():
     n_samples, n_features = X.shape
     X = Scaler().fit_transform(X)
     X -= X.min()
+
+    succeeded = True
+
     for name, Trans in transformers:
         if Trans in dont_test or Trans in meta_estimators:
             continue
@@ -139,9 +142,22 @@ def test_transformers():
             trans.k = 1
 
         # fit
-        trans.fit(X, y)
-        X_pred = trans.fit_transform(X, y=y)
-        assert_equal(X_pred.shape[0], n_samples)
+
+        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA):
+            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = y_.T
+        else:
+            y_ = y
+
+        try:
+            trans.fit(X, y_)
+            X_pred = trans.fit_transform(X, y=y_)
+            assert_equal(X_pred.shape[0], n_samples)
+        except Exception as e:
+            print trans
+            print e
+            print
+            succeeded = False
 
         if hasattr(trans, 'transform'):
             X_pred2 = trans.transform(X)
@@ -149,6 +165,7 @@ def test_transformers():
 
             # raises error on malformed input for transform
             assert_raises(ValueError, trans.transform, X.T)
+    assert_true(succeeded)
 
 
 def test_transformers_sparse_data():
@@ -381,7 +398,8 @@ def test_regressors_int():
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
     X = Scaler().fit_transform(X)
-    y = np.random.randint(2, size=X.shape[0])
+    #y = np.random.randint(2, size=X.shape[0])
+    y = y.astype(np.int)
     for name, Reg in regressors:
         if Reg in dont_test or Reg in meta_estimators:
             continue
@@ -397,12 +415,18 @@ def test_regressors_int():
             reg1.set_params(random_state=0)
             reg2.set_params(random_state=0)
 
+        if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = y_.T
+        else:
+            y_ = y
+
         # fit
-        reg1.fit(X, y)
+        reg1.fit(X, y_)
         pred1 = reg1.predict(X)
-        reg2.fit(X, y.astype(np.float))
+        reg2.fit(X, y_.astype(np.float))
         pred2 = reg2.predict(X)
-        assert_array_almost_equal(pred1, pred2, 2)
+        assert_array_almost_equal(pred1, pred2, 2, name)
 
 
 def test_regressors_train():
@@ -431,7 +455,8 @@ def test_regressors_train():
         # fit
         try:
             if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
-                y_ = np.vstack([y, 2 * y + 0.001 * np.random.randn(len(y))]).T
+                y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+                y_ = y_.T
             else:
                 y_ = y
             reg.fit(X, y_)
