@@ -392,6 +392,9 @@ class Lars(LinearModel, RegressorMixin):
 
     fit_path : boolean
         If True the full path is stored in the coef_path_ attribute.
+        If you compute the solution for a large problem or many targets,
+        setting fit_path to False will lead to a speedup, especially
+        with a small alpha.
 
     Attributes
     ----------
@@ -574,6 +577,9 @@ class LassoLars(Lars):
 
     fit_path : boolean
         If True the full path is stored in the coef_path_ attribute.
+        If you compute the solution for a large problem or many targets,
+        setting fit_path to False will lead to a speedup, especially
+        with a small alpha.
 
     Attributes
     ----------
