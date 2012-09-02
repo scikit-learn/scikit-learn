@@ -15,7 +15,8 @@ from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, preference=None, p=None, convit=15, max_iter=200,
+def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
+        convit=None, max_iter=200,
         damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
@@ -34,7 +35,7 @@ def affinity_propagation(S, preference=None, p=None, convit=15, max_iter=200,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convit : int, default: 15, optional
+    convergence_iteration : int, default: 15, optional
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
@@ -67,6 +68,11 @@ def affinity_propagation(S, preference=None, p=None, convit=15, max_iter=200,
     Between Data Points", Science Feb. 2007
     """
     S = as_float_array(S, copy=copy)
+    if convit is not None:
+        warnings.warn("p is deprecated and will be removed in version 0.14. "
+                      "Use ``convergence_iteration`` instead",
+                      DeprecationWarning)
+        convergence_iteration = convit
 
     n_samples = S.shape[0]
 
@@ -97,7 +103,7 @@ def affinity_propagation(S, preference=None, p=None, convit=15, max_iter=200,
          random_state.randn(n_samples, n_samples)
 
     # Execute parallel affinity propagation updates
-    e = np.zeros((n_samples, convit))
+    e = np.zeros((n_samples, convergence_iteration))
 
     ind = np.arange(n_samples)
 
@@ -134,12 +140,13 @@ def affinity_propagation(S, preference=None, p=None, convit=15, max_iter=200,
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
-        e[:, it % convit] = E
+        e[:, it % convergence_iteration] = E
         K = np.sum(E, axis=0)
 
-        if it >= convit:
+        if it >= convergence_iteration:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convit) + (se == 0)) != n_samples
+            unconverged = np.sum((se == convergence_iteration) +\
+                                 (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
@@ -187,7 +194,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     max_iter : int, optional
         Maximum number of iterations
 
-    convit : int, default: 15, optional
+    convergence_iteration : int, default: 15, optional
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
@@ -235,11 +242,19 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=15, copy=True,
+    def __init__(self, damping=.5, max_iter=200, convergence_iteration=15,
+            convit=None, copy=True,
             preference=None, p=None, affinity='euclidean', verbose=False):
+
+        if convit is not None:
+            warnings.warn("``convit`` is deprectaed and will be removed in "
+                          "version 0.14. Use ``convergence_iteration`` "
+                          "instead", DeprecationWarning)
+            convergence_iteration = convit
+
         self.damping = damping
         self.max_iter = max_iter
-        self.convit = convit
+        self.convergence_iteration = convergence_iteration
         self.copy = copy
         self.verbose = verbose
         if not p is None:
@@ -281,6 +296,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
                 self.affinity_matrix_, self.preference,
-                max_iter=self.max_iter, convit=self.convit,
+                max_iter=self.max_iter,
+                convergence_iteration=self.convergence_iteration,
                 damping=self.damping, copy=self.copy, verbose=self.verbose)
         return self
