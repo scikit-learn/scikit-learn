@@ -7,6 +7,7 @@ import numpy as np
 import warnings
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils import check_arrays
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -97,6 +98,7 @@ class Isomap(BaseEstimator, TransformerMixin):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
+        X, = check_arrays(X, sparse_format='dense')
         if self.out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
                           "``n_components`` and is now deprecated. This will "

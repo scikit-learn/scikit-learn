@@ -9,7 +9,7 @@ import warnings
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, check_arrays
 from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors
 
@@ -631,6 +631,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
             self.out_dim = None
 
         self.random_state = check_random_state(self.random_state)
+        X, = check_arrays(X, sparse_format='dense')
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
