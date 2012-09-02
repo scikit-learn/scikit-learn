@@ -877,6 +877,8 @@ class LarsCV(Lars):
         self.cv_mse_path_ = mse_path
 
         # Now compute the full model
+        # it will call a lasso internally when self if LassoLarsCV
+        # as self.method == 'lasso'
         Lars.fit(self, X, y)
         return self
 
