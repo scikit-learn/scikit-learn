@@ -140,7 +140,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
     RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, loss_func=None,
         normalize=False, score_func=None)
-    >>> clf.best_alpha                                      # doctest: +SKIP
+    >>> clf.alpha_                                      # doctest: +SKIP
     0.1
 
 .. topic:: References

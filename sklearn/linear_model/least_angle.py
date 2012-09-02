@@ -11,6 +11,7 @@ Generalized Linear Model for a complete discussion.
 
 from math import log
 import sys
+import warnings
 
 import numpy as np
 from scipy import linalg, interpolate
@@ -766,10 +767,23 @@ class LarsCV(Lars):
         parameter vector (w in the fomulation formula)
 
     `intercept_` : float
-        independent term in decision function.
+        independent term in decision function
 
     `coef_path_`: array, shape = [n_features, n_alpha]
-        the varying values of the coefficients along the path.
+        the varying values of the coefficients along the path
+
+    `alpha_`: float
+        the estimated regularization parameter alpha
+
+    `alphas_`: array, shape = [n_alpha]
+        the different values of alpha along the path
+
+    `cv_alphas_`: array, shape = [n_cv_alphas]
+        all the values of alpha along the path for the different folds
+
+    `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
+        the mean square error on left-out for each fold along the path
+        (alpha values given by cv_alphas)
 
     See also
     --------
@@ -858,13 +872,26 @@ class LarsCV(Lars):
         best_alpha = all_alphas[i_best_alpha]
 
         # Store our parameters
-        self.alpha = best_alpha
-        self.cv_alphas = all_alphas
+        self.alpha_ = best_alpha
+        self.cv_alphas_ = all_alphas
         self.cv_mse_path_ = mse_path
 
         # Now compute the full model
         Lars.fit(self, X, y)
         return self
+
+    @property
+    def alpha(self):
+        # impedance matching for the above Lars.fit (should not be documented)
+        return self.alpha_
+
+    @property
+    def cv_alphas(self):
+        warnings.warn("Use cv_alphas_. Using cv_alphas is deprecated"
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=2)
+        return self.cv_alphas_
 
 
 class LassoLarsCV(LarsCV):
@@ -926,16 +953,18 @@ class LassoLarsCV(LarsCV):
     `coef_path_`: array, shape = [n_features, n_alpha]
         the varying values of the coefficients along the path
 
+    `alpha_`: float
+        the estimated regularization parameter alpha
+
     `alphas_`: array, shape = [n_alpha]
         the different values of alpha along the path
 
-    `cv_alphas`: array, shape = [n_cv_alphas]
+    `cv_alphas_`: array, shape = [n_cv_alphas]
         all the values of alpha along the path for the different folds
 
     `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
         the mean square error on left-out for each fold along the path
         (alpha values given by cv_alphas)
-
 
     Notes
     -----

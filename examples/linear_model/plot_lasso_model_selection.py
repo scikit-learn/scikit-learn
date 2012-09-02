@@ -106,7 +106,7 @@ model = LassoCV(cv=20).fit(X, y)
 t_lasso_cv = time.time() - t1
 
 # Display results
-m_log_alphas = -np.log10(model.alphas)
+m_log_alphas = -np.log10(model.alphas_)
 
 pl.figure()
 ymin, ymax = 2300, 3800

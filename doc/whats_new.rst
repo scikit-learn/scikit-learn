@@ -113,6 +113,15 @@ API changes summary
      :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
      classes.
 
+   - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
+     :class:`linear_model.ElasticNetCV` is now stored
+     in the attribute `alphas_` rather than overriding the init parameter
+     `alphas`.
+
+   - Linear models when alpha is estimated by cross-validation store
+     the estimated value in the `alpha_` attribute rather than just
+     `alpha` or `best_alpha`.
+
 .. _changes_0_11:
 
 0.11

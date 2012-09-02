@@ -533,7 +533,7 @@ class _RidgeGCV(LinearModel):
                     for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
-        self.best_alpha = self.alphas[best]
+        self.alpha_ = self.alphas[best]
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
@@ -547,6 +547,14 @@ class _RidgeGCV(LinearModel):
             self.cv_values_ = cv_values.reshape(cv_values_shape)
 
         return self
+
+    @property
+    def best_alpha(self):
+        warnings.warn("Use alpha_. Using best_alpha is deprecated"
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=2)
+        return self.alpha_
 
 
 class _BaseRidgeCV(LinearModel):
@@ -591,7 +599,7 @@ class _BaseRidgeCV(LinearModel):
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
-            self.best_alpha = estimator.best_alpha
+            self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
         else:
@@ -607,7 +615,7 @@ class _BaseRidgeCV(LinearModel):
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
             estimator = gs.best_estimator_
-            self.best_alpha = gs.best_estimator_.alpha
+            self.alpha_ = gs.best_estimator_.alpha
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -681,11 +689,14 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
+    `alpha_` : float
+        Estimated regularization parameter
+
     See also
     --------
     Ridge: Ridge regression
     RidgeClassifier: Ridge classifier
-    RidgeCV: Ridge regression with built-in cross validation
+    RidgeClassifierCV: Ridge classifier with built-in cross validation
     """
     pass
 
@@ -732,6 +743,21 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
         Weights associated with classes in the form
         {class_label : weight}. If not given, all classes are
         supposed to have weight one.
+
+    Attributes
+    ----------
+    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+        shape = [n_samples, n_responses, n_alphas], optional
+        Cross-validation values for each alpha (if `store_cv_values=True` and
+        `cv=None`). After `fit()` has been called, this attribute will contain
+        the mean squared errors (by default) or the values of the
+        `{loss,score}_func` function (if provided in the constructor).
+
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+        Weight vector(s).
+
+    `alpha_` : float
+        Estimated regularization parameter
 
     See also
     --------

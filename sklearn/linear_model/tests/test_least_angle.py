@@ -283,8 +283,8 @@ def test_lars_cv():
         X = diabetes.data[:length]
         y = diabetes.target[:length]
         lars_cv.fit(X, y)
-        np.testing.assert_array_less(old_alpha, lars_cv.alpha)
-        old_alpha = lars_cv.alpha
+        np.testing.assert_array_less(old_alpha, lars_cv.alpha_)
+        old_alpha = lars_cv.alpha_
 
 
 def test_lasso_lars_ic():
