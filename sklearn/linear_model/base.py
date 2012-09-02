@@ -142,7 +142,7 @@ class LinearModel(BaseEstimator):
             self.coef_ = self.coef_ / X_std
             self.intercept_ = y_mean - np.dot(X_mean, self.coef_.T)
         else:
-            self.intercept_ = 0
+            self.intercept_ = 0.
 
 
 class LinearRegression(LinearModel, RegressorMixin):

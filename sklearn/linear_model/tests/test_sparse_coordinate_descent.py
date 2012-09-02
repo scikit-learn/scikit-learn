@@ -8,7 +8,8 @@ from numpy.testing import assert_equal
 from nose.tools import assert_true
 from sklearn.utils.testing import assert_less, assert_greater
 
-from sklearn.linear_model.coordinate_descent import Lasso, ElasticNet
+from sklearn.linear_model.coordinate_descent import Lasso, ElasticNet, \
+                                                    ElasticNetCV
 
 
 def test_sparse_coef():
@@ -115,15 +116,15 @@ def test_enet_toy_explicit_sparse_input():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def make_sparse_data(n_samples, n_features, n_informative, seed=42,
-                     positive=False):
+def make_sparse_data(n_samples=100, n_features=100, n_informative=10, seed=42,
+                     positive=False, n_targets=1):
     random_state = np.random.RandomState(seed)
 
     # build an ill-posed linear regression problem with many noisy features and
     # comparatively few samples
 
     # generate a ground truth model
-    w = random_state.randn(n_features)
+    w = random_state.randn(n_features, n_targets)
     w[n_informative:] = 0.0  # only the top features are impacting the model
     if positive:
         w = np.abs(w)
@@ -135,6 +136,8 @@ def make_sparse_data(n_samples, n_features, n_informative, seed=42,
     # generate training ground truth labels
     y = np.dot(X, w)
     X = sp.csc_matrix(X)
+    if n_targets == 1:
+        y = np.ravel(y)
     return X, y
 
 
@@ -196,10 +199,10 @@ def test_sparse_enet_not_as_toy_dataset():
 
 
 def test_sparse_lasso_not_as_toy_dataset():
-    n_samples, n_features, max_iter = 100, 100, 1000
+    n_samples = 100
+    max_iter = 1000
     n_informative = 10
-
-    X, y = make_sparse_data(n_samples, n_features, n_informative)
+    X, y = make_sparse_data(n_samples=n_samples, n_informative=n_informative)
 
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
@@ -219,3 +222,33 @@ def test_sparse_lasso_not_as_toy_dataset():
 
     # check that the coefs are sparse
     assert_equal(np.sum(s_clf.coef_ != 0.0), n_informative)
+
+
+def test_enet_multitarget():
+    n_targets = 3
+    X, y = make_sparse_data(n_targets=n_targets)
+
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
+    # XXX: There is a bug when precompute is not None!
+    estimator.fit(X, y)
+    coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
+                                      estimator.dual_gap_, estimator.eps_)
+
+    for k in xrange(n_targets):
+        estimator.fit(X, y[:, k])
+        assert_array_almost_equal(coef[k, :], estimator.coef_)
+        assert_array_almost_equal(intercept[k], estimator.intercept_)
+        assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+        assert_array_almost_equal(eps[k], estimator.eps_)
+
+
+def test_path_parameters():
+    X, y = make_sparse_data()
+    max_iter = 50
+    n_alphas = 10
+    clf = ElasticNetCV(n_alphas=n_alphas, eps=1e-3, max_iter=max_iter,
+                       rho=0.5, fit_intercept=False)
+    clf.fit(X, y)  # new params
+    assert_almost_equal(0.5, clf.rho)
+    assert_equal(n_alphas, clf.n_alphas)
+    assert_equal(n_alphas, len(clf.alphas_))

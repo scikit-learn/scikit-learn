@@ -140,7 +140,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
     RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, loss_func=None,
         normalize=False, score_func=None)
-    >>> clf.best_alpha                                      # doctest: +SKIP
+    >>> clf.alpha_                                      # doctest: +SKIP
     0.1
 
 .. topic:: References
@@ -396,9 +396,10 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit([[0, 0], [1, 1]], [0, 1])                # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   >>> clf.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
    LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
-        max_iter=500, normalize=True, precompute='auto', verbose=False)
+        fit_path=True, max_iter=500, normalize=True, precompute='auto',
+        verbose=False)
    >>> clf.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 

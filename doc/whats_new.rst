@@ -67,6 +67,11 @@ Changelog
    - In :class:`feature_extraction.text.CountVectorizer`, added an option to
      infrequent words, ``min_df`` by  `Andreas Müller`_.
 
+   - Add support for multiple targets in some linear models (ElasticNet, Lasso
+     and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
+     `Alexandre Gramfort`_.
+
+
 API changes summary
 -------------------
 
@@ -107,6 +112,15 @@ API changes summary
    - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
      :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
      classes.
+
+   - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
+     :class:`linear_model.ElasticNetCV` is now stored
+     in the attribute `alphas_` rather than overriding the init parameter
+     `alphas`.
+
+   - Linear models when alpha is estimated by cross-validation store
+     the estimated value in the `alpha_` attribute rather than just
+     `alpha` or `best_alpha`.
 
 .. _changes_0_11:
 
