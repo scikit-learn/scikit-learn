@@ -411,10 +411,9 @@ def test_regressors_int():
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
     X = Scaler().fit_transform(X)
-    #y = np.random.randint(2, size=X.shape[0])
-    y = y.astype(np.int)
+    y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in meta_estimators:
+        if Reg in dont_test or Reg in meta_estimators or Reg in (CCA,):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -428,7 +427,7 @@ def test_regressors_int():
             reg1.set_params(random_state=0)
             reg2.set_params(random_state=0)
 
-        if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+        if Reg in (_PLS, PLSCanonical, PLSRegression):
             y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
             y_ = y_.T
         else:
