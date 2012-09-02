@@ -69,8 +69,8 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
     """
     S = as_float_array(S, copy=copy)
     if convit is not None:
-        warnings.warn("p is deprecated and will be removed in version 0.14. "
-                      "Use ``convergence_iteration`` instead",
+        warnings.warn("``convit`` is deprecated and will be removed in"
+                      "version 0.14. Use ``convergence_iteration`` instead",
                       DeprecationWarning)
         convergence_iteration = convit
 
