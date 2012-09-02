@@ -164,7 +164,10 @@ def test_transformers():
             succeeded = False
 
         if hasattr(trans, 'transform'):
-            X_pred2 = trans.transform(X, y=y_)
+            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA):
+                X_pred2 = trans.transform(X, y_)
+            else:
+                X_pred2 = trans.transform(X)
             if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
                 for x_pred, x_pred2 in zip(X_pred, X_pred2):
                     assert_array_almost_equal(x_pred, x_pred2, 2,

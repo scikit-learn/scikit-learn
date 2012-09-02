@@ -401,6 +401,28 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         Ypred = np.dot(Xc, self.coefs)
         return Ypred + self.y_mean_
 
+    def fit_transform(self, X, y=None, **fit_params):
+        """Learn and apply the dimension reduction on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
+
+        copy : boolean
+            Whether to copy X and Y, or perform in-place normalization.
+
+        Returns
+        -------
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        """
+        return self.fit(X, y, **fit_params).transform(X, y)
+
 
 class PLSRegression(_PLS):
     """PLS regression
@@ -841,3 +863,22 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores
         return x_scores
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Learn and apply the dimension reduction on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
+
+        Returns
+        -------
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        """
+        return self.fit(X, y, **fit_params).transform(X, y)

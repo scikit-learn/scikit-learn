@@ -369,7 +369,7 @@ class TransformerMixin(object):
             return self.fit(X, **fit_params).transform(X)
         else:
             # fit method of arity 2 (supervised transformation)
-            return self.fit(X, y, **fit_params).transform(X, y)
+            return self.fit(X, y, **fit_params).transform(X)
 
 
 ###############################################################################
