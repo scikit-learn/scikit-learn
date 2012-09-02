@@ -152,7 +152,11 @@ def test_transformers():
         try:
             trans.fit(X, y_)
             X_pred = trans.fit_transform(X, y=y_)
-            assert_equal(X_pred.shape[0], n_samples)
+            if isinstance(X_pred, tuple):
+                for x_pred in X_pred:
+                    assert_equal(x_pred.shape[0], n_samples)
+            else:
+                assert_equal(X_pred.shape[0], n_samples)
         except Exception as e:
             print trans
             print e
@@ -160,8 +164,14 @@ def test_transformers():
             succeeded = False
 
         if hasattr(trans, 'transform'):
-            X_pred2 = trans.transform(X)
-            assert_array_almost_equal(X_pred, X_pred2, 2)
+            X_pred2 = trans.transform(X, y=y_)
+            if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
+                for x_pred, x_pred2 in zip(X_pred, X_pred2):
+                    assert_array_almost_equal(x_pred, x_pred2, 2,
+                        "fit_transform not correct in %s" % Trans)
+            else:
+                assert_array_almost_equal(X_pred, X_pred2, 2,
+                    "fit_transform not correct in %s" % Trans)
 
             # raises error on malformed input for transform
             assert_raises(ValueError, trans.transform, X.T)
