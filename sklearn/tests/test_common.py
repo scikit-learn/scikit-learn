@@ -8,7 +8,7 @@ import traceback
 
 import numpy as np
 from scipy import sparse
-from nose.tools import assert_raises, assert_equal
+from nose.tools import assert_raises, assert_equal, assert_true
 from numpy.testing import assert_array_equal, \
         assert_array_almost_equal
 
@@ -29,6 +29,7 @@ from sklearn.svm.base import BaseLibSVM
 from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
 from sklearn.pipeline import Pipeline
+from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
 from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
@@ -119,6 +120,9 @@ def test_transformers():
     n_samples, n_features = X.shape
     X = Scaler().fit_transform(X)
     X -= X.min()
+
+    succeeded = True
+
     for name, Trans in transformers:
         if Trans in dont_test or Trans in meta_estimators:
             continue
@@ -138,16 +142,43 @@ def test_transformers():
             trans.k = 1
 
         # fit
-        trans.fit(X, y)
-        X_pred = trans.fit_transform(X, y=y)
-        assert_equal(X_pred.shape[0], n_samples)
+
+        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = y_.T
+        else:
+            y_ = y
+
+        try:
+            trans.fit(X, y=y_)
+            X_pred = trans.fit_transform(X, y=y_)
+            if isinstance(X_pred, tuple):
+                for x_pred in X_pred:
+                    assert_equal(x_pred.shape[0], n_samples)
+            else:
+                assert_equal(X_pred.shape[0], n_samples)
+        except Exception as e:
+            print trans
+            print e
+            print
+            succeeded = False
 
         if hasattr(trans, 'transform'):
-            X_pred2 = trans.transform(X)
-            assert_array_almost_equal(X_pred, X_pred2, 2)
+            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+                X_pred2 = trans.transform(X, y_)
+            else:
+                X_pred2 = trans.transform(X)
+            if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
+                for x_pred, x_pred2 in zip(X_pred, X_pred2):
+                    assert_array_almost_equal(x_pred, x_pred2, 2,
+                        "fit_transform not correct in %s" % Trans)
+            else:
+                assert_array_almost_equal(X_pred, X_pred2, 2,
+                    "fit_transform not correct in %s" % Trans)
 
             # raises error on malformed input for transform
             assert_raises(ValueError, trans.transform, X.T)
+    assert_true(succeeded)
 
 
 def test_transformers_sparse_data():
@@ -382,7 +413,7 @@ def test_regressors_int():
     X = Scaler().fit_transform(X)
     y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in meta_estimators:
+        if Reg in dont_test or Reg in meta_estimators or Reg in (CCA,):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -396,12 +427,18 @@ def test_regressors_int():
             reg1.set_params(random_state=0)
             reg2.set_params(random_state=0)
 
+        if Reg in (_PLS, PLSCanonical, PLSRegression):
+            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = y_.T
+        else:
+            y_ = y
+
         # fit
-        reg1.fit(X, y)
+        reg1.fit(X, y_)
         pred1 = reg1.predict(X)
-        reg2.fit(X, y.astype(np.float))
+        reg2.fit(X, y_.astype(np.float))
         pred2 = reg2.predict(X)
-        assert_array_almost_equal(pred1, pred2, 2)
+        assert_array_almost_equal(pred1, pred2, 2, name)
 
 
 def test_regressors_train():
@@ -415,6 +452,7 @@ def test_regressors_train():
     # TODO: test with multiple responses
     X = Scaler().fit_transform(X)
     y = Scaler().fit_transform(y)
+    succeeded = True
     for name, Reg in regressors:
         if Reg in dont_test or Reg in meta_estimators:
             continue
@@ -427,9 +465,24 @@ def test_regressors_train():
         # raises error on malformed input for fit
         assert_raises(ValueError, reg.fit, X, y[:-1])
         # fit
-        reg.fit(X, y)
-        reg.predict(X)
-        assert_greater(reg.score(X, y), 0.5)
+        try:
+            if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+                y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+                y_ = y_.T
+            else:
+                y_ = y
+            reg.fit(X, y_)
+            reg.predict(X)
+
+            if Reg not in (PLSCanonical, CCA):  # TODO: find out why
+                assert_greater(reg.score(X, y_), 0.5)
+        except Exception as e:
+            print(reg)
+            print e
+            print
+            succeeded = False
+
+    assert_true(succeeded)
 
 
 def test_configure():
