@@ -26,7 +26,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
     S: array [n_samples, n_samples]
         Matrix of similarities between points
 
-    preference: array [n_samples,] or float, optional
+    preference: array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -35,18 +35,21 @@ def affinity_propagation(S, preference=None, p=None, convergence_iteration=15,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convergence_iteration : int, default: 15, optional
+    convergence_iteration: int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    damping : float, optional
-        Damping factor
+    max_iter: int, optional, default: 200
+        Maximum number of iterations
 
-    copy: boolean, optional
+    damping: float, optional, default: 200
+        Damping factor between 0.5 and 1.
+
+    copy: boolean, optional, default: True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
-    verbose: boolean, optional
+    verbose: boolean, optional, default: False
         The verbosity level
 
     Returns
@@ -188,32 +191,32 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    damping : float, optional
-        Damping factor
+    damping: float, optional, default: 0.5
+        Damping factor between 0.5 and 1.
 
-    max_iter : int, optional
-        Maximum number of iterations
-
-    convergence_iteration : int, default: 15, optional
+    convergence_iteration: int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    copy : boolean, optional
-        Make a copy of input data. True by default.
+    max_iter: int, optional, default: 200
+        Maximum number of iterations
 
-    preference : array [n_samples,] or float, optional
+    copy: boolean, optional, default: True
+        Make a copy of input data.
+
+    preference: array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity : string, optional, default=``euclidean``
+    affinity: string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
         ``euclidean`` are supported. ``euclidean`` uses the
         negative squared euclidean distance between points.
 
-    verbose: boolean, optional
+    verbose: boolean, optional, default: False
         Whether to be verbose.
 
 
