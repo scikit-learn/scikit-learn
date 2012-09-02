@@ -147,6 +147,11 @@ class BaseLibSVM(BaseEstimator):
         else:
             self._sparse = self.sparse
 
+        if self._sparse and self._pairwise:
+            raise ValueError("Sparse precomputed kernels are not supported. "
+                    "Using sparse data and dense kernels is possible by not "
+                    "using the ``sparse`` parameter")
+
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = np.asarray(y, dtype=np.float64, order='C')
 
