@@ -9,7 +9,7 @@ import numpy as np
 
 import warnings
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state
 from ..externals.joblib import Parallel
@@ -330,7 +330,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     return best_pos, best_stress
 
 
-class MDS(BaseEstimator, TransformerMixin):
+class MDS(BaseEstimator):
     """
     Multidimensional scaling
 

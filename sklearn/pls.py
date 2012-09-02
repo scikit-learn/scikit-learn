@@ -97,7 +97,7 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(BaseEstimator):
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters
@@ -402,7 +402,7 @@ class _PLS(BaseEstimator):
         return Ypred + self.y_mean_
 
 
-class PLSRegression(_PLS, RegressorMixin, TransformerMixin):
+class PLSRegression(_PLS):
     """PLS regression
 
     PLSRegression implements the PLS 2 blocks regression known as PLS2 or PLS1
@@ -520,7 +520,7 @@ class PLSRegression(_PLS, RegressorMixin, TransformerMixin):
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSCanonical(_PLS, RegressorMixin, TransformerMixin):
+class PLSCanonical(_PLS):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
     algorithm [Tenenhaus 1998] p.204, refered as PLS-C2A in [Wegelin 2000].
 
@@ -748,7 +748,7 @@ class CCA(_PLS):
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSSVD(BaseEstimator):
+class PLSSVD(BaseEstimator, TransformerMixin):
     """Partial Least Square SVD
 
     Simply perform a svd on the crosscovariance matrix: X'Y

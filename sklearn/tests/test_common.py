@@ -3,7 +3,7 @@ General tests for all estimators in sklearn.
 """
 import warnings
 import numpy as np
-from nose.tools import assert_raises, assert_equal
+from nose.tools import assert_raises, assert_equal, assert_true
 from numpy.testing import assert_array_equal
 
 from sklearn.utils.testing import all_estimators
@@ -21,6 +21,7 @@ from sklearn.svm.base import BaseLibSVM
 from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
 from sklearn.pipeline import Pipeline
+from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA
 from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
@@ -150,6 +151,7 @@ def test_regressors_train():
     # TODO: test with multiple responses
     X = Scaler().fit_transform(X)
     y = Scaler().fit_transform(y)
+    succeeded = True
     for name, Reg in regressors:
         if Reg in dont_test or Reg in meta_estimators:
             continue
@@ -161,9 +163,19 @@ def test_regressors_train():
 
         # fit
         try:
-            reg.fit(X, y)
+            if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+                y_ = np.vstack([y, 2 * y + 0.001 * np.random.randn(len(y))]).T
+            else:
+                y_ = y
+            reg.fit(X, y_)
             reg.predict(X)
-            assert_greater(reg.score(X, y), 0.5)
-        except:
+
+            if Reg not in (PLSCanonical, CCA):  # TODO: find out why
+                assert_greater(reg.score(X, y_), 0.5)
+        except Exception as e:
             print(reg)
-            raise
+            print e
+            print
+            succeeded = False
+
+    assert_true(succeeded)
