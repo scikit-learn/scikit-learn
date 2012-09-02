@@ -251,4 +251,4 @@ def test_path_parameters():
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.rho)
     assert_equal(n_alphas, clf.n_alphas)
-    assert_equal(n_alphas, len(clf.alphas))
+    assert_equal(n_alphas, len(clf.alphas_))

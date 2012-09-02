@@ -741,11 +741,19 @@ class LinearModelCV(LinearModel):
             self.rho_ = model.rho
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
-        self.alpha = model.alpha
-        self.alphas = np.asarray(alphas)
+        self.alpha_ = model.alpha
+        self.alphas_ = np.asarray(alphas)
         self.coef_path_ = np.asarray([model.coef_ for model in models])
         self.mse_path_ = np.squeeze(all_mse_paths)
         return self
+
+    @property
+    def alpha(self):
+        warnings.warn("Use alpha_. Using alpha is deprecated"
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=2)
+        return self.alpha_
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
@@ -805,6 +813,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     `mse_path_`: array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
+
+    `alphas_`: numpy array
+        The grid of alphas used for fitting
 
     Notes
     -----
