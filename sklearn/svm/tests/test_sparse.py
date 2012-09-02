@@ -205,8 +205,12 @@ def test_sparse_realdata():
 
 def test_sparse_svc_clone_with_callable_kernel():
     # first, test that we raise a value error for "sparse kernels"
+    # this test is only relevant for the deprecated sparse.SVC class.
     sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
     assert_raises(ValueError, sp.fit, X_sp, Y)
+
+    # Test that the "dense_fit" is called even though we use sparse input
+    # meaning that everything works fine.
     a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
     b = base.clone(a)
 
