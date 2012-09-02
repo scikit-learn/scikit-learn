@@ -13,18 +13,18 @@ import numpy as np
 from scipy import linalg
 
 
-def _nipals_twoblocks_inner_loop(X, y, mode="A", max_iter=500, tol=1e-06,
+def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     norm_y_weights=False):
     """Inner loop of the iterative NIPALS algorithm. Provides an alternative
-    to the svd(X'y); returns the first left and rigth singular vectors of X'y.
+    to the svd(X'Y); returns the first left and rigth singular vectors of X'Y.
     See PLS for the meaning of the parameters.
     It is similar to the Power method for determining the eigenvectors and
-    eigenvalues of a X'y
+    eigenvalues of a X'Y
     """
-    y_score = y[:, [0]]
+    y_score = Y[:, [0]]
     x_weights_old = 0
     ite = 1
-    X_pinv = y_pinv = None
+    X_pinv = Y_pinv = None
     # Inner loop of the Wold algo.
     while True:
         # 1.1 Update u: the X weights
@@ -41,20 +41,20 @@ def _nipals_twoblocks_inner_loop(X, y, mode="A", max_iter=500, tol=1e-06,
         x_score = np.dot(X, x_weights)
         # 2.1 Update y_weights
         if mode == "B":
-            if y_pinv is None:
-                y_pinv = linalg.pinv(y)    # compute once pinv(y)
-            y_weights = np.dot(y_pinv, x_score)
+            if Y_pinv is None:
+                Y_pinv = linalg.pinv(Y)    # compute once pinv(Y)
+            y_weights = np.dot(Y_pinv, x_score)
         else:
-            # Mode A regress each y column on x_score
-            y_weights = np.dot(y.T, x_score) / np.dot(x_score.T, x_score)
+            # Mode A regress each Y column on x_score
+            y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
         ## 2.2 Normalize y_weights
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights.T, y_weights))
-        # 2.3 Update y_score: the y latent scores
-        y_score = np.dot(y, y_weights) / np.dot(y_weights.T, y_weights)
-        ## y_score = np.dot(y, y_weights) / np.dot(y_score.T, y_score) ## BUG
+        # 2.3 Update y_score: the Y latent scores
+        y_score = np.dot(Y, y_weights) / np.dot(y_weights.T, y_weights)
+        ## y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
         x_weights_diff = x_weights - x_weights_old
-        if np.dot(x_weights_diff.T, x_weights_diff) < tol or y.shape[1] == 1:
+        if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
             warnings.warn('Maximum number of iterations reached')
@@ -64,37 +64,37 @@ def _nipals_twoblocks_inner_loop(X, y, mode="A", max_iter=500, tol=1e-06,
     return x_weights, y_weights
 
 
-def _svd_cross_product(X, y):
-    C = np.dot(X.T, y)
+def _svd_cross_product(X, Y):
+    C = np.dot(X.T, Y)
     U, s, Vh = linalg.svd(C, full_matrices=False)
     u = U[:, [0]]
     v = Vh.T[:, [0]]
     return u, v
 
 
-def _center_scale_xy(X, y, scale=True):
-    """ Center X, y and scale if the scale parameter==True
+def _center_scale_xy(X, Y, scale=True):
+    """ Center X, Y and scale if the scale parameter==True
     Returns
     -------
-        X, y, x_mean, y_mean, x_std, y_std
+        X, Y, x_mean, y_mean, x_std, y_std
     """
     # center
     x_mean = X.mean(axis=0)
     X -= x_mean
-    y_mean = y.mean(axis=0)
-    y -= y_mean
+    y_mean = Y.mean(axis=0)
+    Y -= y_mean
     # scale
     if scale:
         x_std = X.std(axis=0, ddof=1)
         x_std[x_std == 0.0] = 1.0
         X /= x_std
-        y_std = y.std(axis=0, ddof=1)
+        y_std = Y.std(axis=0, ddof=1)
         y_std[y_std == 0.0] = 1.0
-        y /= y_std
+        Y /= y_std
     else:
         x_std = np.ones(X.shape[1])
-        y_std = np.ones(y.shape[1])
-    return X, y, x_mean, y_mean, x_std, y_std
+        y_std = np.ones(Y.shape[1])
+    return X, Y, x_mean, y_mean, x_std, y_std
 
 
 class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
@@ -126,7 +126,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -138,7 +138,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
 
     mode : "A" classical PLS and "B" CCA. See notes.
 
-    norm_y_weights: boolean, normalize y weights to one? (default False)
+    norm_y_weights: boolean, normalize Y weights to one? (default False)
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -160,28 +160,28 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         X block weights vectors.
 
     `y_weights_` : array, [q, n_components]
-        y block weights vectors.
+        Y block weights vectors.
 
     `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
     `y_loadings_` : array, [q, n_components]
-        y block loadings vectors.
+        Y block loadings vectors.
 
     `x_scores_` : array, [n_samples, n_components]
         X scores.
 
     `y_scores_` : array, [n_samples, n_components]
-        y scores.
+        Y scores.
 
     `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
     `y_rotations_` : array, [q, n_components]
-        y block to latents rotations.
+        Y block to latents rotations.
 
     coefs: array, [p, q]
-        The coefficients of the linear model: y = X coefs + Err
+        The coefficients of the linear model: Y = X coefs + Err
 
     References
     ----------
@@ -215,30 +215,26 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         self.tol = tol
         self.copy = copy
 
-    def fit(self, X, y, Y=None):
-        if Y is not None:
-            warnings.warn("Y has been renamed to y and will be removed in "
-                          "0.15.", DeprecationWarning, stacklevel=2)
-            y = Y
+    def fit(self, X, Y):
         # copy since this will contains the residuals (deflated) matrices
-        X, y = check_arrays(X, y, dtype=np.float, copy=self.copy,
+        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
                             sparse_format='dense')
 
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
-        if y.ndim == 1:
-            y = y.reshape((y.size, 1))
-        if y.ndim != 2:
-            raise ValueError('y must be a 1D or a 2D array')
+        if Y.ndim == 1:
+            Y = Y.reshape((Y.size, 1))
+        if Y.ndim != 2:
+            raise ValueError('Y must be a 1D or a 2D array')
 
         n = X.shape[0]
         p = X.shape[1]
-        q = y.shape[1]
+        q = Y.shape[1]
 
-        if n != y.shape[0]:
+        if n != Y.shape[0]:
             raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
+                'Incompatible shapes: X has %s samples, while Y '
+                'has %s' % (X.shape[0], Y.shape[0]))
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
         if self.algorithm not in ("svd", "nipals"):
@@ -250,11 +246,11 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         if not self.deflation_mode in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
         # Scale (in place)
-        X, y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
-            = _center_scale_xy(X, y, self.scale)
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
+            = _center_scale_xy(X, Y, self.scale)
         # Residuals (deflated) matrices
         Xk = X
-        yk = y
+        Yk = Y
         # Results matrices
         self.x_scores_ = np.zeros((n, self.n_components))
         self.y_scores_ = np.zeros((n, self.n_components))
@@ -269,18 +265,18 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             # -----------------------------------
             if self.algorithm == "nipals":
                 x_weights, y_weights = _nipals_twoblocks_inner_loop(
-                        X=Xk, y=yk, mode=self.mode,
+                        X=Xk, Y=Yk, mode=self.mode,
                         max_iter=self.max_iter, tol=self.tol,
                         norm_y_weights=self.norm_y_weights)
             elif self.algorithm == "svd":
-                x_weights, y_weights = _svd_cross_product(X=Xk, y=yk)
+                x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
             # compute scores
             x_scores = np.dot(Xk, x_weights)
             if self.norm_y_weights:
                 y_ss = 1
             else:
                 y_ss = np.dot(y_weights.T, y_weights)
-            y_scores = np.dot(yk, y_weights) / y_ss
+            y_scores = np.dot(Yk, y_weights) / y_ss
             # test for null variance
             if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
@@ -296,15 +292,15 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             # - substract rank-one approximations to obtain remainder matrix
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
-                # - regress yk's on y_score, then substract rank-one approx.
-                y_loadings = np.dot(yk.T, y_scores) \
+                # - regress Yk's on y_score, then substract rank-one approx.
+                y_loadings = np.dot(Yk.T, y_scores) \
                            / np.dot(y_scores.T, y_scores)
-                yk -= np.dot(y_scores, y_loadings.T)
+                Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
-                # - regress yk's on x_score, then substract rank-one approx.
-                y_loadings = np.dot(yk.T, x_scores) \
+                # - regress Yk's on x_score, then substract rank-one approx.
+                y_loadings = np.dot(Yk.T, x_scores) \
                            / np.dot(x_scores.T, x_scores)
-                yk -= np.dot(x_scores, y_loadings.T)
+                Yk -= np.dot(x_scores, y_loadings.T)
             # 3) Store weights, scores and loadings # Notation:
             self.x_scores_[:, k] = x_scores.ravel()  # T
             self.y_scores_[:, k] = y_scores.ravel()  # U
@@ -312,14 +308,14 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             self.y_weights_[:, k] = y_weights.ravel()  # C
             self.x_loadings_[:, k] = x_loadings.ravel()  # P
             self.y_loadings_[:, k] = y_loadings.ravel()  # Q
-        # Such that: X = TP' + Err and y = UQ' + Err
+        # Such that: X = TP' + Err and Y = UQ' + Err
 
         # 4) rotations from input space to transformed space (scores)
         # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
-        # U = y C(Q'C)^-1 = yC* (W* : q x k matrix)
+        # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(self.x_weights_,
             linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
-        if y.shape[1] > 1:
+        if Y.shape[1] > 1:
             self.y_rotations_ = np.dot(self.y_weights_,
                 linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
         else:
@@ -327,17 +323,17 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
 
         if True or self.deflation_mode == "regression":
             # Estimate regression coefficient
-            # Regress y on T
-            # y = TQ' + Err,
+            # Regress Y on T
+            # Y = TQ' + Err,
             # Then express in function of X
-            # y = X W(P'W)^-1Q' + Err = XB + Err
+            # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
             self.coefs = np.dot(self.x_rotations_, self.y_loadings_.T)
             self.coefs = 1. / self.x_std_.reshape((p, 1)) * \
                     self.coefs * self.y_std_
         return self
 
-    def transform(self, X, y=None, copy=True, Y=None):
+    def transform(self, X, Y=None, copy=True):
         """Apply the dimension reduction learned on the train data.
 
         Parameters
@@ -346,38 +342,34 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        y : array-like of response, shape = [n_samples, q], optional
+        Y : array-like of response, shape = [n_samples, q], optional
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
         copy : boolean
-            Whether to copy X and y, or perform in-place normalization.
+            Whether to copy X and Y, or perform in-place normalization.
 
         Returns
         -------
-        x_scores if y is not given, (x_scores, y_scores) otherwise.
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        if Y is not None:
-            warnings.warn("Y has been renamed to y and will be removed in "
-                          "0.15.", DeprecationWarning, stacklevel=2)
-            y = Y
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
-            if y is not None:
-                yc = (np.asarray(y) - self.y_mean_) / self.y_std_
+            if Y is not None:
+                Yc = (np.asarray(Y) - self.y_mean_) / self.y_std_
         else:
             X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
-            if y is not None:
-                y = np.asarray(y)
-                yc -= self.y_mean_
-                yc /= self.y_std_
+            if Y is not None:
+                Y = np.asarray(Y)
+                Yc -= self.y_mean_
+                Yc /= self.y_std_
         # Apply rotation
         x_scores = np.dot(Xc, self.x_rotations_)
-        if y is not None:
-            y_scores = np.dot(yc, self.y_rotations_)
+        if Y is not None:
+            y_scores = np.dot(Yc, self.y_rotations_)
             return x_scores, y_scores
 
         return x_scores
@@ -392,7 +384,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             p is the number of predictors.
 
         copy : boolean
-            Whether to copy X and y, or perform in-place normalization.
+            Whether to copy X and Y, or perform in-place normalization.
 
         Notes
         -----
@@ -406,8 +398,8 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
-        ypred = np.dot(Xc, self.coefs)
-        return ypred + self.y_mean_
+        Ypred = np.dot(Xc, self.coefs)
+        return Ypred + self.y_mean_
 
     def fit_transform(self, X, y=None, **fit_params):
         """Learn and apply the dimension reduction on the train data.
@@ -418,16 +410,16 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        y : array-like of response, shape = [n_samples, q], optional
+        Y : array-like of response, shape = [n_samples, q], optional
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
         copy : boolean
-            Whether to copy X and y, or perform in-place normalization.
+            Whether to copy X and Y, or perform in-place normalization.
 
         Returns
         -------
-        x_scores if y is not given, (x_scores, y_scores) otherwise.
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         return self.fit(X, y, **fit_params).transform(X, y)
 
@@ -446,7 +438,7 @@ class PLSRegression(_PLS):
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -473,33 +465,33 @@ class PLSRegression(_PLS):
         X block weights vectors.
 
     `y_weights_` : array, [q, n_components]
-        y block weights vectors.
+        Y block weights vectors.
 
     `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
     `y_loadings_` : array, [q, n_components]
-        y block loadings vectors.
+        Y block loadings vectors.
 
     `x_scores_` : array, [n_samples, n_components]
         X scores.
 
     `y_scores_` : array, [n_samples, n_components]
-        y scores.
+        Y scores.
 
     `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
     `y_rotations_` : array, [q, n_components]
-        y block to latents rotations.
+        Y block to latents rotations.
 
     coefs: array, [p, q]
-        The coeficients of the linear model: y = X coefs + Err
+        The coeficients of the linear model: Y = X coefs + Err
 
     Notes
     -----
     For each component k, find weights u, v that optimizes:
-    ``max corr(Xk u, yk v) * var(Xk u) var(yk u)``, such that ``|u| = 1``
+    ``max corr(Xk u, Yk v) * var(Xk u) var(Yk u)``, such that ``|u| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -507,28 +499,28 @@ class PLSRegression(_PLS):
     The residual matrix of X (Xk+1) block is obtained by the deflation on
     the current X score: x_score.
 
-    The residual matrix of y (yk+1) block is obtained by deflation on the
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
     current X score. This performs the PLS regression known as PLS2. This
     mode is prediction oriented.
 
     This implementation provides the same results that 3 PLS packages
     provided in the R language (R-project):
 
-        - "mixOmics" with function pls(X, y, mode = "regression")
-        - "plspm " with function plsreg2(X, y)
-        - "pls" with function oscorespls.fit(X, y)
+        - "mixOmics" with function pls(X, Y, mode = "regression")
+        - "plspm " with function plsreg2(X, Y)
+        - "pls" with function oscorespls.fit(X, Y)
 
     Examples
     --------
     >>> from sklearn.pls import PLSCanonical, PLSRegression, CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-    >>> y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
-    >>> pls2.fit(X, y)
+    >>> pls2.fit(X, Y)
     ... # doctest: +NORMALIZE_WHITESPACE
     PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
             tol=1e-06)
-    >>> y_pred = pls2.predict(X)
+    >>> Y_pred = pls2.predict(X)
 
     References
     ----------
@@ -564,7 +556,7 @@ class PLSCanonical(_PLS):
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -593,30 +585,30 @@ class PLSCanonical(_PLS):
         X block weights vectors.
 
     `y_weights_` : array, shape = [q, n_components]
-        y block weights vectors.
+        Y block weights vectors.
 
     `x_loadings_` : array, shape = [p, n_components]
         X block loadings vectors.
 
     `y_loadings_` : array, shape = [q, n_components]
-        y block loadings vectors.
+        Y block loadings vectors.
 
     `x_scores_` : array, shape = [n_samples, n_components]
         X scores.
 
     `y_scores_` : array, shape = [n_samples, n_components]
-        y scores.
+        Y scores.
 
     `x_rotations_` : array, shape = [p, n_components]
         X block to latents rotations.
 
     `y_rotations_` : array, shape = [q, n_components]
-        y block to latents rotations.
+        Y block to latents rotations.
 
     Notes
     -----
     For each component k, find weights u, v that optimize::
-    max corr(Xk u, yk v) * var(Xk u) var(yk u), such that ``|u| = |v| = 1``
+    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -624,13 +616,13 @@ class PLSCanonical(_PLS):
     The residual matrix of X (Xk+1) block is obtained by the deflation on the
     current X score: x_score.
 
-    The residual matrix of y (yk+1) block is obtained by deflation on the
-    current y score. This performs a canonical symetric version of the PLS
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
+    current Y score. This performs a canonical symetric version of the PLS
     regression. But slightly different than the CCA. This is mode mostly used
     for modeling.
 
     This implementation provides the same results that the "plspm" package
-    provided in the R language (R-project), using the function plsca(X, y).
+    provided in the R language (R-project), using the function plsca(X, Y).
     Results are equal or colinear with the function
     ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
     relies in the fact that mixOmics implmentation does not exactly implement
@@ -640,13 +632,13 @@ class PLSCanonical(_PLS):
     --------
     >>> from sklearn.pls import PLSCanonical, PLSRegression, CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-    >>> y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
-    >>> plsca.fit(X, y)
+    >>> plsca.fit(X, Y)
     ... # doctest: +NORMALIZE_WHITESPACE
     PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
                  scale=True, tol=1e-06)
-    >>> X_c, y_c = plsca.transform(X, y)
+    >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
     ----------
@@ -682,7 +674,7 @@ class CCA(_PLS):
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -709,49 +701,49 @@ class CCA(_PLS):
         X block weights vectors.
 
     `y_weights_` : array, [q, n_components]
-        y block weights vectors.
+        Y block weights vectors.
 
     `x_loadings_` : array, [p, n_components]
         X block loadings vectors.
 
     `y_loadings_` : array, [q, n_components]
-        y block loadings vectors.
+        Y block loadings vectors.
 
     `x_scores_` : array, [n_samples, n_components]
         X scores.
 
     `y_scores_` : array, [n_samples, n_components]
-        y scores.
+        Y scores.
 
     `x_rotations_` : array, [p, n_components]
         X block to latents rotations.
 
     `y_rotations_` : array, [q, n_components]
-        y block to latents rotations.
+        Y block to latents rotations.
 
     Notes
     -----
     For each component k, find the weights u, v that maximizes
-    max corr(Xk u, yk v), such that ``|u| = |v| = 1``
+    max corr(Xk u, Yk v), such that ``|u| = |v| = 1``
 
     Note that it maximizes only the correlations between the scores.
 
     The residual matrix of X (Xk+1) block is obtained by the deflation on the
     current X score: x_score.
 
-    The residual matrix of y (yk+1) block is obtained by deflation on the
-    current y score.
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
+    current Y score.
 
     Examples
     --------
     >>> from sklearn.pls import PLSCanonical, PLSRegression, CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
-    >>> y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
-    >>> cca.fit(X, y)
+    >>> cca.fit(X, Y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     CCA(copy=True, max_iter=500, n_components=1, scale=True, tol=1e-06)
-    >>> X_c, y_c = cca.transform(X, y)
+    >>> X_c, Y_c = cca.transform(X, Y)
 
     References
     ----------
@@ -781,7 +773,7 @@ class CCA(_PLS):
 class PLSSVD(BaseEstimator, TransformerMixin):
     """Partial Least Square SVD
 
-    Simply perform a svd on the crosscovariance matrix: X'y
+    Simply perform a svd on the crosscovariance matrix: X'Y
     The are no iterative deflation here.
 
     Parameters
@@ -790,7 +782,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         Training vector, where n_samples in the number of samples and
         p is the number of predictors. X will be centered before any analysis.
 
-    y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q]
         Training vector, where n_samples in the number of samples and
         q is the number of response variables. X will be centered before any
         analysis.
@@ -799,7 +791,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         number of components to keep.
 
     scale : boolean, (default True)
-        scale X and y
+        scale X and Y
 
     Attributes
     ----------
@@ -807,13 +799,13 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         X block weights vectors.
 
     `y_weights_` : array, [q, n_components]
-        y block weights vectors.
+        Y block weights vectors.
 
     `x_scores_` : array, [n_samples, n_components]
         X scores.
 
     `y_scores_` : array, [n_samples, n_components]
-        y scores.
+        Y scores.
 
     See also
     --------
@@ -826,14 +818,9 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.scale = scale
         self.copy = copy
 
-    def fit(self, X, y, Y=None):
-        if Y is not None:
-            warnings.warn("Y has been renamed to y and will be removed in "
-                          "0.15.", DeprecationWarning, stacklevel=2)
-            y = Y
-
+    def fit(self, X, Y):
         # copy since this will contains the centered data
-        X, y = check_arrays(X, y, dtype=np.float, copy=self.copy,
+        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
                             sparse_format='dense')
 
         n = X.shape[0]
@@ -842,38 +829,34 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
 
-        if n != y.shape[0]:
+        if n != Y.shape[0]:
             raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
+                'Incompatible shapes: X has %s samples, while Y '
+                'has %s' % (X.shape[0], Y.shape[0]))
 
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
 
         # Scale (in place)
-        X, y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
-            _center_scale_xy(X, y, self.scale)
-        # svd(X'y)
-        C = np.dot(X.T, y)
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
+            _center_scale_xy(X, Y, self.scale)
+        # svd(X'Y)
+        C = np.dot(X.T, Y)
         U, s, V = linalg.svd(C, full_matrices=False)
         V = V.T
         self.x_scores_ = np.dot(X, U)
-        self.y_scores_ = np.dot(y, V)
+        self.y_scores_ = np.dot(Y, V)
         self.x_weights_ = U
         self.y_weights_ = V
         return self
 
-    def transform(self, X, y=None, Y=None):
+    def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
-        if Y is not None:
-            warnings.warn("Y has been renamed to y and will be removed in "
-                          "0.15.", DeprecationWarning, stacklevel=2)
-            y = Y
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
-        if y is not None:
-            yr = (y - self.y_mean_) / self.y_std_
-            y_scores = np.dot(yr, self.y_weights_)
+        if Y is not None:
+            Yr = (Y - self.y_mean_) / self.y_std_
+            y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores
         return x_scores
 
@@ -886,12 +869,12 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        y : array-like of response, shape = [n_samples, q], optional
+        Y : array-like of response, shape = [n_samples, q], optional
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
         Returns
         -------
-        x_scores if y is not given, (x_scores, y_scores) otherwise.
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         return self.fit(X, y, **fit_params).transform(X, y)
