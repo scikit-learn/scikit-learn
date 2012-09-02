@@ -286,7 +286,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             coef_ = coef_[np.newaxis, :]
         if coef_.shape != (n_targets, n_features):
             raise ValueError("X and coef_init have incompatible " +
-                             "shapes.")
+                 "shapes (%s != %s)." % (coef_.shape, (n_targets, n_features)))
 
         return coef_
 
@@ -684,6 +684,9 @@ class LinearModelCV(LinearModel):
                              copy=self.copy_X and self.fit_intercept)
         # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)" % (
+                             X.shape[0], y.shape[0]))
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -752,7 +755,7 @@ class LinearModelCV(LinearModel):
         warnings.warn("Use alpha_. Using alpha is deprecated"
                 "since version 0.12, and backward compatibility "
                 "won't be maintained from version 0.14 onward. ",
-                DeprecationWarning, stacklevel=2)
+                DeprecationWarning, stacklevel=1)
         return self.alpha_
 
 
