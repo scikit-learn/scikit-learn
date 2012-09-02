@@ -22,7 +22,7 @@ from sklearn.datasets import make_classification
 from sklearn.grid_search import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 
-X, y = make_classification(n_samples=100, n_features=10)
+X, y = make_classification(n_samples=100, n_features=10, random_state=0)
 
 param_grid = {'max_depth': range(1, 8), 'min_samples_split': [1, 2, 3, 4],
         'max_features': [1, 3, 5, 8, 10]}
@@ -36,9 +36,11 @@ cv_scores = grid_search.scores_
 fig, axes = pl.subplots(1, 3)
 axes = axes.ravel()
 for ax, param in zip(axes, cv_scores.params):
-    means, errors = cv_scores.accumulated(param, 'max')
-    ax.errorbar(cv_scores.values[param], means, yerr=errors)
-    ax.set_title(param)
+    means, errors = cv_scores.accumulate(param, 'max')
+    ax.boxplot(cv_scores.values[param], means, yerr=errors)
+    ax.set_xlabel(param)
+    ax.set_ylabel("accuracy")
+    ax.set_ylim(0.6, 0.95)
 fig.set_size_inches((12, 4), forward=True)
-pl.subplots_adjust(left=0.05, right=0.95)
+pl.subplots_adjust(left=0.07, right=0.95, bottom=0.15, wspace=0.26)
 pl.show()

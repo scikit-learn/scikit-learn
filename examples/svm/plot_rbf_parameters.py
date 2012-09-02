@@ -113,13 +113,14 @@ pl.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
 pl.imshow(cv_scores.mean(), interpolation='nearest', cmap=pl.cm.spectral)
 pl.xlabel('gamma')
 pl.ylabel('C')
-pl.colorbar()
+cb = pl.colorbar()
+cb.set_label("Accuracy")
 pl.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
 pl.yticks(np.arange(len(C_range)), C_range)
 
 fig, axes = pl.subplots(2, 1)
 for ax, param in zip(axes, cv_scores.params):
-    maxs, errors = cv_scores.accumulated(param, 'max')
+    maxs, errors = cv_scores.accumulate(param, 'max')
     ax.errorbar(np.arange(len(cv_scores.values[param])), maxs,
             yerr=errors)
     ax.set_title(param)

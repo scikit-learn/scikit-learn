@@ -56,7 +56,7 @@ class ResultGrid(object):
         parameter grid."""
         return np.std(self.scores, axis=-1)
 
-    def accumulated(self, param, kind="max"):
+    def accumulate(self, param, kind="max"):
         """Accumulates scores over all but one parameter.
 
         Useful for grid searches in many parameters, where
@@ -177,7 +177,6 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     else:
         X_train = X[safe_mask(X, train)]
         X_test = X[safe_mask(X, test)]
-
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
@@ -230,8 +229,8 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter values should be a list.")
 
             if len(v) == 0:
-                raise ValueError("Parameter values should be a non-empty "
-                        "list.")
+                raise ValueError("Parameter values should be "
+                                 "a non-empty list.")
 
 
 def _has_one_grid_point(param_grid):
@@ -547,7 +546,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             start += n_entries
 
         # often the list is just one grid. Make access easier
-        if len(self.scores_) is 1:
+        if len(self.scores_) == 1:
             self.scores_ = self.scores_[0]
 
         # old interface
