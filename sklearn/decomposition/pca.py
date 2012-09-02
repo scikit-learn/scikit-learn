@@ -310,24 +310,24 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X : array of shape(n_samples, n_dim)
+        X : array of shape(n_samples, n_features)
             The data to fit
 
         homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
-        self.dim = X.shape[1]
+        n_features = X.shape[1]
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
-        if self.dim <= self.n_components:
-            delta = np.zeros(self.dim)
+        if n_features <= self.n_components:
+            delta = np.zeros(n_features)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() * np.ones(self.dim) \
-                    / (n_samples * self.dim)
+            delta = (Xr ** 2).sum() * np.ones(n_features) \
+                    / (n_samples * n_features)
         else:
-            delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
+            delta = (Xr ** 2).mean(0) / (n_features - self.n_components)
         self.covariance_ = np.diag(delta)
         n_components = self.n_components
         if n_components is None:
@@ -342,7 +342,7 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim)
+        X: array of shape(n_samples, n_features)
             The data to test
 
         Returns
@@ -351,12 +351,12 @@ class ProbabilisticPCA(PCA):
             log-likelihood of each row of X under the current model
         """
         Xr = X - self.mean_
+        n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(self.covariance_)
-        for i in range(X.shape[0]):
-            log_like[i] = -.5 * np.dot(np.dot(self.precision_, Xr[i]), Xr[i])
-        log_like += fast_logdet(self.precision_) - \
-                                    self.dim / 2 * np.log(2 * np.pi)
+        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1);
+        log_like += -.5 * fast_logdet(self.covariance_) - \
+                                    n_features / 2 * np.log(2 * np.pi)
         return log_like
 
 
