@@ -563,7 +563,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self.classes_[np.ravel(indices)]
 
     def predict_proba(self, X):
-        """Predict class membership probability
+        """Predict class membership probability.
+
 
         Prediction probabilities are only supported for binary classification.
 
@@ -573,8 +574,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,
-        n_classes]
+        array, shape = [n_samples] if n_classes == 2 else raises Exception
             Contains the membership probabilities of the positive class.
 
         References
