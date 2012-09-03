@@ -565,6 +565,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     def predict_proba(self, X):
         """Predict class membership probability
 
+        Prediction probabilities are only supported for binary classification.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
