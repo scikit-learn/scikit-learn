@@ -189,10 +189,10 @@ class Ridge(_BaseRidge, RegressorMixin):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
-        LogisticRegression or LinearSVC.
+        Small positive values of alpha improve the conditioning of the problem
+        and reduce the variance of the estimates.  Alpha corresponds to
+        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        LinearSVC.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -205,12 +205,11 @@ class Ridge(_BaseRidge, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    tol: float
+    tol : float
         Precision of the solution.
 
     Attributes
     ----------
-
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
@@ -243,15 +242,15 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
-        LogisticRegression or LinearSVC.
+        Small positive values of alpha improve the conditioning of the problem
+        and reduce the variance of the estimates.  Alpha corresponds to
+        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        LinearSVC.
 
     fit_intercept : boolean
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        Whether to calculate the intercept for this model. If set to false, no
+        intercept will be used in calculations (e.g. data is expected to be
+        already centered).
 
     normalize : boolean, optional
         If True, the regressors X are normalized
@@ -259,7 +258,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    tol: float
+    tol : float
         Precision of the solution.
 
     class_weight : dict, optional
@@ -270,7 +269,6 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
 
     Attributes
     ----------
-
     `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
@@ -681,16 +679,16 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     ----------
     `cv_values_` : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_responses, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and
-        `cv=None`). After `fit()` has been called, this attribute will contain
-        the mean squared errors (by default) or the values of the
+        Cross-validation values for each alpha (if `store_cv_values=True` and \
+        `cv=None`). After `fit()` has been called, this attribute will contain \
+        the mean squared errors (by default) or the values of the \
         `{loss,score}_func` function (if provided in the constructor).
 
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
     `alpha_` : float
-        Estimated regularization parameter
+        Estimated regularization parameter.
 
     See also
     --------
@@ -747,11 +745,11 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
     Attributes
     ----------
     `cv_values_` : array, shape = [n_samples, n_alphas] or \
-        shape = [n_samples, n_responses, n_alphas], optional
+    shape = [n_samples, n_responses, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and
-        `cv=None`). After `fit()` has been called, this attribute will contain
-        the mean squared errors (by default) or the values of the
-        `{loss,score}_func` function (if provided in the constructor).
+    `cv=None`). After `fit()` has been called, this attribute will contain \
+    the mean squared errors (by default) or the values of the \
+    `{loss,score}_func` function (if provided in the constructor).
 
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).

@@ -150,7 +150,7 @@ You can also check for common programming errors with the following tools:
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
 
-      see also :ref:`testing`
+      see also :ref:`testing_coverage`
 
     * No pyflakes warnings, check with::
 
@@ -226,7 +226,7 @@ it.
    slightly differently. To get the best results, you should use version
    1.0.
 
-.. _testing:
+.. _testing_coverage:
 
 Testing and improving test coverage
 ------------------------------------
@@ -269,7 +269,7 @@ More information can be found on the `developer's wiki
 Issue Tracker Tags
 ------------------
 All issues and pull requests on the
-`Github issue tracker`<https://github.com/scikit-learn/scikit-learn/issues>`_
+`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
 should have (at least) one of the following tags:
 
 :Bug / Crash:

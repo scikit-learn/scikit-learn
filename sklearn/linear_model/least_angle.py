@@ -391,22 +391,23 @@ class Lars(LinearModel, RegressorMixin):
         the tolerance of the optimization.
 
     fit_path : boolean
-        If True the full path is stored in the coef_path_ attribute.
+        If True the full path is stored in the `coef_path_` attribute.
         If you compute the solution for a large problem or many targets,
         setting fit_path to False will lead to a speedup, especially
         with a small alpha.
 
     Attributes
     ----------
+    `coef_path_` : array, shape = [n_features, n_alpha]
+        The varying values of the coefficients along the path. It is not \
+    present if the fit_path parameter is False.
+
+
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        Parameter vector (w in the fomulation formula).
 
     `intercept_` : float
-        independent term in decision function.
-
-    `coef_path_`: array, shape = [n_features, n_alpha]
-        the varying values of the coefficients along the path.
-        It is not present if fit_path parameter is False.
+        Independent term in decision function.
 
     Examples
     --------
@@ -576,22 +577,22 @@ class LassoLars(Lars):
         the tolerance of the optimization.
 
     fit_path : boolean
-        If True the full path is stored in the coef_path_ attribute.
+        If True the full path is stored in the `coef_path_` attribute.
         If you compute the solution for a large problem or many targets,
         setting fit_path to False will lead to a speedup, especially
         with a small alpha.
 
     Attributes
     ----------
+    `coef_path_` : array, shape = [n_features, n_alpha]
+        The varying values of the coefficients along the path. It is not \
+    present if fit_path parameter is False.
+
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        Parameter vector (w in the fomulation formula).
 
     `intercept_` : float
-        independent term in decision function.
-
-    `coef_path_`: array, shape = [n_features, n_alpha]
-        the varying values of the coefficients along the path.
-        It is not present if fit_path parameter is False.
+        Independent term in decision function.
 
     Examples
     --------

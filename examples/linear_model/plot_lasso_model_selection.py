@@ -135,7 +135,7 @@ model = LassoLarsCV(cv=20).fit(X, y)
 t_lasso_lars_cv = time.time() - t1
 
 # Display results
-m_log_alphas = -np.log10(model.cv_alphas)
+m_log_alphas = -np.log10(model.cv_alphas_)
 
 pl.figure()
 pl.plot(m_log_alphas, model.cv_mse_path_, ':')
