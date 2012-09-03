@@ -78,7 +78,7 @@ API changes summary
    - The old ``scikits.learn`` package has disappeared; all code should import
      from ``sklearn`` instead, which was introduced in 0.9.
 
-   - In :class:`metrics.roc_curve`, the ``thresholds`` array is now returned
+   - In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
      with it's order reversed, in order to keep it consistent with the order
      of the returned ``fpr`` and ``tpr``.
 
