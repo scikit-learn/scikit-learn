@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 from ..metrics import euclidean_distances
@@ -273,7 +273,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 ###############################################################################
 # Class for Ward hierarchical clustering
 
-class Ward(BaseEstimator):
+class Ward(BaseEstimator, ClusterMixin):
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
     Parameters

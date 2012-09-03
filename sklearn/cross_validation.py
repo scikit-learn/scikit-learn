@@ -623,18 +623,18 @@ class Bootstrap(object):
             train_size = n_train
             warnings.warn(
                 "n_train is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead",
+                "removal in 0.13, use train_size instead",
                 DeprecationWarning, stacklevel=2)
         if n_test is not None:
             test_size = n_test
             warnings.warn(
                 "n_test is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead",
+                "removal in 0.13, use test_size instead",
                 DeprecationWarning, stacklevel=2)
-        if (isinstance(train_size, float) and train_size >= 0.0
+        if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
-        elif isinstance(train_size, int):
+        elif isinstance(train_size, (int, np.integer)):
             self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
@@ -643,10 +643,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if (isinstance(test_size, float) and test_size >= 0.0
+        if (isinstance(test_size, (float, np.floating)) and test_size >= 0.0
                     and test_size <= 1.0):
             self.test_size = ceil(test_size * n)
-        elif isinstance(test_size, int):
+        elif isinstance(test_size, (int, np.integer)):
             self.test_size = test_size
         elif test_size is None:
             self.test_size = self.n - self.train_size
@@ -765,13 +765,13 @@ class ShuffleSplit(object):
         if test_fraction is not None:
             warnings.warn(
                 "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead",
+                "removal in 0.13, use test_size instead",
                 DeprecationWarning, stacklevel=2)
             test_size = test_fraction
         if train_fraction is not None:
             warnings.warn(
                 "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead",
+                "removal in 0.13, use train_size instead",
                 DeprecationWarning, stacklevel=2)
             train_size = train_fraction
 
@@ -872,8 +872,8 @@ def _validate_shuffle_split(n, test_size, train_size):
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
-    y = unique(y, return_inverse=True)[1]
-    n_cls = unique(y).size
+    classes, y = unique(y, return_inverse=True)
+    n_cls = classes.shape[0]
 
     if np.min(np.bincount(y)) < 2:
         raise ValueError("The least populated class in y has only 1"
@@ -892,7 +892,7 @@ def _validate_stratified_shuffle_split(y, test_size, train_size):
                          'equal to the number of classes = %d' %
                          (n_test, n_cls))
 
-    return n_train, n_test
+    return n_train, n_test, classes, y
 
 
 class StratifiedShuffleSplit(object):
@@ -961,22 +961,22 @@ class StratifiedShuffleSplit(object):
         self.train_size = train_size
         self.random_state = random_state
         self.indices = indices
-        self.n_train, self.n_test = \
+        self.n_train, self.n_test, self.classes, self.y_indices = \
             _validate_stratified_shuffle_split(y, test_size, train_size)
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        cls_count = np.bincount(unique(self.y, return_inverse=True)[1])
+        cls_count = np.bincount(self.y_indices)
         p_i = cls_count / float(self.n)
-        n_i = np.round(self.n_train * p_i).astype('int')
+        n_i = np.round(self.n_train * p_i).astype(int)
         t_i = np.minimum(cls_count - n_i,
-                         np.round(self.n_test * p_i).astype('int'))
+                         np.round(self.n_test * p_i).astype(int))
 
         for n in range(self.n_iterations):
             train = []
             test = []
 
-            for i, cls in enumerate(unique(self.y)):
+            for i, cls in enumerate(self.classes):
                 permutation = rng.permutation(n_i[i] + t_i[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
@@ -989,8 +989,8 @@ class StratifiedShuffleSplit(object):
             if self.indices:
                 yield train, test
             else:
-                train_m = np.zeros(self.n, dtype='bool')
-                test_m = np.zeros(self.n, dtype='bool')
+                train_m = np.zeros(self.n, dtype=bool)
+                test_m = np.zeros(self.n, dtype=bool)
                 train_m[train] = True
                 test_m[test] = True
 
@@ -1302,7 +1302,7 @@ def train_test_split(*arrays, **options):
     if test_fraction is not None:
         warnings.warn(
                 "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use test_size instead",
+                "removal in 0.13, use test_size instead",
                 DeprecationWarning, stacklevel=2)
     else:
         test_fraction = 0.25
@@ -1311,7 +1311,7 @@ def train_test_split(*arrays, **options):
     if train_fraction is not None:
         warnings.warn(
                 "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.12, use train_size instead",
+                "removal in 0.13, use train_size instead",
                 DeprecationWarning, stacklevel=2)
 
     test_size = options.pop('test_size', test_fraction)

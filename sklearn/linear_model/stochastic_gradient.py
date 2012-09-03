@@ -339,7 +339,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.n_jobs = int(n_jobs)
 
     @property
-    @deprecated("to be removed in v0.12; use ``classes_`` instead.")
+    @deprecated("to be removed in v0.13; use ``classes_`` instead.")
     def classes(self):
         return self.classes_
 
@@ -455,8 +455,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                    "method is deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "method is deprecated and will be removed in 0.13. "
+                          "Set it on initialization instead.",
+                          DeprecationWarning, stacklevel=2)
             self.class_weight = class_weight
         return self._partial_fit(X, y, n_iter=1, classes=classes,
                                  sample_weight=sample_weight)
@@ -489,8 +490,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         """
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                    "method is deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "method is deprecated and will be removed in 0.13. "
+                          "Set it on initialization instead.",
+                          DeprecationWarning, stacklevel=2)
+
             self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
@@ -775,8 +778,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "
-                          "scikit-learn 0.12, use epsilon instead.",
-                           DeprecationWarning)
+                          "scikit-learn 0.14, use epsilon instead.",
+                           DeprecationWarning, stacklevel=2)
             self.p = float(p)
             epsilon = p
 

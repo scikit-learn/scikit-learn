@@ -196,24 +196,24 @@ def _test_ridge_loo(filter_):
 
     # check best alpha
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
-    best_alpha = ridge_gcv.best_alpha
-    ret.append(best_alpha)
+    alpha_ = ridge_gcv.alpha_
+    ret.append(alpha_)
 
     # check that we get same best alpha with custom loss_func
     ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
     ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
-    assert_equal(ridge_gcv2.best_alpha, best_alpha)
+    assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
     ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
     ridge_gcv3.fit(filter_(X_diabetes), y_diabetes)
-    assert_equal(ridge_gcv3.best_alpha, best_alpha)
+    assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with sample weights
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
                   sample_weight=np.ones(n_samples))
-    assert_equal(ridge_gcv.best_alpha, best_alpha)
+    assert_equal(ridge_gcv.alpha_, alpha_)
 
     # simulate several responses
     Y = np.vstack((y_diabetes, y_diabetes)).T

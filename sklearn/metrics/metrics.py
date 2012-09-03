@@ -911,6 +911,9 @@ def r2_score(y_true, y_pred):
     http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+    if len(y_true) == 1:
+        raise ValueError("r2_score can only be computed given more than one"
+                " sample.")
     numerator = ((y_true - y_pred) ** 2).sum()
     denominator = ((y_true - y_true.mean()) ** 2).sum()
     if denominator == 0.0:
@@ -994,7 +997,7 @@ def mean_squared_error(y_true, y_pred):
 
 
 @deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
-            instead; to be removed in v0.12""")
+            instead; to be removed in v0.13""")
 def mean_square_error(y_true, y_pred):
     """Cumulated square error regression loss
 

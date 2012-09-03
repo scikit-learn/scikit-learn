@@ -193,12 +193,11 @@ automatically by cross-validation::
     >>> X_diabetes = diabetes.data
     >>> y_diabetes = diabetes.target
     >>> lasso.fit(X_diabetes, y_diabetes)
-    LassoCV(alphas=array([ 2.14804,  2.00327, ...,  0.0023 ,  0.00215]),
-        copy_X=True, cv=None, eps=0.001, fit_intercept=True, max_iter=1000,
-        n_alphas=100, normalize=False, precompute='auto', tol=0.0001,
-        verbose=False)
+    LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
+        max_iter=1000, n_alphas=100, normalize=False, precompute='auto',
+        tol=0.0001, verbose=False)
     >>> # The estimator chose automatically its lambda:
-    >>> lasso.alpha # doctest: +ELLIPSIS
+    >>> lasso.alpha_ # doctest: +ELLIPSIS
     0.01318...
 
 These estimators are called similarly to their counterparts, with 'CV'

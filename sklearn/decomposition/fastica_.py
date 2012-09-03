@@ -12,7 +12,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, as_float_array, check_random_state, deprecated
 
 __all__ = ['fastica', 'FastICA']
@@ -72,7 +72,9 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
             if isinstance(nonlin, tuple):
                 gwtx, g_wtx = nonlin
             else:
-                # XXX: deprecation warning
+                warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
                 gwtx = nonlin
                 g_wtx = gprime(wtx, fun_args)
 
@@ -111,7 +113,9 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
         if isinstance(nonlin, tuple):
             gwtx, g_wtx = nonlin
         else:
-            # XXX: deprecation warning
+            warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
             gwtx = nonlin
             g_wtx = gprime(wtx, fun_args)
 
@@ -319,7 +323,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return None, W, S.T
 
 
-class FastICA(BaseEstimator):
+class FastICA(BaseEstimator, TransformerMixin):
     """FastICA; a fast algorithm for Independent Component Analysis
 
     Parameters
@@ -386,7 +390,7 @@ class FastICA(BaseEstimator):
         self.w_init = w_init
         self.random_state = random_state
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
@@ -399,7 +403,7 @@ class FastICA(BaseEstimator):
         self.sources_ = sources_
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """Apply un-mixing matrix "W" to X to recover the sources
 
         S = X * W.T
@@ -412,6 +416,6 @@ class FastICA(BaseEstimator):
         return linalg.pinv(self.components_)
 
     @property
-    @deprecated("Renamed to ``components_``")
+    @deprecated("Renamed to ``components_``. This will be removed in 0.14.")
     def unmixing_matrix_(self):
         return self.components_

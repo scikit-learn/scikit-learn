@@ -252,7 +252,6 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     orthogonal_mp_gram
     lars_path
     decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
 
     Notes
     -----
@@ -267,15 +266,11 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    X = np.asarray(X)
+    X = array2d(X, order='F', copy=copy_X)
+    copy_X = False
     y = np.asarray(y)
     if y.ndim == 1:
         y = y[:, np.newaxis]
-    if copy_X:
-        X = X.copy('F')
-        copy_X = False
-    else:
-        X = np.asfortranarray(X)
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
     if n_nonzero_coefs == None and tol == None:
@@ -285,8 +280,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
-        raise ValueError("The number of atoms cannot be more than the number \
-                          of features")
+        raise ValueError("The number of atoms cannot be more than the number "
+                         "of features")
     if precompute_gram == 'auto':
         precompute_gram = X.shape[0] > X.shape[1]
     if precompute_gram:
@@ -354,7 +349,6 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     orthogonal_mp
     lars_path
     decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
 
     Notes
     -----
@@ -369,8 +363,10 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    Gram = np.asarray(Gram)
+    Gram = array2d(Gram, order='F', copy=copy_Gram)
     Xy = np.asarray(Xy)
+    if Xy.ndim > 1 and Xy.shape[1] > 1:  # or subsequent target will be affected
+        copy_Gram = True
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
         if tol is not None:
@@ -379,15 +375,15 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     if n_nonzero_coefs == None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
     if tol is not None and norms_squared == None:
-        raise ValueError('Gram OMP needs the precomputed norms in order \
-                          to evaluate the error sum of squares.')
+        raise ValueError('Gram OMP needs the precomputed norms in order '
+                         'to evaluate the error sum of squares.')
     if tol is not None and tol < 0:
-        raise ValueError("Epsilon cennot be negative")
+        raise ValueError("Epsilon cannot be negative")
     if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
-        raise ValueError("The number of atoms cannot be more than the number \
-                          of features")
+        raise ValueError("The number of atoms cannot be more than the number "
+                          "of features")
     coef = np.zeros((len(Gram), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
@@ -466,7 +462,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Lars
     LassoLars
     decomposition.sparse_encode
-    decomposition.sparse_encode_parallel
 
     """
     def __init__(self, copy_X=True, copy_Gram=True,
@@ -530,19 +525,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             Gram, Xy = None, None
 
         if Gram is not None:
-            Gram = array2d(Gram)
-
-            if self.copy_Gram:
-                copy_Gram = False
-                Gram = Gram.copy('F')
-            else:
-                Gram = np.asfortranarray(Gram)
-
-            copy_Gram = self.copy_Gram
-
-            if y.shape[1] > 1:  # subsequent targets will be affected
-                copy_Gram = True
-
             if Xy is None:
                 Xy = np.dot(X.T, y)
             else:
@@ -561,7 +543,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
                                             self.tol, norms_sq,
-                                            copy_Gram, True).T
+                                            self.copy_Gram, True).T
         else:
             precompute_gram = self.precompute_gram
             if precompute_gram == 'auto':

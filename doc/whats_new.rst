@@ -64,8 +64,13 @@ Changelog
    - Fixed bug in spectral clustering that led to single point clusters
      by `Andreas Müller`_.
 
-   - Fixed API inconsistency: :meth:`SGDClassifier.predict_proba` now
-     returns 2d array.
+   - In :class:`feature_extraction.text.CountVectorizer`, added an option to
+     infrequent words, ``min_df`` by  `Andreas Müller`_.
+
+   - Add support for multiple targets in some linear models (ElasticNet, Lasso
+     and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
+     `Alexandre Gramfort`_.
+
 
 API changes summary
 -------------------
@@ -73,7 +78,7 @@ API changes summary
    - The old ``scikits.learn`` package has disappeared; all code should import
      from ``sklearn`` instead, which was introduced in 0.9.
 
-   - In :class:`metrics.roc_curve`, the ``thresholds`` array is now returned
+   - In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
      with it's order reversed, in order to keep it consistent with the order
      of the returned ``fpr`` and ``tpr``.
 
@@ -96,6 +101,26 @@ API changes summary
    - In :class:`feature_extraction.text.CountVectorizer` the parameters
      ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
      enable grid-searching both at once.
+
+   - In :class:`feature_extraction.text.CountVectorizer`, words that appear
+     only in one document are now ignored by default. To reproduce
+     the previous behavior, set ``min_df=1``.
+
+   - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
+     returns 2d array when fit on two classes.
+
+   - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
+     :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
+     classes.
+
+   - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
+     :class:`linear_model.ElasticNetCV` is now stored
+     in the attribute `alphas_` rather than overriding the init parameter
+     `alphas`.
+
+   - Linear models when alpha is estimated by cross-validation store
+     the estimated value in the `alpha_` attribute rather than just
+     `alpha` or `best_alpha`.
 
 .. _changes_0_11:
 
