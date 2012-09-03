@@ -34,7 +34,7 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 SPARSE_INTERCEPT_DECAY = 0.01
 """For sparse data intercept updates are scaled by this decay factor to avoid
-intercept osscilation."""
+intercept oscillation."""
 
 
 class BaseSGD(BaseEstimator):
