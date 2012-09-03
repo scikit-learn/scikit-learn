@@ -71,6 +71,8 @@ Changelog
      and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
      `Alexandre Gramfort`_.
 
+   - Fixes in :class:`decomposition.ProbabilisticPCA` score function by Wei Li.
+
 
 API changes summary
 -------------------
