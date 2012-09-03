@@ -216,8 +216,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
-    This implementation works with data represented as dense numpy arrays of
-    floating point values for the features.
+    This implementation works with data represented as dense or sparse arrays
+    of floating point values for the features.
 
     Parameters
     ----------
