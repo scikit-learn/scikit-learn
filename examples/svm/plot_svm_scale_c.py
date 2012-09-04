@@ -75,6 +75,20 @@ is not scaled.
     Two seperate datasets are used for the two different plots. The reason
     behind this is the `L1` case works better on sparse data, while `L2`
     is better suited to the non-sparse case.
+
+.. topic:: References:
+
+    This issue is little discussed in the literature, but here
+    are some pointers:
+
+    `Guilherme Rocha, Xing Wang and Bin Yu. Asymptotic
+    distribution and sparsistency for L1 penalized
+    parametric M-estimators, with applications to linear SVM
+    and logistic regression. (2009)`
+
+    `A. Chatterjee & S. N. Lahiri. Strong Consistency of
+    Lasso Estimators. Indian Statistical Institute (2011)`
+
 """
 print __doc__
 
