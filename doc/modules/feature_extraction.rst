@@ -102,6 +102,85 @@ memory the ``DictVectorizer`` class uses a ``scipy.sparse`` matrix by
 default instead of a ``numpy.ndarray``.
 
 
+.. _feature_hashing:
+
+Feature hashing
+===============
+
+.. currentmodule:: sklearn.feature_extraction
+
+The class :class:`FeatureHasher` is a high-speed, low-memory vectorizer that
+uses a technique known as
+`feature hashing <https://en.wikipedia.org/wiki/Feature_hashing>`_,
+or the "hashing trick".
+Instead of building a hash table of the features encountered in training,
+as the vectorizers do, instances of :class:`FeatureHasher`
+apply a hash function to the features
+to determine their column index in sample matrices directly.
+The result is increased speed and reduced memory usage,
+at the expense of inspectability;
+the hasher does not remember what the input features looked like
+and has no ``inverse_transform`` method.
+
+Since the hash function might cause collisions between (unrelated) features,
+a signed hash function is used and the sign of the hash value
+determines the sign of the value stored in the output matrix for a feature;
+this way, collisions are likely to cancel out rather than accumulate error,
+and the expected mean of any output feature's value is zero
+
+If ``non_negative=True`` is passed to the constructor,
+the absolute value is taken.
+This undoes some of the collision handling,
+but allows the output to be passed to estimators like :class:`MultinomialNB`
+or ``chi2`` feature selectors that expect non-negative inputs.
+
+:class:`FeatureHasher` accepts either ``(feature, value)`` or strings,
+depending on the constructor parameter ``input_type``.
+If a feature occurs multiple times in a sample, its value in the output
+will be its frequency (count), so if features are intended to be booleans,
+it is up to the user to assure uniqueness of strings in the input.
+This way, feature hashing can be employed in document classification.
+However, unlike :class:`text.CountVectorizer`,
+:class:`FeatureHasher` does not do word
+splitting or any other preprocessing except Unicode-to-UTF-8 encoding.
+The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
+in the CSR format.
+
+As an example, consider a word-level NLP classification task
+that needs features extracted from ``(token, part_of_speech)`` pairs.
+One could use a Python generator function to extract features::
+
+  def token_features(token, part_of_speech):
+      if token.isdigit():
+          yield "numeric"
+      else:
+          yield "token={}".format(token.lower())
+          yield "token,pos={},{}".format(token, part_of_speech)
+      if token[0].isupper():
+          yield "uppercase_initial"
+      if token.isupper():
+          yield "all_uppercase"
+      yield "pos={}".format(part_of_speech)
+
+Then, the ``raw_X`` to be fed to ``FeatureHasher.transform``
+can be constructed using::
+
+  raw_X = (token_features(tok, pos_tagger(tok)) for tok in corpus)
+
+Note the use of a generator comprehension,
+which introduces laziness into the feature extraction:
+tokens are only processed on demand from the :class:`FeatureHasher`
+(which should be given the constructor parameter ``input_type=strings``
+for this particular example).
+
+
+.. topic:: References:
+
+ * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
+   Josh Attenberg (2009). `Feature hashing for large scale multitask learning
+   <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+
+
 .. _text_feature_extraction:
 
 Text feature extraction

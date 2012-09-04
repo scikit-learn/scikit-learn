@@ -281,6 +281,7 @@ Samples generator
    :template: class.rst
 
    feature_extraction.DictVectorizer
+   feature_extraction.FeatureHasher
 
 From images
 -----------
