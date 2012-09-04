@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils import check_arrays
@@ -596,7 +596,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-class KMeans(BaseEstimator):
+class KMeans(BaseEstimator, ClusterMixin):
     """K-Means clustering
 
     Parameters
@@ -1048,18 +1048,13 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, chunk_size=None, k=None):
+                 init_size=None, n_init=3, k=None):
 
         super(MiniBatchKMeans, self).__init__(n_clusters=n_clusters, init=init,
               max_iter=max_iter, verbose=verbose, random_state=random_state,
               tol=tol, n_init=n_init, k=k)
 
         self.max_no_improvement = max_no_improvement
-        if chunk_size is not None:
-            warnings.warn(
-                "chunk_size is deprecated in 0.10, use batch_size instead",
-                PendingDeprecationWarning, stacklevel=2)
-            batch_size = chunk_size
         self.batch_size = batch_size
         self.compute_labels = compute_labels
         self.init_size = init_size

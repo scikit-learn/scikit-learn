@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 from nose.tools import raises
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_raises
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
@@ -369,7 +369,12 @@ def test_losses_at_limits():
     # test limit cases
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
-    assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
+    assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
+
+
+def test_r2_one_case_error():
+    # test whether r2_score raises error given one point
+    assert_raises(ValueError, r2_score, [0], [0])
 
 
 def test_symmetry():

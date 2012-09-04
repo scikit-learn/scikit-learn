@@ -150,7 +150,7 @@ You can also check for common programming errors with the following tools:
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
 
-      see also :ref:`testing`
+      see also :ref:`testing_coverage`
 
     * No pyflakes warnings, check with::
 
@@ -181,13 +181,13 @@ and Cython optimizations.
   on all new contributions will get the overall code base quality in the
   right direction.
 
-EasyFix Issues
---------------
+Easy Issues
+-----------
 
 A great way to start contributing to scikit-learn is to pick an item from the
-list of `EasyFix issues
-<https://github.com/scikit-learn/scikit-learn/issues?labels=EasyFix>`_
-in the issue tracker.  Resolving these issues allow you to start contributing
+list of `Easy issues
+<https://github.com/scikit-learn/scikit-learn/issues?labels=Easy>`_
+in the issue tracker. Resolving these issues allow you to start contributing
 to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
 their time to concentrate on other issues.
@@ -226,7 +226,7 @@ it.
    slightly differently. To get the best results, you should use version
    1.0.
 
-.. _testing:
+.. _testing_coverage:
 
 Testing and improving test coverage
 ------------------------------------
@@ -264,6 +264,36 @@ Developers web site
 
 More information can be found on the `developer's wiki
 <https://github.com/scikit-learn/scikit-learn/wiki>`_.
+
+
+Issue Tracker Tags
+------------------
+All issues and pull requests on the
+`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+should have (at least) one of the following tags:
+
+:Bug / Crash:
+    Something is happening that clearly shouldn't happen.
+    Wrong results as well as unexpected errors from estimators go here.
+
+:Cleanup / Enhancement:
+    Improving performance, usability, consistency.
+
+:Documentation:
+    Missing, incorrect or sub-standard documentations and examples.
+
+:New Feature:
+    Feature requests and pull requests implementing a new feature.
+
+There are two other tags to help new contributors:
+
+:Easy:
+    This issue can be tackled by anyone, no experience needed.
+    Ask for help if the formulation is unclear.
+
+:Moderate:
+    Might need some knowledge of machine learning or the package,
+    but is still approachable for someone new to the project.
 
 
 Other ways to contribute

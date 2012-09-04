@@ -10,12 +10,13 @@ clustering.
 import numpy as np
 import warnings
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
+def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
+        convit=None, max_iter=200,
         damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
@@ -25,7 +26,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
     S: array [n_samples, n_samples]
         Matrix of similarities between points
 
-    preference: array [n_samples,] or float, optional
+    preference: array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -34,14 +35,21 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    damping : float, optional
-        Damping factor
+    convergence_iter: int, optional, default: 15
+        Number of iterations with no change in the number
+        of estimated clusters that stops the convergence.
 
-    copy: boolean, optional
+    max_iter: int, optional, default: 200
+        Maximum number of iterations
+
+    damping: float, optional, default: 200
+        Damping factor between 0.5 and 1.
+
+    copy: boolean, optional, default: True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
-    verbose: boolean, optional
+    verbose: boolean, optional, default: False
         The verbosity level
 
     Returns
@@ -63,6 +71,11 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
     Between Data Points", Science Feb. 2007
     """
     S = as_float_array(S, copy=copy)
+    if convit is not None:
+        warnings.warn("``convit`` is deprecated and will be removed in"
+                      "version 0.14. Use ``convergence_iter`` instead",
+                      DeprecationWarning)
+        convergence_iter = convit
 
     n_samples = S.shape[0]
 
@@ -93,7 +106,7 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
          random_state.randn(n_samples, n_samples)
 
     # Execute parallel affinity propagation updates
-    e = np.zeros((n_samples, convit))
+    e = np.zeros((n_samples, convergence_iter))
 
     ind = np.arange(n_samples)
 
@@ -130,12 +143,13 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
-        e[:, it % convit] = E
+        e[:, it % convergence_iter] = E
         K = np.sum(E, axis=0)
 
-        if it >= convit:
+        if it >= convergence_iter:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convit) + (se == 0)) != n_samples
+            unconverged = np.sum((se == convergence_iter) +\
+                                 (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
@@ -172,37 +186,37 @@ def affinity_propagation(S, preference=None, p=None, convit=30, max_iter=200,
 
 ###############################################################################
 
-class AffinityPropagation(BaseEstimator):
+class AffinityPropagation(BaseEstimator, ClusterMixin):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
     ----------
-    damping : float, optional
-        Damping factor
+    damping: float, optional, default: 0.5
+        Damping factor between 0.5 and 1.
 
-    max_iter : int, optional
-        Maximum number of iterations
-
-    convit : int, optional
+    convergence_iter: int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    copy : boolean, optional
-        Make a copy of input data. True by default.
+    max_iter: int, optional, default: 200
+        Maximum number of iterations
 
-    preference : array [n_samples,] or float, optional
+    copy: boolean, optional, default: True
+        Make a copy of input data.
+
+    preference: array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity : string, optional, default=``euclidean``
+    affinity: string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
         ``euclidean`` are supported. ``euclidean`` uses the
         negative squared euclidean distance between points.
 
-    verbose: boolean, optional
+    verbose: boolean, optional, default: False
         Whether to be verbose.
 
 
@@ -231,11 +245,19 @@ class AffinityPropagation(BaseEstimator):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True,
+    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
+            convit=None, copy=True,
             preference=None, p=None, affinity='euclidean', verbose=False):
+
+        if convit is not None:
+            warnings.warn("``convit`` is deprectaed and will be removed in "
+                          "version 0.14. Use ``convergence_iter`` "
+                          "instead", DeprecationWarning)
+            convergence_iter = convit
+
         self.damping = damping
         self.max_iter = max_iter
-        self.convit = convit
+        self.convergence_iter = convergence_iter
         self.copy = copy
         self.verbose = verbose
         if not p is None:
@@ -277,6 +299,7 @@ class AffinityPropagation(BaseEstimator):
 
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
                 self.affinity_matrix_, self.preference,
-                max_iter=self.max_iter, convit=self.convit,
+                max_iter=self.max_iter,
+                convergence_iter=self.convergence_iter,
                 damping=self.damping, copy=self.copy, verbose=self.verbose)
         return self

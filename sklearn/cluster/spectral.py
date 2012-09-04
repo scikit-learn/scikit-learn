@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
@@ -87,8 +87,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
         # We need to put the diagonal at zero
         if not sparse.isspmatrix(laplacian):
-            ix, iy, = np.diag_indices(n_nodes)
-            laplacian[ix, iy] = 0
+            laplacian.flat[::n_nodes + 1] = 0
         else:
             laplacian = laplacian.tocoo()
             diag_idx = (laplacian.row == laplacian.col)
@@ -223,7 +222,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     return labels
 
 
-class SpectralClustering(BaseEstimator):
+class SpectralClustering(BaseEstimator, ClusterMixin):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -278,12 +277,12 @@ class SpectralClustering(BaseEstimator):
 
     Attributes
     ----------
+    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
+        Affinity matrix used for clustering. Available only if after calling
+        ``fit``.
 
     `labels_` :
         Labels of each point
-    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
-        Affinity matrix used for clustering. Available only if
-        after calling ``fit``.
 
     Notes
     -----

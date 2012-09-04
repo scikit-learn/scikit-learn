@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..utils import array2d, atleast2d_or_csr, check_arrays, safe_asarray
+from ..utils import array2d, atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
 from ..utils import deprecated
 
@@ -26,6 +26,15 @@ from .sgd_fast import ModifiedHuber
 from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
+
+
+LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3}
+
+PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
+
+SPARSE_INTERCEPT_DECAY = 0.01
+"""For sparse data intercept updates are scaled by this decay factor to avoid
+intercept oscillation."""
 
 
 class BaseSGD(BaseEstimator):
@@ -89,23 +98,21 @@ class BaseSGD(BaseEstimator):
             self.t_ = 1.0 / (eta0 * self.alpha)
 
     def _set_learning_rate(self, learning_rate):
-        learning_rate_codes = {"constant": 1, "optimal": 2, "invscaling": 3}
         try:
-            self.learning_rate_code = learning_rate_codes[learning_rate]
+            self.learning_rate_type = LEARNING_RATE_TYPES[learning_rate]
         except KeyError:
             raise ValueError("learning rate %s"
-            "is not supported. " % learning_rate)
+                             "is not supported. " % learning_rate)
 
     def _set_penalty_type(self, penalty):
-        penalty_types = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
         try:
-            self.penalty_type = penalty_types[penalty]
+            self.penalty_type = PENALTY_TYPES[penalty]
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
     def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
-        if sample_weight == None:
+        if sample_weight is None:
             # uniform sample weights
             sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         else:
@@ -167,35 +174,32 @@ class BaseSGD(BaseEstimator):
                 intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init " \
-                                 "does not match dataset.")
+                                     "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
             else:
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
 
 def _check_fit_data(X, y):
+    """Check if shape of input data matches. """
     n_samples, _ = X.shape
     if n_samples != y.shape[0]:
         raise ValueError("Shapes of X and y do not match.")
 
 
 def _make_dataset(X, y_i, sample_weight):
-    """Returns Dataset object + intercept_decay"""
+    """Create ``Dataset`` abstraction for sparse and dense inputs.
+
+    This also returns the ``intercept_decay`` which is different
+    for sparse datasets.
+    """
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
-        intercept_decay = 0.01
+        intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
         intercept_decay = 1.0
     return dataset, intercept_decay
-
-
-def _tocsr(X):
-    """Convert X to CSR matrix, preventing a copy if possible"""
-    if sp.isspmatrix_csr(X) and X.dtype == np.float64:
-        return X
-    else:
-        return sp.csr_matrix(X, dtype=np.float64)
 
 
 class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
@@ -212,8 +216,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
-    This implementation works with data represented as dense numpy arrays of
-    floating point values for the features.
+    This implementation works with data represented as dense or sparse arrays
+    of floating point values for the features.
 
     Parameters
     ----------
@@ -335,7 +339,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.n_jobs = int(n_jobs)
 
     @property
-    @deprecated("to be removed in v0.12; use ``classes_`` instead.")
+    @deprecated("to be removed in v0.13; use ``classes_`` instead.")
     def classes(self):
         return self.classes_
 
@@ -382,8 +386,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
     def _partial_fit(self, X, y, n_iter, classes=None, sample_weight=None,
                      coef_init=None, intercept_init=None):
-        X = safe_asarray(X, dtype=np.float64, order="C")
-        y = np.asarray(y)
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y = np.asarray(y).ravel()
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -449,10 +453,11 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        if class_weight != None:
+        if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                    "method is deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "method is deprecated and will be removed in 0.13. "
+                          "Set it on initialization instead.",
+                          DeprecationWarning, stacklevel=2)
             self.class_weight = class_weight
         return self._partial_fit(X, y, n_iter=1, classes=classes,
                                  sample_weight=sample_weight)
@@ -483,19 +488,18 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        if class_weight != None:
+        if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                    "method is deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "method is deprecated and will be removed in 0.13. "
+                          "Set it on initialization instead.",
+                          DeprecationWarning, stacklevel=2)
+
             self.class_weight = class_weight
 
-        X = safe_asarray(X, dtype=np.float64, order="C")
-        # labels can be encoded as float, int, or string literals
-        y = np.asarray(y)
-
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
 
+        # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
@@ -561,14 +565,16 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
     def predict_proba(self, X):
         """Predict class membership probability
 
+
+        Prediction probabilities are only supported for binary classification.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,
-        n_classes]
+        array, shape = [n_samples] if n_classes == 2 else raises Exception
             Contains the membership probabilities of the positive class.
 
         References
@@ -582,27 +588,27 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
 
+        proba = np.ones((len(X), 2), dtype=np.float64)
         if self.loss == "log":
-            return 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+            proba[:, 1] = 1.0 / (1.0 + np.exp(-self.decision_function(X)))
         elif self.loss == "modified_huber":
-            ret = np.minimum(1, np.maximum(-1, self.decision_function(X)))
-            ret += 1
-            ret /= 2
-            return ret
+            proba[:, 1] = np.minimum(1, np.maximum(-1,
+                                                   self.decision_function(X)))
+            proba[:, 1] += 1
+            proba[:, 1] /= 2
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
                                       "(%s given)" % self.loss)
+        proba[:, 0] -= proba[:, 1]
+        return proba
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
-        if sp.issparse(X):
-            X = _tocsr(X)
-
+        """Fit a binary classifier on X and y. """
         coef, intercept = fit_binary(self, 1, X, y, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
                                      sample_weight)
-
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
@@ -614,9 +620,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        if sp.issparse(X):
-            X = _tocsr(X)
-
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, n_iter,
@@ -662,7 +665,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      dataset, n_iter, est.fit_intercept,
                      est.verbose, est.shuffle, est.seed,
                      pos_weight, neg_weight,
-                     est.learning_rate_code, est.eta0,
+                     est.learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
 
@@ -777,8 +780,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "
-                          "scikit-learn 0.12, use epsilon instead.",
-                           DeprecationWarning)
+                          "scikit-learn 0.14, use epsilon instead.",
+                           DeprecationWarning, stacklevel=2)
             self.p = float(p)
             epsilon = p
 
@@ -808,6 +811,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                      coef_init=None, intercept_init=None):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
+        y = y.ravel()
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -931,7 +935,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           int(self.shuffle),
                                           self.seed,
                                           1.0, 1.0,
-                                          self.learning_rate_code,
+                                          self.learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
                                           intercept_decay)
 
