@@ -115,7 +115,8 @@ def test_stratified_shuffle_split():
 
     # Check that error is raised if the test set size is smaller than n_classes
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 2)
-    # Check that error is raised if the train set size is smaller than n_classes
+    # Check that error is raised if the train set size is smaller than
+    # n_classes
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 3, 2)
 
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])

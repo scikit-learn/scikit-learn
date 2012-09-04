@@ -51,8 +51,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Lasso solution (linear_model.Lasso). lasso_lars will be faster if
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than regularization from
-        the projection dictionary * data'
+        threshold: squashes to zero all coefficients less than regularization
+        from the projection dictionary * data'
 
     regularization : int | float
         The regularization parameter. It corresponds to alpha when
@@ -121,7 +121,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             np.seterr(**err_mgt)
 
     elif algorithm == 'threshold':
-        new_code = (np.sign(cov) * np.maximum(np.abs(cov) - regularization, 0)).T
+        new_code = ((np.sign(cov) *
+                    np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
         norms_squared = np.sum((X ** 2), axis=1)

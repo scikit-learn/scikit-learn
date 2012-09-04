@@ -192,7 +192,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             Returns self.
         """
         self.random_state = check_random_state(self.random_state)
-        
+
         # set min_samples_split sensibly
         self.min_samples_split = max(self.min_samples_split,
                                      2 * self.min_samples_leaf)

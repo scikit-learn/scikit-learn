@@ -226,7 +226,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             Returns self.
         """
         self.random_state = check_random_state(self.random_state)
-        
+
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
         if getattr(X, "dtype", None) != DTYPE or \

@@ -687,8 +687,8 @@ class LinearModelCV(LinearModel):
         # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
         if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have inconsistent dimensions (%d != %d)" % (
-                             X.shape[0], y.shape[0]))
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
+                              % (X.shape[0], y.shape[0]))
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -1034,16 +1034,18 @@ class MultiTaskElasticNet(Lasso):
         Independent term in decision function.
 
     `coef_` : array, shape = (n_tasks, n_features)
-        Parameter vector (W in the cost function formula). If a 1D y is passed \
-        in at fit (non multi-task usage), `coef_` is then a 1D array
+        Parameter vector (W in the cost function formula). If a 1D y is \
+        passed in at fit (non multi-task usage), `coef_` is then a 1D array
 
     Examples
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskElasticNet(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
-    MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-              normalize=False, rho=0.5, tol=0.0001, warm_start=False)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
+            max_iter=1000, normalize=False, rho=0.5, tol=0.0001,
+            warm_start=False)
     >>> print clf.coef_
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]

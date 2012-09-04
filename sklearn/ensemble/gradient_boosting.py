@@ -796,7 +796,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
             proba[:, 0] -= proba[:, 1]
         else:
-            proba = np.exp(score) / np.sum(np.exp(score), axis=1)[:, np.newaxis]
+            proba = (np.exp(score)
+                     / np.sum(np.exp(score), axis=1)[:, np.newaxis])
         return proba
 
     def predict_proba(self, X):

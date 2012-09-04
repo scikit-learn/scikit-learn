@@ -64,8 +64,8 @@ for label, color, setting in [('No shrinkage', 'orange',
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         test_deviance[i] = clf.loss_(y_test, y_pred)
 
-    pl.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5], '-',
-            color=color, label=label)
+    pl.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5],
+             '-', color=color, label=label)
 
 pl.legend(loc='upper left')
 pl.xlabel('Boosting Iterations')

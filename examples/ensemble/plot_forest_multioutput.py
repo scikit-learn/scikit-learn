@@ -17,7 +17,6 @@ import pylab as pl
 
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.tree import DecisionTreeRegressor
 
 
 # Load the faces datasets
