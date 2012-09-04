@@ -5,6 +5,8 @@ from .base import SparseBaseLibSVM
 from ...utils import deprecated
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.SVC instead""")
 class SVC(SparseBaseLibSVM, BaseSVC):
     """SVC for sparse matrices (csr).
 
@@ -41,6 +43,8 @@ class SVC(SparseBaseLibSVM, BaseSVC):
                                   cache_size, class_weight, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.NuSVC instead""")
 class NuSVC(SparseBaseLibSVM, BaseSVC):
     """NuSVC for sparse matrices (csr).
 
@@ -77,6 +81,8 @@ class NuSVC(SparseBaseLibSVM, BaseSVC):
                                     cache_size, class_weight, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.SVR instead""")
 class SVR(SparseBaseLibSVM, RegressorMixin):
     """SVR for sparse matrices (csr)
 
@@ -112,6 +118,8 @@ class SVR(SparseBaseLibSVM, RegressorMixin):
                                   cache_size, None, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.NuSVR instead""")
 class NuSVR(SparseBaseLibSVM, RegressorMixin):
     """NuSVR for sparse matrices (csr)
 
@@ -147,6 +155,8 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
                 None, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.OneClassSVM instead""")
 class OneClassSVM(SparseBaseLibSVM):
     """OneClassSVM for sparse matrices (csr)
 
@@ -172,7 +182,7 @@ class OneClassSVM(SparseBaseLibSVM):
             X, [], sample_weight=sample_weight)
 
 
-@deprecated("""to be removed in v0.12;
+@deprecated("""to be removed in v0.14;
 use sklearn.svm.LinearSVC instead""")
 class LinearSVC(LinearSVC):
     pass

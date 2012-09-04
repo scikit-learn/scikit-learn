@@ -16,12 +16,11 @@ from scipy import sparse
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from .base import sparse_center_data
-from ..utils import as_float_array
+from .base import sparse_center_data, center_data
+from ..utils import array2d, atleast2d_or_csc
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
-from ..utils import check_arrays
 
 from . import cd_fast
 
@@ -98,13 +97,13 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = (n_features,)
         parameter vector (w in the cost function formula)
 
-    `sparse_coef_` : scipy.sparse matrix, shape = [n_features, 1]
+    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1)
         `sparse_coef_` is a readonly property derived from `coef_`
 
-    `intercept_` : float
+    `intercept_` : float | array, shape = (n_targets,)
         independent term in decision function.
 
     Notes
@@ -135,12 +134,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         -----------
         X: ndarray or scipy.sparse matrix, (n_samples, n_features)
             Data
-        y: ndarray, (n_samples)
+        y: ndarray, shape = (n_samples,) or (n_samples, n_targets)
             Target
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
-        coef_init: ndarray of shape n_features
+        coef_init: ndarray of shape n_features or (n_targets, n_features)
             The initial coeffients to warm-start the optimization
 
         Notes
@@ -153,44 +152,43 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-
+        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                             copy=self.copy_X and self.fit_intercept)
+        # From now on X can be touched inplace
+        y = np.asarray(y, dtype=np.float64)
+        # now all computation with X can be done inplace
         fit = self._sparse_fit if sparse.isspmatrix(X) else self._dense_fit
         fit(X, y, Xy, coef_init)
         return self
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None):
 
-        # X and y must be of type float64
-        X = np.asanyarray(X, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
+        X, y, X_mean, y_mean, X_std = center_data(X, y,
+                self.fit_intercept, self.normalize,
+                copy=False)  # copy was done in fit if necessary
+
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+        if Xy is not None and Xy.ndim == 1:
+            Xy = Xy[:, np.newaxis]
 
         n_samples, n_features = X.shape
+        n_targets = y.shape[1]
 
-        X_init = X
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, copy=self.copy_X)
         precompute = self.precompute
-        if X_init is not X and hasattr(precompute, '__array__'):
+        if hasattr(precompute, '__array__') \
+                and not np.allclose(X_mean, np.zeros(n_features)) \
+                and not np.allclose(X_std, np.ones(n_features)):
             # recompute Gram
-            # FIXME: it could be updated from precompute and X_mean
-            # instead of recomputed
             precompute = 'auto'
-        if X_init is not X and Xy is not None:
-            Xy = None  # recompute Xy
+            Xy = None
 
-        if coef_init is None:
-            if not self.warm_start or self.coef_ is None:
-                self.coef_ = np.zeros(n_features, dtype=np.float64)
-        else:
-            if coef_init.shape[0] != X.shape[1]:
-                raise ValueError("X and coef_init have incompatible " +
-                                  "shapes.")
-            self.coef_ = coef_init
+        coef_ = self._init_coef(coef_init, n_features, n_targets)
+        dual_gap_ = np.empty(n_targets)
+        eps_ = np.empty(n_targets)
 
-        alpha = self.alpha * self.rho * n_samples
-        beta = self.alpha * (1.0 - self.rho) * n_samples
-
-        X = np.asfortranarray(X)  # make data contiguous in memory
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
         # precompute if n_samples > n_features
         if hasattr(precompute, '__array__'):
@@ -201,31 +199,36 @@ class ElasticNet(LinearModel, RegressorMixin):
         else:
             Gram = None
 
-        if Gram is None:
-            self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent(self.coef_, alpha, beta,
-                            X, y, self.max_iter, self.tol, self.positive)
-        else:
-            if Xy is None:
-                Xy = np.dot(X.T, y)
-            self.coef_, self.dual_gap_, self.eps_ = \
-                    cd_fast.enet_coordinate_descent_gram(self.coef_, alpha,
-                    beta, Gram, Xy, y, self.max_iter, self.tol, self.positive)
+        for k in xrange(n_targets):
+            if Gram is None:
+                coef_[k, :], dual_gap_[k], eps_[k] = \
+                        cd_fast.enet_coordinate_descent(coef_[k, :],
+                        l1_reg, l2_reg, X, y[:, k], self.max_iter, self.tol,
+                        self.positive)
+            else:
+                Gram = Gram.copy()
+                if Xy is None:
+                    this_Xy = np.dot(X.T, y[:, k])
+                else:
+                    this_Xy = Xy[:, k]
+                coef_[k, :], dual_gap_[k], eps_[k] = \
+                        cd_fast.enet_coordinate_descent_gram(coef_[k, :],
+                        l1_reg, l2_reg, Gram, this_Xy, y[:, k], self.max_iter,
+                        self.tol, self.positive)
 
+            if dual_gap_[k] > eps_[k]:
+                warnings.warn('Objective did not converge for ' +
+                              'target %d, you might want' % k +
+                              ' to increase the number of iterations')
+
+        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
+                                                    coef_, dual_gap_, eps_))
         self._set_intercept(X_mean, y_mean, X_std)
-
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations')
 
         # return self for chaining fit and predict calls
         return self
 
     def _sparse_fit(self, X, y, Xy=None, coef_init=None):
-
-        if not sparse.isspmatrix_csc(X) or not np.issubdtype(np.float64, X):
-            X = sparse.csc_matrix(X, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
@@ -234,38 +237,58 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # NOTE: we are explicitly not centering the data the naive way to
         # avoid breaking the sparsity of X
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-
-        if coef_init is None and \
-            (not self.warm_start or self.coef_ is None):
-            self.coef_ = np.zeros(n_features, dtype=np.float64)
-        else:
-            if coef_init.shape[0] != X.shape[1]:
-                raise ValueError("X and coef_init have incompatible " +
-                                  "shapes.")
-            self.coef_ = coef_init
-
-        alpha = self.alpha * self.rho * n_samples
-        beta = self.alpha * (1.0 - self.rho) * n_samples
         X_data, y, X_mean, y_mean, X_std = sparse_center_data(X, y,
                                                        self.fit_intercept,
                                                        self.normalize)
 
-        self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.sparse_enet_coordinate_descent(
-                    self.coef_, alpha, beta, X_data, X.indices,
-                    X.indptr, y, X_mean / X_std,
-                    self.max_iter, self.tol, self.positive)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
 
+        n_samples, n_features = X.shape[0], X.shape[1]
+        n_targets = y.shape[1]
+
+        coef_ = self._init_coef(coef_init, n_features, n_targets)
+        dual_gap_ = np.empty(n_targets)
+        eps_ = np.empty(n_targets)
+
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
+
+        for k in xrange(n_targets):
+            coef_[k, :], dual_gap_[k], eps_[k] = \
+                    cd_fast.sparse_enet_coordinate_descent(
+                        coef_[k, :], l1_reg, l2_reg, X_data, X.indices,
+                        X.indptr, y[:, k], X_mean / X_std,
+                        self.max_iter, self.tol, self.positive)
+
+            if dual_gap_[k] > eps_[k]:
+                warnings.warn('Objective did not converge for ' +
+                              'target %d, you might want' % k +
+                              ' to increase the number of iterations')
+
+        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
+                                                    coef_, dual_gap_, eps_))
         self._set_intercept(X_mean, y_mean, X_std)
-
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want'
-                                'to increase the number of iterations')
 
         # return self for chaining fit and predict calls
         return self
+
+    def _init_coef(self, coef_init, n_features, n_targets):
+        if coef_init is None:
+            if not self.warm_start or self.coef_ is None:
+                coef_ = np.zeros((n_targets, n_features), dtype=np.float64)
+            else:
+                coef_ = self.coef_
+        else:
+            coef_ = coef_init
+
+        if coef_.ndim == 1:
+            coef_ = coef_[np.newaxis, :]
+        if coef_.shape != (n_targets, n_features):
+            raise ValueError("X and coef_init have incompatible " +
+                 "shapes (%s != %s)." % (coef_.shape, (n_targets, n_features)))
+
+        return coef_
 
     @property
     def sparse_coef_(self):
@@ -277,11 +300,12 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or scipy.sparse matrix of shape [n_samples, n_features]
+        X : numpy array or scipy.sparse matrix of shape (n_samples, n_features)
 
         Returns
         -------
-        array, shape = [n_samples] with the predicted real values
+        T : array, shape = (n_samples,)
+            The predicted decision function
         """
         if sparse.isspmatrix(X):
             return np.ravel(safe_sparse_dot(self.coef_, X.T, \
@@ -328,7 +352,7 @@ class Lasso(ElasticNet):
     max_iter: int, optional
         The maximum number of iterations
 
-    tol: float, optional
+    tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than 'tol', the optimization code checks the
         dual gap for optimality and continues until it is smaller
@@ -338,16 +362,16 @@ class Lasso(ElasticNet):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    positive: bool, optional
+    positive : bool, optional
         When set to True, forces the coefficients to be positive.
 
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = (n_features,)
         parameter vector (w in the cost function formula)
 
-    `sparse_coef_` : scipy.sparse matrix, shape = [n_features, 1]
+    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1)
         `sparse_coef_` is a readonly property derived from `coef_`
 
     `intercept_` : float
@@ -408,11 +432,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : numpy array of shape [n_samples,n_features]
+    X : ndarray, shape = (n_samples, n_features)
         Training data. Pass directly as fortran contiguous data to avoid
         unnecessary memory duplication
 
-    y : numpy array of shape [n_samples]
+    y : ndarray, shape = (n_samples,)
         Target values
 
     eps : float, optional
@@ -422,7 +446,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     n_alphas : int, optional
         Number of alphas along the regularization path
 
-    alphas : numpy array, optional
+    alphas : ndarray, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
 
@@ -490,11 +514,11 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : numpy array of shape [n_samples, n_features]
+    X : ndarray, shape = (n_samples, n_features)
         Training data. Pass directly as fortran contiguous data to avoid
         unnecessary memory duplication
 
-    y : numpy array of shape [n_samples]
+    y : ndarray, shape = (n_samples,)
         Target values
 
     rho : float, optional
@@ -508,7 +532,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     n_alphas : int, optional
         Number of alphas along the regularization path
 
-    alphas : numpy array, optional
+    alphas : ndarray, optional
         List of alphas where to compute the models.
         If None alphas are set automatically
 
@@ -549,28 +573,34 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = as_float_array(X, copy_X)
+    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                        copy=copy_X and fit_intercept)
+    # From now on X can be touched inplace
+    if not sparse.isspmatrix(X):
+        X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
+                                                  normalize, copy=False)
+        # XXX : in the sparse case the data will be centered
+        # at each fit...
 
-    X_init = X
-    X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
-                                                           fit_intercept,
-                                                           normalize,
-                                                           copy=False)
-    X, y = check_arrays(X, y, sparse_format='dense')
-    X = np.asfortranarray(X)  # make data contiguous in memory
     n_samples, n_features = X.shape
 
-    if X_init is not X and hasattr(precompute, '__array__'):
+    if hasattr(precompute, '__array__') \
+            and not np.allclose(X_mean, np.zeros(n_features)) \
+            and not np.allclose(X_std, np.ones(n_features)):
+        # recompute Gram
         precompute = 'auto'
-    if X_init is not X and Xy is not None:
         Xy = None
 
     if precompute is True or \
                 ((precompute == 'auto') and (n_samples > n_features)):
-        precompute = np.dot(X.T, X)
+        if sparse.isspmatrix(X):
+            warnings.warn("precompute is ignored for sparse data")
+            precompute = False
+        else:
+            precompute = np.dot(X.T, X)
 
     if Xy is None:
-        Xy = np.dot(X.T, y)
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
     n_samples = X.shape[0]
     if alphas is None:
@@ -584,11 +614,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
-        model = ElasticNet(alpha=alpha, rho=rho, fit_intercept=False,
-                           precompute=precompute)
+        model = ElasticNet(alpha=alpha, rho=rho,
+            fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
+            precompute=precompute)
         model.set_params(**params)
         model.fit(X, y, coef_init=coef_, Xy=Xy)
-        if fit_intercept:
+        if fit_intercept and not sparse.isspmatrix(X):
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
@@ -636,23 +667,28 @@ class LinearModelCV(LinearModel):
         self.verbose = verbose
 
     def fit(self, X, y):
-        """Fit linear model with coordinate descent along decreasing alphas
-        using cross-validation
+        """Fit linear model with coordinate descent
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
 
         Parameters
         ----------
 
-        X : numpy array of shape [n_samples,n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data. Pass directly as fortran contiguous data to avoid
             unnecessary memory duplication
 
-        y : numpy array of shape [n_samples]
+        y : narray, shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         """
-        if not sparse.issparse(X):
-            X = np.asfortranarray(X, dtype=np.float64)
+        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                             copy=self.copy_X and self.fit_intercept)
+        # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)" % (
+                             X.shape[0], y.shape[0]))
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -710,11 +746,19 @@ class LinearModelCV(LinearModel):
             self.rho_ = model.rho
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
-        self.alpha = model.alpha
-        self.alphas = np.asarray(alphas)
+        self.alpha_ = model.alpha
+        self.alphas_ = np.asarray(alphas)
         self.coef_path_ = np.asarray([model.coef_ for model in models])
         self.mse_path_ = np.squeeze(all_mse_paths)
         return self
+
+    @property
+    def alpha(self):
+        warnings.warn("Use alpha_. Using alpha is deprecated"
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=1)
+        return self.alpha_
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
@@ -766,14 +810,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
     `alpha_`: float
         The amount of penalization choosen by cross validation
 
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = (n_features,)
         parameter vector (w in the cost function formula)
 
     `intercept_` : float
         independent term in decision function.
 
-    `mse_path_`: array, shape = [n_alphas, n_folds]
+    `mse_path_`: array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
+
+    `alphas_`: numpy array
+        The grid of alphas used for fitting
 
     Notes
     -----
@@ -838,10 +885,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
-    tol: float, optional
+    tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than 'tol', the optimization code checks the
         dual gap for optimality and continues until it is smaller
@@ -862,20 +909,20 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Attributes
     ----------
-    `alpha_`: float
+    `alpha_` : float
         The amount of penalization choosen by cross validation
 
-    `rho_`: float
+    `rho_` : float
         The compromise between l1 and l2 penalization choosen by
         cross validation
 
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = (n_features,)
         parameter vector (w in the cost function formula)
 
     `intercept_` : float
         independent term in decision function.
 
-    `mse_path_`: array, shape = [n_rho, n_alpha, n_folds]
+    `mse_path_` : array, shape = (n_rho, n_alpha, n_folds)
         mean square error for the test set on each fold, varying rho and
         alpha
 
@@ -968,10 +1015,10 @@ class MultiTaskElasticNet(Lasso):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
-    tol: float, optional
+    tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than 'tol', the optimization code checks the
         dual gap for optimality and continues until it is smaller
@@ -983,13 +1030,12 @@ class MultiTaskElasticNet(Lasso):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_tasks, n_features]
-        parameter vector (W in the cost function formula)
-        If a 1D y is passed in at fit (non multi-task usage), `coef_` is
-        then a 1D array
+    `intercept_` : array, shape = (n_tasks,)
+        Independent term in decision function.
 
-    `intercept_` : array, shape = [n_tasks]
-        independent term in decision function.
+    `coef_` : array, shape = (n_tasks, n_features)
+        Parameter vector (W in the cost function formula). If a 1D y is passed \
+        in at fit (non multi-task usage), `coef_` is then a 1D array
 
     Examples
     --------
@@ -1032,9 +1078,9 @@ class MultiTaskElasticNet(Lasso):
 
         Parameters
         -----------
-        X: ndarray, (n_samples, n_features)
+        X: ndarray, shape = (n_samples, n_features)
             Data
-        y: ndarray, (n_samples, n_tasks)
+        y: ndarray, shape = (n_samples, n_tasks)
             Target
         coef_init: ndarray of shape n_features
             The initial coeffients to warm-start the optimization
@@ -1050,7 +1096,9 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         # X and y must be of type float64
-        X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float64)
+        X = array2d(X, dtype=np.float64, order='F',
+                    copy=self.copy_X and self.fit_intercept)
+        y = np.asarray(y, dtype=np.float64)
 
         squeeze_me = False
         if y.ndim == 1:
@@ -1060,8 +1108,8 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, copy=self.copy_X)
+        X, y, X_mean, y_mean, X_std = center_data(X, y,
+                self.fit_intercept, self.normalize, copy=False)
 
         if coef_init is None:
             if not self.warm_start or self.coef_ is None:
@@ -1073,7 +1121,6 @@ class MultiTaskElasticNet(Lasso):
         l1_reg = self.alpha * self.rho * n_samples
         l2_reg = self.alpha * (1.0 - self.rho) * n_samples
 
-        X = np.asfortranarray(X)  # make data contiguous in memory
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
         self.coef_, self.dual_gap_, self.eps_ = \
@@ -1124,10 +1171,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
-    tol: float, optional
+    tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than 'tol', the optimization code checks the
         dual gap for optimality and continues until it is smaller
@@ -1139,10 +1186,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_tasks, n_features]
+    `coef_` : array, shape = (n_tasks, n_features)
         parameter vector (W in the cost function formula)
 
-    `intercept_` : array, shape = [n_tasks]
+    `intercept_` : array, shape = (n_tasks,)
         independent term in decision function.
 
     Examples

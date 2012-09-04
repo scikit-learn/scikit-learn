@@ -189,10 +189,10 @@ class Ridge(_BaseRidge, RegressorMixin):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
-        LogisticRegression or LinearSVC.
+        Small positive values of alpha improve the conditioning of the problem
+        and reduce the variance of the estimates.  Alpha corresponds to
+        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        LinearSVC.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -205,12 +205,11 @@ class Ridge(_BaseRidge, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    tol: float
+    tol : float
         Precision of the solution.
 
     Attributes
     ----------
-
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
@@ -243,15 +242,15 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
-        LogisticRegression or LinearSVC.
+        Small positive values of alpha improve the conditioning of the problem
+        and reduce the variance of the estimates.  Alpha corresponds to
+        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        LinearSVC.
 
     fit_intercept : boolean
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        Whether to calculate the intercept for this model. If set to false, no
+        intercept will be used in calculations (e.g. data is expected to be
+        already centered).
 
     normalize : boolean, optional
         If True, the regressors X are normalized
@@ -259,7 +258,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    tol: float
+    tol : float
         Precision of the solution.
 
     class_weight : dict, optional
@@ -270,7 +269,6 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
 
     Attributes
     ----------
-
     `coef_` : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
@@ -320,7 +318,7 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
             class_weight = self.class_weight
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidge.fit(self, X, Y, solver=solver,
                        sample_weight=sample_weight_classes)
@@ -529,10 +527,11 @@ class _RidgeGCV(LinearModel):
             best = cv_values.mean(axis=0).argmin()
         else:
             func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), cv_values[:, i]) for i in range(len(self.alphas))]
+            out = [func(y.ravel(), cv_values[:, i])
+                    for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
-        self.best_alpha = self.alphas[best]
+        self.alpha_ = self.alphas[best]
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
@@ -546,6 +545,14 @@ class _RidgeGCV(LinearModel):
             self.cv_values_ = cv_values.reshape(cv_values_shape)
 
         return self
+
+    @property
+    def best_alpha(self):
+        warnings.warn("Use alpha_. Using best_alpha is deprecated"
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=2)
+        return self.alpha_
 
 
 class _BaseRidgeCV(LinearModel):
@@ -582,12 +589,15 @@ class _BaseRidgeCV(LinearModel):
         self : Returns self.
         """
         if self.cv is None:
-            estimator = _RidgeGCV(self.alphas, self.fit_intercept,
-                                  self.score_func, self.loss_func,
+            estimator = _RidgeGCV(self.alphas,
+                                  fit_intercept=self.fit_intercept,
+                                  normalize=self.normalize,
+                                  score_func=self.score_func,
+                                  loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
-            self.best_alpha = estimator.best_alpha
+            self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
         else:
@@ -603,7 +613,7 @@ class _BaseRidgeCV(LinearModel):
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
             estimator = gs.best_estimator_
-            self.best_alpha = gs.best_estimator_.alpha
+            self.alpha_ = gs.best_estimator_.alpha
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -667,23 +677,24 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
+    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+        shape = [n_samples, n_responses, n_alphas], optional
+        Cross-validation values for each alpha (if `store_cv_values=True` and \
+        `cv=None`). After `fit()` has been called, this attribute will contain \
+        the mean squared errors (by default) or the values of the \
+        `{loss,score}_func` function (if provided in the constructor).
+
     `coef_` : array, shape = [n_features] or [n_responses, n_features]
         Weight vector(s).
 
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-                         shape = [n_samples, n_responses, n_alphas],
-                  optional
-        Cross-validation values for each alpha (if
-        `store_cv_values=True` and `cv=None`). After `fit()` has been
-        called, this attribute will contain the mean squared errors (by
-        default) or the values of the `{loss,score}_func` function (if
-        provided in the constructor).
+    `alpha_` : float
+        Estimated regularization parameter.
 
     See also
     --------
     Ridge: Ridge regression
     RidgeClassifier: Ridge classifier
-    RidgeCV: Ridge regression with built-in cross validation
+    RidgeClassifierCV: Ridge classifier with built-in cross validation
     """
     pass
 
@@ -730,6 +741,21 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
         Weights associated with classes in the form
         {class_label : weight}. If not given, all classes are
         supposed to have weight one.
+
+    Attributes
+    ----------
+    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    shape = [n_samples, n_responses, n_alphas], optional
+        Cross-validation values for each alpha (if `store_cv_values=True` and
+    `cv=None`). After `fit()` has been called, this attribute will contain \
+    the mean squared errors (by default) or the values of the \
+    `{loss,score}_func` function (if provided in the constructor).
+
+    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+        Weight vector(s).
+
+    `alpha_` : float
+        Estimated regularization parameter
 
     See also
     --------
@@ -778,8 +804,9 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
         """
         if class_weight != None:
             warnings.warn("'class_weight' is now an initialization parameter."
-                    "Using it in the 'fit' method is deprecated.",
-                    DeprecationWarning)
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
             self.class_weight_ = class_weight
         else:
             self.class_weight_ = self.class_weight
@@ -788,7 +815,7 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
             self.class_weight_ = {}
 
         sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer()
+        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self.label_binarizer.fit_transform(y)
         _BaseRidgeCV.fit(self, X, Y,
                          sample_weight=sample_weight * sample_weight2)

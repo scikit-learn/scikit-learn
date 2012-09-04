@@ -111,6 +111,9 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asanyarray(mask)
+    if np.issubdtype(mask.dtype, np.int):
+        return mask
+
     if hasattr(X, "toarray"):
         ind = np.arange(mask.shape[0])
         mask = ind[mask]

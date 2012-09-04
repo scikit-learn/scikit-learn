@@ -6,6 +6,7 @@
 import os
 from os.path import join, exists
 import re
+import numpy as np
 import scipy as sp
 from scipy import io
 from shutil import copyfileobj
@@ -141,9 +142,9 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
                  for descr in matlab_dict['mldata_descr_ordering'][0]]
 
     # if target or data names are indices, transform then into names
-    if isinstance(target_name, int):
+    if isinstance(target_name, (int, np.integer)):
         target_name = col_names[target_name]
-    if isinstance(data_name, int):
+    if isinstance(data_name, (int, np.integer)):
         data_name = col_names[data_name]
 
     # rules for making sense of the mldata.org data format

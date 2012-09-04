@@ -9,7 +9,7 @@ import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false
 
 from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
-                           check_arrays, safe_asarray)
+                           atleast2d_or_csc, check_arrays, safe_asarray)
 
 
 def test_as_float_array():
@@ -59,9 +59,18 @@ def test_np_matrix():
     assert_false(isinstance(atleast2d_or_csr(np.matrix(X)), np.matrix))
     assert_false(isinstance(atleast2d_or_csr(sp.csc_matrix(X)), np.matrix))
 
+    assert_false(isinstance(atleast2d_or_csc(X), np.matrix))
+    assert_false(isinstance(atleast2d_or_csc(np.matrix(X)), np.matrix))
+    assert_false(isinstance(atleast2d_or_csc(sp.csr_matrix(X)), np.matrix))
+
     assert_false(isinstance(safe_asarray(X), np.matrix))
     assert_false(isinstance(safe_asarray(np.matrix(X)), np.matrix))
     assert_false(isinstance(safe_asarray(sp.lil_matrix(X)), np.matrix))
+
+    assert_true(atleast2d_or_csr(X, copy=False) is X)
+    assert_false(atleast2d_or_csr(X, copy=True) is X)
+    assert_true(atleast2d_or_csc(X, copy=False) is X)
+    assert_false(atleast2d_or_csc(X, copy=True) is X)
 
 
 def test_memmap():

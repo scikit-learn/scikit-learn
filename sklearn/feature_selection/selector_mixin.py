@@ -55,6 +55,9 @@ class SelectorMixin(TransformerMixin):
             raise ValueError("Missing `feature_importances_` or `coef_`"
                              " attribute, did you forget to set the "
                              "estimator's parameter to compute it?")
+        if len(importances) != X.shape[1]:
+            raise ValueError("X has different number of features than"
+                    " during model fitting.")
 
         # Retrieve threshold
         if threshold is None:

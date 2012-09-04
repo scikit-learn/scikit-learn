@@ -182,11 +182,11 @@ This model has many parameters, however the default values are quite
 reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
-  >>> vectorizer = CountVectorizer()
-  >>> vectorizer
+  >>> vectorizer = CountVectorizer(min_df=1)
+  >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
-          lowercase=True, max_df=1.0, max_features=None, max_n=None,
+          lowercase=True, max_df=1.0, max_features=None, max_n=None, min_df=1,
           min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
           strip_accents=None, token_pattern=u'\\b\\w\\w+\\b', tokenizer=None,
           vocabulary=None)
@@ -246,7 +246,7 @@ preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
   >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
-  ...                                     token_pattern=ur'\b\w+\b')
+  ...                                     token_pattern=ur'\b\w+\b', min_df=1)
   >>> analyze = bigram_vectorizer.build_analyzer()
   >>> analyze('Bi-grams are cool!')
   [u'bi', u'grams', u'are', u'cool', u'bi grams', u'grams are', u'are cool']
@@ -341,7 +341,7 @@ class called :class:`TfidfVectorizer` that combines all the option of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
-  >>> vectorizer = TfidfVectorizer()
+  >>> vectorizer = TfidfVectorizer(min_df=1)
   >>> vectorizer.fit_transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
   <4x9 sparse matrix of type '<type 'numpy.float64'>'
@@ -410,7 +410,7 @@ A character 2-gram representation, however, would find the documents
 matching in 4 out of 8 features, which may help the preferred classifier
 decide better::
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
   >>> ngram_vectorizer.get_feature_names()
   [u' w', u'ds', u'or', u'pr', u'rd', u's ', u'wo', u'wp']
@@ -423,7 +423,7 @@ only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
 span across words::
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x4 sparse matrix of type '<type 'numpy.int64'>'
@@ -431,7 +431,7 @@ span across words::
   >>> ngram_vectorizer.get_feature_names()
   [u' fox ', u' jump', u'jumpy', u'umpy ']
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x5 sparse matrix of type '<type 'numpy.int64'>'

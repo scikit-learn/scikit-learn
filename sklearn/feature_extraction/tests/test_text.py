@@ -317,7 +317,7 @@ def test_vectorizer():
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = CountVectorizer(max_df=0.5)
+    v1 = CountVectorizer(max_df=0.5, min_df=1)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
@@ -373,7 +373,7 @@ def test_vectorizer():
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = TfidfVectorizer(norm='l1')
+    tv = TfidfVectorizer(norm='l1', min_df=1)
     assert_false(tv.fixed_vocabulary)
 
     tv.max_df = v1.max_df
@@ -390,7 +390,7 @@ def test_vectorizer():
 
 
 def test_feature_names():
-    cv = CountVectorizer(max_df=0.5)
+    cv = CountVectorizer(max_df=0.5, min_df=1)
     X = cv.fit_transform(ALL_FOOD_DOCS)
 
     n_samples, n_features = X.shape
@@ -423,7 +423,7 @@ def test_vectorizer_max_features():
 
 def test_vectorizer_max_df():
     test_data = [u'abc', u'dea']  # the letter a occurs in both strings
-    vect = CountVectorizer(analyzer='char', max_df=1.0)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
     vect.fit(test_data)
     assert_true(u'a' in vect.vocabulary_.keys())
     assert_equals(len(vect.vocabulary_.keys()), 5)
@@ -433,11 +433,35 @@ def test_vectorizer_max_df():
     assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equals(len(vect.vocabulary_.keys()), 4)  # the others remain
 
+    # absolute count: if in more than one
+    vect.max_df = 1
+    vect.fit(test_data)
+    assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
+    assert_equals(len(vect.vocabulary_.keys()), 4)  # the others remain
+
+
+def test_vectorizer_min_df():
+    test_data = [u'abc', u'dea', u'eat']  # the letter a occurs in both strings
+    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
+    vect.fit(test_data)
+    assert_true(u'a' in vect.vocabulary_.keys())
+    assert_equals(len(vect.vocabulary_.keys()), 6)
+
+    vect.min_df = 2
+    vect.fit(test_data)
+    assert_true(u'c' not in vect.vocabulary_.keys())  # 'c' is ignored
+    assert_equals(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+
+    vect.min_df = .5
+    vect.fit(test_data)
+    assert_true(u'c' not in vect.vocabulary_.keys())  # 'c' is ignored
+    assert_equals(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+
 
 def test_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = [u'aaabc', u'abbde']
-    vect = CountVectorizer(analyzer='char', max_df=1.0)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
     assert_array_equal([[3, 1, 1, 0, 0],
@@ -446,7 +470,7 @@ def test_binary_occurrences():
     # using boolean features, we can fetch the binary occurrence info
     # instead.
     vect = CountVectorizer(analyzer='char', max_df=1.0,
-                           binary=True)
+                           binary=True, min_df=1)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal([[1, 1, 1, 0, 0],
                         [1, 1, 0, 1, 1]], X)
@@ -461,7 +485,7 @@ def test_binary_occurrences():
 def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
+    for vectorizer in (TfidfVectorizer(min_df=1), CountVectorizer(min_df=1)):
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
@@ -490,7 +514,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', CountVectorizer()),
+    pipeline = Pipeline([('vect', CountVectorizer(min_df=1)),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -528,7 +552,7 @@ def test_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', TfidfVectorizer()),
+    pipeline = Pipeline([('vect', TfidfVectorizer(min_df=1)),
                          ('svc', LinearSVC())])
 
     parameters = {

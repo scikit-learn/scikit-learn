@@ -11,7 +11,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import check_random_state
+from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -291,6 +291,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
 
+    similarities, = check_arrays(similarities, sparse_format='dense')
     random_state = check_random_state(random_state)
 
     if hasattr(init, '__array__'):

@@ -411,8 +411,9 @@ class _BaseHMM(BaseEstimator):
 
         if kwargs:
             warnings.warn("Setting parameters in the 'fit' method is"
-                    "deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "deprecated and will be removed in 0.14. Set it on "
+                          "initialization instead.", DeprecationWarning,
+                          stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:
