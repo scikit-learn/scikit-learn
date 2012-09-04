@@ -65,7 +65,7 @@ word of interest.
 For example, suppose that we have a first algorithm that extracts Part of
 Speech (PoS) tags that we want to use as complementary tags for training
 a sequence classifier (e.g. a chunker). The following dict could be
-such a window of feature extracted around the word 'sat' in the sentence
+such a window of features extracted around the word 'sat' in the sentence
 'The cat sat on the mat.'::
 
   >>> pos_window = [
@@ -147,10 +147,6 @@ of text documents into numerical feature vectors. This specific stragegy
 or "Bag of n-grams" representation. Documents are described by word
 occurrences while completely ignoring the relative position information
 of the words in the document.
-
-When combined with :ref:`tfidf`, the bag of words encoding is also known
-as the `Vector Space Model
-<https://en.wikipedia.org/wiki/Vector_space_model>`_.
 
 
 Sparsity
@@ -273,8 +269,8 @@ last document::
 
 .. _tfidf:
 
-TF-IDF normalization
---------------------
+Tf–idf term weighting
+---------------------
 
 In a large text corpus, some words will be very present (e.g. "the", "a",
 "is" in English) hence carrying very little meaningul information about
@@ -352,7 +348,7 @@ be cases where the binary occurrence markers might offer better
 features. This can be achieved by using the ``binary`` parameter
 of :class:`CountVectorizer`. In particular, some estimators such as
 :ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
-variables. Also very short text are likely to have noisy tf–idf values
+variables. Also, very short text are likely to have noisy tf–idf values
 while the binary occurrence info is more stable.
 
 As usual the only way how to best adjust the feature extraction parameters
@@ -461,8 +457,8 @@ problems which are currently outside of the scope of scikit-learn.
 Customizing the vectorizer classes
 -----------------------------------
 
-It is possible to customize the behavior by passing some callable as
-parameters of the vectorizer::
+It is possible to customize the behavior by passing a callable
+to the vectorizer constructor::
 
   >>> def my_tokenizer(s):
   ...     return s.split()
@@ -490,8 +486,7 @@ parameters it is possible to derive from the class and override the
 factory method instead.
 
 Customizing the vectorizer can be very useful to handle Asian languages
-that do not use an explicit word separator such as the whitespace for
-instance.
+that do not use an explicit word separator such as whitespace.
 
 
 Image feature extraction
