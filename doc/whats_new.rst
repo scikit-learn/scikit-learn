@@ -130,6 +130,17 @@ API changes summary
      :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
      :meth:`ensemble.GradientBoostingClassifier.staged_predict`.
 
+   - :class:`svm.sparse.SVC` and other sparse SVM classes are now deprecated.
+     The all classes in the :ref:`svm` module now automatically select the
+     sparse or dense representation base on the input.
+
+   - All clustering algorithm now interpret the array ``X`` given to ``fit`` as
+     input data, in particular :class:`cluster.SpectralClustering` and
+     :class:`cluster.AffinityPropagation` which previously expected affinity matrices.
+
+   - For clustering algorithms that take the desired number of clusters as a parameter,
+     this parameter is now called ``n_clusters``.
+
 
 .. _changes_0_11:
 
