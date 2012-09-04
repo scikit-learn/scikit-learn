@@ -27,14 +27,14 @@ increase as we add more samples. The penalization term, however, will not
 increase.
 
 When using, for example, :ref:`cross validation <cross_validation>`, to
-set the amount of regularization with `C`, there will be a different a
+set the amount of regularization with `C`, there will be a
 different amount of samples between the main problem and the smaller problems
 withing the folds of the cross validation.
 
 Since our loss function is dependant on the amount of samples, the latter
 will influence the selected value of `C`.
 The question that arises is `How do we optimally adjust C to
-account for the different training samples?`
+account for the different amount of training samples?`
 
 The figures below are used to illustrate the effect of scaling our
 `C` to compensate for the change in the number of samples, in the
@@ -44,7 +44,7 @@ L1-penalty case
 -----------------
 In the `L1` case, theory says that prediction consistency
 (i.e. that under given hypothesis, the estimator
-learned predicts as well as an model knowing the true distribution)
+learned predicts as well as a model knowing the true distribution)
 is not possible because of the bias of the `L1`. It does say, however,
 that model consistency, in terms of finding the right set of non-zero
 parameters as well as their signs, can be achieved by scaling
@@ -52,8 +52,9 @@ parameters as well as their signs, can be achieved by scaling
 
 L2-penalty case
 -----------------
-Theory says that for this case, the penalty parameter should be kept constant
-as the number of samples grow, in order to keep prediction consistency.
+The theory says that in order to achieve prediction consistency, the
+penalty parameter should be kept constant
+as the number of samples grow.
 
 Simulations
 ------------
@@ -99,11 +100,11 @@ rnd = check_random_state(1)
 n_samples = 100
 n_features = 300
 
-#L1 data (only 5 informative features)
+# L1 data (only 5 informative features)
 X_1, y_1 = datasets.make_classification(n_samples=n_samples, n_features=n_features,
         n_informative=5, random_state=1)
 
-#L2 data: non sparse, but less features
+# L2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
 X_2 = rnd.randn(n_samples, n_features/5) + y_2[:, np.newaxis]
 X_2 += 5 * rnd.randn(n_samples, n_features/5)
@@ -142,7 +143,8 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
             grid_cs =  cs * float(scaler) # scale the C's
             pl.semilogx(grid_cs, scores, label="fraction %.2f" %
                         train_size)
-            pl.title('scaling=%s, penalty=%s, loss=%s' % (name, clf.penalty, clf.loss))
+            pl.title('scaling=%s, penalty=%s, loss=%s' %
+                     (name, clf.penalty, clf.loss))
 
     pl.legend(loc="best")
 pl.show()
