@@ -101,13 +101,13 @@ n_samples = 100
 n_features = 300
 
 # L1 data (only 5 informative features)
-X_1, y_1 = datasets.make_classification(n_samples=n_samples, n_features=n_features,
-        n_informative=5, random_state=1)
+X_1, y_1 = datasets.make_classification(n_samples=n_samples,
+           n_features=n_features, n_informative=5, random_state=1)
 
 # L2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
-X_2 = rnd.randn(n_samples, n_features/5) + y_2[:, np.newaxis]
-X_2 += 5 * rnd.randn(n_samples, n_features/5)
+X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
+X_2 += 5 * rnd.randn(n_samples, n_features / 5)
 
 clf_sets = [(LinearSVC(penalty='L1', loss='L2', dual=False,
                        tol=1e-3),
@@ -140,7 +140,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
             pl.subplot(2, 1, subplotnum + 1)
             pl.xlabel('C')
             pl.ylabel('CV Score')
-            grid_cs =  cs * float(scaler) # scale the C's
+            grid_cs = cs * float(scaler)  # scale the C's
             pl.semilogx(grid_cs, scores, label="fraction %.2f" %
                         train_size)
             pl.title('scaling=%s, penalty=%s, loss=%s' %
@@ -148,4 +148,3 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
 
     pl.legend(loc="best")
 pl.show()
-
