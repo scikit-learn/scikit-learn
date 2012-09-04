@@ -134,7 +134,7 @@ API changes summary
      The all classes in the :ref:`svm` module now automatically select the
      sparse or dense representation base on the input.
 
-   - All clustering algorithm now interpret the array ``X`` given to ``fit`` as
+   - All clustering algorithms now interpret the array ``X`` given to ``fit`` as
      input data, in particular :class:`cluster.SpectralClustering` and
      :class:`cluster.AffinityPropagation` which previously expected affinity matrices.
 
