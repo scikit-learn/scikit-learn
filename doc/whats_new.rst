@@ -74,7 +74,7 @@ Changelog
    - Fixes in :class:`decomposition.ProbabilisticPCA` score function by Wei Li.
 
    - Fixed feature importance computation in
-     :ref:`ensemble.gradient_boosting`.
+     :ref:`gradient_boosting`.
 
 API changes summary
 -------------------
