@@ -12,4 +12,16 @@ The :mod:`sklearn.svm` module includes Support Vector Machine algorithms.
 
 from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC
 from .bounds import l1_min_c
-from . import sparse, libsvm, liblinear
+from . import sparse, libsvm, liblinear, libsvm_sparse
+
+__all__ = ['LinearSVC',
+           'NuSVC',
+           'NuSVR',
+           'OneClassSVM',
+           'SVC',
+           'SVR',
+           'l1_min_c',
+           'liblinear',
+           'libsvm',
+           'libsvm_sparse',
+           'sparse']

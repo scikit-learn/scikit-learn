@@ -23,6 +23,20 @@ from .utils import check_arrays, check_random_state
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
+__all__ = ['Bootstrap',
+           'KFold',
+           'LeaveOneLabelOut',
+           'LeaveOneOut',
+           'LeavePLabelOut',
+           'LeavePOut',
+           'ShuffleSplit',
+           'StratifiedKFold',
+           'StratifiedShuffleSplit',
+           'check_cv',
+           'cross_val_score',
+           'permutation_test_score',
+           'train_test_split']
+
 
 class LeaveOneOut(object):
     """Leave-One-Out cross validation iterator.

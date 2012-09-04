@@ -13,3 +13,5 @@ based predictions.
 from .gaussian_process import GaussianProcess
 from . import correlation_models
 from . import regression_models
+
+__all__ = ['GaussianProcess', 'correlation_models', 'regression_models']

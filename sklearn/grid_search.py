@@ -18,6 +18,8 @@ from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import check_arrays, safe_mask
 
+__all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
+
 
 class IterGrid(object):
     """Generators on the combination of the various parameter lists given
