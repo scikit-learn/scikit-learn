@@ -22,9 +22,9 @@ builtins.__SKLEARN_SETUP__ = True
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
-MAINTAINER = 'Fabian Pedregosa'
-MAINTAINER_EMAIL = 'fabian.pedregosa@inria.fr'
-URL = 'http://scikit-learn.sourceforge.net'
+MAINTAINER = 'Andreas Mueller'
+MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
+URL = 'http://scikit-learn.org'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 
