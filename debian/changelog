@@ -2,6 +2,7 @@ scikit-learn (0.12.0-1) experimental; urgency=low
 
   * Fresh upstrem release:
     - all debian/up_ patches removed, deb_ patched updated
+  * Boosted policy to 3.9.3 (should be ok without changes)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Sep 2012 15:15:18 -0400
 
