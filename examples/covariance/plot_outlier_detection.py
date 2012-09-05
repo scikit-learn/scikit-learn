@@ -52,7 +52,6 @@ n_outliers = int(outliers_fraction * n_samples)
 ground_truth = np.ones(n_samples, dtype=int)
 ground_truth[-n_outliers:] = 0
 
-
 # Fit the problem with varying cluster separation
 for i, offset in enumerate(clusters_separation):
     np.random.seed(42)

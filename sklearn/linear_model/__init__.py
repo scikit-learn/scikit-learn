@@ -12,10 +12,11 @@ implements Stochastic Gradient Descent related algorithms.
 from .base import LinearRegression
 
 from .bayes import BayesianRidge, ARDRegression
-from .least_angle import Lars, LassoLars, lars_path, LARS, LassoLARS, \
-                LarsCV, LassoLarsCV, LassoLarsIC
+from .least_angle import Lars, LassoLars, lars_path, LarsCV, LassoLarsCV, \
+                         LassoLarsIC
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
-                                lasso_path, enet_path
+                                lasso_path, enet_path, MultiTaskLasso, \
+                                MultiTaskElasticNet
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
@@ -27,3 +28,44 @@ from .randomized_l1 import RandomizedLasso, RandomizedLogisticRegression, \
                            lasso_stability_path
 
 from . import sparse
+
+__all__ = ['ARDRegression',
+           'BayesianRidge',
+           'ElasticNet',
+           'ElasticNetCV',
+           'Hinge',
+           'Huber',
+           'LARS',
+           'Lars',
+           'LarsCV',
+           'Lasso',
+           'LassoCV',
+           'LassoLARS',
+           'LassoLars',
+           'LassoLarsCV',
+           'LassoLarsIC',
+           'LinearRegression',
+           'Log',
+           'LogisticRegression',
+           'ModifiedHuber',
+           'MultiTaskElasticNet',
+           'MultiTaskLasso',
+           'OrthogonalMatchingPursuit',
+           'Perceptron',
+           'RandomizedLasso',
+           'RandomizedLogisticRegression',
+           'Ridge',
+           'RidgeCV',
+           'RidgeClassifier',
+           'RidgeClassifierCV',
+           'SGDClassifier',
+           'SGDRegressor',
+           'SquaredLoss',
+           'enet_path',
+           'lars_path',
+           'lasso_path',
+           'lasso_stability_path',
+           'orthogonal_mp',
+           'orthogonal_mp_gram',
+           'ridge_regression',
+           'sparse']

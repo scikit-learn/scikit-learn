@@ -75,29 +75,24 @@ repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub:
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
- 4. Work on this copy, on your computer, using Git to do the version
-    control::
-
-        $ git add modified_files
-        $ git commit
-        $ git push origin master
-
-    and so on.
-
-If your changes are not just trivial fixes, it is better to directly
-work in a branch with the name of the feature you are working on. In
-this case, replace step 4 with step 5:
-
-  5. Create a branch to host your changes and publish it on your public
-     repo::
+ 4. Create a branch to hold your changes::
 
         $ git checkout -b my-feature
+
+    and start making changes. Never work in the ``master`` branch!
+
+ 5. Work on this copy, on your computer, using Git to do the version
+    control. When you're done editing, do::
+
         $ git add modified_files
         $ git commit
-        $ git push origin my-feature
 
-When you are ready, and you have pushed your changes to your GitHub repo, go
-the web page of the repo, and click on 'Pull request' to send us a pull
+    to record your changes in Git, then push them to GitHub with::
+
+        $ git push -u origin my-feature
+
+Finally, go to the web page of the your fork of the scikit-learn repo,
+and click 'Pull request' to send your changes to the maintainers for review.
 request. This will send an email to the committers, but might also send an
 email to the mailing list in order to get more visibility.
 
@@ -109,8 +104,7 @@ email to the mailing list in order to get more visibility.
   to use instead of ``origin``. If we choose the name ``upstream`` for it, the
   command will be::
 
-        $ git remote add upstream git@github.com:scikit-learn/scikit-learn.git
-
+        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 (If any of the above seems like magic to you, then look up the
 `Git documentation <http://git-scm.com/documentation>`_ on the web.)
@@ -156,6 +150,8 @@ You can also check for common programming errors with the following tools:
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
 
+      see also :ref:`testing_coverage`
+
     * No pyflakes warnings, check with::
 
         $ pip install pyflakes
@@ -185,13 +181,13 @@ and Cython optimizations.
   on all new contributions will get the overall code base quality in the
   right direction.
 
-EasyFix Issues
---------------
+Easy Issues
+-----------
 
 A great way to start contributing to scikit-learn is to pick an item from the
-list of `EasyFix issues
-<https://github.com/scikit-learn/scikit-learn/issues?labels=EasyFix>`_
-in the issue tracker.  Resolving these issues allow you to start contributing
+list of `Easy issues
+<https://github.com/scikit-learn/scikit-learn/issues?labels=Easy>`_
+in the issue tracker. Resolving these issues allow you to start contributing
 to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
 their time to concentrate on other issues.
@@ -230,11 +226,74 @@ it.
    slightly differently. To get the best results, you should use version
    1.0.
 
+.. _testing_coverage:
+
+Testing and improving test coverage
+------------------------------------
+
+High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
+is a corner-stone of the sciki-learn development process. For this
+purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
+package. The tests are functions appropriately names, located in `tests`
+subdirectories, that check the validity of the algorithms and the
+different options of the code.
+
+The full scikit-learn tests can be run using 'make' in the root folder.
+Alternatively, running 'nosetests' in a folder will run all the tests of
+the corresponding subpackages.
+
+We expect code coverage of new features to be at least around 90%.
+
+.. note:: **Workflow to improve test coverage**
+
+   To test code coverage, you need to install the `coverage
+   <http://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+
+   1. Run 'make test-coverage'. The output lists for each file the line
+      numbers that are not tested.
+
+   2. Find a low hanging fruit, looking at which lines are not tested,
+      write or adapt a test specifically for these lines.
+
+   3. Loop.
+
+
+
 Developers web site
 -------------------
 
 More information can be found on the `developer's wiki
 <https://github.com/scikit-learn/scikit-learn/wiki>`_.
+
+
+Issue Tracker Tags
+------------------
+All issues and pull requests on the
+`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+should have (at least) one of the following tags:
+
+:Bug / Crash:
+    Something is happening that clearly shouldn't happen.
+    Wrong results as well as unexpected errors from estimators go here.
+
+:Cleanup / Enhancement:
+    Improving performance, usability, consistency.
+
+:Documentation:
+    Missing, incorrect or sub-standard documentations and examples.
+
+:New Feature:
+    Feature requests and pull requests implementing a new feature.
+
+There are two other tags to help new contributors:
+
+:Easy:
+    This issue can be tackled by anyone, no experience needed.
+    Ask for help if the formulation is unclear.
+
+:Moderate:
+    Might need some knowledge of machine learning or the package,
+    but is still approachable for someone new to the project.
 
 
 Other ways to contribute

@@ -3,6 +3,7 @@ cimport numpy as np
 cimport cython
 ctypedef np.float64_t DOUBLE
 ctypedef np.int_t INT
+ctypedef np.int8_t INT8
 
 
 @cython.boundscheck(False)
@@ -70,10 +71,65 @@ def _hc_get_descendent(int node, children, int n_leaves):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _get_parent(int node, np.ndarray[INT, ndim=1] parents):
-    cdef int parent
-    parent = parents[node]
-    while parent != node:
-        node = parent
+def hc_get_heads(np.ndarray[INT, ndim=1] parents, copy=True):
+    """ Return the heads of the forest, as defined by parents
+    
+    Parameters
+    ===========
+    parents: array of integers
+        The parent structure defining the forest (ensemble of trees)
+    copy: boolean
+        If copy is False, the input 'parents' array is modified inplace
+
+    Returns
+    =======
+    heads: array of integers of same shape as parents
+        The indices in the 'parents' of the tree heads
+
+    """
+    cdef unsigned int parent, node0, node, size
+    if copy:
+        parents = np.copy(parents)
+    size = parents.size
+    for node0 in range(size):
+        # Start from the top of the tree and go down
+        node0 = size - node0 - 1
+        node = node0
         parent = parents[node]
-    return node
+        while parent != node:
+            parents[node0] = parent
+            node = parent
+            parent = parents[node]
+    return parents
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _get_parents(nodes, heads, np.ndarray[INT, ndim=1] parents,
+                 np.ndarray[INT8, ndim=1] not_visited):
+    """ Return the heads of the given nodes, as defined by parents
+    
+    Modifies in-place 'heads' and 'not_visited'
+
+    Parameters
+    ===========
+    nodes: list of integers
+        The nodes to start from
+    heads: list of integers
+        A list to hold the results (modified inplace)
+    parents: array of integers
+        The parent structure defining the tree
+    not_visited:
+        The tree nodes to consider (modified inplace)
+
+    """
+    cdef unsigned int parent, node
+    for node in nodes:
+        parent = parents[node]
+        while parent != node:
+            node = parent
+            parent = parents[node]
+        if not_visited[node]:
+            not_visited[node] = 0
+            heads.append(node)
+    return heads

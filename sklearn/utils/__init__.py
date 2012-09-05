@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilites.
 """
 
 import numpy as np
+from scipy.sparse import issparse
 import warnings
 
 from .validation import *
@@ -110,6 +111,9 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asanyarray(mask)
+    if np.issubdtype(mask.dtype, np.int):
+        return mask
+
     if hasattr(X, "toarray"):
         ind = np.arange(mask.shape[0])
         mask = ind[mask]
@@ -159,8 +163,8 @@ def resample(*arrays, **options):
              [ 2.,  1.],
              [ 1.,  0.]])
 
-      >>> X_sparse                            # doctest: +NORMALIZE_WHITESPACE
-      <3x2 sparse matrix of type '<type 'numpy.float64'>'
+      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 4 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
@@ -260,8 +264,8 @@ def shuffle(*arrays, **options):
              [ 2.,  1.],
              [ 1.,  0.]])
 
-      >>> X_sparse                            # doctest: +NORMALIZE_WHITESPACE
-      <3x2 sparse matrix of type '<type 'numpy.float64'>'
+      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 3 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
@@ -281,6 +285,30 @@ def shuffle(*arrays, **options):
     """
     options['replace'] = False
     return resample(*arrays, **options)
+
+
+def safe_sqr(X, copy=True):
+    """Element wise squaring of array-likes and sparse matrices.
+
+    Parameters
+    ----------
+    X : array like, matrix, sparse matrix
+
+    Returns
+    -------
+    X ** 2 : element wise square
+    """
+    X = safe_asarray(X)
+    if issparse(X):
+        if copy:
+            X = X.copy()
+        X.data **= 2
+    else:
+        if copy:
+            X = X ** 2
+        else:
+            X **= 2
+    return X
 
 
 def gen_even_slices(n, n_packs):

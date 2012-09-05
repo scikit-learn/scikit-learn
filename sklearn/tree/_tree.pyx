@@ -7,15 +7,25 @@
 #
 # License: BSD Style.
 
+
+# ==============================================================================
+# Imports
+# ==============================================================================
+
 cimport cython
 
 import numpy as np
 cimport numpy as np
+np.import_array()
 
-# Define a datatype for the data array
-DTYPE = np.float32
-ctypedef np.float32_t DTYPE_t
-ctypedef np.int8_t BOOL_t
+cdef extern from "stdlib.h":
+    void* malloc(size_t size)
+    void* calloc(size_t nmemb, size_t size)
+    void* realloc(void* ptr, size_t size)
+    void free(void* ptr)
+
+cdef extern from "string.h":
+    void* memcpy(void* dest, void* src, size_t n)
 
 cdef extern from "math.h":
     cdef extern double log(double x)
@@ -25,32 +35,890 @@ cdef extern from "float.h":
     cdef extern double DBL_MAX
 
 
-################################################################################
-# Classification entropy measures
-#
-#    From Hastie et al. Elements of Statistical Learning, 2009.
-#
-#    If a target is a classification outcome taking on values 0,1,...,K-1
-#    In node m, representing a region Rm with Nm observations, let
-#
-#       pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
-#
-#    be the proportion of class k observations in node m
+# ==============================================================================
+# Types and constants
+# ==============================================================================
+
+# Dtype
+DTYPE = np.float32
+DOUBLE = np.float64
+# ctypedef np.float32_t DTYPE_t
+# ctypedef np.float64_t DOUBLE_t
+# ctypedef np.int8_t BOOL_t
+
+# Constants
+cdef double INFINITY = np.inf
+
+TREE_LEAF = -1
+TREE_UNDEFINED = -2
+cdef int _TREE_LEAF = TREE_LEAF
+cdef int _TREE_UNDEFINED = TREE_UNDEFINED
+
+TREE_SPLIT_BEST = 1
+TREE_SPLIT_RANDOM = 2
+cdef int _TREE_SPLIT_BEST = TREE_SPLIT_BEST
+cdef int _TREE_SPLIT_RANDOM = TREE_SPLIT_RANDOM
+
+
+# ==============================================================================
+# Tree
+# ==============================================================================
+
+cdef class Tree:
+    """Struct-of-arrays representation of a binary decision tree.
+
+    The binary tree is represented as a number of parallel arrays.
+    The i-th element of each array holds information about the
+    node `i`. You can find a detailed description of all arrays
+    below. NOTE: Some of the arrays only apply to either leaves or
+    split nodes, resp. In this case the values of nodes of the other
+    type are arbitrary!
+
+    Parameters
+    ----------
+    n_features : int
+        The number of features
+
+    n_classes : array-like
+        n_classes[k] is the number of classes for output k.
+
+    n_outputs : int
+        The number of outputs.
+
+    criterion : Criterion
+    max_depth : double
+    min_samples_split : int
+    min_samples_leaf : int
+    min_density : double
+    max_features : int
+    find_split_algorithm : int
+
+    Attributes
+    ----------
+    node_count : int
+        The number of nodes (internal nodes + leaves) in the tree.
+
+    capacity : int
+        The current capacity (i.e., size) of the arrays.
+
+    children_left : int*
+        children_left[i] holds the node id of the child if node i.
+        For leaves, children_left[i] == TREE_LEAF.
+
+    children_right : int*
+        children_left[i] holds the node id of the child if node i.
+        For leaves, children_left[i] == TREE_LEAF.
+
+    feature : int*
+        feature[i] holds the feature to split on, for the internal node i.
+
+    threshold : double*
+        threshold[i] holds the threshold for the internal node i.
+
+    value : double*
+        Contains the constant prediction value of each node.
+
+    best_error : double*
+        best_error[i] holds the error of the (best) split at node i.
+        For leaves init_error[i] == best_error[i].
+
+    init_error : double*
+        init_error[i] holds the initial error at node i (before splitting).
+        For leaves init_error[i] == best_error[i].
+
+    n_samples : int*
+        n_samples[i] holds the number of training samples reaching node i.
+    """
+
+    # # Input/Output layout
+    # cdef public int n_features
+    # cdef int* n_classes
+    # cdef public int n_outputs
+
+    # cdef public int max_n_classes
+    # cdef public int value_stride
+
+    # # Parameters
+    # cdef public Criterion criterion
+    # cdef public double max_depth
+    # cdef public int min_samples_split
+    # cdef public int min_samples_leaf
+    # cdef public double min_density
+    # cdef public int max_features
+    # cdef public int find_split_algorithm
+    # cdef public object random_state
+
+    # # Inner structures
+    # cdef public int node_count
+    # cdef public int capacity
+    # cdef int* children_left
+    # cdef int* children_right
+    # cdef int* feature
+    # cdef double* threshold
+    # cdef double* value
+    # cdef double* best_error
+    # cdef double* init_error
+    # cdef int* n_samples
+
+    # Wrap for outside world
+    property n_classes:
+        def __get__(self):
+            return intp_to_ndarray(self.n_classes, self.n_outputs)
+
+    property children_left:
+        def __get__(self):
+            return intp_to_ndarray(self.children_left, self.node_count)
+
+    property children_right:
+        def __get__(self):
+            return intp_to_ndarray(self.children_right, self.node_count)
+
+    property feature:
+        def __get__(self):
+            return intp_to_ndarray(self.feature, self.node_count)
+
+    property threshold:
+        def __get__(self):
+            return doublep_to_ndarray(self.threshold, self.node_count)
+
+    property value:
+        def __get__(self):
+            cdef np.npy_intp shape[3]
+            shape[0] = <np.npy_intp> self.node_count
+            shape[1] = <np.npy_intp> self.n_outputs
+            shape[2] = <np.npy_intp> self.max_n_classes
+            return np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
+
+    property best_error:
+        def __get__(self):
+            return doublep_to_ndarray(self.best_error, self.node_count)
+
+    property init_error:
+        def __get__(self):
+            return doublep_to_ndarray(self.init_error, self.node_count)
+
+    property n_samples:
+        def __get__(self):
+            return intp_to_ndarray(self.n_samples, self.node_count)
+
+    def __cinit__(self, int n_features, object n_classes, int n_outputs,
+                 Criterion criterion, double max_depth, int min_samples_split,
+                 int min_samples_leaf, double min_density, int max_features,
+                 int find_split_algorithm, object random_state, int capacity=3):
+        """Constructor."""
+        # Input/Output layout
+        cdef int k
+
+        self.n_features = n_features
+        self.n_outputs = n_outputs
+        self.n_classes = <int*> malloc(n_outputs * sizeof(int))
+
+        self.max_n_classes = np.max(n_classes)
+        self.value_stride = self.n_outputs * self.max_n_classes
+
+        for k from 0 <= k < n_outputs:
+            self.n_classes[k] = n_classes[k]
+
+        # Parameters
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_density = min_density
+        self.max_features = max_features
+        self.find_split_algorithm = find_split_algorithm
+        self.random_state = random_state
+
+        # Inner structures
+        self.node_count = 0
+        self.capacity = capacity
+
+        self.children_left = <int*> malloc(capacity * sizeof(int))
+        self.children_right = <int*> malloc(capacity * sizeof(int))
+
+        for k from 0 <= k < capacity:
+            self.children_left[k] = _TREE_UNDEFINED
+            self.children_right[k] = _TREE_UNDEFINED
+
+        self.feature = <int*> malloc(capacity * sizeof(int))
+        self.threshold = <double*> malloc(capacity * sizeof(double))
+        self.value = <double*> malloc(capacity * self.value_stride * sizeof(double));
+        self.best_error = <double*> malloc(capacity * sizeof(double));
+        self.init_error = <double*> malloc(capacity * sizeof(double));
+        self.n_samples = <int*> malloc(capacity * sizeof(int));
+
+    def __dealloc__(self):
+        """Destructor."""
+        # Free all inner structures
+        free(self.n_classes)
+
+        free(self.children_left)
+        free(self.children_right)
+        free(self.feature)
+        free(self.threshold)
+        free(self.value)
+        free(self.best_error)
+        free(self.init_error)
+        free(self.n_samples)
+
+    def __reduce__(self):
+        """Reduce re-implementation, for pickling."""
+        return (Tree, (self.n_features,
+                       intp_to_ndarray(self.n_classes, self.n_outputs),
+                       self.n_outputs,
+                       self.criterion,
+                       self.max_depth,
+                       self.min_samples_split,
+                       self.min_samples_leaf,
+                       self.min_density,
+                       self.max_features,
+                       self.find_split_algorithm,
+                       self.random_state), self.__getstate__())
+
+    def __getstate__(self):
+        """Getstate re-implementation, for pickling."""
+        d = {}
+
+        d["node_count"] = self.node_count
+        d["capacity"] = self.capacity
+        d["children_left"] = intp_to_ndarray(self.children_left, self.capacity)
+        d["children_right"] = intp_to_ndarray(self.children_right, self.capacity)
+        d["feature"] = intp_to_ndarray(self.feature, self.capacity)
+        d["threshold"] = doublep_to_ndarray(self.threshold, self.capacity)
+        d["value"] = doublep_to_ndarray(self.value, self.capacity * self.value_stride)
+        d["best_error"] = doublep_to_ndarray(self.best_error, self.capacity)
+        d["init_error"] = doublep_to_ndarray(self.init_error, self.capacity)
+        d["n_samples"] = intp_to_ndarray(self.n_samples, self.capacity)
+
+        return d
+
+    def __setstate__(self, d):
+        """Setstate re-implementation, for unpickling."""
+        self.resize(d["capacity"])
+        self.node_count = d["node_count"]
+
+        cdef int* children_left = <int*> (<np.ndarray> d["children_left"]).data
+        cdef int* children_right =  <int*> (<np.ndarray> d["children_right"]).data
+        cdef int* feature = <int*> (<np.ndarray> d["feature"]).data
+        cdef double* threshold = <double*> (<np.ndarray> d["threshold"]).data
+        cdef double* value = <double*> (<np.ndarray> d["value"]).data
+        cdef double* best_error = <double*> (<np.ndarray> d["best_error"]).data
+        cdef double* init_error = <double*> (<np.ndarray> d["init_error"]).data
+        cdef int* n_samples = <int*> (<np.ndarray> d["n_samples"]).data
+
+        memcpy(self.children_left, children_left, self.capacity * sizeof(int))
+        memcpy(self.children_right, children_right, self.capacity * sizeof(int))
+        memcpy(self.feature, feature, self.capacity * sizeof(int))
+        memcpy(self.threshold, threshold, self.capacity * sizeof(double))
+        memcpy(self.value, value, self.capacity * self.value_stride * sizeof(double))
+        memcpy(self.best_error, best_error, self.capacity * sizeof(double))
+        memcpy(self.init_error, init_error, self.capacity * sizeof(double))
+        memcpy(self.n_samples, n_samples, self.capacity * sizeof(int))
+
+    cdef void resize(self, int capacity=-1):
+        """Resize all inner arrays to `capacity`, if < 0 double capacity."""
+        if capacity == self.capacity:
+            return
+
+        if capacity < 0:
+            capacity = 2 * self.capacity
+
+        self.capacity = capacity
+
+        self.children_left = <int*> realloc(self.children_left, capacity * sizeof(int))
+        self.children_right = <int*> realloc(self.children_right, capacity * sizeof(int))
+        self.feature = <int*> realloc(self.feature, capacity * sizeof(int))
+        self.threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
+        self.value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
+        self.best_error = <double*> realloc(self.best_error, capacity * sizeof(double))
+        self.init_error = <double*> realloc(self.init_error, capacity * sizeof(double))
+        self.n_samples = <int*> realloc(self.n_samples, capacity * sizeof(int))
+
+        # if capacity smaller than node_count, adjust the counter
+        if capacity < self.node_count:
+            self.node_count = capacity
+
+    cpdef build(self, np.ndarray X, np.ndarray y,
+                np.ndarray sample_mask=None, np.ndarray X_argsorted=None):
+        """Build a decision tree from the training set (X, y).
+
+        Parameters
+        ----------
+        X : ndarray of shape [n_samples, n_features]
+            The training input samples.
+
+        y : ndarray of shape [n_samples, n_outputs]
+            The target values.
+        """
+        # Check input before recursive partitioning
+        if X.dtype != DTYPE or not np.isfortran(X):
+            X = np.asarray(X, dtype=DTYPE, order="F")
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
+
+        if sample_mask is None:
+            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+
+        if X_argsorted is None:
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
+
+        # Pre-allocate some space
+        cdef int init_capacity
+
+        if self.max_depth <= 10:
+            init_capacity = (2 ** (int(self.max_depth) + 1)) - 1
+        else:
+            init_capacity = 2047
+
+        self.resize(init_capacity)
+        cdef double* buffer_value = <double*> malloc(self.value_stride * sizeof(double))
+
+        # Build the tree by recursive partitioning
+        self.recursive_partition(X, X_argsorted, y, sample_mask, np.sum(sample_mask), 0, -1, False, buffer_value)
+
+        # Compactify
+        self.resize(self.node_count)
+        free(buffer_value)
+
+    cdef void recursive_partition(self,
+                                  np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
+                                  np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
+                                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                                  np.ndarray sample_mask,
+                                  int n_node_samples,
+                                  int depth,
+                                  int parent,
+                                  int is_left_child,
+                                  double* buffer_value):
+        """Recursive partition algorithm for the tree construction."""
+        # Variables
+        cdef Criterion criterion = self.criterion
+
+        cdef DTYPE_t* X_ptr = <DTYPE_t*> X.data
+        cdef int* X_argsorted_ptr = <int*> X_argsorted.data
+        cdef DOUBLE_t* y_ptr = <DOUBLE_t*> y.data
+        cdef BOOL_t* sample_mask_ptr = <BOOL_t*> sample_mask.data
+
+        cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
+        cdef int X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
+        cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
+
+        cdef int n_total_samples = y.shape[0]
+        cdef int feature
+        cdef double threshold
+        cdef double best_error
+        cdef double init_error
+
+        cdef int i
+        cdef np.ndarray sample_mask_left
+        cdef np.ndarray sample_mask_right
+        cdef int n_node_samples_left
+        cdef int n_node_samples_right
+
+        # Count samples
+        if n_node_samples == 0:
+            raise ValueError("Attempting to find a split "
+                             "with an empty sample_mask")
+
+        # Split samples
+        if depth < self.max_depth and \
+           n_node_samples >= self.min_samples_split and \
+           n_node_samples >= 2 * self.min_samples_leaf:
+            self.find_split(X_ptr, X_stride,
+                            X_argsorted_ptr, X_argsorted_stride,
+                            y_ptr, y_stride,
+                            sample_mask_ptr,
+                            n_node_samples,
+                            n_total_samples,
+                            &feature, &threshold, &best_error, &init_error)
+
+        else:
+            feature = -1
+            criterion.init(y_ptr, y_stride, sample_mask_ptr, n_node_samples, n_total_samples)
+            init_error = criterion.eval()
+
+        criterion.init_value(buffer_value)
+
+        # Current node is leaf
+        if feature == -1:
+            self.add_leaf(parent, is_left_child, buffer_value, init_error, n_node_samples)
+
+        # Current node is internal node (= split node)
+        else:
+            # Sample mask is too sparse?
+            if 1. * n_node_samples / n_total_samples <= self.min_density:
+                X = X[sample_mask]
+                X_argsorted = np.asfortranarray(np.argsort(X.T, axis=1).astype(np.int32).T)
+                y = y[sample_mask]
+                sample_mask = np.ones((n_node_samples, ), dtype=np.bool)
+
+                n_total_samples = n_node_samples
+
+                X_ptr = <DTYPE_t*> X.data
+                X_stride = <int> X.strides[1] / <int> X.strides[0]
+                sample_mask_ptr = <BOOL_t*> sample_mask.data
+
+                # !! No need to update the other variables
+                # X_argsorted_ptr = <int*> X_argsorted.data
+                # y_ptr = <DOUBLE_t*> y.data
+                # X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
+                # y_stride = <int> y.strides[0] / <int> y.strides[1]
+
+            # Split
+            X_ptr = X_ptr + feature * X_stride
+            sample_mask_left = np.zeros((n_total_samples, ), dtype=np.bool)
+            sample_mask_right = np.zeros((n_total_samples, ), dtype=np.bool)
+            n_node_samples_left = 0
+            n_node_samples_right = 0
+
+            for i from 0 <= i < n_total_samples:
+                if sample_mask_ptr[i]:
+                    if X_ptr[i] <= threshold:
+                        sample_mask_left[i] = 1
+                        n_node_samples_left += 1
+                    else:
+                        sample_mask_right[i] = 1
+                        n_node_samples_right += 1
+
+            node_id = self.add_split_node(parent, is_left_child, feature,
+                                          threshold, buffer_value, best_error,
+                                          init_error, n_node_samples)
+
+            # Left child recursion
+            self.recursive_partition(X, X_argsorted, y, sample_mask_left,
+                                     n_node_samples_left, depth + 1, node_id,
+                                     True, buffer_value)
+
+            # Right child recursion
+            self.recursive_partition(X, X_argsorted, y, sample_mask_right,
+                                     n_node_samples_right, depth + 1, node_id,
+                                     False, buffer_value)
+
+    cdef int add_split_node(self, int parent, int is_left_child, int feature,
+                                  double threshold, double* value,
+                                  double best_error, double init_error,
+                                  int n_samples):
+        """Add a splitting node to the tree. The new node registers itself as
+           the child of its parent. """
+        cdef int node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        self.feature[node_id] = feature
+        self.threshold[node_id] = threshold
+
+        cdef int offset_node = node_id * self.value_stride
+        memcpy(self.value + offset_node, value, self.value_stride * sizeof(double))
+
+        self.init_error[node_id] = init_error
+        self.best_error[node_id] = best_error
+        self.n_samples[node_id] = n_samples
+
+        # set as left or right child of parent
+        if parent > _TREE_LEAF:
+            if is_left_child:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        self.node_count += 1
+
+        return node_id
+
+    cdef int add_leaf(self, int parent, int is_left_child, double* value,
+                      double error, int n_samples):
+        """Add a leaf to the tree. The new node registers itself as the
+           child of its parent. """
+        cdef int node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        cdef int offset_node = node_id * self.n_outputs * self.max_n_classes
+        memcpy(self.value + offset_node, value, self.value_stride * sizeof(double))
+
+        self.init_error[node_id] = error
+        self.best_error[node_id] = error
+        self.n_samples[node_id] = n_samples
+
+        if parent >= 0:
+            if is_left_child:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        self.children_left[node_id] = _TREE_LEAF
+        self.children_right[node_id] = _TREE_LEAF
+
+        self.node_count += 1
+
+        return node_id
+
+    cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
+                         int* X_argsorted_ptr, int X_argsorted_stride,
+                         DOUBLE_t* y_ptr, int y_stride, BOOL_t* sample_mask_ptr,
+                         int n_node_samples, int n_total_samples, int* _best_i,
+                         double* _best_t, double* _best_error,
+                         double* _initial_error):
+        """Find the best dimension and threshold that minimises the error."""
+        if self.find_split_algorithm == _TREE_SPLIT_BEST:
+            self.find_best_split(X_ptr, X_stride, X_argsorted_ptr,
+                                 X_argsorted_stride, y_ptr, y_stride,
+                                 sample_mask_ptr, n_node_samples,
+                                 n_total_samples, _best_i, _best_t,
+                                 _best_error, _initial_error)
+
+        elif self.find_split_algorithm == _TREE_SPLIT_RANDOM:
+            self.find_random_split(X_ptr, X_stride, X_argsorted_ptr,
+                                   X_argsorted_stride, y_ptr, y_stride,
+                                   sample_mask_ptr, n_node_samples,
+                                   n_total_samples, _best_i, _best_t,
+                                   _best_error, _initial_error)
+
+    cdef void find_best_split(self, DTYPE_t* X_ptr, int X_stride,
+                              int* X_argsorted_ptr, int X_argsorted_stride,
+                              DOUBLE_t* y_ptr, int y_stride,
+                              BOOL_t* sample_mask_ptr, int n_node_samples,
+                              int n_total_samples, int* _best_i,
+                              double* _best_t, double* _best_error,
+                              double* _initial_error):
+        """Implementation of `find_split` that looks for the best threshold."""
+        # Variables declarations
+        cdef Criterion criterion = self.criterion
+        cdef int n_features = self.n_features
+        cdef int max_features = self.max_features
+        cdef int min_samples_leaf = self.min_samples_leaf
+        cdef object random_state = self.random_state
+
+        cdef int i, a, b, best_i = -1
+        cdef np.int32_t feature_idx = -1
+        cdef int n_left = 0
+
+        cdef double t, initial_error, error
+        cdef double best_error = INFINITY, best_t = INFINITY
+
+        cdef DTYPE_t* X_i = NULL
+        cdef int* X_argsorted_i = NULL
+        cdef DTYPE_t X_a, X_b
+
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
+
+        # Compute the initial criterion value in the node
+        criterion.init(y_ptr, y_stride, sample_mask_ptr, n_node_samples, n_total_samples)
+        initial_error = criterion.eval()
+
+        if initial_error == 0:  # break early if the node is pure
+            _best_i[0] = best_i
+            _best_t[0] = best_t
+            _best_error[0] = initial_error
+            _initial_error[0] = initial_error
+
+            return
+
+        best_error = initial_error
+
+        # Features to consider
+        features = np.arange(n_features, dtype=np.int32)
+
+        if max_features < 0 or max_features >= n_features:
+            max_features = n_features
+
+        else:
+            features = random_state.permutation(features)[:max_features]
+
+        # Look for the best split
+        for feature_idx from 0 <= feature_idx < max_features:
+            i = features[feature_idx]
+
+            # Get i-th col of X and X_sorted
+            X_i = X_ptr + X_stride * i
+            X_argsorted_i = X_argsorted_ptr + X_argsorted_stride * i
+
+            # Reset the criterion for this feature
+            criterion.reset()
+
+            # Index of smallest sample in X_argsorted_i that is in the sample mask
+            a = 0
+
+            while sample_mask_ptr[X_argsorted_i[a]] == 0:
+                a = a + 1
+
+            # Consider splits between two consecutive samples
+            while True:
+                # Find the following larger sample
+                b = _smallest_sample_larger_than(a, X_i, X_argsorted_i,
+                                                 sample_mask_ptr, n_total_samples)
+                if b == -1:
+                    break
+
+                # Better split than the best so far?
+                n_left = criterion.update(a, b, y_ptr, y_stride, X_argsorted_i, sample_mask_ptr)
+
+                # Only consider splits that respect min_leaf
+                if n_left < min_samples_leaf or (n_node_samples - n_left) < min_samples_leaf:
+                    a = b
+                    continue
+
+                error = criterion.eval()
+
+                if error < best_error:
+                    X_a = X_i[X_argsorted_i[a]]
+                    X_b = X_i[X_argsorted_i[b]]
+
+                    t = X_a + (X_b - X_a) / 2.0
+                    if t == X_b:
+                        t = X_a
+
+                    best_i = i
+                    best_t = t
+                    best_error = error
+
+                # Proceed to the next interval
+                a = b
+
+        _best_i[0] = best_i
+        _best_t[0] = best_t
+        _best_error[0] = best_error
+        _initial_error[0] = initial_error
+
+    cdef void find_random_split(self, DTYPE_t* X_ptr, int X_stride,
+                                int* X_argsorted_ptr, int X_argsorted_stride,
+                                DOUBLE_t* y_ptr, int y_stride,
+                                BOOL_t* sample_mask_ptr, int n_node_samples,
+                                int n_total_samples, int* _best_i,
+                                double* _best_t, double* _best_error,
+                                double* _initial_error):
+        """Implementation of `find_split` that looks for the best threshold
+           among randomly drawn thresholds at each feature."""
+        # Variables declarations
+        cdef Criterion criterion = self.criterion
+        cdef int n_features = self.n_features
+        cdef int max_features = self.max_features
+        cdef int min_samples_leaf = self.min_samples_leaf
+        cdef object random_state = self.random_state
+
+        cdef int i, a, b, c, best_i = -1
+        cdef np.int32_t feature_idx = -1
+        cdef int n_left = 0
+        cdef double random
+
+        cdef double t, initial_error, error
+        cdef double best_error = INFINITY, best_t = INFINITY
+
+        cdef DTYPE_t* X_i = NULL
+        cdef int* X_argsorted_i = NULL
+        cdef DTYPE_t X_a, X_b
+
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
+
+        # Compute the initial criterion value in the node
+        criterion.init(y_ptr, y_stride, sample_mask_ptr, n_node_samples, n_total_samples)
+        initial_error = criterion.eval()
+
+        if initial_error == 0:  # break early if the node is pure
+            _best_i[0] = best_i
+            _best_t[0] = best_t
+            _best_error[0] = initial_error
+            _initial_error[0] = initial_error
+
+            return
+
+        best_error = initial_error
+
+        # Features to consider
+        features = np.arange(n_features, dtype=np.int32)
+
+        if max_features < 0 or max_features >= n_features:
+            max_features = n_features
+
+        else:
+            features = random_state.permutation(features)[:max_features]
+
+        # Look for the best split
+        for feature_idx from 0 <= feature_idx < max_features:
+            i = features[feature_idx]
+
+            # Get i-th col of X and X_sorted
+            X_i = X_ptr + X_stride * i
+            X_argsorted_i = X_argsorted_ptr + X_argsorted_stride * i
+
+            # Reset the criterion for this feature
+            criterion.reset()
+
+            # Find min and max
+            a = 0
+            while sample_mask_ptr[X_argsorted_i[a]] == 0:
+                a = a + 1
+            X_a = X_i[X_argsorted_i[a]]
+
+            b = n_total_samples - 1
+            while sample_mask_ptr[X_argsorted_i[b]] == 0:
+                b = b - 1
+            X_b = X_i[X_argsorted_i[b]]
+
+            if b <= a or X_a == X_b:
+                continue
+
+            # Draw a random threshold in [a, b)
+            random = random_state.rand()
+            t = X_a + (random * (X_b - X_a))
+            if t == X_b:
+                t = X_a
+
+            # Find the sample just greater than t
+            c = a + 1
+
+            while True:
+                if sample_mask_ptr[X_argsorted_i[c]] != 0:
+                    # FIXME why is t cast to DTYPE_t?
+                    if X_i[X_argsorted_i[c]] > (<DTYPE_t> t) or c == b:
+                        break
+
+                c += 1
+
+            # Better than the best so far?
+            n_left = criterion.update(0, c, y_ptr, y_stride, X_argsorted_i, sample_mask_ptr)
+            error = criterion.eval()
+
+            if n_left < min_samples_leaf or (n_node_samples - n_left) < min_samples_leaf:
+                continue
+
+            if error < best_error:
+                best_i = i
+                best_t = t
+                best_error = error
+
+        _best_i[0] = best_i
+        _best_t[0] = best_t
+        _best_error[0] = best_error
+        _initial_error[0] = initial_error
+
+    cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+        """Predict target for X."""
+        cdef int i, k, c
+        cdef int n_samples = X.shape[0]
+        cdef int node_id = 0
+        cdef int offset_node
+        cdef int offset_output
+
+        cdef np.ndarray[np.float64_t, ndim=3] out
+        out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
+
+        for i from 0 <= i < n_samples:
+            node_id = 0
+
+            # While node_id not a leaf
+            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
+                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
+                    node_id = self.children_left[node_id]
+                else:
+                    node_id = self.children_right[node_id]
+
+            offset_node = node_id * self.value_stride
+
+            for k from 0 <= k < self.n_outputs:
+                offset_output = k * self.max_n_classes
+
+                for c from 0 <= c < self.n_classes[k]:
+                    out[i, k, c] = self.value[offset_node + offset_output + c]
+
+        return out
+
+    cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
+        """Finds the terminal region (=leaf node) for each sample in X."""
+        cdef int i = 0
+        cdef int n_samples = X.shape[0]
+        cdef int node_id = 0
+
+        cdef np.ndarray[np.int32_t, ndim=1] out
+        out = np.zeros((n_samples, ), dtype=np.int32)
+
+        for i from 0 <= i < n_samples:
+            node_id = 0
+
+            # While node_id not a leaf
+            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
+                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
+                    node_id = self.children_left[node_id]
+                else:
+                    node_id = self.children_right[node_id]
+
+            out[i] = node_id
+
+        return out
+
+    cpdef compute_feature_importances(self, method="gini"):
+        """Computes the importance of each feature (aka variable).
+
+        The following `method`s are supported:
+
+          * "gini" : The difference of the initial error and the error of the
+                     split times the number of samples that passed the node.
+          * "squared" : The empirical improvement in squared error.
+
+        Parameters
+        ----------
+        method : str, optional (default="gini")
+            The method to estimate the importance of a feature. Either "gini"
+            or "squared".
+        """
+        if method != "gini" and method != "squared":
+            raise ValueError(
+                'Invalid value for method. Allowed string '
+                'values are "gini", or "squared".')
+
+        cdef int node
+        cdef np.ndarray[np.float64_t, ndim=1] importances
+        importances = np.zeros((self.n_features,), dtype=np.float64)
+
+        if method == "gini":
+            for node from 0 <= node < self.node_count:
+                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
+                    importances[self.feature[node]] += \
+                        self._compute_feature_importances_gini(node)
+        else:
+            for node from 0 <= node < self.node_count:
+                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
+                    importances[self.feature[node]] += \
+                        self._compute_feature_importances_squared(node)
+
+        cdef double normalizer = np.sum(importances)
+
+        if normalizer > 0.0:
+            # Avoid dividing by zero (e.g., when root is pure)
+            importances /= normalizer
+
+        return importances
+
+    cdef inline double _compute_feature_importances_gini(self, int node):
+        return self.n_samples[node] * (self.init_error[node] - self.best_error[node])
+
+    cdef inline double _compute_feature_importances_squared(self, int node):
+        cdef double error = self.init_error[node] - self.best_error[node]
+        return error * error
+
+
+# ==============================================================================
+# Criterion
+# ==============================================================================
 
 cdef class Criterion:
-    """Interface for splitting criteria (regression and classification)"""
+    """Interface for splitting criteria (regression and classification)."""
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
-                   int n_total_samples):
-        """Initialise the criterion class for new split point."""
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t*
+                   sample_mask, int n_samples, int n_total_samples):
+        """Initialise the criterion."""
         pass
 
     cdef void reset(self):
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
-                    BOOL_t *sample_mask):
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
+                    int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         pass
@@ -59,8 +927,9 @@ cdef class Criterion:
         """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef np.ndarray init_value(self):
-        """Get the init value of the criterion - `init` must be called before."""
+    cdef void init_value(self, double* buffer_value):
+        """Get the initial value of the criterion (`init` must be called
+           before)."""
         pass
 
 
@@ -69,183 +938,313 @@ cdef class ClassificationCriterion(Criterion):
 
     Attributes
     ----------
-    n_classes : int
-        The number of classes.
+    n_outputs : int
+        The number of outputs.
+
+    n_classes : int*
+        n_classes[k] is the number of classes for output k.
 
     n_samples : int
         The number of samples.
 
+    label_count_stride : int
+        The stride between outputs in label_count_* arrays.
+
     label_count_left : int*
-        The label counts for samples left of splitting point.
+        label_count_left[k * label_count_stride + c] is the number of samples
+        of class c left of splitting point for output k.
 
     label_count_right : int*
-        The label counts for samples right of splitting point.
+        label_count_rightt[k * label_count_stride + c] is the number of samples
+        of class c right of splitting point for output k.
 
     label_count_init : int*
-        The initial label counts for samples right of splitting point.
-        Used to reset `label_count_right` for each feature.
+        label_count_init[k * label_count_stride + c] is the initial number of
+        samples of class c for output k. Used to reset `label_count_right` for
+        each feature.
 
     n_left : int
         The number of samples left of splitting point.
 
     n_right : int
         The number of samples right of splitting point.
+
+    References
+    ----------
+
+    [1] Hastie et al. "Elements of Statistical Learning", 2009.
     """
-    cdef int n_classes
+    cdef int n_outputs
+    cdef int* n_classes
     cdef int n_samples
+
+    cdef int label_count_stride
     cdef int* label_count_left
     cdef int* label_count_right
     cdef int* label_count_init
+
     cdef int n_left
     cdef int n_right
 
-    # need to store ref to arrays to prevent GC
-    cdef ndarray_label_count_left
-    cdef ndarray_label_count_right
-    cdef ndarray_label_count_init
+    def __cinit__(self, int n_outputs, object n_classes):
+        """Constructor."""
+        cdef int k = 0
 
-    def __init__(self, int n_classes):
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_left \
-            = np.zeros((n_classes,), dtype=np.int32, order='C')
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_right \
-            = np.zeros((n_classes,), dtype=np.int32, order='C')
-        cdef np.ndarray[np.int32_t, ndim=1] ndarray_label_count_init \
-            = np.zeros((n_classes,), dtype=np.int32, order='C')
+        self.n_outputs = n_outputs
+        self.n_classes = <int*> malloc(n_outputs * sizeof(int))
+        cdef int label_count_stride = -1
 
-        self.n_classes = n_classes
+        for k from 0 <= k < n_outputs:
+            self.n_classes[k] = n_classes[k]
+
+            if n_classes[k] > label_count_stride:
+                label_count_stride = n_classes[k]
+
+        self.label_count_stride = label_count_stride
+        self.label_count_left = <int*> calloc(n_outputs * label_count_stride, sizeof(int))
+        self.label_count_right = <int*> calloc(n_outputs * label_count_stride, sizeof(int))
+        self.label_count_init = <int*> calloc(n_outputs * label_count_stride, sizeof(int))
+
         self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
-        self.label_count_left = <int*>ndarray_label_count_left.data
-        self.label_count_right = <int*>ndarray_label_count_right.data
-        self.label_count_init = <int*>ndarray_label_count_init.data
-        self.ndarray_label_count_left = ndarray_label_count_left
-        self.ndarray_label_count_right = ndarray_label_count_right
-        self.ndarray_label_count_init = ndarray_label_count_init
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
-                   int n_total_samples):
-        """Initialise the criterion class."""
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.n_classes)
+        free(self.label_count_left)
+        free(self.label_count_right)
+        free(self.label_count_init)
+
+    def __reduce__(self):
+        return (ClassificationCriterion,
+                (self.n_outputs, intp_to_ndarray(self.n_classes,
+                                                 self.n_outputs)),
+                self.__getstate__())
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, d):
+        pass
+
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t *sample_mask,
+                   int n_samples, int n_total_samples):
+        """Initialise the criterion."""
+        cdef int n_outputs = self.n_outputs
+        cdef int* n_classes = self.n_classes
+        cdef int label_count_stride = self.label_count_stride
+        cdef int* label_count_init = self.label_count_init
+
+        cdef int k = 0
         cdef int c = 0
         cdef int j = 0
 
         self.n_samples = n_samples
 
-        for c from 0 <= c < self.n_classes:
-            self.label_count_init[c] = 0
+        for k from 0 <= k < n_outputs:
+            for c from 0 <= c < n_classes[k]:
+                label_count_init[k * label_count_stride + c] = 0
 
         for j from 0 <= j < n_total_samples:
             if sample_mask[j] == 0:
                 continue
-            c = <int>(y[j])
-            self.label_count_init[c] += 1
+
+            for k from 0 <= k < n_outputs:
+                c = <int>y[j * y_stride + k]
+                label_count_init[k * label_count_stride + c] += 1
 
         self.reset()
 
     cdef void reset(self):
-        """Reset label_counts by setting `label_count_left to zero
-        and copying the init array into the right."""
+        """Reset the criterion for a new feature index."""
+        cdef int n_outputs = self.n_outputs
+        cdef int* n_classes = self.n_classes
+        cdef int label_count_stride = self.label_count_stride
+        cdef int* label_count_init = self.label_count_init
+        cdef int* label_count_left = self.label_count_left
+        cdef int* label_count_right = self.label_count_right
+
+        cdef int k = 0
         cdef int c = 0
         self.n_left = 0
         self.n_right = self.n_samples
 
-        for c from 0 <= c < self.n_classes:
-            self.label_count_left[c] = 0
-            self.label_count_right[c] = self.label_count_init[c]
+        for k from 0 <= k < n_outputs:
+            for c from 0 <= c < n_classes[k]:
+                # Reset left label counts to 0
+                label_count_left[k * label_count_stride + c] = 0
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
-                    BOOL_t *sample_mask):
+                # Reset right label counts to the initial counts
+                label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
+
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
+                    int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
-        cdef int c
+        cdef int n_outputs = self.n_outputs
+        cdef int label_count_stride = self.label_count_stride
+        cdef int* label_count_left = self.label_count_left
+        cdef int* label_count_right = self.label_count_right
+        cdef int n_left = self.n_left
+        cdef int n_right = self.n_right
+
+        cdef int idx, k, c, s
+
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
             s = X_argsorted_i[idx]
+
             if sample_mask[s] == 0:
                 continue
-            c = <int>(y[s])
-            self.label_count_right[c] -= 1
-            self.label_count_left[c] += 1
-            self.n_right -= 1
-            self.n_left += 1
 
-        return self.n_left
+            for k from 0 <= k < n_outputs:
+                c = <int>y[s * y_stride + k]
+                label_count_right[k * label_count_stride + c] -= 1
+                label_count_left[k * label_count_stride + c] += 1
+
+            n_left += 1
+            n_right -=1
+
+        self.n_left = n_left
+        self.n_right = n_right
+
+        return n_left
 
     cdef double eval(self):
+        """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef np.ndarray init_value(self):
-        return self.ndarray_label_count_init
+    cdef void init_value(self, double* buffer_value):
+        """Get the initial value of the criterion (`init` must be called
+           before)."""
+        cdef int n_outputs = self.n_outputs
+        cdef int* n_classes = self.n_classes
+        cdef int label_count_stride = self.label_count_stride
+        cdef int* label_count_init = self.label_count_init
+
+        cdef int k, c
+
+        for k from 0 <= k < n_outputs:
+            for c from 0 <= c < n_classes[k]:
+                buffer_value[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
 
 cdef class Gini(ClassificationCriterion):
     """Gini Index splitting criteria.
 
-    Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
-               = 1 - \sum_{k=0}^{K-1} pmk ** 2
+    Let the target be a classification outcome taking values in 0, 1, ..., K-1.
+    If node m represents a region Rm with Nm observations, then let
+
+        pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
+    The Gini Index is then defined as:
+
+        index = \sum_{k=0}^{K-1} pmk (1 - pmk)
+              = 1 - \sum_{k=0}^{K-1} pmk ** 2
     """
 
     cdef double eval(self):
-        """Returns Gini index of left branch + Gini index of right branch. """
+        """Returns Gini index of left branch + Gini index of right branch."""
+        cdef int n_samples = self.n_samples
+        cdef int n_outputs = self.n_outputs
+        cdef int* n_classes = self.n_classes
+        cdef int label_count_stride = self.label_count_stride
+        cdef int* label_count_left = self.label_count_left
+        cdef int* label_count_right = self.label_count_right
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
-        cdef double H_left = n_left * n_left
-        cdef double H_right = n_right * n_right
-        cdef int k, count_left, count_right
 
-        for k from 0 <= k < self.n_classes:
-            count_left = self.label_count_left[k]
-            if count_left > 0:
-                H_left -= (count_left * count_left)
-            count_right = self.label_count_right[k]
-            if count_right > 0:
-                H_right -= (count_right * count_right)
+        cdef double total = 0.0
+        cdef double H_left
+        cdef double H_right
+        cdef int k, c, count_left, count_right
 
-        if n_left == 0:
-            H_left = 0
-        else:
-            H_left /= n_left
+        for k from 0 <= k < n_outputs:
+            H_left = n_left * n_left
+            H_right = n_right * n_right
 
-        if n_right == 0:
-            H_right = 0
-        else:
-            H_right /= n_right
+            for c from 0 <= c < n_classes[k]:
+                count_left = label_count_left[k * label_count_stride + c]
+                if count_left > 0:
+                    H_left -= (count_left * count_left)
 
-        return (H_left + H_right) / self.n_samples
+                count_right = label_count_right[k * label_count_stride + c]
+                if count_right > 0:
+                    H_right -= (count_right * count_right)
+
+            if n_left == 0:
+                H_left = 0
+            else:
+                H_left /= n_left
+
+            if n_right == 0:
+                H_right = 0
+            else:
+                H_right /= n_right
+
+            total += (H_left + H_right)
+
+        return total / (n_samples * n_outputs)
 
 
 cdef class Entropy(ClassificationCriterion):
-    """Entropy splitting criteria.
+    """Cross Entropy splitting criteria.
 
-    Cross Entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
+    Let the target be a classification outcome taking values in 0, 1, ..., K-1.
+    If node m represents a region Rm with Nm observations, then let
+
+        pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
+    The cross-entropy is then defined as
+
+        cross-entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
     """
 
     cdef double eval(self):
         """Returns Entropy of left branch + Entropy index of right branch. """
-        cdef double H_left = 0.0
-        cdef double H_right = 0.0
-        cdef int k
-        cdef double e1, e2
+        cdef int n_samples = self.n_samples
+        cdef int n_outputs = self.n_outputs
+        cdef int* n_classes = self.n_classes
+        cdef int label_count_stride = self.label_count_stride
+        cdef int* label_count_left = self.label_count_left
+        cdef int* label_count_right = self.label_count_right
         cdef double n_left = <double> self.n_left
         cdef double n_right = <double> self.n_right
 
-        for k from 0 <= k < self.n_classes:
-            if self.label_count_left[k] > 0:
-                H_left -= ((self.label_count_left[k] / n_left)
-                           * log(self.label_count_left[k] / n_left))
-            if self.label_count_right[k] > 0:
-                H_right -= ((self.label_count_right[k] / n_right)
-                            * log(self.label_count_right[k] / n_right))
+        cdef double total = 0.0
+        cdef double H_left
+        cdef double H_right
+        cdef int k, c
+        cdef double e1, e2
 
-        e1 = (n_left / self.n_samples) * H_left
-        e2 = (n_right / self.n_samples) * H_right
-        return e1 + e2
+        for k from 0 <= k < n_outputs:
+            H_left = 0.0
+            H_right = 0.0
+
+            for c from 0 <= c < n_classes[k]:
+                if label_count_left[k * label_count_stride + c] > 0:
+                    H_left -= ((label_count_left[k * label_count_stride + c] / n_left) * log(label_count_left[k * label_count_stride + c] / n_left))
+
+                if self.label_count_right[k * label_count_stride + c] > 0:
+                    H_right -= ((label_count_right[k * label_count_stride + c] / n_right) * log(label_count_right[k * label_count_stride + c] / n_right))
+
+            e1 = (n_left / n_samples) * H_left
+            e2 = (n_right / n_samples) * H_right
+
+            total += e1 + e2
+
+        return total / n_outputs
 
 
 cdef class RegressionCriterion(Criterion):
-    """Abstract criterion for regression. Computes variance of the
-       target values left and right of the split point.
+    """Abstract criterion for regression.
 
+    Computes variance of the target values left and right of the split point.
     Computation is linear in `n_samples` by using ::
 
         var = \sum_i^n (y_i - y_bar) ** 2
@@ -253,26 +1252,35 @@ cdef class RegressionCriterion(Criterion):
 
     Attributes
     ----------
+    n_outputs : int
+        The number of outputs.
+
     n_samples : int
         The number of samples
 
-    mean_left : double
-        The mean target value of the samples left of the split point.
+    mean_left : double*
+        mean_left[k] is the mean target value of the samples left of the split
+        point for output k.
 
-    mean_right : double
-        The mean target value of the samples right of the split.
+    mean_right : double*
+        mean_right[k] is the mean target value of the samples right of the split
+        point for output k.
 
-    sq_sum_left : double
-        The sum of squared target values left of the split point.
+    sq_sum_left : double*
+        sq_sum_left[k] is the sum of squared target values left of the split
+        point for output k.
 
-    sq_sum_right : double
-        The sum of squared target values right of the split point.
+    sq_sum_right : double*
+        sq_sum_right[k] is the sum of squared target values right of the split
+        point for output k.
 
-    var_left : double
-        The variance of the target values left of the split point.
+    var_left : double*
+        var_left[k] is the variance of the values left of the split point for
+        output k.
 
-    var_right : double
-        The variance of the target values left of the split point.
+    var_right : double*
+        var_right[k] is the variance of the values riht of the split point for
+        output k.
 
     n_left : int
         number of samples left of split point.
@@ -281,57 +1289,105 @@ cdef class RegressionCriterion(Criterion):
         number of samples right of split point.
     """
 
+    cdef int n_outputs
     cdef int n_samples
+
+    cdef double* mean_left
+    cdef double* mean_right
+    cdef double* mean_init
+    cdef double* sq_sum_left
+    cdef double* sq_sum_right
+    cdef double* sq_sum_init
+    cdef double* var_left
+    cdef double* var_right
+
     cdef int n_right
     cdef int n_left
 
-    cdef double mean_left
-    cdef double mean_right
-    cdef double mean_init
+    def __cinit__(self, int n_outputs):
+        """Constructor."""
+        cdef int k = 0
 
-    cdef double sq_sum_right
-    cdef double sq_sum_left
-    cdef double sq_sum_init
+        self.n_outputs = n_outputs
 
-    cdef double var_left
-    cdef double var_right
-
-    def __init__(self):
         self.n_samples = 0
         self.n_left = 0
         self.n_right = 0
-        self.mean_left = 0.0
-        self.mean_right = 0.0
-        self.mean_init = 0.0
-        self.sq_sum_right = 0.0
-        self.sq_sum_left = 0.0
-        self.sq_sum_init = 0.0
-        self.var_left = 0.0
-        self.var_right = 0.0
 
-    cdef void init(self, DTYPE_t *y, BOOL_t *sample_mask, int n_samples,
-                   int n_total_samples):
+        self.mean_left = <double*> calloc(n_outputs, sizeof(double))
+        self.mean_right = <double*> calloc(n_outputs, sizeof(double))
+        self.mean_init = <double*> calloc(n_outputs, sizeof(double))
+        self.sq_sum_left = <double*> calloc(n_outputs, sizeof(double))
+        self.sq_sum_right = <double*> calloc(n_outputs, sizeof(double))
+        self.sq_sum_init = <double*> calloc(n_outputs, sizeof(double))
+        self.var_left = <double*> calloc(n_outputs, sizeof(double))
+        self.var_right = <double*> calloc(n_outputs, sizeof(double))
+
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.mean_left)
+        free(self.mean_right)
+        free(self.mean_init)
+        free(self.sq_sum_left)
+        free(self.sq_sum_right)
+        free(self.sq_sum_init)
+        free(self.var_left)
+        free(self.var_right)
+
+    def __reduce__(self):
+        return (RegressionCriterion,
+                (self.n_outputs,),
+                self.__getstate__())
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, d):
+        pass
+
+    cdef void init(self, DOUBLE_t* y, int y_stride, BOOL_t* sample_mask,
+                   int n_samples, int n_total_samples):
         """Initialise the criterion class; assume all samples
            are in the right branch and store the mean and squared
            sum in `self.mean_init` and `self.sq_sum_init`. """
-        self.mean_left = 0.0
-        self.mean_right = 0.0
-        self.mean_init = 0.0
-        self.sq_sum_right = 0.0
-        self.sq_sum_left = 0.0
-        self.sq_sum_init = 0.0
-        self.var_left = 0.0
-        self.var_right = 0.0
+        cdef double* mean_left = self.mean_left
+        cdef double* mean_right = self.mean_right
+        cdef double* mean_init = self.mean_init
+        cdef double* sq_sum_left = self.sq_sum_left
+        cdef double* sq_sum_right = self.sq_sum_right
+        cdef double* sq_sum_init = self.sq_sum_init
+        cdef double* var_left = self.var_left
+        cdef double* var_right = self.var_right
+        cdef int n_outputs = self.n_outputs
+
+        cdef int k = 0
+
+        for k from 0 <= k < n_outputs:
+            mean_left[k] = 0.0
+            mean_right[k] = 0.0
+            mean_init[k] = 0.0
+            sq_sum_right[k] = 0.0
+            sq_sum_left[k] = 0.0
+            sq_sum_init[k] = 0.0
+            var_left[k] = 0.0
+            var_right[k] = 0.0
+
         self.n_samples = n_samples
 
         cdef int j = 0
+        cdef DOUBLE_t y_jk = 0.0
+
         for j from 0 <= j < n_total_samples:
             if sample_mask[j] == 0:
                 continue
-            self.sq_sum_init += (y[j] * y[j])
-            self.mean_init += y[j]
 
-        self.mean_init = self.mean_init / self.n_samples
+            for k from 0 <= k < n_outputs:
+                y_jk = y[j * y_stride + k]
+                sq_sum_init[k] += y_jk * y_jk
+                mean_init[k] += y_jk
+
+        for k from 0 <= k < n_outputs:
+            mean_init[k] /= n_samples
 
         self.reset()
 
@@ -342,162 +1398,135 @@ cdef class RegressionCriterion(Criterion):
         whole dataset into the auxiliary variables of the
         right branch.
         """
+        cdef double* mean_left = self.mean_left
+        cdef double* mean_right = self.mean_right
+        cdef double* mean_init = self.mean_init
+        cdef double* sq_sum_left = self.sq_sum_left
+        cdef double* sq_sum_right = self.sq_sum_right
+        cdef double* sq_sum_init = self.sq_sum_init
+        cdef double* var_left = self.var_left
+        cdef double* var_right = self.var_right
+
+        cdef int n_samples = self.n_samples
+        cdef int n_outputs = self.n_outputs
+
+        cdef int k = 0
+
         self.n_right = self.n_samples
         self.n_left = 0
-        self.mean_right = self.mean_init
-        self.mean_left = 0.0
-        self.sq_sum_right = self.sq_sum_init
-        self.sq_sum_left = 0.0
-        self.var_left = 0.0
-        self.var_right = self.sq_sum_right - \
-            self.n_samples * (self.mean_right * self.mean_right)
 
-    cdef int update(self, int a, int b, DTYPE_t *y, int *X_argsorted_i,
-                    BOOL_t *sample_mask):
+        for k from 0 <= k < n_outputs:
+            mean_right[k] = mean_init[k]
+            mean_left[k] = 0.0
+            sq_sum_right[k] = sq_sum_init[k]
+            sq_sum_left[k] = 0.0
+            var_left[k] = 0.0
+            var_right[k] = sq_sum_right[k] - n_samples * (mean_right[k] * mean_right[k])
+
+    cdef int update(self, int a, int b, DOUBLE_t* y, int y_stride,
+                    int* X_argsorted_i, BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
+        cdef double* mean_left = self.mean_left
+        cdef double* mean_right = self.mean_right
+        cdef double* sq_sum_left = self.sq_sum_left
+        cdef double* sq_sum_right = self.sq_sum_right
+        cdef double* var_left = self.var_left
+        cdef double* var_right = self.var_right
+
+        cdef int n_samples = self.n_samples
+        cdef int n_outputs = self.n_outputs
+        cdef int n_left = self.n_left
+        cdef int n_right = self.n_right
+
         cdef double y_idx = 0.0
-        cdef int idx, j
+        cdef int idx, j, k
+
         # post condition: all samples from [0:b) are on the left side
         for idx from a <= idx < b:
             j = X_argsorted_i[idx]
+
             if sample_mask[j] == 0:
                 continue
-            y_idx = y[j]
-            self.sq_sum_left = self.sq_sum_left + (y_idx * y_idx)
-            self.sq_sum_right = self.sq_sum_right - (y_idx * y_idx)
 
-            self.mean_left = (self.n_left * self.mean_left + y_idx) / \
-                <double>(self.n_left + 1)
-            self.mean_right = ((self.n_samples - self.n_left) * \
-                self.mean_right - y_idx) / \
-                <double>(self.n_samples - self.n_left - 1)
+            for k from 0 <= k < n_outputs:
+                y_idx = y[j * y_stride + k]
+                sq_sum_left[k] += (y_idx * y_idx)
+                sq_sum_right[k] -= (y_idx * y_idx)
 
-            self.n_right -= 1
-            self.n_left += 1
+                mean_left[k] = (n_left * mean_left[k] + y_idx) / <double>(n_left + 1)
+                mean_right[k] = ((n_samples - n_left) * mean_right[k] - y_idx) / <double>(n_samples - n_left - 1)
 
-            self.var_left = self.sq_sum_left - \
-                self.n_left * (self.mean_left * self.mean_left)
-            self.var_right = self.sq_sum_right - \
-                self.n_right * (self.mean_right * self.mean_right)
+            n_left += 1
+            self.n_left = n_left
+            n_right -= 1
+            self.n_right = n_right
 
-        return self.n_left
+            for k from 0 <= k < n_outputs:
+                var_left[k] = sq_sum_left[k] - n_left * (mean_left[k] * mean_left[k])
+                var_right[k] = sq_sum_right[k] - n_right * (mean_right[k] * mean_right[k])
+
+        return n_left
 
     cdef double eval(self):
+        """Evaluate the criteria (aka the split error)."""
         pass
 
-    cpdef np.ndarray init_value(self):
-        ## TODO is calling np.asarray a performance issue?
-        return np.asarray(self.mean_init)
+    cdef void init_value(self, double* buffer_value):
+        """Get the initial value of the criterion (`init` must be called
+           before)."""
+        cdef int n_outputs = self.n_outputs
+        cdef double* mean_init = self.mean_init
+
+        cdef int k
+
+        for k from 0 <= k < n_outputs:
+            buffer_value[k] = mean_init[k]
 
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
 
-    MSE = var_left + var_right
+        MSE = var_left + var_right
     """
 
     cdef double eval(self):
-        return self.var_left + self.var_right
+        cdef double* var_left = self.var_left
+        cdef double* var_right = self.var_right
+
+        cdef int n_outputs = self.n_outputs
+
+        cdef int k
+        cdef double total = 0.0
+
+        for k from 0 <= k < n_outputs:
+            total += var_left[k]
+            total += var_right[k]
+
+        return total / n_outputs
 
 
-################################################################################
-# Tree util functions
-#
+# ==============================================================================
+# Utils
+# ==============================================================================
 
+cdef inline np.ndarray intp_to_ndarray(int* data, int size):
+    """Encapsulate data into a 1D numpy array of int's."""
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
 
-def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
-    """Create a random sample mask where ``n_total_in_bag`` elements are set.
+cdef inline np.ndarray doublep_to_ndarray(double* data, int size):
+    """Encapsulate data into a 1D numpy array of double's."""
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
-    Parameters
-    ----------
-    n_total_samples : int
-        The length of the resulting mask.
-    n_total_in_bag : int
-        The number of elements in the sample mask which are set to 1.
-    random_state : np.RandomState
-        A numpy ``RandomState`` object.
-
-    Returns
-    -------
-    sample_mask : np.ndarray, shape=[n_total_samples]
-        An ndarray where ``n_total_in_bag`` elements are set to ``True``
-        the others are ``False``.
-    """
-    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] rand = \
-         random_state.rand(n_total_samples)
-    cdef np.ndarray[BOOL_t, ndim=1, mode="c"] sample_mask = \
-         np.zeros((n_total_samples,), dtype=np.int8)
-
-    cdef int n_bagged = 0
-    cdef int i = 0
-    for i in range(n_total_samples):
-        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
-            sample_mask[i] = 1
-            n_bagged += 1
-
-    return sample_mask.astype(np.bool)
-
-
-def _apply_tree(np.ndarray[DTYPE_t, ndim=2] X,
-                np.ndarray[np.int32_t, ndim=2] children,
-                np.ndarray[np.int32_t, ndim=1] feature,
-                np.ndarray[np.float64_t, ndim=1] threshold,
-                np.ndarray[np.int32_t, ndim=1] out):
-    """Finds the terminal region (=leaf node) for each sample in
-    `X` and sets the corresponding element in `out` to its node id."""
-    cdef int i = 0
-    cdef int n = X.shape[0]
-    cdef int node_id = 0
-    for i in xrange(n):
-        node_id = 0
-        # While node_id not a leaf
-        while children[node_id, 0] != -1 and children[node_id, 1] != -1:
-            if X[i, feature[node_id]] <= threshold[node_id]:
-                node_id = children[node_id, 0]
-            else:
-                node_id = children[node_id, 1]
-        out[i] = node_id
-
-
-def _predict_tree(np.ndarray[DTYPE_t, ndim=2] X,
-                  np.ndarray[np.int32_t, ndim=2] children,
-                  np.ndarray[np.int32_t, ndim=1] feature,
-                  np.ndarray[np.float64_t, ndim=1] threshold,
-                  np.ndarray[np.float64_t, ndim=2] values,
-                  np.ndarray[np.float64_t, ndim=2] pred):
-    """Finds the terminal region (=leaf node) values for each sample. """
-    cdef int i = 0
-    cdef int n = X.shape[0]
-    cdef int node_id = 0
-    cdef int K = values.shape[1]
-    for i in xrange(n):
-        node_id = 0
-        # While node_id not a leaf
-        while children[node_id, 0] != -1 and children[node_id, 1] != -1:
-            if X[i, feature[node_id]] <= threshold[node_id]:
-                node_id = children[node_id, 0]
-            else:
-                node_id = children[node_id, 1]
-        for k in xrange(K):
-            pred[i, k] = values[node_id, k]
-
-
-def _error_at_leaf(np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
-                   np.ndarray sample_mask, Criterion criterion,
-                   int n_samples):
-    """Compute criterion error at leaf with terminal region defined
-    by `sample_mask`. """
-    cdef int n_total_samples = y.shape[0]
-    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
-    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-    criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
-    return criterion.eval()
-
-
-cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
-                                     int *X_argsorted_i, BOOL_t *sample_mask,
-                                     int n_total_samples):
+cdef inline int _smallest_sample_larger_than(int sample_idx,
+                                             DTYPE_t* X_i,
+                                             int* X_argsorted_i,
+                                             BOOL_t* sample_mask,
+                                             int n_total_samples):
     """Find the largest next sample.
 
     Find the index in the `X_i` array for sample who's feature
@@ -529,288 +1558,37 @@ cdef int smallest_sample_larger_than(int sample_idx, DTYPE_t *X_i,
 
     return -1
 
-
-def _find_best_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                     np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
-                     np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
-                     np.ndarray sample_mask,
-                     int n_samples,
-                     int min_leaf,
-                     int max_features,
-                     Criterion criterion,
-                     object random_state):
-    """Find the best dimension and threshold that minimises the error.
+def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
     Parameters
     ----------
-    X : ndarray, shape (n_total_samples, n_features), dtype=DTYPE_t
-        The feature values.
+    n_total_samples : int
+        The length of the resulting mask.
 
-    y : ndarray, shape (n_total_samples,), dtype=float
-        The label to predict for each sample.
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
 
-    X_argsorted : ndarray, shape (n_samples, n_features)
-        Argsort of cols of `X`. `X_argsorted[0,j]` gives the example
-        index of the smallest value of feature `j`.
-
-    sample_mask : ndarray, shape (n_samples,), dtype=np.bool
-        A mask for the samples to be considered. Only samples `j` for which
-        sample_mask[j] != 0 are considered.
-
-    n_samples : int
-        The number of samples in the current sample_mask
-        (i.e. `sample_mask.sum()`).
-
-    min_leaf : int
-        The minimum number of samples required to be at a leaf node.
-
-    max_features : int
-        The number of features to consider when looking for the best split.
-
-    criterion : Criterion
-        The criterion function to be minimized.
-
-    random_state : RandomState
-        The numpy random state to use.
+    random_state : np.RandomState
+        A numpy ``RandomState`` object.
 
     Returns
     -------
-    best_i : int
-        The split feature or -1 if criterion not smaller than
-        `parent_split_error`.
-
-    best_t : DTYPE_t
-        The split threshold
-
-    best_error : DTYPE_t
-        The split error
-
-    initial_error : DTYPE_t
-        The initial error contained in the node.
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
     """
-    # Variables declarations
-    cdef int n_total_samples = X.shape[0]
-    cdef int n_features = X.shape[1]
-    cdef int i, a, b, best_i = -1
-    cdef int n_left = 0
-    cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = np.inf, best_t = np.inf
-    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
-    cdef DTYPE_t *X_i = NULL
-    cdef int *X_argsorted_i = NULL
-    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] rand = \
+         random_state.rand(n_total_samples)
+    cdef np.ndarray[BOOL_t, ndim=1, mode="c"] sample_mask = \
+         np.zeros((n_total_samples,), dtype=np.int8)
 
-    # Compute the column strides (increment in pointer elements to get
-    # from column i to i + 1) for `X` and `X_argsorted`
-    cdef int X_elem_stride = X.strides[0]
-    cdef int X_col_stride = X.strides[1]
-    cdef int X_stride = X_col_stride / X_elem_stride
-    cdef int X_argsorted_elem_stride = X_argsorted.strides[0]
-    cdef int X_argsorted_col_stride = X_argsorted.strides[1]
-    cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
+    cdef int n_bagged = 0
+    cdef int i = 0
 
-    # Compute the initial criterion value in the node
-    X_argsorted_i = <int *>X_argsorted.data
-    criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
-    initial_error = criterion.eval()
+    for i from 0 <= i < n_total_samples:
+        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+            sample_mask[i] = 1
+            n_bagged += 1
 
-    if initial_error == 0:  # break early if the node is pure
-        return best_i, best_t, initial_error, initial_error
-
-    best_error = initial_error
-
-    # Features to consider
-    if max_features < 0 or max_features == n_features:
-        features = np.arange(n_features)
-    else:
-        features = random_state.permutation(n_features)[:max_features]
-
-    # Look for the best split
-    for i in features:
-        # Get i-th col of X and X_sorted
-        X_i = (<DTYPE_t *>X.data) + X_stride * i
-        X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
-
-        # Reset the criterion for this feature
-        criterion.reset()
-
-        # Index of smallest sample in X_argsorted_i that is in the sample mask
-        a = 0
-        while sample_mask_ptr[X_argsorted_i[a]] == 0:
-            a = a + 1
-
-        # Consider splits between two consecutive samples
-        while True:
-            # Find the following larger sample
-            b = smallest_sample_larger_than(a, X_i, X_argsorted_i,
-                                            sample_mask_ptr, n_total_samples)
-            if b == -1:
-                break
-
-            # Better split than the best so far?
-            n_left = criterion.update(a, b, y_ptr, X_argsorted_i, sample_mask_ptr)
-
-            # Only consider splits that respect min_leaf
-            if n_left < min_leaf or (n_samples - n_left) < min_leaf:
-                a = b
-                continue
-
-            error = criterion.eval()
-
-            if error < best_error:
-                t = X_i[X_argsorted_i[a]] + \
-                    ((X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]]) / 2.0)
-                if t == X_i[X_argsorted_i[b]]:
-                    t = X_i[X_argsorted_i[a]]
-                best_i = i
-                best_t = t
-                best_error = error
-
-            # Proceed to the next interval
-            a = b
-
-    return best_i, best_t, best_error, initial_error
-
-def _find_best_random_split(np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                            np.ndarray[DTYPE_t, ndim=1, mode="c"] y,
-                            np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
-                            np.ndarray sample_mask,
-                            int n_samples,
-                            int min_leaf,
-                            int max_features,
-                            Criterion criterion,
-                            object random_state):
-    """Find the best dimension and threshold that minimises the error.
-
-    Parameters
-    ----------
-    X : ndarray, shape (n_total_samples, n_features), dtype=DTYPE_t
-        The feature values.
-
-    y : ndarray, shape (n_total_samples,), dtype=float
-        The label to predict for each sample.
-
-    X_argsorted : ndarray, shape (n_samples, n_features)
-        Argsort of cols of `X`. `X_argsorted[0,j]` gives the example
-        index of the smallest value of feature `j`.
-
-    sample_mask : ndarray, shape (n_samples,), dtype=np.bool
-        A mask for the samples to be considered. Only samples `j` for which
-        sample_mask[j] != 0 are considered.
-
-    n_samples : int
-        The number of samples in the current sample_mask
-        (i.e. `sample_mask.sum()`).
-
-    min_leaf : int
-        The minimum number of samples required to be at a leaf node.
-
-    max_features : int
-        The number of features to consider when looking for the best split.
-
-    criterion : Criterion
-        The criterion function to be minimized.
-
-    random_state : RandomState
-        The numpy random state to use.
-
-    Returns
-    -------
-    best_i : int
-        The split feature or -1 if criterion not smaller than
-        `parent_split_error`.
-
-    best_t : DTYPE_t
-        The split threshold
-
-    best_error : DTYPE_t
-        The split error
-
-    initial_error : DTYPE_t
-        The initial error contained in the node.
-    """
-    # Variables
-    cdef int n_total_samples = X.shape[0]
-    cdef int n_features = X.shape[1]
-    cdef int i, a, b, best_i = -1
-    cdef DTYPE_t t, initial_error, error
-    cdef DTYPE_t best_error = np.inf, best_t = np.inf
-    cdef DTYPE_t *y_ptr = <DTYPE_t *>y.data
-    cdef DTYPE_t *X_i = NULL
-    cdef int *X_argsorted_i = NULL
-    cdef BOOL_t *sample_mask_ptr = <BOOL_t *>sample_mask.data
-
-    # Compute the column strides (increment in pointer elements to get
-    # from column i to i + 1) for `X` and `X_argsorted`
-    cdef int X_elem_stride = X.strides[0]
-    cdef int X_col_stride = X.strides[1]
-    cdef int X_stride = X_col_stride / X_elem_stride
-    cdef int X_argsorted_elem_stride = X_argsorted.strides[0]
-    cdef int X_argsorted_col_stride = X_argsorted.strides[1]
-    cdef int X_argsorted_stride = X_argsorted_col_stride / X_argsorted_elem_stride
-
-    # Compute the initial criterion value
-    X_argsorted_i = <int *>X_argsorted.data
-    criterion.init(y_ptr, sample_mask_ptr, n_samples, n_total_samples)
-    initial_error = criterion.eval()
-
-    if initial_error == 0:  # break early if the node is pure
-        return best_i, best_t, best_error, initial_error
-
-    best_error = initial_error
-
-    # Features to consider
-    if max_features == n_features:
-        features = np.arange(n_features)
-    else:
-        features = random_state.permutation(n_features)[:max_features]
-
-    # Look for the best random split
-    for i in features:
-        # Get i-th col of X and X_sorted
-        X_i = (<DTYPE_t *>X.data) + X_stride * i
-        X_argsorted_i = (<int *>X_argsorted.data) + X_argsorted_stride * i
-
-        # Reset the criterion for this feature
-        criterion.reset()
-
-        # Find min and max
-        a = 0
-        while sample_mask_ptr[X_argsorted_i[a]] == 0:
-            a = a + 1
-
-        b = n_total_samples - 1
-        while sample_mask_ptr[X_argsorted_i[b]] == 0:
-            b = b - 1
-
-        if b <= a or X_i[X_argsorted_i[a]] == X_i[X_argsorted_i[b]]:
-            continue
-
-        # Draw a random threshold in [a, b)
-        t = X_i[X_argsorted_i[a]] + random_state.rand() * (X_i[X_argsorted_i[b]] - X_i[X_argsorted_i[a]])
-        if t == X_i[X_argsorted_i[b]]:
-            t = X_i[X_argsorted_i[a]]
-
-        # Find the sample just greater than t
-        c = a + 1
-
-        while True:
-            if sample_mask_ptr[X_argsorted_i[c]] != 0:
-                if X_i[X_argsorted_i[c]] > t or c == b:
-                    break
-
-            c += 1
-
-        # Better than the best so far?
-        n_left = criterion.update(0, c, y_ptr, X_argsorted_i, sample_mask_ptr)
-        error = criterion.eval()
-
-        if n_left < min_leaf or (n_samples - n_left) < min_leaf:
-            continue
-
-        if error < best_error:
-            best_i = i
-            best_t = t
-            best_error = error
-
-    return best_i, best_t, best_error, initial_error
+    return sample_mask.astype(np.bool)

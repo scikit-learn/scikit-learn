@@ -8,7 +8,6 @@ import numpy as np
 from scipy import linalg
 
 from . import check_random_state
-from . import deprecated
 from .fixes import qr_economic
 
 
@@ -200,13 +199,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("fast_svd is deprecated in 0.10 and will be removed in 0.12: "
-            "use randomized_svd instead")
-def fast_svd(M, k, p=10, n_iterations=0, transpose='auto', random_state=0):
-    return randomized_svd(M, k, n_oversamples=p, n_iterations=n_iterations,
-                          transpose=transpose, random_state=random_state)
-
-
 def logsumexp(arr, axis=0):
     """Computes the sum of arr assuming arr is in the log domain.
 
@@ -305,3 +297,62 @@ def weighted_mode(a, w, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
+
+
+def pinvh(a, cond=None, rcond=None, lower=True):
+    """Compute the (Moore-Penrose) pseudo-inverse of a hermetian matrix.
+
+    Calculate a generalized inverse of a symmetric matrix using its
+    eigenvalue decomposition and including all 'large' eigenvalues.
+
+    Parameters
+    ----------
+    a : array, shape (N, N)
+        Real symmetric or complex hermetian matrix to be pseudo-inverted
+    cond, rcond : float or None
+        Cutoff for 'small' eigenvalues.
+        Singular values smaller than rcond * largest_eigenvalue are considered
+        zero.
+
+        If None or -1, suitable machine precision is used.
+    lower : boolean
+        Whether the pertinent array data is taken from the lower or upper
+        triangle of a. (Default: lower)
+
+    Returns
+    -------
+    B : array, shape (N, N)
+
+    Raises
+    ------
+    LinAlgError
+        If eigenvalue does not converge
+
+    Examples
+    --------
+    >>> from numpy import *
+    >>> a = random.randn(9, 6)
+    >>> a = np.dot(a, a.T)
+    >>> B = pinvh(a)
+    >>> allclose(a, dot(a, dot(B, a)))
+    True
+    >>> allclose(B, dot(B, dot(a, B)))
+    True
+
+    """
+    a = np.asarray_chkfinite(a)
+    s, u = linalg.eigh(a, lower=lower)
+
+    if rcond is not None:
+        cond = rcond
+    if cond in [None, -1]:
+        t = u.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+        cond = factor[t] * np.finfo(t).eps
+
+    # unlike svd case, eigh can lead to negative eigenvalues
+    above_cutoff = (abs(s) > cond * np.max(abs(s)))
+    psigma_diag = np.zeros_like(s)
+    psigma_diag[above_cutoff] = 1.0 / s[above_cutoff]
+
+    return np.dot(u * psigma_diag, np.conjugate(u).T)

@@ -10,6 +10,8 @@ estimator, as a chain of transforms and estimators.
 
 from .base import BaseEstimator
 
+__all__ = ['Pipeline']
+
 
 # One round of beers on me if someone finds out why the backslash
 # is needed in the Attributes section so as not to upset sphinx.
@@ -192,3 +194,8 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
+
+    @property
+    def _pairwise(self):
+        # check if first estimator expects pairwise input
+        return getattr(self.steps[0][1], '_pairwise', False)

@@ -39,6 +39,30 @@ def test_linear_regression():
     assert_array_almost_equal(clf.predict(X), [0])
 
 
+def test_fit_intercept():
+    """
+    Test assertions on betas shape.
+    """
+    X2 = np.array([[0.38349978, 0.61650022],
+                   [0.58853682, 0.41146318]])
+    X3 = np.array([[0.27677969, 0.70693172, 0.01628859],
+                   [0.08385139, 0.20692515, 0.70922346]])
+    y = np.array([1, 1])
+
+    lr2_without_intercept = LinearRegression(fit_intercept=False).fit(X2, y)
+    lr2_with_intercept = LinearRegression(fit_intercept=True).fit(X2, y)
+
+    lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
+    lr3_with_intercept = LinearRegression(fit_intercept=True).fit(X3, y)
+
+    assert_equal(lr2_with_intercept.coef_.shape,
+                 lr2_without_intercept.coef_.shape)
+    assert_equal(lr3_with_intercept.coef_.shape,
+                 lr3_without_intercept.coef_.shape)
+    assert_equal(lr2_without_intercept.coef_.ndim,
+                 lr3_without_intercept.coef_.ndim)
+
+
 def test_linear_regression_sparse(random_state=0):
     "Test that linear regression also works with sparse data"
     random_state = check_random_state(random_state)

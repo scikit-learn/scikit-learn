@@ -10,8 +10,8 @@ cimport liblinear
 
 
 def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-                 np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
-                 solver_type, double eps, double bias, double C, 
+                 np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+                 int solver_type, double eps, double bias, double C, 
                  np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
     """
@@ -66,8 +66,8 @@ cdef _csr_train_wrap(np.int32_t n_features,
                  np.ndarray[np.float64_t, ndim=1, mode='c'] X_values,
                  np.ndarray[np.int32_t,   ndim=1, mode='c'] X_indices,
                  np.ndarray[np.int32_t,   ndim=1, mode='c'] X_indptr,
-                 np.ndarray[np.int32_t, ndim=1, mode='c'] Y, int
-                 solver_type, double eps, double bias, double C,
+                 np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+                 int solver_type, double eps, double bias, double C,
                  np.ndarray[np.int32_t, ndim=1] weight_label,
                  np.ndarray[np.float64_t, ndim=1] weight):
     cdef parameter *param
