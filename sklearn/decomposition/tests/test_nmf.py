@@ -131,10 +131,12 @@ def test_sparse_input():
 
     A = np.abs(random_state.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
-    T1 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
+    T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                  random_state=999).fit_transform(A)
 
     A = csr_matrix(A)
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
+    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                  random_state=999).fit_transform(A)
     assert_array_almost_equal(T1, T2)
 
 
