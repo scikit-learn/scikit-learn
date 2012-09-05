@@ -21,6 +21,24 @@ matplotlib.use('Agg')
 import token
 import tokenize
 
+###############################################################################
+# A tee object to redict streams to multiple outputs
+
+class Tee(object):
+
+    def __init__(self, file1, file2):
+        self.file1 = file1
+        self.file2 = file2
+
+    def write(self, data):
+        self.file1.write(data)
+        self.file2.write(data)
+
+    def flush(self):
+        self.file1.flush()
+        self.file2.flush()
+
+###############################################################################
 rst_template = """
 
 .. _example_%(short_fname)s:
@@ -47,6 +65,8 @@ plot_rst_template = """
 
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
+
+**Total running time of the example:** %(time_elapsed) 4i seconds
     """
 
 # The following strings are used when we have several pictures: we use
@@ -81,7 +101,7 @@ def extract_docstring(filename):
 
     docstring = ''
     first_par = ''
-    tokens = tokenize.generate_tokens(lines.__iter__().next)
+    tokens = tokenize.generate_tokens(iter(lines).next)
     for tok_type, tok_content, _, (erow, _), _ in tokens:
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
@@ -249,7 +269,10 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     image_path = os.path.join(image_dir, image_fname)
     stdout_path = os.path.join(image_dir,
                                'stdout_%s.txt' % base_image_name)
+    time_path = os.path.join(image_dir,
+                               'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
+    time_elapsed = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
@@ -259,6 +282,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             stdout = open(stdout_path).read()
         else:
             stdout = ''
+        if os.path.exists(time_path):
+            time_elapsed = float(open(time_path).read())
 
         if (not os.path.exists(first_image_file) or
                 os.stat(first_image_file).st_mtime <=
@@ -274,12 +299,14 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                 # created by the example get created in this directory
                 orig_stdout = sys.stdout
                 os.chdir(os.path.dirname(src_file))
-                my_stdout = StringIO()
+                my_buffer = StringIO()
+                my_stdout = Tee(sys.stdout, my_buffer)
                 sys.stdout = my_stdout
                 my_globals = {'pl': plt}
                 execfile(os.path.basename(src_file), my_globals)
+                time_elapsed = time() - t0
                 sys.stdout = orig_stdout
-                my_stdout = my_stdout.getvalue()
+                my_stdout = my_buffer.getvalue()
                 if '__doc__' in my_globals:
                     # The __doc__ is often printed in the example, we
                     # don't with to echo it
@@ -291,6 +318,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                     stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
                 open(stdout_path, 'w').write(stdout)
+                open(time_path, 'w').write('%f' % time_elapsed)
                 os.chdir(cwd)
 
                 # In order to save every figure we have two solutions :
@@ -314,8 +342,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
             finally:
                 os.chdir(cwd)
                 sys.stdout = orig_stdout
-
-            print " - time elapsed : %.2g sec" % (time() - t0)
+            
+            print " - time elapsed : %.2g sec" % time_elapsed
         else:
             figure_list = [f[len(image_dir):]
                             for f in glob.glob(image_path % '[1-9]')]

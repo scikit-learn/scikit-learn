@@ -183,6 +183,7 @@ def fit(
     # copy model.SV
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] support_vectors
     if kernel_index == 4:
+        # precomputed kernel
         support_vectors = np.empty((0, 0), dtype=np.float64)
     else:
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)

@@ -6,7 +6,7 @@ and cached in the past.
 from os.path import exists
 from os.path import join
 from nose import SkipTest
-from scikits.learn.datasets import get_data_home
+from sklearn.datasets import get_data_home
 
 
 def setup_module(module):

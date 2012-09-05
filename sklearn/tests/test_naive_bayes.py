@@ -1,4 +1,5 @@
-import cPickle as pickle
+import pickle
+from io import BytesIO
 import numpy as np
 import scipy.sparse
 
@@ -72,6 +73,7 @@ def test_mnnb():
     for X in [X2, scipy.sparse.csr_matrix(X2)]:
         # Check the ability to predict the learning set.
         clf = MultinomialNB()
+        assert_raises(ValueError, clf.fit, -X, y2)
         y_pred = clf.fit(X, y2).predict(X)
 
         assert_array_equal(y_pred, y2)
@@ -95,6 +97,10 @@ def test_discretenb_pickle():
         clf = pickle.load(StringIO(store.getvalue()))
 
         assert_array_equal(y_pred, clf.predict(X2))
+
+    store = BytesIO()
+    pickle.dump(clf, store)
+    clf = pickle.load(BytesIO(store.getvalue()))
 
 
 def test_input_check():

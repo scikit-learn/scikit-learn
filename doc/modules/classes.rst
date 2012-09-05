@@ -145,7 +145,6 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
-   datasets.load_20newsgroups
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
@@ -158,6 +157,7 @@ Loaders
    datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
+   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.load_sample_image
    datasets.load_sample_images
@@ -520,6 +520,8 @@ For dense data
    linear_model.LassoCV
    linear_model.ElasticNet
    linear_model.ElasticNetCV
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskElasticNet
    linear_model.Lars
    linear_model.LassoLars
    linear_model.LarsCV
@@ -560,8 +562,8 @@ For sparse data
    :toctree: generated/
    :template: class.rst
 
-   linear_model.sparse.Lasso
-   linear_model.sparse.ElasticNet
+   linear_model.Lasso
+   linear_model.ElasticNet
    linear_model.sparse.SGDClassifier
    linear_model.sparse.SGDRegressor
    linear_model.LogisticRegression
@@ -586,6 +588,7 @@ For sparse data
 
     manifold.LocallyLinearEmbedding
     manifold.Isomap
+    manifold.MDS
 
 .. autosummary::
     :toctree: generated
@@ -619,6 +622,8 @@ Classification metrics
    metrics.recall_score
    metrics.fbeta_score
    metrics.f1_score
+   metrics.auc_score
+   metrics.average_precision_score
    metrics.precision_recall_fscore_support
    metrics.classification_report
    metrics.precision_recall_curve
@@ -651,13 +656,15 @@ See the :ref:`clustering` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
-   metrics.adjusted_rand_score
    metrics.adjusted_mutual_info_score
+   metrics.adjusted_rand_score
+   metrics.completeness_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
-   metrics.completeness_score
-   metrics.v_measure_score
+   metrics.mutual_info_score
+   metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.v_measure_score
 
 Pairwise metrics
 ----------------
@@ -855,6 +862,7 @@ Pairwise metrics
    preprocessing.Normalizer
    preprocessing.Binarizer
    preprocessing.LabelBinarizer
+   preprocessing.LabelEncoder
    preprocessing.KernelCenterer
 
 .. autosummary::

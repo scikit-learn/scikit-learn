@@ -182,10 +182,13 @@ class TestBaseHMM(TestCase):
 
 
 def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
-    hmm.fit(obs, n_iter=1, **kwargs)
+    hmm.n_iter = 1
+    hmm.fit(obs)
     loglikelihoods = []
     for n in xrange(n_iter):
-        hmm.fit(obs, n_iter=1, init_params='', **kwargs)
+        hmm.n_iter = 1
+        hmm.init_params = ''
+        hmm.fit(obs)
         loglikelihoods.append(sum(hmm.score(x) for x in obs))
     return loglikelihoods
 
@@ -293,7 +296,7 @@ class GaussianHMMBaseTester(object):
         samples = h.sample(n)[0]
         self.assertEquals(samples.shape, (n, self.n_features))
 
-    def test_fit(self, params='stmc', n_iter=25, verbose=False, **kwargs):
+    def test_fit(self, params='stmc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
         h.transmat_ = hmm.normalize(self.transmat
@@ -305,7 +308,8 @@ class GaussianHMMBaseTester(object):
         train_obs = [h.sample(n=10)[0] for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0)
+        h.n_iter = 0
+        h.fit(train_obs)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)[1:]
@@ -333,7 +337,7 @@ class GaussianHMMBaseTester(object):
         # ValueError: setting an array element with a sequence.
         h.fit(obs)
 
-    def test_fit_with_priors(self, params='stmc', n_iter=10, verbose=False):
+    def test_fit_with_priors(self, params='stmc', n_iter=5, verbose=False):
         startprob_prior = 10 * self.startprob + 2.0
         transmat_prior = 10 * self.transmat + 2.0
         means_prior = self.means
@@ -360,7 +364,8 @@ class GaussianHMMBaseTester(object):
         train_obs = [h.sample(n=10)[0] for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs[:1], n_iter=0)
+        h.n_iter = 0
+        h.fit(train_obs[:1])
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params)[1:]
@@ -466,7 +471,7 @@ class MultinomialHMMTestCase(TestCase):
         self.assertEquals(len(samples), n)
         self.assertEquals(len(np.unique(samples)), self.n_symbols)
 
-    def test_fit(self, params='ste', n_iter=15, verbose=False, **kwargs):
+    def test_fit(self, params='ste', n_iter=5, verbose=False, **kwargs):
         h = self.h
 
         # Create training data by sampling from the HMM.
@@ -591,7 +596,8 @@ class GMMHMMBaseTester(object):
             random_state=self.prng)[0] for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.fit(train_obs, n_iter=0)
+        h.n_iter = 0
+        h.fit(train_obs)
         h.transmat_ = hmm.normalize(self.prng.rand(self.n_components,
                                                    self.n_components), axis=1)
         h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))

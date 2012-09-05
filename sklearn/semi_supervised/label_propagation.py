@@ -56,6 +56,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 
 import numpy as np
 from scipy import sparse
+from abc import ABCMeta, abstractmethod
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
@@ -93,6 +94,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         Convergence tolerance: threshold to consider the system at steady
         state
     """
+    __metaclass__ = ABCMeta
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  alpha=1, max_iters=30, tol=1e-3):
@@ -125,6 +127,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             raise ValueError("%s is not a valid kernel. Only rbf and knn"
                              " are supported at this time" % self.kernel)
 
+    @abstractmethod
     def _build_graph(self):
         raise NotImplementedError("Graph construction must be implemented"
                                   " to fit a label propagation model.")

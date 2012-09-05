@@ -35,6 +35,10 @@ class AgglomerationTransform(TransformerMixin):
         """
         X = np.asarray(X)
         nX = []
+        if len(self.labels_) != X.shape[1]:
+            raise ValueError("X has a different number of features than "
+                    "during fitting.")
+
         for l in np.unique(self.labels_):
             nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
         return np.array(nX).T

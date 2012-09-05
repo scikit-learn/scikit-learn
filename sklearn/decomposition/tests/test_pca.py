@@ -295,7 +295,7 @@ def test_probabilistic_pca_1():
     ppca = ProbabilisticPCA(n_components=2)
     ppca.fit(X)
     ll1 = ppca.score(X)
-    h = 0.5 * np.log(2 * np.pi * np.exp(1) / 0.1 ** 2) * p
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
     np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
 
 

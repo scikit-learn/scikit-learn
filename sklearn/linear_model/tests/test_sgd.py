@@ -133,7 +133,16 @@ class CommonTest(object):
         assert_true(hasattr(clf, "coef_"))
 
         clf.fit(X[:, :-1], Y)
-        assert_true(True)
+
+    def test_input_format(self):
+        """Input format tests. """
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        Y_ = np.array(Y)[:, np.newaxis]
+        clf.fit(X, Y_)
+
+        Y_ = np.c_[Y_, Y_]
+        assert_raises(ValueError, clf.fit, X, Y_)
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
@@ -263,18 +272,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
     def test_sgd_proba(self):
-        """Check SGD.predict_proba for log loss only"""
+        """Check SGD.predict_proba"""
 
         # hinge loss does not allow for conditional prob estimate
         clf = self.factory(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
         assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
 
-        # log loss implements the logistic regression prob estimate
-        clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X, Y)
-        p = clf.predict_proba([3, 2])
-        assert_greater(p, 0.5)
-        p = clf.predict_proba([-1, -1])
-        assert_less(p, 0.5)
+        # the log and modified_huber losses can output "probability" estimates
+        for loss in ("log", "modified_huber"):
+            clf = self.factory(loss=loss, alpha=0.01, n_iter=10).fit(X, Y)
+            p = clf.predict_proba([3, 2])
+            assert_true(p[0, 1] > 0.5)
+            p = clf.predict_proba([-1, -1])
+            assert_true(p[0, 1] < 0.5)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
@@ -423,7 +433,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X3, Y3)
 
     def test_partial_fit_binary(self):
-        third = X.shape[0] / 3
+        third = X.shape[0] // 3
         clf = self.factory(alpha=0.01)
         classes = np.unique(Y)
 
@@ -442,7 +452,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(y_pred, true_result)
 
     def test_partial_fit_multiclass(self):
-        third = X2.shape[0] / 3
+        third = X2.shape[0] // 3
         clf = self.factory(alpha=0.01)
         classes = np.unique(Y2)
 
@@ -484,6 +494,21 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_regression_losses(self):
+        clf = self.factory(alpha=0.01, learning_rate="constant",
+                           eta0=0.1, loss="epsilon_insensitive")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
+        clf = self.factory(alpha=0.01, loss="huber")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
+        clf = self.factory(alpha=0.01, learning_rate="constant", eta0=0.01,
+                           loss="squared_loss")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -516,9 +541,9 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         clf = self.factory(loss='squared_loss')
         assert_true(isinstance(clf.loss_function, linear_model.SquaredLoss))
 
-        clf = self.factory(loss='huber', p=0.5)
+        clf = self.factory(loss='huber', epsilon=0.5)
         assert_true(isinstance(clf.loss_function, linear_model.Huber))
-        assert_equal(clf.p, 0.5)
+        assert_equal(clf.epsilon, 0.5)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -549,6 +574,32 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         score = clf.score(X, y)
         assert_greater(score, 0.5)
 
+    def test_sgd_epsilon_insensitive(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
+                           alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_true(score > 0.99)
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() \
+            + np.random.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
+                           alpha=0.1, n_iter=20,
+                           fit_intercept=False)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_true(score > 0.5)
+
     def test_sgd_huber_fit(self):
         xmin, xmax = -5, 5
         n_samples = 100
@@ -558,7 +609,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
-        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, n_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -567,7 +618,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         # simple linear function with noise
         y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-        clf = self.factory(loss="huber", p=0.1, alpha=0.1, n_iter=20,
+        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, n_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -599,7 +650,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                                     err_msg=err_msg)
 
     def test_partial_fit(self):
-        third = X.shape[0] / 3
+        third = X.shape[0] // 3
         clf = self.factory(alpha=0.01)
 
         clf.partial_fit(X[:third], Y[:third])

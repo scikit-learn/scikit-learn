@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 from nose.tools import raises
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_raises
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
@@ -22,6 +22,8 @@ from ..metrics import precision_recall_fscore_support
 from ..metrics import precision_score
 from ..metrics import recall_score
 from ..metrics import roc_curve
+from ..metrics import auc_score
+from ..metrics import average_precision_score
 from ..metrics import zero_one
 from ..metrics import hinge_loss
 
@@ -77,6 +79,24 @@ def test_roc_curve():
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
+    assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+
+
+def test_roc_returns_consistency():
+    """Test whether the returned threshold matches up with tpr"""
+    # make small toy dataset
+    y_true, _, probas_pred = make_prediction(binary=True)
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+
+    # use the given thresholds to determine the tpr
+    tpr_correct = []
+    for t in range(len(thresholds)):
+        tp = np.sum((probas_pred >= thresholds[t]) & y_true)
+        p = np.sum(y_true)
+        tpr_correct.append(1.0 * tp / p)
+
+    # compare tpr and tpr_correct to see if the thresholds' order was correct
+    assert_array_almost_equal(tpr, tpr_correct, decimal=2)
 
 
 @raises(ValueError)
@@ -320,6 +340,8 @@ def test_precision_recall_curve():
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.82, 2)
+    assert_array_almost_equal(precision_recall_auc,
+            average_precision_score(y_true, probas_pred))
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
@@ -347,7 +369,12 @@ def test_losses_at_limits():
     # test limit cases
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
-    assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
+    assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
+
+
+def test_r2_one_case_error():
+    # test whether r2_score raises error given one point
+    assert_raises(ValueError, r2_score, [0], [0])
 
 
 def test_symmetry():

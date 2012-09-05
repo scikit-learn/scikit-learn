@@ -112,7 +112,7 @@ def teardown_module():
 
 @raises(IOError)
 def test_load_empty_lfw_people():
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
 
 
 def test_load_fake_lfw_people():
@@ -152,7 +152,7 @@ def test_load_fake_lfw_people_too_restrictive():
 
 @raises(IOError)
 def test_load_empty_lfw_pairs():
-    lfw_people = load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
 
 
 def test_load_fake_lfw_pairs():
