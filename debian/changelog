@@ -1,3 +1,10 @@
+scikit-learn (0.12.0-1) experimental; urgency=low
+
+  * Fresh upstrem release:
+    - all debian/up_ patches removed, deb_ patched updated
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Sep 2012 15:15:18 -0400
+
 scikit-learn (0.11.0-2) unstable; urgency=low
 
   * Patches to resolve FTBFS'es (Closes: #680246)
