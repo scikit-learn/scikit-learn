@@ -6,10 +6,8 @@ import copy
 import inspect
 import numpy as np
 from scipy import sparse
-import warnings
 
 from .metrics import r2_score
-from .utils import deprecated
 
 
 ###############################################################################
@@ -186,10 +184,6 @@ class BaseEstimator(object):
         args.sort()
         return args
 
-    @deprecated("to be removed in v0.12; use get_params() instead")
-    def _get_params(self, deep=True):
-        return self.get_params(deep)
-
     def get_params(self, deep=True):
         """Get parameters for the estimator
 
@@ -247,13 +241,6 @@ class BaseEstimator(object):
                             % (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
-
-    def _set_params(self, **params):
-        if params != {}:
-            warnings.warn("Passing estimator parameters to fit is deprecated;"
-                          " use set_params instead",
-                          category=DeprecationWarning)
-        return self.set_params(**params)
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -326,6 +313,28 @@ class RegressorMixin(object):
 
 
 ###############################################################################
+class ClusterMixin(object):
+    """Mixin class for all cluster estimators in scikit-learn"""
+    def fit_predict(self, X, y=None):
+        """Performs clustering on X and returns cluster labels.
+
+        This is a non-optimized default implementation.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            cluster labels
+        """
+        self.fit(X)
+        return self.labels_
+
+
+###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn"""
 
@@ -361,6 +370,12 @@ class TransformerMixin(object):
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
+
+
+###############################################################################
+class MetaEstimatorMixin(object):
+    """Mixin class for all meta estimators in scikit-learn"""
+    # this is just a tag for the moment
 
 
 ###############################################################################

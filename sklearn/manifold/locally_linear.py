@@ -8,8 +8,8 @@ import numpy as np
 import warnings
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
-from ..base import BaseEstimator
-from ..utils import array2d, check_random_state
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import array2d, check_random_state, check_arrays
 from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors
 
@@ -124,6 +124,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+                    Warning: ARPACK can be unstable for some problems.  It is
+                    best to try several random seeds in order to check results.
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
                     or matrix type.  This method should be avoided for
@@ -136,9 +138,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     max_iter : maximum number of iterations for 'arpack' method
         not used if eigen_solver=='dense'
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
-        Used to determine the starting vector for arpack iterations
+    random_state: numpy.RandomState or int, optional
+        The generator or seed used to determine the starting vector for arpack
+        iterations.  Defaults to numpy.random.
+
     """
     if eigen_solver == 'auto':
         if M.shape[0] > 200 and k + k_skip < 10:
@@ -161,9 +164,6 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
                              "ill-behaved.  method='dense' is recommended. "
                              "See online documentation for more information."
                              % msg)
-        except:
-            #let other errors pass through
-            raise
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
@@ -207,6 +207,8 @@ def locally_linear_embedding(
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+                    Warning: ARPACK can be unstable for some problems.  It is
+                    best to try several random seeds in order to check results.
 
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
@@ -239,8 +241,9 @@ def locally_linear_embedding(
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: numpy.RandomState or int, optional
+        The generator or seed used to determine the starting vector for arpack
+        iterations.  Defaults to numpy.random.
 
     Returns
     -------
@@ -274,8 +277,8 @@ def locally_linear_embedding(
 
     if out_dim:
         warnings.warn("Parameter ``out_dim`` was renamed to ``n_components`` "
-                "and is now deprecated.", DeprecationWarning,
-                stacklevel=2)
+                      "and is now deprecated. This will be removed in 0.13.",
+                      DeprecationWarning, stacklevel=2)
         n_components = out_dim
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
@@ -500,7 +503,7 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator):
+class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """Locally Linear Embedding
 
     Parameters
@@ -521,6 +524,8 @@ class LocallyLinearEmbedding(BaseEstimator):
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
                     or general linear operator.
+                    Warning: ARPACK can be unstable for some problems.  It is
+                    best to try several random seeds in order to check results.
 
         dense  : use standard dense matrix operations for the eigenvalue
                     decomposition.  For this method, M must be an array
@@ -558,9 +563,9 @@ class LocallyLinearEmbedding(BaseEstimator):
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
-        Used to determine the starting vector for arpack iterations
+    random_state: numpy.RandomState or int, optional
+        The generator or seed used to determine the starting vector for arpack
+        iterations.  Defaults to numpy.random.
 
     Attributes
     ----------
@@ -597,8 +602,9 @@ class LocallyLinearEmbedding(BaseEstimator):
 
         if out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=2)
+                          "``n_components`` and is now deprecated. This will "
+                          "be removed in 0.13.", DeprecationWarning,
+                          stacklevel=2)
         self.out_dim = out_dim
 
         self.n_neighbors = n_neighbors
@@ -611,18 +617,21 @@ class LocallyLinearEmbedding(BaseEstimator):
         self.hessian_tol = hessian_tol
         self.modified_tol = modified_tol
         self.random_state = random_state
-        self.nbrs_ = NearestNeighbors(n_neighbors,
-                                      algorithm=neighbors_algorithm)
+        self.neighbors_algorithm = neighbors_algorithm
 
     def _fit_transform(self, X):
+        self.nbrs_ = NearestNeighbors(self.n_neighbors,
+                algorithm=self.neighbors_algorithm)
         if self.out_dim:
             warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=3)
+                          "``n_components`` and is now deprecated. This will "
+                          "be removed in 0.13.", DeprecationWarning,
+                          stacklevel=3)
             self.n_components = self.out_dim
             self.out_dim = None
 
         self.random_state = check_random_state(self.random_state)
+        X, = check_arrays(X, sparse_format='dense')
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(

@@ -135,8 +135,8 @@
          <span class="linkdescr">
                 <a href="modules/svm.html">Support vector machines</a>,
                 <a href="modules/linear_model.html">linear models</a>,
-                <a href="modules/naive_bayes.html">naives Bayes</a>,
-                <a href="modules/gaussian_process.html">Gaussian process</a>...
+                <a href="modules/naive_bayes.html">naive Bayes</a>,
+                <a href="modules/gaussian_process.html">Gaussian processes</a>...
          </span></p>
     </td><td align="center" width="32%">
       <p class="biglink"><a class="biglink" href="unsupervised_learning.html">

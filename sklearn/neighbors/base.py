@@ -8,13 +8,14 @@
 import warnings
 
 import numpy as np
+from abc import ABCMeta, abstractmethod
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
 
 from .ball_tree import BallTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
-from ..utils import safe_asarray, atleast2d_or_csr
+from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
 
 
 class NeighborsWarning(UserWarning):
@@ -60,7 +61,7 @@ def _get_weights(dist, weights):
         return None
     elif weights == 'distance':
         with np.errstate(divide='ignore'):
-            dist = 1./dist
+            dist = 1. / dist
         return dist
     elif callable(weights):
         return weights(dist)
@@ -71,6 +72,12 @@ def _get_weights(dist, weights):
 
 class NeighborsBase(BaseEstimator):
     """Base class for nearest neighbors estimators."""
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self):
+        pass
+
     #FIXME: include float parameter p for using different distance metrics.
     # this can be passed directly to BallTree and cKDTree.  Brute-force will
     # rely on soon-to-be-updated functionality in the pairwise module.
@@ -131,7 +138,9 @@ class NeighborsBase(BaseEstimator):
 
         if self._fit_method == 'auto':
             # BallTree outperforms the others in nearly any circumstance.
-            if self.n_neighbors < self._fit_X.shape[0] / 2:
+            if self.n_neighbors is None:
+                self._fit_method = 'ball_tree'
+            elif self.n_neighbors < self._fit_X.shape[0] // 2:
                 self._fit_method = 'ball_tree'
             else:
                 self._fit_method = 'brute'
@@ -188,7 +197,7 @@ class KNeighborsMixin(object):
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print neigh.kneighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        >>> print(neigh.kneighbors([1., 1., 1.])) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
@@ -366,7 +375,7 @@ class RadiusNeighborsMixin(object):
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print neigh.radius_neighbors([1., 1., 1.]) # doctest: +ELLIPSIS
+        >>> print(neigh.radius_neighbors([1., 1., 1.])) # doctest: +ELLIPSIS
         (array([[ 1.5,  0.5]]...), array([[1, 2]]...)
 
         The first array returned contains the distances to all points which
@@ -548,7 +557,8 @@ class SupervisedFloatMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of float values.
         """
-        self._y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format="csr")
+        self._y = y
         return self._fit(X)
 
 
@@ -565,7 +575,9 @@ class SupervisedIntegerMixin(object):
         y : {array-like, sparse matrix}, shape = [n_samples]
             Target values, array of integer values.
         """
-        self._y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format="csr")
+        self._y = y
+        self._classes = np.sort(np.unique(y))
         return self._fit(X)
 
 

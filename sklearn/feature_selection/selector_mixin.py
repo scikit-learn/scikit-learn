@@ -1,8 +1,10 @@
+# Authors: Gilles Louppe, Mathieu Blondel
+# License: BSD
 
 import numpy as np
 
 from ..base import TransformerMixin
-from ..utils import safe_mask
+from ..utils import safe_mask, atleast2d_or_csr
 
 
 class SelectorMixin(TransformerMixin):
@@ -34,6 +36,7 @@ class SelectorMixin(TransformerMixin):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        X = atleast2d_or_csr(X)
         # Retrieve importance vector
         if hasattr(self, "feature_importances_"):
             importances = self.feature_importances_
@@ -52,6 +55,9 @@ class SelectorMixin(TransformerMixin):
             raise ValueError("Missing `feature_importances_` or `coef_`"
                              " attribute, did you forget to set the "
                              "estimator's parameter to compute it?")
+        if len(importances) != X.shape[1]:
+            raise ValueError("X has different number of features than"
+                    " during model fitting.")
 
         # Retrieve threshold
         if threshold is None:

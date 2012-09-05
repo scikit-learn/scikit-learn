@@ -48,7 +48,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import Bunch
 from .base import load_files
-from ..utils import check_random_state, deprecated
+from ..utils import check_random_state
 from ..utils.fixes import in1d
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
@@ -270,13 +270,3 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
                          "['train', 'test', 'all']" % subset)
 
     return Bunch(data=data, target=target, target_names=target_names)
-
-
-@deprecated("Use fetch_20newsgroups instead with download_if_missing=False")
-def load_20newsgroups(download_if_missing=False, **kwargs):
-    """Alias for fetch_20newsgroups(download_if_missing=False).
-
-    See fetch_20newsgroups.__doc__ for documentation and parameter list.
-    """
-    return fetch_20newsgroups(download_if_missing=download_if_missing,
-            **kwargs)

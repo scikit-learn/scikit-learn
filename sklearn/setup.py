@@ -14,7 +14,7 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('sklearn', parent_package, top_path)
 
-    config.add_subpackage('check_build')
+    config.add_subpackage('__check_build')
     config.add_subpackage('svm')
     config.add_subpackage('datasets')
     config.add_subpackage('datasets/tests')
@@ -43,7 +43,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('semi_supervised')
     config.add_subpackage("tree")
     config.add_subpackage("tree/tests")
-    config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')

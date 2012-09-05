@@ -13,6 +13,7 @@ from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import Scaler
@@ -144,6 +145,22 @@ def test_scaler_without_centering():
     assert_true(X_csr_scaled_back is not X_csr)
     assert_true(X_csr_scaled_back is not X_csr_scaled)
     assert_array_almost_equal(X_scaled_back, X)
+
+
+def test_scaler_without_copy():
+    """Check that Scaler.fit does not change input"""
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
+    X_csr = sp.csr_matrix(X)
+
+    X_copy = X.copy()
+    Scaler(copy=False).fit(X)
+    assert_array_equal(X, X_copy)
+
+    X_csr_copy = X_csr.copy()
+    Scaler(with_mean=False, copy=False).fit(X_csr)
+    assert_array_equal(X_csr.toarray(), X_csr_copy.toarray())
 
 
 def test_scale_sparse_with_mean_raise_exception():
@@ -326,14 +343,14 @@ def test_label_binarizer():
     lb = LabelBinarizer()
 
     # two-class case
-    inp = np.array([0, 1, 1, 0])
+    inp = ["neg", "pos", "pos", "neg"]
     expected = np.array([[0, 1, 1, 0]]).T
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
     # multi-class case
-    inp = np.array([3, 2, 1, 2, 0])
+    inp = ["spam", "ham", "eggs", "ham", "0"]
     expected = np.array([[0, 0, 0, 1],
                          [0, 0, 1, 0],
                          [0, 1, 0, 0],
@@ -411,6 +428,49 @@ def test_label_binarizer_errors():
 
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
+
+
+def test_label_encoder():
+    """Test LabelEncoder's transform and inverse_transform methods"""
+    le = LabelEncoder()
+    le.fit([1, 1, 4, 5, -1, 0])
+    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
+    assert_array_equal(le.transform([0, 1, 4, 4, 5, -1, -1]),
+                       [1, 2, 3, 3, 4, 0, 0])
+    assert_array_equal(le.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
+                       [0, 1, 4, 4, 5, -1, -1])
+    assert_raises(ValueError, le.transform, [0, 6])
+
+
+def test_label_encoder_fit_transform():
+    """Test fit_transform"""
+    le = LabelEncoder()
+    ret = le.fit_transform([1, 1, 4, 5, -1, 0])
+    assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
+
+    le = LabelEncoder()
+    ret = le.fit_transform(["paris", "paris", "tokyo", "amsterdam"])
+    assert_array_equal(ret, [1, 1, 2, 0])
+
+
+def test_label_encoder_string_labels():
+    """Test LabelEncoder's transform and inverse_transform methods with
+    non-numeric labels"""
+    le = LabelEncoder()
+    le.fit(["paris", "paris", "tokyo", "amsterdam"])
+    assert_array_equal(le.classes_, ["amsterdam", "paris", "tokyo"])
+    assert_array_equal(le.transform(["tokyo", "tokyo", "paris"]),
+                       [2, 2, 1])
+    assert_array_equal(le.inverse_transform([2, 2, 1]),
+                       ["tokyo", "tokyo", "paris"])
+    assert_raises(ValueError, le.transform, ["london"])
+
+
+def test_label_encoder_errors():
+    """Check that invalid arguments yield ValueError"""
+    le = LabelEncoder()
+    assert_raises(ValueError, le.transform, [])
+    assert_raises(ValueError, le.inverse_transform, [])
 
 
 def test_label_binarizer_iris():

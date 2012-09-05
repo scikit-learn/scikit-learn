@@ -38,6 +38,8 @@ Some advantages of decision trees are:
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
+    - Able to handle multi-output problems.
+
     - Uses a white box model. If a given situation is observable in a model,
       the explanation for the condition is easily explained by boolean logic.
       By constrast, in a black box model (e.g., in an artificial neural
@@ -48,6 +50,7 @@ Some advantages of decision trees are:
 
     - Performs well even if its assumptions are somewhat violated by
       the true model from which the data were generated.
+
 
 The disadvantages of decision trees include:
 
@@ -78,6 +81,7 @@ The disadvantages of decision trees include:
       It is therefore recommended to balance the dataset prior to fitting
       with the decision tree.
 
+
 .. _tree_classification:
 
 Classification
@@ -87,8 +91,8 @@ Classification
 classification on a dataset.
 
 As other classifiers, :class:`DecisionTreeClassifier` take as input two
-arrays: an array X of size [n_samples, n_features] holding the training
-samples, and an array Y of integer values, size [n_samples], holding
+arrays: an array X of size ``[n_samples, n_features]`` holding the training
+samples, and an array Y of integer values, size ``[n_samples]``, holding
 the class labels for the training samples::
 
     >>> from sklearn import tree
@@ -100,7 +104,7 @@ the class labels for the training samples::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([1])
+    array([ 1.])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -136,7 +140,7 @@ iris dataset::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict(iris.data[0, :])
-    array([0])
+    array([ 0.])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -146,6 +150,7 @@ After being fitted, the model can then be used to predict new values::
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_iris.py`
+
 
 .. _tree_regression:
 
@@ -176,6 +181,67 @@ instead of integer values::
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_tree_regression.py`
+
+
+.. _tree_multioutput:
+
+Multi-output problems
+=====================
+
+A multi-output problem is a supervised learning problem with several outputs
+to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
+
+When there is no correlation between the outputs, a very simple way to solve
+this kind of problem is to build n independent models, i.e. one for each
+output, and then to use those models to independently predict each one of the n
+outputs. However, because it is likely that the output values related to the
+same input are themselves correlated, an often better way is to build a single
+model capable of predicting simultaneously all n outputs. First, it requires
+lower training time since only a single estimator is built. Second, the
+generalization accuracy of the resulting estimator may often be increased.
+
+With regard to decision trees, this strategy can readily be used to support
+multi-output problems. This requires the following changes:
+
+  - Store n output values in leaves, instead of 1;
+  - Use splitting criteria that compute the average reduction across all
+    n outputs.
+
+This module offers support for multi-output problems by implementing this
+strategy in both :class:`DecisionTreeClassifier` and
+:class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
+of size ``[n_samples, n_outputs]`` then the resulting estimator will:
+
+  * Output n_output values upon ``predict``;
+
+  * Output a list of n_output arrays of class probabilities upon
+    ``predict_proba``.
+
+
+The use of multi-output trees for regression is demonstrated in
+:ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
+X is a single real value and the outputs Y are the sine and cosine of X.
+
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_1.png
+   :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
+   :scale: 75
+   :align: center
+
+The use of multi-output trees for classification is demonstrated in
+:ref:`example_ensemble_plot_forest_multioutput.py`. In this example, the inputs
+X are the pixels of the upper half of faces and the outputs Y are the pixels of
+the lower half of those faces.
+
+.. figure:: ../auto_examples/ensemble/images/plot_forest_multioutput_1.png
+   :target: ../auto_examples/ensemble/plot_forest_multioutput.html
+   :scale: 75
+   :align: center
+
+.. topic:: Examples:
+
+ * :ref:`example_tree_plot_tree_regression_multioutput.py`
+ * :ref:`example_ensemble_plot_forest_multioutput.py`
+
 
 .. _tree_complexity:
 
@@ -228,6 +294,7 @@ slowing down the algorithm significantly.
 
 Tips on practical use
 =====================
+
   * Decision trees tend to overfit on data with a large number of features.
     Getting the right ratio of samples to number of features is important, since
     a tree with few samples in high dimensional space is very likely to overfit.
@@ -258,6 +325,7 @@ Tips on practical use
 
   * All decision trees use Fortran ordered ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
+
 
 .. _tree_algorithms:
 
@@ -296,6 +364,7 @@ scikit-learn uses an optimised version of the CART algorithm.
 
 .. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+
 
 .. _tree_mathematical_formulation:
 

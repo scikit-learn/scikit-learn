@@ -2,17 +2,30 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
+from collections import Sequence
+
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 from .utils import warn_if_not_float
+from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
 from .utils.sparsefuncs import inplace_csr_column_scale
 from .utils.sparsefuncs import mean_variance_axis0
+
+__all__ = ['Binarizer',
+           'KernelCenterer',
+           'LabelBinarizer',
+           'LabelEncoder',
+           'Normalizer',
+           'Scaler',
+           'binarize',
+           'normalize',
+           'scale']
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -202,7 +215,6 @@ class Scaler(BaseEstimator, TransformerMixin):
             _, var = mean_variance_axis0(X)
             self.std_ = np.sqrt(var)
             self.std_[var == 0.0] = 1.0
-            inplace_csr_column_scale(X, 1 / self.std_)
             return self
         else:
             X = np.asarray(X)
@@ -504,9 +516,122 @@ def _is_label_indicator_matrix(y):
 
 
 def _is_multilabel(y):
-    return isinstance(y[0], tuple) or \
-           isinstance(y[0], list) or \
-           _is_label_indicator_matrix(y)
+    # the explicit check for ndarray is for forward compatibility; future
+    # versions of Numpy might want to register ndarray as a Sequence
+    return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
+       and not isinstance(y[0], basestring) \
+        or _is_label_indicator_matrix(y)
+
+
+class LabelEncoder(BaseEstimator, TransformerMixin):
+    """Encode labels with value between 0 and n_classes-1.
+
+    Attributes
+    ----------
+    `classes_`: array of shape [n_class]
+        Holds the label for each class.
+
+    Examples
+    --------
+    `LabelEncoder` can be used to normalize labels.
+
+    >>> from sklearn import preprocessing
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit([1, 2, 2, 6])
+    LabelEncoder()
+    >>> le.classes_
+    array([1, 2, 6])
+    >>> le.transform([1, 1, 2, 6])
+    array([0, 0, 1, 2])
+    >>> le.inverse_transform([0, 0, 1, 2])
+    array([1, 1, 2, 6])
+
+    It can also be used to transform non-numerical labels (as long as they are
+    hashable and comparable) to numerical labels.
+
+    >>> le = preprocessing.LabelEncoder()
+    >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
+    LabelEncoder()
+    >>> list(le.classes_)
+    ['amsterdam', 'paris', 'tokyo']
+    >>> le.transform(["tokyo", "tokyo", "paris"])
+    array([2, 2, 1])
+    >>> list(le.inverse_transform([2, 2, 1]))
+    ['tokyo', 'tokyo', 'paris']
+
+    """
+
+    def _check_fitted(self):
+        if not hasattr(self, "classes_"):
+            raise ValueError("LabelNormalizer was not fitted yet.")
+
+    def fit(self, y):
+        """Fit label encoder
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self.classes_ = np.unique(y)
+        return self
+
+    def fit_transform(self, y):
+        """Fit label encoder and return encoded labels
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : array-like of shape [n_samples]
+        """
+        self.classes_, y = unique(y, return_inverse=True)
+        return y
+
+    def transform(self, y):
+        """Transform labels to normalized encoding.
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : array-like of shape [n_samples]
+        """
+        self._check_fitted()
+
+        classes = np.unique(y)
+        if len(np.intersect1d(classes, self.classes_)) < len(classes):
+            diff = np.setdiff1d(classes, self.classes_)
+            raise ValueError("y contains new labels: %s" % str(diff))
+
+        return np.searchsorted(self.classes_, y)
+
+    def inverse_transform(self, y):
+        """Transform labels back to original encoding.
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+        """
+        self._check_fitted()
+
+        y = np.asarray(y)
+        return self.classes_[y]
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -544,19 +669,19 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn import preprocessing
-    >>> clf = preprocessing.LabelBinarizer()
-    >>> clf.fit([1, 2, 6, 4, 2])
+    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb.fit([1, 2, 6, 4, 2])
     LabelBinarizer(neg_label=0, pos_label=1)
-    >>> clf.classes_
+    >>> lb.classes_
     array([1, 2, 4, 6])
-    >>> clf.transform([1, 6])
-    array([[ 1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.]])
+    >>> lb.transform([1, 6])
+    array([[1, 0, 0, 0],
+           [0, 0, 0, 1]])
 
-    >>> clf.fit_transform([(1, 2), (3,)])
-    array([[ 1.,  1.,  0.],
-           [ 0.,  0.,  1.]])
-    >>> clf.classes_
+    >>> lb.fit_transform([(1, 2), (3,)])
+    array([[1, 1, 0],
+           [0, 0, 1]])
+    >>> lb.classes_
     array([1, 2, 3])
     """
 
@@ -618,9 +743,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 # nothing to do as y is already a label indicator matrix
                 return y
 
-            Y = np.zeros((len(y), len(self.classes_)))
+            Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
-            Y = np.zeros((len(y), 1))
+            Y = np.zeros((len(y), 1), dtype=np.int)
 
         Y += self.neg_label
 
@@ -644,18 +769,21 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
             return Y
 
-        elif len(self.classes_) == 2:
-            Y[y == self.classes_[1], 0] = self.pos_label
-            return Y
-
-        elif len(self.classes_) >= 2:
-            for i, k in enumerate(self.classes_):
-                Y[y == k, i] = self.pos_label
-            return Y
-
         else:
-            # Only one class, returns a matrix with all negative labels.
-            return Y
+            y = np.asarray(y)
+
+            if len(self.classes_) == 2:
+                Y[y == self.classes_[1], 0] = self.pos_label
+                return Y
+
+            elif len(self.classes_) >= 2:
+                for i, k in enumerate(self.classes_):
+                    Y[y == k, i] = self.pos_label
+                return Y
+
+            else:
+                # Only one class, returns a matrix with all negative labels.
+                return Y
 
     def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels
@@ -723,7 +851,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.Scaler(with_std=False).
     """
 
-    def fit(self, K):
+    def fit(self, K, y=None):
         """Fit KernelCenterer
 
         Parameters
@@ -735,12 +863,13 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+        K = array2d(K)
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
-    def transform(self, K, copy=True):
+    def transform(self, K, y=None, copy=True):
         """Center kernel
 
         Parameters
@@ -752,7 +881,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-
+        K = array2d(K)
         if copy:
             K = K.copy()
 

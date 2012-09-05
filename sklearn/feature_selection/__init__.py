@@ -17,3 +17,16 @@ from .univariate_selection import GenericUnivariateSelect
 
 from .rfe import RFE
 from .rfe import RFECV
+
+__all__ = ['GenericUnivariateSelect',
+           'RFE',
+           'RFECV',
+           'SelectFdr',
+           'SelectFpr',
+           'SelectFwe',
+           'SelectKBest',
+           'SelectPercentile',
+           'chi2',
+           'f_classif',
+           'f_oneway',
+           'f_regression']

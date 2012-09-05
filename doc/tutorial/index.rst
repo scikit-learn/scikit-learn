@@ -32,6 +32,26 @@ Tutorials: From the bottom up with scikit-learn
 
    statistical_inference/index.rst
 
-.. note:: **Videos**
+.. topic:: **External Tutorials**
+    
+    There are several online tutorials available which are geared toward
+    specific subject areas:
+
+    - `Machine Learning for NeuroImaging in Python <http://nisl.github.com/>`_
+    - `Machine Learning for Astronomical Data Analysis <http://astroml.github.com/sklearn_tutorial/>`_
+
+.. topic:: **Videos**
 
     Videos with tutorials can also be found in the :ref:`videos` section.
+
+.. note:: **Doctest Mode**
+
+   The code-examples in the above tutorials are written in a
+   *python-console* format. If you wish to easily execute these examples
+   in **iPython**, use::
+   	
+	%doctest_mode
+
+   in the iPython-console. You can then simply copy and paste the examples 
+   directly into iPython without having to worry about removing the **>>>** 
+   manually.

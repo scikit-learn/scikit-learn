@@ -162,7 +162,7 @@ commands with root privileges::
 Additionally, backport builds of the most recent release of
 scikit-learn for existing releases of Debian and Ubuntu are available
 from `NeuroDebian repository
-<http://neuro.debian.net/pkgs/python-scikits-learn.html>`__ .
+<http://neuro.debian.net/pkgs/python-sklearn.html>`__ .
 
 Python(x, y)
 ------------
@@ -187,11 +187,11 @@ The macport's package is named `py26-sklearn` or `py27-sklearn` depending
 on the version of Python. It can be installed by typing the following
 command::
 
-    sudo port install py26-scikits-learn
+    sudo port install py26-sklearn
 
 or::
 
-    sudo port install py27-scikits-learn
+    sudo port install py27-sklearn
 
 depending on the version of Python you want to use.
 

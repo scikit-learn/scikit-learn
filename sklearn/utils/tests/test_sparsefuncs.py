@@ -12,10 +12,17 @@ def test_mean_variance_axis0():
     X[0, 0] = 0
     X[2, 1] = 0
     X[4, 3] = 0
-    X_csr = sp.csr_matrix(X)
-    X_csr[1, 0] = 0
+    X_lil = sp.lil_matrix(X)
+    X_lil[1, 0] = 0
     X[1, 0] = 0
+    X_csr = sp.csr_matrix(X_lil)
+
     X_means, X_vars = mean_variance_axis0(X_csr)
+    assert_array_almost_equal(X_means, np.mean(X, axis=0))
+    assert_array_almost_equal(X_vars, np.var(X, axis=0))
+
+    X_csc = sp.csc_matrix(X_lil)
+    X_means, X_vars = mean_variance_axis0(X_csc)
 
     assert_array_almost_equal(X_means, np.mean(X, axis=0))
     assert_array_almost_equal(X_vars, np.var(X, axis=0))
