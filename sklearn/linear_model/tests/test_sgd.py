@@ -8,6 +8,7 @@ from sklearn import linear_model, datasets, metrics
 from sklearn import preprocessing
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.base import clone
 
 import unittest
 from nose.tools import raises
@@ -143,6 +144,18 @@ class CommonTest(object):
 
         Y_ = np.c_[Y_, Y_]
         assert_raises(ValueError, clf.fit, X, Y_)
+
+    def test_clone(self):
+        """Test whether clone works ok. """
+        clf = self.factory(alpha=0.01, n_iter=5, penalty='l1')
+        clf = clone(clf)
+        clf.set_params(penalty='l2')
+        clf.fit(X, Y)
+
+        clf2 = self.factory(alpha=0.01, n_iter=5, penalty='l2')
+        clf2.fit(X, Y)
+
+        assert_array_equal(clf.coef_, clf2.coef_)
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
