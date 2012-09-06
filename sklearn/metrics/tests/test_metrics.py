@@ -39,6 +39,7 @@ from sklearn.metrics import (accuracy_score,
                              matthews_corrcoef,
                              mean_squared_error,
                              mean_absolute_error,
+                             multiclass_log_loss,
                              precision_recall_curve,
                              precision_recall_fscore_support,
                              precision_score,
@@ -1778,3 +1779,11 @@ def test__check_reg_targets():
                 assert_array_equal(y_check2, y2)
         else:
             assert_raises(ValueError, _check_reg_targets, y1, y2)
+
+
+def test_multiclass_log_loss():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([[0.5, 0.5], [0.1, 0.9], [0.01, 0.99],
+        [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]])
+    loss = multiclass_log_loss(y_true, y_pred)
+    assert_equal(loss, 1.8817970689982668)
