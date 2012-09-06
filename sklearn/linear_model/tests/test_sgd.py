@@ -177,17 +177,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         """Check whether expected ValueError on bad penalty"""
         self.factory(penalty='foobar', rho=0.85)
 
-    def test_sgd_losses(self):
-        """Check whether losses and hyperparameters are set properly"""
-        clf = self.factory(loss='hinge')
-        assert_true(isinstance(clf.loss_function, linear_model.Hinge))
-
-        clf = self.factory(loss='log')
-        assert_true(isinstance(clf.loss_function, linear_model.Log))
-
-        clf = self.factory(loss='modified_huber')
-        assert_true(isinstance(clf.loss_function, linear_model.ModifiedHuber))
-
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
@@ -549,15 +538,6 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         """Check whether expected ValueError on bad penalty"""
         self.factory(penalty='foobar', rho=0.85)
 
-    def test_sgd_losses(self):
-        """Check whether losses and hyperparameters are set properly"""
-        clf = self.factory(loss='squared_loss')
-        assert_true(isinstance(clf.loss_function, linear_model.SquaredLoss))
-
-        clf = self.factory(loss='huber', epsilon=0.5)
-        assert_true(isinstance(clf.loss_function, linear_model.Huber))
-        assert_equal(clf.epsilon, 0.5)
-
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
@@ -701,6 +681,11 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
 
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
+
+    def test_loss_function_epsilon(self):
+        clf = self.factory(epsilon=0.9)
+        clf.set_params(epsilon=0.1)
+        assert clf.loss_functions['huber'][1] == 0.1
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
