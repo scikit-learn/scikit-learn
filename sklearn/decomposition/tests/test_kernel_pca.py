@@ -148,7 +148,7 @@ def test_gridsearch_pipeline_precomputed():
                         random_state=0)
     kpca = KernelPCA(kernel="precomputed", n_components=2)
     pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
-    param_grid = dict(Perceptron__n_iter=np.arange(5))
+    param_grid = dict(Perceptron__n_iter=np.arange(1, 5))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     X_kernel = rbf_kernel(X, gamma=10)
     grid_search.fit(X_kernel, y)
