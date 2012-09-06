@@ -709,6 +709,11 @@ class CountVectorizerBuffered(CountVectorizer):
             dtype=dtype)
 
         self._docs_buffer = docs_buffer
+        if self.fixed_vocabulary:
+            try:
+                self._vocabulary_max_dim = max(self.vocabulary_.itervalues()) + 1
+            except ValueError, err:
+                self._vocabulary_max_dim = 1
 
     def _term_count_dicts_to_matrix(self, term_count_dicts):
         i_indices = []
