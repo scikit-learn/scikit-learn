@@ -48,10 +48,13 @@ class BaseSGD(BaseEstimator):
                  eta0=0.0, power_t=0.5, warm_start=False):
         self.loss = str(loss)
         self.penalty = str(penalty).lower()
-        self.epsilon = float(epsilon)
-        self._set_loss_function(self.loss)
-        self._set_penalty_type(self.penalty)
+        self.learning_rate = str(learning_rate)
 
+        # raises ValueError if not registered
+        self.get_penalty_type(self.penalty)
+        self.get_learning_rate_type(self.learning_rate)
+
+        self.epsilon = float(epsilon)
         self.alpha = float(alpha)
         if self.alpha < 0.0:
             raise ValueError("alpha must be greater than zero")
@@ -68,8 +71,6 @@ class BaseSGD(BaseEstimator):
         self.seed = seed
         self.verbose = int(verbose)
 
-        self.learning_rate = str(learning_rate)
-        self._set_learning_rate(self.learning_rate)
         self.eta0 = float(eta0)
         self.power_t = float(power_t)
         if self.learning_rate != "optimal":
@@ -78,7 +79,10 @@ class BaseSGD(BaseEstimator):
         self.coef_ = None
         self.warm_start = warm_start
 
-        self._init_t()
+        #self._init_t()
+        # iteration count for learning rate schedule
+        # must not be int (e.g. if ``learning_rate=='optimal'``)
+        self.t_ = None
 
     @abstractmethod
     def fit(self, X, y):
@@ -88,25 +92,39 @@ class BaseSGD(BaseEstimator):
     def predict(self, X):
         """Predict using model."""
 
-    def _init_t(self):
+    def _init_t(self, loss_function):
+        """Initialize iteration counter attr ``t_``.
+
+        If ``self.loss=='optimal'`` initialize ``t_`` such that ``eta`` at
+        first sample equals ``self.eta0``.
+        """
         self.t_ = 1.0
         if self.learning_rate == "optimal":
             typw = np.sqrt(1.0 / np.sqrt(self.alpha))
             # computing eta0, the initial learning rate
-            eta0 = typw / max(1.0, self.loss_function.dloss(-typw, 1.0))
-            # initialize t such that eta at first example equals eta0
+            eta0 = typw / max(1.0, loss_function.dloss(-typw, 1.0))
+            # initialize t such that eta at first sample equals eta0
             self.t_ = 1.0 / (eta0 * self.alpha)
 
-    def _set_learning_rate(self, learning_rate):
+    def get_loss_function(self, loss):
+        """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
-            self.learning_rate_type = LEARNING_RATE_TYPES[learning_rate]
+            loss_ = self.loss_functions[loss]
+            loss_class, args = loss_[0], loss_[1:]
+            return loss_class(*args)
+        except KeyError:
+            raise ValueError("The loss %s is not supported. " % loss)
+
+    def get_learning_rate_type(self, learning_rate):
+        try:
+            return LEARNING_RATE_TYPES[learning_rate]
         except KeyError:
             raise ValueError("learning rate %s"
                              "is not supported. " % learning_rate)
 
-    def _set_penalty_type(self, penalty):
+    def get_penalty_type(self, penalty):
         try:
-            self.penalty_type = PENALTY_TYPES[penalty]
+            return PENALTY_TYPES[penalty]
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
@@ -338,26 +356,22 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
+        self.loss_functions = {
+            "hinge": (Hinge, 1.0),
+            "perceptron": (Hinge, 0.0),
+            "log": (Log, ),
+            "modified_huber": (ModifiedHuber, ),
+            "squared_loss": (SquaredLoss, ),
+            "huber": (Huber, self.epsilon),
+            "epsilon_insensitive": (EpsilonInsensitive, self.epsilon),
+        }
+        if loss not in self.loss_functions:
+            raise ValueError("The loss %s is not supported. " % loss)
+
     @property
     @deprecated("to be removed in v0.13; use ``classes_`` instead.")
     def classes(self):
         return self.classes_
-
-    def _set_loss_function(self, loss):
-        """Set concrete LossFunction."""
-        loss_functions = {
-            "hinge": Hinge(1.0),
-            "perceptron": Hinge(0.0),
-            "log": Log(),
-            "modified_huber": ModifiedHuber(),
-            "squared_loss": SquaredLoss(),
-            "huber": Huber(self.epsilon),
-            "epsilon_insensitive": EpsilonInsensitive(self.epsilon),
-        }
-        try:
-            self.loss_function = loss_functions[loss]
-        except KeyError:
-            raise ValueError("The loss %s is not supported. " % loss)
 
     def _set_class_weight(self, class_weight, classes, y):
         """Estimate class weights for unbalanced datasets."""
@@ -513,7 +527,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             self.intercept_ = None
 
         # Need to re-initialize in case of multiple call to fit.
-        self._init_t()
+        #self._init_t()
+        self.t_ = None
 
         self._partial_fit(X, y, self.n_iter, classes,
                           sample_weight, coef_init, intercept_init)
@@ -660,12 +675,19 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
-    return plain_sgd(coef, intercept, est.loss_function,
-                     est.penalty_type, est.alpha, est.rho,
+    loss_function = est.get_loss_function(est.loss)
+    penalty_type = est.get_penalty_type(est.penalty)
+    learning_rate_type = est.get_learning_rate_type(est.learning_rate)
+
+    if est.t_ is None:
+        est._init_t(loss_function)
+
+    return plain_sgd(coef, intercept, loss_function,
+                     penalty_type, est.alpha, est.rho,
                      dataset, n_iter, est.fit_intercept,
                      est.verbose, est.shuffle, est.seed,
                      pos_weight, neg_weight,
-                     est.learning_rate_type, est.eta0,
+                     learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
 
@@ -795,16 +817,12 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
 
-    def _set_loss_function(self, loss):
-        """Get concrete LossFunction"""
-        loss_functions = {
-            "squared_loss": SquaredLoss(),
-            "huber": Huber(self.epsilon),
-            "epsilon_insensitive": EpsilonInsensitive(self.epsilon),
+        self.loss_functions = {
+            "squared_loss": (SquaredLoss, ),
+            "huber": (Huber, self.epsilon),
+            "epsilon_insensitive": (EpsilonInsensitive, self.epsilon)
         }
-        try:
-            self.loss_function = loss_functions[loss]
-        except KeyError:
+        if loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % loss)
 
     def _partial_fit(self, X, y, n_iter, sample_weight=None,
@@ -885,7 +903,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             self.intercept_ = None
 
         # Need to re-initialize in case of multiple call to fit.
-        self._init_t()
+        #self._init_t()
+        self.t_ = None
 
         return self._partial_fit(X, y, self.n_iter, sample_weight,
                                  coef_init, intercept_init)
@@ -923,10 +942,17 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     def _fit_regressor(self, X, y, sample_weight, n_iter):
         dataset, intercept_decay = _make_dataset(X, y, sample_weight)
 
+        loss_function = self.get_loss_function(self.loss)
+        penalty_type = self.get_penalty_type(self.penalty)
+        learning_rate_type = self.get_learning_rate_type(self.learning_rate)
+
+        if self.t_ is None:
+            self._init_t(loss_function)
+
         self.coef_, intercept = plain_sgd(self.coef_,
                                           self.intercept_[0],
-                                          self.loss_function,
-                                          self.penalty_type,
+                                          loss_function,
+                                          penalty_type,
                                           self.alpha, self.rho,
                                           dataset,
                                           n_iter,
@@ -935,7 +961,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           int(self.shuffle),
                                           self.seed,
                                           1.0, 1.0,
-                                          self.learning_rate_type,
+                                          learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
                                           intercept_decay)
 
