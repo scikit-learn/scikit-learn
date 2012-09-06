@@ -819,7 +819,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
             rho=0.85, fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-            epsilon=0.1, p=None, seed=0, learning_rate="invscaling", eta0=0.01,
+            epsilon=DEFAULT_EPSILON, p=None, seed=0,
+            learning_rate="invscaling", eta0=0.01,
             power_t=0.25, warm_start=False):
 
         if p is not None:
