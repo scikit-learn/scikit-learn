@@ -426,6 +426,10 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
+        self.loss_function = self.get_loss_function(self.loss)
+        if self.t_ is None:
+            self._init_t(self.loss_function)
+
         # delegate to concrete training procedure
         if n_classes > 2:
             self._fit_multiclass(X, y, sample_weight, n_iter)
@@ -526,8 +530,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             self.coef_ = None
             self.intercept_ = None
 
-        # Need to re-initialize in case of multiple call to fit.
-        #self._init_t()
+        # Clear iteration count for multiple call to fit.
         self.t_ = None
 
         self._partial_fit(X, y, self.n_iter, classes,
@@ -648,7 +651,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
 
 def _prepare_fit_binary(est, y, i):
-    """Common initialization for _fit_binary_{dense,sparse}.
+    """Initialization for fit_binary.
 
     Returns y, coef, intercept.
     """
@@ -675,14 +678,10 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
-    loss_function = est.get_loss_function(est.loss)
     penalty_type = est.get_penalty_type(est.penalty)
     learning_rate_type = est.get_learning_rate_type(est.learning_rate)
 
-    if est.t_ is None:
-        est._init_t(loss_function)
-
-    return plain_sgd(coef, intercept, loss_function,
+    return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, est.alpha, est.rho,
                      dataset, n_iter, est.fit_intercept,
                      est.verbose, est.shuffle, est.seed,
