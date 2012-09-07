@@ -5,8 +5,11 @@ scikit-learn (0.12.0-1) experimental; urgency=low
   * Boosted policy to 3.9.3 (should be ok without changes)
   * patches/deb_disable_test_spectral_old_scipy
     - disable unittest on older scipy's due to failure
+  * debian/control
+    - removed obsolete (and not used any longer) python-psyco from
+      Recommends
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Sep 2012 15:15:18 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 06 Sep 2012 21:30:31 -0400
 
 scikit-learn (0.11.0-2) unstable; urgency=low
 
