@@ -3,7 +3,7 @@ Testing Recursive feature elimination
 """
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.tools import assert_equal
 from scipy import sparse
 
@@ -14,9 +14,24 @@ from sklearn.svm import SVC
 from sklearn.utils import check_random_state
 
 
+def test_rfe_set_params():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
+    y_pred = rfe.fit(X, y).predict(X)
+
+    clf = SVC()
+    rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1,
+              estimator_params={'kernel': 'linear'})
+    y_pred2 = rfe.fit(X, y).predict(X)
+    assert_array_equal(y_pred, y_pred2)
+
+
 def test_rfe():
     generator = check_random_state(0)
-
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     X_sparse = sparse.csr_matrix(X)
