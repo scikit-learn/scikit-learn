@@ -61,6 +61,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         ranking position of the i-th feature. Selected (i.e., estimated \
         best) features are assigned rank 1.
 
+    `estimator_` : object
+        The external estimator fit on the reduced dataset.
+
     Examples
     --------
     The following example shows how to retrieve the 5 right informative
@@ -143,7 +146,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
             ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
-        self.estimator.fit(X[:, support_], y)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X[:, support_], y)
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
@@ -164,7 +168,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        return self.estimator.predict(X[:, self.support_])
+        return self.estimator_.predict(X[:, self.support_])
 
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
@@ -178,7 +182,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        return self.estimator.score(X[:, self.support_], y)
+        return self.estimator_.score(X[:, self.support_], y)
 
     def transform(self, X):
         """Reduce X to the selected features during the elimination.
@@ -246,6 +250,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         The cross-validation scores such that
         `cv_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
+
+    `estimator_` : object
+        The external estimator fit on the reduced dataset.
 
     Examples
     --------
@@ -345,7 +352,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         rfe.fit(X, y)
 
         # Set final attributes
-        self.estimator.fit(X[:, rfe.support_], y)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X[:, rfe.support_], y)
         self.n_features_ = rfe.n_features_
         self.support_ = rfe.support_
         self.ranking_ = rfe.ranking_
