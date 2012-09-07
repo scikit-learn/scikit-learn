@@ -3,6 +3,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
 from collections import Sequence
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -133,7 +134,71 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(BaseEstimator, TransformerMixin):
+    """Standardizes features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    This standardization is often used as an alternative to zero mean,
+    unit variance scaling.
+    It is in particular useful for sparse positive data, as it retains the
+    sparsity structure of the data (if scaled between zero and some number).
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    Attributes
+    ----------
+    min_ : ndarray, shape (n_features,)
+        Per feature minimum of the training data.
+
+    scale_ : ndarray, shape (n_features,)
+        Per feature range of the training data, i.e. max - min.
+    """
+
+    def __init__(self, feature_range=(0, 1), copy=True):
+        self.feature_range = feature_range
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        feature_range = self.feature_range
+        if feature_range[0] >= feature_range[1]:
+            raise ValueError("Minimum of desired feature range must be smaller"
+                             " than maximum. Got %s." % str(feature_range))
+        if sp.issparse(X):
+            self.min_ = sp.min(X, axis=1)
+            self.scale = sp.max(X, axis=1) - self.min_
+        else:
+            self.min_ = np.min(X, axis=1)
+            self.scale_ = np.max(X, axis=1) - self.min_
+        return self
+
+    def transform(self, X):
+        if self.copy:
+            X = (X - self.min_[:, np.newaxis]) / self.scale_[:, np.newaxis]
+        else:
+            X -= self.min_
+            X /= self.scale_
+        feature_min, feature_max = self.feature_range
+        if feature_min != 0:
+            X += feature_min
+        # denominator is X.max after adding min
+        max_scale = feature_max / (feature_min + 1.)
+        if max_scale != 1:
+            X *= max_scale
+        return X
+
+
+class UnitVarianceScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -164,7 +229,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         unit standard deviation).
 
     copy : boolean, optional, default is True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
@@ -284,6 +349,13 @@ class Scaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
+
+
+class Scaler(UnitVarianceScaler):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        warnings.warn("Scaler was renamed to UnitVarianceScaler. The old name "
+                " will be removed in 0.15.", DeprecationWarning)
+        super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
