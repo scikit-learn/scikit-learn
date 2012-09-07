@@ -104,7 +104,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         number of dimension in which to immerse the similarities
         overwritten if initial array is provided.
 
-    init: {None or ndarray}
+    init: {None or ndarray}, optional
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
 
@@ -236,7 +236,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
-    init : {None or ndarray of shape (n_samples, n_components)}
+    init : {None or ndarray of shape (n_samples, n_components)}, optional
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
 
@@ -418,7 +418,7 @@ class MDS(BaseEstimator):
         X: array, shape=[n_samples, n_samples], symetric
             Proximity matrice
 
-        init: {None or ndarray, shape (n_samples,)}
+        init: {None or ndarray, shape (n_samples,)}, optional
             if None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array
         """
@@ -441,7 +441,7 @@ class MDS(BaseEstimator):
         X: array, shape=[n_samples, n_samples], symetric
             Proximity matrice
 
-        init: {None or ndarray, shape (n_samples,)}
+        init: {None or ndarray, shape (n_samples,)}, optional
             if None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array
 

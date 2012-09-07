@@ -320,7 +320,7 @@ class ProbabilisticPCA(PCA):
         """
         PCA.fit(self, X)
         n_features = X.shape[1]
-        self._dim  = n_features
+        self._dim = n_features
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
@@ -346,8 +346,8 @@ class ProbabilisticPCA(PCA):
                 "since version 0.12, and backward compatibility "
                 "won't be maintained from version 0.14 onward. ",
                 DeprecationWarning, stacklevel=2)
-        return self._dim       
-    
+        return self._dim
+
     def score(self, X, y=None):
         """Return a score associated to new data
 
@@ -365,7 +365,7 @@ class ProbabilisticPCA(PCA):
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(self.covariance_)
-        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1);
+        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
         log_like -= .5 * (fast_logdet(self.covariance_) + \
                                     n_features * log(2 * np.pi))
         return log_like

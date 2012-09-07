@@ -27,10 +27,10 @@ def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
     # test X's shape
-    assert_equal(X.indptr.shape[0], 5)
-    assert_equal(X.shape[0], 4)
+    assert_equal(X.indptr.shape[0], 7)
+    assert_equal(X.shape[0], 6)
     assert_equal(X.shape[1], 21)
-    assert_equal(y.shape[0], 4)
+    assert_equal(y.shape[0], 6)
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
@@ -51,7 +51,7 @@ def test_load_svmlight_file():
     assert_equal(X[0, 2], 5)
 
     # test y
-    assert_array_equal(y, [1, 2, 3, 4])
+    assert_array_equal(y, [1, 2, 3, 4, 1, 2])
 
 
 def test_load_svmlight_file_fd():
@@ -91,8 +91,8 @@ def test_load_svmlight_file_n_features():
     X, y = load_svmlight_file(datafile, n_features=20)
 
     # test X'shape
-    assert_equal(X.indptr.shape[0], 5)
-    assert_equal(X.shape[0], 4)
+    assert_equal(X.indptr.shape[0], 7)
+    assert_equal(X.shape[0], 6)
     assert_equal(X.shape[1], 20)
 
     # test X's non-zero values

@@ -114,6 +114,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     target vector. For multilabel learning, the number of classes must be at
     least three, since otherwise OvR reduces to binary classification.
 
+    In the multilabel learning literature, OvR is also known as the binary
+    relevance method.
+
     Parameters
     ----------
     estimator : estimator object

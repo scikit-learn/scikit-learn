@@ -680,8 +680,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     `cv_values_` : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_responses, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and \
-        `cv=None`). After `fit()` has been called, this attribute will contain \
-        the mean squared errors (by default) or the values of the \
+        `cv=None`). After `fit()` has been called, this attribute will \
+        contain the mean squared errors (by default) or the values of the \
         `{loss,score}_func` function (if provided in the constructor).
 
     `coef_` : array, shape = [n_features] or [n_responses, n_features]

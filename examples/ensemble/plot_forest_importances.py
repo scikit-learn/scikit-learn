@@ -34,7 +34,8 @@ forest = ExtraTreesClassifier(n_estimators=250,
 
 forest.fit(X, y)
 importances = forest.feature_importances_
-std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
+std = np.std([tree.feature_importances_ for tree in forest.estimators_],
+             axis=0)
 indices = np.argsort(importances)[::-1]
 
 # Print the feature ranking

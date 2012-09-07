@@ -20,7 +20,7 @@ from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
 from sklearn.utils import shuffle
 from sklearn.preprocessing import Scaler
 #from sklearn.cross_validation import train_test_split
-from sklearn.datasets import load_iris, load_boston
+from sklearn.datasets import load_iris, load_boston, make_blobs
 from sklearn.metrics import zero_one_score, adjusted_rand_score
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
@@ -113,10 +113,8 @@ def test_transformers():
     estimators = all_estimators()
     transformers = [(name, E) for name, E in estimators if issubclass(E,
         TransformerMixin)]
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=0)
-    X, y = X[:10], y[:10]
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+            random_state=0, n_features=2, cluster_std=0.1)
     n_samples, n_features = X.shape
     X = Scaler().fit_transform(X)
     X -= X.min()

@@ -26,6 +26,8 @@ from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils import check_arrays
 
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
+
 
 class BaseNB(BaseEstimator, ClassifierMixin):
     """Abstract base class for naive Bayes estimators"""

@@ -1,5 +1,13 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_13:
+
+0.13
+====
+
+Changelog
+---------
+
 
 .. _changes_0_12:
 
@@ -74,7 +82,7 @@ Changelog
    - Fixes in :class:`decomposition.ProbabilisticPCA` score function by Wei Li.
 
    - Fixed feature importance computation in
-     :ref:`ensemble.gradient_boosting`.
+     :ref:`gradient_boosting`.
 
 API changes summary
 -------------------
@@ -130,6 +138,69 @@ API changes summary
      :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
      :meth:`ensemble.GradientBoostingClassifier.staged_predict`.
 
+   - :class:`svm.sparse.SVC` and other sparse SVM classes are now deprecated.
+     The all classes in the :ref:`svm` module now automatically select the
+     sparse or dense representation base on the input.
+
+   - All clustering algorithms now interpret the array ``X`` given to ``fit`` as
+     input data, in particular :class:`cluster.SpectralClustering` and
+     :class:`cluster.AffinityPropagation` which previously expected affinity matrices.
+
+   - For clustering algorithms that take the desired number of clusters as a parameter,
+     this parameter is now called ``n_clusters``.
+
+
+People
+------
+ * 267  `Andreas Müller`_
+ *  94  `Gilles Louppe`_
+ *  89  `Gael Varoquaux`_
+ *  79  `Peter Prettenhofer`_
+ *  60  `Mathieu Blondel`_
+ *  57  `Alexandre Gramfort`_
+ *  52  `Vlad Niculae`_
+ *  45  `Lars Buitinck`_
+ *  44  Nelle Varoquaux
+ *  37  `Jaques Grobler`_
+ *  30  Alexis Mignon
+ *  30  Immanuel Bayer
+ *  27  `Olivier Grisel`_
+ *  16  Subhodeep Moitra
+ *  13  Yannick Schwartz
+ *  12  `@kernc`_
+ *  11  `Virgile Fritsch`_
+ *   9  Daniel Duckworth
+ *   9  `Fabian Pedregosa`_
+ *   9  `Robert Layton`_
+ *   8  John Benediktsson
+ *   7  Marko Burjek
+ *   5  `Nicolas Pinto`_
+ *   4  Alexandre Abraham
+ *   4  Jake VanderPlas
+ *   3  `Brian Holt`_
+ *   3  `Edouard Duchesnay`_
+ *   3  Florian Hoenig
+ *   3  flyingimmidev
+ *   2  Francois Savard
+ *   2  Hannes Schulz
+ *   2  Peter Welinder
+ *   2  `Yaroslav Halchenko`_
+ *   2  Wei Li
+ *   1  Alex Companioni
+ *   1  Brandyn A. White
+ *   1  Bussonnier Matthias
+ *   1  Charles-Pierre Astolfi
+ *   1  Dan O'Huiginn
+ *   1  David Cournapeau
+ *   1  Keith Goodman
+ *   1  Ludwig Schwardt
+ *   1  Olivier Hervieu
+ *   1  Sergio Medina
+ *   1  Shiqiao Du
+ *   1  Tim Sheerman-Chase
+ *   1  buguen
+
+
 
 .. _changes_0_11:
 
@@ -169,7 +240,7 @@ Highlights
 
    - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
      a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
-     by `Yannick Schwartz`.
+     by Yannick Schwartz.
 
    - :class:`sklearn.neighbors.NearestCentroid` classifier added, along with a
      ``shrink_threshold`` parameter, which implements **shrunken centroid
@@ -352,7 +423,7 @@ People
    *   1  Carlos Scheidegger
    *   1  Claire Revillet
    *   1  Conrad Lee
-   *   1  Edouard Duchesnay
+   *   1  `Edouard Duchesnay`_
    *   1  Jan Hendrik Metzen
    *   1  Meng Xinfan
    *   1  Rob Zinkov
@@ -965,7 +1036,7 @@ People that made this release possible preceeded by number of commits:
     - 14  Dan Yamins
     - 13  `Olivier Grisel`_
     - 12  `Gael Varoquaux`_
-    - 4  Edouard Duchesnay
+    - 4  `Edouard Duchesnay`_
     - 4  `Ron Weiss`_
     - 2  Satrajit Ghosh
     - 2  Vincent Dubourg

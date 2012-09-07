@@ -94,6 +94,8 @@ This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
     * `Development version <http://scikit-learn.org/dev/>`_
+    * `0.12 <http://scikit-learn.org/0.12/>`_
+    * `0.11 <http://scikit-learn.org/0.11/>`_
     * `0.10 <http://scikit-learn.org/0.10/>`_
     * `0.9 <http://scikit-learn.org/0.9/>`_
     * `0.8 <http://scikit-learn.org/0.8/>`_
