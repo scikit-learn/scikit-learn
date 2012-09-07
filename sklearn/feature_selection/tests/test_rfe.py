@@ -27,6 +27,7 @@ def test_rfe():
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     X_r = rfe.transform(X)
+    clf.fit(X_r, y)
     assert_equal(len(rfe.ranking_), X.shape[1])
 
     # sparse model
