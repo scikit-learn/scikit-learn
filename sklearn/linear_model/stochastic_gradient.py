@@ -118,7 +118,7 @@ class BaseSGD(BaseEstimator):
             # initialize t such that eta at first sample equals eta0
             self.t_ = 1.0 / (eta0 * self.alpha)
 
-    def get_loss_function(self, loss):
+    def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
             loss_ = self.loss_functions[loss]
@@ -442,7 +442,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
-        self.loss_function = self.get_loss_function(self.loss)
+        self.loss_function = self._get_loss_function(self.loss)
         if self.t_ is None:
             self._init_t(self.loss_function)
 
@@ -958,7 +958,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     def _fit_regressor(self, X, y, sample_weight, n_iter):
         dataset, intercept_decay = _make_dataset(X, y, sample_weight)
 
-        loss_function = self.get_loss_function(self.loss)
+        loss_function = self._get_loss_function(self.loss)
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(self.learning_rate)
 
