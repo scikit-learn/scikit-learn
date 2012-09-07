@@ -48,6 +48,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
+    estimator_params : dict
+        Parameters for the external estimator.
+        Useful for doing grid searches.
+
     Attributes
     ----------
     `n_features_` : int
@@ -89,10 +93,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, n_features_to_select=None, step=1):
+    def __init__(self, estimator, n_features_to_select=None, step=1,
+                 estimator_params={}):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
+        self.estimator_params = estimator_params
 
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
@@ -130,6 +136,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
             # Rank the remaining features
             estimator = clone(self.estimator)
+            estimator.set_params(**self.estimator_params)
             estimator.fit(X[:, features], y)
 
             if estimator.coef_.ndim > 1:
@@ -147,6 +154,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
         # Set final attributes
         self.estimator_ = clone(self.estimator)
+        self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(X[:, support_], y)
         self.n_features_ = support_.sum()
         self.support_ = support_
@@ -232,6 +240,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         The loss function to minimize by cross-validation. If None, then the
         score function of the estimator is maximized.
 
+    estimator_params : dict
+        Parameters for the external estimator.
+        Useful for doing grid searches.
+
     Attributes
     ----------
     `n_features_` : int
@@ -279,11 +291,13 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, loss_func=None):
+    def __init__(self, estimator, step=1, cv=None, loss_func=None,
+            estimator_params={}):
         self.estimator = estimator
         self.step = 1
         self.cv = cv
         self.loss_func = loss_func
+        self.estimator_params = estimator_params
 
     def fit(self, X, y):
         """Fit the RFE model and automatically tune the number of selected
@@ -301,7 +315,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         """
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
-                step=self.step)
+                step=self.step, estimator_params=self.estimator_params)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
         scores = {}
@@ -347,12 +361,13 @@ class RFECV(RFE, MetaEstimatorMixin):
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=best_k,
-                  step=self.step)
+                  step=self.step, estimator_params=self.estimator_params)
 
         rfe.fit(X, y)
 
         # Set final attributes
         self.estimator_ = clone(self.estimator)
+        self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(X[:, rfe.support_], y)
         self.n_features_ = rfe.n_features_
         self.support_ = rfe.support_
