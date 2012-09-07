@@ -341,7 +341,6 @@ class RFECV(RFE, MetaEstimatorMixin):
         for train, test in cv:
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
-
             # Score each subset of features
             for k in xrange(1, max(ranking_) + 1):
                 mask = np.where(ranking_ <= k)[0]
@@ -361,7 +360,7 @@ class RFECV(RFE, MetaEstimatorMixin):
                     scores[k] = 0.0
 
                 if self.verbose > 0:
-                    print("Finished fold with %d / %d feature ranks, score=%f"
+                    print("Finished fold with %d / %d feature ranks, loss=%f"
                           % (k, max(ranking_), score_k))
                 scores[k] += score_k
 
