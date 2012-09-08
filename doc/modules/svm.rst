@@ -43,8 +43,7 @@ data. For optimal performance, use C-ordered ``numpy.ndarray`` (dense) or
 
 In previous versions of scikit-learn, sparse input support existed only
 in the ``sklearn.svm.sparse`` module which duplicated the ``sklearn.svm``
-interface. This module still exists for backward compatibility, but is
-deprecated and will be removed in scikit-learn 0.12.
+interface.
 
 .. TODO: add reference to probability estimates
 

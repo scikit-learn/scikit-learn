@@ -193,8 +193,6 @@ scale of the target variables.
  - :ref:`example_linear_model_plot_sgd_ols.py`,
 
 
-.. currentmodule:: sklearn.linear_model.sparse
-
 Stochastic Gradient Descent for sparse data
 ===========================================
 
