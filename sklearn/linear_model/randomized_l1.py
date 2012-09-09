@@ -91,8 +91,6 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
-        from IPython.core.debugger import Tracer
-        Tracer()()
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
                                                         self.normalize)
@@ -133,10 +131,10 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
     # Should we add an intermediate base class?
     def transform(self, X):
         """Transform a new matrix using the selected features"""
-        mask = self.get_support(indices=issparse(X))
+        mask = self.get_support()
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return safe_asarray(X)[:, mask]
+        return safe_asarray(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """Transform a new matrix using the selected features"""
