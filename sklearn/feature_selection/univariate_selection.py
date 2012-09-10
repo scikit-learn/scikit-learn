@@ -164,7 +164,7 @@ def chi2(X, y):
 
     feature_count = array2d(X.sum(axis=0))
     class_prob = array2d(Y.mean(axis=0))
-    expected = safe_sparse_dot(class_prob.T, feature_count)
+    expected = np.dot(class_prob.T, feature_count)
 
     return stats.chisquare(observed, expected)
 

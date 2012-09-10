@@ -620,7 +620,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
-        self.idf_ = None
 
     def fit(self, X, y=None):
         """Learn the idf vector (global term weights)
@@ -645,7 +644,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             n_samples += int(self.smooth_idf)
 
             # avoid division by zeros for features that occur in all documents
-            self.idf_ = np.log(float(n_samples) / df) + 1.0
+            idf = np.log(float(n_samples) / df) + 1.0
+            idf_diag = sp.lil_matrix((n_features, n_features))
+            idf_diag.setdiag(idf)
+            self._idf_diag = sp.csc_matrix(idf_diag)
 
         return self
 
@@ -675,20 +677,25 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            expected_n_features = self.idf_.shape[0]
+            expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
                                  " has been trained with n_features=%d" % (
                                      n_features, expected_n_features))
-            d = sp.lil_matrix((n_features, n_features))
-            d.setdiag(self.idf_)
             # *= doesn't work
-            X = X * d
+            X = X * self._idf_diag
 
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
+
+    @property
+    def idf_(self):
+        if hasattr(self, "_idf_diag"):
+            return np.ravel(self._idf_diag.sum(axis=0))
+        else:
+            return None
 
 
 class TfidfVectorizer(CountVectorizer):
