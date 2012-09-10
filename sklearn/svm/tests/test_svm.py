@@ -375,7 +375,6 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y)
 
     Xt = np.array(X).T
-    clf = svm.SVC(kernel='precomputed')
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 
@@ -571,7 +570,8 @@ def test_immutable_coef_property():
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
-        assert_raises(RuntimeError, clf.coef_.__setitem__, (0, 0), 0)
+        assert_raises((RuntimeError, ValueError),
+                      clf.coef_.__setitem__, (0, 0), 0)
 
 
 def test_inheritance():

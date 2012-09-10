@@ -21,7 +21,6 @@ from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import fetch_20newsgroups_vectorized
-from .twenty_newsgroups import load_20newsgroups
 from .mldata import fetch_mldata, mldata_filename
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
@@ -46,6 +45,51 @@ from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from ..utils import deprecated
+
+__all__ = ['clear_data_home',
+           'dump_svmlight_file',
+           'fetch_20newsgroups',
+           'fetch_20newsgroups_vectorized',
+           'fetch_lfw_pairs',
+           'fetch_lfw_people',
+           'fetch_mldata',
+           'fetch_olivetti_faces',
+           'fetch_species_distributions',
+           'get_data_home',
+           'load_20newsgroups',
+           'load_boston',
+           'load_diabetes',
+           'load_digits',
+           'load_filenames',
+           'load_files',
+           'load_iris',
+           'load_lfw_pairs',
+           'load_lfw_people',
+           'load_linnerud',
+           'load_mlcomp',
+           'load_sample_image',
+           'load_sample_images',
+           'load_svmlight_file',
+           'load_svmlight_files',
+           'make_blobs',
+           'make_circles',
+           'make_classification',
+           'make_friedman1',
+           'make_friedman2',
+           'make_friedman3',
+           'make_hastie_10_2',
+           'make_low_rank_matrix',
+           'make_moons',
+           'make_multilabel_classification',
+           'make_regression',
+           'make_s_curve',
+           'make_sparse_coded_signal',
+           'make_sparse_spd_matrix',
+           'make_sparse_uncorrelated',
+           'make_spd_matrix',
+           'make_swiss_roll',
+           'mldata_filename',
+           'samples_generator']
 
 
 # backward compatibility

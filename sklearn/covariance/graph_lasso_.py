@@ -17,6 +17,7 @@ from .empirical_covariance_ import empirical_covariance, \
                 EmpiricalCovariance, log_likelihood
 
 from ..utils import ConvergenceWarning
+from ..utils.extmath import pinvh
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import check_cv, cross_val_score
@@ -143,7 +144,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
     covariance_.flat[::n_features + 1] = diagonal
-    precision_ = linalg.pinv(covariance_)
+    precision_ = pinvh(covariance_)
 
     indices = np.arange(n_features)
     costs = list()

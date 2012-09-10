@@ -145,7 +145,6 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
-   datasets.load_20newsgroups
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
@@ -521,6 +520,8 @@ For dense data
    linear_model.LassoCV
    linear_model.ElasticNet
    linear_model.ElasticNetCV
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskElasticNet
    linear_model.Lars
    linear_model.LassoLars
    linear_model.LarsCV
@@ -621,6 +622,8 @@ Classification metrics
    metrics.recall_score
    metrics.fbeta_score
    metrics.f1_score
+   metrics.auc_score
+   metrics.average_precision_score
    metrics.precision_recall_fscore_support
    metrics.classification_report
    metrics.precision_recall_curve
@@ -859,6 +862,7 @@ Pairwise metrics
    preprocessing.Normalizer
    preprocessing.Binarizer
    preprocessing.LabelBinarizer
+   preprocessing.LabelEncoder
    preprocessing.KernelCenterer
 
 .. autosummary::

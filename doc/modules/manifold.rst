@@ -442,9 +442,9 @@ Tips on practical use
 
 * Certain input configurations can lead to singular weight matrices, for
   example when more than two points in the dataset are identical, or when
-  the data is split into disjointed groups.  In this case, ``method='arpack'``
+  the data is split into disjointed groups.  In this case, ``solver='arpack'``
   will fail to find the null space.  The easiest way to address this is to
-  use ``method='dense'`` which will work on a singular matrix, though it may
+  use ``solver='dense'`` which will work on a singular matrix, though it may
   be very slow depending on the number of input points.  Alternatively, one
   can attempt to understand the source of the singularity: if it is due to
   disjoint sets, increasing ``n_neighbors`` may help.  If it is due to

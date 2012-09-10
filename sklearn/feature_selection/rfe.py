@@ -7,19 +7,21 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
+from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
 
 
-class RFE(BaseEstimator):
+class RFE(BaseEstimator, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
-    sets of features.  First, the estimator is trained on the initial set of
+    sets of features. First, the estimator is trained on the initial set of
     features and weights are assigned to each one of them. Then, features whose
     absolute weights are the smallest are pruned from the current set features.
     That procedure is recursively repeated on the pruned set until the desired
@@ -36,8 +38,9 @@ class RFE(BaseEstimator):
         algorithms such as Support Vector Classifiers and Generalized
         Linear Models from the `svm` and `linear_model` modules.
 
-    n_features_to_select : int
-        The number of features to select.
+    n_features_to_select : int or None (default=None)
+        The number of features to select. If `None`, half of the features
+        are selected.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then `step` corresponds to the (integer)
@@ -83,7 +86,7 @@ class RFE(BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, n_features_to_select, step=1):
+    def __init__(self, estimator, n_features_to_select=None, step=1):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -100,8 +103,13 @@ class RFE(BaseEstimator):
         y : array of shape [n_samples]
             The target values.
         """
+        X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         n_features = X.shape[1]
+        if self.n_features_to_select is None:
+            n_features_to_select = n_features / 2
+        else:
+            n_features_to_select = self.n_features_to_select
 
         if 0.0 < self.step < 1.0:
             step = int(self.step * n_features)
@@ -112,9 +120,8 @@ class RFE(BaseEstimator):
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
-
         # Elimination
-        while np.sum(support_) > self.n_features_to_select:
+        while np.sum(support_) > n_features_to_select:
             # Remaining features
             features = np.arange(n_features)[support_]
 
@@ -123,12 +130,15 @@ class RFE(BaseEstimator):
             estimator.fit(X[:, features], y)
 
             if estimator.coef_.ndim > 1:
-                ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+                ranks = np.argsort(safe_sqr(estimator.coef_).sum(axis=0))
             else:
-                ranks = np.argsort(estimator.coef_ ** 2)
+                ranks = np.argsort(safe_sqr(estimator.coef_))
+
+            # for sparse case ranks is matrix
+            ranks = np.asarray(ranks).ravel()
 
             # Eliminate the worse features
-            threshold = min(step, np.sum(support_) - self.n_features_to_select)
+            threshold = min(step, np.sum(support_) - n_features_to_select)
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -184,10 +194,10 @@ class RFE(BaseEstimator):
             The input samples with only the features selected during the \
             elimination.
         """
-        return X[:, self.support_]
+        return X[:, np.where(self.support_)[0]]
 
 
-class RFECV(RFE):
+class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
        selection of the best number of features.
 
@@ -283,9 +293,8 @@ class RFECV(RFE):
             regression).
         """
         # Initialization
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=1,
-                  step=self.step)
+        rfe = RFE(estimator=self.estimator, n_features_to_select=1,
+                step=self.step)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
         scores = {}
@@ -298,8 +307,8 @@ class RFECV(RFE):
             ranking_ = rfe.fit(X[train], y[train]).ranking_
 
             # Score each subset of features
-            for k in xrange(1, max(ranking_)):
-                mask = ranking_ <= k
+            for k in xrange(1, max(ranking_) + 1):
+                mask = np.where(ranking_ <= k)[0]
                 estimator = clone(self.estimator)
                 estimator.fit(X[train][:, mask], y[train])
 

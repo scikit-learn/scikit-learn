@@ -27,6 +27,11 @@ from . import cluster
 from .utils import deprecated
 from . import _hmmc
 
+__all__ = ['GMMHMM',
+           'GaussianHMM',
+           'MultinomialHMM',
+           'decoder_algorithms',
+           'normalize']
 
 ZEROLOGPROB = -1e200
 EPS = np.finfo(float).eps
@@ -411,8 +416,9 @@ class _BaseHMM(BaseEstimator):
 
         if kwargs:
             warnings.warn("Setting parameters in the 'fit' method is"
-                    "deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "deprecated and will be removed in 0.14. Set it on "
+                          "initialization instead.", DeprecationWarning,
+                          stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:
@@ -540,9 +546,9 @@ class _BaseHMM(BaseEstimator):
 
     def _init(self, obs, params):
         if 's' in params:
-            self.startprob_[:] = 1.0 / self.n_components
+            self.startprob_.fill(1.0 / self.n_components)
         if 't' in params:
-            self.transmat_[:] = 1.0 / self.n_components
+            self.transmat_.fill(1.0 / self.n_components)
 
     # Methods used by self.fit()
 
@@ -1126,11 +1132,11 @@ class GMMHMM(_BaseHMM):
             lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis]
                                       + np.finfo(np.float).eps)
             gmm_posteriors = np.exp(lgmm_posteriors)
-            tmp_gmm = GMM(g.n_components, covariance_type=g._covariance_type)
+            tmp_gmm = GMM(g.n_components, covariance_type=g.covariance_type)
             n_features = g.means_.shape[1]
             tmp_gmm._set_covars(
                 distribute_covar_matrix_to_match_covariance_type(
-                    np.eye(n_features), g._covariance_type,
+                    np.eye(n_features), g.covariance_type,
                     g.n_components))
             norm = tmp_gmm._do_mstep(obs, gmm_posteriors, params)
 
@@ -1141,7 +1147,7 @@ class GMMHMM(_BaseHMM):
             if 'm' in params:
                 stats['means'][state] += tmp_gmm.means_ * norm[:, np.newaxis]
             if 'c' in params:
-                if tmp_gmm._covariance_type == 'tied':
+                if tmp_gmm.covariance_type == 'tied':
                     stats['covars'][state] += tmp_gmm.covars_ * norm.sum()
                 else:
                     cvnorm = np.copy(norm)
@@ -1162,7 +1168,7 @@ class GMMHMM(_BaseHMM):
             if 'm' in params:
                 g.means_ = stats['means'][state] / norm[:, np.newaxis]
             if 'c' in params:
-                if g._covariance_type == 'tied':
+                if g.covariance_type == 'tied':
                     g.covars_ = ((stats['covars'][state]
                                  + self.covars_prior * np.eye(n_features))
                                 / norm.sum())
@@ -1171,10 +1177,10 @@ class GMMHMM(_BaseHMM):
                     shape = np.ones(g.covars_.ndim)
                     shape[0] = np.shape(g.covars_)[0]
                     cvnorm.shape = shape
-                    if (g._covariance_type in ['spherical', 'diag']):
+                    if (g.covariance_type in ['spherical', 'diag']):
                         g.covars_ = (stats['covars'][state]
                                     + self.covars_prior) / cvnorm
-                    elif g._covariance_type == 'full':
+                    elif g.covariance_type == 'full':
                         eye = np.eye(n_features)
                         g.covars_ = ((stats['covars'][state]
                                      + self.covars_prior * eye[np.newaxis])

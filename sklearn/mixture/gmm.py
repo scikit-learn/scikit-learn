@@ -14,7 +14,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, deprecated
-from ..utils.extmath import logsumexp
+from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
 EPS = np.finfo(float).eps
@@ -196,7 +196,7 @@ class GMM(BaseEstimator):
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+    GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
@@ -214,7 +214,7 @@ class GMM(BaseEstimator):
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
-    GMM(covariance_type=None, init_params='wmc', min_covar=0.001,
+    GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, thresh=0.01)
     >>> np.round(g.weights_, 2)
@@ -226,7 +226,7 @@ class GMM(BaseEstimator):
                  random_state=None, thresh=1e-2, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc'):
         self.n_components = n_components
-        self._covariance_type = covariance_type
+        self.covariance_type = covariance_type
         self.thresh = thresh
         self.min_covar = min_covar
         self.random_state = random_state
@@ -257,19 +257,19 @@ class GMM(BaseEstimator):
             (`n_states`, `n_features`)                if 'diag',
             (`n_states`, `n_features`, `n_features`)  if 'full'
             """
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             return self.covars_
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             return [np.diag(cov) for cov in self.covars_]
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             return [self.covars_] * self.n_components
-        elif self._covariance_type == 'spherical':
+        elif self.covariance_type == 'spherical':
             return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
         """Provide values for covariance"""
         covars = np.asarray(covars)
-        _validate_covars(covars, self._covariance_type, self.n_components)
+        _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
 
     def eval(self, X):
@@ -302,18 +302,18 @@ class GMM(BaseEstimator):
             raise ValueError('the shape of X  is not compatible with self')
 
         lpr = (log_multivariate_normal_density(
-                X, self.means_, self.covars_, self._covariance_type)
+                X, self.means_, self.covars_, self.covariance_type)
                + np.log(self.weights_))
         logprob = logsumexp(lpr, axis=1)
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
 
-    @deprecated("""will be removed in v0.12;
+    @deprecated("""will be removed in v0.13;
     use the score or predict method instead, depending on the question""")
     def decode(self, X):
         """Find most likely mixture components for each point in X.
 
-        DEPRECATED IN VERSION 0.10; WILL BE REMOVED IN VERSION 0.12
+        DEPRECATED IN VERSION 0.11; WILL BE REMOVED IN VERSION 0.13.
         use the score or predict method instead, depending on the question.
 
         Parameters
@@ -381,7 +381,7 @@ class GMM(BaseEstimator):
         logprob, responsibilities = self.eval(X)
         return responsibilities
 
-    @deprecated("""will be removed in v0.12;
+    @deprecated("""will be removed in v0.13;
     use the score or predict method instead, depending on the question""")
     def rvs(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
@@ -420,14 +420,14 @@ class GMM(BaseEstimator):
             # number of those occurrences
             num_comp_in_X = comp_in_X.sum()
             if num_comp_in_X > 0:
-                if self._covariance_type == 'tied':
+                if self.covariance_type == 'tied':
                     cv = self.covars_
-                elif self._covariance_type == 'spherical':
+                elif self.covariance_type == 'spherical':
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
                 X[comp_in_X] = sample_gaussian(
-                    self.means_[comp], cv, self._covariance_type,
+                    self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
 
@@ -448,7 +448,7 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         """
         ## initialization step
-        X = np.asarray(X)
+        X = np.asarray(X, dtype=np.float)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.shape[0] < self.n_components:
@@ -457,15 +457,16 @@ class GMM(BaseEstimator):
                 (self.n_components, X.shape[0]))
         if kwargs:
             warnings.warn("Setting parameters in the 'fit' method is"
-                    "deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "deprecated and will be removed in 0.13. Set it on "
+                          "initialization instead.", DeprecationWarning,
+                          stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:
                 self.n_iter = kwargs['n_iter']
             if 'n_init' in kwargs:
                 if kwargs['n_init'] < 1:
-                    raise ValueError('GMM estimation requires at least one run')
+                    raise ValueError('GMM estimation requires n_init > 0.')
                 else:
                     self.n_init = kwargs['n_init']
             if 'params' in kwargs:
@@ -473,7 +474,7 @@ class GMM(BaseEstimator):
             if 'init_params' in kwargs:
                 self.init_params = kwargs['init_params']
 
-        max_log_prob = - np.infty
+        max_log_prob = -np.infty
 
         for _ in range(self.n_init):
             if 'm' in self.init_params or not hasattr(self, 'means_'):
@@ -490,7 +491,7 @@ class GMM(BaseEstimator):
                     cv.shape = (1, 1)
                 self.covars_ = \
                     distribute_covar_matrix_to_match_covariance_type(
-                    cv, self._covariance_type, self.n_components)
+                    cv, self.covariance_type, self.n_components)
 
             # EM algorithms
             log_likelihood = []
@@ -536,7 +537,7 @@ class GMM(BaseEstimator):
         if 'm' in params:
             self.means_ = weighted_X_sum * inverse_weights
         if 'c' in params:
-            covar_mstep_func = _covar_mstep_funcs[self._covariance_type]
+            covar_mstep_func = _covar_mstep_funcs[self.covariance_type]
             self.covars_ = covar_mstep_func(
                 self, X, responsibilities, weighted_X_sum, inverse_weights,
                 min_covar)
@@ -545,13 +546,13 @@ class GMM(BaseEstimator):
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
         ndim = self.means_.shape[1]
-        if self._covariance_type == 'full':
+        if self.covariance_type == 'full':
             cov_params = self.n_components * ndim * (ndim + 1) / 2.
-        elif self._covariance_type == 'diag':
+        elif self.covariance_type == 'diag':
             cov_params = self.n_components * ndim
-        elif self._covariance_type == 'tied':
+        elif self.covariance_type == 'tied':
             cov_params = ndim * (ndim + 1) / 2.
-        elif self._covariance_type == 'spherical':
+        elif self.covariance_type == 'spherical':
             cov_params = self.n_components
         mean_params = ndim * self.n_components
         return  int(cov_params + mean_params + self.n_components - 1)
@@ -615,7 +616,7 @@ def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
     from scipy import linalg
     n_samples, n_dim = X.shape
-    icv = linalg.pinv(covars)
+    icv = pinvh(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
                   + np.sum(X * np.dot(X, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(X, icv), means.T)

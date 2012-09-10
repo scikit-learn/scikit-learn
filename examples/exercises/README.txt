@@ -1,4 +1,4 @@
-Tutorial exercices
+Tutorial exercises
 ------------------
 
 Exercises for the tutorials

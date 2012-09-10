@@ -5,12 +5,14 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD Style.
 
-from .base import BaseEstimator
-from .utils import as_float_array
+from .base import BaseEstimator, RegressorMixin, TransformerMixin
+from .utils import check_arrays
 
 import warnings
 import numpy as np
 from scipy import linalg
+
+__all__ = ['CCA', 'PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 
 def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
@@ -97,7 +99,7 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(BaseEstimator):
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters
@@ -217,8 +219,8 @@ class _PLS(BaseEstimator):
 
     def fit(self, X, Y):
         # copy since this will contains the residuals (deflated) matrices
-        X = as_float_array(X, copy=self.copy)
-        Y = as_float_array(Y, copy=self.copy)
+        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
+                            sparse_format='dense')
 
         if X.ndim != 2:
             raise ValueError('X must be a 2D array')
@@ -400,6 +402,28 @@ class _PLS(BaseEstimator):
             Xc /= self.x_std_
         Ypred = np.dot(Xc, self.coefs)
         return Ypred + self.y_mean_
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Learn and apply the dimension reduction on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
+
+        copy : boolean
+            Whether to copy X and Y, or perform in-place normalization.
+
+        Returns
+        -------
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        """
+        return self.fit(X, y, **fit_params).transform(X, y)
 
 
 class PLSRegression(_PLS):
@@ -748,7 +772,7 @@ class CCA(_PLS):
                         max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSSVD(BaseEstimator):
+class PLSSVD(BaseEstimator, TransformerMixin):
     """Partial Least Square SVD
 
     Simply perform a svd on the crosscovariance matrix: X'Y
@@ -798,12 +822,8 @@ class PLSSVD(BaseEstimator):
 
     def fit(self, X, Y):
         # copy since this will contains the centered data
-        if self.copy:
-            X = np.asarray(X).copy()
-            Y = np.asarray(Y).copy()
-        else:
-            X = np.asarray(X)
-            Y = np.asarray(Y)
+        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
+                            sparse_format='dense')
 
         n = X.shape[0]
         p = X.shape[1]
@@ -841,3 +861,22 @@ class PLSSVD(BaseEstimator):
             y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores
         return x_scores
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Learn and apply the dimension reduction on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
+
+        Returns
+        -------
+        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        """
+        return self.fit(X, y, **fit_params).transform(X, y)

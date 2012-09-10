@@ -1,10 +1,13 @@
 from .. import LinearSVC
-from ...base import ClassifierMixin, RegressorMixin
+from ..base import BaseSVC
+from ...base import RegressorMixin
 from .base import SparseBaseLibSVM
 from ...utils import deprecated
 
 
-class SVC(SparseBaseLibSVM, ClassifierMixin):
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.SVC instead""")
+class SVC(SparseBaseLibSVM, BaseSVC):
     """SVC for sparse matrices (csr).
 
     See :class:`sklearn.svm.SVC` for a complete list of parameters
@@ -24,7 +27,7 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-            gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+            gamma=0.0, kernel='rbf', probability=False, shrinking=True,
             tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
@@ -40,7 +43,9 @@ class SVC(SparseBaseLibSVM, ClassifierMixin):
                                   cache_size, class_weight, verbose)
 
 
-class NuSVC(SparseBaseLibSVM, ClassifierMixin):
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.NuSVC instead""")
+class NuSVC(SparseBaseLibSVM, BaseSVC):
     """NuSVC for sparse matrices (csr).
 
     See :class:`sklearn.svm.NuSVC` for a complete list of parameters
@@ -59,7 +64,7 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm.sparse import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.5,
+    NuSVC(cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
             kernel='rbf', nu=0.5, probability=False, shrinking=True, tol=0.001,
             verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -76,6 +81,8 @@ class NuSVC(SparseBaseLibSVM, ClassifierMixin):
                                     cache_size, class_weight, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.SVR instead""")
 class SVR(SparseBaseLibSVM, RegressorMixin):
     """SVR for sparse matrices (csr)
 
@@ -111,6 +118,8 @@ class SVR(SparseBaseLibSVM, RegressorMixin):
                                   cache_size, None, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.NuSVR instead""")
 class NuSVR(SparseBaseLibSVM, RegressorMixin):
     """NuSVR for sparse matrices (csr)
 
@@ -132,7 +141,7 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(nu=0.1, C=1.0)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.2,
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
        kernel='rbf', nu=0.1, probability=False, shrinking=True, tol=0.001,
        verbose=False)
     """
@@ -146,6 +155,8 @@ class NuSVR(SparseBaseLibSVM, RegressorMixin):
                 None, verbose)
 
 
+@deprecated("""to be removed in v0.14;
+use sklearn.svm.OneClassSVM instead""")
 class OneClassSVM(SparseBaseLibSVM):
     """OneClassSVM for sparse matrices (csr)
 
@@ -171,7 +182,7 @@ class OneClassSVM(SparseBaseLibSVM):
             X, [], sample_weight=sample_weight)
 
 
-@deprecated("""to be removed in v0.12;
+@deprecated("""to be removed in v0.14;
 use sklearn.svm.LinearSVC instead""")
 class LinearSVC(LinearSVC):
     pass

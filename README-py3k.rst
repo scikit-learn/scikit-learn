@@ -16,7 +16,7 @@ of these is:
 To generate python3 compatible sources for selected modules, run the
 2to3 tool on the module::
 
-    2to3 -wn --no-diffs scikits/learn/$module
+    2to3 -wn --no-diffs sklearn/$module
 
 If you would like to help with porting to python3, please propose
 yourself in the scikit-learn mailing list:

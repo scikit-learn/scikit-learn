@@ -1,5 +1,13 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_13:
+
+0.13
+====
+
+Changelog
+---------
+
 
 .. _changes_0_12:
 
@@ -9,25 +17,190 @@
 Changelog
 ---------
 
-   - Added :class:`preprocessing.LabelBinarizer`, a simple utility class to
+   - Various speed improvements of the :ref:`decision trees <tree>` module, by
+     `Gilles Louppe`_.
+
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
+     via the ``max_features`` argument, by `Peter Prettenhofer`_.
+
+   - Added Huber and Quantile loss functions to
+     :class:`ensemble.GradientBoostingRegressor`, by `Peter Prettenhofer`_.
+
+   - :ref:`Decision trees <tree>` and :ref:`forests of randomized trees <forest>`
+     now support multi-output classification and regression problems, by
+     `Gilles Louppe`_.
+
+   - Added :class:`preprocessing.LabelEncoder`, a simple utility class to
      normalize labels or transform non-numerical labels, by `Mathieu Blondel`_.
 
    - Added the epsilon-insensitive loss and the ability to make probabilistic
      predictions with the modified huber loss in :ref:`sgd`, by
      `Mathieu Blondel`_.
 
-   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux
+   - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux.
 
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
-     decompresses them on the fly.
+     decompresses them on the fly, by `Lars Buitinck`_.
+
+   - SVMlight file format serializer now preserves double precision floating
+     point values, by `Olivier Grisel`_.
+
+   - A common testing framework for all estimators was added, by `Andreas Müller`_.
+
+   - Understandable error messages for estimators that do not accept
+     sparse input by `Gael Varoquaux`_
+
+   - Speedups in hierarchical clustering by `Gael Varoquaux`_. In
+     particular building the tree now supports early stopping. This is
+     useful when the number of clusters is not small compared to the
+     number of samples.
+
+   - Add MultiTaskLasso and MultiTaskElasticNet for joint feature selection,
+     by `Alexandre Gramfort`_.
+
+   - Added :func:`metrics.auc_score` and
+     :func:`metrics.average_precision_score` convenience functions by `Andreas
+     Müller`_.
+
+   - Improved sparse matrix support in the :ref:`feature_selection`
+     module by `Andreas Müller`_.
+
+   - New word boundaries-aware character n-gram analyzer for the
+     :ref:`text_feature_extraction` module by `@kernc`_.
+
+   - Fixed bug in spectral clustering that led to single point clusters
+     by `Andreas Müller`_.
+
+   - In :class:`feature_extraction.text.CountVectorizer`, added an option to
+     infrequent words, ``min_df`` by  `Andreas Müller`_.
+
+   - Add support for multiple targets in some linear models (ElasticNet, Lasso
+     and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
+     `Alexandre Gramfort`_.
+
+   - Fixes in :class:`decomposition.ProbabilisticPCA` score function by Wei Li.
+
+   - Fixed feature importance computation in
+     :ref:`gradient_boosting`.
 
 API changes summary
 -------------------
 
-   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`, 
-     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the 
-     object when initialising it and not through ``fit``. Now ``fit`` will 
+   - The old ``scikits.learn`` package has disappeared; all code should import
+     from ``sklearn`` instead, which was introduced in 0.9.
+
+   - In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
+     with it's order reversed, in order to keep it consistent with the order
+     of the returned ``fpr`` and ``tpr``.
+
+   - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
+     :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
+     object when initialising it and not through ``fit``. Now ``fit`` will
      only accept the data as an input parameter.
+
+   - For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
+     the default gamma value was only computed the first time ``fit`` was called
+     and then stored. It is now recalculated on every call to ``fit``.
+
+   - All ``Base`` classes are now abstract meta classes so that they can not be
+     instantiated.
+
+   - :func:`cluster.ward_tree` now also returns the parent array. This is
+     necessary for early-stopping in which case the tree is not
+     completely built.
+
+   - In :class:`feature_extraction.text.CountVectorizer` the parameters
+     ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
+     enable grid-searching both at once.
+
+   - In :class:`feature_extraction.text.CountVectorizer`, words that appear
+     only in one document are now ignored by default. To reproduce
+     the previous behavior, set ``min_df=1``.
+
+   - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
+     returns 2d array when fit on two classes.
+
+   - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
+     :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
+     classes.
+
+   - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
+     :class:`linear_model.ElasticNetCV` is now stored
+     in the attribute `alphas_` rather than overriding the init parameter
+     `alphas`.
+
+   - Linear models when alpha is estimated by cross-validation store
+     the estimated value in the `alpha_` attribute rather than just
+     `alpha` or `best_alpha`.
+
+   - :class:`ensemble.GradientBoostingClassifier` now supports
+     :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
+     :meth:`ensemble.GradientBoostingClassifier.staged_predict`.
+
+   - :class:`svm.sparse.SVC` and other sparse SVM classes are now deprecated.
+     The all classes in the :ref:`svm` module now automatically select the
+     sparse or dense representation base on the input.
+
+   - All clustering algorithms now interpret the array ``X`` given to ``fit`` as
+     input data, in particular :class:`cluster.SpectralClustering` and
+     :class:`cluster.AffinityPropagation` which previously expected affinity matrices.
+
+   - For clustering algorithms that take the desired number of clusters as a parameter,
+     this parameter is now called ``n_clusters``.
+
+
+People
+------
+ * 267  `Andreas Müller`_
+ *  94  `Gilles Louppe`_
+ *  89  `Gael Varoquaux`_
+ *  79  `Peter Prettenhofer`_
+ *  60  `Mathieu Blondel`_
+ *  57  `Alexandre Gramfort`_
+ *  52  `Vlad Niculae`_
+ *  45  `Lars Buitinck`_
+ *  44  Nelle Varoquaux
+ *  37  `Jaques Grobler`_
+ *  30  Alexis Mignon
+ *  30  Immanuel Bayer
+ *  27  `Olivier Grisel`_
+ *  16  Subhodeep Moitra
+ *  13  Yannick Schwartz
+ *  12  `@kernc`_
+ *  11  `Virgile Fritsch`_
+ *   9  Daniel Duckworth
+ *   9  `Fabian Pedregosa`_
+ *   9  `Robert Layton`_
+ *   8  John Benediktsson
+ *   7  Marko Burjek
+ *   5  `Nicolas Pinto`_
+ *   4  Alexandre Abraham
+ *   4  Jake VanderPlas
+ *   3  `Brian Holt`_
+ *   3  `Edouard Duchesnay`_
+ *   3  Florian Hoenig
+ *   3  flyingimmidev
+ *   2  Francois Savard
+ *   2  Hannes Schulz
+ *   2  Peter Welinder
+ *   2  `Yaroslav Halchenko`_
+ *   2  Wei Li
+ *   1  Alex Companioni
+ *   1  Brandyn A. White
+ *   1  Bussonnier Matthias
+ *   1  Charles-Pierre Astolfi
+ *   1  Dan O'Huiginn
+ *   1  David Cournapeau
+ *   1  Keith Goodman
+ *   1  Ludwig Schwardt
+ *   1  Olivier Hervieu
+ *   1  Sergio Medina
+ *   1  Shiqiao Du
+ *   1  Tim Sheerman-Chase
+ *   1  buguen
+
+
 
 .. _changes_0_11:
 
@@ -67,7 +240,7 @@ Highlights
 
    - Added :class:`sklearn.cross_validation.StratifiedShuffleSplit`, which is
      a :class:`sklearn.cross_validation.ShuffleSplit` with balanced splits,
-     by `Yannick Schwartz`.
+     by Yannick Schwartz.
 
    - :class:`sklearn.neighbors.NearestCentroid` classifier added, along with a
      ``shrink_threshold`` parameter, which implements **shrunken centroid
@@ -250,7 +423,7 @@ People
    *   1  Carlos Scheidegger
    *   1  Claire Revillet
    *   1  Conrad Lee
-   *   1  Edouard Duchesnay
+   *   1  `Edouard Duchesnay`_
    *   1  Jan Hendrik Metzen
    *   1  Meng Xinfan
    *   1  Rob Zinkov
@@ -296,7 +469,7 @@ Changelog
 
    - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
      predict methods; Enhanced test time performance by converting model
-     paramters to fortran-style arrays after fitting (only multi-class).
+     parameters to fortran-style arrays after fitting (only multi-class).
 
    - Adjusted Mutual Information metric added as
      :func:`sklearn.metrics.adjusted_mutual_info_score` by Robert Layton.
@@ -863,7 +1036,7 @@ People that made this release possible preceeded by number of commits:
     - 14  Dan Yamins
     - 13  `Olivier Grisel`_
     - 12  `Gael Varoquaux`_
-    - 4  Edouard Duchesnay
+    - 4  `Edouard Duchesnay`_
     - 4  `Ron Weiss`_
     - 2  Satrajit Ghosh
     - 2  Vincent Dubourg
@@ -1150,7 +1323,7 @@ of commits):
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
-.. _Alexandre Gramfort: http://www-sop.inria.fr/members/Alexandre.Gramfort/
+.. _Alexandre Gramfort: http://alexandre.gramfort.net
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
@@ -1176,7 +1349,7 @@ of commits):
 
 .. _Bertrand Thirion: http://parietal.saclay.inria.fr/Members/bertrand-thirion
 
-.. _Andreas Müller: http://www.ais.uni-bonn.de/~amueller/
+.. _Andreas Müller: http://peekaboo-vision.blogspot.com
 
 .. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
 
@@ -1202,5 +1375,7 @@ of commits):
 
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
 
-.. _David Marek: http://http://www.davidmarek.cz/
+.. _David Marek: http://www.davidmarek.cz/
+
+.. _@kernc: http://github.com/kernc
 

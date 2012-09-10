@@ -1,6 +1,6 @@
 from ..base import ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from .base import BaseLibLinear, BaseLibSVM
+from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 
 
 class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
@@ -16,9 +16,8 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        Penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
@@ -132,7 +131,7 @@ class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
     pass
 
 
-class SVC(BaseLibSVM, ClassifierMixin):
+class SVC(BaseSVC):
     """C-Support Vector Classification.
 
     The implementations is a based on libsvm. The fit time complexity
@@ -150,9 +149,8 @@ class SVC(BaseLibSVM, ClassifierMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        Penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
@@ -233,7 +231,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-            gamma=0.5, kernel='rbf', probability=False, shrinking=True,
+            gamma=0.0, kernel='rbf', probability=False, shrinking=True,
             tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
@@ -260,7 +258,7 @@ class SVC(BaseLibSVM, ClassifierMixin):
                 class_weight, verbose)
 
 
-class NuSVC(BaseLibSVM, ClassifierMixin):
+class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
 
     Similar to SVC but uses a parameter to control the number of support
@@ -354,7 +352,7 @@ class NuSVC(BaseLibSVM, ClassifierMixin):
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y)
-    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.5, kernel='rbf', nu=0.5,
+    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf', nu=0.5,
        probability=False, shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [ 1.]
@@ -387,9 +385,8 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
 
     epsilon : float, optional (default=0.1)
          epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -463,7 +460,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y)
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.2,
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.0,
       kernel='rbf', probability=False, shrinking=True, tol=0.001,
       verbose=False)
 
@@ -494,9 +491,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float or None, optional (default=None)
-        penalty parameter C of the error term. If None then C is set
-        to n_samples.
+    C : float, optional (default=1.0)
+        penalty parameter C of the error term.
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
@@ -569,7 +565,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.2, kernel='rbf',
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
        nu=0.1, probability=False, shrinking=True, tol=0.001, verbose=False)
 
     See also

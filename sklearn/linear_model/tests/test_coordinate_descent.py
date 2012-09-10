@@ -15,7 +15,7 @@ from nose.tools import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV
+    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet
 from sklearn.linear_model import LassoLarsCV
 
 
@@ -129,13 +129,18 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def build_dataset():
-    # build an ill-posed linear regression problem with many noisy features and
-    # comparatively few samples
-    n_samples, n_features = 50, 200
+def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
+                  n_targets=1):
+    """
+    build an ill-posed linear regression problem with many noisy features and
+    comparatively few samples
+    """
     random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features)
-    w[10:] = 0.0  # only the top 10 features are impacting the model
+    if n_targets > 1:
+        w = random_state.randn(n_features, n_targets)
+    else:
+        w = random_state.randn(n_features)
+    w[n_informative_features:] = 0.0
     X = random_state.randn(n_samples, n_features)
     y = np.dot(X, w)
     X_test = random_state.randn(n_samples, n_features)
@@ -147,11 +152,11 @@ def test_lasso_path():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
-    assert_almost_equal(clf.alpha, 0.026, 2)
+    assert_almost_equal(clf.alpha_, 0.026, 2)
 
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
     clf.fit(X, y)
-    assert_almost_equal(clf.alpha, 0.026, 2)
+    assert_almost_equal(clf.alpha_, 0.026, 2)
 
     # Check that the lars and the coordinate descent implementation
     # select a similar alpha
@@ -159,13 +164,13 @@ def test_lasso_path():
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
     assert_true(np.abs(
-            np.searchsorted(clf.alphas[::-1], lars.alpha)
-            - np.searchsorted(clf.alphas[::-1], clf.alpha)
+            np.searchsorted(clf.alphas_[::-1], lars.alpha_)
+            - np.searchsorted(clf.alphas_[::-1], clf.alpha_)
                 ) <= 1)
     # check that they also give a similar MSE
-    mse_lars = interpolate.interp1d(lars.cv_alphas, lars.cv_mse_path_.T)
+    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
     np.testing.assert_approx_equal(
-                            mse_lars(clf.alphas[5]).mean(),
+                            mse_lars(clf.alphas_[5]).mean(),
                             clf.mse_path_[5].mean(),
                             significant=2)
 
@@ -184,13 +189,13 @@ def test_enet_path():
         clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
-        assert_almost_equal(clf.alpha, 0.002, 2)
+        assert_almost_equal(clf.alpha_, 0.002, 2)
         assert_equal(clf.rho_, 0.95)
 
         clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95], cv=3,
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
-    assert_almost_equal(clf.alpha, 0.002, 2)
+    assert_almost_equal(clf.alpha_, 0.002, 2)
     assert_equal(clf.rho_, 0.95)
 
     # test set
@@ -206,7 +211,7 @@ def test_path_parameters():
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.rho)
     assert_equal(50, clf.n_alphas)
-    assert_equal(50, len(clf.alphas))
+    assert_equal(50, len(clf.alphas_))
 
 
 def test_warm_start():
@@ -264,9 +269,36 @@ def test_enet_positive_constraint():
     enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, precompute=True, positive=True)
-    enet.fit(X, y)
-    assert_true(min(enet.coef_) >= 0)
+
+def test_multi_task_lasso_and_enet():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    #Y_test = np.c_[y_test, y_test]
+    clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+    clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
+    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+
+def test_enet_multitarget():
+    n_targets = 3
+    X, y, _, _ = build_dataset(n_samples=10, n_features=8,
+                               n_informative_features=10, n_targets=n_targets)
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True)
+    estimator.fit(X, y)
+    coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
+                                      estimator.dual_gap_, estimator.eps_)
+
+    for k in xrange(n_targets):
+        estimator.fit(X, y[:, k])
+        assert_array_almost_equal(coef[k, :], estimator.coef_)
+        assert_array_almost_equal(intercept[k], estimator.intercept_)
+        assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+        assert_array_almost_equal(eps[k], estimator.eps_)
+
 
 if __name__ == '__main__':
     import nose

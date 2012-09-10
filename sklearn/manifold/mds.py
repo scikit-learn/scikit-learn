@@ -11,7 +11,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import check_random_state
+from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -104,7 +104,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         number of dimension in which to immerse the similarities
         overwritten if initial array is provided.
 
-    init: {None or ndarray}
+    init: {None or ndarray}, optional
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
 
@@ -138,8 +138,8 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" % \
                             n_samples)
-    eps = 100 * np.finfo(np.float).resolution
-    if np.any((similarities - similarities.T) > eps):
+    res = 100 * np.finfo(np.float).resolution
+    if np.any((similarities - similarities.T) > res):
         raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()
@@ -236,7 +236,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         number of dimension in which to immerse the similarities
         overridden if initial array is provided.
 
-    init : {None or ndarray of shape (n_samples, n_components)}
+    init : {None or ndarray of shape (n_samples, n_components)}, optional
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
 
@@ -291,6 +291,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
 
+    similarities, = check_arrays(similarities, sparse_format='dense')
     random_state = check_random_state(random_state)
 
     if hasattr(init, '__array__'):
@@ -417,7 +418,7 @@ class MDS(BaseEstimator):
         X: array, shape=[n_samples, n_samples], symetric
             Proximity matrice
 
-        init: {None or ndarray, shape (n_samples,)}
+        init: {None or ndarray, shape (n_samples,)}, optional
             if None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array
         """
@@ -440,7 +441,7 @@ class MDS(BaseEstimator):
         X: array, shape=[n_samples, n_samples], symetric
             Proximity matrice
 
-        init: {None or ndarray, shape (n_samples,)}
+        init: {None or ndarray, shape (n_samples,)}, optional
             if None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array
 

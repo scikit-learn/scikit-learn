@@ -5,13 +5,11 @@
 =========================================================
 Feature agglomeration
 =========================================================
+
 These images how similiar features are merged together using
 feature agglomeration.
-
-
 """
 print __doc__
-
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
@@ -61,3 +59,4 @@ pl.imshow(np.reshape(agglo.labels_, images[0].shape),
 pl.xticks(())
 pl.yticks(())
 pl.title('Labels')
+pl.show()

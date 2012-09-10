@@ -29,7 +29,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
-    shrink_threshold : float, optional
+    shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
 
     Attributes

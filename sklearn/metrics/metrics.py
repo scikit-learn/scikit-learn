@@ -103,7 +103,13 @@ def roc_curve(y_true, y_score):
         True Positive Rates
 
     thresholds : array, shape = [>2]
-        Thresholds on y_score used to compute fpr and tpr
+        Thresholds on y_score used to compute fpr and tpr.
+
+        *Note*: Since the thresholds are sorted from low to high values,
+        they are reversed upon returning them to ensure they
+        correspond to both fpr and tpr, which are sorted in reversed order
+        during their calculation.
+
 
     Examples
     --------
@@ -172,11 +178,81 @@ def roc_curve(y_true, y_score):
         fpr = np.array([0.0, fpr[0], 1.0])
         tpr = np.array([0.0, tpr[0], 1.0])
 
-    return fpr, tpr, thresholds
+    return fpr, tpr, thresholds[::-1]
+
+
+def average_precision_score(y_true, y_score):
+    """Compute average precision (AP) from prediction scores.
+
+    This score corresponds to the area under the precision-recall curve.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    average_precision : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
+
+
+    See also
+    --------
+    auc_score: Area under the ROC curve
+    """
+    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+
+    return auc(recall, precision)
+
+
+def auc_score(y_true, y_score):
+    """Compute Area Under the Curve (AUC) from prediction scores.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    auc : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+
+    See also
+    --------
+    average_precision_score: Area under the precision-recall curve
+    """
+
+    fpr, tpr, tresholds = roc_curve(y_true, y_score)
+    return auc(fpr, tpr)
 
 
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
+
+    This is a general fuction, given points on a curve.
+    For computing the area under the ROC-curve, see auc_score.
 
     Parameters
     ----------
@@ -199,6 +275,10 @@ def auc(x, y):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> metrics.auc(fpr, tpr)
     0.75
+
+    See also
+    --------
+    auc_score Computes the area under the ROC curve
 
     """
     x, y = check_arrays(x, y)
@@ -753,7 +833,7 @@ def precision_recall_curve(y_true, probas_pred):
         Thresholds on y_score used to compute precision and recall
 
     """
-    y_true = y_true.ravel()
+    y_true = np.ravel(y_true)
     labels = np.unique(y_true)
     if np.all(labels == np.array([-1, 1])):
         # convert {-1, 1} to boolean {0, 1} repr
@@ -762,7 +842,7 @@ def precision_recall_curve(y_true, probas_pred):
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
-    probas_pred = probas_pred.ravel()
+    probas_pred = np.ravel(probas_pred)
     thresholds = np.sort(np.unique(probas_pred))
     n_thresholds = thresholds.size + 1
     precision = np.empty(n_thresholds)
@@ -831,6 +911,9 @@ def r2_score(y_true, y_pred):
     http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+    if len(y_true) == 1:
+        raise ValueError("r2_score can only be computed given more than one"
+                " sample.")
     numerator = ((y_true - y_pred) ** 2).sum()
     denominator = ((y_true - y_true.mean()) ** 2).sum()
     if denominator == 0.0:
@@ -914,7 +997,7 @@ def mean_squared_error(y_true, y_pred):
 
 
 @deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
-            instead; to be removed in v0.12""")
+            instead; to be removed in v0.13""")
 def mean_square_error(y_true, y_pred):
     """Cumulated square error regression loss
 

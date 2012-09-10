@@ -251,14 +251,6 @@ function of the gradient of the image.
 
 .. centered:: |noisy_img| |segmented_img|
 
-.. warning:: Shapeless isotropic data
-
-   When the data is really shapeless (i.e. generated from a random
-   distribution with no clusters), the spectral-clustering problem is
-   ill-conditioned: the different choices are almost equivalent, and 
-   the spectral clustering solver chooses an arbitrary one, putting 
-   the first sample alone in one bin. 
-
 .. warning:: Transforming distance to well-behaved similarities
 
     Note that if the values of your similarity matrix are not well

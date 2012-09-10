@@ -8,38 +8,48 @@ clustering.
 # License: BSD
 
 import numpy as np
+import warnings
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
+from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
-            copy=True, verbose=False):
+def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
+        convit=None, max_iter=200,
+        damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
     ----------
 
-    S: array [n_points, n_points]
+    S: array [n_samples, n_samples]
         Matrix of similarities between points
 
-    p: array [n_points,] or float, optional
+    preference: array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
-        exemplars, ie of clusters, is influenced by the input preferences
+        exemplars, i.e. of clusters, is influenced by the input preferences
         value. If the preferences are not passed as arguments, they will be
         set to the median of the input similarities (resulting in a moderate
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    damping : float, optional
-        Damping factor
+    convergence_iter: int, optional, default: 15
+        Number of iterations with no change in the number
+        of estimated clusters that stops the convergence.
 
-    copy: boolean, optional
+    max_iter: int, optional, default: 200
+        Maximum number of iterations
+
+    damping: float, optional, default: 200
+        Damping factor between 0.5 and 1.
+
+    copy: boolean, optional, default: True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
-    verbose: boolean, optional
+    verbose: boolean, optional, default: False
         The verbosity level
 
     Returns
@@ -48,7 +58,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     cluster_centers_indices: array [n_clusters]
         index of clusters centers
 
-    labels : array [n_points]
+    labels : array [n_samples]
         cluster labels for each point
 
     Notes
@@ -61,34 +71,44 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
     Between Data Points", Science Feb. 2007
     """
     S = as_float_array(S, copy=copy)
+    if convit is not None:
+        warnings.warn("``convit`` is deprecated and will be removed in"
+                      "version 0.14. Use ``convergence_iter`` instead",
+                      DeprecationWarning)
+        convergence_iter = convit
 
-    n_points = S.shape[0]
+    n_samples = S.shape[0]
 
     if S.shape[0] != S.shape[1]:
         raise ValueError("S must be a square array (shape=%r)" % S.shape)
 
-    if p is None:
-        p = np.median(S)
+    if not p is None:
+        warnings.warn("p is deprecated and will be removed in version 0.14."
+                " Use ``preference`` instead.", DeprecationWarning)
+        preference = p
+
+    if preference is None:
+        preference = np.median(S)
 
     if damping < 0.5 or damping >= 1:
         raise ValueError('damping must be >= 0.5 and < 1')
 
     random_state = np.random.RandomState(0)
 
-    # Place preferences on the diagonal of S
-    S.flat[::(n_points + 1)] = p
+    # Place preference on the diagonal of S
+    S.flat[::(n_samples + 1)] = preference
 
-    A = np.zeros((n_points, n_points))
-    R = np.zeros((n_points, n_points))  # Initialize messages
+    A = np.zeros((n_samples, n_samples))
+    R = np.zeros((n_samples, n_samples))  # Initialize messages
 
     # Remove degeneracies
     S += (np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) * \
-         random_state.randn(n_points, n_points)
+         random_state.randn(n_samples, n_samples)
 
     # Execute parallel affinity propagation updates
-    e = np.zeros((n_points, convit))
+    e = np.zeros((n_samples, convergence_iter))
 
-    ind = np.arange(n_points)
+    ind = np.arange(n_samples)
 
     for it in range(max_iter):
         # Compute responsibilities
@@ -96,7 +116,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         AS = A + S
 
         I = np.argmax(AS, axis=1)
-        Y = AS[np.arange(n_points), I]  # np.max(AS, axis=1)
+        Y = AS[np.arange(n_samples), I]  # np.max(AS, axis=1)
 
         AS[ind, I[ind]] = - np.finfo(np.double).max
 
@@ -110,25 +130,26 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         # Compute availabilities
         Aold = A
         Rp = np.maximum(R, 0)
-        Rp.flat[::n_points + 1] = R.flat[::n_points + 1]
+        Rp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
 
         A = np.sum(Rp, axis=0)[np.newaxis, :] - Rp
 
         dA = np.diag(A)
         A = np.minimum(A, 0)
 
-        A.flat[::n_points + 1] = dA
+        A.flat[::n_samples + 1] = dA
 
         A = (1 - damping) * A + damping * Aold  # Damping
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
-        e[:, it % convit] = E
+        e[:, it % convergence_iter] = E
         K = np.sum(E, axis=0)
 
-        if it >= convit:
+        if it >= convergence_iter:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convit) + (se == 0)) != n_points
+            unconverged = np.sum((se == convergence_iter) +\
+                                 (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
@@ -156,7 +177,7 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
-        labels = np.empty((n_points, 1))
+        labels = np.empty((n_samples, 1))
         cluster_centers_indices = None
         labels.fill(np.nan)
 
@@ -165,23 +186,38 @@ def affinity_propagation(S, p=None, convit=30, max_iter=200, damping=0.5,
 
 ###############################################################################
 
-class AffinityPropagation(BaseEstimator):
+class AffinityPropagation(BaseEstimator, ClusterMixin):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
     ----------
-    damping : float, optional
-        Damping factor
+    damping: float, optional, default: 0.5
+        Damping factor between 0.5 and 1.
 
-    max_iter : int, optional
-        Maximum number of iterations
-
-    convit : int, optional
+    convergence_iter: int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    copy: boolean, optional
-        Make a copy of input data. True by default.
+    max_iter: int, optional, default: 200
+        Maximum number of iterations
+
+    copy: boolean, optional, default: True
+        Make a copy of input data.
+
+    preference: array [n_samples,] or float, optional, default: None
+        Preferences for each point - points with larger values of
+        preferences are more likely to be chosen as exemplars. The number
+        of exemplars, ie of clusters, is influenced by the input
+        preferences value. If the preferences are not passed as arguments,
+        they will be set to the median of the input similarities.
+
+    affinity: string, optional, default=``euclidean``
+        Which affinity to use. At the moment ``precomputed`` and
+        ``euclidean`` are supported. ``euclidean`` uses the
+        negative squared euclidean distance between points.
+
+    verbose: boolean, optional, default: False
+        Whether to be verbose.
 
 
     Attributes
@@ -191,6 +227,9 @@ class AffinityPropagation(BaseEstimator):
 
     `labels_` : array, [n_samples]
         Labels of each point
+
+    `affinity_matrix_` : array-like, [n_samples, n_samples]
+        Stores the affinity matrix used in ``fit``.
 
     Notes
     -----
@@ -206,38 +245,61 @@ class AffinityPropagation(BaseEstimator):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convit=30, copy=True):
+    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
+            convit=None, copy=True,
+            preference=None, p=None, affinity='euclidean', verbose=False):
+
+        if convit is not None:
+            warnings.warn("``convit`` is deprectaed and will be removed in "
+                          "version 0.14. Use ``convergence_iter`` "
+                          "instead", DeprecationWarning)
+            convergence_iter = convit
+
         self.damping = damping
         self.max_iter = max_iter
-        self.convit = convit
+        self.convergence_iter = convergence_iter
         self.copy = copy
+        self.verbose = verbose
+        if not p is None:
+            warnings.warn("p is deprecated and will be removed in version 0.14"
+                    ". Use ``preference`` instead.", DeprecationWarning)
+            preference = p
 
-    def fit(self, S, p=None):
-        """Compute affinity propagation clustering.
+        self.preference = preference
+        self.affinity = affinity
+
+    @property
+    def _pairwise(self):
+        return self.affinity is "precomputed"
+
+    def fit(self, X):
+        """ Create affinity matrix from negative euclidean distances, then
+        apply affinity propagation clustering.
 
         Parameters
         ----------
 
-        S: array [n_points, n_points]
-            Matrix of similarities between points
-
-        p: array [n_points,] or float, optional
-            Preferences for each point - points with larger values of
-            preferences are more likely to be chosen as exemplars. The number
-            of exemplars, ie of clusters, is influenced by the input
-            preferences value. If the preferences are not passed as arguments,
-            they will be set to the median of the input similarities.
-
-        damping : float, optional
-            Damping factor
-
-        copy: boolean, optional
-            If copy is False, the affinity matrix is modified inplace by the
-            algorithm, for memory efficiency
-
+        X: array [n_samples, n_features] or [n_samples, n_samples]
+            Data matrix or, if affinity is ``precomputed``, matrix of
+            similarities / affinities.
         """
-        self.cluster_centers_indices_, self.labels_ = affinity_propagation(S,
-                                p, max_iter=self.max_iter, convit=self.convit,
-                                damping=self.damping,
-                copy=self.copy)
+
+        if X.shape[0] == X.shape[1] and not self._pairwise:
+            warnings.warn("The API of AffinityPropagation has changed."
+                "Now ``fit`` constructs an affinity matrix from the data."
+                "To use a custom affinity matrix, set "
+                "``affinity=precomputed``.")
+        if self.affinity is "precomputed":
+            self.affinity_matrix_ = X
+        elif self.affinity is "euclidean":
+            self.affinity_matrix_ = -euclidean_distances(X, squared=True)
+        else:
+            raise ValueError("Affinity must be 'precomputed' or "
+                "'euclidean'. Got %s instead" % str(self.affinity))
+
+        self.cluster_centers_indices_, self.labels_ = affinity_propagation(
+                self.affinity_matrix_, self.preference,
+                max_iter=self.max_iter,
+                convergence_iter=self.convergence_iter,
+                damping=self.damping, copy=self.copy, verbose=self.verbose)
         return self

@@ -17,6 +17,11 @@ from ..utils.fixes import in1d
 from ..utils import array2d, check_random_state
 from ..base import BaseEstimator
 
+__all__ = ['PatchExtractor',
+           'extract_patches_2d',
+           'grid_to_graph',
+           'img_to_graph',
+           'reconstruct_from_patches_2d']
 
 ###############################################################################
 # From an image to a graph
@@ -244,9 +249,11 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if isinstance(max_patches, int) and max_patches < all_patches:
+        if (isinstance(max_patches, (int, np.integer))
+                and max_patches < all_patches):
             n_patches = max_patches
-        elif isinstance(max_patches, float) and 0 < max_patches < 1:
+        elif (isinstance(max_patches, (float, np.floating))
+                and 0 < max_patches < 1):
             n_patches = int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
@@ -330,7 +337,7 @@ class PatchExtractor(BaseEstimator):
         Pseudo number generator state used for random sampling.
 
     """
-    def __init__(self, patch_size, max_patches=None, random_state=None):
+    def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.random_state = random_state
@@ -367,16 +374,21 @@ class PatchExtractor(BaseEstimator):
         n_images, i_h, i_w = X.shape[:3]
         X = np.reshape(X, (n_images, i_h, i_w, -1))
         n_channels = X.shape[-1]
+        if self.patch_size is None:
+            patch_size = i_h / 10, i_w / 10
+        else:
+            patch_size = self.patch_size
+
         if self.max_patches:
             n_patches = self.max_patches
         else:
-            p_h, p_w = self.patch_size
+            p_h, p_w = patch_size
             n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-        patches_shape = (n_images * n_patches,) + self.patch_size
+        patches_shape = (n_images * n_patches,) + patch_size
         if n_channels > 1:
             patches_shape += (n_channels,)
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
-                image, self.patch_size, self.max_patches, self.random_state)
+                image, patch_size, self.max_patches, self.random_state)
         return patches

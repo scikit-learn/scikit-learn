@@ -621,12 +621,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     References
     ----------
-    .. [3] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+    .. [1] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
        Clusterings Comparison: Variants, Properties, Normalization and
        Correction for Chance}, JMLR
        http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
 
-    .. [4] `Wikipedia entry for the Adjusted Mutual Information
+    .. [2] `Wikipedia entry for the Adjusted Mutual Information
        <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
@@ -687,7 +687,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_information_score: Adjusted Mutual Information (adjusted
+    adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
         against chance)
 
     Examples

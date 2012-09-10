@@ -518,8 +518,10 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     n_samples_out, n_samples_in = n_samples_out + 1, n_samples_in + 1
     outer_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
     outer_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    inner_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
-    inner_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
+    inner_circ_x = (np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
+                    * factor)
+    inner_circ_y = (np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
+                    * factor)
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
            np.append(outer_circ_y, inner_circ_y))).T
@@ -627,7 +629,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, int):
+    if isinstance(centers, (int, np.integer)):
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:

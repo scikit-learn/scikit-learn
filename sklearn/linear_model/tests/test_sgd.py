@@ -8,6 +8,7 @@ from sklearn import linear_model, datasets, metrics
 from sklearn import preprocessing
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.base import clone
 
 import unittest
 from nose.tools import raises
@@ -133,7 +134,28 @@ class CommonTest(object):
         assert_true(hasattr(clf, "coef_"))
 
         clf.fit(X[:, :-1], Y)
-        assert_true(True)
+
+    def test_input_format(self):
+        """Input format tests. """
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        Y_ = np.array(Y)[:, np.newaxis]
+        clf.fit(X, Y_)
+
+        Y_ = np.c_[Y_, Y_]
+        assert_raises(ValueError, clf.fit, X, Y_)
+
+    def test_clone(self):
+        """Test whether clone works ok. """
+        clf = self.factory(alpha=0.01, n_iter=5, penalty='l1')
+        clf = clone(clf)
+        clf.set_params(penalty='l2')
+        clf.fit(X, Y)
+
+        clf2 = self.factory(alpha=0.01, n_iter=5, penalty='l2')
+        clf2.fit(X, Y)
+
+        assert_array_equal(clf.coef_, clf2.coef_)
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
@@ -154,17 +176,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
         self.factory(penalty='foobar', rho=0.85)
-
-    def test_sgd_losses(self):
-        """Check whether losses and hyperparameters are set properly"""
-        clf = self.factory(loss='hinge')
-        assert_true(isinstance(clf.loss_function, linear_model.Hinge))
-
-        clf = self.factory(loss='log')
-        assert_true(isinstance(clf.loss_function, linear_model.Log))
-
-        clf = self.factory(loss='modified_huber')
-        assert_true(isinstance(clf.loss_function, linear_model.ModifiedHuber))
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -273,9 +284,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         for loss in ("log", "modified_huber"):
             clf = self.factory(loss=loss, alpha=0.01, n_iter=10).fit(X, Y)
             p = clf.predict_proba([3, 2])
-            assert_true(p > 0.5)
+            assert_true(p[0, 1] > 0.5)
             p = clf.predict_proba([-1, -1])
-            assert_true(p < 0.5)
+            assert_true(p[0, 1] < 0.5)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
@@ -527,15 +538,6 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         """Check whether expected ValueError on bad penalty"""
         self.factory(penalty='foobar', rho=0.85)
 
-    def test_sgd_losses(self):
-        """Check whether losses and hyperparameters are set properly"""
-        clf = self.factory(loss='squared_loss')
-        assert_true(isinstance(clf.loss_function, linear_model.SquaredLoss))
-
-        clf = self.factory(loss='huber', epsilon=0.5)
-        assert_true(isinstance(clf.loss_function, linear_model.Huber))
-        assert_equal(clf.epsilon, 0.5)
-
     @raises(ValueError)
     def test_sgd_bad_loss(self):
         """Check whether expected ValueError on bad loss"""
@@ -679,6 +681,11 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
 
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
+
+    def test_loss_function_epsilon(self):
+        clf = self.factory(epsilon=0.9)
+        clf.set_params(epsilon=0.1)
+        assert clf.loss_functions['huber'][1] == 0.1
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):

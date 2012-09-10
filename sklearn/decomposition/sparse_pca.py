@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from ..utils import check_random_state
+from ..utils import check_random_state, array2d
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -72,9 +72,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     MiniBatchSparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components, alpha=1, ridge_alpha=0.01, max_iter=1000,
-                 tol=1e-8, method='lars', n_jobs=1, U_init=None,
-                 V_init=None, verbose=False, random_state=None):
+    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+            max_iter=1000, tol=1e-8, method='lars', n_jobs=1, U_init=None,
+            V_init=None, verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -102,10 +102,14 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
+        if self.n_components is None:
+            n_components = X.shape[1]
+        else:
+            n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E = dict_learning(X.T, self.n_components, self.alpha,
+        Vt, _, E = dict_learning(X.T, n_components, self.alpha,
                                  tol=self.tol, max_iter=self.max_iter,
                                  method=self.method, n_jobs=self.n_jobs,
                                  verbose=self.verbose,
@@ -212,9 +216,9 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components, alpha=1, ridge_alpha=0.01, n_iter=100,
-                 callback=None, chunk_size=3, verbose=False, shuffle=True,
-                 n_jobs=1, method='lars', random_state=None):
+    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+            n_iter=100, callback=None, chunk_size=3, verbose=False,
+            shuffle=True, n_jobs=1, method='lars', random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -242,8 +246,12 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
-        Vt, _ = dict_learning_online(X.T, self.n_components, alpha=self.alpha,
+        X = array2d(X)
+        if self.n_components is None:
+            n_components = X.shape[1]
+        else:
+            n_components = self.n_components
+        Vt, _ = dict_learning_online(X.T, n_components, alpha=self.alpha,
                                      n_iter=self.n_iter, return_code=True,
                                      dict_init=None, verbose=self.verbose,
                                      callback=self.callback,
