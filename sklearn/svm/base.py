@@ -755,13 +755,15 @@ class BaseLibLinear(BaseEstimator):
         self._check_n_features(X)
         return X
 
-    def _get_intercept_(self):
+    @property
+    def intercept_(self):
         if self.fit_intercept:
             ret = self.intercept_scaling * self.raw_coef_[:, -1]
             return ret
         return 0.0
 
-    def _set_intercept_(self, intercept):
+    @intercept_.setter
+    def intercept_(self, intercept):
         self.fit_intercept = True
 
         intercept /= self.intercept_scaling
@@ -771,9 +773,8 @@ class BaseLibLinear(BaseEstimator):
         # We need fortran ordered arrays for the predict
         self.raw_coef_ = np.asfortranarray(self.raw_coef_)
 
-    intercept_ = property(_get_intercept_, _set_intercept_)
-
-    def _get_coef_(self):
+    @property
+    def coef_(self):
         if self.fit_intercept:
             ret = self.raw_coef_[:, : -1].copy()
         else:
@@ -784,7 +785,8 @@ class BaseLibLinear(BaseEstimator):
         ret.flags.writeable = False
         return ret
 
-    def _set_coef_(self, coef):
+    @coef_.setter
+    def coef_(self, coef):
         raw_intercept = self.raw_coef_[:, -1].reshape(-1, 1)
 
         self.raw_coef_ = coef
@@ -794,8 +796,6 @@ class BaseLibLinear(BaseEstimator):
 
         # We need fortran ordered arrays for the predict
         self.raw_coef_ = np.asfortranarray(self.raw_coef_)
-
-    coef_ = property(_get_coef_, _set_coef_)
 
     def _get_bias(self):
         if self.fit_intercept:
