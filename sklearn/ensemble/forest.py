@@ -59,8 +59,7 @@ __all__ = ["RandomForestClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_trees(n_trees, forest, X, y,
-                          sample_mask, X_argsorted, seed, verbose):
+def _parallel_build_trees(n_trees, forest, X, y, seed, verbose):
     """Private function used to build a batch of trees within a job."""
     random_state = check_random_state(seed)
     trees = []
@@ -77,13 +76,11 @@ def _parallel_build_trees(n_trees, forest, X, y,
         if forest.bootstrap:
             n_samples = X.shape[0]
             indices = random_state.randint(0, n_samples, n_samples)
-            tree.fit(X[indices], y[indices],
-                     sample_mask=sample_mask, X_argsorted=X_argsorted)
+            tree.fit(X[indices], y[indices])
             tree.indices_ = indices
 
         else:
-            tree.fit(X, y,
-                     sample_mask=sample_mask, X_argsorted=X_argsorted)
+            tree.fit(X, y)
 
         trees.append(tree)
 
@@ -141,11 +138,6 @@ def _partition_trees(forest):
         starts[i] = starts[i - 1] + n_trees[i - 1]
 
     return n_jobs, n_trees, starts
-
-
-def _parallel_X_argsort(X):
-    """Private function used to sort the features of X."""
-    return np.asarray(np.argsort(X.T, axis=1).T, dtype=np.int32, order="F")
 
 
 def _partition_features(forest, n_total_features):
@@ -235,26 +227,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         n_samples, self.n_features_ = X.shape
 
-        if self.bootstrap:
-            sample_mask = None
-            X_argsorted = None
-
-        else:
-            if self.oob_score:
-                raise ValueError("Out of bag estimation only available"
-                        " if bootstrap=True")
-
-            sample_mask = np.ones((n_samples,), dtype=np.bool)
-
-            n_jobs, _, starts = _partition_features(self, self.n_features_)
-
-            all_X_argsorted = Parallel(n_jobs=n_jobs)(
-                delayed(_parallel_X_argsort)(
-                    X[:, starts[i]:starts[i + 1]])
-                for i in xrange(n_jobs))
-
-            X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
-
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -285,8 +257,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 self,
                 X,
                 y,
-                sample_mask,
-                X_argsorted,
                 self.random_state.randint(MAX_INT),
                 verbose=self.verbose)
             for i in xrange(n_jobs))
@@ -614,17 +584,6 @@ class RandomForestClassifier(ForestClassifier):
         ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
-        Note: this parameter is tree-specific.
-
     max_features : int, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
           - If "auto", then `max_features=sqrt(n_features)` on
@@ -690,7 +649,6 @@ class RandomForestClassifier(ForestClassifier):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features="auto",
                        bootstrap=True,
                        compute_importances=False,
@@ -702,7 +660,7 @@ class RandomForestClassifier(ForestClassifier):
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                "min_samples_leaf", "min_density", "max_features",
+                "min_samples_leaf", "max_features",
                 "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
@@ -715,7 +673,6 @@ class RandomForestClassifier(ForestClassifier):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
 
 
@@ -750,17 +707,6 @@ class RandomForestRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
-
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
@@ -828,7 +774,6 @@ class RandomForestRegressor(ForestRegressor):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features="auto",
                        bootstrap=True,
                        compute_importances=False,
@@ -840,7 +785,7 @@ class RandomForestRegressor(ForestRegressor):
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                "min_samples_leaf", "min_density", "max_features",
+                "min_samples_leaf", "max_features",
                 "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
@@ -853,7 +798,6 @@ class RandomForestRegressor(ForestRegressor):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
 
 
@@ -889,17 +833,6 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
-
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
@@ -969,7 +902,6 @@ class ExtraTreesClassifier(ForestClassifier):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features="auto",
                        bootstrap=False,
                        compute_importances=False,
@@ -981,7 +913,7 @@ class ExtraTreesClassifier(ForestClassifier):
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                "min_samples_leaf", "min_density", "max_features",
+                "min_samples_leaf", "max_features",
                 "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
@@ -994,7 +926,6 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
 
 
@@ -1030,17 +961,6 @@ class ExtraTreesRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
-
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
         Note: this parameter is tree-specific.
 
     max_features : int, string or None, optional (default="auto")
@@ -1109,7 +1029,6 @@ class ExtraTreesRegressor(ForestRegressor):
                        max_depth=None,
                        min_samples_split=1,
                        min_samples_leaf=1,
-                       min_density=0.1,
                        max_features="auto",
                        bootstrap=False,
                        compute_importances=False,
@@ -1121,7 +1040,7 @@ class ExtraTreesRegressor(ForestRegressor):
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                "min_samples_leaf", "min_density", "max_features",
+                "min_samples_leaf", "max_features",
                 "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
@@ -1134,5 +1053,4 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features

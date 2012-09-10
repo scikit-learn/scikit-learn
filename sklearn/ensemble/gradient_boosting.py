@@ -465,7 +465,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.estimators_ = None
 
-    def fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
+    def fit_stage(self, i, X, y, y_pred, sample_mask):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -478,11 +478,10 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # induce regression tree on residuals
             tree = Tree(self.n_features, (1,), 1, MSE(1), self.max_depth,
-                        self.min_samples_split, self.min_samples_leaf, 0.0,
+                        self.min_samples_split, self.min_samples_leaf,
                         self.max_features, TREE_SPLIT_BEST, self.random_state)
 
-            tree.build(X, residual[:, np.newaxis],
-                       sample_mask, X_argsorted)
+            tree.build(X[sample_mask, :], residual[sample_mask][:, np.newaxis])
 
             # update tree leaves
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
@@ -540,10 +539,6 @@ class BaseGradientBoosting(BaseEnsemble):
         if self.init is None:
             self.init = loss.init_estimator()
 
-        # create argsorted X for fast tree induction
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
-
         # fit initial model
         self.init.fit(X, y)
 
@@ -569,7 +564,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                   self.random_state)
 
             # fit next stage of trees
-            y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
+            y_pred = self.fit_stage(i, X, y, y_pred, sample_mask)
 
             # track deviance (= loss)
             if self.subsample < 1.0:

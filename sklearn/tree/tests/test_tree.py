@@ -256,10 +256,6 @@ def test_error():
                   X, y)
 
     assert_raises(ValueError,
-                  tree.DecisionTreeClassifier(min_density=2.0).fit,
-                  X, y)
-
-    assert_raises(ValueError,
                   tree.DecisionTreeClassifier(max_features=42).fit,
                   X, y)
 
@@ -315,16 +311,6 @@ def test_error():
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
-
-    # wrong length of sample mask
-    clf = tree.DecisionTreeClassifier()
-    sample_mask = np.array([1])
-    assert_raises(ValueError, clf.fit, X, y, sample_mask=sample_mask)
-
-    # wrong length of X_argsorted
-    clf = tree.DecisionTreeClassifier()
-    X_argsorted = np.array([1])
-    assert_raises(ValueError, clf.fit, X, y, X_argsorted=X_argsorted)
 
 
 def test_min_samples_leaf():

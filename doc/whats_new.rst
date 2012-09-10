@@ -17,6 +17,9 @@ Changelog
 Changelog
 ---------
 
+   - Memory consumption improvements of the :ref:`decision trees <tree>` module, by
+     `Brian Holt`_.
+
    - Various speed improvements of the :ref:`decision trees <tree>` module, by
      `Gilles Louppe`_.
 
