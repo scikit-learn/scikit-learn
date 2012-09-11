@@ -142,7 +142,7 @@ def trim(s):
 
 
 # mapping from integer feature name to original token string
-feature_names = vectorizer.get_feature_names()
+feature_names = np.asarray(vectorizer.get_feature_names())
 
 
 ###############################################################################
