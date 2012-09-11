@@ -95,9 +95,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if n_samples == 0:
             raise ValueError("cannot vectorize empty sequence")
 
-        X = sp.coo_matrix((values, (i_ind, j_ind)), dtype=self.dtype,
+        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
+        X.sum_duplicates()  # also sorts the indices
         if self.non_negative:
-            X = X.tocsr()
             np.abs(X.data, X.data)
         return X

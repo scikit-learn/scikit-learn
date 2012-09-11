@@ -27,8 +27,7 @@ def test_feature_hasher():
         assert_equal(X[0].sum(), 4)
         assert_equal(X[1].sum(), 3)
 
-        # .nnz is unreliable on coo_matrix
-        assert_equal(X.tocsr().nnz, sum(len(set(x)) for x in raw_X))
+        assert_equal(X.nnz, sum(len(set(x)) for x in raw_X))
 
 
 def test_hash_empty_input():
