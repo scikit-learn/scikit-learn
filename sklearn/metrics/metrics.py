@@ -1070,9 +1070,13 @@ def multiclass_log_loss(y_true, y_pred, eps=1e-15):
     -------
     loss : float
     """
-    clip = np.clip(y_pred, eps, 1 - eps)
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+
+    # normalize row sums to 1
+    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
+
     actual = np.zeros(y_pred.shape)
     rows = actual.shape[0]
     actual[np.arange(rows), y_true.astype(int)] = 1
-    vsota = np.sum(actual * np.log(clip))
+    vsota = np.sum(actual * np.log(y_pred))
     return -1.0 / rows * vsota
