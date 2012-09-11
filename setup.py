@@ -33,22 +33,26 @@ DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 import sklearn
 VERSION = sklearn.__version__
 
-from numpy.distutils.core import setup
-
 ###############################################################################
 # Optional setuptools features
+# We need to import setuptools early, if we want setuptools features,
+# as it monkey-patches the 'setup' function
 
 # For some commands, use setuptools
 if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist_wininst', 'install_egg_info', 'build_sphinx',
            'egg_info', 'easy_install', 'upload',
             )).intersection(sys.argv)) > 0:
+    import setuptools
     extra_setuptools_args = dict(
             zip_safe=False, # the package can run out of an .egg file
             include_package_data=True,
         )
 else:
     extra_setuptools_args = dict()
+
+###############################################################################
+from numpy.distutils.core import setup
 
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
