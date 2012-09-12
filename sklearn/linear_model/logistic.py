@@ -3,7 +3,6 @@ import numpy as np
 from ..base import ClassifierMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..svm.base import BaseLibLinear
-from ..svm.liblinear import csr_predict_prob_wrap, predict_prob_wrap
 
 
 class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
@@ -114,19 +113,17 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
             the model, where classes are ordered by arithmetical
             order.
         """
-        X = self._validate_for_predict(X)
-
-        C = 0.0  # C is not useful here
-
-        prob_wrap = (csr_predict_prob_wrap if self._sparse else
-                predict_prob_wrap)
-        probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
-                           self.tol, C, self.class_weight_label_,
-                           self.class_weight_, self.label_, self._get_bias())
-        return probas[:, np.argsort(self.label_)]
+        scores = self.decision_function(X)
+        if len(scores.shape) == 1:
+            scores = 1. / (1. + np.exp(-scores))
+            return np.vstack([1 - scores, scores]).T
+        else:
+            prob = 1. / (1. + np.exp(-scores))
+            prob /= prob.sum(axis=0)
+            return prob
 
     def predict_log_proba(self, X):
-        """Log of Probability estimates.
+        """Log of probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
