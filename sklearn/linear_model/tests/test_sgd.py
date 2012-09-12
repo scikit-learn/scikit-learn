@@ -29,6 +29,10 @@ class SparseSGDClassifier(SGDClassifier):
         X = sp.csr_matrix(X)
         return SGDClassifier.decision_function(self, X, *args, **kw)
 
+    def predict_proba(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDClassifier.predict_proba(self, X, *args, **kw)
+
 
 class SparseSGDRegressor(SGDRegressor):
 
