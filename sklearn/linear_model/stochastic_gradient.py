@@ -571,6 +571,12 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             The signed 'distances' to the hyperplane(s).
         """
         X = atleast2d_or_csr(X)
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        """predict decision function assuming that X is either sparse
+        matrix or array-like.
+        """
         scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
         if self.classes_.shape[0] == 2:
             return np.ravel(scores)
@@ -622,12 +628,13 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
 
-        proba = np.ones((len(X), 2), dtype=np.float64)
+        X = atleast2d_or_csr(X)
+        proba = np.ones((X.shape[0], 2), dtype=np.float64)
         if self.loss == "log":
-            proba[:, 1] = 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+            proba[:, 1] = 1.0 / (1.0 + np.exp(-self._decision_function(X)))
         elif self.loss == "modified_huber":
             proba[:, 1] = np.minimum(1, np.maximum(-1,
-                                                   self.decision_function(X)))
+                                                   self._decision_function(X)))
             proba[:, 1] += 1
             proba[:, 1] /= 2
         else:
