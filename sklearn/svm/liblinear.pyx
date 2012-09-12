@@ -20,7 +20,7 @@ def train_wrap ( np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef parameter *param
     cdef problem *problem
     cdef model *model
-    cdef char *error_msg
+    cdef char_const_ptr error_msg
     cdef int len_w
 
     problem = set_problem(X.data, Y.data, X.shape, bias)
@@ -73,7 +73,7 @@ cdef _csr_train_wrap(np.int32_t n_features,
     cdef parameter *param
     cdef problem *problem
     cdef model *model
-    cdef char *error_msg
+    cdef char_const_ptr error_msg
     cdef int len_w
 
     problem = csr_set_problem(X_values.data, X_indices.shape,
