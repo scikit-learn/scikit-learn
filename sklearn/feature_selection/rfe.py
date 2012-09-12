@@ -194,7 +194,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        return self.estimator_.score(X[:, safe_mask(X, self.support)], y)
+        return self.estimator_.score(X[:, safe_mask(X, self.support_)], y)
 
     def transform(self, X):
         """Reduce X to the selected features during the elimination.
