@@ -162,10 +162,7 @@ def test_svr():
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
                 svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=1.0),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.sparse.SVR(kernel='linear', C=10.)):
+                svm.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
 
@@ -246,9 +243,7 @@ def test_probability():
 
     for clf in (
         svm.SVC(probability=True, C=1.0),
-        svm.NuSVC(probability=True),
-        svm.sparse.SVC(probability=True, C=1.0),
-        svm.sparse.NuSVC(probability=True)):
+        svm.NuSVC(probability=True)):
 
         clf.fit(iris.data, iris.target)
 
@@ -360,7 +355,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
+    for clf in (svm.SVC(), svm.LinearSVC()):
         Xf = np.asfortranarray(X)
         assert_true(Xf.flags['C_CONTIGUOUS'] == False)
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -563,10 +558,6 @@ def test_immutable_coef_property():
         svm.SVR(kernel='linear').fit(iris.data, iris.target),
         svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
         svm.OneClassSVM(kernel='linear').fit(iris.data),
-        svm.sparse.SVC(kernel='linear').fit(iris.data, iris.target),
-        svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
-        svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
-        svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
