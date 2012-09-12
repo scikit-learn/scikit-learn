@@ -574,8 +574,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self._decision_function(X)
 
     def _decision_function(self, X):
-        """predict decision function assuming that X is either sparse
-        matrix or array-like.
+        """Compute decision function values for each sample in X.
+
+        X is assumed to be either sparse matrix or array-like.
         """
         scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
         if self.classes_.shape[0] == 2:
