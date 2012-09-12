@@ -263,7 +263,7 @@ class ClassifierMixin(object):
             Labels for X.
 
         sample_weight : array-like, shape = [n_samples], optional
-            Sample weights
+            Sample weights.
 
         Returns
         -------
@@ -271,8 +271,8 @@ class ClassifierMixin(object):
 
         """
         if sample_weight is not None:
-            return ((self.predict(X) == y) * sample_weight) \
-                    / sample_weight.sum()
+            return np.average((self.predict(X) == y),
+                    weights=sample_weight)
         return np.mean(self.predict(X) == y)
 
 
