@@ -2539,7 +2539,7 @@ double predict_values(const struct model *model_, const struct feature_node *x, 
 		   model_->param.solver_type == L2R_L2LOSS_SVR_DUAL)
 			return dec_values[0];
 		else
-			return (dec_values[0]>0)?model_->label[1]:model_->label[0];
+			return (dec_values[0]>0)?model_->label[0]:model_->label[1];
 	}
 	else
 	{
@@ -2561,6 +2561,7 @@ double predict(const model *model_, const feature_node *x)
 	return label;
 }
 
+#if 0
 double predict_probability(const struct model *model_, const struct feature_node *x, double* prob_estimates)
 {
 	if(check_probability_model(model_))
@@ -2578,10 +2579,7 @@ double predict_probability(const struct model *model_, const struct feature_node
 			prob_estimates[i]=1/(1+exp(-prob_estimates[i]));
 
 		if(nr_class==2) // for binary classification
-		{
-			prob_estimates[1]=prob_estimates[0];
-			prob_estimates[0]=1.-prob_estimates[0];
-		}
+			prob_estimates[1]=1.-prob_estimates[0];
 		else
 		{
 			double sum=0;
@@ -2598,7 +2596,6 @@ double predict_probability(const struct model *model_, const struct feature_node
 		return 0;
 }
 
-#if 0
 static const char *solver_type_table[]=
 {
 	"L2R_LR", "L2R_L2LOSS_SVC_DUAL", "L2R_L2LOSS_SVC", "L2R_L1LOSS_SVC_DUAL", "MCSVM_CS",
@@ -2844,12 +2841,14 @@ const char *check_parameter(const problem *prob, const parameter *param)
 	return NULL;
 }
 
+#if 0
 int check_probability_model(const struct model *model_)
 {
 	return (model_->param.solver_type==L2R_LR ||
 			model_->param.solver_type==L2R_LR_DUAL ||
 			model_->param.solver_type==L1R_LR);
 }
+#endif
 
 void set_print_string_function(void (*print_func)(const char*))
 {
