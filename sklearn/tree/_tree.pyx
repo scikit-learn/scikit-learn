@@ -319,7 +319,7 @@ cdef class Tree:
 
         if capacity < 0:
             if self.capacity <= 0:
-                capacity = 3
+                capacity = 3 # default initial value
             else:
                 capacity = 2 * self.capacity
 
