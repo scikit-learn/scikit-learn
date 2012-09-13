@@ -691,7 +691,8 @@ sparser.
 Isotonic regression
 ====================
 
-The :class:`Isotonic Regression` solves the following problem:
+The :class:`Isotonic Regression` fits a monotonic function to the data.
+It solves the following problem:
 
   minimize :math:`\sum w_i (y_i - x_i)^2`
 
