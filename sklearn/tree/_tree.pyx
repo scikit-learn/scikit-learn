@@ -1030,7 +1030,14 @@ cdef class ClassificationCriterion(Criterion):
         cdef int k = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = 0
+        self.n_left = 0
+        self.n_right = 0
+
         self.n_classes = <int*> malloc(n_outputs * sizeof(int))
+        if self.n_classes == NULL:
+            raise MemoryError()
+
         cdef int label_count_stride = -1
 
         for k from 0 <= k < n_outputs:
@@ -1040,20 +1047,28 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_stride = n_classes[k]
 
         self.label_count_stride = label_count_stride
+
+        # Allocate
         self.label_count_left = <int*> calloc(n_outputs * label_count_stride, sizeof(int))
         self.label_count_right = <int*> calloc(n_outputs * label_count_stride, sizeof(int))
         self.label_count_init = <int*> calloc(n_outputs * label_count_stride, sizeof(int))
 
-        self.n_samples = 0
-        self.n_left = 0
-        self.n_right = 0
+        # Check for allocation errors
+        if self.label_count_left == NULL or \
+           self.label_count_right == NULL or \
+           self.label_count_init == NULL:
+            if self.n_classes != NULL: free(self.n_classes)
+            if self.label_count_left != NULL: free(self.label_count_left)
+            if self.label_count_right != NULL: free(self.label_count_right)
+            if self.label_count_right != NULL: free(self.label_count_init)
+            raise MemoryError()
 
     def __dealloc__(self):
         """Destructor."""
-        free(self.n_classes)
-        free(self.label_count_left)
-        free(self.label_count_right)
-        free(self.label_count_init)
+        if self.n_classes != NULL: free(self.n_classes)
+        if self.label_count_left != NULL: free(self.label_count_left)
+        if self.label_count_right != NULL: free(self.label_count_right)
+        if self.label_count_right != NULL: free(self.label_count_init)
 
     def __reduce__(self):
         return (ClassificationCriterion,
@@ -1353,6 +1368,7 @@ cdef class RegressionCriterion(Criterion):
         self.n_left = 0
         self.n_right = 0
 
+        # Allocate
         self.mean_left = <double*> calloc(n_outputs, sizeof(double))
         self.mean_right = <double*> calloc(n_outputs, sizeof(double))
         self.mean_init = <double*> calloc(n_outputs, sizeof(double))
@@ -1362,16 +1378,35 @@ cdef class RegressionCriterion(Criterion):
         self.var_left = <double*> calloc(n_outputs, sizeof(double))
         self.var_right = <double*> calloc(n_outputs, sizeof(double))
 
+        # Check for allocation errors
+        if self.mean_left == NULL or \
+           self.mean_right == NULL or \
+           self.mean_init == NULL or \
+           self.sq_sum_left == NULL or \
+           self.sq_sum_right == NULL or \
+           self.sq_sum_init == NULL or \
+           self.var_left == NULL or \
+           self.var_right == NULL:
+            if self.mean_left != NULL: free(self.mean_left)
+            if self.mean_right != NULL: free(self.mean_right)
+            if self.mean_init != NULL: free(self.mean_init)
+            if self.sq_sum_left != NULL: free(self.sq_sum_left)
+            if self.sq_sum_right != NULL: free(self.sq_sum_right)
+            if self.sq_sum_init != NULL: free(self.sq_sum_init)
+            if self.var_left != NULL: free(self.var_left)
+            if self.var_right != NULL: free(self.var_right)
+            raise MemoryError()
+
     def __dealloc__(self):
         """Destructor."""
-        free(self.mean_left)
-        free(self.mean_right)
-        free(self.mean_init)
-        free(self.sq_sum_left)
-        free(self.sq_sum_right)
-        free(self.sq_sum_init)
-        free(self.var_left)
-        free(self.var_right)
+        if self.mean_left != NULL: free(self.mean_left)
+        if self.mean_right != NULL: free(self.mean_right)
+        if self.mean_init != NULL: free(self.mean_init)
+        if self.sq_sum_left != NULL: free(self.sq_sum_left)
+        if self.sq_sum_right != NULL: free(self.sq_sum_right)
+        if self.sq_sum_init != NULL: free(self.sq_sum_init)
+        if self.var_left != NULL: free(self.var_left)
+        if self.var_right != NULL: free(self.var_right)
 
     def __reduce__(self):
         return (RegressionCriterion,
