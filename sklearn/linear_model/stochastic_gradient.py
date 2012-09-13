@@ -608,7 +608,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else raises Exception
+        array, shape = [n_samples, n_classes]
             Contains the membership probabilities of the positive class.
 
         References
