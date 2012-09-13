@@ -2451,6 +2451,7 @@ model* train(const problem *prob, const parameter *param)
 	return model_;
 }
 
+#if 0
 void cross_validation(const problem *prob, const parameter *param, int nr_fold, double *target)
 {
 	int i;
@@ -2561,7 +2562,6 @@ double predict(const model *model_, const feature_node *x)
 	return label;
 }
 
-#if 0
 double predict_probability(const struct model *model_, const struct feature_node *x, double* prob_estimates)
 {
 	if(check_probability_model(model_))
