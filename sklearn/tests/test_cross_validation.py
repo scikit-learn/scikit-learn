@@ -32,7 +32,13 @@ class MockClassifier(BaseEstimator):
     def __init__(self, a=0):
         self.a = a
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_weight=None, class_prior=None):
+        assert_true(sample_weight is None or sample_weight.shape[0] == X.shape[0],
+        'MockClassifier extra fit_param sample_weight.shape[0] is {0}, should be {1}'
+        .format(sample_weight.shape[0], X.shape[0]))
+        assert_true(class_prior is None or class_prior.shape[0] == len(np.unique(y)),
+        'MockClassifier extra fit_param class_prior.shape[0] is {0}, should be {1}'
+        .format(class_prior.shape[0], len(np.unique(y))))
         return self
 
     def predict(self, T):
@@ -162,6 +168,15 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, y))
 
 
+def test_cross_val_score_fit_params():
+    clf = MockClassifier()
+    n_samples = X.shape[0]
+    n_classes = len(np.unique(y))
+    fit_params = {'sample_weight': np.ones(n_samples),
+                  'class_prior': np.ones(n_classes) / n_classes}
+    cval.cross_val_score(clf, X, y, fit_params=fit_params)
+
+    
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
     assert_raises(ValueError, cval.train_test_split, range(3),

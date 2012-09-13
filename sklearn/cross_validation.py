@@ -1027,16 +1027,21 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test, verbose):
+def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
+                     fit_params):
     """Inner loop for cross validation"""
+    n_samples = X.shape[0] if sp.issparse(X) else len(X)
+    fit_params = dict([(k, np.asarray(v)[train]
+                        if hasattr(v, '__len__') and len(v) == n_samples else v)
+                       for k, v in fit_params.items()])
     if y is None:
-        estimator.fit(X[train])
+        estimator.fit(X[train], **fit_params)
         if score_func is None:
             score = estimator.score(X[test])
         else:
             score = score_func(X[test])
     else:
-        estimator.fit(X[train], y[train])
+        estimator.fit(X[train], y[train], **fit_params)
         if score_func is None:
             score = estimator.score(X[test], y[test])
         else:
@@ -1047,7 +1052,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose):
 
 
 def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
-                    verbose=0):
+                    verbose=0, fit_params=None):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1079,6 +1084,9 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
     verbose: integer, optional
         The verbosity level
+
+    fit_params : dict, optional
+        parameters to pass to the fit method
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -1090,9 +1098,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
                 "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
+    fit_params = fit_params if fit_params is not None else {}
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
                 delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                          train, test, verbose)
+                                          train, test, verbose, fit_params)
                 for train, test in cv)
     return np.array(scores)
 
