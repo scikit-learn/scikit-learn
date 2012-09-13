@@ -37,52 +37,52 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
     -------
     x: list of floating-point values
     """
+
+
     if w is None:
         w = np.ones(len(y), dtype=y.dtype)
-
     if x_min is not None or x_max is not None:
         y = np.copy(y)
         w = np.copy(w)
+        C = np.dot(w, y * y) * 10 # upper bound on the cost function
         if x_min is not None:
             y[0] = x_min
-            w[0] = 1e32
+            w[0] = C
         if x_max is not None:
             y[-1] = x_max
-            w[-1] = 1e32
+            w[-1] = C
 
-    J = [[i, ] for i in range(len(y))]
+    J = [(w[i] * y[i], w[i], [i,]) for i in range(len(y))]
     cur = 0
 
     while cur < len(J) - 1:
-        av0, av1, av2 = 0, 0, np.inf
-        while av0 <= av1 and cur < len(J) - 1:
-            idx0 = J[cur]
-            idx1 = J[cur + 1]
-            av0 = np.dot(w[idx0], y[idx0]) / np.sum(w[idx0])
-            av1 = np.dot(w[idx1], y[idx1]) / np.sum(w[idx1])
-            cur += 1 if av0 <= av1 else 0
+        v0, v1, v2 = 0, 0, np.inf
+        w0, w1, w2 = 1, 1, 1
+        while v0 * w1 <= v1 * w0 and cur < len(J) - 1:
+            v0, w0, idx0 = J[cur]
+            v1, w1, idx1 = J[cur + 1]
+            if v0 * w1 <= v1 * w0:
+                cur +=1
 
         if cur == len(J) - 1:
             break
 
-        a = J.pop(cur)
-        b = J.pop(cur)
-        J.insert(cur, a + b)
-        while av2 > av0 and cur > 0:
-            idx0 = J[cur]
-            idx2 = J[cur - 1]
-            av0 = np.dot(w[idx0], y[idx0]) / np.sum(w[idx0])
-            av2 = np.dot(w[idx2], y[idx2]) / np.sum(w[idx2])
-            if av2 >= av0:
-                a = J.pop(cur - 1)
-                b = J.pop(cur - 1)
-                J.insert(cur - 1, a + b)
+        # merge two groups
+        v0, w0, idx0 = J.pop(cur)
+        v1, w1, idx1 = J.pop(cur)
+        J.insert(cur, (v0 + v1, w0 + w1, idx0 + idx1))
+        while v2 * w0 > v0 * w2 and cur > 0:
+            v0, w0, idx0 = J[cur]
+            v2, w2, idx2 = J[cur - 1]
+            if w0 * v2 >= w2 * v0:
+                J.pop(cur)
+                J[cur - 1] = (v0 + v2, w0 + w2, idx0 + idx2)
                 cur -= 1
 
-    sol = []
-    for idx in J:
-        sol += [np.dot(w[idx], y[idx]) / np.sum(w[idx])] * len(idx)
-    return np.asarray(sol)
+    sol = np.empty(len(y))
+    for v, w, idx in J:
+        sol[idx] = v / w
+    return sol
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin):
