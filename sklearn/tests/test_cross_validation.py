@@ -33,12 +33,14 @@ class MockClassifier(BaseEstimator):
         self.a = a
 
     def fit(self, X, Y, sample_weight=None, class_prior=None):
-        assert_true(sample_weight is None or sample_weight.shape[0] == X.shape[0],
-        'MockClassifier extra fit_param sample_weight.shape[0] is {0}, should be {1}'
-        .format(sample_weight.shape[0], X.shape[0]))
-        assert_true(class_prior is None or class_prior.shape[0] == len(np.unique(y)),
-        'MockClassifier extra fit_param class_prior.shape[0] is {0}, should be {1}'
-        .format(class_prior.shape[0], len(np.unique(y))))
+        if sample_weight is not None:
+            assert_true(sample_weight.shape[0] == X.shape[0],
+            'MockClassifier extra fit_param sample_weight.shape[0] is {0}, '
+            'should be {1}'.format(sample_weight.shape[0], X.shape[0]))
+        if class_prior is not None:
+            assert_true(class_prior.shape[0] == len(np.unique(y)),
+            'MockClassifier extra fit_param class_prior.shape[0] is {0}, '
+            'should be {1}'.format(class_prior.shape[0], len(np.unique(y))))
         return self
 
     def predict(self, T):
