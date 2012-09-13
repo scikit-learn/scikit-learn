@@ -1,12 +1,11 @@
 """Factor Analysis.
-A latent linear variable model, similar to PPCA.
+A latent linear variable model, similar to ProbabilisticPCA.
 
 This implementation is based on David Barber's Book,
 Bayesian Reasoning and Machine Learning,
 http://www.cs.ucl.ac.uk/staff/d.barber/brml,
 Algorithm 21.1
 """
-
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -59,10 +58,20 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     verbose : int | bool
         Print verbose output.
 
+    noise_variance_init : None | array, shape=(n_features,)
+        The initial guess of the noise variance for each feature.
+        If None, it defaults to np.ones(n_features)
+
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
         Components with maximum variance.
+
+    `loglike_` : list, [n_iterations]
+        The log likelihood at each iteration.
+
+    `noise_variance_` : array, shape=(n_features,)
+        The estimated noise variance for each feature.
 
     References
     ----------
@@ -78,22 +87,21 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0):
+                 verbose=0, noise_variance_init=None):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
         self.verbose = verbose
+        self.noise_variance_init = noise_variance_init
 
-    def fit(self, X, psi=None):
+    def fit(self, X, y=None):
         """Fit the FactorAnalysis model to X using EM
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Training data.
-        psi : None | array-like, shape (n_features,)
-            The initial values for the variance of the noise for each feature.
 
         Returns
         -------
@@ -112,10 +120,16 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         # some constant terms
         nsqrt = sqrt(n_samples)
         llconst = n_features * np.log(2 * np.pi) + n_components
-        var = np.var(X, 0)
+        var = np.var(X, axis=0)
 
-        if psi is None:
-            psi = np.ones(n_features)
+        if self.noise_variance_init is None:
+            psi = np.ones(n_features, dtype=X.dtype)
+        else:
+            if len(self.noise_variance_init) != n_features:
+                raise ValueError("noise_variance_init dimension does not "
+                        "with number of featueres : %d != %d" %
+                        (len(self.noise_variance_init), n_features))
+            psi = np.array(self.noise_variance_init)
 
         loglike = []
         old_ll = -np.inf
@@ -124,11 +138,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
             Xtilde = X / (sqrt_psi * nsqrt)
-            _, s, v = linalg.svd(Xtilde, full_matrices=False)
-            v = v[:n_components]
-            s *= s
+            _, s, V = linalg.svd(Xtilde, full_matrices=False)
+            V = V[:n_components]
+            s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s[:n_components] - 1, 0))[:, np.newaxis] * v
+            W = np.sqrt(np.maximum(s[:n_components] - 1, 0))[:, np.newaxis] * V
             W *= sqrt_psi
 
             # loglikelihood
@@ -136,7 +150,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             ll += np.sum(s[n_components:]) + np.sum(np.log(psi))
             ll *= -n_samples / 2.
             loglike.append(ll)
-            if ll - old_ll < self.tol:
+            if (ll - old_ll) < self.tol:
                 break
             old_ll = ll
 
@@ -146,7 +160,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                 print "Did not converge"
 
         self.components_ = W
-        self.psi_ = psi
+        self.noise_variance_ = psi
         self.loglike_ = loglike
         return self
 
@@ -169,7 +183,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         X_transformed = X - self.mean_
 
-        Wpsi = self.components_ / self.psi_
+        Wpsi = self.components_ / self.noise_variance_
         cov_z = linalg.inv(Ih + np.dot(Wpsi, self.components_.T))
         tmp = np.dot(X_transformed, Wpsi.T)
         X_transformed = np.dot(tmp, cov_z)
@@ -186,5 +200,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape=(n_features, n_features)
             The covariance
         """
-        cov = np.dot(self.components_.T, self.components_) + np.diag(self.psi_)
+        cov = np.dot(self.components_.T, self.components_) \
+              + np.diag(self.noise_variance_)
         return cov

@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_raises
 
 from sklearn.decomposition import FactorAnalysis
 
@@ -39,3 +39,7 @@ def test_fa_generative():
     mcov = fa.get_covariance()
     diff = np.sum(np.abs(scov - mcov)) / W.size
     assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
+
+    fa = FactorAnalysis(n_components=n_components,
+                        noise_variance_init=np.ones(n_features))
+    assert_raises(ValueError, fa.fit, X[:, :2])

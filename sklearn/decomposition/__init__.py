@@ -12,7 +12,7 @@ from .fastica_ import FastICA, fastica
 from .dict_learning import dict_learning, dict_learning_online, sparse_encode,\
                            DictionaryLearning, MiniBatchDictionaryLearning,\
                            SparseCoder
-from .fa import FactorAnalysis
+from .factor_analysis import FactorAnalysis
 
 __all__ = ['DictionaryLearning',
            'FastICA',
