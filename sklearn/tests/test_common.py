@@ -43,10 +43,11 @@ from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
         Normalizer
 from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
+from sklearn.linear_model import IsotonicRegression
 
 dont_test = [Pipeline, GridSearchCV, SparseCoder, EllipticEnvelope,
         EllipticEnvelop, DictVectorizer, LabelBinarizer, LabelEncoder,
-        TfidfTransformer]
+        TfidfTransformer, IsotonicRegression]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
