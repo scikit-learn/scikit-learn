@@ -5,16 +5,14 @@
 # License: BSD Style.
 
 import warnings
-
 import numpy as np
 
-
-from ..base import BaseEstimator, ClusterMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
-from .k_means_ import k_means
+from ..metrics.pairwise import pairwise_kernels
 
 
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
@@ -60,7 +58,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, kernel="linear", gamma=0, degree=3,
                  coef0=1, alpha=1.0, fit_inverse_transform=False,
-                 eigen_solver='auto', tol=0, max_iter=None):
+                 eigen_solver='auto', tol=0, random_state=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -73,8 +71,23 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self.fit_inverse_transform = fit_inverse_transform
         self.eigen_solver = eigen_solver
         self.tol = tol
-        self.max_iter = max_iter
-        self.centerer = KernelCenterer()
+        self.random_state = check_random_state(random_state)
+
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
+
+    def _get_kernel(self, X, Y=None):
+        params = {"gamma": self.gamma,
+                  "degree": self.degree,
+                  "coef0": self.coef0}
+        try:
+            return pairwise_kernels(X, Y, metric=self.kernel,
+                                    filter_params=True, **params)
+        except AttributeError:
+            raise ValueError("%s is not a valid kernel. Valid kernels are: "
+                             "rbf, poly, sigmoid, linear and precomputed."
+                             % self.kernel)
 
     def _fit_transform(self, affinity):
         """ Fit's using kernel K"""
@@ -93,7 +106,11 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.embedding_ = _spectra_embedding(adjacency)
+
+        # get the adjacency matrix
+        adjacency = self._get_kernel(X)
+        # get the embedding
+        self.embedding_ = self._spectra_embedding(adjacency)
 
     def fit_transform(self, X, y=None, **params):
         """Fit the model from data in X and transform X.
@@ -108,14 +125,9 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+
         self.fit(X, **params)
-
-        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
-
-        if self.fit_inverse_transform:
-            self._fit_inverse_transform(X_transformed, X)
-
-        return X_transformed
+        return self.embedding_
 
     def transform(self, X):
         """Transform X.
@@ -128,6 +140,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+
+        # tranform using
+        raise NotImplementedError(
+            "out of sample extension is currently unavailable")
 
     def _spectra_embedding(self, adjacency):
         """Project the sample on the first eigen vectors of the graph Laplacian
@@ -181,21 +197,18 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         try:
             from pyamg import smoothed_aggregation_solver
         except ImportError:
-            if mode == "amg":
+            if self.mode == "amg":
                 raise ValueError("The mode was set to 'amg', but pyamg is "
                                  "not available.")
-
-        random_state = check_random_state(random_state)
-
         n_nodes = adjacency.shape[0]
         # XXX: Should we check that the matrices given is symmetric
-        if mode is None:
-            mode = 'arpack'
+        if self.mode is None:
+            self.mode = 'arpack'
         laplacian, dd = graph_laplacian(adjacency,
                                         normed=True, return_diag=True)
-        if (mode == 'arpack'
+        if (self.mode == 'arpack'
             or not sparse.isspmatrix(laplacian)
-            or n_nodes < 5 * n_components):
+            or n_nodes < 5 * self.n_components):
             # lobpcg used with mode='amg' has bugs for low number of nodes
 
             # We need to put the diagonal at zero
@@ -231,15 +244,16 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             # near 1.0 and leads to much faster convergence: potentially an
             # orders-of-magnitude speedup over simply using keyword which='LA'
             # in standard mode.
-            lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
+            lambdas, diffusion_map = eigsh(-laplacian, k=self.n_components,
                                            sigma=1.0, which='LM')
             embedding = diffusion_map.T[::-1] * dd
-        elif mode == 'amg':
+        elif self.mode == 'amg':
             # Use AMG to get a preconditioner and speed up the eigenvalue
             # problem.
             laplacian = laplacian.astype(np.float)  # lobpcg needs native float
             ml = smoothed_aggregation_solver(laplacian.tocsr())
-            X = random_state.rand(laplacian.shape[0], n_components)
+            X = self.random_state.rand(laplacian.shape[0],
+                                       self.n_components)
             X[:, 0] = 1. / dd.ravel()
             M = ml.aspreconditioner()
             lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
@@ -249,5 +263,5 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 raise ValueError
         else:
             raise ValueError("Unknown value for mode: '%s'."
-                             "Should be 'amg' or 'arpack'" % mode)
+                             "Should be 'amg' or 'arpack'" % self.mode)
         return embedding
