@@ -6,7 +6,7 @@
 import numpy as np
 from scipy import interpolate
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import as_float_array
+from ..utils import as_float_array, check_arrays
 
 
 def isotonic_regression(y, w=None, x_min=None, x_max=None):
@@ -151,6 +151,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
         self; object
             returns an instance of self
         """
+        X, y = check_arrays(X, y, sparse_format='dense')
         y = as_float_array(y)
         self.X_ = as_float_array(X, copy=True)
         self._check_fit_data(self.X_, y, w)
