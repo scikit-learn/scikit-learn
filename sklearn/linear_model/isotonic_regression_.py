@@ -132,11 +132,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
         X, y = check_arrays(X, y, sparse_format='dense')
         if weight is not None:
             if len(X) != len(weight):
-                raise ValueError("Shapes of X and w do not match")
+                raise ValueError("X and w should be vectors of same length")
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
         if len(X) != len(y):
-            raise ValueError("X and y should have the same length")
+            raise ValueError("X and y should be vectors of same length")
 
     def fit(self, X, y, weight=None):
         """Fit the model using X as training data
