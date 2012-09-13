@@ -8,13 +8,19 @@ from nose.tools import assert_raises
 
 
 def test_isotonic_regression():
-    X = np.array([3, 7, 5, 9, 8, 7, 10])
-    Y = np.array([3, 6, 6, 8, 8, 8, 10])
-    assert_array_equal(Y, isotonic_regression(X))
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    y_ = np.array([3, 6, 6, 8, 8, 8, 10])
+    assert_array_equal(y_, isotonic_regression(y))
+
+    x = np.arange(len(y))
+    ir = IsotonicRegression(x_min=0., x_max=1.)
+    ir.fit(x, y)
+    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
 
 
-def assert_raises_exceptions():
-    assert_raises(ValueError, IsotonicRegression.fit([5, 7, 3],
-                                                     w=[0.1, 0.6]))
-    assert_raises(ValueError,
-                  IsotonicRegression.fit(np.random.randn(shape=(10, 10))))
+def test_assert_raises_exceptions():
+    ir = IsotonicRegression()
+    assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7, 3], [0.1, 0.6])
+    assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7])
+    assert_raises(ValueError, ir.fit, np.random.randn(3, 10), [0, 1, 2])
+    assert_raises(ValueError, ir.transform, np.random.randn(3, 10))

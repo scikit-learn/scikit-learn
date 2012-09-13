@@ -10,28 +10,39 @@ An illustration of the isotonic regression on generated data.
 # Licence: BSD
 
 import numpy as np
-from matplotlib import pyplot as plt
+import pylab as pl
 from matplotlib.collections import LineCollection
 
 from sklearn.linear_model import IsotonicRegression
 
 a = 50.
 n = 100
-X = np.random.randint(-50, 50, size=(n,)) + a * np.log(np.arange(n))
+x = np.arange(n)
+y = np.random.randint(-50, 50, size=(n,)) + a * np.log(1 + np.arange(n))
 
-Y = IsotonicRegression().fit(X).X_
-segments = [[[i, X[i]], [i, Y[i]]] for i in range(n)]
-lc = LineCollection(
-        segments,
-        zorder=0)
-lc.set_array(np.ones(len(X)))
+###############################################################################
+# Fit IsotonicRegression model
+
+ir = IsotonicRegression()
+y_ = ir.fit_transform(x, y)
+
+# Show case extrapolation outside of fit interval
+x_extrapolated = np.arange(-5, n + 5)
+y_extrapolated_ = ir.transform(x_extrapolated)
+
+###############################################################################
+# plot result
+
+segments = [[[i, y[i]], [i, y_[i]]] for i in range(n)]
+lc = LineCollection(segments, zorder=0)
+lc.set_array(np.ones(len(y)))
 lc.set_linewidths(0.5 * np.ones(n))
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-
-ax.plot(X, 'r.')
-ax.plot(Y, 'g.-')
-ax.add_collection(lc)
-ax.legend(('Data', 'Fit'))
-ax.set_title('Isotonic regression')
+fig = pl.figure()
+pl.plot(x, y, 'r.', markersize=12)
+pl.plot(x, y_, 'g.-', markersize=12)
+pl.plot(x_extrapolated, y_extrapolated_, 'k-')
+pl.gca().add_collection(lc)
+pl.legend(('Data', 'Fit', 'Fit with extrapolation'), loc='lower right')
+pl.title('Isotonic regression')
+pl.show()
