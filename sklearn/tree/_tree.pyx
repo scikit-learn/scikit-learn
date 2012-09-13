@@ -248,15 +248,15 @@ cdef class Tree:
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
-        if self.n_classes != NULL: free(self.n_classes)
-        if self.children_left != NULL: free(self.children_left)
-        if self.children_right != NULL: free(self.children_right)
-        if self.feature != NULL: free(self.feature)
-        if self.threshold != NULL: free(self.threshold)
-        if self.value != NULL: free(self.value)
-        if self.best_error != NULL: free(self.best_error)
-        if self.init_error != NULL: free(self.init_error)
-        if self.n_samples != NULL: free(self.n_samples)
+        free(self.n_classes)
+        free(self.children_left)
+        free(self.children_right)
+        free(self.feature)
+        free(self.threshold)
+        free(self.value)
+        free(self.best_error)
+        free(self.init_error)
+        free(self.n_samples)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -314,12 +314,12 @@ cdef class Tree:
 
     cdef void resize(self, int capacity=-1):
         """Resize all inner arrays to `capacity`, if < 0 double capacity."""
-        if capacity >= 0 and capacity == self.capacity:
+        if capacity == self.capacity:
             return
 
         if capacity < 0:
             if self.capacity <= 0:
-                capacity = 3 # default value
+                capacity = 3
             else:
                 capacity = 2 * self.capacity
 
@@ -1043,18 +1043,18 @@ cdef class ClassificationCriterion(Criterion):
         if self.label_count_left == NULL or \
            self.label_count_right == NULL or \
            self.label_count_init == NULL:
-            if self.n_classes != NULL: free(self.n_classes)
-            if self.label_count_left != NULL: free(self.label_count_left)
-            if self.label_count_right != NULL: free(self.label_count_right)
-            if self.label_count_right != NULL: free(self.label_count_init)
+            free(self.n_classes)
+            free(self.label_count_left)
+            free(self.label_count_right)
+            free(self.label_count_init)
             raise MemoryError()
 
     def __dealloc__(self):
         """Destructor."""
-        if self.n_classes != NULL: free(self.n_classes)
-        if self.label_count_left != NULL: free(self.label_count_left)
-        if self.label_count_right != NULL: free(self.label_count_right)
-        if self.label_count_right != NULL: free(self.label_count_init)
+        free(self.n_classes)
+        free(self.label_count_left)
+        free(self.label_count_right)
+        free(self.label_count_init)
 
     def __reduce__(self):
         return (ClassificationCriterion,
@@ -1373,26 +1373,26 @@ cdef class RegressionCriterion(Criterion):
            self.sq_sum_init == NULL or \
            self.var_left == NULL or \
            self.var_right == NULL:
-            if self.mean_left != NULL: free(self.mean_left)
-            if self.mean_right != NULL: free(self.mean_right)
-            if self.mean_init != NULL: free(self.mean_init)
-            if self.sq_sum_left != NULL: free(self.sq_sum_left)
-            if self.sq_sum_right != NULL: free(self.sq_sum_right)
-            if self.sq_sum_init != NULL: free(self.sq_sum_init)
-            if self.var_left != NULL: free(self.var_left)
-            if self.var_right != NULL: free(self.var_right)
+            free(self.mean_left)
+            free(self.mean_right)
+            free(self.mean_init)
+            free(self.sq_sum_left)
+            free(self.sq_sum_right)
+            free(self.sq_sum_init)
+            free(self.var_left)
+            free(self.var_right)
             raise MemoryError()
 
     def __dealloc__(self):
         """Destructor."""
-        if self.mean_left != NULL: free(self.mean_left)
-        if self.mean_right != NULL: free(self.mean_right)
-        if self.mean_init != NULL: free(self.mean_init)
-        if self.sq_sum_left != NULL: free(self.sq_sum_left)
-        if self.sq_sum_right != NULL: free(self.sq_sum_right)
-        if self.sq_sum_init != NULL: free(self.sq_sum_init)
-        if self.var_left != NULL: free(self.var_left)
-        if self.var_right != NULL: free(self.var_right)
+        free(self.mean_left)
+        free(self.mean_right)
+        free(self.mean_init)
+        free(self.sq_sum_left)
+        free(self.sq_sum_right)
+        free(self.sq_sum_init)
+        free(self.var_left)
+        free(self.var_right)
 
     def __reduce__(self):
         return (RegressionCriterion,
