@@ -9,7 +9,7 @@ from nose.tools import assert_true, assert_raises
 from sklearn.decomposition import FactorAnalysis
 
 
-def test_fa_generative():
+def test_factor_analysis():
     """Test FactorAnalysis ability to recover the data covariance structure
     """
     n_samples, n_features, n_components = 20, 5, 3
@@ -31,6 +31,9 @@ def test_fa_generative():
     fa.fit(X)
     X_t = fa.transform(X)
     assert_true(X_t.shape == (n_samples, n_components))
+
+    # Make log likelihood increases at each iteration
+    assert_true(np.all(np.diff(fa.loglike_) > 0.))
 
     # Sample Covariance
     scov = np.cov(X, rowvar=0., bias=1.)
