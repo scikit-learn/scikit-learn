@@ -6,15 +6,18 @@ cdef extern from "src/liblinear/linear.h":
     cdef struct problem
     cdef struct model
     cdef struct parameter
-    char *check_parameter (problem *prob, parameter *param)
-    model *train (problem *prob, parameter *param)
+    ctypedef problem* problem_const_ptr "problem const *"
+    ctypedef parameter* parameter_const_ptr "parameter const *"
+    ctypedef char* char_const_ptr "char const *"
+    char_const_ptr check_parameter(problem_const_ptr prob, parameter_const_ptr param)
+    model *train(problem_const_ptr prob, parameter_const_ptr param)
     int get_nr_feature (model *model)
     int get_nr_class (model *model)
     void free_and_destroy_model (model **)
     void destroy_param (parameter *)
 
 cdef extern from "src/liblinear/liblinear_helper.c":
-    void copy_w(char *, model *, int)
+    void copy_w(void *, model *, int)
     parameter *set_parameter (int, double, double, int,
                              char *, char *)
     problem *set_problem (char *, char *, np.npy_intp *, double)

@@ -890,7 +890,7 @@ class TfidfVectorizer(CountVectorizer):
     def sublinear_tf(self, value):
         self._tfidf.sublinear_tf = value
 
-    def fit(self, raw_documents):
+    def fit(self, raw_documents, y=None):
         """Learn a conversion law from documents to array data"""
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)

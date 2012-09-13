@@ -228,7 +228,7 @@ model_error:
 }
 
 
-void copy_w(char *data, struct model *model, int len)
+void copy_w(void *data, struct model *model, int len)
 {
     memcpy(data, model->w, len * sizeof(double)); 
     

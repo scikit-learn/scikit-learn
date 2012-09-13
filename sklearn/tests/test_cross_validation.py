@@ -32,7 +32,15 @@ class MockClassifier(BaseEstimator):
     def __init__(self, a=0):
         self.a = a
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_weight=None, class_prior=None):
+        if sample_weight is not None:
+            assert_true(sample_weight.shape[0] == X.shape[0],
+            'MockClassifier extra fit_param sample_weight.shape[0] is {0}, '
+            'should be {1}'.format(sample_weight.shape[0], X.shape[0]))
+        if class_prior is not None:
+            assert_true(class_prior.shape[0] == len(np.unique(y)),
+            'MockClassifier extra fit_param class_prior.shape[0] is {0}, '
+            'should be {1}'.format(class_prior.shape[0], len(np.unique(y))))
         return self
 
     def predict(self, T):
@@ -80,11 +88,11 @@ def test_shuffle_kfold():
         all_folds = None
         for train, test in kf:
             sorted_array = np.arange(100)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             sorted_array = np.arange(101, 200)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             sorted_array = np.arange(201, 300)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             if all_folds is None:
                 all_folds = ind[test].copy()
             else:
@@ -160,6 +168,15 @@ def test_cross_val_score():
 
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+
+def test_cross_val_score_fit_params():
+    clf = MockClassifier()
+    n_samples = X.shape[0]
+    n_classes = len(np.unique(y))
+    fit_params = {'sample_weight': np.ones(n_samples),
+                  'class_prior': np.ones(n_classes) / n_classes}
+    cval.cross_val_score(clf, X, y, fit_params=fit_params)
 
 
 def test_train_test_split_errors():

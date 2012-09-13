@@ -60,7 +60,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
-        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty.
+        the penalty is an L1 penalty. For rho = 1 it is an L1 penalty.
         For 0 < rho < 1, the penalty is a combination of L1 and L2
 
     fit_intercept: bool
@@ -860,7 +860,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     rho : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For rho = 0
-        the penalty is an L1 penalty. For rho = 1 it is an L2 penalty.
+        the penalty is an L1 penalty. For rho = 1 it is an L1 penalty.
         For 0 < rho < 1, the penalty is a combination of L1 and L2
         This parameter can be a list, in which case the different
         values are tested by cross-validation and the one giving the best
@@ -1001,7 +1001,7 @@ class MultiTaskElasticNet(Lasso):
 
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
-        the penalty is an L1/L2 penalty. For rho = 1 it is an L2 penalty.
+        the penalty is an L1/L2 penalty. For rho = 1 it is an L1 penalty.
         For 0 < rho < 1, the penalty is a combination of L1/L2 and L2
 
     fit_intercept : boolean

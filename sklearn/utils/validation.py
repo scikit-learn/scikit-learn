@@ -1,6 +1,6 @@
-"""
-Utilities for input validation
-"""
+"""Utilities for input validation"""
+# Authors: Olivier Grisel and others (please update me)
+# License: BSD 3
 
 import numpy as np
 from scipy import sparse
