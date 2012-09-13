@@ -4,7 +4,8 @@
 # License: BSD Style.
 
 import numpy as np
-from ..base import BaseEstimator
+from scipy import interpolate
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import as_float_array
 
 
@@ -84,30 +85,32 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
     return np.asarray(sol)
 
 
-class IsotonicRegression(BaseEstimator):
-    """
-    Solve the isotonic regression optimization problem
+class IsotonicRegression(BaseEstimator, TransformerMixin):
+    """Solve the isotonic regression optimization problem
 
     The isotonic regression optimization problem is defined by:
-        min Sum w_i (y_i - x_i) ** 2
+        min Sum w_i (y[i] - y_[i]) ** 2
 
-        subject to x_min = x_1 <= x_2 ... <= x_n = x_max
+        subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
 
     where each w_i is strictly positive and each y_i is an arbitrary
     real number.
 
     Parameters
     ----------
-    x_min: optional, default: None
-        if not None, set the lowest value of the fit to x_min
+    y_min: optional, default: None
+        if not None, set the lowest value of the fit to y_min
 
-    x_max: optional, default: None
-        if not None, set the highest value of the fit to x_max
+    y_max: optional, default: None
+        if not None, set the highest value of the fit to y_max
 
     Attributes
     ----------
     `X_`: ndarray (n, )
-        Estimated fit
+        A copy of the input X
+
+    `y_`: ndarray (n, )
+        Estimated y
 
     Notes
     -----
@@ -116,26 +119,29 @@ class IsotonicRegression(BaseEstimator):
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
-
-    def ___init__(self, x_min=None, x_max=None):
+    def __init__(self, x_min=None, x_max=None):
         self.x_min = x_min
         self.x_max = x_max
 
-    def _check_fit_data(self, X, w=None):
+    def _check_fit_data(self, X, y, w=None):
         if w is not None:
             if len(X) != len(w):
                 raise ValueError("Shapes of X and w do not match")
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
+        if len(X) != len(y):
+            raise ValueError("X and y should have the same length")
 
-    def fit(self, X, w=None):
-        """
-        Fit the model using X as training data
+    def fit(self, X, y, w=None):
+        """Fit the model using X as training data
 
         Parameters
         ----------
         X: array-like, shape=(n_samples,)
             training data
+
+        y: array-like, shape=(n_samples,)
+            training target
 
         w: array-like, shape=(n_samples,)
             weights
@@ -145,15 +151,55 @@ class IsotonicRegression(BaseEstimator):
         self; object
             returns an instance of self
         """
-        X = as_float_array(X)
-        self._check_fit_data(X, w)
-        self.X_ = isotonic_regression(X, w, self.x_min, self.x_max)
+        y = as_float_array(y)
+        self.X_ = as_float_array(X, copy=True)
+        self._check_fit_data(self.X_, y, w)
+        self.y_ = isotonic_regression(y, w, self.x_min, self.x_max)
         return self
 
-    def transform(self, Y):
-        """
-        """
+    def transform(self, T):
+        """Transform new data by linear interpolation along
 
-    def fit_transform(self, X, w=None):
+        Parameters
+        ----------
+        T: array-like, shape=(n_samples,)
+            data to transform
+
+        Returns
+        -------
+        T_: array, shape=(n_samples,)
+            The transformed data
         """
+        if len(T.shape) != 1:
+            raise ValueError("X should be a vector")
+
+        f = interpolate.interp1d(self.X_, self.y_, kind='linear',
+                                 bounds_error=False)
+        T_ = f(T)
+        x_min = self.X_.min()
+        x_max = self.X_.max()
+        T_[T <= x_min] = self.y_[0]
+        T_[T >= x_max] = self.y_[-1]
+        return T_
+
+    def fit_transform(self, X, y, w=None):
+        """Transform by linear interpolation
+
+        Parameters
+        ----------
+        X: array-like, shape=(n_samples,)
+            training data
+
+        y: array-like, shape=(n_samples,)
+            training target
+
+        w: array-like, shape=(n_samples,)
+            weights
+
+        Returns
+        -------
+        y_: array, shape=(n_samples,)
+            The transformed data
         """
+        self.fit(X, y, w)
+        return self.y_
