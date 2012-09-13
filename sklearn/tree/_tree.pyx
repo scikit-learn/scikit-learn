@@ -234,7 +234,7 @@ cdef class Tree:
 
         # Inner structures
         self.node_count = 0
-        self.capacity = -1
+        self.capacity = 0
 
         self.children_left = NULL
         self.children_right = NULL
@@ -244,20 +244,6 @@ cdef class Tree:
         self.best_error = NULL
         self.init_error = NULL
         self.n_samples = NULL
-
-        # self.children_left = <int*> malloc(capacity * sizeof(int))
-        # self.children_right = <int*> malloc(capacity * sizeof(int))
-
-        # for k from 0 <= k < capacity:
-        #     self.children_left[k] = _TREE_UNDEFINED
-        #     self.children_right[k] = _TREE_UNDEFINED
-
-        # self.feature = <int*> malloc(capacity * sizeof(int))
-        # self.threshold = <double*> malloc(capacity * sizeof(double))
-        # self.value = <double*> malloc(capacity * self.value_stride * sizeof(double))
-        # self.best_error = <double*> malloc(capacity * sizeof(double))
-        # self.init_error = <double*> malloc(capacity * sizeof(double))
-        # self.n_samples = <int*> malloc(capacity * sizeof(int))
 
     def __dealloc__(self):
         """Destructor."""
@@ -332,7 +318,7 @@ cdef class Tree:
             return
 
         if capacity < 0:
-            if self.capacity < 0:
+            if self.capacity <= 0:
                 capacity = 3 # default value
             else:
                 capacity = 2 * self.capacity
