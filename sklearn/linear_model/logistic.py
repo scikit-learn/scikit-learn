@@ -109,16 +109,19 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in self.classes_.
         """
-        scores = self.decision_function(X)
-        if len(scores.shape) == 1:
-            scores = 1. / (1. + np.exp(-scores))
-            return np.vstack([1 - scores, scores]).T
+        # 1. / (1. + np.exp(-scores)), computed in-place
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(prob.shape) == 1:
+            return np.vstack([1 - prob, prob]).T
         else:
-            prob = 1. / (1. + np.exp(-scores))
+            # OvR, not softmax, like Liblinear's predict_probability
             prob /= prob.sum(axis=0)
             return prob
 
@@ -135,8 +138,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in self.classes_.
         """
         return np.log(self.predict_proba(X))
