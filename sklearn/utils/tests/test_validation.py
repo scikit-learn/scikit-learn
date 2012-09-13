@@ -1,6 +1,4 @@
-"""
-Tests for input validation functions
-"""
+"""Tests for input validation functions"""
 
 from tempfile import NamedTemporaryFile
 import numpy as np
@@ -13,9 +11,7 @@ from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
 
 
 def test_as_float_array():
-    """
-    Test function for as_float_array
-    """
+    """Test function for as_float_array"""
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
     # Checks that the return type is ok
@@ -46,9 +42,7 @@ def test_check_arrays_exceptions():
 
 
 def test_np_matrix():
-    """
-    Confirm that input validation code does not return np.matrix
-    """
+    """Confirm that input validation code does not return np.matrix"""
     X = np.arange(12).reshape(3, 4)
 
     assert_false(isinstance(as_float_array(X), np.matrix))
@@ -74,9 +68,7 @@ def test_np_matrix():
 
 
 def test_memmap():
-    """
-    Confirm that input validation code doesn't copy memory mapped arrays
-    """
+    """Confirm that input validation code doesn't copy memory mapped arrays"""
 
     asflt = lambda x: as_float_array(x, copy=False)
 
