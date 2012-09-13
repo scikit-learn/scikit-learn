@@ -174,13 +174,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
             raise ValueError("X should be a vector")
 
         f = interpolate.interp1d(self.X_, self.y_, kind='linear',
-                                 bounds_error=False)
-        T_ = f(T)
-        x_min = self.X_.min()
-        x_max = self.X_.max()
-        T_[T <= x_min] = self.y_[0]
-        T_[T >= x_max] = self.y_[-1]
-        return T_
+                                 bounds_error=True)
+        return f(T)
 
     def fit_transform(self, X, y, w=None):
         """Transform by linear interpolation

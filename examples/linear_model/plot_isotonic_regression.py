@@ -26,10 +26,6 @@ y = np.random.randint(-50, 50, size=(n,)) + a * np.log(1 + np.arange(n))
 ir = IsotonicRegression()
 y_ = ir.fit_transform(x, y)
 
-# Show case extrapolation outside of fit interval
-x_extrapolated = np.arange(-5, n + 5)
-y_extrapolated_ = ir.transform(x_extrapolated)
-
 ###############################################################################
 # plot result
 
@@ -41,8 +37,7 @@ lc.set_linewidths(0.5 * np.ones(n))
 fig = pl.figure()
 pl.plot(x, y, 'r.', markersize=12)
 pl.plot(x, y_, 'g.-', markersize=12)
-pl.plot(x_extrapolated, y_extrapolated_, 'k-')
 pl.gca().add_collection(lc)
-pl.legend(('Data', 'Fit', 'Fit with extrapolation'), loc='lower right')
+pl.legend(('Data', 'Fit'), loc='lower right')
 pl.title('Isotonic regression')
 pl.show()
