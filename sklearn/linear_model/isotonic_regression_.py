@@ -37,14 +37,12 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
     -------
     x: list of floating-point values
     """
-
-
     if w is None:
         w = np.ones(len(y), dtype=y.dtype)
     if x_min is not None or x_max is not None:
         y = np.copy(y)
         w = np.copy(w)
-        C = np.dot(w, y * y) * 10 # upper bound on the cost function
+        C = np.dot(w, y * y) * 10  # upper bound on the cost function
         if x_min is not None:
             y[0] = x_min
             w[0] = C
@@ -52,7 +50,7 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
             y[-1] = x_max
             w[-1] = C
 
-    J = [(w[i] * y[i], w[i], [i,]) for i in range(len(y))]
+    J = [(w[i] * y[i], w[i], [i, ]) for i in range(len(y))]
     cur = 0
 
     while cur < len(J) - 1:
@@ -62,7 +60,7 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
             v0, w0, idx0 = J[cur]
             v1, w1, idx1 = J[cur + 1]
             if v0 * w1 <= v1 * w0:
-                cur +=1
+                cur += 1
 
         if cur == len(J) - 1:
             break
