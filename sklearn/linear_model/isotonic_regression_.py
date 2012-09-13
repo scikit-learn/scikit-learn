@@ -9,9 +9,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import as_float_array, check_arrays
 
 
-def isotonic_regression(y, w=None, x_min=None, x_max=None):
+def isotonic_regression(y, weight=None, x_min=None, x_max=None):
     """
-    Solve the isotonic regression model:
+    solutionve the isotonic regression model:
 
         min Sum w_i (y_i - x_i) ** 2
 
@@ -24,8 +24,9 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
     ----------
     y: iterable of floating-point values
 
-    w: iterable of floating-point values
-        If None w is set to 1 (no weights)
+    weight: iterable of floating-point values, optional, default: None
+        Weights on each point of the regression.
+        If None, weight is set to 1 (equal weights)
 
     x_min: optional, default: None
         if not None, set the lowest value of the fit to x_min
@@ -37,56 +38,62 @@ def isotonic_regression(y, w=None, x_min=None, x_max=None):
     -------
     x: list of floating-point values
     """
-    if w is None:
-        w = np.ones(len(y), dtype=y.dtype)
+    if weight is None:
+        weight = np.ones(len(y), dtype=y.dtype)
     if x_min is not None or x_max is not None:
         y = np.copy(y)
-        w = np.copy(w)
-        C = np.dot(w, y * y) * 10  # upper bound on the cost function
+        weight = np.copy(weight)
+        C = np.dot(weight, y * y) * 10  # upper bound on the cost function
         if x_min is not None:
             y[0] = x_min
-            w[0] = C
+            weight[0] = C
         if x_max is not None:
             y[-1] = x_max
-            w[-1] = C
+            weight[-1] = C
 
-    J = [(w[i] * y[i], w[i], [i, ]) for i in range(len(y))]
-    cur = 0
+    active_set = [(weight[i] * y[i], weight[i], [i, ])
+                  for i in range(len(y))]
+    current = 0
 
-    while cur < len(J) - 1:
-        v0, v1, v2 = 0, 0, np.inf
-        w0, w1, w2 = 1, 1, 1
-        while v0 * w1 <= v1 * w0 and cur < len(J) - 1:
-            v0, w0, idx0 = J[cur]
-            v1, w1, idx1 = J[cur + 1]
-            if v0 * w1 <= v1 * w0:
-                cur += 1
+    while current < len(active_set) - 1:
+        value0, value1, value2 = 0, 0, np.inf
+        weight0, weight1, weight2 = 1, 1, 1
+        while value0 * weight1 <= value1 * weight0 and \
+              current < len(active_set) - 1:
+            value0, weight0, idx0 = active_set[current]
+            value1, weight1, idx1 = active_set[current + 1]
+            if value0 * weight1 <= value1 * weight0:
+                current += 1
 
-        if cur == len(J) - 1:
+        if current == len(active_set) - 1:
             break
 
         # merge two groups
-        v0, w0, idx0 = J.pop(cur)
-        v1, w1, idx1 = J.pop(cur)
-        J.insert(cur, (v0 + v1, w0 + w1, idx0 + idx1))
-        while v2 * w0 > v0 * w2 and cur > 0:
-            v0, w0, idx0 = J[cur]
-            v2, w2, idx2 = J[cur - 1]
-            if w0 * v2 >= w2 * v0:
-                J.pop(cur)
-                J[cur - 1] = (v0 + v2, w0 + w2, idx0 + idx2)
-                cur -= 1
+        value0, weight0, idx0 = active_set.pop(current)
+        value1, weight1, idx1 = active_set.pop(current)
+        active_set.insert(current,
+                          (value0 + value1,
+                           weight0 + weight1, idx0 + idx1))
+        while value2 * weight0 > value0 * weight2 and current > 0:
+            value0, weight0, idx0 = active_set[current]
+            value2, weight2, idx2 = active_set[current - 1]
+            if weight0 * value2 >= weight2 * value0:
+                active_set.pop(current)
+                active_set[current - 1] = (value0 + value2,
+                                  weight0 + weight2,
+                                  idx0 + idx2)
+                current -= 1
 
-    sol = np.empty(len(y))
-    for v, w, idx in J:
-        sol[idx] = v / w
-    return sol
+    solution = np.empty(len(y))
+    for value, weight, idx in active_set:
+        solution[idx] = value / weight
+    return solution
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin):
-    """Solve the isotonic regression optimization problem
+    """solve the isotonic regression optimization problem
 
-    The isotonic regression optimization problem is defined by:
+    The isotonic regression optimization problem is defined by::
         min Sum w_i (y[i] - y_[i]) ** 2
 
         subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
@@ -121,16 +128,17 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
         self.x_min = x_min
         self.x_max = x_max
 
-    def _check_fit_data(self, X, y, w=None):
-        if w is not None:
-            if len(X) != len(w):
+    def _check_fit_data(self, X, y, weight=None):
+        X, y = check_arrays(X, y, sparse_format='dense')
+        if weight is not None:
+            if len(X) != len(weight):
                 raise ValueError("Shapes of X and w do not match")
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
         if len(X) != len(y):
             raise ValueError("X and y should have the same length")
 
-    def fit(self, X, y, w=None):
+    def fit(self, X, y, weight=None):
         """Fit the model using X as training data
 
         Parameters
@@ -141,19 +149,20 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
         y: array-like, shape=(n_samples,)
             training target
 
-        w: array-like, shape=(n_samples,)
-            weights
+        weight: array-like, shape=(n_samples,), optional, default: None
+            weights. If set to None, all weights will be set to 1 (equal
+            weights)
 
         Returns
         -------
         self; object
             returns an instance of self
         """
-        X, y = check_arrays(X, y, sparse_format='dense')
+        X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
         y = as_float_array(y)
         self.X_ = as_float_array(X, copy=True)
-        self._check_fit_data(self.X_, y, w)
-        self.y_ = isotonic_regression(y, w, self.x_min, self.x_max)
+        self._check_fit_data(self.X_, y, weight)
+        self.y_ = isotonic_regression(y, weight, self.x_min, self.x_max)
         return self
 
     def transform(self, T):
@@ -176,7 +185,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
                                  bounds_error=True)
         return f(T)
 
-    def fit_transform(self, X, y, w=None):
+    def fit_transform(self, X, y, weight=None):
         """Transform by linear interpolation
 
         Parameters
@@ -187,13 +196,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
         y: array-like, shape=(n_samples,)
             training target
 
-        w: array-like, shape=(n_samples,)
-            weights
+        weight: array-like, shape=(n_samples,), optional, default: None
+            weights. If set to None, all weights will be equal to 1 (equal
+            weights)
 
         Returns
         -------
         y_: array, shape=(n_samples,)
             The transformed data
         """
-        self.fit(X, y, w)
+        self.fit(X, y, weight)
         return self.y_
