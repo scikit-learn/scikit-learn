@@ -204,7 +204,7 @@ cdef class Tree:
     def __cinit__(self, int n_features, object n_classes, int n_outputs,
                  Criterion criterion, double max_depth, int min_samples_split,
                  int min_samples_leaf, double min_density, int max_features,
-                 int find_split_algorithm, object random_state, int capacity=3):
+                 int find_split_algorithm, object random_state):
         """Constructor."""
         # Input/Output layout
         cdef int k
@@ -212,6 +212,9 @@ cdef class Tree:
         self.n_features = n_features
         self.n_outputs = n_outputs
         self.n_classes = <int*> malloc(n_outputs * sizeof(int))
+
+        if self.n_classes == NULL:
+            raise MemoryError()
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = self.n_outputs * self.max_n_classes
@@ -231,35 +234,43 @@ cdef class Tree:
 
         # Inner structures
         self.node_count = 0
-        self.capacity = capacity
+        self.capacity = -1
 
-        self.children_left = <int*> malloc(capacity * sizeof(int))
-        self.children_right = <int*> malloc(capacity * sizeof(int))
+        self.children_left = NULL
+        self.children_right = NULL
+        self.feature = NULL
+        self.threshold = NULL
+        self.value = NULL
+        self.best_error = NULL
+        self.init_error = NULL
+        self.n_samples = NULL
 
-        for k from 0 <= k < capacity:
-            self.children_left[k] = _TREE_UNDEFINED
-            self.children_right[k] = _TREE_UNDEFINED
+        # self.children_left = <int*> malloc(capacity * sizeof(int))
+        # self.children_right = <int*> malloc(capacity * sizeof(int))
 
-        self.feature = <int*> malloc(capacity * sizeof(int))
-        self.threshold = <double*> malloc(capacity * sizeof(double))
-        self.value = <double*> malloc(capacity * self.value_stride * sizeof(double));
-        self.best_error = <double*> malloc(capacity * sizeof(double));
-        self.init_error = <double*> malloc(capacity * sizeof(double));
-        self.n_samples = <int*> malloc(capacity * sizeof(int));
+        # for k from 0 <= k < capacity:
+        #     self.children_left[k] = _TREE_UNDEFINED
+        #     self.children_right[k] = _TREE_UNDEFINED
+
+        # self.feature = <int*> malloc(capacity * sizeof(int))
+        # self.threshold = <double*> malloc(capacity * sizeof(double))
+        # self.value = <double*> malloc(capacity * self.value_stride * sizeof(double))
+        # self.best_error = <double*> malloc(capacity * sizeof(double))
+        # self.init_error = <double*> malloc(capacity * sizeof(double))
+        # self.n_samples = <int*> malloc(capacity * sizeof(int))
 
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
-        free(self.n_classes)
-
-        free(self.children_left)
-        free(self.children_right)
-        free(self.feature)
-        free(self.threshold)
-        free(self.value)
-        free(self.best_error)
-        free(self.init_error)
-        free(self.n_samples)
+        if self.n_classes != NULL: free(self.n_classes)
+        if self.children_left != NULL: free(self.children_left)
+        if self.children_right != NULL: free(self.children_right)
+        if self.feature != NULL: free(self.feature)
+        if self.threshold != NULL: free(self.threshold)
+        if self.value != NULL: free(self.value)
+        if self.best_error != NULL: free(self.best_error)
+        if self.init_error != NULL: free(self.init_error)
+        if self.n_samples != NULL: free(self.n_samples)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -317,22 +328,50 @@ cdef class Tree:
 
     cdef void resize(self, int capacity=-1):
         """Resize all inner arrays to `capacity`, if < 0 double capacity."""
-        if capacity == self.capacity:
+        if capacity >= 0 and capacity == self.capacity:
             return
 
         if capacity < 0:
-            capacity = 2 * self.capacity
+            if self.capacity < 0:
+                capacity = 3 # default value
+            else:
+                capacity = 2 * self.capacity
 
         self.capacity = capacity
 
-        self.children_left = <int*> realloc(self.children_left, capacity * sizeof(int))
-        self.children_right = <int*> realloc(self.children_right, capacity * sizeof(int))
-        self.feature = <int*> realloc(self.feature, capacity * sizeof(int))
-        self.threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
-        self.value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
-        self.best_error = <double*> realloc(self.best_error, capacity * sizeof(double))
-        self.init_error = <double*> realloc(self.init_error, capacity * sizeof(double))
-        self.n_samples = <int*> realloc(self.n_samples, capacity * sizeof(int))
+        cdef int* tmp_children_left = <int*> realloc(self.children_left, capacity * sizeof(int))
+        if tmp_children_left != NULL: self.children_left = tmp_children_left
+
+        cdef int* tmp_children_right = <int*> realloc(self.children_right, capacity * sizeof(int))
+        if tmp_children_right != NULL: self.children_right = tmp_children_right
+
+        cdef int* tmp_feature = <int*> realloc(self.feature, capacity * sizeof(int))
+        if tmp_feature != NULL: self.feature = tmp_feature
+
+        cdef double* tmp_threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
+        if tmp_threshold != NULL: self.threshold = tmp_threshold
+
+        cdef double* tmp_value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
+        if tmp_value != NULL: self.value = tmp_value
+
+        cdef double* tmp_best_error = <double*> realloc(self.best_error, capacity * sizeof(double))
+        if tmp_best_error != NULL: self.best_error = tmp_best_error
+
+        cdef double* tmp_init_error = <double*> realloc(self.init_error, capacity * sizeof(double))
+        if tmp_init_error != NULL: self.init_error = tmp_init_error
+
+        cdef int* tmp_n_samples = <int*> realloc(self.n_samples, capacity * sizeof(int))
+        if tmp_n_samples != NULL: self.n_samples = tmp_n_samples
+
+        if tmp_children_left == NULL or \
+           tmp_children_right == NULL or \
+           tmp_feature == NULL or \
+           tmp_threshold == NULL or \
+           tmp_value == NULL or \
+           tmp_best_error == NULL or \
+           tmp_init_error == NULL or \
+           tmp_n_samples == NULL:
+            raise MemoryError()
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
