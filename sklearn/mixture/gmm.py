@@ -514,7 +514,6 @@ class GMM(BaseEstimator):
 
             # if the results are better, keep it
             if self.n_iter:
-                print log_likelihood[-1]
                 if log_likelihood[-1] > max_log_prob:
                     max_log_prob = log_likelihood[-1]
                     best_params = {'weights': self.weights_,
@@ -522,11 +521,12 @@ class GMM(BaseEstimator):
                                    'covars': self.covars_}
         # check the existence of an init param that was not subject to
         # likelihood computation issue.
-        if np.isinf(max_log_prob):
+        if np.isneginf(max_log_prob) and self.n_iter:
             raise RuntimeError(
                 "EM algorithm was never able to compute a valid likelihood " +
                 "given initial parameters. Try different init parameters " +
                 "(or increasing n_init) or check for degenerate data.")
+        # self.n_iter == 0 occurs when using GMM within HMM
         if self.n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
