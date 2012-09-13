@@ -88,11 +88,11 @@ def test_shuffle_kfold():
         all_folds = None
         for train, test in kf:
             sorted_array = np.arange(100)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             sorted_array = np.arange(101, 200)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             sorted_array = np.arange(201, 300)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             if all_folds is None:
                 all_folds = ind[test].copy()
             else:
