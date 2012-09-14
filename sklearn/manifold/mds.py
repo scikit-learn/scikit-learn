@@ -101,8 +101,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             # Compute the disparities using a monotonic regression
             indxs = np.lexsort((dis_flat_w, sim_flat_w))
             rindxs = np.argsort(indxs)
-            disparities_flat = isotonic_regression(
-                                    dis_flat_w[indxs])
+            disparities_flat = isotonic_regression(dis_flat_w[indxs])
             disparities_flat = disparities_flat[rindxs]
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
