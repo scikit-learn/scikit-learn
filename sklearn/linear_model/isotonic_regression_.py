@@ -5,7 +5,7 @@
 
 import numpy as np
 from scipy import interpolate
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, RegressorMixin
 from ..utils import as_float_array, check_arrays
 
 
@@ -90,7 +90,7 @@ def isotonic_regression(y, weight=None, x_min=None, x_max=None):
     return solution
 
 
-class IsotonicRegression(BaseEstimator, TransformerMixin):
+class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     """solve the isotonic regression optimization problem
 
     The isotonic regression optimization problem is defined by::
@@ -207,3 +207,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin):
         """
         self.fit(X, y, weight)
         return self.y_
+
+    def predict(self, T):
+        """Predict new data by linear interpolation along
+
+        Parameters
+        ----------
+        T: array-like, shape=(n_samples,)
+            data to transform
+
+        Returns
+        -------
+        T_: array, shape=(n_samples,)
+            The transformed data
+        """
+        return self.transform(T)
