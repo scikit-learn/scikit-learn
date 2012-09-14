@@ -206,6 +206,26 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     return embedding
 
 def discretization(eigen_vec):
+    """Search for a discrete solution which is closest to the eigenvector
+    embedding.
+    
+    Parameters
+    ----------
+    eigen_vec : array-like, shape: (n_samples, n_clusters)
+        The embedding space of the samples.
+    
+    Returns
+    -------
+    labels : array of integers, shape: n_samples
+        The labels of the clusters.
+    
+    References
+    ----------
+    
+    - Multiclass spectral clustering, 2003
+      Stella X. Yu, Jianbo Shi
+    
+    """
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
     eps=2.2204e-16
@@ -221,27 +241,26 @@ def discretization(eigen_vec):
     
     #Normalize the rows of the eigenvectors
     n,k = eigen_vec.shape
-    vm = np.kron(np.ones((1,k)), np.sqrt((eigen_vec*eigen_vec).sum(1)[:, np.newaxis]))
+    vm = np.sqrt((eigen_vec**2).sum(1))[:, np.newaxis]
     eigen_vec = eigen_vec/vm
 
     svd_restarts=0
     exitLoop=0
 
-    ### if there is an exception we try to randomize and rerun SVD again
-        ### do this 30 times
+    # if there is an exception we try to randomize and rerun SVD again
+    # do this 30 times
     while (svd_restarts < 30) and (exitLoop==0):
 
         # initialize algorithm with a random ordering of eigenvectors
-        c = np.zeros((n,1))
         R = np.zeros((k,k))
-        R[:,0] = eigen_vec[int(np.random.rand(1)*(n-1)),:].transpose()
-
+        R[:,0] = eigen_vec[np.random.randint(n),:].T
+        
+        c = np.zeros((n,1))
         for j in range(1,k):
             c = c + np.abs(eigen_vec.dot(R[:,j-1]))
             R[:,j] = eigen_vec[c.argmin(),:].T
 
-
-        lastObjectiveValue=0
+        lastObjectiveValue=0.0
         nbIterationsDiscretisation=0
         nbIterationsDiscretisationMax=20
 
@@ -253,29 +272,29 @@ def discretization(eigen_vec):
             j = np.reshape(np.asarray(tDiscrete.argmax(1)),n)
             eigenvec_discrete=csc_matrix((np.ones(len(j)),(range(0,n), np.array(j))),shape=(n,k))
             
-            tSVD=eigenvec_discrete.transpose()*eigen_vec
-            
+            tSVD=eigenvec_discrete.T*eigen_vec
+
             try:
                 U,S,Vh = np.linalg.svd(tSVD)
             except LinAlgError:
                 print "SVD did not converge, randomizing and trying again"
                 break
             
-            NcutValue=2*(n-S.sum())
-            if((abs(NcutValue-lastObjectiveValue) < eps ) or 
-                  ( nbIterationsDiscretisation > nbIterationsDiscretisationMax )):
+            NcutValue=2.0*(n-S.sum())
+            if((abs(NcutValue-lastObjectiveValue) < eps) or 
+               (nbIterationsDiscretisation > nbIterationsDiscretisationMax)):
                 exitLoop=1
             else:
                 # otherwise calculate rotation and continue
                 lastObjectiveValue=NcutValue
-                R=np.matrix(Vh).transpose()*np.matrix(U).transpose()
-                
+                R = Vh.T.dot(U.T)
+
     if exitLoop == 0:
         raise ValueError('SVD did not converge')
 
-    y_pred = np.dot(eigenvec_discrete.toarray(), np.diag(np.arange(k))).sum(1)
+    labels = eigenvec_discrete.toarray().dot(np.diag(np.arange(k))).sum(1)
 
-    return y_pred
+    return labels
         
 def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
                         random_state=None, n_init=10, k=None, eig_tol=0.0,
