@@ -559,7 +559,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self
 
     def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score)
+        """Predict signed 'distance' to the hyperplane (aka confidence score).
 
         Parameters
         ----------
@@ -578,7 +578,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             return scores
 
     def predict(self, X):
-        """Predict using the linear model
+        """Predict using the linear model.
 
         Parameters
         ----------
@@ -597,7 +597,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self.classes_[np.ravel(indices)]
 
     def predict_proba(self, X):
-        """Probability estimates
+        """Probability estimates.
 
         Probability estimates are only supported for binary classification.
 
@@ -649,9 +649,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in self.classes_.
         """
         return np.log(self.predict_proba(X))
 
