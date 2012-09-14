@@ -70,9 +70,9 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
     clusters, cluster_idx = np.unique(labels_pred, return_inverse = True);
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    contingency = coo_matrix((np.ones(class_idx.shape[0]),(class_idx, cluster_idx))
+    contingency = np.asarray(coo_matrix((np.ones(class_idx.shape[0]),(class_idx, cluster_idx))
                             ,shape=(n_classes, n_clusters)
-                            ,dtype=np.uint8).todense();
+                            ,dtype=np.int).todense());
     if eps is not None:
         # Must be a float matrix to accept float eps
         contingency = np.array(contingency.todense(), dtype='float') + eps
@@ -553,7 +553,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     sumpj = pj.sum()
     outer = np.outer(pi, pj)
     nnz = contingency != 0.0
-    mi = (contingency[nnz]/contingency_sum) * (np.log2(contingency[nnz]) - np.log2(contingency_sum) - np.log2(outer[nnz]) + np.log2(sumpi) + np.log2(sumpj))
+    mi = (contingency[nnz]/contingency_sum) * (np.log(contingency[nnz]) - np.log(contingency_sum)) + (contingency[nnz]/contingency_sum) *(-np.log(outer[nnz]) + np.log(sumpi) + np.log(sumpj))
     return mi.sum()
 
 
@@ -778,5 +778,5 @@ def entropy(labels):
     label_idx = unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
-    pi /= np.sum(pi)
-    return -np.sum(pi * np.log(pi))
+    pisum = np.sum(pi)
+    return -np.sum((pi/pisum) * (np.log(pi) - np.log(pisum)))
