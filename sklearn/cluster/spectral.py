@@ -56,7 +56,7 @@ def _set_diag(laplacian, value):
 
 
 def spectral_embedding(adjacency, n_components=8, mode=None,
-                       random_state=None):
+                       random_state=None, eig_tol=0.0):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -90,6 +90,10 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when mode == 'amg'. By default
         arpack is used.
+
+    eig_tol : float, optional, default: 0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix 
+        when using arpack mode.
 
     Returns
     -------
@@ -156,7 +160,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         # in standard mode.
         try:
             lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
-                                        sigma=1.0, which='LM')
+                                        sigma=1.0, which='LM',
+                                        tol=eig_tol)
             embedding = diffusion_map.T[::-1] * dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
@@ -200,9 +205,81 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                 raise ValueError
     return embedding
 
+def discretization(eigen_vec):
+    from scipy.sparse import csc_matrix
+    from scipy.linalg import LinAlgError
+    eps=2.2204e-16
+    
+    m = eigen_vec.shape[0]
+    
+    #Normalize the eigenvectors
+    norm_ones=np.linalg.norm(np.ones((m,1)))
+    for i in range(eigen_vec.shape[1]):
+        eigen_vec[:,i]=(eigen_vec[:,i]/np.linalg.norm(eigen_vec[:,i]))*norm_ones
+        if eigen_vec[0,i] != 0:
+            eigen_vec[:,i] = -1 * eigen_vec[:,i] * np.sign( eigen_vec[0,i] )
+    
+    #Normalize the rows of the eigenvectors
+    n,k = eigen_vec.shape
+    vm = np.kron(np.ones((1,k)), np.sqrt((eigen_vec*eigen_vec).sum(1)[:, np.newaxis]))
+    eigen_vec = eigen_vec/vm
 
+    svd_restarts=0
+    exitLoop=0
+
+    ### if there is an exception we try to randomize and rerun SVD again
+        ### do this 30 times
+    while (svd_restarts < 30) and (exitLoop==0):
+
+        # initialize algorithm with a random ordering of eigenvectors
+        c = np.zeros((n,1))
+        R = np.zeros((k,k))
+        R[:,0] = eigen_vec[int(np.random.rand(1)*(n-1)),:].transpose()
+
+        for j in range(1,k):
+            c = c + np.abs(eigen_vec.dot(R[:,j-1]))
+            R[:,j] = eigen_vec[c.argmin(),:].T
+
+
+        lastObjectiveValue=0
+        nbIterationsDiscretisation=0
+        nbIterationsDiscretisationMax=20
+
+        while exitLoop == 0:
+            nbIterationsDiscretisation = nbIterationsDiscretisation + 1
+            
+            tDiscrete = eigen_vec.dot(R)
+            
+            j = np.reshape(np.asarray(tDiscrete.argmax(1)),n)
+            eigenvec_discrete=csc_matrix((np.ones(len(j)),(range(0,n), np.array(j))),shape=(n,k))
+            
+            tSVD=eigenvec_discrete.transpose()*eigen_vec
+            
+            try:
+                U,S,Vh = np.linalg.svd(tSVD)
+            except LinAlgError:
+                print "SVD did not converge, randomizing and trying again"
+                break
+            
+            NcutValue=2*(n-S.sum())
+            if((abs(NcutValue-lastObjectiveValue) < eps ) or 
+                  ( nbIterationsDiscretisation > nbIterationsDiscretisationMax )):
+                exitLoop=1
+            else:
+                # otherwise calculate rotation and continue
+                lastObjectiveValue=NcutValue
+                R=np.matrix(Vh).transpose()*np.matrix(U).transpose()
+                
+    if exitLoop == 0:
+        raise ValueError('SVD did not converge')
+
+    y_pred = np.dot(eigenvec_discrete.toarray(), np.diag(np.arange(k))).sum(1)
+
+    return y_pred
+        
 def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
-                        random_state=None, n_init=10, k=None):
+                        random_state=None, n_init=10, k=None, eig_tol=0.0,
+                        embed_solve='kmeans'):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -246,6 +323,14 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+    eig_tol : float, optional, default: 0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix 
+        when using arpack mode.
+
+    embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
+        The strategy to use to solve the clustering problem in the embedding
+        space.
+
     Returns
     -------
     labels: array of integers, shape: n_samples
@@ -276,10 +361,16 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
     maps = spectral_embedding(affinity, n_components=n_components,
-                              mode=mode, random_state=random_state)
-    maps = maps[1:]
-    _, labels, _ = k_means(maps.T, n_clusters, random_state=random_state,
-                    n_init=n_init)
+                              mode=mode, random_state=random_state,
+                              eig_tol=eig_tol)
+    
+    if embed_solve == 'kmeans':
+        maps = maps[1:]
+        _, labels, _ = k_means(maps.T, n_clusters, random_state=random_state,
+                        n_init=n_init)
+    else:
+        labels = discretization(maps.T)
+        
     return labels
 
 
@@ -335,6 +426,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+    eig_tol : float, optional, default: 0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix 
+        when using arpack mode.
+
+    embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
+        The strategy to use to solve the clustering problem in the embedding
+        space.
 
     Attributes
     ----------
@@ -375,7 +473,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
             gamma=1., affinity='rbf', n_neighbors=10, k=None,
-            precomputed=False):
+            precomputed=False, eig_tol=0.0, embed_solve='kmeans'):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
@@ -386,6 +484,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.gamma = gamma
         self.affinity = affinity
         self.n_neighbors = n_neighbors
+        self.eig_tol = eig_tol
+        self.embed_solve = embed_solve
 
     def fit(self, X):
         """Creates an affinity matrix for X using the selected affinity,
@@ -418,7 +518,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
                 n_clusters=self.n_clusters, mode=self.mode,
-                random_state=self.random_state, n_init=self.n_init)
+                random_state=self.random_state, n_init=self.n_init,
+                eig_tol=self.eig_tol, embed_solve=self.embed_solve)
         return self
 
     @property
