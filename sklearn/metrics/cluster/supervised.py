@@ -5,11 +5,13 @@ better.
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
+#          Wei LI         <kuantkid@gmail.com>
 # License: BSD Style.
 
 from math import log
 from scipy.misc import comb
 from scipy.special import gammaln
+from scipy.sparse import coo_matrix
 
 import numpy as np
 
@@ -64,21 +66,16 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
         in predicted class j. If eps is None, the dtype of this array will be
         integer. If eps is given, the dtype will be float.
     """
-    classes = np.unique(labels_true)
-    clusters = np.unique(labels_pred)
-    # The cluster and class ids are not necessarily consecutive integers
-    # starting at 0 hence build a map
-    class_idx = dict((k, v) for v, k in enumerate(classes))
-    cluster_idx = dict((k, v) for v, k in enumerate(clusters))
-    # Build the contingency table
+    classes, class_idx = np.unique(labels_true, return_inverse = True);
+    clusters, cluster_idx = np.unique(labels_pred, return_inverse = True);
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    contingency = np.zeros((n_classes, n_clusters), dtype=np.int)
-    for c, k in zip(labels_true, labels_pred):
-        contingency[class_idx[c], cluster_idx[k]] += 1
+    contingency = coo_matrix((np.ones(class_idx.shape[0]),(class_idx, cluster_idx))
+                            ,shape=(n_classes, n_clusters)
+                            ,dtype=np.uint8).todense();
     if eps is not None:
         # Must be a float matrix to accept float eps
-        contingency = np.array(contingency, dtype='float') + eps
+        contingency = np.array(contingency.todense(), dtype='float') + eps
     return contingency
 
 
@@ -549,14 +546,14 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred)
     contingency = np.array(contingency, dtype='float')
-    contingency /= np.sum(contingency)
+    contingency_sum = np.sum(contingency)
     pi = np.sum(contingency, axis=1)
-    pi /= np.sum(pi)
     pj = np.sum(contingency, axis=0)
-    pj /= np.sum(pj)
+    sumpi = pi.sum()
+    sumpj = pj.sum()
     outer = np.outer(pi, pj)
     nnz = contingency != 0.0
-    mi = contingency[nnz] * np.log(contingency[nnz] / outer[nnz])
+    mi = (contingency[nnz]/contingency_sum) * (np.log2(contingency[nnz]) - np.log2(contingency_sum) - np.log2(outer[nnz]) + np.log2(sumpi) + np.log2(sumpj))
     return mi.sum()
 
 
