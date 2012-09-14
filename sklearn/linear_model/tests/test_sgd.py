@@ -33,6 +33,10 @@ class SparseSGDClassifier(SGDClassifier):
         X = sp.csr_matrix(X)
         return SGDClassifier.predict_proba(self, X, *args, **kw)
 
+    def predict_log_proba(self, X, *args, **kw):
+        X = sp.csr_matrix(X)
+        return SGDClassifier.predict_log_proba(self, X, *args, **kw)
+
 
 class SparseSGDRegressor(SGDRegressor):
 
@@ -291,6 +295,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             assert_true(p[0, 1] > 0.5)
             p = clf.predict_proba([-1, -1])
             assert_true(p[0, 1] < 0.5)
+
+            p = clf.predict_log_proba([3, 2])
+            assert_true(p[0, 1] > p[0, 0])
+            p = clf.predict_log_proba([-1, -1])
+            assert_true(p[0, 1] < p[0, 0])
 
     def test_sgd_l1(self):
         """Test L1 regularization"""

@@ -597,10 +597,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self.classes_[np.ravel(indices)]
 
     def predict_proba(self, X):
-        """Predict class membership probability
+        """Probability estimates
 
-
-        Prediction probabilities are only supported for binary classification.
+        Probability estimates are only supported for binary classification.
 
         Parameters
         ----------
@@ -609,7 +608,8 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         Returns
         -------
         array, shape = [n_samples, n_classes]
-            Contains the membership probabilities of the positive class.
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in self.classes_.
 
         References
         ----------
@@ -636,6 +636,24 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
                                       "(%s given)" % self.loss)
         proba[:, 0] -= proba[:, 1]
         return proba
+
+    def predict_log_proba(self, X):
+        """Log of probability estimates.
+
+        Log probability estimates are only supported for binary classification.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probabilities of the sample for each class in
+            the model, where classes are ordered by arithmetical
+            order.
+        """
+        return np.log(self.predict_proba(X))
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         """Fit a binary classifier on X and y. """
