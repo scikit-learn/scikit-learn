@@ -75,7 +75,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
                                         dtype=np.int).todense())
     if eps is not None:
         # Must be a float matrix to accept float eps
-        contingency = np.array(contingency.todense(), dtype='float') + eps
+        contingency = np.array(contingency, dtype='float') + eps
     return contingency
 
 
