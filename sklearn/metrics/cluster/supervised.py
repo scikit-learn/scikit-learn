@@ -5,7 +5,6 @@ better.
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Wei LI         <kuantkid@gmail.com>
 # License: BSD Style.
 
 from math import log
@@ -66,13 +65,14 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
         in predicted class j. If eps is None, the dtype of this array will be
         integer. If eps is given, the dtype will be float.
     """
-    classes, class_idx = np.unique(labels_true, return_inverse = True);
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse = True);
+    classes, class_idx = np.unique(labels_true, return_inverse=True)
+    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    contingency = np.asarray(coo_matrix((np.ones(class_idx.shape[0]),(class_idx, cluster_idx))
-                            ,shape=(n_classes, n_clusters)
-                            ,dtype=np.int).todense());
+    contingency = np.asarray(coo_matrix((np.ones(class_idx.shape[0]),
+                                         (class_idx, cluster_idx)),
+                                        shape=(n_classes, n_clusters),
+                                        dtype=np.int).todense())
     if eps is not None:
         # Must be a float matrix to accept float eps
         contingency = np.array(contingency.todense(), dtype='float') + eps
@@ -549,11 +549,12 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     contingency_sum = np.sum(contingency)
     pi = np.sum(contingency, axis=1)
     pj = np.sum(contingency, axis=0)
-    sumpi = pi.sum()
-    sumpj = pj.sum()
     outer = np.outer(pi, pj)
     nnz = contingency != 0.0
-    mi = (contingency[nnz]/contingency_sum) * (np.log(contingency[nnz]) - np.log(contingency_sum)) + (contingency[nnz]/contingency_sum) *(-np.log(outer[nnz]) + np.log(sumpi) + np.log(sumpj))
+    mi = ((contingency[nnz] / contingency_sum) *
+          (np.log(contingency[nnz]) - log(contingency_sum))
+          + (contingency[nnz] / contingency_sum) *
+          (-np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())))
     return mi.sum()
 
 
@@ -778,5 +779,5 @@ def entropy(labels):
     label_idx = unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
-    pisum = np.sum(pi)
-    return -np.sum((pi/pisum) * (np.log(pi) - np.log(pisum)))
+    pi_sum = np.sum(pi)
+    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
