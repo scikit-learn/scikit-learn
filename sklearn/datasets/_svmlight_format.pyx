@@ -28,7 +28,8 @@ cdef bytes COLON = u':'.encode('ascii')
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
-    cdef Py_ssize_t hash_idx
+    cdef np.int32_t idx, prev_idx
+    cdef Py_ssize_t i
 
     data = ArrayBuilder(dtype=dtype)
     indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
@@ -42,11 +43,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
         # skip comments
         line_cstr = line
         hash_ptr = strchr(line_cstr, '#')
-        if hash_ptr == NULL:
-            hash_idx = -1           # index of '\n' in line
-        else:
-            hash_idx = hash_ptr - <char *>line
-        line = line[:hash_idx]
+        if hash_ptr != NULL:
+            line = line[:hash_ptr - line_cstr]
 
         line_parts = line.split()
         if len(line_parts) == 0:
@@ -63,8 +61,10 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
 
         prev_idx = -1
         for i in xrange(1, len(line_parts)):
-            idx, value = line_parts[i].split(COLON, 1)
-            idx = int(idx)
+            idx_s, value = line_parts[i].split(COLON, 1)
+            # XXX if we replace int with np.int32 in the line below, this
+            # function becomes twice as slow.
+            idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
                         "Invalid index %d in SVMlight/LibSVM data file." % idx)
