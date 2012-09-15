@@ -21,7 +21,8 @@ def test_isotonic_regression():
 
 def test_assert_raises_exceptions():
     ir = IsotonicRegression()
+    rng = np.random.RandomState(42)
     assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7, 3], [0.1, 0.6])
     assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7])
-    assert_raises(ValueError, ir.fit, np.random.randn(3, 10), [0, 1, 2])
-    assert_raises(ValueError, ir.transform, np.random.randn(3, 10))
+    assert_raises(ValueError, ir.fit, rng.randn(3, 10), [0, 1, 2])
+    assert_raises(ValueError, ir.transform, rng.randn(3, 10))
