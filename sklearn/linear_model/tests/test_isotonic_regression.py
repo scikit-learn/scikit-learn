@@ -13,7 +13,7 @@ def test_isotonic_regression():
     assert_array_equal(y_, isotonic_regression(y))
 
     x = np.arange(len(y))
-    ir = IsotonicRegression(x_min=0., x_max=1.)
+    ir = IsotonicRegression(y_min=0., y_max=1.)
     ir.fit(x, y)
     assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
     assert_array_equal(ir.transform(x), ir.predict(x))

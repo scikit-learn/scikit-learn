@@ -9,15 +9,17 @@ from ..base import BaseEstimator, TransformerMixin, RegressorMixin
 from ..utils import as_float_array, check_arrays
 
 
-def isotonic_regression(y, weight=None, x_min=None, x_max=None):
-    """solve the isotonic regression model:
+def isotonic_regression(y, weight=None, y_min=None, y_max=None):
+    """Solve the isotonic regression model:
 
-        min Sum w_i (y_i - x_i) ** 2
+        min sum w[i] (y[i] - y_[i]) ** 2
 
-        subject to x_min = x_1 <= x_2 ... <= x_n = x_max
+        subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
 
-    where each w_i is strictly positive and each y_i is an arbitrary
-    real number.
+    where:
+        - y[i] are inputs (real numbers)
+        - y_[i] are fitted
+        - w[i] are optional strictly positive weights (default to 1.0)
 
     Parameters
     ----------
@@ -28,15 +30,16 @@ def isotonic_regression(y, weight=None, x_min=None, x_max=None):
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights)
 
-    x_min: optional, default: None
-        if not None, set the lowest value of the fit to x_min
+    y_min: optional, default: None
+        if not None, set the lowest value of the fit to y_min
 
-    x_max: optional, default: None
-        if not None, set the highest value of the fit to x_max
+    y_max: optional, default: None
+        if not None, set the highest value of the fit to y_max
 
     Returns
     -------
-    x: list of floating-point values
+    y_: list of floating-point values
+        Isotonic fit of y
 
     References
     ----------
@@ -47,15 +50,15 @@ def isotonic_regression(y, weight=None, x_min=None, x_max=None):
     """
     if weight is None:
         weight = np.ones(len(y), dtype=y.dtype)
-    if x_min is not None or x_max is not None:
+    if y_min is not None or y_max is not None:
         y = np.copy(y)
         weight = np.copy(weight)
         C = np.dot(weight, y * y) * 10  # upper bound on the cost function
-        if x_min is not None:
-            y[0] = x_min
+        if y_min is not None:
+            y[0] = y_min
             weight[0] = C
-        if x_max is not None:
-            y[-1] = x_max
+        if y_max is not None:
+            y[-1] = y_max
             weight[-1] = C
 
     active_set = [(weight[i] * y[i], weight[i], [i, ])
@@ -101,12 +104,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     """solve the isotonic regression optimization problem
 
     The isotonic regression optimization problem is defined by::
-        min Sum w_i (y[i] - y_[i]) ** 2
+        min sum w_i (y[i] - y_[i]) ** 2
 
         subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
 
-    where each w_i is strictly positive and each y_i is an arbitrary
-    real number.
+    where:
+        - y[i] are inputs (real numbers)
+        - y_[i] are fitted
+        - w[i] are optional strictly positive weights (default to 1.0)
 
     Parameters
     ----------
@@ -118,11 +123,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    `X_`: ndarray (n, )
+    `X_`: ndarray (n_samples, )
         A copy of the input X
 
-    `y_`: ndarray (n, )
-        Estimated y
+    `y_`: ndarray (n_samples, )
+        Isotonic fit of y
 
     References
     ----------
@@ -131,9 +136,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
-    def __init__(self, x_min=None, x_max=None):
-        self.x_min = x_min
-        self.x_max = x_max
+    def __init__(self, y_min=None, y_max=None):
+        self.y_min = y_min
+        self.y_max = y_max
 
     def _check_fit_data(self, X, y, weight=None):
         if len(X.shape) != 1:
@@ -169,7 +174,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y = as_float_array(y)
         self.X_ = as_float_array(X, copy=True)
         self._check_fit_data(self.X_, y, weight)
-        self.y_ = isotonic_regression(y, weight, self.x_min, self.x_max)
+        self.y_ = isotonic_regression(y, weight, self.y_min, self.y_max)
         return self
 
     def transform(self, T):
