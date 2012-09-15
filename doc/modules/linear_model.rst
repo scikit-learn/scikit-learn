@@ -691,7 +691,7 @@ sparser.
 Isotonic regression
 ====================
 
-The :class:`Isotonic Regression` fits a monotonic function to the data.
+The :class:`Isotonic Regression` fits a non-decreasing function to the data.
 It solves the following problem:
 
   minimize :math:`\sum w_i (y_i - x_i)^2`
@@ -699,8 +699,9 @@ It solves the following problem:
   subject to :math:`x_min = x_1 <= x_2 ... <= x_n = x_max`
 
 where each :math:`w_i` is strictly positive and each :math:`y_i` is an
-arbitrary real number. It yields the vector which is composed of monotonic
-elements the closest in term of least square to the data.
+arbitrary real number. It yields the vector which is composed of non-decreasing
+elements the closest in terms of mean squared error. In practice this list
+of elements forms a function that is piecewise linear.
 
 .. figure:: ../auto_examples/linear_model/images/plot_isotonic_regression_1.png
    :target: ../auto_examples/linear_model/images/plot_isotonic_regression.html

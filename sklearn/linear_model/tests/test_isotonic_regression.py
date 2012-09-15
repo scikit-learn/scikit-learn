@@ -16,6 +16,7 @@ def test_isotonic_regression():
     ir = IsotonicRegression(x_min=0., x_max=1.)
     ir.fit(x, y)
     assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
+    assert_array_equal(ir.transform(x), ir.predict(x))
 
 
 def test_assert_raises_exceptions():

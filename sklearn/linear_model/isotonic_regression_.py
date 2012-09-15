@@ -23,6 +23,7 @@ def isotonic_regression(y, weight=None, x_min=None, x_max=None):
     Parameters
     ----------
     y: iterable of floating-point values
+        The data
 
     weight: iterable of floating-point values, optional, default: None
         Weights on each point of the regression.
@@ -129,14 +130,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.x_max = x_max
 
     def _check_fit_data(self, X, y, weight=None):
-        X, y = check_arrays(X, y, sparse_format='dense')
-        if weight is not None:
-            if len(X) != len(weight):
-                raise ValueError("X and w should be vectors of same length")
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
-        if len(X) != len(y):
-            raise ValueError("X and y should be vectors of same length")
 
     def fit(self, X, y, weight=None):
         """Fit the model using X as training data
@@ -178,6 +173,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         T_: array, shape=(n_samples,)
             The transformed data
         """
+        T = as_float_array(T)
         if len(T.shape) != 1:
             raise ValueError("X should be a vector")
 
