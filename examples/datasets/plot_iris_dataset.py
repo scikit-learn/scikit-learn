@@ -24,7 +24,9 @@ print __doc__
 # License: BSD
 
 import pylab as pl
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn import datasets
+from sklearn.decomposition import PCA
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -37,7 +39,7 @@ y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
 pl.figure(1, figsize=(4, 3))
 pl.clf()
 
-# Plot also the training points
+# Plot the training points
 pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
 pl.xlabel('Sepal length')
 pl.ylabel('Sepal width')
@@ -46,5 +48,13 @@ pl.xlim(x_min, x_max)
 pl.ylim(y_min, y_max)
 pl.xticks(())
 pl.yticks(())
+
+# To getter a better understanding of interaction of the dimensions
+# plot the first three PCA dimensions
+fig = pl.figure(2, figsize=(4, 3))
+pl.clf()
+ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=-150, azim=110)
+X_reduced = PCA(n_components=3).fit_transform(iris.data)
+ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=Y, cmap=pl.cm.Paired)
 
 pl.show()
