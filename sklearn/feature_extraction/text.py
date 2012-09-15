@@ -28,7 +28,6 @@ __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
-           'Vectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
            'strip_tags']
@@ -928,27 +927,3 @@ class TfidfVectorizer(CountVectorizer):
         """
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy)
-
-
-class Vectorizer(TfidfVectorizer):
-    """Vectorizer is deprecated in 0.11, use TfidfVectorizer instead"""
-
-    def __init__(self, input='content', charset='utf-8',
-            charset_error='strict', strip_accents=None, lowercase=True,
-            preprocessor=None, tokenizer=None, analyzer='word',
-            stop_words=None, token_pattern=ur"\b\w\w+\b", min_n=None,
-            max_n=None, ngram_range=(1, 1), max_df=1.0, min_df=2,
-            max_features=None, vocabulary=None, binary=False, dtype=long,
-            norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
-        warnings.warn("Vectorizer is deprecated in 0.11 and will be removed"
-                     " in 0.13. Please use TfidfVectorizer instead.",
-                      category=DeprecationWarning, stacklevel=2)
-        super(Vectorizer, self).__init__(
-            input=input, charset=charset, charset_error=charset_error,
-            strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
-            stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
-            max_n=max_n, max_df=max_df, min_df=min_df,
-            max_features=max_features, vocabulary=vocabulary, binary=False,
-            dtype=dtype, norm=norm, use_idf=use_idf, smooth_idf=smooth_idf,
-            sublinear_tf=sublinear_tf)
