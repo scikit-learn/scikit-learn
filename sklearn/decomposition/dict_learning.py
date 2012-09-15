@@ -6,7 +6,6 @@
 import time
 import sys
 import itertools
-import warnings
 
 from math import sqrt, floor, ceil
 
@@ -136,8 +135,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_gram=None,
-                  copy_cov=True, init=None, max_iter=1000, n_jobs=1):
+        n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
+        max_iter=1000, n_jobs=1):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -211,10 +210,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    if copy_gram is not None:
-        warnings.warn("copy_gram in sparse_encode is deprecated: it"
-                      "lead to errors. To be removed in 0.13.",
-                      DeprecationWarning, stacklevel=2)
     dictionary = array2d(dictionary)
     X = array2d(X)
     n_samples, n_features = X.shape
