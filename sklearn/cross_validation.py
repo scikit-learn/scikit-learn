@@ -13,7 +13,6 @@ from __future__ import print_function
 from itertools import combinations
 from math import ceil, floor, factorial
 import operator
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -630,21 +629,9 @@ class Bootstrap(object):
     indices = True
 
     def __init__(self, n, n_bootstraps=3, train_size=.5, test_size=None,
-                 n_train=None, n_test=None, random_state=None):
+                 random_state=None):
         self.n = n
         self.n_bootstraps = n_bootstraps
-        if n_train is not None:
-            train_size = n_train
-            warnings.warn(
-                "n_train is deprecated in 0.11 and scheduled for "
-                "removal in 0.13, use train_size instead",
-                DeprecationWarning, stacklevel=2)
-        if n_test is not None:
-            test_size = n_test
-            warnings.warn(
-                "n_test is deprecated in 0.11 and scheduled for "
-                "removal in 0.13, use test_size instead",
-                DeprecationWarning, stacklevel=2)
         if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
@@ -771,24 +758,9 @@ class ShuffleSplit(object):
     """
 
     def __init__(self, n, n_iterations=10, test_size=0.1,
-                 train_size=None, indices=True, random_state=None,
-                 test_fraction=None, train_fraction=None):
+                 train_size=None, indices=True, random_state=None):
         self.n = n
         self.n_iterations = n_iterations
-
-        if test_fraction is not None:
-            warnings.warn(
-                "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.13, use test_size instead",
-                DeprecationWarning, stacklevel=2)
-            test_size = test_fraction
-        if train_fraction is not None:
-            warnings.warn(
-                "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.13, use train_size instead",
-                DeprecationWarning, stacklevel=2)
-            train_size = train_fraction
-
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
@@ -1321,24 +1293,8 @@ def train_test_split(*arrays, **options):
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
 
-    test_fraction = options.pop('test_fraction', None)
-    if test_fraction is not None:
-        warnings.warn(
-                "test_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.13, use test_size instead",
-                DeprecationWarning, stacklevel=2)
-    else:
-        test_fraction = 0.25
-
-    train_fraction = options.pop('train_fraction', None)
-    if train_fraction is not None:
-        warnings.warn(
-                "train_fraction is deprecated in 0.11 and scheduled for "
-                "removal in 0.13, use train_size instead",
-                DeprecationWarning, stacklevel=2)
-
-    test_size = options.pop('test_size', test_fraction)
-    train_size = options.pop('train_size', train_fraction)
+    test_size = options.pop('test_size', 0.1)
+    train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
 
