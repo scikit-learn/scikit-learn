@@ -37,6 +37,13 @@ def isotonic_regression(y, weight=None, x_min=None, x_max=None):
     Returns
     -------
     x: list of floating-point values
+
+    References
+    ----------
+    Isotonic Median Regression: A Linear Programming Approach
+    Nilotpal Chakravarti
+    Mathematics of Operations Research
+    Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
     if weight is None:
         weight = np.ones(len(y), dtype=y.dtype)
@@ -117,8 +124,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     `y_`: ndarray (n, )
         Estimated y
 
-    Notes
-    -----
+    References
+    ----------
     Isotonic Median Regression: A Linear Programming Approach
     Nilotpal Chakravarti
     Mathematics of Operations Research
@@ -151,6 +158,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         -------
         self; object
             returns an instance of self
+
+        Note
+        ----
+        X doesn't influence the result of `fit`. It is however stored
+        for future use, as `transform` needs X to interpolate new
+        input data.
         """
         X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
         y = as_float_array(y)
@@ -199,6 +212,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         -------
         y_: array, shape=(n_samples,)
             The transformed data
+
+        Note
+        ----
+        X doesn't influence the result of `fit_transform`. It is however stored
+        for future use, as `transform` needs X to interpolate new input
+        data.
         """
         self.fit(X, y, weight)
         return self.y_
