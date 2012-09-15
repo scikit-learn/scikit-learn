@@ -21,10 +21,12 @@ import pylab as pl
 from matplotlib.collections import LineCollection
 
 from sklearn.linear_model import IsotonicRegression, LinearRegression
+from sklearn.utils import check_random_state
 
 n = 100
 x = np.arange(n)
-y = np.random.randint(-50, 50, size=(n,)) + 50. * np.log(1 + np.arange(n))
+rs = check_random_state(0)
+y = rs.randint(-50, 50, size=(n,)) + 50. * np.log(1 + np.arange(n))
 
 ###############################################################################
 # Fit IsotonicRegression and LinearRegression models
