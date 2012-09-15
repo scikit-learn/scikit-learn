@@ -10,8 +10,7 @@ from ..utils import as_float_array, check_arrays
 
 
 def isotonic_regression(y, weight=None, x_min=None, x_max=None):
-    """
-    solutionve the isotonic regression model:
+    """solve the isotonic regression model:
 
         min Sum w_i (y_i - x_i) ** 2
 
