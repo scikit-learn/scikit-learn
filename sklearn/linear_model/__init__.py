@@ -27,8 +27,6 @@ from .perceptron import Perceptron
 from .randomized_l1 import RandomizedLasso, RandomizedLogisticRegression, \
                            lasso_stability_path
 
-from . import sparse
-
 __all__ = ['ARDRegression',
            'BayesianRidge',
            'ElasticNet',
@@ -67,5 +65,4 @@ __all__ = ['ARDRegression',
            'lasso_stability_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
-           'ridge_regression',
-           'sparse']
+           'ridge_regression']

@@ -11,6 +11,13 @@ Changelog
 
 .. _changes_0_12:
 
+API changes summary
+-------------------
+
+   - The ``sklearn.linear_model.sparse`` and ``sklearn.svm.sparse`` modules
+     are gone; sparse matrix input support has been added the main
+     ``linear_model`` and ``svm`` modules in previous releases.
+
 0.12
 ====
 
