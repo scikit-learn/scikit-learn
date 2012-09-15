@@ -36,7 +36,7 @@ Y = iris.target
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
 
-pl.figure(1, figsize=(4, 3))
+pl.figure(2, figsize=(8, 6))
 pl.clf()
 
 # Plot the training points
@@ -51,10 +51,17 @@ pl.yticks(())
 
 # To getter a better understanding of interaction of the dimensions
 # plot the first three PCA dimensions
-fig = pl.figure(2, figsize=(4, 3))
-pl.clf()
-ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=-150, azim=110)
+fig = pl.figure(1, figsize=(8, 6))
+ax = Axes3D(fig, elev=-150, azim=110)
 X_reduced = PCA(n_components=3).fit_transform(iris.data)
-ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=Y, cmap=pl.cm.Paired)
+ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=Y,
+           cmap=pl.cm.Paired)
+ax.set_title("First three PCA directions")
+ax.set_xlabel("1st eigenvector")
+ax.set_xticks(())
+ax.set_ylabel("2nd eigenvector")
+ax.set_yticks(())
+ax.set_zlabel("3rd eigenvector")
+ax.set_zticks(())
 
 pl.show()
