@@ -855,7 +855,12 @@ def precision_recall_curve(y_true, probas_pred):
     last_recorded_idx = -1
 
     # Iterate over (predict_prob, true_val) pairs, in order of highest
-    # to lowest predicted probabilities
+    # to lowest predicted probabilities. Incrementally keep track of how
+    # many true and false labels have been encountered. If several of the
+    # predicted probabilities are the same, then create only one new point
+    # in the curve that represents all of these "tied" predictions.
+    # (In other words, add new points only when new values of prob_val
+    # are encountered)
     sorted_pred_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
     pairs = np.vstack((probas_pred, y_true)).T
     for idx, (prob_val, class_val) in enumerate(pairs[sorted_pred_idxs, :]):
@@ -870,10 +875,13 @@ def precision_recall_curve(y_true, probas_pred):
             recall.append(tp_count / (tp_count + fn_count))
             last_prob_val = prob_val
             last_recorded_idx = idx
+    # Don't forget to include the last point in the PR-curve if
+    # it wasn't yet recorded.
     if last_recorded_idx != idx:
         recall.append(1.0)
         precision.append(total_positive / (tp_count + fp_count))
 
+    # Sklearn expects these in reverse order
     thresholds = np.array(thresholds)[::-1]
     precision = np.array(precision)[::-1]
     recall = np.array(recall)[::-1]
