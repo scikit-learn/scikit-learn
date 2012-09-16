@@ -5,7 +5,7 @@ Small example showing recursive logging in an object hierarchy.
 from time import sleep
 import itertools
 
-from monologue.progress_log import HasLog
+from sklearn.progress_log import HasLog
 
 FIRST_NAMES = itertools.cycle(['Jane', 'Joe', 'Jack'])
 
@@ -47,5 +47,5 @@ if __name__ == '__main__':
     from sklearn.progress_log import setup_logger
     import logging
     setup_logger('__main__', level=logging.DEBUG, display_name=True,
-              timestamp=True)
+              time_stamp=True)
     boss.yell()

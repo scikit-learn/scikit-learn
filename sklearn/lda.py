@@ -78,7 +78,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             if (self.priors < 0).any():
                 raise ValueError('priors must be non-negative')
             if self.priors.sum() != 1:
-                print 'warning: the priors do not sum to 1. Renormalizing'
+                self._get_logger().warn(
+                        'warning: the priors do not sum to 1. Renormalizing')
                 self.priors = self.priors / self.priors.sum()
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4):

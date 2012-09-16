@@ -15,7 +15,8 @@ import numpy as np
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
-from .externals.joblib import Parallel, delayed, logger
+from .externals.joblib import Parallel, delayed, logger as log_fmt
+from .progress_log import get_logger
 from .utils import check_arrays, safe_mask
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
@@ -73,11 +74,12 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
 
     Returns the score and the instance of the classifier
     """
+    logger = get_logger(verbose)
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
-        print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
+        logger.progress("%s %s", msg_vars=(msg, (64 - len(msg)) * '.'))
 
     X, y = check_arrays(X, y, sparse_format="csr")
     # update parameters of the classifier after a copy of its base structure
@@ -132,9 +134,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         msg += ", score=%f" % this_score
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
+                              log_fmt.short_format_time(time.time() -
                                                        start_time))
-        print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
+        logger.progress("%s %s",
+                        msg_vars=((64 - len(end_msg)) * '.', end_msg))
     return this_score, clf_params, this_n_test_samples
 
 
@@ -370,6 +373,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                                  % (len(y), n_samples))
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+        logger = self._get_logger()
 
         grid = IterGrid(self.param_grid)
         base_clf = clone(self.estimator)
@@ -388,7 +392,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                 pre_dispatch=pre_dispatch)(
             delayed(fit_grid_point)(
                 X, y, base_clf, clf_params, train, test, self.loss_func,
-                self.score_func, self.verbose, **self.fit_params)
+                self.score_func, logger, **self.fit_params)
                     for clf_params in grid for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
