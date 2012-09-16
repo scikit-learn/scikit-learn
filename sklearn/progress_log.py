@@ -5,9 +5,12 @@ A logger with a nested control of verbosity for progress messages.
 import sys
 import inspect
 import logging
+import pickle
+import copy_reg
 # To make users' life easier, import useful symbols
 from logging import DEBUG, INFO, ERROR, WARNING, WARN, NOTSET
 
+# XXX: must make logger objects picklable
 
 def get_logger(verbosity=0, name=None, caller_name=None):
     if isinstance(verbosity, ProgressLog):
@@ -99,6 +102,106 @@ class ProgressLog(logging.Logger):
     def __repr__(self):
         return '%s(verbosity=%s)' % (self.__class__.__name__, self.verbosity)
 
+    def __reduce__(self):
+        # Need to pop the manager at reduce and during reconstruction
+        # grab the one from the root logger
+        # XXX: what do we do with 'parent'?
+        pass
+
+
+###############################################################################
+# Code to make sure that our logging framework always pickles cleanly
+
+class _StdErr(object):
+    " No-op tracer for pickling"
+    pass
+
+
+class _StdOut(object):
+    " No-op tracer for pickling"
+    pass
+
+
+class FileStreamHandler(logging.StreamHandler):
+    """ StreamHandler subclass to deal with pickling problems."""
+
+    def __init__(self, stream=None):
+        self._original_stream = stream
+        if isinstance(stream, basestring):
+            stream = open(stream, 'ab')
+        elif (not stream is sys.__stderr__
+                        or stream is sys.__stdout__):
+            # Just try pickling to raise an error if the stream doesn't
+            # pickle
+            pickle.dumps(stream)
+        if stream is None:
+            stream = sys.stdout
+        super(FileStreamHandler, self).__init__(stream)
+
+    def __reduce__(self):
+        return _file_stream_handler_unpickle, (self._original_stream, )
+
+
+def _file_stream_handler_unpickle(stream):
+    if stream is _StdOut:
+        stream = sys.stdout
+    if stream is _StdErr:
+        stream = sys.stderr
+    return FileStreamHandler(stream)
+
+# XXX: the 'logger.manager.logDict' dictionary doesn't pickle right
+# The reason is that we don't control what goes in it, and at some point,
+# there will be a logger with a handler that doesn't pickle
+
+class PickeableLogger(logging.Logger):
+    """ A logger that pickles safely by not saving its
+        manager.
+
+        The manager contains a reference to all loggers, and some of
+        these may have open file handles that do not pickle.
+    """
+    def __reduce__(self):
+        reconstructor, object_init, state = \
+            super(PickeableLogger, self).__reduce__
+        state.pop('manager', None)
+        return _picklable_logger_unpickle, object_init, state
+
+
+def _picklable_logger_unpickle(cls, base, state):
+    obj = copy_reg._reconstructor(cls, base, state)
+    # need to register the logger
+    manager = logging.Logger.manager
+    logging._acquireLock()
+    try:
+        manager.loggerDict[obj.name] = obj
+    finally:
+        manager._releaseLock()
+
+    return obj
+
+# XXX need to be able to set the logger
+
+def get_pickleable_logger(name):
+    """ Replacement of logging.getLogger to control the class used in
+        order to plug in our class, that is picklable.
+    """
+    manager = logging.Logger.manager
+    logging._acquireLock()
+    try:
+        if name in manager.loggerDict:
+            logger = manager.loggerDict[name]
+        else:
+            # XXX: Should I use the ProgressLog here or another smaller
+            # subclass?
+            logger = PickeableLogger(name)
+            logger.manager = manager
+            manager.loggerDict[name] = logger
+            manager._fixupParents(logger)
+    finally:
+        manager._releaseLock()
+    return logger
+
+###############################################################################
 
 def setup_logger(name, level=logging.INFO, log_file=None, dots=True,
                  display_name=False, time_stamp=False,
@@ -120,12 +223,8 @@ def setup_logger(name, level=logging.INFO, log_file=None, dots=True,
         if unset (None), the value set at object
         initialization (in __init__) is reused
     """
-    logger = logging.getLogger(name)
+    logger = get_pickleable_logger(name)
     logger.setLevel(level)
-    if log_file is None:
-        log_file = sys.stdout
-    elif isinstance(log_file, basestring):
-        log_file = open(log_file, 'ab')
 
     log_format = []
     if time_stamp:
@@ -141,7 +240,7 @@ def setup_logger(name, level=logging.INFO, log_file=None, dots=True,
         for handler in logger.handlers:
             logger.removeHandler(handler)
 
-    handler = logging.StreamHandler(log_file)
+    handler = FileStreamHandler(log_file)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 

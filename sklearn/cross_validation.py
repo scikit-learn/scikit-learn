@@ -18,6 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
+from .progress_log import get_logger
 from .utils import check_arrays, check_random_state
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
@@ -1018,8 +1019,8 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
             score = estimator.score(X[test], y[test])
         else:
             score = score_func(y[test], estimator.predict(X[test]))
-    if verbose > 1:
-        print("score: %f" % score)
+    logger = get_logger(verbosity=verbose)
+    logger.progress("score: %f", msg_vars=(score, ))
     return score
 
 
