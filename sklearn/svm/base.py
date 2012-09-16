@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
+from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d
 from ..utils.extmath import safe_sparse_dot
 
@@ -644,7 +645,9 @@ class BaseLibLinear(BaseEstimator):
         self : object
             Returns self.
         """
-        if len(np.unique(y)) < 2:
+        self._enc = LabelEncoder()
+        y = self._enc.fit_transform(y)
+        if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                     " one.")
 
@@ -676,10 +679,16 @@ class BaseLibLinear(BaseEstimator):
 
         if self.verbose:
             print '[LibLinear]',
-        self.raw_coef_, self.label_ = train(X, y, self._get_solver_type(),
-                                            self.tol, self._get_bias(), self.C,
-                                            self.class_weight_label_,
-                                            self.class_weight_)
+        self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
+                               self._get_bias(), self.C,
+                               self.class_weight_label_, self.class_weight_)
+
+        if self.fit_intercept:
+            self.coef_ = self.raw_coef_[:, :-1]
+            self.intercept_ = self.intercept_scaling * self.raw_coef_[:, -1]
+        else:
+            self.coef_ = self.raw_coef_
+            self.intercept_ = 0.
 
         return self
 
@@ -694,15 +703,12 @@ class BaseLibLinear(BaseEstimator):
         -------
         C : array, shape = [n_samples]
         """
-        X = self._validate_for_predict(X)
-
-        C = 0.0  # C is not useful here
-
-        predict = liblinear.csr_predict_wrap if self._sparse \
-                                             else liblinear.predict_wrap
-        return predict(X, self.raw_coef_, self._get_solver_type(), self.tol,
-                       C, self.class_weight_label_, self.class_weight_,
-                       self.label_, self._get_bias())
+        scores = self.decision_function(X)
+        if len(scores.shape) == 1:
+            indices = (scores > 0).astype(np.int)
+        else:
+            indices = scores.argmax(axis=1)
+        return self.classes_[indices]
 
     def decision_function(self, X):
         """Decision function value for X according to the trained model.
@@ -718,18 +724,12 @@ class BaseLibLinear(BaseEstimator):
             in the model.
         """
         X = self._validate_for_predict(X)
+        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return scores.ravel() if scores.shape[1] == 1 else scores
 
-        C = 0.0  # C is not useful here
-
-        dfunc_wrap = liblinear.csr_decision_function_wrap \
-                       if self._sparse \
-                       else liblinear.decision_function_wrap
-
-        dec_func = dfunc_wrap(X, self.raw_coef_, self._get_solver_type(),
-                self.tol, C, self.class_weight_label_, self.class_weight_,
-                self.label_, self._get_bias())
-
-        return dec_func
+    @property
+    def classes_(self):
+        return self._enc.classes_
 
     def _check_n_features(self, X):
         n_features = self.raw_coef_.shape[1]
@@ -754,48 +754,6 @@ class BaseLibLinear(BaseEstimator):
             self.raw_coef_ = np.asfortranarray(self.raw_coef_)
         self._check_n_features(X)
         return X
-
-    @property
-    def intercept_(self):
-        if self.fit_intercept:
-            ret = self.intercept_scaling * self.raw_coef_[:, -1]
-            return ret
-        return 0.0
-
-    @intercept_.setter
-    def intercept_(self, intercept):
-        self.fit_intercept = True
-
-        intercept /= self.intercept_scaling
-        intercept = intercept.reshape(-1, 1)
-
-        self.raw_coef_ = np.hstack((self.raw_coef_[:, : -1], intercept))
-        # We need fortran ordered arrays for the predict
-        self.raw_coef_ = np.asfortranarray(self.raw_coef_)
-
-    @property
-    def coef_(self):
-        if self.fit_intercept:
-            ret = self.raw_coef_[:, : -1].copy()
-        else:
-            ret = self.raw_coef_.copy()
-
-        # mark the returned value as immutable
-        # to avoid silencing potential bugs
-        ret.flags.writeable = False
-        return ret
-
-    @coef_.setter
-    def coef_(self, coef):
-        raw_intercept = self.raw_coef_[:, -1].reshape(-1, 1)
-
-        self.raw_coef_ = coef
-
-        if self.fit_intercept:
-            self.raw_coef_ = np.hstack((self.raw_coef_, raw_intercept))
-
-        # We need fortran ordered arrays for the predict
-        self.raw_coef_ = np.asfortranarray(self.raw_coef_)
 
     def _get_bias(self):
         if self.fit_intercept:
