@@ -122,7 +122,6 @@ def test_linearsvc_iris():
     sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
     clf = svm.LinearSVC().fit(iris.data.todense(), iris.target)
 
-    assert_array_almost_equal(clf.label_, sp_clf.label_)
     assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)

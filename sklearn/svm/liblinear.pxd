@@ -27,26 +27,7 @@ cdef extern from "src/liblinear/liblinear_helper.c":
     parameter *set_parameter(int, double, double, int, char *, char *)
 
     model *set_model(parameter *, char *, np.npy_intp *, char *, double)
-    int copy_predict(char *, model *, np.npy_intp *, char *)
 
-    int csr_copy_predict(
-        np.npy_intp n_features, np.npy_intp *data_size, char *data,
-        np.npy_intp *index_size, char *index, np.npy_intp
-        *intptr_size, char *intptr, model *model, char *dec_values)
-
-    int csr_copy_predict_values(
-        np.npy_intp n_features, np.npy_intp *data_size, char *data, np.npy_intp
-        *index_size, char *index, np.npy_intp *indptr_shape, char
-        *intptr, model *model_, char *dec_values, int nr_class)
-
-    int csr_copy_predict_proba(
-        np.npy_intp n_features, np.npy_intp *data_size, char *data,
-        np.npy_intp *index_size, char *index, np.npy_intp
-        *indptr_shape, char *indptr, model *model_, char *dec_values)
-
-    int copy_prob_predict(char *, model *, np.npy_intp *, char *)
-    int copy_predict_values(char *, model *, np.npy_intp *, char *, int)
-    int copy_label(char *, model *, int)
     double get_bias(model *)
     void free_problem (problem *)
     void free_parameter (parameter *)
