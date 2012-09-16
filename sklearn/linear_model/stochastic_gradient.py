@@ -382,11 +382,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    @property
-    @deprecated("to be removed in v0.13; use ``classes_`` instead.")
-    def classes(self):
-        return self.classes_
-
     def _set_class_weight(self, class_weight, classes, y):
         """Estimate class weights for unbalanced datasets."""
         if class_weight is None or len(class_weight) == 0:
