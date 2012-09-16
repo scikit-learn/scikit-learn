@@ -836,6 +836,7 @@ def precision_recall_curve(y_true, probas_pred):
     y_true = np.ravel(y_true)
     probas_pred = np.ravel(probas_pred)
 
+    # Make sure input is boolean
     labels = np.unique(y_true)
     if np.all(labels == np.array([-1, 1])):
         # convert {-1, 1} to boolean {0, 1} repr
@@ -844,6 +845,7 @@ def precision_recall_curve(y_true, probas_pred):
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
+    # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
     tp_count, fp_count = 0., 0.
     last_prob_val = 1.
@@ -852,9 +854,11 @@ def precision_recall_curve(y_true, probas_pred):
     recall = [0.]
     last_recorded_idx = -1
 
-    sorted_prediction_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
-    pred_classval_pairs = np.vstack((probas_pred, y_true)).T
-    for idx, (prob_val, class_val) in enumerate(pred_classval_pairs[sorted_prediction_idxs,:]):
+    # Iterate over (predict_prob, true_val) pairs, in order of highest
+    # to lowest predicted probabilities
+    sorted_pred_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
+    pairs = np.vstack((probas_pred, y_true)).T
+    for idx, (prob_val, class_val) in enumerate(pairs[sorted_pred_idxs, :]):
         if class_val:
             tp_count += 1.
         else:
@@ -932,7 +936,7 @@ def r2_score(y_true, y_pred):
     y_true, y_pred = check_arrays(y_true, y_pred)
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
-                " sample.")
+                         " sample.")
     numerator = ((y_true - y_pred) ** 2).sum()
     denominator = ((y_true - y_true.mean()) ** 2).sum()
     if denominator == 0.0:
