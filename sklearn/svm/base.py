@@ -691,42 +691,6 @@ class BaseLibLinear(BaseEstimator):
 
         return self
 
-    def predict(self, X):
-        """Predict target values of X according to the fitted model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-        """
-        scores = self.decision_function(X)
-        if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
-        else:
-            indices = scores.argmax(axis=1)
-        return self.classes_[indices]
-
-    def decision_function(self, X):
-        """Decision function value for X according to the trained model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_class]
-            Returns the decision function of the sample for each class
-            in the model.
-        """
-        X = atleast2d_or_csr(X)
-        self._check_n_features(X)
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
-        return scores.ravel() if scores.shape[1] == 1 else scores
-
     @property
     def classes_(self):
         return self._enc.classes_
