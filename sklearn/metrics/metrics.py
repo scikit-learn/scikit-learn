@@ -16,6 +16,7 @@ import numpy as np
 
 from ..utils import check_arrays
 from ..utils import deprecated
+from scipy.sparse import coo_matrix
 
 
 def unique_labels(*lists_of_labels):
@@ -64,6 +65,19 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
+    # convert yt, yp into index
+    y_pred = np.array([label_to_ind[x] for x in y_pred])
+    y_true = np.array([label_to_ind[x] for x in y_true])
+
+    # intersect y_pred, y_true with labels
+    y_pred = y_pred[y_pred < n_labels]
+    y_true = y_true[y_true < n_labels]
+
+    CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
+                                    (y_true, y_pred)),
+                               shape=(n_labels, n_labels),
+                               dtype=np.int).todense())
+    return CM
 
     if n_labels >= 15:
         CM = np.zeros((n_labels, n_labels), dtype=np.long)
@@ -913,7 +927,7 @@ def r2_score(y_true, y_pred):
     y_true, y_pred = check_arrays(y_true, y_pred)
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
-                " sample.")
+                         " sample.")
     numerator = ((y_true - y_pred) ** 2).sum()
     denominator = ((y_true - y_true.mean()) ** 2).sum()
     if denominator == 0.0:
