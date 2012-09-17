@@ -798,7 +798,7 @@ class LarsCV(Lars):
 
     See also
     --------
-    lars_path, LassoLARS, LassoLarsCV
+    lars_path, LassoLars, LassoLarsCV
     """
 
     method = 'lar'
