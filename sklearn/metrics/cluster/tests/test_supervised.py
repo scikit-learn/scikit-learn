@@ -181,7 +181,7 @@ def test_exactly_zero_info_score():
 
 
 def test_v_measure_and_mi():
-    """Check relation between v_measure, entropy and and mi's relation"""
+    """Check relation between v_measure, entropy and and mi"""
     for i in np.logspace(1, 4, 4):
         labels_a, labels_b = np.random.random_integers(0, 10, i),\
             np.random.random_integers(0, 10, i)
