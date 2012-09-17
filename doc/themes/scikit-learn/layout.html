@@ -212,12 +212,12 @@ $(function () {
                         .click(function(event){
                                 if (this == event.target) {
                                         $(this).css('list-style-image',
-                                                   (!$(this).children('ul').is(':hidden')) ? 'url(./static/plusBox.png)' : 'url(./static/minBox.png)');
+                                                   (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
                                                    $(this).children('ul').toggle('slow');
                                 }
                                 return false;
                         })
-                        .css({cursor:'pointer', 'list-style-image':'url(./static/plusBox.png)'})
+                        .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                         .children('ul').hide();
                 $('ul li ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'none'});
 });
