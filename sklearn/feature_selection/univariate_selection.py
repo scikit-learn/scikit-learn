@@ -137,18 +137,18 @@ def chi2(X, y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features_in]
+    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
         Sample vectors.
 
-    y : array-like, shape = n_samples
+    y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
     Returns
     -------
-    chi2 : array, shape = [n_features,]
-        chi2 statistics of each feature
-    pval : array, shape = [n_features,]
-        p-values of each feature
+    chi2 : array, shape = (n_features,)
+        chi2 statistics of each feature.
+    pval : array, shape = (n_features,)
+        p-values of each feature.
 
     Notes
     -----
@@ -185,20 +185,20 @@ def f_regression(X, y, center=True):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}  shape = [n_samples, n_features]
-        The set of regressors that will tested sequentially
-    y : array of shape(n_samples)
+    X : {array-like, sparse matrix}  shape = (n_samples, n_features)
+        The set of regressors that will tested sequentially.
+    y : array of shape(n_samples).
         The data matrix
 
     center : True, bool,
-        If true, X and y will be centered
+        If true, X and y will be centered.
 
     Returns
     -------
-    F : array, shape=[m,]
-        The set of F values
-    pval : array, shape=[m,]
-        The set of p-values
+    F : array, shape=(n_features,)
+        F values of features.
+    pval : array, shape=(n_features,)
+        p-values of F-scores.
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
@@ -231,10 +231,10 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """ Initialize the univariate feature selection.
 
         Parameters
-        ===========
-        score_func: callable
+        ----------
+        score_func : callable
             Function taking two arrays X and y, and returning 2 arrays:
-            both scores and pvalues
+            both scores and pvalues.
         """
         if not callable(score_func):
             raise TypeError(
@@ -308,16 +308,24 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
 ######################################################################
 
 class SelectPercentile(_AbstractUnivariateFilter):
-    """Filter: Select the best percentile of the p_values
+    """Filter: Select the best percentile of the p-values.
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        both scores and pvalues.
 
-    percentile: int, optional, default=10
-        Percent of features to keep
+    percentile : int, optional, default=10
+        Percent of features to keep.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
 
     Notes
     -----
@@ -356,12 +364,20 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
-    k: int, optional, default=10
+    k : int, optional, default=10
         Number of top features to select.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
 
     Notes
     -----
@@ -396,12 +412,20 @@ class SelectFpr(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        both scores and pvalues.
 
-    alpha: float, optional
-        The highest p-value for features to be kept
+    alpha : float, optional
+        The highest p-value for features to be kept.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -421,13 +445,21 @@ class SelectFdr(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning 2 arrays:
         both scores and pvalues
 
-    alpha: float, optional
-        The highest uncorrected p-value for features to keep
+    alpha : float, optional
+        The highest uncorrected p-value for features to keep.
 
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -446,13 +478,20 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        both scores and pvalues.
 
-    alpha: float, optional
-        The highest uncorrected p-value for features to keep
+    alpha : float, optional
+        The highest uncorrected p-value for features to keep.
 
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -473,15 +512,23 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        both scores and pvalues.
 
-    mode: {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
-        Feature selection mode
+    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
+        Feature selection mode.
 
-    param: float or int depending on the feature selection mode
-        Parameter of the corresponding mode
+    param : float or int depending on the feature selection mode
+        Parameter of the corresponding mode.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     _selection_modes = {'percentile':   SelectPercentile,
