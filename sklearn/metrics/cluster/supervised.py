@@ -19,6 +19,8 @@ from ...utils.fixes import unique
 
 # the exact version if faster for k == 2: use it by default globally in
 # this module instead of the float approximate variant
+
+
 def comb2(n):
     return comb(n, 2, exact=1)
 
@@ -234,13 +236,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
     if len(labels_true) == 0:
-        return 1.0,1.0,1.0
+        return 1.0, 1.0, 1.0
 
     entropy_C = entropy(labels_true)
     entropy_K = entropy(labels_pred)
 
     MI = mutual_info_score(labels_true, labels_pred)
-    
+
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
     completeness = MI / (entropy_K) if entropy_K else 1.0
 
