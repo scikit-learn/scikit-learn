@@ -141,6 +141,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     that it is in the given range on the training set, i.e. between
     zero and one.
 
+    The standardization is given by::
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std / (max - min) + min
+    where min, max = feature_range.
+
     This standardization is often used as an alternative to zero mean,
     unit variance scaling.
     It is in particular useful for sparse positive data, as it retains the
@@ -159,10 +164,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     min_ : ndarray, shape (n_features,)
-        Per feature minimum of the training data.
+        Per feature adjustment for minimum.
 
     scale_ : ndarray, shape (n_features,)
-        Per feature range of the training data, i.e. max - min.
+        Per feature relative scaling of the data.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -170,35 +175,25 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
                              " than maximum. Got %s." % str(feature_range))
-        if sp.issparse(X):
-            self.min_ = sp.min(X, axis=1)
-            self.scale = sp.max(X, axis=1) - self.min_
-        else:
-            self.min_ = np.min(X, axis=1)
-            self.scale_ = np.max(X, axis=1) - self.min_
+        min_ = np.min(X, axis=0)
+        scale_ = np.max(X, axis=0) - min_
+        self.scale_ = (feature_range[1] - feature_range[0]) / scale_
+        self.min_ = feature_range[0] - min_ / scale_
         return self
 
     def transform(self, X):
-        if self.copy:
-            X = (X - self.min_[:, np.newaxis]) / self.scale_[:, np.newaxis]
-        else:
-            X -= self.min_
-            X /= self.scale_
-        feature_min, feature_max = self.feature_range
-        if feature_min != 0:
-            X += feature_min
-        # denominator is X.max after adding min
-        max_scale = feature_max / (feature_min + 1.)
-        if max_scale != 1:
-            X *= max_scale
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X *= self.scale_
+        X += self.min_
         return X
 
 
-class UnitVarianceScaler(BaseEstimator, TransformerMixin):
+class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -351,9 +346,9 @@ class UnitVarianceScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-class Scaler(UnitVarianceScaler):
+class Scaler(StandardScaler):
     def __init__(self, copy=True, with_mean=True, with_std=True):
-        warnings.warn("Scaler was renamed to UnitVarianceScaler. The old name "
+        warnings.warn("Scaler was renamed to StandardScaler. The old name "
                 " will be removed in 0.15.", DeprecationWarning)
         super(Scaler, self).__init__(copy, with_mean, with_std)
 
