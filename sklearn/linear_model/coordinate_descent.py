@@ -128,7 +128,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
 
     def fit(self, X, y, Xy=None, coef_init=None):
-        """Fit Elastic Net model with coordinate descent
+        """Fit model with coordinate descent
 
         Parameters
         -----------
