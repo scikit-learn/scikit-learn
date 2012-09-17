@@ -51,7 +51,7 @@ if __name__ == '__main__':
     boss = Boss(verbose=10000)
     boss.yell()
 
-    from sklearn.progress_log import setup_logger
+    from sklearn.progress_logger import setup_logger
     import logging
     setup_logger('__main__', level=logging.DEBUG, display_name=True,
               time_stamp=True)
