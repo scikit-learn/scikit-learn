@@ -149,7 +149,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
                 ranks = np.argsort(safe_sqr(estimator.coef_))
 
             # for sparse case ranks is matrix
-            ranks = np.asarray(ranks).ravel()
+            ranks = np.ravel(ranks)
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
@@ -327,6 +327,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             Target values (integers for classification, real numbers for
             regression).
         """
+        X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                 step=self.step, estimator_params=self.estimator_params,
