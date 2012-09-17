@@ -19,6 +19,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.sparsefuncs import mean_variance_axis0
+from ..progress_logger import get_logger
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
@@ -229,6 +230,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     """
     random_state = check_random_state(random_state)
+    logger = get_logger(verbose)
 
     if not k is None:
         n_clusters = k
@@ -267,7 +269,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         for it in range(n_init):
             # run a k-means once
             labels, inertia, centers = _kmeans_single(
-                X, n_clusters, max_iter=max_iter, init=init, verbose=verbose,
+                X, n_clusters, max_iter=max_iter, init=init, verbose=logger,
                 precompute_distances=precompute_distances, tol=tol,
                 x_squared_norms=x_squared_norms, random_state=random_state)
             # determine if these results are the best so far
@@ -280,7 +282,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
             delayed(_kmeans_single)(X, n_clusters, max_iter=max_iter,
-                init=init, verbose=verbose, tol=tol,
+                init=init, verbose=logger, tol=tol,
                 precompute_distances=precompute_distances,
                 x_squared_norms=x_squared_norms,
                                     # Change seed to ensure variety
@@ -361,14 +363,14 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
         the closest centroid for all observations in the training set).
     """
     random_state = check_random_state(random_state)
+    logger = get_logger(verbosity=verbose)
     if x_squared_norms is None:
         x_squared_norms = _squared_norms(X)
     best_labels, best_inertia, best_centers = None, None, None
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
-    if verbose:
-        print 'Initialization complete'
+    logger.progress('Initialization complete')
 
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
@@ -386,8 +388,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
         # computation of the means is also called the M-step of EM
         centers = _centers(X, labels, n_clusters, distances)
 
-        if verbose:
-            print 'Iteration %i, inertia %s' % (i, inertia)
+        logger.progress('Iteration %i, inertia %s', msg_vars=(i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -395,8 +396,8 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
             best_inertia = inertia
 
         if np.sum((centers_old - centers) ** 2) < tol:
-            if verbose:
-                print 'Converged to similar centers at iteration', i
+            logger.progress('Converged to similar centers at iteration %i',
+                            msg_vars=(i, ))
             break
     return best_labels, best_inertia, best_centers
 
@@ -751,7 +752,7 @@ class KMeans(BaseEstimator, ClusterMixin):
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, n_clusters=n_clusters, init=self.init, n_init=self.n_init,
-            max_iter=self.max_iter, verbose=self.verbose,
+            max_iter=self.max_iter, verbose=self._get_logger(),
             precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
             n_jobs=self.n_jobs)
@@ -899,6 +900,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
                             n_samples, centers_squared_diff, batch_inertia,
                             context, verbose=0):
     """Helper function to encapsulte the early stopping logic"""
+    logger = get_logger(verbosity=verbose)
     # Normalize inertia to be able to compare values when
     # batch_size changes
     batch_inertia /= model.batch_size
@@ -920,20 +922,18 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
         ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
 
     # Log progress to be able to monitor convergence
-    if verbose:
-        progress_msg = (
-            'Minibatch iteration %d/%d:'
-            'mean batch inertia: %f, ewa inertia: %f ' % (
+    logger.progress(
+            'iteration %d/%d: batch inertia: %.3f, ewa inertia: %.3f',
+            msg_vars=(
                 iteration_idx + 1, n_iterations, batch_inertia,
-                ewa_inertia))
-        print progress_msg
+                ewa_inertia),
+            )
 
     # Early stopping based on absolute tolerance on squared change of
     # centers postion (using EWA smoothing)
     if tol > 0.0 and ewa_diff < tol:
-        if verbose:
-            print 'Converged (small centers change) at iteration %d/%d' % (
-                iteration_idx + 1, n_iterations)
+        logger.progress('Converged (small centers change) at iteration %d/%d',
+                        msg_vars=(iteration_idx + 1, n_iterations))
         return True
 
     # Early stopping heuristic due to lack of improvement on smoothed inertia
@@ -946,11 +946,10 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
         no_improvement += 1
 
     if (model.max_no_improvement is not None
-        and no_improvement >= model.max_no_improvement):
-        if verbose:
-            print ('Converged (lack of improvement in inertia)'
-                   ' at iteration %d/%d' % (
-                       iteration_idx + 1, n_iterations))
+                and no_improvement >= model.max_no_improvement):
+        logger.progress('Converged (no improvement in inertia)'
+                   ' at iteration %d/%d',
+                   msg_vars=(iteration_idx + 1, n_iterations))
         return True
 
     # update the convergence context to maintain state across sucessive calls:
@@ -1068,6 +1067,7 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         self.random_state = check_random_state(self.random_state)
+        logger = self._get_logger()
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
@@ -1112,9 +1112,8 @@ class MiniBatchKMeans(KMeans):
         # perform several inits with random sub-sets
         best_inertia = None
         for init_idx in range(self.n_init):
-            if self.verbose:
-                print "Init %d/%d with method: %s" % (
-                    init_idx + 1, self.n_init, self.init)
+            logger.progress("Init %d/%d with method: %s",
+                            msg_vars=(init_idx + 1, self.n_init, self.init))
             counts = np.zeros(self.n_clusters, dtype=np.int32)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1138,9 +1137,8 @@ class MiniBatchKMeans(KMeans):
             # the common validation set
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)
-            if self.verbose:
-                print "Inertia for init %d/%d: %f" % (
-                    init_idx + 1, self.n_init, inertia)
+            logger.progress("Inertia for init %d/%d: %f",
+                        msg_vars=(init_idx + 1, self.n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts
@@ -1167,12 +1165,12 @@ class MiniBatchKMeans(KMeans):
             if _mini_batch_convergence(
                 self, iteration_idx, n_iterations, tol, n_samples,
                 centers_squared_diff, batch_inertia, convergence_context,
-                verbose=self.verbose):
+                verbose=logger):
                 break
 
         if self.compute_labels:
-            if self.verbose:
-                print 'Computing label assignements and total inertia'
+            logger.progress(
+                        'Computing label assignements and total inertia')
             self.labels_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
 

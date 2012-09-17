@@ -8,6 +8,7 @@ import logging
 # To make users' life easier, import useful symbols
 from logging import DEBUG, INFO, ERROR, WARNING, WARN, NOTSET
 
+# XXX: timer, for use e.g. in kmeans?
 def get_logger(verbosity=0, name=None, caller_name=None):
     if isinstance(verbosity, ProgressLogger):
         # Should we clone and set the caller_name?
