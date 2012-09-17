@@ -178,7 +178,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         return self
 
     def transform(self, T):
-        """Transform new data by linear interpolation along
+        """Transform new data by linear interpolation
 
         Parameters
         ----------
