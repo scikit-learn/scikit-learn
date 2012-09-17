@@ -176,10 +176,3 @@ def test_exactly_zero_info_score():
         assert_equal(v_measure_score(labels_a,labels_b),0.0)
         assert_equal(adjusted_mutual_info_score(labels_a,labels_b),0.0)
         assert_equal(normalized_mutual_info_score(labels_a,labels_b),0.0)
-    
-def test_nmi_equal_v_measure():
-    """Check the nmi and v_measure are equal"""
-    for i in np.logspace(1, 4, 4):
-        labels_a, labels_b = np.random.random_integers(0, int(i/5)+1, i), np.arange(i, dtype=np.int)
-        assert_equal(normalized_mutual_info_score(labels_a,labels_b),v_measure_score(labels_a,labels_b))
-    
