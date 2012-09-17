@@ -180,7 +180,7 @@ def test_exactly_zero_info_score():
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
 
 
-def test_v_measure_and_mi(seed = 36):
+def test_v_measure_and_mi(seed=36):
     """Check relation between v_measure, entropy and and mi"""
     for i in np.logspace(1, 4, 4):
         random_state = np.random.RandomState(seed)
