@@ -386,7 +386,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         else:
             random_state = self.random_state
 
-        if init == 'nndsvdar':
+        if init == 'nndsvd':
             W, H = _initialize_nmf(X, self.n_components)
         elif init == 'nndsvda':
             W, H = _initialize_nmf(X, self.n_components, variant='a')
@@ -404,7 +404,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         else:
             raise ValueError(
                 'Invalid init parameter: got %r instead of one of %r' %
-                (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random')))
+                (init, (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random')))
         return W, H
 
     def _update_W(self, X, H, W, tolW):
