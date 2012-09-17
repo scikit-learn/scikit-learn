@@ -245,11 +245,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     n_C = [float(np.sum(labels_true == c)) for c in classes]
     n_K = [float(np.sum(labels_pred == k)) for k in clusters]
 
-    for i in xrange(len(classes)):
-        entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
+    # for i in xrange(len(classes)):
+    #     entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
 
-    for j in xrange(len(clusters)):
-        entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
+    # for j in xrange(len(clusters)):
+    #     entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
+    entropy_C = entropy(labels_true)
+    entropy_K = entropy(labels_pred)
 
     for i, c in enumerate(classes):
         for j, k in enumerate(clusters):
@@ -260,6 +262,23 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
                 # turn label assignments into contribution to entropies
                 entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[j])
                 entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[i])
+    con = np.matrix(contingency_matrix(labels_true, labels_pred), dtype=np.float)
+
+    print con
+
+    a = con / con.sum(axis=0)
+    b = con / con.sum(axis=1)
+    print a
+    print b
+    a = a[a!=0.0]
+    b = b[b!=0.0]
+    print a
+    print b
+    print np.vdot(a, np.log(a)) / n_samples
+    print np.vdot(b, np.log(b)) / n_samples
+
+    print entropy_C_given_K
+    print entropy_K_given_C
 
     homogeneity = 1.0 - entropy_C_given_K / entropy_C if entropy_C else 1.0
     completeness = 1.0 - entropy_K_given_C / entropy_K if entropy_K else 1.0
@@ -776,6 +795,8 @@ def expected_mutual_information(contingency, n_samples):
 
 def entropy(labels):
     """Calculates the entropy for a labeling."""
+    if len(labels) == 0:
+        return 1.0
     label_idx = unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
