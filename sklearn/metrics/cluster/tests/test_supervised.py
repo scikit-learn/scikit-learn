@@ -180,11 +180,12 @@ def test_exactly_zero_info_score():
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
 
 
-def test_v_measure_and_mi():
+def test_v_measure_and_mi(seed = 36):
     """Check relation between v_measure, entropy and and mi"""
     for i in np.logspace(1, 4, 4):
-        labels_a, labels_b = np.random.random_integers(0, 10, i),\
-            np.random.random_integers(0, 10, i)
+        random_state = np.random.RandomState(seed)
+        labels_a, labels_b = random_state.random_integers(0, 10, i),\
+            random_state.random_integers(0, 10, i)
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
