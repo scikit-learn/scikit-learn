@@ -12,6 +12,7 @@ from math import log
 from scipy.misc import comb
 from scipy.special import gammaln
 from scipy.sparse import coo_matrix
+from ..metrics import confusion_matrix
 
 import numpy as np
 
@@ -71,6 +72,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
     clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
+    # using coo_matrix to accelerate calculation of contingency matrix
+    # it can accelerate 2d-histogram like construction
     contingency = np.asarray(coo_matrix((np.ones(class_idx.shape[0]),
                                          (class_idx, cluster_idx)),
                                         shape=(n_classes, n_clusters),
@@ -533,10 +536,13 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     pj = np.sum(contingency, axis=0)
     outer = np.outer(pi, pj)
     nnz = contingency != 0.0
-    mi = ((contingency[nnz] / contingency_sum) *
-          (np.log(contingency[nnz]) - log(contingency_sum))
-          + (contingency[nnz] / contingency_sum) *
-          (-np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())))
+    # normalized contingency
+    contingency_nm = contingency[nnz]
+    log_contingency_nm = np.log(contingency_nm)
+    contingency_nm /= contingency_sum
+    log_outer = -np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())
+    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum))
+          + contingency_nm * log_outer)
     return mi.sum()
 
 
