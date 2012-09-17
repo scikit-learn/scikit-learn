@@ -16,7 +16,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger as log_fmt
-from .progress_log import get_logger
+from .progress_logger import get_logger
 from .utils import check_arrays, safe_mask
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']

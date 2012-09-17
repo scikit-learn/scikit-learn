@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .progress_log import get_logger
+from .progress_logger import get_logger
 from .utils import check_arrays, check_random_state
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed

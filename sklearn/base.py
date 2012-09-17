@@ -8,7 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from .metrics import r2_score
-from .progress_log import HasLog
+from .progress_logger import HasLogger
 
 
 ###############################################################################
@@ -150,7 +150,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 ###############################################################################
-class BaseEstimator(HasLog):
+class BaseEstimator(HasLogger):
     """Base class for all estimators in scikit-learn
 
     Notes

@@ -5,7 +5,7 @@ Small example showing recursive logging in an object hierarchy.
 from time import sleep
 import itertools
 
-from sklearn.progress_log import HasLog
+from sklearn.progress_logger import HasLogger
 from sklearn.externals.joblib import Parallel, delayed
 
 FIRST_NAMES = itertools.cycle(['Jane', 'Joe', 'Jack'])
@@ -14,7 +14,7 @@ def do_work(logger, msg):
     logger.progress(msg)
 
 
-class Employee(HasLog):
+class Employee(HasLogger):
 
     def __init__(self, name='Joe Average', verbose=False):
         self.name = name
@@ -29,7 +29,7 @@ class Employee(HasLog):
                 msg_vars=(self.name, chore_msg))
 
 
-class Boss(HasLog):
+class Boss(HasLogger):
 
     def __init__(self, n_employees=3, verbose=False):
         self.verbose = verbose
