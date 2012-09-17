@@ -172,8 +172,8 @@ def test_entropy():
 def test_exactly_zero_info_score():
     """Check numerical stabability when information is exactly zero"""
     for i in np.logspace(1, 4, 4):
-        labels_a, labels_b = np.ones(i, dtype=np.int),
-        np.arange(i, dtype=np.int)
+        labels_a, labels_b = np.ones(i, dtype=np.int),\
+            np.arange(i, dtype=np.int)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
         assert_equal(v_measure_score(labels_a, labels_b), 0.0)
         assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
