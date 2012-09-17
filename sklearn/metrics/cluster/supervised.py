@@ -5,6 +5,7 @@ better.
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
+#          Wei LI <kuantkid@gmail.com>
 # License: BSD Style.
 
 from math import log
@@ -15,7 +16,6 @@ from scipy.sparse import coo_matrix
 import numpy as np
 
 from ...utils.fixes import unique
-
 
 # the exact version if faster for k == 2: use it by default globally in
 # this module instead of the float approximate variant
@@ -232,56 +232,17 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     v_measure_score
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples = labels_true.shape[0]
 
-    entropy_K_given_C = 0.
-    entropy_C_given_K = 0.
-    entropy_C = 0.
-    entropy_K = 0.
+    if len(labels_true) == 0:
+        return 1.0,1.0,1.0
 
-    classes = np.unique(labels_true)
-    clusters = np.unique(labels_pred)
-
-    n_C = [float(np.sum(labels_true == c)) for c in classes]
-    n_K = [float(np.sum(labels_pred == k)) for k in clusters]
-
-    # for i in xrange(len(classes)):
-    #     entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
-
-    # for j in xrange(len(clusters)):
-    #     entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
     entropy_C = entropy(labels_true)
     entropy_K = entropy(labels_pred)
 
-    for i, c in enumerate(classes):
-        for j, k in enumerate(clusters):
-            # count samples at the intersection of class c and cluster k
-            n_CK = float(np.sum((labels_true == c) * (labels_pred == k)))
-
-            if n_CK != 0.0:
-                # turn label assignments into contribution to entropies
-                entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[j])
-                entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[i])
-    con = np.matrix(contingency_matrix(labels_true, labels_pred), dtype=np.float)
-
-    print con
-
-    a = con / con.sum(axis=0)
-    b = con / con.sum(axis=1)
-    print a
-    print b
-    a = a[a!=0.0]
-    b = b[b!=0.0]
-    print a
-    print b
-    print np.vdot(a, np.log(a)) / n_samples
-    print np.vdot(b, np.log(b)) / n_samples
-
-    print entropy_C_given_K
-    print entropy_K_given_C
-
-    homogeneity = 1.0 - entropy_C_given_K / entropy_C if entropy_C else 1.0
-    completeness = 1.0 - entropy_K_given_C / entropy_K if entropy_K else 1.0
+    MI = mutual_info_score(labels_true, labels_pred)
+    
+    homogeneity = MI / (entropy_C) if entropy_C else 1.0
+    completeness = MI / (entropy_K) if entropy_K else 1.0
 
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
@@ -674,7 +635,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
-    information) and 1 (perfect correlation).
+    information) and 1 (perfect correlation). In this function, mutual
+    information is normalized by sqrt(H(labels_true) * H(labels_pred))
 
     This measure is not adjusted for chance. Therefore
     ``adjusted_mustual_info_score`` might be preferred.
