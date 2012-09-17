@@ -6,8 +6,13 @@ from time import sleep
 import itertools
 
 from sklearn.progress_log import HasLog
+from sklearn.externals.joblib import Parallel, delayed
 
 FIRST_NAMES = itertools.cycle(['Jane', 'Joe', 'Jack'])
+
+def do_work(logger, msg):
+    logger.progress(msg)
+
 
 class Employee(HasLog):
 
@@ -18,6 +23,8 @@ class Employee(HasLog):
     def work(self, chore_msg):
         log = self._get_logger()
         sleep(.2)
+        Parallel(n_jobs=-1)(delayed(do_work)(log, '.')
+                for _ in range(10))
         log.progress('%s says "Done my chores %s"',
                 msg_vars=(self.name, chore_msg))
 
