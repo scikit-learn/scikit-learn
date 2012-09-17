@@ -382,11 +382,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    @property
-    @deprecated("to be removed in v0.13; use ``classes_`` instead.")
-    def classes(self):
-        return self.classes_
-
     def _set_class_weight(self, class_weight, classes, y):
         """Estimate class weights for unbalanced datasets."""
         if class_weight is None or len(class_weight) == 0:
@@ -559,7 +554,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self
 
     def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score)
+        """Predict signed 'distance' to the hyperplane (aka confidence score).
 
         Parameters
         ----------
@@ -578,7 +573,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             return scores
 
     def predict(self, X):
-        """Predict using the linear model
+        """Predict using the linear model.
 
         Parameters
         ----------
@@ -597,10 +592,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         return self.classes_[np.ravel(indices)]
 
     def predict_proba(self, X):
-        """Predict class membership probability
+        """Probability estimates.
 
-
-        Prediction probabilities are only supported for binary classification.
+        Probability estimates are only supported for binary classification.
 
         Parameters
         ----------
@@ -608,8 +602,9 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else raises Exception
-            Contains the membership probabilities of the positive class.
+        array, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in self.classes_.
 
         References
         ----------
@@ -622,20 +617,37 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
             raise NotImplementedError("predict_(log_)proba only supported"
                                       " for binary classification")
 
-        proba = np.ones((len(X), 2), dtype=np.float64)
+        scores = self.decision_function(X)
+        proba = np.ones((scores.shape[0], 2), dtype=np.float64)
         if self.loss == "log":
-            proba[:, 1] = 1.0 / (1.0 + np.exp(-self.decision_function(X)))
+            proba[:, 1] = 1. / (1. + np.exp(-scores))
+
         elif self.loss == "modified_huber":
-            proba[:, 1] = np.minimum(1, np.maximum(-1,
-                                                   self.decision_function(X)))
-            proba[:, 1] += 1
-            proba[:, 1] /= 2
+            proba[:, 1] = (np.minimum(1, np.maximum(-1, scores)) + 1) / 2.0
+
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
                                       "(%s given)" % self.loss)
         proba[:, 0] -= proba[:, 1]
         return proba
+
+    def predict_log_proba(self, X):
+        """Log of probability estimates.
+
+        Log probability estimates are only supported for binary classification.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in self.classes_.
+        """
+        return np.log(self.predict_proba(X))
 
     def _fit_binary(self, X, y, sample_weight, n_iter):
         """Fit a binary classifier on X and y. """

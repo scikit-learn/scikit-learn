@@ -5,7 +5,6 @@
 # License: BSD, (C) INRIA 2011
 
 import numpy as np
-import warnings
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
@@ -181,7 +180,7 @@ def locally_linear_embedding(
     X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
     tol=1e-6, max_iter=100, method='standard',
     hessian_tol=1E-4, modified_tol=1E-12,
-    random_state=None, out_dim=None):
+    random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Parameters
@@ -274,12 +273,6 @@ def locally_linear_embedding(
 
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
-
-    if out_dim:
-        warnings.warn("Parameter ``out_dim`` was renamed to ``n_components`` "
-                      "and is now deprecated. This will be removed in 0.13.",
-                      DeprecationWarning, stacklevel=2)
-        n_components = out_dim
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
     nbrs.fit(X)
@@ -598,14 +591,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
             eigen_solver='auto', tol=1E-6, max_iter=100, method='standard',
             hessian_tol=1E-4, modified_tol=1E-12, neighbors_algorithm='auto',
-            random_state=None, out_dim=None):
-
-        if out_dim:
-            warnings.warn("Parameter ``out_dim`` was renamed to "
-                          "``n_components`` and is now deprecated. This will "
-                          "be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-        self.out_dim = out_dim
+            random_state=None):
 
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -622,13 +608,6 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(self.n_neighbors,
                 algorithm=self.neighbors_algorithm)
-        if self.out_dim:
-            warnings.warn("Parameter ``out_dim`` was renamed to "
-                          "``n_components`` and is now deprecated. This will "
-                          "be removed in 0.13.", DeprecationWarning,
-                          stacklevel=3)
-            self.n_components = self.out_dim
-            self.out_dim = None
 
         self.random_state = check_random_state(self.random_state)
         X, = check_arrays(X, sparse_format='dense')

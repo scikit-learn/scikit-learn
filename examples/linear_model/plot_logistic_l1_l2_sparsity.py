@@ -53,11 +53,11 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
     sparsity_l1_LR = np.mean(coef_l1_LR == 0) * 100
     sparsity_l2_LR = np.mean(coef_l2_LR == 0) * 100
 
-    print "C=%f" % C
-    print "Sparsity with L1 penalty: %f" % sparsity_l1_LR
-    print "score with L1 penalty: %f" % clf_l1_LR.score(X, y)
-    print "Sparsity with L2 penalty: %f" % sparsity_l2_LR
-    print "score with L2 penalty: %f" % clf_l2_LR.score(X, y)
+    print "C=%d" % C
+    print "Sparsity with L1 penalty: %.2f%%" % sparsity_l1_LR
+    print "score with L1 penalty: %.4f" % clf_l1_LR.score(X, y)
+    print "Sparsity with L2 penalty: %.2f%%" % sparsity_l2_LR
+    print "score with L2 penalty: %.4f" % clf_l2_LR.score(X, y)
 
     l1_plot = pl.subplot(3, 2, 2 * i + 1)
     l2_plot = pl.subplot(3, 2, 2 * (i + 1))

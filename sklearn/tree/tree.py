@@ -383,7 +383,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         `max_features=log2(n_features)`. If None, then
         `max_features=n_features`.
 
-    compute_importances : boolean, optional (default=True)
+    compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored into the
         ``feature_importances_`` attribute when calling fit.
 

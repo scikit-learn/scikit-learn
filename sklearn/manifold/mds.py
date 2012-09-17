@@ -14,77 +14,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
-
-
-def pool_adjacent_violators(distances, similarities, max_iter=300,
-                            verbose=0):
-    """
-    Pool adjancent violators
-
-    Computes an isotonic regression of distances on similarities.
-
-    Parameters
-    ----------
-    distances: ndarray, shape (n, 1)
-        array to fit
-
-    similarities: ndarray, shape (n, 1)
-        array on which to fit
-
-    max_iter: int, optional, default:300
-        Set the maximum number of iteration
-
-    verbose: int, optional, default: 0
-        set the level of verbosity
-
-    Returns
-    -------
-    distances: ndarray, shape (n, 1)
-
-    Notes
-    -----
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
-    """
-    # First approach for ties: ignore them. The multidimensional scaling won't
-    # enforce that points with equal similarity be at equal distance.
-    indxs = np.lexsort((distances, similarities))
-
-    new_blocks = range(len(indxs))
-
-    block = []
-    sort = True
-    for it in range(max_iter):
-        sort = False
-        blocks = new_blocks[:]
-        new_blocks = []
-        block = []
-        dis = distances[indxs[blocks[:-1]]] <= distances[indxs[blocks[1:]]] + \
-             np.finfo(np.float).resolution
-        for i, element in enumerate(dis):
-            if not element:
-                sort = True
-                block.append(blocks[i])
-            elif element and block:
-                tmp = np.arange(block[0], blocks[i + 1])
-                distances[indxs[tmp]] = distances[indxs[tmp]].mean()
-                new_blocks.append(block[0])
-                block = []
-            else:
-                new_blocks.append(blocks[i])
-        # The last element
-        if block:
-            tmp = np.arange(block[0], len(similarities))
-            distances[indxs[tmp]] = distances[indxs[tmp]].mean()
-            new_blocks.append(block[0])
-        else:
-            new_blocks.append(len(similarities) - 1)
-        if not sort:
-            if verbose:
-                print "Breaking at iteration %d" % it
-            break
-
-    return distances
+from ..linear_model.isotonic_regression_ import isotonic_regression
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,
@@ -136,7 +66,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     random_state = check_random_state(random_state)
 
     if similarities.shape[0] != similarities.shape[1]:
-        raise ValueError("similarities must be a square array (shape=%d)" % \
+        raise ValueError("similarities must be a square array (shape=%d)" %
                             n_samples)
     res = 100 * np.finfo(np.float).resolution
     if np.any((similarities - similarities.T) > res):
@@ -152,7 +82,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         # overrides the parameter p
         n_components = init.shape[1]
         if n_samples != init.shape[0]:
-            raise ValueError("init matrix should be of shape (%d, %d)" % \
+            raise ValueError("init matrix should be of shape (%d, %d)" %
                                  (n_samples, n_components))
         X = init
 
@@ -169,16 +99,18 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             dis_flat_w = dis_flat[sim_flat != 0]
 
             # Compute the disparities using a monotonic regression
-            disparities_flat = pool_adjacent_violators(dis_flat_w,
-                                                       sim_flat_w)
+            indxs = np.lexsort((dis_flat_w, sim_flat_w))
+            rindxs = np.argsort(indxs)
+            disparities_flat = isotonic_regression(dis_flat_w[indxs])
+            disparities_flat = disparities_flat[rindxs]
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) / \
+            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
                            (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() - \
+        stress = ((dis.ravel() -
                     disparities.ravel()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
