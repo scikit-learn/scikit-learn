@@ -691,7 +691,7 @@ sparser.
 Isotonic regression
 ====================
 
-The :class:`Isotonic Regression` fits a non-decreasing function to the data.
+The :class:`IsotonicRegression` fits a non-decreasing function to the data.
 It solves the following problem:
 
   minimize :math:`\sum_i w_i (y_i - \hat{y}_i)^2`
