@@ -11,9 +11,8 @@ from abc import ABCMeta, abstractmethod
 import warnings
 import numpy as np
 
-from .base import LinearModel
+from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
-from ..base import ClassifierMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
@@ -236,7 +235,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                 normalize=normalize, copy_X=copy_X, tol=tol)
 
 
-class RidgeClassifier(_BaseRidge, ClassifierMixin):
+class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
     Parameters
@@ -265,7 +264,6 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
         Weights associated with classes in the form
         {class_label : weight}. If not given, all classes are
         supposed to have weight one.
-
 
     Attributes
     ----------
@@ -318,25 +316,15 @@ class RidgeClassifier(_BaseRidge, ClassifierMixin):
             class_weight = self.class_weight
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self.label_binarizer.fit_transform(y)
+        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
+        Y = self._label_binarizer.fit_transform(y)
         _BaseRidge.fit(self, X, Y, solver=solver,
                        sample_weight=sample_weight_classes)
         return self
 
-    def predict(self, X):
-        """Predict target values according to the fitted model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        y : array, shape = [n_samples]
-        """
-        Y = self.decision_function(X)
-        return self.label_binarizer.inverse_transform(Y)
+    @property
+    def classes_(self):
+        return self._label_binarizer.classes_
 
 
 class _RidgeGCV(LinearModel):
@@ -699,7 +687,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     pass
 
 
-class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
+class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
@@ -815,22 +803,12 @@ class RidgeClassifierCV(_BaseRidgeCV, ClassifierMixin):
             self.class_weight_ = {}
 
         sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
-        self.label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self.label_binarizer.fit_transform(y)
+        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
+        Y = self._label_binarizer.fit_transform(y)
         _BaseRidgeCV.fit(self, X, Y,
                          sample_weight=sample_weight * sample_weight2)
         return self
 
-    def predict(self, X):
-        """Predict target values according to the fitted model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        y : array, shape = [n_samples]
-        """
-        Y = self.decision_function(X)
-        return self.label_binarizer.inverse_transform(Y)
+    @property
+    def classes_(self):
+        return self._label_binarizer.classes_
