@@ -228,18 +228,23 @@ def discretization(eigen_vec):
     """
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
-    eps=2.2204e-16
+    EPS = np.finfo(float).eps
     
     m = eigen_vec.shape[0]
     
-    #Normalize the eigenvectors
+    #Normalize the eigenvectors to an equal length of a vector of ones.  Reorient
+    #the eigenvectors to point in the negative direction with respect to the first
+    #element.  This may have to do with constraining the eigenvectors to lie in a
+    #specific quadrant to make the discretization search easier.
     norm_ones=np.linalg.norm(np.ones((m,1)))
     for i in range(eigen_vec.shape[1]):
         eigen_vec[:,i]=(eigen_vec[:,i]/np.linalg.norm(eigen_vec[:,i]))*norm_ones
         if eigen_vec[0,i] != 0:
             eigen_vec[:,i] = -1 * eigen_vec[:,i] * np.sign( eigen_vec[0,i] )
     
-    #Normalize the rows of the eigenvectors
+    #Normalize the rows of the eigenvectors.  Samples should lie on the unit 
+    #hypersphere centered at the origin.  This transforms the samples in the 
+    #embedding space to the space of partition matrices.
     n,k = eigen_vec.shape
     vm = np.sqrt((eigen_vec**2).sum(1))[:, np.newaxis]
     eigen_vec = eigen_vec/vm
@@ -281,7 +286,7 @@ def discretization(eigen_vec):
                 break
             
             NcutValue=2.0*(n-S.sum())
-            if((abs(NcutValue-lastObjectiveValue) < eps) or 
+            if((abs(NcutValue-lastObjectiveValue) < EPS) or 
                (nbIterationsDiscretisation > nbIterationsDiscretisationMax)):
                 exitLoop=1
             else:
