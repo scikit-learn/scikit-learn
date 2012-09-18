@@ -527,9 +527,13 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
                         }
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
+        if not callable(score_func):
+            raise TypeError(
+                "The score function should be a callable, %r (type %s) "
+                "was passed." % (score_func, type(score_func)))
         if mode not in self._selection_modes:
             raise ValueError(
-                "The mode passed should be one of %s, %r "
+                "The mode passed should be one of %s, %r, (type %s) "
                 "was passed." % (
                         self._selection_modes.keys(),
                         mode, type(mode)))
