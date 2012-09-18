@@ -228,35 +228,37 @@ def discretization(eigen_vec):
     """
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
+
     EPS = np.finfo(float).eps
-    
     m = eigen_vec.shape[0]
     
-    #Normalize the eigenvectors to an equal length of a vector of ones.  Reorient
-    #the eigenvectors to point in the negative direction with respect to the first
-    #element.  This may have to do with constraining the eigenvectors to lie in a
-    #specific quadrant to make the discretization search easier.
-    norm_ones=np.linalg.norm(np.ones((m,1)))
+    # Normalize the eigenvectors to an equal length of a vector of ones. 
+    # Reorient the eigenvectors to point in the negative direction with respect
+    # to the first element.  This may have to do with constraining the
+    # eigenvectors to lie in a specific quadrant to make the discretization
+    # search easier.
+    norm_ones = np.linalg.norm(np.ones((m,1)))
     for i in range(eigen_vec.shape[1]):
-        eigen_vec[:,i]=(eigen_vec[:,i]/np.linalg.norm(eigen_vec[:,i]))*norm_ones
+        eigen_vec[:,i] = (eigen_vec[:,i] / np.linalg.norm(eigen_vec[:,i])) \
+                * norm_ones
         if eigen_vec[0,i] != 0:
-            eigen_vec[:,i] = -1 * eigen_vec[:,i] * np.sign( eigen_vec[0,i] )
+            eigen_vec[:,i] = -1 * eigen_vec[:,i] * np.sign(eigen_vec[0,i])
     
-    #Normalize the rows of the eigenvectors.  Samples should lie on the unit 
-    #hypersphere centered at the origin.  This transforms the samples in the 
-    #embedding space to the space of partition matrices.
+    # Normalize the rows of the eigenvectors.  Samples should lie on the unit
+    # hypersphere centered at the origin.  This transforms the samples in the
+    # embedding space to the space of partition matrices.
     n,k = eigen_vec.shape
-    vm = np.sqrt((eigen_vec**2).sum(1))[:, np.newaxis]
-    eigen_vec = eigen_vec/vm
+    vm = np.sqrt((eigen_vec ** 2).sum(1))[:, np.newaxis]
+    eigen_vec = eigen_vec / vm
 
-    svd_restarts=0
-    exitLoop=0
+    svd_restarts = 0
+    exitLoop = 0
 
-    # if there is an exception we try to randomize and rerun SVD again
-    # do this 30 times
+    # If there is an exception we try to randomize and rerun SVD again
+    # do this 30 times.
     while (svd_restarts < 30) and (exitLoop==0):
 
-        # initialize algorithm with a random ordering of eigenvectors
+        # Initialize algorithm with a random ordering of eigenvectors
         R = np.zeros((k,k))
         R[:,0] = eigen_vec[np.random.randint(n),:].T
         
@@ -265,9 +267,9 @@ def discretization(eigen_vec):
             c = c + np.abs(eigen_vec.dot(R[:,j-1]))
             R[:,j] = eigen_vec[c.argmin(),:].T
 
-        lastObjectiveValue=0.0
-        nbIterationsDiscretisation=0
-        nbIterationsDiscretisationMax=20
+        lastObjectiveValue = 0.0
+        nbIterationsDiscretisation = 0
+        nbIterationsDiscretisationMax = 20
 
         while exitLoop == 0:
             nbIterationsDiscretisation = nbIterationsDiscretisation + 1
@@ -275,9 +277,11 @@ def discretization(eigen_vec):
             tDiscrete = eigen_vec.dot(R)
             
             j = np.reshape(np.asarray(tDiscrete.argmax(1)),n)
-            eigenvec_discrete=csc_matrix((np.ones(len(j)),(range(0,n), np.array(j))),shape=(n,k))
+            eigenvec_discrete = csc_matrix(
+                    (np.ones(len(j)),(range(0,n), np.array(j))),
+                    shape=(n,k))
             
-            tSVD=eigenvec_discrete.T*eigen_vec
+            tSVD = eigenvec_discrete.T * eigen_vec
 
             try:
                 U,S,Vh = np.linalg.svd(tSVD)
@@ -285,10 +289,10 @@ def discretization(eigen_vec):
                 print "SVD did not converge, randomizing and trying again"
                 break
             
-            NcutValue=2.0*(n-S.sum())
-            if((abs(NcutValue-lastObjectiveValue) < EPS) or 
+            NcutValue = 2.0 * (n - S.sum())
+            if ((abs(NcutValue-lastObjectiveValue) < EPS) or 
                (nbIterationsDiscretisation > nbIterationsDiscretisationMax)):
-                exitLoop=1
+                exitLoop = 1
             else:
                 # otherwise calculate rotation and continue
                 lastObjectiveValue=NcutValue
