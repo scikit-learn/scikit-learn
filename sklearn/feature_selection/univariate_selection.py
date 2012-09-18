@@ -293,7 +293,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
 ######################################################################
 
 class SelectPercentile(_AbstractUnivariateFilter):
-    """Filter: Select the best percentile of the p-values.
+    """Select features according to a percentile of the highest scores.
 
     Parameters
     ----------
@@ -331,24 +331,24 @@ class SelectPercentile(_AbstractUnivariateFilter):
         if percentile > 100:
             raise ValueError("percentile should be between 0 and 100"
                              " (%f given)" % (percentile))
-        # Cater for Nans
+        # Cater for NaNs
         if percentile == 100:
-            return np.ones(len(self.pvalues_), dtype=np.bool)
+            return np.ones(len(self.scores_), dtype=np.bool)
         elif percentile == 0:
-            return np.zeros(len(self.pvalues_), dtype=np.bool)
-        alpha = stats.scoreatpercentile(self.pvalues_, percentile)
+            return np.zeros(len(self.scores_), dtype=np.bool)
+        alpha = stats.scoreatpercentile(self.scores_, 100 - percentile)
         # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(self.pvalues_ <= alpha)[0]
-        # if we selected to many because of equal p-values,
+        inds = np.where(self.scores_ >= alpha)[0]
+        # if we selected too many features because of equal scores,
         # we throw them away now
-        inds = inds[:len(self.pvalues_) * percentile // 100]
-        mask = np.zeros(self.pvalues_.shape, dtype=np.bool)
+        inds = inds[:len(self.scores_) * percentile // 100]
+        mask = np.zeros(self.scores_.shape, dtype=np.bool)
         mask[inds] = True
         return mask
 
 
 class SelectKBest(_AbstractUnivariateFilter):
-    """Filter: Select the k lowest p-values.
+    """Select features according to the k highest scores.
 
     Parameters
     ----------
@@ -369,7 +369,7 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     Notes
     -----
-    Ties between features with equal p-values will be broken in an unspecified
+    Ties between features with equal scores will be broken in an unspecified
     way.
 
     """
@@ -380,15 +380,15 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         k = self.k
-        if k > len(self.pvalues_):
+        if k > len(self.scores_):
             raise ValueError("cannot select %d features among %d"
-                             % (k, len(self.pvalues_)))
+                             % (k, len(self.scores_)))
 
         # XXX This should be refactored; we're getting an array of indices
         # from argsort, which we transform to a mask, which we probably
         # transform back to indices later.
-        mask = np.zeros(self.pvalues_.shape, dtype=bool)
-        mask[np.argsort(self.pvalues_)[:k]] = 1
+        mask = np.zeros(self.scores_.shape, dtype=bool)
+        mask[np.argsort(self.scores_)[-k:]] = 1
         return mask
 
 
