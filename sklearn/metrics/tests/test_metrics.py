@@ -26,6 +26,7 @@ from ..metrics import auc_score
 from ..metrics import average_precision_score
 from ..metrics import zero_one
 from ..metrics import hinge_loss
+from ..metrics import multiclass_log_loss
 
 
 def make_prediction(dataset=None, binary=False):
@@ -403,3 +404,10 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(1.2 / 4,
                  hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0))
+
+def test_multiclass_log_loss():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([[0.5, 0.5], [0.1, 0.9], [0.01, 0.99],
+        [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]])
+    loss = multiclass_log_loss(y_true, y_pred)
+    assert_equal(loss, 1.8817970689982668)
