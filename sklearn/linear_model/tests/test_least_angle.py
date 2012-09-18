@@ -101,6 +101,13 @@ def test_collinearity():
     assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
+    
+    n_samples = 10
+    X = np.random.rand(n_samples, 5)
+    y = np.zeros(n_samples)
+    _, _, coef_path_ = linear_model.lars_path(X, y, Gram='auto', copy_X=False, 
+         copy_Gram=False, alpha_min=0., method='lasso', verbose=0, max_iter=500)
+    assert_array_almost_equal(coef_path_, np.zeros_like(coef_path_))
 
 
 def test_no_path():

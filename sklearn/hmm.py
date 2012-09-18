@@ -382,11 +382,6 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
-    @deprecated("rvs is deprecated in 0.11 will be removed in 0.13:"
-            + " use sample instead")
-    def rvs(self, n=1, random_state=None):
-        return self.sample(n, random_state)
-
     def fit(self, obs, **kwargs):
         """Estimate model parameters.
 

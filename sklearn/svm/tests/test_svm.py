@@ -162,10 +162,7 @@ def test_svr():
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
                 svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=1.0),
-                svm.sparse.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.sparse.SVR(kernel='linear', C=10.)):
+                svm.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
 
@@ -246,9 +243,7 @@ def test_probability():
 
     for clf in (
         svm.SVC(probability=True, C=1.0),
-        svm.NuSVC(probability=True),
-        svm.sparse.SVC(probability=True, C=1.0),
-        svm.sparse.NuSVC(probability=True)):
+        svm.NuSVC(probability=True)):
 
         clf.fit(iris.data, iris.target)
 
@@ -360,7 +355,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
+    for clf in (svm.SVC(), svm.LinearSVC()):
         Xf = np.asfortranarray(X)
         assert_true(Xf.flags['C_CONTIGUOUS'] == False)
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -430,7 +425,7 @@ def test_linearsvc():
     assert_array_equal(clf.predict(T), true_result)
 
     # test also decision function
-    dec = clf.decision_function(T).ravel()
+    dec = clf.decision_function(T)
     res = (dec > 0).astype(np.int) + 1
     assert_array_equal(res, true_result)
 
@@ -458,12 +453,16 @@ def test_linearsvc_crammer_singer():
 def test_linearsvc_iris():
     """
     Test that LinearSVC gives plausible predictions on the iris dataset
+
+    Also, test symbolic class names (classes_).
     """
-    clf = svm.LinearSVC().fit(iris.data, iris.target)
-    assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.8)
+    target = iris.target_names[iris.target]
+    clf = svm.LinearSVC().fit(iris.data, target)
+    assert_equal(set(clf.classes_), set(iris.target_names))
+    assert_greater(np.mean(clf.predict(iris.data) == target), 0.8)
 
     dec = clf.decision_function(iris.data)
-    pred = np.argmax(dec, 1)
+    pred = iris.target_names[np.argmax(dec, 1)]
     assert_array_equal(pred, clf.predict(iris.data))
 
 
@@ -502,35 +501,6 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     assert_array_almost_equal(intercept1, intercept2, decimal=2)
 
 
-def test_liblinear_predict():
-    """
-    Test liblinear predict
-
-    Sanity check, test that predict implemented in python
-    returns the same as the one in libliblinear
-
-    """
-    # multi-class case
-    clf = svm.LinearSVC().fit(iris.data, iris.target)
-    weights = clf.coef_.T
-    bias = clf.intercept_
-    H = np.dot(iris.data, weights) + bias
-    assert_array_equal(clf.predict(iris.data), H.argmax(axis=1))
-
-    # binary-class case
-    X = [[2, 1],
-         [3, 1],
-         [1, 3],
-         [2, 3]]
-    y = [0, 0, 1, 1]
-
-    clf = svm.LinearSVC().fit(X, y)
-    weights = np.ravel(clf.coef_)
-    bias = clf.intercept_
-    H = np.dot(X, weights) + bias
-    assert_array_equal(clf.predict(X), (H > 0).astype(int))
-
-
 def test_liblinear_set_coef():
     # multi-class case
     clf = svm.LinearSVC().fit(iris.data, iris.target)
@@ -563,10 +533,6 @@ def test_immutable_coef_property():
         svm.SVR(kernel='linear').fit(iris.data, iris.target),
         svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
         svm.OneClassSVM(kernel='linear').fit(iris.data),
-        svm.sparse.SVC(kernel='linear').fit(iris.data, iris.target),
-        svm.sparse.NuSVC(kernel='linear').fit(iris.data, iris.target),
-        svm.sparse.SVR(kernel='linear').fit(iris.data, iris.target),
-        svm.sparse.NuSVR(kernel='linear').fit(iris.data, iris.target),
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
@@ -599,15 +565,6 @@ def test_linearsvc_verbose():
 
     # stdout: restore
     os.dup2(stdout, 1)  # restore original stdout
-
-
-def test_linearsvc_deepcopy():
-    rng = check_random_state(0)
-    clf = svm.LinearSVC()
-    clf.fit(rng.rand(10, 2), rng.randint(0, 2, size=10))
-    with warnings.catch_warnings(record=True) as warn_queue:
-        copy.deepcopy(clf).predict(rng.rand(2))
-    assert_equal(len(warn_queue), 1)
 
 
 def test_svc_clone_with_callable_kernel():

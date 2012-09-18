@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - :class:`feature_selection.SelectPercentile` now breaks ties deterministically
+     instead of returning all equally ranked features.
+
 
 .. _changes_0_12:
 

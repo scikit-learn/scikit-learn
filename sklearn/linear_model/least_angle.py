@@ -236,8 +236,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 L_.flat[::n_active + 1] += (2 ** i) * eps
                 least_squares, info = solve_cholesky(L_,
                                     sign_active[:n_active], lower=True)
-                AA = 1. / np.sqrt(np.sum(least_squares
-                                         * sign_active[:n_active]))
+                tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
+                AA = 1. / np.sqrt(tmp)
                 i += 1
         least_squares *= AA
 
@@ -798,7 +798,7 @@ class LarsCV(Lars):
 
     See also
     --------
-    lars_path, LassoLARS, LassoLarsCV
+    lars_path, LassoLars, LassoLarsCV
     """
 
     method = 'lar'

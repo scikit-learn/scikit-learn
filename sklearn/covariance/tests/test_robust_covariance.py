@@ -68,6 +68,15 @@ def launch_mcd_on_dataset(
     assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
+def test_mcd_issue1127():
+    # Check that the code does not break with X.shape = (3, 1)
+    # (i.e. n_support = n_samples)
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(3, 1))
+    mcd = MinCovDet()
+    mcd.fit(X)
+
+
 def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)

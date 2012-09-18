@@ -276,7 +276,7 @@ def _test_ridge_classifiers(filter_):
         clf.fit(filter_(X_iris), y_iris)
         assert_equal(clf.coef_.shape, (n_classes, n_features))
         y_pred = clf.predict(filter_(X_iris))
-        assert_true(np.mean(y_iris == y_pred) >= 0.8)
+        assert_greater(np.mean(y_iris == y_pred), .79)
 
     n_samples = X_iris.shape[0]
     cv = KFold(n_samples, 5)

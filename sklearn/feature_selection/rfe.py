@@ -107,10 +107,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The training input samples.
 
-        y : array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             The target values.
         """
         X, y = check_arrays(X, y, sparse_format="csr")
@@ -149,7 +149,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
                 ranks = np.argsort(safe_sqr(estimator.coef_))
 
             # for sparse case ranks is matrix
-            ranks = np.asarray(ranks).ravel()
+            ranks = np.ravel(ranks)
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
@@ -319,14 +319,15 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the total number of features.
 
-        y : array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             Target values (integers for classification, real numbers for
             regression).
         """
+        X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                 step=self.step, estimator_params=self.estimator_params,

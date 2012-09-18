@@ -1,12 +1,11 @@
 import numpy as np
 
-from ..base import ClassifierMixin
+from .base import LinearClassifierMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..svm.base import BaseLibLinear
-from ..svm.liblinear import csr_predict_prob_wrap, predict_prob_wrap
 
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
+class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -110,23 +109,24 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in self.classes_.
         """
-        X = self._validate_for_predict(X)
-
-        C = 0.0  # C is not useful here
-
-        prob_wrap = (csr_predict_prob_wrap if self._sparse else
-                predict_prob_wrap)
-        probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
-                           self.tol, C, self.class_weight_label_,
-                           self.class_weight_, self.label_, self._get_bias())
-        return probas[:, np.argsort(self.label_)]
+        # 1. / (1. + np.exp(-scores)), computed in-place
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(prob.shape) == 1:
+            return np.vstack([1 - prob, prob]).T
+        else:
+            # OvR, not softmax, like Liblinear's predict_probability
+            prob /= prob.sum(axis=0)
+            return prob
 
     def predict_log_proba(self, X):
-        """Log of Probability estimates.
+        """Log of probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -138,8 +138,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in self.classes_.
         """
         return np.log(self.predict_proba(X))
