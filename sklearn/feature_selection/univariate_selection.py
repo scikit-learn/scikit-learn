@@ -15,8 +15,8 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import array2d, atleast2d_or_csr, deprecated, \
-        check_arrays, safe_asarray, safe_sqr, safe_mask
+from ..utils import (array2d, atleast2d_or_csr, check_arrays, safe_asarray,
+                     safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
 
 ######################################################################
@@ -233,12 +233,12 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         score_func : callable
-            Function taking two arrays X and y, and returning 2 arrays:
-            both scores and pvalues.
+            Function taking two arrays X and y, and returning a pair of arrays
+            (scores, pvalues).
         """
         if not callable(score_func):
             raise TypeError(
-                "The score function should be a callable, '%s' (type %s) "
+                "The score function should be a callable, %r "
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
@@ -246,27 +246,12 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         Evaluate the function
         """
-        scores = self.score_func(X, y)
-        self.scores_ = scores[0]
-        self.pvalues_ = scores[1]
-        if len(np.unique(scores[1])) < len(scores[1]):
+        self.scores_, self.pvalues_ = self.score_func(X, y)
+        if len(np.unique(self.pvalues_)) < len(self.pvalues_):
             warn("Duplicate p-values. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
                  "classification score for a regression task.")
-
         return self
-
-    @property
-    @deprecated('``_scores`` is deprecated and will be removed in '
-                'version 0.13. Please use ``scores_`` instead.')
-    def _scores(self):
-        return self.scores_
-
-    @property
-    @deprecated('``_pvalues`` is deprecated and will be removed in '
-                'version 0.13. Please use ``pvalues_`` instead.')
-    def _pvalues(self):
-        return self.pvalues_
 
     def get_support(self, indices=False):
         """
@@ -313,8 +298,8 @@ class SelectPercentile(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func : callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues.
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -335,8 +320,11 @@ class SelectPercentile(_AbstractUnivariateFilter):
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
+        if not 0 <= percentile <= 100:
+            raise ValueError("percentile should be >=0, <=100; got %r"
+                             % percentile)
         self.percentile = percentile
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectPercentile, self).__init__(score_func)
 
     def _get_support_mask(self):
         percentile = self.percentile
@@ -365,8 +353,8 @@ class SelectKBest(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func : callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     k : int, optional, default=10
         Number of top features to select.
@@ -388,7 +376,7 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     def __init__(self, score_func=f_classif, k=10):
         self.k = k
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectKBest, self).__init__(score_func)
 
     def _get_support_mask(self):
         k = self.k
@@ -413,8 +401,8 @@ class SelectFpr(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func : callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues.
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     alpha : float, optional
         The highest p-value for features to be kept.
@@ -430,7 +418,7 @@ class SelectFpr(_AbstractUnivariateFilter):
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectFpr, self).__init__(score_func)
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -446,8 +434,8 @@ class SelectFdr(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func : callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
@@ -464,7 +452,7 @@ class SelectFdr(_AbstractUnivariateFilter):
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectFdr, self).__init__(score_func)
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -479,8 +467,8 @@ class SelectFwe(_AbstractUnivariateFilter):
     Parameters
     ----------
     score_func : callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues.
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
@@ -496,7 +484,7 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectFwe, self).__init__(score_func)
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -508,13 +496,13 @@ class SelectFwe(_AbstractUnivariateFilter):
 ######################################################################
 
 class GenericUnivariateSelect(_AbstractUnivariateFilter):
-    """Univariate feature selector with configurable strategy
+    """Univariate feature selector with configurable strategy.
 
     Parameters
     ----------
     score_func : callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues.
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
         Feature selection mode.
@@ -539,17 +527,13 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
                         }
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        if not callable(score_func):
-            raise TypeError(
-                "The score function should be a callable, '%s' (type %s) "
-                "was passed." % (score_func, type(score_func)))
         if mode not in self._selection_modes:
             raise ValueError(
-                "The mode passed should be one of %s, '%s', (type %s) "
+                "The mode passed should be one of %s, %r "
                 "was passed." % (
                         self._selection_modes.keys(),
                         mode, type(mode)))
-        self.score_func = score_func
+        super(GenericUnivariateSelect, self).__init__(score_func)
         self.mode = mode
         self.param = param
 

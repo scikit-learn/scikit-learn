@@ -5,11 +5,12 @@ Todo: cross-check the F-value with stats model
 import numpy as np
 import warnings
 
-from nose.tools import assert_equal, assert_true
+from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy import stats, sparse
-from sklearn.datasets.samples_generator import make_classification, \
-                                                     make_regression
+
+from sklearn.datasets.samples_generator import (make_classification,
+                                                make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
                                        SelectPercentile, SelectKBest,
                                        SelectFpr, SelectFdr, SelectFwe,
@@ -297,6 +298,10 @@ def test_select_percentile_regression_full():
     support = univariate_filter.get_support()
     gtruth = np.ones(20)
     assert_array_equal(support, gtruth)
+
+
+def test_invalid_percentile():
+    assert_raises(ValueError, SelectPercentile, percentile=101)
 
 
 def test_select_kbest_regression():
