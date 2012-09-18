@@ -100,11 +100,11 @@ def safe_mask(X, mask):
 
     Parameters
     ----------
-        X : {array-like, sparse matrix}
-            Data on which to apply mask.
+    X : {array-like, sparse matrix}
+        Data on which to apply mask.
 
-        mask: array
-            Mask to be used on X.
+    mask: array
+        Mask to be used on X.
 
     Returns
     -------
