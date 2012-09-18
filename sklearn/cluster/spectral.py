@@ -225,6 +225,10 @@ def discretization(eigen_vec):
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
     
+    - A whole brain fMRI atlas generated via spatially constrained spectral
+      clustering, 2011
+      R.C. Craddock, G.A. James, P.E. Holtzheimer III, X.P. Hu, H.S. Mayberg
+    
     """
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
