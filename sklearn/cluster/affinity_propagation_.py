@@ -11,6 +11,7 @@ import numpy as np
 import warnings
 
 from ..base import BaseEstimator, ClusterMixin
+from ..progress_logger import get_logger
 from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
@@ -70,6 +71,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
     """
+    logger = get_logger(verbosity=verbose)
     S = as_float_array(S, copy=copy)
     if convit is not None:
         warnings.warn("``convit`` is deprecated and will be removed in"
@@ -151,12 +153,11 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
             unconverged = np.sum((se == convergence_iter) +\
                                  (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
-                if verbose:
-                    print "Converged after %d iterations." % it
+                logger.progress("Converged after %d iterations.",
+                                msg_vars=(it, ))
                 break
     else:
-        if verbose:
-            print "Did not converged"
+        logger.progress("Did not converged")
 
     I = np.where(np.diag(A + R) > 0)[0]
     K = I.size  # Identify exemplars
