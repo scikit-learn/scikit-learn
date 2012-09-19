@@ -23,11 +23,9 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     Parameters
     -----------
-    X: array-like or sparse matrix, shape: (n_samples, n_features)
-        The adjacency matrix of the graph to embed.
-
     n_components: integer, optional
-        The dimension of the projection subspace.
+        The dimension of the projected subspace.
+        #TODO if None is given how to select the default?
 
     eigen_solver: {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
@@ -40,16 +38,26 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     affinity: string or callable
         How to construct the adjacency graph.
-         - 'knn' : construct default knn graph.
+         - 'nearest_neighbors' : construct default knn graph.
          - 'precomputed' : precomputed graph.
          - [callable] : take in a array X (n_samples, n_features) and return
-         a (n_samples, n_samples) adjacent graph.
+           affinity matrix (n_samples, n_samples).
 
-        Default: "knn"
+        Default: "nearest_neighbors"
 
     gamma : float, optional
-        Kernel coefficient for knn graph.
+        Affinity coefficient for knn graph.
+
         Default: 1/n_features.
+
+    n_neighbors : int
+        Number of nearest neighbors for nearest_neighbors graph building
+
+       Default: max(n_samples/10 , 1)
+
+    fit_inverse_transform : bool, optional
+       whether to fit the inverse transformation
+
 
     Attributes
     ----------
@@ -75,16 +83,17 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, affinity="nn", gamma=None,
                  fit_inverse_transform=False, random_state=None,
-                 eigen_solver=None, n_neighbors=5):
-        if affinity not in {'precomputed', 'rbf', 'nn'}:
-            raise ValueError(
-                "Only precomputed, rbf, knn graph supported.")
-        elif fit_inverse_transform and graph == 'precomputed':
-            raise ValueError(
-                "Cannot fit_inverse_transform with a precomputed kernel.")
+                 eigen_solver=None, n_neighbors=None):
         self.n_components = n_components
         if isinstance(affinity, str):
             self.affinity = affinity.lower()
+            if affinity not in {'precomputed', 'rbf', 'nearest_neighbors'}:
+                raise ValueError(
+                    "Only precomputed, rbf,"
+                    "nearest_neighbors graph supported.")
+        if fit_inverse_transform and graph == 'precomputed':
+            raise ValueError(
+                "Cannot fit_inverse_transform with a precomputed kernel.")
         self.gamma = gamma
         self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
@@ -96,12 +105,29 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         return self.affinity == "precomputed"
 
     def _get_affinity_matrix(self, X, Y=None):
+        """Caclulate the affinity matrix from data
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+           array-like, shape (n_samples, n_samples)
+            If self.precomputed == true
+            Precomputed adjacency graph computed from samples
+
+        Returns
+        -------
+        affinity_matrix, shape (n_samples, n_samples)
+        """
         if self.affinity == 'precomputed':
             self.affinity_matrix_ = X
             return self.affinity_matrix_
-        if self.affinity == 'nn':
+        if self.affinity == 'nearest_neighbors':
             if self.gamma is None:
                 self.gamma = 1.0 / X.shape[1]
+            if self.n_neighbors is None:
+                self.n_neighbors = np.max(int(X.shape[0] / 10), 1)
             self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors,
                                                      mode='distance')
             self.affinity_matrix_ = (self.affinity_matrix_ +
@@ -121,7 +147,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         except:
             raise ValueError(
                 "%s is not a valid graph type. Valid kernels are: "
-                "knn, precomputed and callable."
+                "nearest_neighbors, precomputed and callable."
                 % self.affinity)
 
     def fit(self, X, y=None):
@@ -135,17 +161,15 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
            array-like, shape (n_samples, n_samples)
             If self.precomputed == true
-            Precomputed adjacency graph computed from samples
+            Precomputed affinity matrix computed from samples
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        # get the adjacency matrix
-        adjacency = self._get_affinity_matrix(X)
-        # get the embedding
-        self.embedding_ = self._spectra_embedding(adjacency)
+        affinity_matrix = self._get_affinity_matrix(X)
+        self.embedding_ = self._spectra_embedding(affinity_matrix)
         return self
 
     def fit_transform(self, X, y=None):
@@ -159,7 +183,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
            array-like, shape (n_samples, n_samples)
             If self.precomputed == true
-            Precomputed adjacency graph computed from samples
+            Precomputed affinity matrix computed from samples
 
         Returns
         -------
@@ -179,12 +203,21 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        # out of sample not implemented
+        # out of sample not supported
         raise NotImplementedError(
             "Out of sample extension is currently not supported")
 
-    def fit_inverse_transform(self, affinity):
-        """ Fit's using kernel K"""
+    def fit_inverse_transform(self, X):
+        """Inverse transform new points
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_components)
+
+        Returns
+        -------
+        X_new: array-like, shape (n_samples, n_features)
+        """
         # inverse tranform not supported
         raise NotImplementedError(
             "Inverse transformation is not currently not supported")
