@@ -211,7 +211,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             if Gram is None:
                 if self.use_strong_rule:
                     coef_[k, :], dual_gap_[k], eps_[k] = \
-                        self._fit_enet_with_strong_rule(coef_[k, :], X,
+                        self._fit_with_strong_rule(coef_[k, :], X,
                         y[:, k], Xy, active_set_init=active_set_init,
                         coef_init=coef_init, alpha_init=alpha_init, R=R_init)
                 else:
@@ -304,7 +304,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         return coef_
 
-    def _fit_enet_with_strong_rule(self, w, X, y, Xy=None,
+    def _fit_with_strong_rule(self, w, X, y, Xy=None,
                     active_set_init=None, coef_init=None, alpha_init=None,
                     R=None, max_iter_strong=100):
 
