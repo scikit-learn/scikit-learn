@@ -64,7 +64,7 @@ def test_rfecv():
 
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = iris.target
+    y = list(iris.target)   # regression test: list should be supported
 
     # Test using the score function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)

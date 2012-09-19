@@ -691,12 +691,12 @@ sparser.
 Isotonic regression
 ====================
 
-The :class:`Isotonic Regression` fits a non-decreasing function to the data.
+The :class:`IsotonicRegression` fits a non-decreasing function to the data.
 It solves the following problem:
 
   minimize :math:`\sum_i w_i (y_i - \hat{y}_i)^2`
 
-  subject to :math:`\hat{y}_min = \hat{y}_1 <= \hat{y}_2 ... <= \hat{y}_n = \hat{y}_max`
+  subject to :math:`\hat{y}_{min} = \hat{y}_1 \le \hat{y}_2 ... \le \hat{y}_n = \hat{y}_{max}`
 
 where each :math:`w_i` is strictly positive and each :math:`y_i` is an
 arbitrary real number. It yields the vector which is composed of non-decreasing

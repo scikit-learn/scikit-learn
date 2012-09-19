@@ -101,7 +101,7 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
-    """solve the isotonic regression optimization problem
+    """Isotonic regression model.
 
     The isotonic regression optimization problem is defined by::
         min sum w_i (y[i] - y_[i]) ** 2
@@ -116,18 +116,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Parameters
     ----------
     y_min: optional, default: None
-        if not None, set the lowest value of the fit to y_min
+        If not None, set the lowest value of the fit to y_min.
 
     y_max: optional, default: None
-        if not None, set the highest value of the fit to y_max
+        If not None, set the highest value of the fit to y_max.
 
     Attributes
     ----------
     `X_`: ndarray (n_samples, )
-        A copy of the input X
+        A copy of the input X.
 
     `y_`: ndarray (n_samples, )
-        Isotonic fit of y
+        Isotonic fit of y.
 
     References
     ----------
@@ -145,7 +145,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             raise ValueError("X should be a vector")
 
     def fit(self, X, y, weight=None):
-        """Fit the model using X as training data
+        """Fit the model using X, y as training data.
 
         Parameters
         ----------
@@ -178,7 +178,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         return self
 
     def transform(self, T):
-        """Transform new data by linear interpolation along
+        """Transform new data by linear interpolation
 
         Parameters
         ----------
@@ -199,7 +199,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         return f(T)
 
     def fit_transform(self, X, y, weight=None):
-        """Transform by linear interpolation
+        """Fit model and transform y by linear interpolation.
 
         Parameters
         ----------
@@ -228,16 +228,16 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         return self.y_
 
     def predict(self, T):
-        """Predict new data by linear interpolation along
+        """Predict new data by linear interpolation.
 
         Parameters
         ----------
         T: array-like, shape=(n_samples,)
-            data to transform
+            Data to transform.
 
         Returns
         -------
         T_: array, shape=(n_samples,)
-            The transformed data
+            Transformed data.
         """
         return self.transform(T)

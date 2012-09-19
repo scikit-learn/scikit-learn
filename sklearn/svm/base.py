@@ -660,7 +660,6 @@ class BaseLibLinear(BaseEstimator):
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()
-        self._sparse = sp.isspmatrix(X)
 
         self.class_weight_, self.class_weight_label_ = \
                      _get_class_weight(self.class_weight, y)
@@ -672,7 +671,7 @@ class BaseLibLinear(BaseEstimator):
 
         liblinear.set_verbosity_wrap(self.verbose)
 
-        if self._sparse:
+        if sp.isspmatrix(X):
             train = liblinear.csr_train_wrap
         else:
             train = liblinear.train_wrap
@@ -692,68 +691,15 @@ class BaseLibLinear(BaseEstimator):
 
         return self
 
-    def predict(self, X):
-        """Predict target values of X according to the fitted model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-        """
-        scores = self.decision_function(X)
-        if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
-        else:
-            indices = scores.argmax(axis=1)
-        return self.classes_[indices]
-
-    def decision_function(self, X):
-        """Decision function value for X according to the trained model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_class]
-            Returns the decision function of the sample for each class
-            in the model.
-        """
-        X = self._validate_for_predict(X)
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
-        return scores.ravel() if scores.shape[1] == 1 else scores
-
     @property
     def classes_(self):
         return self._enc.classes_
 
     def _check_n_features(self, X):
-        n_features = self.raw_coef_.shape[1]
-        if self.fit_intercept:
-            n_features -= 1
+        n_features = self.coef_.shape[1]
         if X.shape[1] != n_features:
             raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
                                                                    X.shape[1]))
-
-    def _validate_for_predict(self, X):
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        if self._sparse and not sp.isspmatrix(X):
-            X = sp.csr_matrix(X)
-        elif sp.isspmatrix(X) and not self._sparse:
-            raise ValueError(
-                "cannot use sparse input in %r trained on dense data"
-                % type(self).__name__)
-        if not self.raw_coef_.flags['F_CONTIGUOUS']:
-            warnings.warn('Coefficients are the fortran-contiguous. '
-                          'Copying them.', RuntimeWarning,
-                          stacklevel=3)
-            self.raw_coef_ = np.asfortranarray(self.raw_coef_)
-        self._check_n_features(X)
-        return X
 
     def _get_bias(self):
         if self.fit_intercept:

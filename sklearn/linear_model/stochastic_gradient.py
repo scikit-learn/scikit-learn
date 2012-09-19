@@ -12,7 +12,8 @@ import warnings
 
 from ..externals.joblib import Parallel, delayed
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .base import LinearClassifierMixin
+from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
@@ -78,10 +79,6 @@ class BaseSGD(BaseEstimator):
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
-
-    @abstractmethod
-    def predict(self, X):
-        """Predict using model."""
 
     def _validate_params(self):
         """Validate input params. """
@@ -235,7 +232,7 @@ def _make_dataset(X, y_i, sample_weight):
     return dataset, intercept_decay
 
 
-class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
+class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -381,11 +378,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
-
-    @property
-    @deprecated("to be removed in v0.13; use ``classes_`` instead.")
-    def classes(self):
-        return self.classes_
 
     def _set_class_weight(self, class_weight, classes, y):
         """Estimate class weights for unbalanced datasets."""
@@ -557,44 +549,6 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self._set_coef(self.coef_)
 
         return self
-
-    def decision_function(self, X):
-        """Predict signed 'distance' to the hyperplane (aka confidence score).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
-            The signed 'distances' to the hyperplane(s).
-        """
-        X = atleast2d_or_csr(X)
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
-        if self.classes_.shape[0] == 2:
-            return np.ravel(scores)
-        else:
-            return scores
-
-    def predict(self, X):
-        """Predict using the linear model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        array, shape = [n_samples]
-           Array containing the predicted class labels.
-        """
-        scores = self.decision_function(X)
-        if self.classes_.shape[0] == 2:
-            indices = np.array(scores > 0, dtype=np.int)
-        else:
-            indices = scores.argmax(axis=1)
-        return self.classes_[np.ravel(indices)]
 
     def predict_proba(self, X):
         """Probability estimates.

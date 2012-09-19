@@ -1,5 +1,5 @@
 import numpy as np
-from .. import nmf
+from sklearn.decomposition import nmf
 from nose.tools import assert_true, assert_false, raises
 from numpy.testing import assert_array_almost_equal
 
@@ -108,6 +108,12 @@ def test_projgrad_nmf_transform():
     assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
 
 
+def test_n_components_greater_n_features():
+    """Smoke test for the case of more components than features."""
+    A = np.abs(random_state.randn(30, 10))
+    nmf.ProjectedGradientNMF(n_components=15, sparseness='data').fit(A)
+
+
 def test_projgrad_nmf_sparseness():
     """Test sparseness
 
@@ -131,10 +137,12 @@ def test_sparse_input():
 
     A = np.abs(random_state.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
-    T1 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
+    T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                  random_state=999).fit_transform(A)
 
     A = csr_matrix(A)
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init=999).fit_transform(A)
+    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                  random_state=999).fit_transform(A)
     assert_array_almost_equal(T1, T2)
 
 

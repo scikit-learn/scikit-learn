@@ -2,16 +2,19 @@
 Todo: cross-check the F-value with stats model
 """
 
+import numpy as np
+import warnings
+
+from nose.tools import assert_equal, assert_raises, assert_true
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+from scipy import stats, sparse
+
+from sklearn.datasets.samples_generator import (make_classification,
+                                                make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
                                        SelectPercentile, SelectKBest,
                                        SelectFpr, SelectFdr, SelectFwe,
                                        GenericUnivariateSelect)
-from nose.tools import assert_equal, assert_true
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from scipy import stats, sparse
-from sklearn.datasets.samples_generator import make_classification, \
-                                                     make_regression
 
 
 ##############################################################################
@@ -297,6 +300,10 @@ def test_select_percentile_regression_full():
     assert_array_equal(support, gtruth)
 
 
+def test_invalid_percentile():
+    assert_raises(ValueError, SelectPercentile, percentile=101)
+
+
 def test_select_kbest_regression():
     """
     Test whether the relative univariate feature selection
@@ -386,9 +393,23 @@ def test_selectkbest_tiebreaking():
     """
     X = [[1, 0, 0], [0, 1, 1]]
     y = [0, 1]
+    with warnings.catch_warnings(record=True):
+        X1 = SelectKBest(chi2, k=1).fit_transform(X, y)
+        assert_equal(X1.shape[1], 1)
 
-    X1 = SelectKBest(chi2, k=1).fit_transform(X, y)
-    assert_equal(X1.shape[1], 1)
+        X2 = SelectKBest(chi2, k=2).fit_transform(X, y)
+        assert_equal(X2.shape[1], 2)
 
-    X2 = SelectKBest(chi2, k=2).fit_transform(X, y)
-    assert_equal(X2.shape[1], 2)
+
+def test_selectpercentile_tiebreaking():
+    """Test if SelectPercentile actually selects k features in case of ties.
+    """
+    X = [[1, 0, 0], [0, 1, 1]]
+    y = [0, 1]
+
+    with warnings.catch_warnings(record=True):
+        X1 = SelectPercentile(chi2, percentile=34).fit_transform(X, y)
+        assert_equal(X1.shape[1], 1)
+
+        X2 = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
+        assert_equal(X2.shape[1], 2)

@@ -377,8 +377,8 @@ class CountVectorizer(BaseEstimator):
                 tokenize(preprocess(self.decode(doc))), stop_words)
 
         else:
-            raise ValueError('%s is not a valid tokenization scheme' %
-                             self.tokenize)
+            raise ValueError('%s is not a valid tokenization scheme/analyzer' %
+                             self.analyzer)
 
     def _term_count_dicts_to_matrix(self, term_count_dicts):
         i_indices = []
