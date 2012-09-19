@@ -19,56 +19,32 @@ from IPython.core.debugger import Tracer; debug_here = Tracer()
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
     """Spectral Embedding
 
-    Non-linear dimensionality reduction through Spectral Embedding
-
-    Project the sample on the first eigen vectors of the graph Laplacian
-
-    The adjacency matrix is used to compute a normalized graph Laplacian
-    whose spectrum (especially the eigen vectors associated to the
-    smallest eigen values) has an interpretation in terms of minimal
-    number of cuts necessary to split the graph into comparably sized
-    components.
-
-    This embedding can also 'work' even if the ``adjacency`` variable is
-    not strictly the adjacency matrix of a graph but more generally
-    an affinity or similarity matrix between samples (for instance the
-    heat kernel of a euclidean distance matrix or a k-NN matrix).
-
-    However care must taken to always make the affinity matrix symmetric
-    so that the eigen vector decomposition works as expected.
+    Non-linear dimensionality reduction using spectral methods
 
     Parameters
     -----------
-    adjacency: array-like or sparse matrix, shape: (n_samples, n_samples)
+    X: array-like or sparse matrix, shape: (n_samples, n_features)
         The adjacency matrix of the graph to embed.
 
     n_components: integer, optional
         The dimension of the projection subspace.
 
-    mode: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when mode == 'amg'. By default
-        arpack is used.
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
 
-    kernel: "rbf" | "sigmoid" | "precomputed"
-        Kernel.
-        Default: "rbf"
-
-    degree : int, optional
-        Degree for poly, rbf and sigmoid kernels.
-        Default: 3.
+    graph: string ['rbf' | 'knn' | 'precomputed']
+        How to construct the graph.
+        Default: "knn"
 
     gamma : float, optional
         Kernel coefficient for rbf and poly kernels.
         Default: 1/n_features.
-
-    coef0 : float, optional
-        Independent term in poly and sigmoid kernels.
     
 
     Attributes
@@ -79,43 +55,40 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    Kernel PCA was intoduced in:
-        Bernhard Schoelkopf, Alexander J. Smola,
-        and Klaus-Robert Mueller. 1999. Kernel principal
-        component analysis. In Advances in kernel methods,
-        MIT Press, Cambridge, MA, USA 327-352.
+    Spectral Embedding was intoduced in:
+    #TODO: We need several ref here ..
     """
 
-    def __init__(self, n_components=None, kernel="rbf", gamma=0, degree=3,
-                 coef0=1, fit_inverse_transform=False,
-                 random_state=None, mode = None):
-        if kernel not in {'precomputed', 'rbf', 'knn'}:
+    def __init__(self, n_components=None, graph="rbf", gamma=0, 
+                 fit_inverse_transform=False,
+                 random_state=None, mode = None,
+                 eigen_solver = None, n_neighbors = 5):
+        if graph not in {'precomputed', 'rbf', 'knn'}:
             raise ValueError(
-                "Only precomputed, rbf, knn kernel supported.")
-        elif fit_inverse_transform and kernel == 'precomputed':
+                "Only precomputed, rbf, knn graph supported.")
+        elif fit_inverse_transform and graph == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
-        self.kernel = kernel.lower()
+        self.graph = graph.lower()
         self.gamma = gamma
-        self.degree = degree
-        self.coef0 = coef0
         self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
-        self.mode = None;
+        self.eigen_solver = eigen_solver
+        self.mode = mode
+        self.n_neighbors = n_neighbors
 
     @property
     def _pairwise(self):
-        return self.kernel == "precomputed"
+        return self.graph == "precomputed"
 
-    def _get_kernel(self, X, Y=None):
+    def _get_graph(self, X, Y=None):
         params = {"gamma": self.gamma,
                   "degree": self.degree,
                   "coef0": self.coef0}
-        if kernel == 'knn':
-            return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
-            self.n_neighbors, mode='connectivity')
-            
+        if graph == 'knn':
+            return np.exp(-self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
+            self.n_neighbors, mode='connectivity')/self.gamma/self.gamma)
         try:
             return pairwise_kernels(X, Y, metric=self.kernel,
                                     filter_params=True, **params)
@@ -123,12 +96,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             raise ValueError("%s is not a valid kernel. Valid kernels are: "
                              "rbf, poly, sigmoid, linear and precomputed."
                              % self.kernel)
-
-    def _fit_transform(self, affinity):
-        """ Fit's using kernel K"""
-        # inverse tranform not supported
-        raise NotImplementedError(
-            "inverse transformation is not supported")
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -144,14 +111,14 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-
         # get the adjacency matrix
-        adjacency = self._get_kernel(X)
+        adjacency = self._get_graph(X)
         # get the embedding
         self.embedding_ = self._spectra_embedding(adjacency)
         return self
 
-    def fit_transform(self, X, y=None, **params):
+
+    def fit_transform(self, X, y=None):
         """Fit the model from data in X and transform X.
 
         Parameters
@@ -164,12 +131,12 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-
-        self.fit(X, **params)
+        self.fit(X)
         return self.embedding_
 
+
     def transform(self, X):
-        """Transform X.
+        """Transform new points
 
         Parameters
         ----------
@@ -179,10 +146,17 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-
         # out of sample not implemented
         raise NotImplementedError(
-            "out of sample extension is currently unavailable")
+            "Out of sample extension is currently not supported")
+
+
+    def fit_inverse_transform(self, affinity):
+        """ Fit's using kernel K"""
+        # inverse tranform not supported
+        raise NotImplementedError(
+            "Inverse transformation is not currently not supported")
+
 
     def _spectra_embedding(self, adjacency):
         """Project the sample on the first eigen vectors of the graph Laplacian
@@ -205,19 +179,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         -----------
         adjacency: array-like or sparse matrix, shape: (n_samples, n_samples)
             The adjacency matrix of the graph to embed.
-
-        n_components: integer, optional
-            The dimension of the projection subspace.
-
-        mode: {None, 'arpack' or 'amg'}
-            The eigenvalue decomposition strategy to use. AMG requires pyamg
-            to be installed. It can be faster on very large, sparse problems,
-            but may also lead to instabilities
-
-        random_state: int seed, RandomState instance, or None (default)
-            A pseudo random number generator used for the initialization of the
-            lobpcg eigen vectors decomposition when mode == 'amg'. By default
-            arpack is used.
 
         Returns
         --------
