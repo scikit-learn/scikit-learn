@@ -780,33 +780,18 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         sample_weight : float or numpy array of shape [n_samples]
             Sample weight
 
-        class_weight : dict, optional
-            Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
         Returns
         -------
         self : object
             Returns self.
         """
-        if class_weight != None:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-            self.class_weight_ = class_weight
-        else:
-            self.class_weight_ = self.class_weight
-
-        if self.class_weight_ is None:
-            self.class_weight_ = {}
-
-        sample_weight2 = np.array([self.class_weight_.get(k, 1.0) for k in y])
+        if self.class_weight is not None:
+            get_cw = self.class_weight.get
+            sample_weight = (sample_weight
+                           * np.array([get_cw(k, 1.0) for k in y]))
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        _BaseRidgeCV.fit(self, X, Y,
-                         sample_weight=sample_weight * sample_weight2)
+        _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 
     @property
