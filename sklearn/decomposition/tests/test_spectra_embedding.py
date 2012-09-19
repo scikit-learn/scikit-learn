@@ -1,9 +1,8 @@
-import numpy as np
-
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
 from scipy.sparse import csr_matrix
+import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from sklearn.decomposition.spectra_embedding import SpectralEmbedding
