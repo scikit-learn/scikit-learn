@@ -609,7 +609,10 @@ def _generalized_KL(x, y, eps=1.e-8):
 
 def _sparse_dot(a, b, refmat):
     """Computes dot product of a and b on indices where refmat is nonnzero
-    and returns sparse csr matrix.
+    and returns sparse csr matrix with same structure than refmat.
+    
+    First calls to eliminate_zeros on refmat which might modify the structure
+    of refmat.
 
     Params
     ------
@@ -618,6 +621,7 @@ def _sparse_dot(a, b, refmat):
 
     Dot product of a and b must have refmat's shape.
     """
+    refmat.eliminate_zeros()
     ii, jj = refmat.nonzero()
     dot_vals = np.multiply(a[ii, :], b.T[jj, :]).sum(axis=1)
     c = sp.coo_matrix((dot_vals, (ii, jj)), shape=refmat.shape)
@@ -825,22 +829,20 @@ class KLdivNMF(BaseNMF):
 
     # Errors and performance estimations
 
-    # TODO Not really KL (17/09/2012)
-    # This is not really the generalized KL (WH.data only contains values
-    # where X is non-zero. Computing the generalized KL div requires computing
-    # the real WH which might be very costly for big sparse X.
     def error(self, X, W, H=None, weights=1., eps=1.e-8):
+        X = atleast2d_or_csr(X)
         if H is None:
             H = self.components_
         if sp.issparse(X):
             WH = _sparse_dot(W, H, X)
-            return (np.multiply(X.data, np.log(np.divide(X.data + eps,
-                WH.data + eps))) - X.data + WH.data).sum()
+            # Avoid computing all values of WH to get their sum
+            WH_sum = np.sum(np.multiply(np.sum(W, axis=0), np.sum(H, axis=1)))
+            return (np.multiply(
+                X.data,
+                np.log(np.divide(X.data + eps, WH.data + eps))
+                )).sum() - X.data.sum() + WH_sum
         else:
-            WH = W.dot(H)
-            return (np.multiply(X, np.log(np.divide(X + eps, WH + eps))) - X
-                    + WH * (X != 0)).sum()
-        #return _generalized_KL(X, np.dot(W, H))
+            return _generalized_KL(X, np.dot(W, H))
 
     # Projections
 
@@ -862,11 +864,7 @@ class KLdivNMF(BaseNMF):
         """
         # X should be at least 2D or csr
         if sp.issparse(X):
-            X.eliminate_zeros()
             WH = _sparse_dot(W, H, X)
-            # TODO Move to unittest if _sparse_dot (17/09/2012)
-            assert((WH.indptr == X.indptr).all())
-            assert((WH.indices == X.indices).all())
             WH.data = (X.data + eps) / (WH.data + eps)
             return WH
         else:

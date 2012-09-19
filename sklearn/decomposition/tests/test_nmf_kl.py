@@ -10,6 +10,12 @@ def random_NN_matrix(h, w):
     return np.abs(np.random.random((h, w)))
 
 
+def random_NN_sparse(h, w, density):
+    r = sp.rand(h, w, density)
+    r.data = np.abs(r.data)
+    return r
+
+
 def is_NN(a):
     return np.all(a >= 0)
 
@@ -145,6 +151,40 @@ class TestGenenralizedKL(unittest.TestCase):
         self.assertTrue(np.allclose(dkl, ok))
 
 
+class TestError(unittest.TestCase):
+
+    n_samples = 20
+    n_components = 3
+    n_features = 30
+
+    def setUp(self):
+        self.X = random_NN_sparse(self.n_samples, self.n_features, .1)
+        self.W = random_NN_matrix(self.n_samples, self.n_components)
+        self.H = random_NN_matrix(self.n_components, self.n_features)
+        self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-4,
+            max_iter=200, eps=1.e-8, subit=10)
+        self.nmf.components_ = random_NN_matrix(self.n_components, self.n_features)    
+
+    def test_error_is_gen_kl(self):
+        Xdense = self.X.todense()
+        err = self.nmf.error(Xdense, self.W, H=self.H)
+        kl = _generalized_KL(Xdense, self.W.dot(self.H))
+        self.assertTrue(np.allclose(err, kl))
+
+    def test_error_sparse(self):
+        err_dense = self.nmf.error(self.X.todense(), self.W, H=self.H)
+        err_sparse = self.nmf.error(self.X, self.W, H=self.H)
+        print err_dense
+        print err_sparse
+        self.assertTrue(np.allclose(err_dense, err_sparse))
+
+    def test_error_is_gen_kl_with_compenents(self):
+        Xdense = self.X.todense()
+        err = self.nmf.error(Xdense, self.W)
+        kl = _generalized_KL(Xdense, self.W.dot(self.nmf.components_))
+        self.assertTrue(np.allclose(err, kl))
+
+
 class TestUpdates(unittest.TestCase):
 
     n_samples = 20
@@ -183,11 +223,7 @@ class TestSparseUpdates(TestUpdates):
     """
 
     def setUp(self):
-        # TODO switch to sparse.rand
-        self.X = sp.csr_matrix(
-                random_NN_matrix(self.n_samples, self.n_features)
-                * (np.random.random((self.n_samples, self.n_features)) > .5)
-                )
+        self.X = random_NN_sparse(self.n_samples, self.n_features, .5).tocsr()
         self.W = random_NN_matrix(self.n_samples, self.n_components)
         self.H = random_NN_matrix(self.n_components, self.n_features)
         self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-4,
@@ -217,10 +253,19 @@ class TestFitTransform(unittest.TestCase):
 
 class TestSparseDot(unittest.TestCase):
 
+    def setUp(self):
+        self.ref = sp.rand(5, 6, .3).tocsr()
+        self.a = np.random.random((5, 7))
+        self.b = np.random.random((7, 6))
+
+    def test_indices(self):
+        """Test that returned sparse matrix has same structure than refmat.
+        """
+        ab = _sparse_dot(self.a, self.b, self.ref)
+        self.assertTrue((ab.indptr == self.ref.indptr).all()
+                and (ab.indices == self.ref.indices).all())
+
     def test_correct(self):
-        ref = sp.rand(5, 6, .3)
-        a = np.random.random((5, 7))
-        b = np.random.random((7, 6))
-        ok = np.multiply(np.dot(a, b), (ref.todense() != 0))
-        ans = _sparse_dot(a, b, ref).todense()
+        ok = np.multiply(np.dot(self.a, self.b), (self.ref.todense() != 0))
+        ans = _sparse_dot(self.a, self.b, self.ref).todense()
         self.assertTrue(np.allclose(ans, ok))
