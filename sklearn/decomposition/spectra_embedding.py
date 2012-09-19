@@ -23,7 +23,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     Parameters
     -----------
-    n_components: integer, optional
+    n_components: integer
         The dimension of the projected subspace.
         #TODO if None is given how to select the default?
 
@@ -81,7 +81,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, n_components=None, affinity="nn", gamma=None,
+    def __init__(self, n_components=None, affinity="rbf", gamma=None,
                  fit_inverse_transform=False, random_state=None,
                  eigen_solver=None, n_neighbors=None):
         self.n_components = n_components
@@ -91,6 +91,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Only precomputed, rbf,"
                     "nearest_neighbors graph supported.")
+        else:
+            self.affinity = affinity
         if fit_inverse_transform and graph == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -137,7 +139,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             return self.affinity_matrix_
         try:
             self.affinity_matrix_ = self.affinity(X)
-            return self
+            return self.affinity_matrix_
         except:
             raise ValueError(
                 "%s is not a valid graph type. Valid kernels are: "
@@ -323,4 +325,4 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         else:
             raise ValueError("Unknown value for mode: '%s'."
                              "Should be 'amg' or 'arpack'" % self.eigen_solver)
-        return embedding
+        return embedding.T
