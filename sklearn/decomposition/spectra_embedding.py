@@ -1,4 +1,4 @@
-"""Kernel Principal Components Analysis"""
+"""Spectral Embedding"""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
@@ -13,6 +13,7 @@ from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from ..metrics.pairwise import pairwise_kernels
+from ..metrics.pairwise import rbf_kernel
 
 from IPython.core.debugger import Tracer; debug_here = Tracer()
 
@@ -38,12 +39,17 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
 
-    graph: string ['rbf' | 'knn' | 'precomputed']
-        How to construct the graph.
+    affinity: string or callable
+        How to construct the adjacency graph.
+         - 'knn' : construct default knn graph.
+         - 'precomputed' : precomputed graph.
+         - [callable] : take in a array X (n_samples, n_features) and return
+         a (n_samples, n_samples) adjacent graph.
+         
         Default: "knn"
 
     gamma : float, optional
-        Kernel coefficient for rbf and poly kernels.
+        Kernel coefficient for knn graph.
         Default: 1/n_features.
     
 
@@ -53,24 +59,35 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     `embedding_`
         Spectral embedding of the training matrix
 
+    `graph_`
+        Graph constructed from samples or precomputed
+
     References
     ----------
     Spectral Embedding was intoduced in:
     #TODO: We need several ref here ..
+    - Normalized cuts and image segmentation, 2000
+      Jianbo Shi, Jitendra Malik
+      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+
+    - A Tutorial on Spectral Clustering, 2007
+      Ulrike von Luxburg
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, n_components=None, graph="rbf", gamma=0, 
+    def __init__(self, n_components=None, affinity="nn", gamma=None, 
                  fit_inverse_transform=False,
                  random_state=None, mode = None,
                  eigen_solver = None, n_neighbors = 5):
-        if graph not in {'precomputed', 'rbf', 'knn'}:
+        if affinity not in {'precomputed', 'rbf', 'nn'}:
             raise ValueError(
                 "Only precomputed, rbf, knn graph supported.")
         elif fit_inverse_transform and graph == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
-        self.graph = graph.lower()
+        if isinstance(affinity, str):
+            self.affinity = affinity.lower()
         self.gamma = gamma
         self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
@@ -80,22 +97,33 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     @property
     def _pairwise(self):
-        return self.graph == "precomputed"
+        return self.affinity == "precomputed"
 
-    def _get_graph(self, X, Y=None):
-        params = {"gamma": self.gamma,
-                  "degree": self.degree,
-                  "coef0": self.coef0}
-        if graph == 'knn':
-            return np.exp(-self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
-            self.n_neighbors, mode='connectivity')/self.gamma/self.gamma)
+
+    def _get_affinity_matrix(self, X, Y=None):
+        if self.affinity == 'precomputed':
+            self.affinity_matrix_ = X
+            return self.affinity_matrix_
+        if self.affinity == 'nn':
+            if self.gamma == None:
+                self.gamma = 1.0 / X.shape[1]
+            self.affinity_matrix_ = kneighbors_graph(X,self.n_neighbors, mode='distance')
+            self.affinity_matrix_ = (self.affinity_matrix_ + self.affinity_matrix_.T) / 2.0
+            self.affinity_matrix_.data = np.exp(-self.affinity_matrix_.data**2 / self.gamma / self.gamma)
+            return self.affinity_matrix_
+        if self.affinity == 'rbf':
+            if self.gamma == None:
+                self.gamma = 1.0 / X.shape[1]
+            self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
+            return self.affinity_matrix_
         try:
-            return pairwise_kernels(X, Y, metric=self.kernel,
-                                    filter_params=True, **params)
-        except AttributeError:
-            raise ValueError("%s is not a valid kernel. Valid kernels are: "
-                             "rbf, poly, sigmoid, linear and precomputed."
-                             % self.kernel)
+            self.affinity_matrix_ = affinity(X)
+            return self
+        except:
+            raise ValueError("%s is not a valid graph type. Valid kernels are: "
+                        "knn, precomputed and callable."
+                        % self.affinity)
+
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -105,6 +133,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         X: array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+            
+           array-like, shape (n_samples, n_samples)
+            If self.precomputed == true
+            Precomputed adjacency graph computed from samples
 
         Returns
         -------
@@ -112,7 +144,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         # get the adjacency matrix
-        adjacency = self._get_graph(X)
+        adjacency = self._get_affinity_matrix(X)
         # get the embedding
         self.embedding_ = self._spectra_embedding(adjacency)
         return self
@@ -126,6 +158,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         X: array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+           array-like, shape (n_samples, n_samples)
+            If self.precomputed == true
+            Precomputed adjacency graph computed from samples
 
         Returns
         -------
@@ -206,7 +242,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             self.mode = 'arpack'
         laplacian, dd = graph_laplacian(adjacency,
                                         normed=True, return_diag=True)
-        debug_here()
         if (self.mode == 'arpack'
             or not sparse.isspmatrix(laplacian)
             or n_nodes < 5 * self.n_components):
