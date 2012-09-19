@@ -24,7 +24,8 @@ from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 
 
-def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
+def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
+                     max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
 
     Parameters
@@ -34,6 +35,10 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
 
     y : array-like, shape = [n_samples] or [n_samples, n_responses]
         Target values
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        The default value is determined by scipy.sparse.linalg.
 
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample
@@ -96,7 +101,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
                 y_column = X1.rmatvec(y_column)
                 C = sp_linalg.LinearOperator(
                     (n_features, n_features), matvec=mv, dtype=X.dtype)
-                coefs[i], info = sp_linalg.cg(C, y_column, tol=tol)
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol)
             if info != 0:
                 raise ValueError("Failed with error code %d" % info)
 
@@ -105,8 +111,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto', tol=1e-3):
         return coefs
     else:
         # normal equations (cholesky) method
-        if hasattr(X, 'todense'):
-            X = X.todense()
+        if sparse.issparse(X):
+            X = X.toarray()
         if n_features > n_samples or \
            isinstance(sample_weight, np.ndarray) or \
            sample_weight != 1.0:
@@ -131,7 +137,7 @@ class _BaseRidge(LinearModel):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, tol=1e-3):
+                 copy_X=True, max_iter=None, tol=1e-3):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -205,6 +211,10 @@ class Ridge(_BaseRidge, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        The default value is determined by scipy.sparse.linalg.
+
     tol : float
         Precision of the solution.
 
@@ -258,6 +268,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        The default value is determined by scipy.sparse.linalg.
+
     tol : float
         Precision of the solution.
 
@@ -282,10 +296,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-            copy_X=True, tol=1e-3, class_weight=None):
+                 copy_X=True, max_iter=None, tol=1e-3, class_weight=None):
         super(RidgeClassifier, self).__init__(alpha=alpha,
                 fit_intercept=fit_intercept, normalize=normalize,
-                copy_X=copy_X, tol=tol)
+                copy_X=copy_X, max_iter=max_iter, tol=tol)
         self.class_weight = class_weight
 
     def fit(self, X, y, solver='auto'):
