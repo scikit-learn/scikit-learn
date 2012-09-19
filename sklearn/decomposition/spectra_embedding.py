@@ -57,8 +57,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     `embedding_`
         Spectral embedding of the training matrix
 
-    `graph_`
-        Graph constructed from samples or precomputed
+    `affinity_matrix_`
+        affinity_matrix constructed from samples or precomputed
 
     References
     ----------
@@ -116,7 +116,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
             return self.affinity_matrix_
         try:
-            self.affinity_matrix_ = affinity(X)
+            self.affinity_matrix_ = self.affinity(X)
             return self
         except:
             raise ValueError(
