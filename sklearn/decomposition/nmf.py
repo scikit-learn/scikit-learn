@@ -610,19 +610,17 @@ def _generalized_KL(x, y, eps=1.e-8):
 def _sparse_dot(a, b, refmat):
     """Computes dot product of a and b on indices where refmat is nonnzero
     and returns sparse csr matrix.
+
+    Params
+    ------
+    a, b: dense arrays
+    refmat: sparse matrix
+
+    Dot product of a and b must have refmat's shape.
     """
-    c = sp.lil_matrix(refmat.shape)
-    # TODO Optimize... (17/09/2012)
-    for i, j in zip(*refmat.nonzero()):
-        c[i, j] = np.multiply(a[i, :], b[:, j]).sum()
-    # To implement: more efficient ?
-    # >> ii, jj = refmat.nonzeros()
-    # >> a[ii, :] -> rotate axis
-    # >> multiply with
-    # >> b[:, jj] -> rotate axis
-    # >> sum axis -1
-    # >> build sp.coo_matrix
-    # >> transform to lil or other
+    ii, jj = refmat.nonzero()
+    dot_vals = np.multiply(a[ii, :], b.T[jj, :]).sum(axis=1)
+    c = sp.coo_matrix((dot_vals, (ii, jj)), shape=refmat.shape)
     return c.tocsr()
 
 

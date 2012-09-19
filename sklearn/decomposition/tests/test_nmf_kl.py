@@ -1,9 +1,9 @@
 import unittest
 
 import numpy as np
-from scipy.sparse import csr_matrix
+import scipy.sparse as sp
 
-from ..nmf import _generalized_KL, KLdivNMF, _normalize_sum, _scale
+from ..nmf import _generalized_KL, KLdivNMF, _normalize_sum, _scale, _sparse_dot
 
 
 def random_NN_matrix(h, w):
@@ -184,8 +184,10 @@ class TestSparseUpdates(TestUpdates):
 
     def setUp(self):
         # TODO switch to sparse.rand
-        self.X = csr_matrix(random_NN_matrix(self.n_samples, self.n_features)
-                * (np.random.random((self.n_samples, self.n_features)) > .5))
+        self.X = sp.csr_matrix(
+                random_NN_matrix(self.n_samples, self.n_features)
+                * (np.random.random((self.n_samples, self.n_features)) > .5)
+                )
         self.W = random_NN_matrix(self.n_samples, self.n_components)
         self.H = random_NN_matrix(self.n_components, self.n_features)
         self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-4,
@@ -211,3 +213,14 @@ class TestFitTransform(unittest.TestCase):
         W, errors = self.nmf.fit_transform(X, return_errors=True)
         print errors[-1] / errors[0]
         self.assertTrue(errors[-1] < errors[0] * 1.e-3)
+
+
+class TestSparseDot(unittest.TestCase):
+
+    def test_correct(self):
+        ref = sp.rand(5, 6, .3)
+        a = np.random.random((5, 7))
+        b = np.random.random((7, 6))
+        ok = np.multiply(np.dot(a, b), (ref.todense() != 0))
+        ans = _sparse_dot(a, b, ref).todense()
+        self.assertTrue(np.allclose(ans, ok))
