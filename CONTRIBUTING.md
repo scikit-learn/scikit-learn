@@ -2,6 +2,12 @@
 Contributing code
 =================
 
+**Note:** This is just to get started, visit 
+[**Contributing page**](http://scikit-learn.org/stable/developers/index.html#coding-guidelines) for the
+full contributor's guide. Make sure to read it carefully to make the
+code review process go as smoothly as possible and maximize the
+likelihood of your contribution to get merged.
+
 How to contribute
 -----------------
 
@@ -92,7 +98,7 @@ tools:
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
-list or on the GitHub wiki).
+list or on the GitHub issue).
 
 Easy Issues
 -----------
