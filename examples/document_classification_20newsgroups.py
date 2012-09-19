@@ -32,6 +32,7 @@ import pylab as pl
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
@@ -190,7 +191,8 @@ def benchmark(clf):
 
 
 results = []
-for clf, name in ((Perceptron(n_iter=50), "Perceptron"),
+for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+                  (Perceptron(n_iter=50), "Perceptron"),
                   (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
