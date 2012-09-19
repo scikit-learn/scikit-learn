@@ -15,7 +15,6 @@ from ..neighbors import kneighbors_graph
 from ..metrics.pairwise import pairwise_kernels
 from ..metrics.pairwise import rbf_kernel
 
-from IPython.core.debugger import Tracer; debug_here = Tracer()
 
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
     """Spectral Embedding
@@ -45,13 +44,12 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
          - 'precomputed' : precomputed graph.
          - [callable] : take in a array X (n_samples, n_features) and return
          a (n_samples, n_samples) adjacent graph.
-         
+
         Default: "knn"
 
     gamma : float, optional
         Kernel coefficient for knn graph.
         Default: 1/n_features.
-    
 
     Attributes
     ----------
@@ -75,10 +73,9 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
     """
 
-    def __init__(self, n_components=None, affinity="nn", gamma=None, 
-                 fit_inverse_transform=False,
-                 random_state=None, mode = None,
-                 eigen_solver = None, n_neighbors = 5):
+    def __init__(self, n_components=None, affinity="nn", gamma=None,
+                 fit_inverse_transform=False, random_state=None,
+                 eigen_solver=None, n_neighbors=5):
         if affinity not in {'precomputed', 'rbf', 'nn'}:
             raise ValueError(
                 "Only precomputed, rbf, knn graph supported.")
@@ -92,27 +89,29 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
         self.eigen_solver = eigen_solver
-        self.mode = mode
         self.n_neighbors = n_neighbors
 
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
 
-
     def _get_affinity_matrix(self, X, Y=None):
         if self.affinity == 'precomputed':
             self.affinity_matrix_ = X
             return self.affinity_matrix_
         if self.affinity == 'nn':
-            if self.gamma == None:
+            if self.gamma is None:
                 self.gamma = 1.0 / X.shape[1]
-            self.affinity_matrix_ = kneighbors_graph(X,self.n_neighbors, mode='distance')
-            self.affinity_matrix_ = (self.affinity_matrix_ + self.affinity_matrix_.T) / 2.0
-            self.affinity_matrix_.data = np.exp(-self.affinity_matrix_.data**2 / self.gamma / self.gamma)
+            self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors,
+                                                     mode='distance')
+            self.affinity_matrix_ = (self.affinity_matrix_ +
+                                     self.affinity_matrix_.T) / 2.0
+            self.affinity_matrix_.data = \
+                np.exp(-self.affinity_matrix_.data ** 2 /
+                       2.0 / self.gamma / self.gamma)
             return self.affinity_matrix_
         if self.affinity == 'rbf':
-            if self.gamma == None:
+            if self.gamma is None:
                 self.gamma = 1.0 / X.shape[1]
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
             return self.affinity_matrix_
@@ -120,10 +119,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             self.affinity_matrix_ = affinity(X)
             return self
         except:
-            raise ValueError("%s is not a valid graph type. Valid kernels are: "
-                        "knn, precomputed and callable."
-                        % self.affinity)
-
+            raise ValueError(
+                "%s is not a valid graph type. Valid kernels are: "
+                "knn, precomputed and callable."
+                % self.affinity)
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -133,7 +132,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         X: array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
-            
+
            array-like, shape (n_samples, n_samples)
             If self.precomputed == true
             Precomputed adjacency graph computed from samples
@@ -148,7 +147,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         # get the embedding
         self.embedding_ = self._spectra_embedding(adjacency)
         return self
-
 
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and transform X.
@@ -170,7 +168,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self.fit(X)
         return self.embedding_
 
-
     def transform(self, X):
         """Transform new points
 
@@ -186,13 +183,11 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         raise NotImplementedError(
             "Out of sample extension is currently not supported")
 
-
     def fit_inverse_transform(self, affinity):
         """ Fit's using kernel K"""
         # inverse tranform not supported
         raise NotImplementedError(
             "Inverse transformation is not currently not supported")
-
 
     def _spectra_embedding(self, adjacency):
         """Project the sample on the first eigen vectors of the graph Laplacian
@@ -233,16 +228,17 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         try:
             from pyamg import smoothed_aggregation_solver
         except ImportError:
-            if self.mode == "amg":
-                raise ValueError("The mode was set to 'amg', but pyamg is "
-                                 "not available.")
+            if self.eigen_solver == "amg":
+                raise ValueError(
+                    "The eigen_solver was set to 'amg', but pyamg is "
+                    "not available.")
         n_nodes = adjacency.shape[0]
         # XXX: Should we check that the matrices given is symmetric
-        if self.mode is None:
-            self.mode = 'arpack'
+        if self.eigen_solver is None:
+            self.eigen_solver = 'arpack'
         laplacian, dd = graph_laplacian(adjacency,
                                         normed=True, return_diag=True)
-        if (self.mode == 'arpack'
+        if (self.eigen_solver == 'arpack'
             or not sparse.isspmatrix(laplacian)
             or n_nodes < 5 * self.n_components):
             # lobpcg used with mode='amg' has bugs for low number of nodes
@@ -283,7 +279,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             lambdas, diffusion_map = eigsh(-laplacian, k=self.n_components,
                                            sigma=1.0, which='LM')
             embedding = diffusion_map.T[::-1] * dd
-        elif self.mode == 'amg':
+        elif self.eigen_solver == 'amg':
             # Use AMG to get a preconditioner and speed up the eigenvalue
             # problem.
             laplacian = laplacian.astype(np.float)  # lobpcg needs native float
@@ -299,5 +295,5 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 raise ValueError
         else:
             raise ValueError("Unknown value for mode: '%s'."
-                             "Should be 'amg' or 'arpack'" % self.mode)
+                             "Should be 'amg' or 'arpack'" % self.eigen_solver)
         return embedding
