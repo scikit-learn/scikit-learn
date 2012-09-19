@@ -12,6 +12,15 @@ from scipy.sparse.sparsetools import coo_todense
 from . import check_random_state
 from .fixes import qr_economic
 
+# coo_todense has changed signature in Mars:
+coo_todense_extra_arg = False
+try:
+    coo_todense(2, 2, 2, np.array([1, 2], np.int32),
+                np.array([1, 2], np.int32), np.ones(2), np.ones(4))
+except NotImplementedError:
+    coo_todense_extra_arg = True
+
+
 
 def norm(v):
     v = np.asarray(v)
@@ -84,8 +93,12 @@ def safe_sparse_dot(a, b, dense_output=False):
             # Save time and space by using the preallocated output
             ret = ret.tocoo()
             dense_output.fill(0.)
-            coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
-                        ret.col, ret.data, dense_output.ravel())
+            if coo_todense_extra_arg:
+                coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
+                            ret.col, ret.data, dense_output.ravel(), 0)
+            else:
+                coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
+                            ret.col, ret.data, dense_output.ravel())
         else:
             dense_output[:] = ret
         return dense_output
