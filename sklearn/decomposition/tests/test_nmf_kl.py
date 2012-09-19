@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from ..nmf import _generalized_KL, KLdivNMF, _normalize_sum, _scale
 
@@ -167,14 +168,29 @@ class TestUpdates(unittest.TestCase):
         self.assertTrue(is_NN(H))
 
     def test_decreases_KL(self):
-        dkl_prev = _generalized_KL(self.X, self.W.dot(self.H))
+        dkl_prev = self.nmf.error(self.X, self.W)
         W = self.nmf._update(self.X, self.W, _fit=True)
-        dkl_next = _generalized_KL(self.X, W.dot(self.nmf.components_))
+        dkl_next = self.nmf.error(self.X, W)
         self.assertTrue(dkl_prev > dkl_next)
 
     def test_no_compenents_update(self):
         self.nmf._update(self.X, self.W, _fit=False)
         self.assertTrue((self.nmf.components_ == self.H).all())
+
+
+class TestSparseUpdates(TestUpdates):
+    """Checks that updates are OK with sparse input.
+    """
+
+    def setUp(self):
+        # TODO switch to sparse.rand
+        self.X = csr_matrix(random_NN_matrix(self.n_samples, self.n_features)
+                * (np.random.random((self.n_samples, self.n_features)) > .5))
+        self.W = random_NN_matrix(self.n_samples, self.n_components)
+        self.H = random_NN_matrix(self.n_components, self.n_features)
+        self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-4,
+            max_iter=200, eps=1.e-8, subit=10)
+        self.nmf.components_ = self.H
 
 
 class TestFitTransform(unittest.TestCase):
@@ -189,6 +205,7 @@ class TestFitTransform(unittest.TestCase):
         # Last errors should be very close
         self.assertTrue(abs(errors[-1] - errors[-2]) < errors[0] * 1.e-2)
 
+    # TODO Fix: still fails often (error is not small enough) (18/09/2012)
     def test_zero_error_on_fact_data(self):
         X = np.dot(random_NN_matrix(5, 2), random_NN_matrix(2, 3))
         W, errors = self.nmf.fit_transform(X, return_errors=True)
