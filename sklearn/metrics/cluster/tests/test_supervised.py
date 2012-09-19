@@ -181,7 +181,7 @@ def test_exactly_zero_info_score():
 
 
 def test_v_measure_and_mi(seed=36):
-    """Check relation between v_measure, entropy and and mi"""
+    """Check relation between v_measure, entropy and mutual information"""
     for i in np.logspace(1, 4, 4):
         random_state = np.random.RandomState(seed)
         labels_a, labels_b = random_state.random_integers(0, 10, i),\
