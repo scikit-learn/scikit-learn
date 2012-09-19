@@ -541,6 +541,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     contingency_nm = contingency[nnz]
     log_contingency_nm = np.log(contingency_nm)
     contingency_nm /= contingency_sum
+    # log(a / b) should be calculated as log(a) - log(b) for
+    # possible loss of precision
     log_outer = -np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum))
           + contingency_nm * log_outer)
@@ -772,4 +774,6 @@ def entropy(labels):
     pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
+    # log(a / b) should be calculated as log(a) - log(b) for
+    # possible loss of precision
     return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
