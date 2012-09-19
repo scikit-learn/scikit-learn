@@ -46,7 +46,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         Default: "nearest_neighbors"
 
     gamma : float, optional
-        Affinity coefficient for knn graph.
+        Affinity coefficient for rbf graph.
 
         Default: 1/n_features.
 
@@ -127,14 +127,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             if self.gamma is None:
                 self.gamma = 1.0 / X.shape[1]
             if self.n_neighbors is None:
-                self.n_neighbors = np.max(int(X.shape[0] / 10), 1)
-            self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors,
-                                                     mode='distance')
-            self.affinity_matrix_ = (self.affinity_matrix_ +
-                                     self.affinity_matrix_.T) / 2.0
-            self.affinity_matrix_.data = \
-                np.exp(-self.affinity_matrix_.data ** 2 /
-                       2.0 / self.gamma / self.gamma)
+                self.n_neighbors = max(int(X.shape[0] / 10), 1)
+            self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors)
             return self.affinity_matrix_
         if self.affinity == 'rbf':
             if self.gamma is None:
