@@ -117,9 +117,9 @@
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
                                   $(this).children('ul').slideToggle('slow');
                         }
-                        return true;
+                        return true; //Makes links clickable
                         })
-			.mousedown(function(event){ return false; })
+			.mousedown(function(event){ return false; }) //Firefox highlighting fix
                         .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                         .children('ul').hide();
                 $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'none'});
