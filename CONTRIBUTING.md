@@ -2,11 +2,11 @@
 Contributing code
 =================
 
-**Note:** This is just to get started, visit 
-[**Contributing page**](http://scikit-learn.org/stable/developers/index.html#coding-guidelines) for the
-full contributor's guide. Make sure to read it carefully to make the
-code review process go as smoothly as possible and maximize the
-likelihood of your contribution to get merged.
+**Note: This document is just to get started, visit [**Contributing
+page**](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
+for the full contributor's guide. Make sure to read it carefully to make
+the code review process go as smoothly as possible and maximize the
+likelihood of your contribution to get merged.**
 
 How to contribute
 -----------------
@@ -121,7 +121,7 @@ doc/ directory.
 
 You can edit the documentation using any text editor, and then generate
 the HTML output by typing ``make html`` from the doc/ directory.
-Alternatively, ``make html-noplot`` can be used to quickly generate the
+Alternatively, ``make`` can be used to quickly generate the
 documentation without the example gallery. The resulting HTML files will
 be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
