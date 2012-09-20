@@ -11,6 +11,8 @@ Changelog
    - :class:`feature_selection.SelectPercentile` now breaks ties deterministically
      instead of returning all equally ranked features.
 
+   - Speed up of :func:`metrics.precision_recall_curve` by Conrad Lee.
+
 
 .. _changes_0_12:
 
