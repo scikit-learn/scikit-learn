@@ -53,7 +53,9 @@ def test_graph_lasso_cv(random_state=1):
     orig_stdout = sys.stdout
     try:
         sys.stdout = StringIO()
-        # We need verbose very high so that Parallel prints on stdout
+        # Use a high verbosity, to test the printing code, but use a new
+        # logger ('test', rather than the default 'sklearn') that does
+        # not echo on the stdout
         logger = ProgressLogger(logger='test', verbosity=100)
         GraphLassoCV(verbose=logger, alphas=3).fit(X)
     finally:
