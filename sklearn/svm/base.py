@@ -200,7 +200,7 @@ class BaseLibSVM(BaseEstimator):
             kernel = 'precomputed'
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        self._get_logger.progress('[LibSVM]')
+        self._get_logger().progress('[LibSVM]')
         fit(X, y, sample_weight, solver_type, kernel)
 
         self.shape_fit_ = X.shape
@@ -675,7 +675,7 @@ class BaseLibLinear(BaseEstimator):
         else:
             train = liblinear.train_wrap
 
-        self._get_logger.progress('[LibLinear]')
+        self._get_logger().progress('[LibLinear]')
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_label_, self.class_weight_)
