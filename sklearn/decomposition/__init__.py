@@ -13,7 +13,6 @@ from .dict_learning import dict_learning, dict_learning_online, sparse_encode,\
                            DictionaryLearning, MiniBatchDictionaryLearning,\
                            SparseCoder
 from .factor_analysis import FactorAnalysis
-from .spectra_embedding import SpectralEmbedding
 
 __all__ = ['DictionaryLearning',
            'FastICA',
@@ -27,7 +26,6 @@ __all__ = ['DictionaryLearning',
            'RandomizedPCA',
            'SparseCoder',
            'SparsePCA',
-           'SpectralEmbedding',
            'dict_learning',
            'dict_learning_online',
            'fastica',
