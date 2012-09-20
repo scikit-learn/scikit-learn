@@ -10,7 +10,6 @@ Generalized Linear Model for a complete discussion.
 # License: BSD Style.
 
 from math import log
-import sys
 import warnings
 
 import numpy as np
@@ -218,7 +217,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             logger.progress("%s\t\t%s\t\t%s\t\t%s\t\t%s",
                             n_iter, active[-1], '', n_active, C,
-                            verbosity_offset=1)
+                            verbosity_offset=-1)
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
@@ -339,7 +338,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             logger.progress("%s\t\t%s\t\t%s\t\t%s\t\t%s",
                             n_iter, '', drop_idx, n_active, abs(temp),
-                            verbosity_offset=1)
+                            verbosity_offset=-1)
 
     if return_path:
         # resize coefs in case of early stop
