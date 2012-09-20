@@ -5,6 +5,7 @@ import os
 import warnings
 import sys
 import traceback
+from io import BytesIO
 
 import numpy as np
 from scipy import sparse
@@ -495,12 +496,22 @@ def test_configure():
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
+        old_stdout = sys.stdout
+        my_stdout = BytesIO()
+        sys.stdout = my_stdout
         sys.argv = ['setup.py', 'config']
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore',  UserWarning)
             execfile('setup.py', dict(__name__='__main__'))
+    except Exception, e:
+        try:
+            print my_stdout.getvalue()
+        except:
+            pass
+        raise e
     finally:
+        sys.stdout = old_stdout
         sys.argv = old_argv
         os.chdir(cwd)
