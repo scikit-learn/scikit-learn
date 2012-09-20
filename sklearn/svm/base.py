@@ -113,7 +113,7 @@ class BaseLibSVM(BaseEstimator):
         kernel = self.kernel
         return kernel == "precomputed" or hasattr(kernel, "__call__")
 
-    def fit(self, X, y, class_weight=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -159,13 +159,6 @@ class BaseLibSVM(BaseEstimator):
         if self.impl != "one_class" and len(np.unique(y)) < 2:
             raise ValueError("The number of classes has to be greater than"
                     " one.")
-
-        if class_weight != None:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-            self.class_weight = class_weight
 
         sample_weight = np.asarray([] if sample_weight is None
                                       else sample_weight, dtype=np.float64)
@@ -624,7 +617,7 @@ class BaseLibLinear(BaseEstimator):
                              + error_string)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, y, class_weight=None):
+    def fit(self, X, y):
         """Fit the model according to the given training data.
 
         Parameters
@@ -650,13 +643,6 @@ class BaseLibLinear(BaseEstimator):
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                     " one.")
-
-        if class_weight != None:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-            self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()

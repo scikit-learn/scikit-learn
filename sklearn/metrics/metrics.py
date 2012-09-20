@@ -1027,30 +1027,6 @@ def mean_squared_error(y_true, y_pred):
     return np.mean((y_pred - y_true) ** 2)
 
 
-@deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
-            instead; to be removed in v0.13""")
-def mean_square_error(y_true, y_pred):
-    """Cumulated square error regression loss
-
-    Positive floating point value: the best value is 0.0.
-
-    return the mean square error
-
-    Parameters
-    ----------
-    y_true : array-like
-
-    y_pred : array-like
-
-    Returns
-    -------
-    loss : float
-
-    """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.linalg.norm(y_pred - y_true) ** 2
-
-
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     """
     Cumulated hinge loss (non-regularized).

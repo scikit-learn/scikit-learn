@@ -450,8 +450,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
         return self
 
-    def partial_fit(self, X, y, classes=None,
-                    class_weight=None, sample_weight=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -478,12 +477,6 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        if class_weight is not None:
-            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
-                          "Set it on initialization instead.",
-                          DeprecationWarning, stacklevel=2)
-            self.class_weight = class_weight
         return self._partial_fit(X, y, n_iter=1, classes=classes,
                                  sample_weight=sample_weight)
 
