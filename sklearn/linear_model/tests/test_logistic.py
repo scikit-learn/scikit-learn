@@ -94,6 +94,18 @@ def test_inconsistent_input():
             rng.random_sample((3, 12)))
 
 
+def test_write_parameters():
+    """Test that we can write to coef_ and intercept_"""
+    #rng = np.random.RandomState(0)
+    #X = rng.random_sample((5, 10))
+    #y = np.ones(X.shape[0])
+    clf = logistic.LogisticRegression()
+    clf.fit(X, Y1)
+    clf.coef_[:] = 0
+    clf.intercept_[:] = 0
+    assert_array_equal(clf.decision_function(X), 0)
+
+
 @raises(ValueError)
 def test_nan():
     """Test proper NaN handling.
