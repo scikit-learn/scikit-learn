@@ -1020,7 +1020,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
         else:
             score = score_func(y[test], estimator.predict(X[test]))
     logger = get_logger(verbosity=verbose)
-    logger.progress("score: %f", msg_vars=(score, ))
+    logger.progress("score: %f", score, )
     return score
 
 

@@ -153,8 +153,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
             unconverged = np.sum((se == convergence_iter) +\
                                  (se == 0)) != n_samples
             if (not unconverged and (K > 0)) or (it == max_iter):
-                logger.progress("Converged after %d iterations.",
-                                msg_vars=(it, ))
+                logger.progress("Converged after %d iterations.", it)
                 break
     else:
         logger.progress("Did not converged")

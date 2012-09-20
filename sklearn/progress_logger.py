@@ -54,8 +54,11 @@ class ProgressLogger(object):
         self.info = logger.info
         self.error = logger.error
 
-    def progress(self, message, msg_vars=(), short_message=None,
-                 verbosity_offset=0):
+    def progress(self, message, *msg_vars, **options):
+        verbosity_offset = options.pop('verbosity_offset', 0)
+        short_message = options.pop('short_message', None)
+        if options:
+            raise TypeError('Unknown arguments %s' % options.keys())
         verbosity_offset += self.verbosity
         if verbosity_offset <= 0:
             return
@@ -87,12 +90,12 @@ class ProgressLogger(object):
                              verbosity=self.verbosity + verbosity_offset)
         return logger
 
-    def warning(self, message, msg_vars=()):
+    def warning(self, message, *msg_vars):
         # Does some logic so that warnings.warn is called in addition to
         # logging.
         # XXX: should call warnings.warn and be clever so that the
         # message does not pop up twice
-        return self.logger.warning(message, msg_vars)
+        return self.logger.warning(message, *msg_vars)
 
     #def progress_context(self, verbosity_offset=-1):
     #    pass

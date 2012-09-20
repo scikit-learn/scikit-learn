@@ -388,7 +388,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
         # computation of the means is also called the M-step of EM
         centers = _centers(X, labels, n_clusters, distances)
 
-        logger.progress('Iteration %i, inertia %s', msg_vars=(i, inertia))
+        logger.progress('Iteration %i, inertia %s', i, inertia)
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -397,7 +397,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
 
         if np.sum((centers_old - centers) ** 2) < tol:
             logger.progress('Converged to similar centers at iteration %i',
-                            msg_vars=(i, ))
+                            i)
             break
     return best_labels, best_inertia, best_centers
 
@@ -924,16 +924,15 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
     # Log progress to be able to monitor convergence
     logger.progress(
             'iteration %d/%d: batch inertia: %.3f, ewa inertia: %.3f',
-            msg_vars=(
                 iteration_idx + 1, n_iterations, batch_inertia,
-                ewa_inertia),
+                ewa_inertia,
             )
 
     # Early stopping based on absolute tolerance on squared change of
     # centers postion (using EWA smoothing)
     if tol > 0.0 and ewa_diff < tol:
         logger.progress('Converged (small centers change) at iteration %d/%d',
-                        msg_vars=(iteration_idx + 1, n_iterations))
+                        iteration_idx + 1, n_iterations)
         return True
 
     # Early stopping heuristic due to lack of improvement on smoothed inertia
@@ -949,7 +948,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
                 and no_improvement >= model.max_no_improvement):
         logger.progress('Converged (no improvement in inertia)'
                    ' at iteration %d/%d',
-                   msg_vars=(iteration_idx + 1, n_iterations))
+                   iteration_idx + 1, n_iterations)
         return True
 
     # update the convergence context to maintain state across sucessive calls:
@@ -1113,7 +1112,7 @@ class MiniBatchKMeans(KMeans):
         best_inertia = None
         for init_idx in range(self.n_init):
             logger.progress("Init %d/%d with method: %s",
-                            msg_vars=(init_idx + 1, self.n_init, self.init))
+                            init_idx + 1, self.n_init, self.init)
             counts = np.zeros(self.n_clusters, dtype=np.int32)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1138,7 +1137,7 @@ class MiniBatchKMeans(KMeans):
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)
             logger.progress("Inertia for init %d/%d: %f",
-                        msg_vars=(init_idx + 1, self.n_init, inertia))
+                            init_idx + 1, self.n_init, inertia)
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts

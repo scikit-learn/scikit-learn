@@ -79,7 +79,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                      for k, v in clf_params.iteritems()))
-        logger.progress("%s %s", msg_vars=(msg, (64 - len(msg)) * '.'))
+        logger.progress("%s %s", msg, (64 - len(msg)) * '.')
 
     X, y = check_arrays(X, y, sparse_format="csr")
     # update parameters of the classifier after a copy of its base structure
@@ -136,8 +136,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         end_msg = "%s -%s" % (msg,
                               log_fmt.short_format_time(time.time() -
                                                        start_time))
-        logger.progress("%s %s",
-                        msg_vars=((64 - len(end_msg)) * '.', end_msg))
+        logger.progress("%s %s", (64 - len(end_msg)) * '.', end_msg)
     return this_score, clf_params, this_n_test_samples
 
 
