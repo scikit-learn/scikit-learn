@@ -502,9 +502,6 @@ From text
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
-For dense data
---------------
-
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -548,27 +545,6 @@ For dense data
    linear_model.lasso_stability_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
-
-For sparse data
----------------
-
-.. automodule:: sklearn.linear_model.sparse
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`linear_model` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   linear_model.Lasso
-   linear_model.ElasticNet
-   linear_model.sparse.SGDClassifier
-   linear_model.sparse.SGDRegressor
-   linear_model.LogisticRegression
 
 
 .. _manifold_ref:

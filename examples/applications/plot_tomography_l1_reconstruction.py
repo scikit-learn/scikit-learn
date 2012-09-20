@@ -21,10 +21,9 @@ The tomography projection operation is a linear transformation. In
 addition to the data-fidelity term corresponding to a linear regression,
 we penalize the L1 norm of the image to account for its sparsity. The
 resulting optimization problem is called the :ref:`lasso`. We use the
-class :class:`sklearn.linear_model.sparse.Lasso`, that uses the
-coordinate descent algorithm. Importantly, this implementation is more
-computationally efficient on a sparse matrix, as the projection operator
-used here.
+class :class:`sklearn.linear_model.Lasso`, that uses the coordinate descent
+algorithm. Importantly, this implementation is more computationally efficient
+on a sparse matrix, than the projection operator used here.
 
 The reconstruction with L1 penalization gives a result with zero error
 (all pixels are successfully labeled with 0 or 1), even if noise was
