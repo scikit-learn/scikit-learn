@@ -213,9 +213,9 @@ $(function () {
                                 if (this == event.target) {
                                         $(this).css('list-style-image',
                                                    (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
-                                                   $(this).children('ul').toggle('slow');
+                                                   $(this).children('ul').slideToggle('slow');
                                 }
-                                return false;
+                                return true;
                         })
                         .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                         .children('ul').hide();
