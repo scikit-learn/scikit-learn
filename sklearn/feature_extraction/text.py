@@ -206,7 +206,7 @@ class CountVectorizer(BaseEstimator):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=ur"\b\w\w+\b",
+                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
                  ngram_range=(1, 1),
                  min_n=None, max_n=None, analyzer='word',
                  max_df=1.0, min_df=2, max_features=None,
@@ -836,7 +836,7 @@ class TfidfVectorizer(CountVectorizer):
     def __init__(self, input='content', charset='utf-8',
             charset_error='strict', strip_accents=None, lowercase=True,
             preprocessor=None, tokenizer=None, analyzer='word',
-            stop_words=None, token_pattern=ur"\b\w\w+\b", min_n=None,
+            stop_words=None, token_pattern=ur"(?u)\b\w\w+\b", min_n=None,
             max_n=None, ngram_range=(1, 1), max_df=1.0, min_df=2,
             max_features=None, vocabulary=None, binary=False, dtype=long,
             norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
