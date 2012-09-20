@@ -7,7 +7,6 @@ estimator.
 # Copyright: INRIA
 import warnings
 import operator
-import sys
 import time
 
 import numpy as np
@@ -22,6 +21,7 @@ from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
+from ..progress_logger import get_logger
 
 
 ###############################################################################
@@ -128,6 +128,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
     """
+    logger = get_logger(verbosity=verbose)
     _, n_features = emp_cov.shape
     if alpha == 0:
         return emp_cov, linalg.inv(emp_cov)
@@ -186,10 +187,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 covariance_[indices != idx, idx] = coefs
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
-            if verbose:
-                print (
-                    '[graph_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
-                                                % (i, cost, d_gap))
+            logger.progress('Iteration % 3i, cost % 3.2e, dual gap %.3e',
+                            i, cost, d_gap)
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
@@ -304,7 +303,8 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
-    inner_verbose = max(0, verbose - 1)
+    logger = get_logger(verbose)
+    inner_logger = logger.clone()
     emp_cov = empirical_covariance(X)
     if cov_init is None:
         covariance_ = emp_cov.copy()
@@ -321,7 +321,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             covariance_, precision_ = graph_lasso(emp_cov, alpha=alpha,
                                     cov_init=covariance_, mode=mode, tol=tol,
                                     max_iter=max_iter,
-                                    verbose=inner_verbose)
+                                    verbose=inner_logger)
             covariances_.append(covariance_)
             precisions_.append(precision_)
             if X_test is not None:
@@ -334,14 +334,10 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             if not np.isfinite(this_score):
                 this_score = -np.inf
             scores_.append(this_score)
-        if verbose == 1:
-            sys.stderr.write('.')
-        elif verbose:
-            if X_test is not None:
-                print '[graph_lasso_path] alpha: %.2e, score: %.2e' % (alpha,
-                                                            this_score)
-            else:
-                print '[graph_lasso_path] alpha: %.2e' % alpha
+            msg = 'alpha: %.2e' % alpha
+        else:
+            msg = 'alpha: %.2e, score: %.2e' % (alpha, this_score)
+        logger.progress(msg, short_message='.')
     if X_test is not None:
         return covariances_, precisions_, scores_
     return covariances_, precisions_
@@ -429,11 +425,12 @@ class GraphLassoCV(GraphLasso):
         emp_cov = empirical_covariance(X)
 
         cv = check_cv(self.cv, X, y, classifier=False)
+        logger = self._get_logger()
+        inner_logger = logger.clone()
 
         # List of (alpha, scores, covs)
         path = list()
         n_alphas = self.alphas
-        inner_verbose = max(0, self.verbose - 1)
 
         if operator.isSequenceType(n_alphas):
             alphas = self.alphas
@@ -453,17 +450,17 @@ class GraphLassoCV(GraphLasso):
                 # No need to see the convergence warnings on this grid:
                 # they will always be points that will not converge
                 # during the cross-validation
-                warnings.simplefilter('ignore',  ConvergenceWarning)
+                warnings.simplefilter('ignore', ConvergenceWarning)
                 # Compute the cross-validated loss on the current grid
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
-                    verbose=self.verbose)(
+                    verbose=logger.verbosity)(
                         delayed(graph_lasso_path)(
                             X[train], alphas=alphas,
                             X_test=X[test], mode=self.mode,
                             tol=self.tol,
                             max_iter=int(.1 * self.max_iter),
-                            verbose=inner_verbose)
+                            verbose=inner_logger)
                         for (train, test), cov_init in zip(cv, covs_init))
 
             # Little danse to transform the list in what we need
@@ -514,9 +511,9 @@ class GraphLassoCV(GraphLasso):
             alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                  n_alphas + 2)
             alphas = alphas[1:-1]
-            if self.verbose and n_refinements > 1:
-                print '[GraphLassoCV] Done refinement % 2i out of %i: % 3is'\
-                        % (i + 1, n_refinements, time.time() - t0)
+            if n_refinements > 1:
+                logger.progress('Done refinement % 2i out of %i: % 3is',
+                        i + 1, n_refinements, time.time() - t0)
 
         path = zip(*path)
         cv_scores = list(path[1])
@@ -525,7 +522,7 @@ class GraphLassoCV(GraphLasso):
         alphas.append(0)
         cv_scores.append(cross_val_score(EmpiricalCovariance(), X,
                                          cv=cv, n_jobs=self.n_jobs,
-                                         verbose=inner_verbose))
+                                         verbose=inner_logger))
         self.cv_scores = np.array(cv_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
@@ -534,5 +531,5 @@ class GraphLassoCV(GraphLasso):
         # Finally fit the model with the selected alpha
         self.covariance_, self.precision_ = graph_lasso(emp_cov,
                         alpha=best_alpha, mode=self.mode, tol=self.tol,
-                        max_iter=self.max_iter, verbose=inner_verbose)
+                        max_iter=self.max_iter, verbose=inner_logger)
         return self
