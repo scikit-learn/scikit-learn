@@ -23,6 +23,7 @@ except ImportError:
 
 from sklearn.datasets import load_lfw_pairs
 from sklearn.datasets import load_lfw_people
+from sklearn.datasets.lfw import logger as dataset_logger
 
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
@@ -112,12 +113,22 @@ def teardown_module():
 
 @raises(IOError)
 def test_load_empty_lfw_people():
-    load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    finally:
+        dataset_logger.verbosity = original_verbosity
 
 
 def test_load_fake_lfw_people():
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
-                                 min_faces_per_person=3)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
+                                    min_faces_per_person=3)
+    finally:
+        dataset_logger.verbosity = original_verbosity
 
     # The data is croped around the center as a rectangular bounding box
     # arounthe the face. Colors are converted to gray levels:
@@ -133,8 +144,13 @@ def test_load_fake_lfw_people():
 
     # It is possible to ask for the original data without any croping or color
     # conversion and not limit on the number of picture per person
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
-                                 resize=None, slice_=None, color=True)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
+                                     resize=None, slice_=None, color=True)
+    finally:
+        dataset_logger.verbosity = original_verbosity
     assert_equal(lfw_people.images.shape, (17, 250, 250, 3))
 
     # the ids and class names are the same as previously
@@ -147,16 +163,31 @@ def test_load_fake_lfw_people():
 
 @raises(ValueError)
 def test_load_fake_lfw_people_too_restrictive():
-    load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
+    finally:
+        dataset_logger.verbosity = original_verbosity
 
 
 @raises(IOError)
 def test_load_empty_lfw_pairs():
-    load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    finally:
+        dataset_logger.verbosity = original_verbosity
 
 
 def test_load_fake_lfw_pairs():
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
+    finally:
+        dataset_logger.verbosity = original_verbosity
 
     # The data is croped around the center as a rectangular bounding box
     # arounthe the face. Colors are converted to gray levels:
@@ -171,8 +202,13 @@ def test_load_fake_lfw_pairs():
 
     # It is possible to ask for the original data without any croping or color
     # conversion
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
-                                     resize=None, slice_=None, color=True)
+    try:
+        original_verbosity = dataset_logger.verbosity
+        dataset_logger.verbosity = -100
+        lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
+                                         resize=None, slice_=None, color=True)
+    finally:
+        dataset_logger.verbosity = original_verbosity
     assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 250, 250, 3))
 
     # the ids and class names are the same as previously
