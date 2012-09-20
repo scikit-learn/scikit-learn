@@ -11,7 +11,7 @@ from sklearn.externals.joblib import Parallel, delayed
 FIRST_NAMES = itertools.cycle(['Jane', 'Joe', 'Jack'])
 
 def do_work(logger, msg):
-    logger.progress(msg)
+    logger.progress('Working', short_message=msg)
 
 
 class Employee(HasLogger):
@@ -26,7 +26,7 @@ class Employee(HasLogger):
         Parallel(n_jobs=-1)(delayed(do_work)(log, '.')
                 for _ in range(10))
         log.progress('%s says "Done my chores %s"',
-                msg_vars=(self.name, chore_msg))
+                     self.name, chore_msg)
 
 
 class Boss(HasLogger):
@@ -48,7 +48,7 @@ class Boss(HasLogger):
 
 
 if __name__ == '__main__':
-    boss = Boss(verbose=10000)
+    boss = Boss(verbose=2)
     boss.yell()
 
     from sklearn.progress_logger import setup_logger

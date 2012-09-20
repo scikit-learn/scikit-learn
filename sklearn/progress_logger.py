@@ -62,6 +62,10 @@ class ProgressLogger(object):
         verbosity_offset += self.verbosity
         if verbosity_offset <= 0:
             return
+        if short_message and verbosity_offset <= 1:
+            sys.stdout.write(short_message)
+            sys.stdout.flush()
+            return
         caller_name = self.caller_name
         caller_frame = inspect.currentframe().f_back
         if caller_name is None:
