@@ -107,7 +107,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 raise ValueError("Failed with error code %d" % info)
 
         if y.ndim == 1:
-            return np.ravel(coefs)
+            coefs = np.ravel(coefs)
         return coefs
     else:
         # normal equations (cholesky) method
@@ -129,7 +129,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             A.flat[::n_features + 1] += alpha
             coef = linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
 
-    return coef.T
+        return coef.T
 
 
 class _BaseRidge(LinearModel):
@@ -137,39 +137,15 @@ class _BaseRidge(LinearModel):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.tol = tol
+        self.solver = solver
 
-    def fit(self, X, y, sample_weight=1.0, solver='auto'):
-        """Fit Ridge regression model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
-
-        y : array-like, shape = [n_samples] or [n_samples, n_responses]
-            Target values
-
-        sample_weight : float or numpy array of shape [n_samples]
-            Individual weights for each sample
-
-        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
-            Solver to use in the computational
-            routines. 'dense_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the
-            conjugate gradient solver as found in
-            scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropriate depending on the matrix X.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
+    def fit(self, X, y, sample_weight=1.0, solver=None):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
@@ -241,9 +217,45 @@ class Ridge(_BaseRidge, RegressorMixin):
        tol=0.001)
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, tol=1e-3):
+                 copy_X=True, tol=1e-3, solver="auto"):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
-                normalize=normalize, copy_X=copy_X, tol=tol)
+              normalize=normalize, copy_X=copy_X, tol=tol, solver=solver)
+
+    def fit(self, X, y, sample_weight=1.0, solver=None):
+        """Fit Ridge regression model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : array-like, shape = [n_samples] or [n_samples, n_responses]
+            Target values
+
+        sample_weight : float or numpy array of shape [n_samples]
+            Individual weights for each sample
+
+        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
+            Solver to use in the computational
+            routines. 'dense_cholesky' will use the standard
+            scipy.linalg.solve function, 'sparse_cg' will use the
+            conjugate gradient solver as found in
+            scipy.sparse.linalg.cg while 'auto' will chose the most
+            appropriate depending on the matrix X.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if solver is None:
+            solver = self.solver
+        else:
+            # The fit method should be removed from Ridge when this warning is
+            # removed
+            warnings.warn("solver option in fit will be deprecated in v0.14.")
+
+        return _BaseRidge.fit(self, X, y, solver=solver,
+                              sample_weight=sample_weight)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -296,13 +308,14 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, class_weight=None):
+                 copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
+                 solver="auto"):
         super(RidgeClassifier, self).__init__(alpha=alpha,
                 fit_intercept=fit_intercept, normalize=normalize,
-                copy_X=copy_X, max_iter=max_iter, tol=tol)
+                copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y, solver='auto'):
+    def fit(self, X, y, solver=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -329,6 +342,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             class_weight = {}
         else:
             class_weight = self.class_weight
+
+        if solver is None:
+            solver = self.solver
+        else:
+            warnings.warn("solver option in fit will be deprecated in v0.14.")
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
