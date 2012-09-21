@@ -233,15 +233,15 @@ def discretization(eigen_vec):
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
 
-    EPS = np.finfo(float).eps
-    m = eigen_vec.shape[0]
+    eps = np.finfo(float).eps
+    n_samples,n_components = eigen_vec.shape
     
     # Normalize the eigenvectors to an equal length of a vector of ones. 
     # Reorient the eigenvectors to point in the negative direction with respect
     # to the first element.  This may have to do with constraining the
     # eigenvectors to lie in a specific quadrant to make the discretization
     # search easier.
-    norm_ones = np.linalg.norm(np.ones((m,1)))
+    norm_ones = np.sqrt(n_samples)
     for i in range(eigen_vec.shape[1]):
         eigen_vec[:,i] = (eigen_vec[:,i] / np.linalg.norm(eigen_vec[:,i])) \
                 * norm_ones
@@ -251,39 +251,38 @@ def discretization(eigen_vec):
     # Normalize the rows of the eigenvectors.  Samples should lie on the unit
     # hypersphere centered at the origin.  This transforms the samples in the
     # embedding space to the space of partition matrices.
-    n,k = eigen_vec.shape
     vm = np.sqrt((eigen_vec ** 2).sum(1))[:, np.newaxis]
     eigen_vec = eigen_vec / vm
 
     svd_restarts = 0
-    exitLoop = 0
+    has_converged = False
 
     # If there is an exception we try to randomize and rerun SVD again
     # do this 30 times.
-    while (svd_restarts < 30) and (exitLoop==0):
+    while (svd_restarts < 30) and not has_converged:
 
         # Initialize algorithm with a random ordering of eigenvectors
-        R = np.zeros((k,k))
-        R[:,0] = eigen_vec[np.random.randint(n),:].T
+        R = np.zeros((n_components,n_components))
+        R[:,0] = eigen_vec[np.random.randint(n_samples),:].T
         
-        c = np.zeros((n,1))
-        for j in range(1,k):
+        c = np.zeros((n_samples,1))
+        for j in range(1,n_components):
             c = c + np.abs(eigen_vec.dot(R[:,j-1]))
             R[:,j] = eigen_vec[c.argmin(),:].T
 
         lastObjectiveValue = 0.0
-        nbIterationsDiscretisation = 0
-        nbIterationsDiscretisationMax = 20
+        n_iter = 0
+        n_iter_max = 20
 
-        while exitLoop == 0:
-            nbIterationsDiscretisation = nbIterationsDiscretisation + 1
+        while not has_converged:
+            n_iter += 1
             
             tDiscrete = eigen_vec.dot(R)
             
-            j = np.reshape(np.asarray(tDiscrete.argmax(1)),n)
+            j = np.reshape(np.asarray(tDiscrete.argmax(1)),n_samples)
             eigenvec_discrete = csc_matrix(
-                    (np.ones(len(j)),(range(0,n), np.array(j))),
-                    shape=(n,k))
+                    (np.ones(len(j)),(range(0,n_samples), np.array(j))),
+                    shape=(n_samples,n_components))
             
             tSVD = eigenvec_discrete.T * eigen_vec
 
@@ -293,19 +292,19 @@ def discretization(eigen_vec):
                 print "SVD did not converge, randomizing and trying again"
                 break
             
-            NcutValue = 2.0 * (n - S.sum())
-            if ((abs(NcutValue-lastObjectiveValue) < EPS) or 
-               (nbIterationsDiscretisation > nbIterationsDiscretisationMax)):
-                exitLoop = 1
+            NcutValue = 2.0 * (n_samples - S.sum())
+            if ((abs(NcutValue-lastObjectiveValue) < eps) or 
+               (n_iter > n_iter_max)):
+                has_converged = True
             else:
                 # otherwise calculate rotation and continue
                 lastObjectiveValue=NcutValue
                 R = Vh.T.dot(U.T)
 
-    if exitLoop == 0:
+    if not has_converged:
         raise ValueError('SVD did not converge')
 
-    labels = eigenvec_discrete.toarray().dot(np.diag(np.arange(k))).sum(1)
+    labels = eigenvec_discrete.toarray().dot(np.diag(np.arange(n_components))).sum(1)
 
     return labels
         
