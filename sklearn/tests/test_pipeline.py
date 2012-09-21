@@ -208,6 +208,23 @@ def test_feature_stacker():
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
 
 
+def test_feature_stacker_weights():
+    # test feature stacker with transformer weights
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    pca = RandomizedPCA(n_components=2)
+    select = SelectKBest(k=1)
+    fs = FeatureStacker([("pca", pca), ("select", select)],
+            transformer_weights={"pca": 10})
+    fs.fit(X, y)
+    X_transformed = fs.transform(X)
+    # check against expected result
+    assert_array_almost_equal(X_transformed[:, :-1], 10 * pca.fit_transform(X))
+    assert_array_equal(X_transformed[:, -1],
+            select.fit_transform(X, y).ravel())
+
+
 def test_feature_stacker_feature_names():
     JUNK_FOOD_DOCS = (
         "the pizza pizza beer copyright",
