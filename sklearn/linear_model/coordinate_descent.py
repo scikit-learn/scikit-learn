@@ -21,6 +21,7 @@ from ..utils import array2d, atleast2d_or_csc
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
+from ..progress_logger import get_logger
 
 from . import cd_fast
 
@@ -583,6 +584,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         # at each fit...
 
     n_samples, n_features = X.shape
+    logger = get_logger(verbose)
 
     if hasattr(precompute, '__array__') \
             and not np.allclose(X_mean, np.zeros(n_features)) \
@@ -622,13 +624,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if fit_intercept and not sparse.isspmatrix(X):
             model.fit_intercept = True
             model._set_intercept(X_mean, y_mean, X_std)
-        if verbose:
-            if verbose > 2:
-                print model
-            elif verbose > 1:
-                print 'Path: %03i out of %03i' % (i, n_alphas)
-            else:
-                sys.stderr.write('.')
+        logger.progress('%s', model, verbosity_offset=-2)
+        logger.progress('Path: %03i out of %03i', i, n_alphas,
+                        short_message='.')
         coef_ = model.coef_.copy()
         models.append(model)
     return models
