@@ -15,7 +15,6 @@ better
 import numpy as np
 
 from ..utils import check_arrays
-from ..utils import deprecated
 
 
 def unique_labels(*lists_of_labels):
