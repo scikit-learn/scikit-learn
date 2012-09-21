@@ -15,6 +15,7 @@ from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..linear_model.isotonic_regression_ import isotonic_regression
+from ..progress_logger import get_logger
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,
@@ -64,6 +65,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     """
     n_samples = similarities.shape[0]
     random_state = check_random_state(random_state)
+    logger = get_logger(verbose)
 
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" %
@@ -121,13 +123,12 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = 1. / n_samples * np.dot(B, X)
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
-        if verbose == 2:
-            print 'it: %d, stress %s' % (it, stress)
+        logger.progress('it: %d, stress %s', it, stress,
+                        verbosity_offset=-1)
         if old_stress is not None:
             if(old_stress - stress / dis) < eps:
-                if verbose:
-                    print 'breaking at iteration %d with stress %s' % (it,
-                                                                       stress)
+                logger.progress('breaking at iteration %d with stress %s',
+                                it, stress)
                 break
         old_stress = stress / dis
 

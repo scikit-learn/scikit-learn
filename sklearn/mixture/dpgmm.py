@@ -363,25 +363,30 @@ class DPGMM(GMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
-            print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
-            if end == True:
-                print "Cluster proportions:", self.gamma_.T[1]
-                print "covariance_type:", self.covariance_type
+        logger = self._get_logger()
+        logger.progress("Bound after updating %8s: %f", n,
+                        self.lower_bound(X, z))
+        if end:
+            logger.progress("Cluster proportions: %s", self.gamma_.T[1])
+            logger.progress("covariance_type: %s", self.covariance_type)
 
     def _do_mstep(self, X, z, params):
         """Maximize the variational lower bound
 
         Update each of the parameters to maximize the lower bound."""
-        self._monitor(X, z, "z")
+        if self.verbose > 10:
+            self._monitor(X, z, "z")
         self._update_concentration(z)
-        self._monitor(X, z, "gamma")
+        if self.verbose > 10:
+            self._monitor(X, z, "gamma")
         if 'm' in params:
             self._update_means(X, z)
-        self._monitor(X, z, "mu")
+        if self.verbose > 10:
+            self._monitor(X, z, "mu")
         if 'c' in params:
             self._update_precisions(X, z)
-        self._monitor(X, z, "a and b", end=True)
+        if self.verbose > 10:
+            self._monitor(X, z, "a and b", end=True)
 
     def _initialize_gamma(self):
         "Initializes the concentration parameters"
@@ -737,8 +742,11 @@ class VBGMM(DPGMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
-            print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
-            if end == True:
-                print "Cluster proportions:", self.gamma_
-                print "covariance_type:", self.covariance_type
+        logger = self._get_logger()
+        logger.progress("Bound after updating %8s: %f", n,
+                        self.lower_bound(X, z))
+        if end:
+            logger.progress("Cluster proportions: %s", self.gamma_)
+            logger.progress("covariance_type: %s", self.covariance_type)
+
+

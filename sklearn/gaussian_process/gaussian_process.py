@@ -268,6 +268,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             predictions.
         """
         self.random_state = check_random_state(self.random_state)
+        logger = self._get_logger()
 
         # Force data to 2D numpy.array
         X = array2d(X)
@@ -340,9 +341,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
             # Maximum Likelihood Estimation of the parameters
-            if self.verbose:
-                print("Performing Maximum Likelihood Estimation of the "
-                    + "autocorrelation parameters...")
+            logger.progress("Performing Maximum Likelihood Estimation of the "
+                    "autocorrelation parameters...")
             self.theta_, self.reduced_likelihood_function_value_, par = \
                 self._arg_max_reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value_):
@@ -351,9 +351,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         else:
             # Given parameters
-            if self.verbose:
-                print("Given autocorrelation parameters. "
-                    + "Computing Gaussian Process model parameters...")
+            logger.progress("Given autocorrelation parameters. "
+                    "Computing Gaussian Process model parameters...")
             self.theta_ = self.theta0
             self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
@@ -370,9 +369,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if self.storage_mode == 'light':
             # Delete heavy data (it will be computed again if required)
             # (it is required only when MSE is wanted in self.predict)
-            if self.verbose:
-                print("Light storage mode specified. "
-                    + "Flushing autocorrelation matrix...")
+            logger.progress("Light storage mode specified. "
+                            "Flushing autocorrelation matrix...")
             self.D = None
             self.ij = None
             self.F = None
@@ -421,6 +419,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Run input checks
         self._check_params(n_samples)
+        logger = self._get_logger()
 
         if n_features_X != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
@@ -456,10 +455,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 C = self.C
                 if C is None:
                     # Light storage mode (need to recompute C, F, Ft and G)
-                    if self.verbose:
-                        print("This GaussianProcess used 'light' storage mode "
-                            + "at instanciation. Need to recompute "
-                            + "autocorrelation matrix...")
+                    logger.progress(
+                        "This GaussianProcess used 'light' storage mode "
+                        "at instanciation. Need to recompute "
+                        "autocorrelation matrix...")
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
                     self.C = par['C']
@@ -694,10 +693,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         best_optimal_rlf_value = []
         best_optimal_par = []
 
-        if self.verbose:
-            print "The chosen optimizer is: " + str(self.optimizer)
-            if self.random_start > 1:
-                print str(self.random_start) + " random starts are required."
+        logger = self._get_logger()
+        logger.progress("The chosen optimizer is: %s", self.optimizer)
+        if self.random_start > 1:
+            logger.progress("%s random starts are required.",
+                            self.random_start)
 
         percent_completed = 0.
 
@@ -758,7 +758,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print "%s completed" % (5 * percent_completed)
+                        logger.progress("%s completed",
+                                        (5 * percent_completed))
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -769,15 +770,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Backup of the given atrributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
             corr = self.corr
-            verbose = self.verbose
 
             # This will iterate over fmin_cobyla optimizer
             self.optimizer = 'fmin_cobyla'
-            self.verbose = False
 
             # Initialize under isotropy assumption
-            if verbose:
-                print("Initialize under isotropy assumption...")
+            logger.progress("Initialize under isotropy assumption...")
             self.theta0 = array2d(self.theta0.min())
             self.thetaL = array2d(self.thetaL.min())
             self.thetaU = array2d(self.thetaU.max())
@@ -786,11 +784,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             optimal_theta = theta_iso + np.zeros(theta0.shape)
 
             # Iterate over all dimensions of theta allowing for anisotropy
-            if verbose:
-                print("Now improving allowing for anisotropy...")
+            logger.progress("Now improving allowing for anisotropy...")
             for i in self.random_state.permutation(theta0.size):
-                if verbose:
-                    print "Proceeding along dimension %d..." % (i + 1)
+                logger.progress("Proceeding along dimension %d...", i + 1)
                 self.theta0 = array2d(theta_iso)
                 self.thetaL = array2d(thetaL[0, i])
                 self.thetaU = array2d(thetaU[0, i])
@@ -809,7 +805,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
             self.corr = corr
             self.optimizer = 'Welch'
-            self.verbose = verbose
 
         else:
 

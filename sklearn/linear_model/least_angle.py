@@ -10,7 +10,6 @@ Generalized Linear Model for a complete discussion.
 # License: BSD Style.
 
 from math import log
-import sys
 import warnings
 
 import numpy as np
@@ -22,6 +21,7 @@ from ..base import RegressorMixin
 from ..utils import array2d, arrayfuncs, as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..progress_logger import get_logger
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
@@ -95,6 +95,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
     """
+    logger = get_logger(verbose)
 
     n_features = X.shape[1]
     n_samples = y.size
@@ -137,12 +138,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     else:
         Cov = Xy.copy()
 
-    if verbose:
-        if verbose > 1:
-            print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
-        else:
-            sys.stdout.write('.')
-            sys.stdout.flush()
+    logger.progress("Step\t\tAdded\t\tDropped\t\tActive set size\t\tC",
+                    short_message='.')
 
     tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
     tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
@@ -218,9 +215,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             active.append(indices[n_active])
             n_active += 1
 
-            if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
-                                                            n_active, C)
+            logger.progress("%s\t\t%s\t\t%s\t\t%s\t\t%s",
+                            n_iter, active[-1], '', n_active, C,
+                            verbosity_offset=-1)
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
@@ -339,9 +336,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
-            if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-                                                      n_active, abs(temp))
+            logger.progress("%s\t\t%s\t\t%s\t\t%s\t\t%s",
+                            n_iter, '', drop_idx, n_active, abs(temp),
+                            verbosity_offset=-1)
 
     if return_path:
         # resize coefs in case of early stop

@@ -3,6 +3,7 @@
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD Style.
+from nose.tools import assert_equal
 
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
     assert_raises
@@ -81,7 +82,6 @@ def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    print clf.threshold
     assert_raises(Exception, clf.predict, X)
     assert_raises(Exception, clf.decision_function, X)
     clf.fit(X)
@@ -94,4 +94,4 @@ def test_outlier_detection():
     assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
-    assert(sum(y_pred == -1) == sum(decision_transformed < 0))
+    assert_equal(sum(y_pred == -1), sum(decision_transformed < 0))

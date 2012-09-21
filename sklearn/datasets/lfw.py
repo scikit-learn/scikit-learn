@@ -26,16 +26,15 @@ detector from various online websites.
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
-import logging
 import numpy as np
 import urllib
 
 from .base import get_data_home, Bunch
 from ..externals.joblib import Memory
+from ..progress_logger import get_logger
 
-
-logger = logging.getLogger(__name__)
-
+# Operations in this module are lengthy, we want more verbosity
+logger = get_logger(verbosity=10)
 
 BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
 ARCHIVE_NAME = "lfw.tgz"
@@ -60,7 +59,8 @@ def scale_face(face):
 #
 
 
-def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
+def check_fetch_lfw(data_home=None, funneled=True,
+                    download_if_missing=True, logger=logger):
     """Helper function to download any missing LFW data"""
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
@@ -82,7 +82,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(target_filepath):
             if download_if_missing:
                 url = BASE_URL + target_filename
-                logger.warn("Downloading LFW metadata: %s", url)
+                logger.progress("Downloading LFW metadata: %s", url)
                 urllib.urlretrieve(url, target_filepath)
             else:
                 raise IOError("%s is missing" % target_filepath)
@@ -91,20 +91,22 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                logger.warn("Downloading LFW data (~200MB): %s", archive_url)
+                logger.progress("Downloading LFW data (~200MB): %s",
+                               archive_url)
                 urllib.urlretrieve(archive_url, archive_path)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
         import tarfile
-        logger.info("Decompressing the data archive to %s", data_folder_path)
+        logger.progress("Decompressing the data archive to %s",
+                        data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
         remove(archive_path)
 
     return lfw_home, data_folder_path
 
 
-def _load_imgs(file_paths, slice_, color, resize):
+def _load_imgs(file_paths, slice_, color, resize, logger=logger):
     """Internally used to load images"""
 
     # Try to import imread and imresize from PIL. We do this here to prevent
@@ -147,7 +149,7 @@ def _load_imgs(file_paths, slice_, color, resize):
     # arrays
     for i, file_path in enumerate(file_paths):
         if i % 1000 == 0:
-            logger.info("Loading face #%05d / %05d", i + 1, n_faces)
+            logger.progress("Loading face #%05d / %05d", i + 1, n_faces)
         face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
         if resize is not None:
@@ -167,7 +169,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 #
 
 def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
-                     min_faces_per_person=0):
+                     min_faces_per_person=0, logger=logger):
     """Perform the actual data loading for the lfw people dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -194,7 +196,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     target_names = np.unique(person_names)
     target = np.searchsorted(target_names, person_names)
 
-    faces = _load_imgs(file_paths, slice_, color, resize)
+    faces = _load_imgs(file_paths, slice_, color, resize, logger=logger)
 
     # shuffle the faces with a deterministic RNG scheme to avoid having
     # all faces of the same person in a row, as it would break some
@@ -256,20 +258,26 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
     """
+    # We set the caller_name on the logger to get human-friendly reporting
+    # in the sub functions
+    local_logger = logger.clone()
+    local_logger.caller_name = 'fetch_lfw_people'
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
-        download_if_missing=download_if_missing)
-    logger.info('Loading LFW people faces from %s', lfw_home)
+        download_if_missing=download_if_missing,
+        logger=local_logger)
+    logger.progress('Loading LFW people faces from %s', lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
     m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    load_func = m.cache(_fetch_lfw_people)
+    load_func = m.cache(_fetch_lfw_people, ignore=['logger'])
 
     # load and memoize the pairs as np arrays
     faces, target, target_names = load_func(
         data_folder_path, resize=resize,
-        min_faces_per_person=min_faces_per_person, color=color, slice_=slice_)
+        min_faces_per_person=min_faces_per_person, color=color,
+        slice_=slice_, logger=local_logger)
 
     # pack the results as a Bunch instance
     return Bunch(data=faces.reshape(len(faces), -1), images=faces,
@@ -283,7 +291,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
 
 def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
-                    color=False, resize=None):
+                    color=False, resize=None, logger=logger):
     """Perform the actual data loading for the LFW pairs dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -320,7 +328,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)
 
-    pairs = _load_imgs(file_paths, slice_, color, resize)
+    pairs = _load_imgs(file_paths, slice_, color, resize, logger=logger)
     shape = list(pairs.shape)
     n_faces = shape.pop(0)
     shape.insert(0, 2)
@@ -395,15 +403,20 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
     """
+    # We set the caller_name on the logger to get human-friendly reporting
+    # in the sub functions
+    local_logger = logger.clone()
+    local_logger.caller_name = 'fetch_lfw_people'
     lfw_home, data_folder_path = check_fetch_lfw(
-        data_home=data_home, funneled=funneled,
-        download_if_missing=download_if_missing)
-    logger.info('Loading %s LFW pairs from %s', subset, lfw_home)
+                    data_home=data_home, funneled=funneled,
+                    download_if_missing=download_if_missing,
+                    logger=local_logger)
+    local_logger.progress('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
     m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    load_func = m.cache(_fetch_lfw_pairs)
+    load_func = m.cache(_fetch_lfw_pairs, ignore=['logger'])
 
     # select the right metadata file according to the requested subset
     label_filenames = {
@@ -419,7 +432,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     # load and memoize the pairs as np arrays
     pairs, target, target_names = load_func(
         index_file_path, data_folder_path, resize=resize, color=color,
-        slice_=slice_)
+        slice_=slice_, logger=local_logger)
 
     # pack the results as a Bunch instance
     return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,

@@ -142,12 +142,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
+        logger = self._get_logger()
 
         ### Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
         lambda_ = 1.
 
-        verbose = self.verbose
         lambda_1 = self.lambda_1
         lambda_2 = self.lambda_2
         alpha_1 = self.alpha_1
@@ -205,9 +205,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
             ### Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
-                if verbose:
-                    print "Convergence after ", str(iter_), " iterations"
-                break
+                logger.progress("Convergence after %s iterations",
+                                iter_)
             coef_old_ = np.copy(coef_)
 
         self.alpha_ = alpha_
@@ -356,6 +355,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         """
         X, y = check_arrays(X, y, sparse_format='dense',
                             dtype=np.float)
+        logger = self._get_logger()
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
@@ -370,7 +370,6 @@ class ARDRegression(LinearModel, RegressorMixin):
         lambda_2 = self.lambda_2
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
-        verbose = self.verbose
 
         ### Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
@@ -418,8 +417,7 @@ class ARDRegression(LinearModel, RegressorMixin):
 
             ### Check for convergence
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
-                if verbose:
-                    print "Converged after %s iterations" % iter_
+                logger.progress("Converged after %s iterations", iter_)
                 break
             coef_old_ = np.copy(coef_)
 

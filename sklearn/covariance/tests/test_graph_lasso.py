@@ -10,6 +10,7 @@ from sklearn.covariance import graph_lasso, GraphLasso, GraphLassoCV, \
             empirical_covariance
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.utils import check_random_state
+from sklearn.progress_logger import ProgressLogger
 
 
 def test_graph_lasso(random_state=0):
@@ -52,7 +53,10 @@ def test_graph_lasso_cv(random_state=1):
     orig_stdout = sys.stdout
     try:
         sys.stdout = StringIO()
-        # We need verbose very high so that Parallel prints on stdout
-        GraphLassoCV(verbose=100, alphas=3).fit(X)
+        # Use a high verbosity, to test the printing code, but use a new
+        # logger ('test', rather than the default 'sklearn') that does
+        # not echo on the stdout
+        logger = ProgressLogger(logger='test', verbosity=100)
+        GraphLassoCV(verbose=logger, alphas=3).fit(X)
     finally:
         sys.stdout = orig_stdout

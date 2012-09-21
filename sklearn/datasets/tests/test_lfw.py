@@ -12,6 +12,8 @@ import random
 import os
 import shutil
 import tempfile
+import logging
+
 import numpy as np
 try:
     try:
@@ -23,6 +25,7 @@ except ImportError:
 
 from sklearn.datasets import load_lfw_pairs
 from sklearn.datasets import load_lfw_people
+from sklearn.datasets.lfw import logger as dataset_logger
 
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
@@ -44,6 +47,7 @@ FAKE_NAMES = [
     'Onur_Lopez',
 ]
 
+global_state = dict()
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
@@ -101,6 +105,10 @@ def setup_module():
     with open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb') as f:
         f.write("Fake place holder that won't be tested")
 
+    logger = logging.getLogger('sklearn')
+    global_state['logger_level'] = logger.level
+    logger.level = logging.WARN
+
 
 def teardown_module():
     """Test fixture (clean up) run once after all tests of this module"""
@@ -108,6 +116,9 @@ def teardown_module():
         shutil.rmtree(SCIKIT_LEARN_DATA)
     if os.path.isdir(SCIKIT_LEARN_EMPTY_DATA):
         shutil.rmtree(SCIKIT_LEARN_EMPTY_DATA)
+
+    logger = logging.getLogger('sklearn')
+    logger.level = global_state['logger_level']
 
 
 @raises(IOError)
