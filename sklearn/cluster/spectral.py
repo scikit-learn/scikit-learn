@@ -1,6 +1,6 @@
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org
+# Author: Gael Varoquaux gael.varoquaux@normalesup.org, Brian Cheung
 # License: BSD
 import warnings
 
@@ -52,7 +52,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         arpack is used.
 
     eig_tol : float, optional, default: 0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix 
+        Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack mode.
 
     Returns
@@ -86,7 +86,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                                     normed=True, return_diag=True)
     if (mode == 'arpack'
         or not sparse.isspmatrix(laplacian)
-        or n_nodes < 5 * n_components):
+            or n_nodes < 5 * n_components):
         # lobpcg used with mode='amg' has bugs for low number of nodes
 
         # We need to put the diagonal at zero
@@ -143,49 +143,50 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
                          "Should be 'amg' or 'arpack'" % mode)
     return embedding
 
+
 def discretization(eigen_vec):
     """Search for a discrete solution which is closest to the eigenvector
     embedding.
-    
+
     Parameters
     ----------
     eigen_vec : array-like, shape: (n_samples, n_clusters)
         The embedding space of the samples.
-    
+
     Returns
     -------
     labels : array of integers, shape: n_samples
         The labels of the clusters.
-    
+
     References
     ----------
-    
+
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-    
+
     - A whole brain fMRI atlas generated via spatially constrained spectral
       clustering, 2011
       R.C. Craddock, G.A. James, P.E. Holtzheimer III, X.P. Hu, H.S. Mayberg
-    
+
     """
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
 
     eps = np.finfo(float).eps
-    n_samples,n_components = eigen_vec.shape
-    
-    # Normalize the eigenvectors to an equal length of a vector of ones. 
+    n_samples, n_components = eigen_vec.shape
+
+    # Normalize the eigenvectors to an equal length of a vector of ones.
     # Reorient the eigenvectors to point in the negative direction with respect
     # to the first element.  This may have to do with constraining the
     # eigenvectors to lie in a specific quadrant to make the discretization
     # search easier.
     norm_ones = np.sqrt(n_samples)
     for i in range(eigen_vec.shape[1]):
-        eigen_vec[:,i] = (eigen_vec[:,i] / np.linalg.norm(eigen_vec[:,i])) \
-                * norm_ones
-        if eigen_vec[0,i] != 0:
-            eigen_vec[:,i] = -1 * eigen_vec[:,i] * np.sign(eigen_vec[0,i])
-    
+        eigen_vec[:, i] = (eigen_vec[:, i] / np.linalg.norm(eigen_vec[:, i])) \
+            * norm_ones
+        if eigen_vec[0, i] != 0:
+            eigen_vec[:, i] = -1 * eigen_vec[:, i] * np.sign(eigen_vec[0, i])
+
     # Normalize the rows of the eigenvectors.  Samples should lie on the unit
     # hypersphere centered at the origin.  This transforms the samples in the
     # embedding space to the space of partition matrices.
@@ -200,13 +201,13 @@ def discretization(eigen_vec):
     while (svd_restarts < 30) and not has_converged:
 
         # Initialize algorithm with a random ordering of eigenvectors
-        R = np.zeros((n_components,n_components))
-        R[:,0] = eigen_vec[np.random.randint(n_samples),:].T
-        
-        c = np.zeros((n_samples,1))
-        for j in range(1,n_components):
-            c = c + np.abs(eigen_vec.dot(R[:,j-1]))
-            R[:,j] = eigen_vec[c.argmin(),:].T
+        R = np.zeros((n_components, n_components))
+        R[:, 0] = eigen_vec[np.random.randint(n_samples), :].T
+
+        c = np.zeros((n_samples, 1))
+        for j in range(1, n_components):
+            c = c + np.abs(eigen_vec.dot(R[:, j - 1]))
+            R[:, j] = eigen_vec[c.argmin(), :].T
 
         lastObjectiveValue = 0.0
         n_iter = 0
@@ -214,38 +215,40 @@ def discretization(eigen_vec):
 
         while not has_converged:
             n_iter += 1
-            
+
             tDiscrete = eigen_vec.dot(R)
-            
-            j = np.reshape(np.asarray(tDiscrete.argmax(1)),n_samples)
+
+            j = np.reshape(np.asarray(tDiscrete.argmax(1)), n_samples)
             eigenvec_discrete = csc_matrix(
-                    (np.ones(len(j)),(range(0,n_samples), np.array(j))),
-                    shape=(n_samples,n_components))
-            
+                (np.ones(len(j)), (range(0, n_samples), np.array(j))),
+                shape=(n_samples, n_components))
+
             tSVD = eigenvec_discrete.T * eigen_vec
 
             try:
-                U,S,Vh = np.linalg.svd(tSVD)
+                U, S, Vh = np.linalg.svd(tSVD)
             except LinAlgError:
                 print "SVD did not converge, randomizing and trying again"
                 break
-            
+
             NcutValue = 2.0 * (n_samples - S.sum())
-            if ((abs(NcutValue-lastObjectiveValue) < eps) or 
+            if ((abs(NcutValue - lastObjectiveValue) < eps) or
                (n_iter > n_iter_max)):
                 has_converged = True
             else:
                 # otherwise calculate rotation and continue
-                lastObjectiveValue=NcutValue
+                lastObjectiveValue = NcutValue
                 R = Vh.T.dot(U.T)
 
     if not has_converged:
         raise ValueError('SVD did not converge')
 
-    labels = eigenvec_discrete.toarray().dot(np.diag(np.arange(n_components))).sum(1)
+    labels = eigenvec_discrete.toarray(
+    ).dot(np.diag(np.arange(n_components))).sum(1)
 
     return labels
-        
+
+
 def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
                         random_state=None, n_init=10, k=None, eig_tol=0.0,
                         embed_solve='kmeans'):
@@ -293,7 +296,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
         n_init consecutive runs in terms of inertia.
 
     eig_tol : float, optional, default: 0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix 
+        Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack mode.
 
     embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
@@ -332,14 +335,14 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               mode=mode, random_state=random_state,
                               eig_tol=eig_tol)
-    
+
     if embed_solve == 'kmeans':
         maps = maps[1:]
         _, labels, _ = k_means(maps.T, n_clusters, random_state=random_state,
-                        n_init=n_init)
+                               n_init=n_init)
     else:
         labels = discretization(maps.T)
-        
+
     return labels
 
 
@@ -396,7 +399,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         n_init consecutive runs in terms of inertia.
 
     eig_tol : float, optional, default: 0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix 
+        Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack mode.
 
     embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
@@ -441,8 +444,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
-            gamma=1., affinity='rbf', n_neighbors=10, k=None,
-            precomputed=False, eig_tol=0.0, embed_solve='kmeans'):
+                 gamma=1., affinity='rbf', n_neighbors=10, k=None,
+                 precomputed=False, eig_tol=0.0, embed_solve='kmeans'):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
@@ -468,8 +471,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         """
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
-                    "now constructs an affinity matrix from data. To use "
-                    "a custom affinity matrix, set ``affinity=precomputed``.")
+                          "now constructs an affinity matrix from data. To use "
+                          "a custom affinity matrix, set ``affinity=precomputed``.")
 
         if self.affinity == 'rbf':
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
@@ -481,14 +484,14 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             self.affinity_matrix_ = X
         else:
             raise ValueError("Invalid 'affinity'. Expected 'rbf', "
-                "'nearest_neighbors' or 'precomputed', got '%s'."
-                % self.affinity_matrix)
+                             "'nearest_neighbors' or 'precomputed', got '%s'."
+                             % self.affinity_matrix)
 
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
-                n_clusters=self.n_clusters, mode=self.mode,
-                random_state=self.random_state, n_init=self.n_init,
-                eig_tol=self.eig_tol, embed_solve=self.embed_solve)
+                                           n_clusters=self.n_clusters, mode=self.mode,
+                                           random_state=self.random_state, n_init=self.n_init,
+                                           eig_tol=self.eig_tol, embed_solve=self.embed_solve)
         return self
 
     @property
