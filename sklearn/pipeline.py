@@ -221,7 +221,20 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
         self.transformer_list = transformer_list
 
     def get_feature_names(self):
-        pass
+        """Get feature names from all transformers.
+
+        Returns
+        -------
+        feature_names : list of strings
+            Names of the features produced by transform.
+        """
+        feature_names = []
+        for name, trans in self.transformer_list:
+            if not hasattr(trans, 'get_feature_names'):
+                raise AttributeError("Transformer %s does not provide"
+                        " get_feature_names." % str(name))
+            feature_names.extend(trans.get_feature_names)
+        return feature_names
 
     def fit(self, X, y=None):
         """Fit all transformers using X.
