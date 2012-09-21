@@ -207,8 +207,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
 
 def discretization(eigen_vec):
-    """Search for a partition matrix which is closest to the eigenvector
-    embedding.
+    """Search for a partition matrix (clustring) which is closest to the 
+    eigenvector embedding.
 
     The eigenvector embedding is used to iteratively search for the closest 
     discrete partition.  First, the eigenvector embedding is normalized to 
@@ -217,7 +217,8 @@ def discretization(eigen_vec):
     calculated.  Fixing this discrete partition matrix, an optimal rotation 
     matrix is calculated.  These two calculations are performed until 
     convergence.  The discrete partition matrix is returned as the clustering 
-    solution.
+    solution.  This method tends to be faster and more robust to random
+    initialization than k-means.
 
     Parameters
     ----------
