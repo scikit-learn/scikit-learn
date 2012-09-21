@@ -175,6 +175,14 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
+        """Compute the minimum and maximum to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to compute the per-feature minimum and maximum
+            used for later scaling along the features axis.
+        """
         X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -187,6 +195,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        """Scaling features of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
         X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
         X *= self.scale_
         X += self.min_
@@ -251,7 +266,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Compute the mean and std to be used for later scaling
+        """Compute the mean and std to be used for later scaling.
 
         Parameters
         ----------
