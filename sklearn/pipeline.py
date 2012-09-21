@@ -11,9 +11,9 @@ estimator, as a chain of transforms and estimators.
 import numpy as np
 from scipy import sparse
 
-from .base import BaseEstimator
+from .base import BaseEstimator, TransformerMixin
 
-__all__ = ['Pipeline']
+__all__ = ['Pipeline', 'FeatureStacker']
 
 
 # One round of beers on me if someone finds out why the backslash
@@ -204,13 +204,12 @@ class Pipeline(BaseEstimator):
         return getattr(self.steps[0][1], '_pairwise', False)
 
 
-class FeatureStacker(BaseEstimator):
-    """Stacks several transformer objects to yield concatenated features.
+class FeatureStacker(BaseEstimator, TransformerMixin):
+    """Concatenates results of multiple transformer objects.
 
-    Builds an estimator that applies a list of transformer objects
-    in parallel to the input data, then concatenates the results.
-    This is useful to combine several feature extraction mechanisms
-    into a single estimator.
+    This estimator applies a list of transformer objects in parallel to the
+    input data, then concatenates the results. This is useful to combine
+    several feature extraction mechanisms into a single estimator.
 
     Parameters
     ----------
@@ -225,20 +224,39 @@ class FeatureStacker(BaseEstimator):
         pass
 
     def fit(self, X, y=None):
+        """Fit all transformers using X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data, used to fit transformers.
+        """
         for name, trans in self.transformer_list:
             trans.fit(X, y)
         return self
 
     def transform(self, X):
-        features = []
+        """Transform X separately by each transformer, concatenate results.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        Xs = []
         for name, trans in self.transformer_list:
-            features.append(trans.transform(X))
-        issparse = [sparse.issparse(f) for f in features]
-        if np.any(issparse):
-            features = sparse.hstack(features).tocsr()
+            Xs.append(trans.transform(X))
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
         else:
-            features = np.hstack(features)
-        return features
+            Xs = np.hstack(Xs)
+        return Xs
 
     def get_params(self, deep=True):
         if not deep:
