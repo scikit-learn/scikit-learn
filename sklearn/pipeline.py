@@ -12,6 +12,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import BaseEstimator, TransformerMixin
+from .externals.joblib import Parallel, delayed
 
 __all__ = ['Pipeline', 'FeatureStacker']
 
@@ -204,21 +205,33 @@ class Pipeline(BaseEstimator):
         return getattr(self.steps[0][1], '_pairwise', False)
 
 
+def _fit_one_transformer(transformer, X, y):
+    transformer.fit(X, y)
+
+
+def _transform_one(transformer, X):
+    return transformer.transform(X)
+
+
 class FeatureStacker(BaseEstimator, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
-    several feature extraction mechanisms into a single estimator.
+    several feature extraction mechanisms into a single transformer.
 
     Parameters
     ----------
     transformers: list of (name, transformer)
         List of transformer objects to be applied to the data.
 
+    n_jobs: int, optional
+        number of jobs to run in parallel (default 1)
+
     """
-    def __init__(self, transformer_list):
+    def __init__(self, transformer_list, n_jobs=1):
         self.transformer_list = transformer_list
+        self.n_jobs = n_jobs
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -233,7 +246,8 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s does not provide"
                         " get_feature_names." % str(name))
-            feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
+            feature_names.extend([name + "__" + f
+                for f in trans.get_feature_names()])
         return feature_names
 
     def fit(self, X, y=None):
@@ -244,8 +258,8 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             Input data, used to fit transformers.
         """
-        for name, trans in self.transformer_list:
-            trans.fit(X, y)
+        Parallel(n_jobs=self.n_jobs)(delayed(_fit_one_transformer)(trans, X, y)
+                for name, trans in self.transformer_list)
         return self
 
     def transform(self, X):
@@ -262,9 +276,8 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        Xs = []
-        for name, trans in self.transformer_list:
-            Xs.append(trans.transform(X))
+        Xs = Parallel(n_jobs=self.n_jobs)(delayed(_transform_one)(trans, X)
+                for name, trans in self.transformer_list)
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
