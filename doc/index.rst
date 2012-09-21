@@ -2,7 +2,7 @@
 ..
     We are putting the title as a raw HTML so that it doesn't appear in
     the contents
-    
+
 .. raw:: html
 
     <h1>scikit-learn: machine learning in Python</h1>
@@ -15,8 +15,8 @@
     }
     </style>
 
-..  
-   Here we are building a banner: a javascript selects randomly 4 images in 
+..
+   Here we are building a banner: a javascript selects randomly 4 images in
    the list
 
 .. only:: html
@@ -104,11 +104,11 @@
             size--;
             num_choices--;
           }
-          $('#banner').html(replace.html() ); // update our container div 
+          $('#banner').html(replace.html() ); // update our container div
                                               // with the new, randomized divs
         }
         shuffle ($('#banner a.external'));
-
+	//Function to make the index toctree collapsible
 	$(function () {
             $('ul li ul li:has(ul)')
                 .click(function(event){
@@ -123,7 +123,12 @@
                         .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                         .children('ul').hide();
                 $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'none'});
-		});
+                var sidebarbutton = $('#sidebarbutton');
+                sidebarbutton.css({
+		    'display': 'none'
+                });
+	});
+
         </SCRIPT>
 
     |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |banner12| |banner13| |banner14| |end-div|
@@ -175,8 +180,6 @@
     </td></tr>
   </table>
 
-
-
 **License:** Open source, commercially usable: **BSD license** (3 clause)
 
 .. include:: includes/big_toc_css.rst
@@ -219,5 +222,6 @@ Development
    whats_new
    presentations
 
+.. only:: html
 
 
