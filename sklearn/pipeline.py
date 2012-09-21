@@ -209,7 +209,10 @@ def _fit_one_transformer(transformer, X, y):
     transformer.fit(X, y)
 
 
-def _transform_one(transformer, X):
+def _transform_one(transformer, name, X, transformer_weights):
+    if transformer_weights is not None and name in transformer_weights:
+        # if we have a weight for this transformer, muliply output
+        return transformer.transform(X) * transformer_weights[name]
     return transformer.transform(X)
 
 
@@ -226,12 +229,17 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
         List of transformer objects to be applied to the data.
 
     n_jobs: int, optional
-        number of jobs to run in parallel (default 1)
+        Number of jobs to run in parallel (default 1).
+
+    transformer_weights: dict, optional
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
 
     """
-    def __init__(self, transformer_list, n_jobs=1):
+    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -276,8 +284,9 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        Xs = Parallel(n_jobs=self.n_jobs)(delayed(_transform_one)(trans, X)
-                for name, trans in self.transformer_list)
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_transform_one)(trans, name, X, self.transformer_weights)
+            for name, trans in self.transformer_list)
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
