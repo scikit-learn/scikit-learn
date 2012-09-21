@@ -109,6 +109,22 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             coefs = np.ravel(coefs)
         return coefs
+    elif solver == "lsqr":
+        if y.ndim == 1:
+            y1 = np.reshape(y, (-1, 1))
+        else:
+            y1 = y
+        coefs = np.empty((y1.shape[1], n_features))
+
+        for i in range(y1.shape[1]):
+            y_column = y1[:, i]
+            coefs[i] = sp_linalg.lsqr(X, y_column, damp=alpha,
+                                      atol=tol, btol=tol, iter_lim=max_iter)[0]
+
+        if y.ndim == 1:
+            coefs = np.ravel(coefs)
+
+        return coefs
     else:
         # normal equations (cholesky) method
         if sparse.issparse(X):
