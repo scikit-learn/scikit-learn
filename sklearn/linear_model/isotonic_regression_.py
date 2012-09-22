@@ -43,10 +43,8 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
 
     References
     ----------
-    Isotonic Median Regression: A Linear Programming Approach
-    Nilotpal Chakravarti
-    Mathematics of Operations Research
-    Vol. 14, No. 2 (May, 1989), pp. 303-308
+    "Active set algorithms for isotonic regression; A unifying framework" 
+    by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
     if weight is None:
         weight = np.ones(len(y), dtype=y.dtype)
