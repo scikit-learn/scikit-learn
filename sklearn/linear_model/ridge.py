@@ -118,9 +118,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             y1 = y
         coefs = np.empty((y1.shape[1], n_features))
 
+        # According to the lsqr documentation, alpha = damp^2.
+        sqrt_alpha = np.sqrt(alpha)
+
         for i in range(y1.shape[1]):
             y_column = y1[:, i]
-            coefs[i] = sp_linalg.lsqr(X, y_column, damp=alpha,
+            coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
                                       atol=tol, btol=tol, iter_lim=max_iter)[0]
 
         if y.ndim == 1:
