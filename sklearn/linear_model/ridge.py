@@ -158,6 +158,7 @@ class _BaseRidge(LinearModel):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
+        self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
 
@@ -169,8 +170,12 @@ class _BaseRidge(LinearModel):
            self._center_data(X, y, self.fit_intercept,
                    self.normalize, self.copy_X)
 
-        self.coef_ = ridge_regression(X, y, self.alpha, sample_weight,
-                                      solver, self.tol)
+        self.coef_ = ridge_regression(X, y,
+                                      alpha=self.alpha,
+                                      sample_weight=sample_weight,
+                                      solver=solver,
+                                      max_iter=self.max_iter,
+                                      tol=self.tol)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -233,9 +238,10 @@ class Ridge(_BaseRidge, RegressorMixin):
        tol=0.001)
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
-              normalize=normalize, copy_X=copy_X, tol=tol, solver=solver)
+                                    normalize=normalize, copy_X=copy_X,
+                                    max_iter=max_iter, tol=tol, solver=solver)
 
     def fit(self, X, y, sample_weight=1.0, solver=None):
         """Fit Ridge regression model
