@@ -43,12 +43,14 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample
 
-    solver : {'auto', 'dense_cholesky', 'sparse_cg'}, optional
-        Solver to use in the computational routines. 'dense_cholesky'
-        will use the standard scipy.linalg.solve function, 'sparse_cg'
-        will use the conjugate gradient solver as found in
+    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+        Solver to use in the computational
+        routines. 'dense_cholesky' will use the standard
+        scipy.linalg.solve function, 'sparse_cg' will use the
+        conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
-        appropriate depending on the matrix X.
+        appropriate depending on the matrix X. 'lsqr' uses
+        a direct regularized least-squares routine provided by scipy.
 
     tol: float
         Precision of the solution.
@@ -197,20 +199,29 @@ class Ridge(_BaseRidge, RegressorMixin):
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
         LinearSVC.
 
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
-
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
+
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+        Solver to use in the computational
+        routines. 'dense_cholesky' will use the standard
+        scipy.linalg.solve function, 'sparse_cg' will use the
+        conjugate gradient solver as found in
+        scipy.sparse.linalg.cg while 'auto' will chose the most
+        appropriate depending on the matrix X. 'lsqr' uses
+        a direct regularized least-squares routine provided by scipy.
 
     tol : float
         Precision of the solution.
@@ -234,8 +245,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, normalize=False,
-       tol=0.001)
+    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
+          normalize=False, solver='auto', tol=0.001)
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
@@ -256,14 +267,6 @@ class Ridge(_BaseRidge, RegressorMixin):
 
         sample_weight : float or numpy array of shape [n_samples]
             Individual weights for each sample
-
-        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
-            Solver to use in the computational
-            routines. 'dense_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the
-            conjugate gradient solver as found in
-            scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropriate depending on the matrix X.
 
         Returns
         -------
@@ -291,28 +294,37 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
         LinearSVC.
 
+    class_weight : dict, optional
+        Weights associated with classes in the form
+        {class_label : weight}. If not given, all classes are
+        supposed to have weight one.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set to false, no
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
-
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
+    normalize : boolean, optional
+        If True, the regressors X are normalized
+
+    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+        Solver to use in the computational
+        routines. 'dense_cholesky' will use the standard
+        scipy.linalg.solve function, 'sparse_cg' will use the
+        conjugate gradient solver as found in
+        scipy.sparse.linalg.cg while 'auto' will chose the most
+        appropriate depending on the matrix X. 'lsqr' uses
+        a direct regularized least-squares routine provided by scipy.
+
     tol : float
         Precision of the solution.
-
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
-        supposed to have weight one.
 
     Attributes
     ----------
@@ -347,14 +359,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         y : array-like, shape = [n_samples]
             Target values
-
-        solver : {'auto', 'dense_cholesky', 'sparse_cg'}
-            Solver to use in the computational
-            routines. 'dense_cholesky' will use the standard
-            scipy.linalg.solve function, 'sparse_cg' will use the
-            conjugate gradient solver as found in
-            scipy.sparse.linalg.cg while 'auto' will chose the most
-            appropriate depending on the matrix X.
 
         Returns
         -------
