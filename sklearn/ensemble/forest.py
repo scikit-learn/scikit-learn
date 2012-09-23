@@ -60,14 +60,13 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_build_trees(n_trees, forest, X, y,
-                          sample_mask, X_argsorted, seed, verbose):
+                          sample_mask, X_argsorted, seed, logger):
     """Private function used to build a batch of trees within a job."""
     random_state = check_random_state(seed)
     trees = []
 
     for i in xrange(n_trees):
-        if verbose > 1:
-            print("building tree %d of %d" % (i + 1, n_trees))
+        logger.progress("building tree %d of %d", i + 1, n_trees)
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
@@ -226,6 +225,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             Returns self.
         """
         self.random_state = check_random_state(self.random_state)
+        logger = self._get_logger()
 
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
@@ -288,7 +288,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 sample_mask,
                 X_argsorted,
                 self.random_state.randint(MAX_INT),
-                verbose=self.verbose)
+                logger=logger)
             for i in xrange(n_jobs))
 
         # Reduce
