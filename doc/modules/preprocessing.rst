@@ -64,15 +64,15 @@ Scaled data has zero mean and unit variance::
 ..    >>> print_options = np.set_printoptions(print_options)
 
 The ``preprocessing`` module further provides a utility class
-:class:`Scaler` that implements the ``Transformer`` API to compute
+:class:`StandardScaler` that implements the ``Transformer`` API to compute
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.Scaler().fit(X)
+  >>> scaler = preprocessing.StandardScaler().fit(X)
   >>> scaler
-  Scaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler(copy=True, with_mean=True, with_std=True)
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
@@ -94,7 +94,7 @@ same way it did on the training set::
 
 It is possible to disable either centering or scaling by either
 passing ``with_mean=False`` or ``with_std=False`` to the constructor
-of :class:`Scaler`.
+of :class:`StandardScaler`.
 
 
 .. topic:: References:
@@ -115,7 +115,7 @@ of :class:`Scaler`.
 
 .. topic:: Sparse input
 
-  :func:`scale` and :class:`Scaler` accept ``scipy.sparse`` matrices
+  :func:`scale` and :class:`StandardScaler` accept ``scipy.sparse`` matrices
   as input **only when with_mean=False is explicitly passed to the
   constructor**. Otherwise a ``ValueError`` will be raised as
   silently centering would break the sparsity and would often crash the
@@ -132,7 +132,7 @@ of :class:`Scaler`.
 
 .. topic:: Scaling target variables in regression
 
-    :func:`scale` and :class:`Scaler` work out-of-the-box with 1d arrays.
+    :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.
     This is very useful for scaling the target / response variables used
     for regression.
 
@@ -243,7 +243,7 @@ It is possible to adjust the threshold of the binarizer::
          [ 1.,  0.,  0.],
          [ 0.,  0.,  0.]])
 
-As for the :class:`Scaler` and :class:`Normalizer` classes, the
+As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 

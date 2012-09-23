@@ -25,12 +25,12 @@ import pylab as pl
 
 from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 
 digits = datasets.load_digits()
 
 X, y = digits.data, digits.target
-X = Scaler().fit_transform(X)
+X = StandardScaler().fit_transform(X)
 
 # classify small against large digits
 y = (y > 4).astype(np.int)

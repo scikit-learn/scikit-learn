@@ -25,7 +25,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.svm import SVC
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.grid_search import GridSearchCV
@@ -49,7 +49,7 @@ Y_2d -= 1
 # instead of fitting the transformation on the training set and
 # just applying it on the test set.
 
-scaler = Scaler()
+scaler = StandardScaler()
 
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
