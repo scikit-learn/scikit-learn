@@ -7,7 +7,7 @@
 
 cimport numpy as np
 import numpy as np
-import numpy.linalg as linalg
+from scipy import linalg
 cimport cython
 from cpython cimport bool
 import warnings
@@ -112,37 +112,34 @@ def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
                                        np.ndarray[DOUBLE, ndim=2] X,
                                        np.ndarray[DOUBLE, ndim=1] y,
                                        np.ndarray[DOUBLE, ndim=1] R=None,
-                                       subset=None, double tol=0.09):
+                                       np.ndarray[POINTER, ndim=1] subset=None,
+                                       double tol=0.09):
     """ Function returns features that don't satisfy the elastic-net KKT.
     The goal is to distinguish between coefficients that pass the
     KKT only up to a certain tolerance and features that are inactive
     (value of zero) but should be active.
     """
-    kkt_violating_features = set()
+    kkt_violating_features = list()
 
     if subset is None:
-        features_to_check = xrange(X.shape[1])
-    else:
-        if not len(subset) > 0:  # check if subset is empty
-            return
-        else:
-            features_to_check = subset
+        subset = np.arange(X.shape[1])
 
+    cdef int n_iter = subset.shape[0]
     cdef unsigned int i
     cdef double s
     cdef double gradient
     cdef unsigned int n_samples = X.shape[0]
-    for i in features_to_check:
+    for i in xrange(n_iter):
+        i = subset[i]
         gradient = ddot(n_samples,
                    <DOUBLE*>(X.data + i * n_samples * sizeof(DOUBLE)), 1,
                    <DOUBLE*>R.data, 1)
         s = fsign(coef[i])
-        if coef[i] != 0 and \
-            not fclose(gradient, s * l1_reg + l2_reg * coef[i], tol):
-            kkt_violating_features.add(i)
-        else:
-            if coef[i] == 0 and fabs(gradient) >= l1_reg:
-                kkt_violating_features.add(i)
+        if (coef[i] != 0 and
+                not fclose(gradient, s * l1_reg + l2_reg * coef[i], tol)):
+            kkt_violating_features.append(i)
+        elif coef[i] == 0 and fabs(gradient) >= l1_reg:
+            kkt_violating_features.append(i)
     return kkt_violating_features
 
 
