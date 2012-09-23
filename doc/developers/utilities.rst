@@ -144,7 +144,7 @@ efficiently process ``scipy.sparse`` data.
 - :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
   columns of a CSR matrix by a constant scale (one scale per column).
   Used for scaling features to unit standard deviation in
-  :class:`sklearn.preprocessing.Scaler`.
+  :class:`sklearn.preprocessing.StandardScaler`.
 
 
 Graph Routines

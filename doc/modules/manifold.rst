@@ -427,7 +427,7 @@ Tips on practical use
 
 * Make sure the same scale is used over all features. Because manifold
   learning methods are based on a nearest-neighbor search, the algorithm
-  may perform poorly otherwise.  See :ref:`Scaler <preprocessing_scaler>`
+  may perform poorly otherwise.  See :ref:`StandardScaler <preprocessing_scaler>`
   for convenient ways of scaling heterogeneous data.
 
 * The reconstruction error computed by each routine can be used to choose

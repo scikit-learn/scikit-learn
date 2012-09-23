@@ -836,12 +836,13 @@ Pairwise metrics
    :toctree: generated/
    :template: class.rst
 
-   preprocessing.Scaler
-   preprocessing.Normalizer
    preprocessing.Binarizer
+   preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
-   preprocessing.KernelCenterer
+   preprocessing.MinMaxScaler
+   preprocessing.Normalizer
+   preprocessing.StandardScaler
 
 .. autosummary::
    :toctree: generated/

@@ -23,7 +23,7 @@ __all__ = ['Binarizer',
            'LabelBinarizer',
            'LabelEncoder',
            'Normalizer',
-           'Scaler',
+           'StandardScaler',
            'binarize',
            'normalize',
            'scale']
@@ -96,7 +96,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.Scaler` to perform centering and
+    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
@@ -148,8 +148,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     This standardization is often used as an alternative to zero mean,
     unit variance scaling.
-    It is in particular useful for sparse positive data, as it retains the
-    sparsity structure of the data (if scaled between zero and some number).
 
     Parameters
     ----------
@@ -158,8 +156,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional, default is True
         Set to False to perform inplace row normalization and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
+        copy (if the input is already a numpy array).
 
     Attributes
     ----------
@@ -930,7 +927,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
     This is equivalent to centering phi(X) with
-    sklearn.preprocessing.Scaler(with_std=False).
+    sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
     def fit(self, K, y=None):
