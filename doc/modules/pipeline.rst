@@ -84,3 +84,48 @@ The pipeline has all the methods that the last estimator in the pipline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
+
+======================================
+FeatureUnion: Concatenating features
+======================================
+
+.. currentmodule:: sklearn.pipeline
+
+:class:`FeatureUnion` combines several transformer objects into a new
+transformer that combines their output. A :class:`FeatureUnion` takes
+a list of transformer objects. During fitting, each of these
+is fit to the data independently. For transforming data, the
+transformers are applied in parallel, and their output combined into a
+single output array or matrix.
+
+:class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
+convenience and joint parameter estimation and validation.
+
+:class:`FeatureUnion` and :class:`Pipeline` can be combined to
+create complex models.
+
+
+Usage
+=====
+
+The :class:`FeatureUnion` is build using a list of ``(key, value)`` pairs, where
+the ``key`` a string containing the name you want to give to a given transformation and ``value``
+is an estimator object::
+
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from sklearn.decomposition import PCA
+    >>> from sklearn.decomposition import KernelPCA
+    >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
+    >>> combined = FeatureUnion(estimators)   
+    >>> combined # doctest: +NORMALIZE_WHITESPACE
+    FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
+        n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
+        coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
+        gamma=0, kernel='linear', max_iter=None, n_components=None, tol=0))],
+        transformer_weights=None)
+
+
+                                                                       
+.. topic:: Examples:
+
+ * :ref:`example_feature_stacker.py`

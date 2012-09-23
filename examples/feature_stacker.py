@@ -5,21 +5,21 @@ Concatenating multiple feature extraction methods
 
 In many real-world examples, there are many ways to extract features from a
 dataset. Often it is benefitial to combine several methods to obtain good
-performance. This example shows how to use ``FeatureStacker`` to combine
+performance. This example shows how to use ``FeatureUnion`` to combine
 features obtained by PCA and univariate selection.
 
 Combining features using this transformer has the benefit that it allows
 cross validation and grid searches over the whole process.
 
 The combination used in this example is not particularly helpful on this
-dataset and is only used to illustrate the usage of FeatureStacker.
+dataset and is only used to illustrate the usage of FeatureUnion.
 """
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
 # License: BSD 3-clause
 
-from sklearn.pipeline import Pipeline, FeatureStacker
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.grid_search import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.datasets import load_iris
@@ -38,7 +38,7 @@ selection = SelectKBest(k=1)
 
 # Build estimator from PCA and Univariate selection:
 
-combined_features = FeatureStacker([("pca", pca), ("univ_select", selection)])
+combined_features = FeatureUnion([("pca", pca), ("univ_select", selection)])
 
 # Use combined features to transform dataset:
 X_features = combined_features.fit(X, y).transform(X)

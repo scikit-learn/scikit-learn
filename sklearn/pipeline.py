@@ -14,7 +14,7 @@ from scipy import sparse
 from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 
-__all__ = ['Pipeline', 'FeatureStacker']
+__all__ = ['Pipeline', 'FeatureUnion']
 
 
 # One round of beers on me if someone finds out why the backslash
@@ -216,7 +216,7 @@ def _transform_one(transformer, name, X, transformer_weights):
     return transformer.transform(X)
 
 
-class FeatureStacker(BaseEstimator, TransformerMixin):
+class FeatureUnion(BaseEstimator, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -295,7 +295,7 @@ class FeatureStacker(BaseEstimator, TransformerMixin):
 
     def get_params(self, deep=True):
         if not deep:
-            return super(FeatureStacker, self).get_params(deep=False)
+            return super(FeatureUnion, self).get_params(deep=False)
         else:
             out = dict(self.transformer_list)
             for name, trans in self.transformer_list:

@@ -9,7 +9,7 @@ from numpy.testing import assert_array_equal, \
         assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.pipeline import Pipeline, FeatureStacker
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -188,7 +188,7 @@ def test_feature_stacker():
     y = iris.target
     pca = RandomizedPCA(n_components=2)
     select = SelectKBest(k=1)
-    fs = FeatureStacker([("pca", pca), ("select", select)])
+    fs = FeatureUnion([("pca", pca), ("select", select)])
     fs.fit(X, y)
     X_transformed = fs.transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 3))
@@ -215,7 +215,7 @@ def test_feature_stacker_weights():
     y = iris.target
     pca = RandomizedPCA(n_components=2)
     select = SelectKBest(k=1)
-    fs = FeatureStacker([("pca", pca), ("select", select)],
+    fs = FeatureUnion([("pca", pca), ("select", select)],
             transformer_weights={"pca": 10})
     fs.fit(X, y)
     X_transformed = fs.transform(X)
@@ -236,7 +236,7 @@ def test_feature_stacker_feature_names():
     )
     word_vect = CountVectorizer(analyzer="word")
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
-    ft = FeatureStacker([("chars", char_vect), ("words", word_vect)])
+    ft = FeatureUnion([("chars", char_vect), ("words", word_vect)])
     ft.fit(JUNK_FOOD_DOCS)
     feature_names = ft.get_feature_names()
     for feat in feature_names:

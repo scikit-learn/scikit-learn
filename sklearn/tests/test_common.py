@@ -28,7 +28,7 @@ from sklearn.svm.base import BaseLibSVM
 # import "special" estimators
 from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
-from sklearn.pipeline import Pipeline, FeatureStacker
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
 from sklearn.ensemble import BaseEnsemble
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
@@ -45,7 +45,7 @@ from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
 from sklearn.linear_model import IsotonicRegression
 
-dont_test = [Pipeline, FeatureStacker, GridSearchCV, SparseCoder,
+dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
         LabelEncoder, TfidfTransformer, IsotonicRegression]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
