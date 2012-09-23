@@ -60,7 +60,7 @@ cdef extern from "cblas.h":
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
-
+ctypedef np.intp_t POINTER
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -155,7 +155,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol,
                             bint positive=False, bint calc_dual_gap=True,
-                            np.ndarray[INTEGER, ndim=1] iter_set=None,
+                            np.ndarray[POINTER, ndim=1] iter_set=None,
                             np.ndarray[DOUBLE, ndim=1] R=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
