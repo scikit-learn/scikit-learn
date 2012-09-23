@@ -43,12 +43,16 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
                                      normalize=False, copy=False)
             X = np.asfortranarray(X)
             Xy = np.dot(X.T, y)
-            MAX_ITER = 1000
+            # Express alpha as a fraction of alpha_max
+            alpha_max = np.max(np.abs(Xy)) / len(X)
+            this_alpha = alpha * alpha_max
+
+            MAX_ITER = 10000
             tol = 1e-6
 
             gc.collect()
             print "- benching ElasticNet"
-            clf = ElasticNet(alpha=alpha, rho=rho, precompute=False,
+            clf = ElasticNet(alpha=this_alpha, rho=rho, precompute=False,
                              fit_intercept=False, copy_X=False,
                              tol=tol, max_iter=MAX_ITER)
             tstart = time()
@@ -57,9 +61,10 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
 
             gc.collect()
             print "- benching ElasticNet with strong rules"
-            clf_strong_rule = ElasticNet(alpha=alpha, rho=rho, precompute=False,
-                                fit_intercept=False, copy_X=False, tol=tol,
-                                max_iter=MAX_ITER, use_strong_rule=True)
+            clf_strong_rule = ElasticNet(alpha=this_alpha, rho=rho,
+                                precompute=False, fit_intercept=False,
+                                copy_X=False, tol=tol, max_iter=MAX_ITER,
+                                use_strong_rule=True)
             tstart = time()
             clf_strong_rule.fit(X, y, Xy)
             enet_strong_rules_results.append(time() - tstart)
@@ -72,7 +77,7 @@ if __name__ == '__main__':
     from sklearn.linear_model.coordinate_descent import ElasticNet
     import pylab as pl
 
-    alpha = 130  # regularization parameter
+    alpha = 0.90  # regularization parameter as a fraction of alpha_max
     rho = 0.90
 
     n_features = 10
@@ -94,7 +99,7 @@ if __name__ == '__main__':
 
     n_samples = 2000
     list_n_features = np.linspace(500, 3000, 10).astype(np.int)
-    enet_results, enet_strong_rules_results = compute_bench(alpha, rho, 
+    enet_results, enet_strong_rules_results = compute_bench(alpha, rho,
                             [n_samples], list_n_features, precompute=False)
     pl.subplot(212)
     pl.plot(list_n_features, enet_results, 'b-', label='ElasticNet')
