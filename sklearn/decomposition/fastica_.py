@@ -14,6 +14,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, as_float_array, check_random_state, deprecated
+from ..progress_logger import get_logger
 
 __all__ = ['fastica', 'FastICA']
 
@@ -220,6 +221,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     random_state = check_random_state(random_state)
     # make interface compatible with other decompositions
     X = array2d(X).T
+    logger = get_logger()
 
     alpha = fun_args.get('alpha', 1.0)
     if (alpha < 1) or (alpha > 2):
@@ -268,9 +270,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if n_components is None:
         n_components = min(n, p)
-    if (n_components > min(n, p)):
+    elif (n_components > min(n, p)):
         n_components = min(n, p)
-        print("n_components is too large: it will be set to %s" % n_components)
+        logger.warn(
+                "n_components is too large: it will be set to %s",
+                n_components)
 
     if whiten:
         # Centering the columns (ie the variables)

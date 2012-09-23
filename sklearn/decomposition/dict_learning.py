@@ -4,10 +4,9 @@
 # License: BSD
 
 import time
-import sys
 import itertools
 
-from math import sqrt, floor, ceil
+from math import sqrt, floor
 
 import numpy as np
 from scipy import linalg
@@ -18,6 +17,7 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
+from ..progress_logger import get_logger
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -291,6 +291,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     n_atoms = len(code)
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
+    logger = get_logger(verbose)
+
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
     R += Y
@@ -303,11 +305,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         # Scale k'th atom
         atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
         if atom_norm_square < 1e-20:
-            if verbose == 1:
-                sys.stdout.write("+")
-                sys.stdout.flush()
-            elif verbose:
-                print "Adding new random atom"
+            logger.progress("Adding new random atom", short_message="+")
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
@@ -412,6 +410,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     # Avoid integer division problems
     alpha = float(alpha)
     random_state = check_random_state(random_state)
+    logger = get_logger(verbose)
 
     if n_jobs == -1:
         n_jobs = cpu_count()
@@ -441,18 +440,12 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     errors = []
     current_cost = np.nan
 
-    if verbose == 1:
-        print '[dict_learning]',
-
     for ii in xrange(max_iter):
         dt = (time.time() - t0)
-        if verbose == 1:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        elif verbose:
-            print ("Iteration % 3i "
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
-                    (ii, dt, dt / 60, current_cost))
+        logger.progress("Iteration % 3i "
+                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)",
+                    ii, dt, dt / 60, current_cost,
+                    short_message=".")
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
@@ -471,11 +464,9 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
             dE = errors[-2] - errors[-1]
             # assert(dE >= -tol * errors[-1])
             if dE < tol * errors[-1]:
-                if verbose == 1:
-                    # A line return
-                    print ""
-                elif verbose:
-                    print "--- Convergence reached after %d iterations" % ii
+                logger.progress(
+                    "--- Convergence reached after %d iterations", ii,
+                    short_message="\n")
                 break
         if ii % 5 == 0 and callback is not None:
             callback(locals())
@@ -575,6 +566,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     # Avoid integer division problems
     alpha = float(alpha)
     random_state = check_random_state(random_state)
+    logger = get_logger(verbose)
 
     if n_jobs == -1:
         n_jobs = cpu_count()
@@ -593,9 +585,6 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
                            np.zeros((n_atoms - r, dictionary.shape[1]))]
     dictionary = np.ascontiguousarray(dictionary.T)
 
-    if verbose == 1:
-        print '[dict_learning]',
-
     n_batches = floor(float(len(X)) / chunk_size)
     if shuffle:
         X_train = X.copy()
@@ -613,13 +602,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
                                      batches):
         dt = (time.time() - t0)
-        if verbose == 1:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        elif verbose:
-            if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
-                    (ii, dt, dt / 60))
+        logger.progress(
+                "Iteration % 3i (elapsed time: % 3is, % 4.1fmn)",
+                (ii, dt, dt / 60), short_message='.'
+            )
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha).T
@@ -647,15 +633,13 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
             callback(locals())
 
     if return_code:
-        if verbose > 1:
-            print 'Learning code...',
-        elif verbose == 1:
-            print '|',
+        logger.progress('Learning code...', short_message='|')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
                              n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
-            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
+            logger.progress('done (total time: % 3is, % 4.1fmn)',
+                            dt, dt / 60)
         return code, dictionary.T
 
     return dictionary.T
