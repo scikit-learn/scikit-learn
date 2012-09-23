@@ -25,7 +25,6 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
     enet_results = []
     enet_strong_rules_results = []
 
-    n_test_samples = 0
     it = 0
 
     for ns in n_samples:
@@ -38,7 +37,7 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             n_informative = nf // 10
             X, y = make_regression(n_samples=ns, n_features=nf,
                                           n_informative=n_informative,
-                                          noise=0.1)
+                                          noise=0.1, random_state=it)
 
             X, y, _, _, _ = center_data(X, y, fit_intercept=False,
                                      normalize=False, copy=False)
