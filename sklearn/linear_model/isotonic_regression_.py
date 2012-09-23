@@ -43,7 +43,7 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
 
     References
     ----------
-    "Active set algorithms for isotonic regression; A unifying framework" 
+    "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
     if weight is None:

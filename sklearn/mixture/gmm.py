@@ -10,10 +10,9 @@ of Gaussian Mixture Models.
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
 import numpy as np
-import warnings
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, deprecated
+from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
