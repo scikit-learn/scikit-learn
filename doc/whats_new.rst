@@ -11,8 +11,12 @@ Changelog
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
 
-   - Ridge regression and ridge classification fitting no longer has
-     quadratic memory complexity.
+   - Ridge regression and ridge classification fitting with ``sparse_cg`` solver
+     no longer has quadratic memory complexity, by `Lars Buitinck`_ and
+     `Fabian Pedregosa`_.
+
+   - Ridge regression and ridge classification now support a new fast solver
+     called ``lsqr``, by `Mathieu Blondel`_.
 
    - Speed up of :func:`metrics.precision_recall_curve` by Conrad Lee.
 
@@ -31,6 +35,8 @@ API changes summary
    - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
      ``predict`` or ``sample`` methods instead.
 
+   - The ``solver`` option in Ridge regression and classification is now
+     deprecated and will be removed in v0.14.
 
 .. _changes_0_12:
 
