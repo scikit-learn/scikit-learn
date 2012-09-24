@@ -66,6 +66,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     """
 
     n_samples, n_features = X.shape
+    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
@@ -75,7 +76,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         else:
             solver = 'sparse_cg'
 
-    if solver == 'sparse_cg':
+    if solver == 'sparse_cg' and not has_sw:
         # gradient descent
         X1 = sp_linalg.aslinearoperator(X)
         if y.ndim == 1:
@@ -111,7 +112,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             coefs = np.ravel(coefs)
         return coefs
-    elif solver == "lsqr":
+    elif solver == "lsqr" and not has_sw:
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
         else:
@@ -132,23 +133,20 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         return coefs
     else:
         # normal equations (cholesky) method
-        if sparse.issparse(X):
-            X = X.toarray()
-        if n_features > n_samples or \
-           isinstance(sample_weight, np.ndarray) or \
-           sample_weight != 1.0:
-
+        if n_features > n_samples or has_sw:
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
-            A = np.dot(X, X.T)
+            A = safe_sparse_dot(X, X.T, dense_output=True)
             A.flat[::n_samples + 1] += alpha * sample_weight
-            coef = np.dot(X.T, linalg.solve(A, y, sym_pos=True, overwrite_a=True))
+            Axy = linalg.solve(A, y, sym_pos=True, overwrite_a=True)
+            coef = safe_sparse_dot(X.T, Axy, dense_output=True)
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
-            A = np.dot(X.T, X)
+            A = safe_sparse_dot(X.T, X, dense_output=True)
             A.flat[::n_features + 1] += alpha
-            coef = linalg.solve(A, np.dot(X.T, y), sym_pos=True, overwrite_a=True)
+            Xy = safe_sparse_dot(X.T, y, dense_output=True)
+            coef = linalg.solve(A, Xy, sym_pos=True, overwrite_a=True)
 
         return coef.T
 
