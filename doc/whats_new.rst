@@ -35,8 +35,9 @@ API changes summary
    - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
      ``predict`` or ``sample`` methods instead.
 
-   - The ``solver`` option in Ridge regression and classification is now
-     deprecated and will be removed in v0.14.
+   - The ``solver`` fit option in Ridge regression and classification is now
+     deprecated and will be removed in v0.14. Use the constructor option
+     instead.
 
 .. _changes_0_12:
 
