@@ -232,8 +232,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     if not k is None:
         n_clusters = k
-        warnings.warn("Parameter k was renamed to n_clusters",
-                DeprecationWarning)
+        warnings.warn("Parameter k has been renamed by 'n_clusters'"
+                " and will be removed in release 0.14.",
+                DeprecationWarning, stacklevel=2)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -740,7 +741,8 @@ class KMeans(BaseEstimator, ClusterMixin):
 
         if not self.k is None:
             n_clusters = self.k
-            warnings.warn("Parameter k was renamed to n_clusters",
+            warnings.warn("Parameter k has been renamed by 'n_clusters'"
+                    " and will be removed in release 0.14.",
                     DeprecationWarning, stacklevel=2)
             self.n_clusters = n_clusters
         else:
@@ -1068,6 +1070,11 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         self.random_state = check_random_state(self.random_state)
+        if self.k is not None:
+            warnings.warn("Parameter k has been replaced by 'n_clusters'"
+                " and will be removed in release 0.14.",
+                DeprecationWarning, stacklevel=2)
+            self.n_clusters = self.k
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
