@@ -281,42 +281,43 @@ def discretization(eigen_vec):
             c = c + np.abs(eigen_vec.dot(R[:, j - 1]))
             R[:, j] = eigen_vec[c.argmin(), :].T
 
-        lastObjectiveValue = 0.0
+        last_objective_value = 0.0
         n_iter = 0
         n_iter_max = 20
 
         while not has_converged:
             n_iter += 1
 
-            tDiscrete = eigen_vec.dot(R)
+            t_discrete = eigen_vec.dot(R)
 
-            j = np.reshape(np.asarray(tDiscrete.argmax(1)), n_samples)
+            j = np.reshape(np.asarray(t_discrete.argmax(1)), n_samples)
             eigenvec_discrete = csc_matrix(
                 (np.ones(len(j)), (range(0, n_samples), np.array(j))),
                 shape=(n_samples, n_components))
 
-            tSVD = eigenvec_discrete.T * eigen_vec
+            t_svd = eigenvec_discrete.T * eigen_vec
 
             try:
-                U, S, Vh = np.linalg.svd(tSVD)
+                U, S, Vh = np.linalg.svd(t_svd)
+                svd_restarts += 1
             except LinAlgError:
                 print "SVD did not converge, randomizing and trying again"
                 break
 
-            NcutValue = 2.0 * (n_samples - S.sum())
-            if ((abs(NcutValue - lastObjectiveValue) < eps) or
+            ncut_value = 2.0 * (n_samples - S.sum())
+            if ((abs(ncut_value - last_objective_value) < eps) or
                (n_iter > n_iter_max)):
                 has_converged = True
             else:
                 # otherwise calculate rotation and continue
-                lastObjectiveValue = NcutValue
+                last_objective_value = ncut_value
                 R = Vh.T.dot(U.T)
 
     if not has_converged:
         raise ValueError('SVD did not converge')
 
     labels = eigenvec_discrete.toarray(
-    ).dot(np.diag(np.arange(n_components))).sum(1)
+    ).dot(np.diag(np.arange(n_components))).sum(axis=1)
 
     return labels
 
@@ -324,7 +325,7 @@ def discretization(eigen_vec):
 def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
                         random_state=None, n_init=10, k=None, eig_tol=0.0,
                         embed_solve='kmeans'):
-    """Apply k-means to a projection to the normalized laplacian
+    """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
     the individual clusters is highly non-convex or more generally when
@@ -334,6 +335,11 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
 
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
+
+    There are two ways of solving the clustering of the laplacian 
+    embedding.  k-means can be applied and is a popular choice. But it can 
+    also be sensitive to initialization.  Discretization is another approach
+    which is less sensitive to random initialization.
 
     Parameters
     -----------
@@ -391,6 +397,9 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
 
+    - Multiclass spectral clustering, 2003
+      Stella X. Yu, Jianbo Shi
+
     Notes
     ------
     The graph should contain only one connect component, elsewhere
@@ -419,7 +428,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
 
 
 class SpectralClustering(BaseEstimator, ClusterMixin):
-    """Apply k-means to a projection to the normalized laplacian
+    """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
     the individual clusters is highly non-convex or more generally when
@@ -429,6 +438,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
+
+    There are two ways of solving the clustering of the laplacian 
+    embedding.  k-means can be applied and is a popular choice. But it can 
+    also be sensitive to initialization.  Discretization is another approach
+    which is less sensitive to random initialization.
 
     When calling ``fit``, an affinity matrix is constructed using either the
     Gaussian (aka RBF) kernel of the euclidean distanced ``d(X, X)``::
@@ -513,6 +527,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     - A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+      
+    - Multiclass spectral clustering, 2003
+      Stella X. Yu, Jianbo Shi
     """
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
