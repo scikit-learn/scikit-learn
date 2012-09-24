@@ -108,6 +108,7 @@
                                               // with the new, randomized divs
         }
         shuffle ($('#banner a.external'));
+
 	//Function to make the index toctree collapsible
 	$(function () {
             $('ul li ul li:has(ul)')
@@ -115,7 +116,7 @@
                     if (this == event.target) {
                         $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
-                                  $(this).children('ul').slideToggle('slow');
+                              $(this).children('ul').toggle();
                         }
                         return true; //Makes links clickable
                         })
@@ -127,6 +128,16 @@
                 sidebarbutton.css({
 		    'display': 'none'
                 });
+	    $('ul li ul li:has(ul)').hover(
+	    	  function () {
+		      $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBoxHighlight.png)');
+           	  },
+           	  function () {
+		      $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBox.png)');
+           	  }
+	    );
 	});
 
         </SCRIPT>
