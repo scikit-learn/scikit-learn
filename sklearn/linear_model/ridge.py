@@ -76,7 +76,15 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         else:
             solver = 'sparse_cg'
 
-    if solver == 'sparse_cg' and not has_sw:
+    elif solver == 'lsqr' and not hasattr(sp_linalg, 'lsqr'):
+        warnings.warn("""lsqr not available on this machine, falling back
+                      to sparse_cg.""")
+        solver = 'sparse_cg'
+
+    if has_sw:
+        solver = 'dense_cholesky'
+
+    if solver == 'sparse_cg':
         # gradient descent
         X1 = sp_linalg.aslinearoperator(X)
         if y.ndim == 1:
@@ -112,7 +120,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             coefs = np.ravel(coefs)
         return coefs
-    elif solver == "lsqr" and not has_sw:
+    elif solver == "lsqr":
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
         else:
