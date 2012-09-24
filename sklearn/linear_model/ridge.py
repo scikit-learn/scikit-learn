@@ -44,13 +44,23 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         Individual weights for each sample
 
     solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
-        Solver to use in the computational
-        routines. 'dense_cholesky' will use the standard
-        scipy.linalg.solve function, 'sparse_cg' will use the
-        conjugate gradient solver as found in
-        scipy.sparse.linalg.cg while 'auto' will chose the most
-        appropriate depending on the matrix X. 'lsqr' uses
-        a direct regularized least-squares routine provided by scipy.
+        Solver to use in the computational routines:
+
+        - 'auto' chooses the solver automatically based on the type of data.
+
+        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+          obtain a closed-form solution.
+
+        - 'sparse_cg' uses the conjugate gradient solver as found in
+          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          more appropriate than 'dense_cholesky' for large-scale data
+          (possibility to set `tol` and `max_iter`).
+
+        - 'lsqr' uses the dedicated regularized least-squares routine
+          scipy.sparse.linalg.lsqr. It is the fatest but may not be available in
+          old scipy versions. It also uses an iterative procedure.
+
+        All three solvers support both dense and sparse data.
 
     tol: float
         Precision of the solution.
@@ -224,13 +234,23 @@ class Ridge(_BaseRidge, RegressorMixin):
         If True, the regressors X are normalized
 
     solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
-        Solver to use in the computational
-        routines. 'dense_cholesky' will use the standard
-        scipy.linalg.solve function, 'sparse_cg' will use the
-        conjugate gradient solver as found in
-        scipy.sparse.linalg.cg while 'auto' will chose the most
-        appropriate depending on the matrix X. 'lsqr' uses
-        a direct regularized least-squares routine provided by scipy.
+        Solver to use in the computational routines:
+
+        - 'auto' chooses the solver automatically based on the type of data.
+
+        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+          obtain a closed-form solution.
+
+        - 'sparse_cg' uses the conjugate gradient solver as found in
+          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          more appropriate than 'dense_cholesky' for large-scale data
+          (possibility to set `tol` and `max_iter`).
+
+        - 'lsqr' uses the dedicated regularized least-squares routine
+          scipy.sparse.linalg.lsqr. It is the fatest but may not be available in
+          old scipy versions. It also uses an iterative procedure.
+
+        All three solvers support both dense and sparse data.
 
     tol : float
         Precision of the solution.
