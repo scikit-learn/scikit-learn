@@ -30,7 +30,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, LinearOperator}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix, LinearOperator},
+        shape = [n_samples, n_features]
         Training data
 
     y : array-like, shape = [n_samples] or [n_samples, n_responses]
@@ -57,8 +58,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available in
-          old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          in old scipy versions. It also uses an iterative procedure.
 
         All three solvers support both dense and sparse data.
 
@@ -247,8 +248,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available in
-          old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          in old scipy versions. It also uses an iterative procedure.
 
         All three solvers support both dense and sparse data.
 
