@@ -104,13 +104,18 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             y1 = y
         coefs = np.empty((y1.shape[1], n_features))
 
+        if n_features > n_samples:
+            def mv(x):
+                return X1.matvec(X1.rmatvec(x)) + alpha * x
+        else:
+            def mv(x):
+                return X1.rmatvec(X1.matvec(x)) + alpha * x
+
         for i in range(y1.shape[1]):
             y_column = y1[:, i]
             if n_features > n_samples:
                 # kernel ridge
                 # w = X.T * inv(X X^t + alpha*Id) y
-                def mv(x):
-                    return X1.matvec(X1.rmatvec(x)) + alpha * x
                 C = sp_linalg.LinearOperator(
                     (n_samples, n_samples), matvec=mv, dtype=X.dtype)
                 coef, info = sp_linalg.cg(C, y_column, tol=tol)
@@ -118,8 +123,6 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             else:
                 # ridge
                 # w = inv(X^t X + alpha*Id) * X.T y
-                def mv(x):
-                    return X1.rmatvec(X1.matvec(x)) + alpha * x
                 y_column = X1.rmatvec(y_column)
                 C = sp_linalg.LinearOperator(
                     (n_features, n_features), matvec=mv, dtype=X.dtype)
@@ -130,6 +133,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         if y.ndim == 1:
             coefs = np.ravel(coefs)
+
         return coefs
     elif solver == "lsqr":
         if y.ndim == 1:
