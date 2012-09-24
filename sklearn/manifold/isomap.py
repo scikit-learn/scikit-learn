@@ -26,48 +26,48 @@ class Isomap(BaseEstimator, TransformerMixin):
         number of coordinates for the manifold
 
     eigen_solver : ['auto'|'arpack'|'dense']
-        'auto' : attempt to choose the most efficient solver
+        'auto' : Attempt to choose the most efficient solver
             for the given problem.
-        'arpack' : use Arnoldi decomposition to find the eigenvalues
-            and eigenvectors.  Note that arpack can handle both dense
-            and sparse data efficiently
-        'dense' : use a direct solver (i.e. LAPACK)
+        'arpack' : Use Arnoldi decomposition to find the eigenvalues
+            and eigenvectors.
+        'dense' : Use a direct solver (i.e. LAPACK)
             for the eigenvalue decomposition.
 
     tol : float
-        convergence tolerance passed to arpack or lobpcg.
-        not used if eigen_solver == 'dense'
+        Convergence tolerance passed to arpack or lobpcg.
+        not used if eigen_solver == 'dense'.
 
     max_iter : integer
-        maximum number of iterations for the arpack solver.
-        not used if eigen_solver == 'dense'
+        Maximum number of iterations for the arpack solver.
+        not used if eigen_solver == 'dense'.
 
     path_method : string ['auto'|'FW'|'D']
-        method to use in finding shortest path.
+        Method to use in finding shortest path.
         'auto' : attempt to choose the best algorithm automatically
         'FW' : Floyd-Warshall algorithm
         'D' : Dijkstra algorithm with Fibonacci Heaps
 
     neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
-        algorithm to use for nearest neighbors search,
-        passed to neighbors.NearestNeighbors instance
+        Algorithm to use for nearest neighbors search,
+        passed to neighbors.NearestNeighbors instance.
 
     Attributes
     ----------
     `embedding_` : array-like, shape (n_samples, n_components)
-        Stores the embedding vectors
+        Stores the embedding vectors.
 
-    `kernel_pca_` : `KernelPCA` object used to implement the embedding
+    `kernel_pca_` : object
+        `KernelPCA` object used to implement the embedding.
 
     `training_data_` : array-like, shape (n_samples, n_features)
-        Stores the training data
+        Stores the training data.
 
     `nbrs_` : sklearn.neighbors.NearestNeighbors instance
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
     `dist_matrix_` : array-like, shape (n_samples, n_samples)
-        Stores the geodesic distance matrix of training data
+        Stores the geodesic distance matrix of training data.
 
     References
     ----------
@@ -140,7 +140,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
-            numpy array, sparse array, precomputed tree, or NearestNeighbors
+            numpy array, precomputed tree, or NearestNeighbors
             object.
 
         Returns
