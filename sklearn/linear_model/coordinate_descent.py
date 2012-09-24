@@ -308,8 +308,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                     active_set_init=None, coef_init=None, alpha_init=None,
                     R=None, max_iter_strong=100):
 
-        if active_set_init is not None and \
-                 True not in active_set_init:
+        if (active_set_init is not None and not np.any(active_set_init)):
             active_set_init = None
 
         n_samples, n_features = X.shape
@@ -419,12 +418,12 @@ class ElasticNet(LinearModel, RegressorMixin):
             return super(ElasticNet, self).decision_function(X)
 
 
-def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
+def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None,
                               coef_init=None, alpha_init=None, R=None):
 
     alpha_scaled = alpha * X.shape[0]
 
-    # use sequential strong rule if one other pair of 
+    # use sequential strong rule if one other pair of
     # alpha and coefs is given
     # this makes only sense if alpha < alpha_max
     # therefore check if at least one coef != 0
@@ -441,7 +440,7 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None, \
         else:
             gradient = np.abs(np.dot(X.T, R))
         alpha_init_scaled = alpha_init * X.shape[0]
-        strong_set = gradient >= rho * (2 * alpha_scaled -  \
+        strong_set = gradient >= rho * (2 * alpha_scaled -
                                                 alpha_init_scaled)
 #        print "sequential strong rule"
         return strong_set
