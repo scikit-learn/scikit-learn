@@ -101,8 +101,9 @@ its `coef\_` member::
 
     >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
-    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
-    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, normalize=False, tol=0.001)
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
+          normalize=False, solver='auto', tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
     >>> clf.intercept_ #doctest: +ELLIPSIS
