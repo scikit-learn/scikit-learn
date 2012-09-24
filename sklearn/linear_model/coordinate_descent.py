@@ -332,7 +332,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                 alpha=self.alpha, rho=self.rho, alpha_init=alpha_init,
                                             coef_init=coef_init, R=R)
 
-        # the ever_active_set contains the features that had nonzero coefs 
+        # the ever_active_set contains the features that had nonzero coefs
         # while fitting with a higher alpha
         if active_set_init is None:
             active_set = strong_set
@@ -364,7 +364,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                                 self.coef_, l1_reg, l2_reg, X, y, R,
                                 subset=subset, tol=tol_kkt_check)
                 if kkt_violators:
-                    active_set[list(kkt_violators)] = True
+                    active_set[kkt_violators] = True
                 else:
                     # This only garanties that no feature is missing it's still
                     # possible that an active feature is failing kkt
@@ -377,7 +377,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                             subset=subset, tol=tol_kkt_check)
 
             if kkt_violators:
-                active_set[list(kkt_violators)] = True
+                active_set[kkt_violators] = True
                 strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy,
                             alpha=self.alpha, rho=self.rho,
                             alpha_init=alpha_init, coef_init=coef_init, R=R)
