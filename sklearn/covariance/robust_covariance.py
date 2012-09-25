@@ -15,6 +15,7 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet, pinvh
 from ..utils import check_random_state
+from ..progress_logger import get_logger
 
 
 ###############################################################################
@@ -71,6 +72,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
 
     """
     random_state = check_random_state(random_state)
+    logger = get_logger(verbose)
     n_samples, n_features = X.shape
 
     # Initialisation
@@ -128,9 +130,8 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
-        if verbose:
-            print "Optimal couple (location, covariance) found before" \
-                "ending iterations (%d left)" % (remaining_iterations)
+        logger.progress("Optimal couple (location, covariance) found before"
+                "ending iterations (%d left)", remaining_iterations)
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
@@ -141,8 +142,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
 
     # Check early stopping
     if remaining_iterations == 0:
-        if verbose:
-            print 'Maximum number of iterations reached'
+        logger.progress('Maximum number of iterations reached')
         det = fast_logdet(covariance)
         results = location, covariance, det, support, dist
 
