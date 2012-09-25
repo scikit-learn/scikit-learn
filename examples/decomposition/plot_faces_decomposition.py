@@ -76,7 +76,8 @@ estimators = [
      False),
 
     ('Non-negative components - KL NMF',
-     decomposition.KLdivNMF(n_components=n_components, init='nndsvdar', tol=1e-4),
+     decomposition.KLdivNMF(n_components=n_components, init='nndsvdar',
+         tol=1e-4),
      False),
 
     ('Independent components - FastICA',
@@ -133,5 +134,5 @@ for name, estimator, center in estimators:
                 n_col=1, n_row=1)
     plot_gallery('%s - Train time %.1fs' % (name, train_time),
                  components_[:n_components])
-    
+
 pl.show()

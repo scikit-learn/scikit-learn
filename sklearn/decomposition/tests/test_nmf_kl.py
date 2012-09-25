@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 import scipy.sparse as sp
 
-from ..nmf import _generalized_KL, KLdivNMF, _normalize_sum, _scale, _sparse_dot
+from ..nmf import (_generalized_KL, KLdivNMF, _normalize_sum, _scale,
+        _sparse_dot)
 
 
 def random_NN_matrix(h, w):
@@ -26,17 +27,17 @@ class TestNormalizeSum(unittest.TestCase):
         a = np.random.random((3,))
         norm = _normalize_sum(a, axis=0)
         self.assertTrue(np.alltrue(a.shape == norm.shape))
-    
+
     def test_same_shape_on_2D(self):
         a = np.random.random((2, 4))
         norm = _normalize_sum(a, axis=np.random.randint(2))
         self.assertTrue(np.alltrue(a.shape == norm.shape))
-    
+
     def test_same_shape_on_3D(self):
         a = np.random.random((1, 2, 3))
         norm = _normalize_sum(a, axis=np.random.randint(3))
         self.assertTrue(np.alltrue(a.shape == norm.shape))
-    
+
     def test_correct_on_1D(self):
         a = np.random.random((5,))
         norm = _normalize_sum(a, axis=0)
@@ -163,7 +164,8 @@ class TestError(unittest.TestCase):
         self.H = random_NN_matrix(self.n_components, self.n_features)
         self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-4,
             max_iter=200, eps=1.e-8, subit=10)
-        self.nmf.components_ = random_NN_matrix(self.n_components, self.n_features)    
+        self.nmf.components_ = random_NN_matrix(self.n_components,
+                self.n_features)
 
     def test_error_is_gen_kl(self):
         Xdense = self.X.todense()
@@ -234,7 +236,7 @@ class TestSparseUpdates(TestUpdates):
 class TestFitTransform(unittest.TestCase):
 
     def setUp(self):
-        self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-4,
+        self.nmf = KLdivNMF(n_components=3, init=None, tol=1e-6,
             max_iter=200, eps=1.e-8, subit=10)
 
     def test_cv(self):
@@ -243,7 +245,6 @@ class TestFitTransform(unittest.TestCase):
         # Last errors should be very close
         self.assertTrue(abs(errors[-1] - errors[-2]) < errors[0] * 1.e-2)
 
-    # TODO Fix: still fails often (error is not small enough) (18/09/2012)
     def test_zero_error_on_fact_data(self):
         X = np.dot(random_NN_matrix(5, 2), random_NN_matrix(2, 3))
         W, errors = self.nmf.fit_transform(X, return_errors=True)

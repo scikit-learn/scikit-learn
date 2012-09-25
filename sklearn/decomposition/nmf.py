@@ -610,7 +610,7 @@ def _generalized_KL(x, y, eps=1.e-8):
 def _sparse_dot(a, b, refmat):
     """Computes dot product of a and b on indices where refmat is nonnzero
     and returns sparse csr matrix with same structure than refmat.
-    
+
     First calls to eliminate_zeros on refmat which might modify the structure
     of refmat.
 
@@ -772,15 +772,23 @@ class KLdivNMF(BaseNMF):
         else:
             return W
 
-    def _update(self, X, W, _fit=True, eps=1.e-8):
+    def _update(self, X, W, _fit=True, _scale_W=False, eps=1.e-8):
         """Perform one update iteration.
 
         Updates components if _fit and returns updated coefficients.
+
+        Params:
+        -------
+            _fit: boolean (default: True)
+                Whether to update components.
+
+            _scale_W: boolean (default: False)
+                Whether to force scaling of W. This is only relevant if
+                components are normalized. By default when not fitting
+                this is assume false.
         """
-        # TODO add flag to force (14/09/2012)
-        # This is only relevant if the dictionary is normalized which is not
-        # guarantess (but still possible) when fit is off
-        if _fit:
+        if _fit or _scale_W:
+            # This is only relevant if components are normalized.
             # Not always usefull but might improve convergence speed:
             # Scale W lines to have same sum than X lines
             W = _scale(_normalize_sum(W, axis=1), X.sum(axis=1), axis=1)
