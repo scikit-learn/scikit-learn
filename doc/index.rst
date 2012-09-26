@@ -109,33 +109,48 @@
         }
         shuffle ($('#banner a.external'));
 
+	function preload_images() {
+	    var img = new Image();
+	    img.src="_static/plusBox.png";
+	    img.src="_static/minBox.png";
+	    img.src="_static/plusBoxHighlight.png";
+	    img.src="_static/plusBoxHighlight.png";
+	    img.src="_static/noneBox.png";
+	}
+	preload_images();
+
 	//Function to make the index toctree collapsible
 	$(function () {
             $('.toctree-l2')
                 .click(function(event){
                     if (this == event.target) {
-                        $(this).css('list-style-image',
+		        if ($(this).children('ul').length > 0) {
+                            $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
-                              $(this).children('ul').toggle();
+                             $(this).children('ul').slideToggle(200);
                         }
                         return true; //Makes links clickable
-                        })
-			.mousedown(function(event){ return false; }) //Firefox highlighting fix
-                        .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
-                        .children('ul').hide();
+                    }
+		})
+		.mousedown(function(event){ return false; }) //Firefox highlighting fix
+                .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
+                .children('ul').hide();
                 $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
 		$('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
-                var sidebarbutton = $('#sidebarbutton');
-                sidebarbutton.css({
-		    'display': 'none'
-                });
+            var sidebarbutton = $('#sidebarbutton');
+            sidebarbutton.css({
+	        'display': 'none'
+            });
 
 	    $('.toctree-l2').hover(
 	        function () {
-                    $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
 		    if ($(this).children('ul').length > 0) {
+		        $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
 		        $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBoxHighlight.png)' : 'url(_static/plusBoxHighlight.png)');
+		    }
+		    else {
+		        $(this).css('background-color', '#F9F9F9');
 		    }
                 },
                 function () {
