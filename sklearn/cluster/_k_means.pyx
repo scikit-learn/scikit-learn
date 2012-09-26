@@ -243,7 +243,7 @@ def csr_row_norm_l2(X, squared=True):
     """Get L2 norm of each row in CSR matrix X.
 
     TODO: refactor me in the sklearn.utils.sparsefuncs module once the CSR
-    sklearn.preprocessing.Scaler has been refactored as well.
+    sklearn.preprocessing.StandardScaler has been refactored as well.
     """
     cdef:
         unsigned int n_samples = X.shape[0]

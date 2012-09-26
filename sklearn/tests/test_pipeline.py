@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition.pca import PCA, RandomizedPCA
 from sklearn.datasets import load_iris
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 
 
 class IncorrectT(BaseEstimator):
@@ -152,7 +152,7 @@ def test_pipeline_methods_preprocessing_svm():
     y = iris.target
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
-    scaler = Scaler()
+    scaler = StandardScaler()
     pca = RandomizedPCA(n_components=2, whiten=True)
     clf = SVC(probability=True)
 

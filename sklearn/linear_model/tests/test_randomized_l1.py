@@ -8,12 +8,12 @@ from sklearn.linear_model.randomized_l1 import lasso_stability_path, \
         RandomizedLasso, RandomizedLogisticRegression
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 
 diabetes = load_diabetes()
 X = diabetes.data
 y = diabetes.target
-X = Scaler().fit_transform(X)
+X = StandardScaler().fit_transform(X)
 X = X[:, [2, 3, 6, 7, 8]]
 
 # test that the feature score of the best features

@@ -8,6 +8,7 @@ Generalized Linear models.
 #         Vincent Michel <vincent.michel@inria.fr>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
+#         Lars Buitinck <L.J.Buitinck@uva.nl>
 #
 # License: BSD Style.
 
@@ -18,13 +19,12 @@ import scipy.sparse as sp
 from scipy import linalg
 
 from ..externals.joblib import Parallel, delayed
-from ..base import BaseEstimator
-from ..base import RegressorMixin
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
 from ..utils.extmath import safe_sparse_dot
-from ..utils import as_float_array, safe_asarray
 from ..utils.fixes import lsqr
-from ..utils.sparsefuncs import csc_mean_variance_axis0, \
-                                inplace_csc_column_scale
+from ..utils.sparsefuncs import (csc_mean_variance_axis0,
+                                 inplace_csc_column_scale)
 from cd_fast import sparse_std
 
 
@@ -143,6 +143,62 @@ class LinearModel(BaseEstimator):
             self.intercept_ = y_mean - np.dot(X_mean, self.coef_.T)
         else:
             self.intercept_ = 0.
+
+
+# XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
+# Maybe the n_features checking can be moved to LinearModel.
+class LinearClassifierMixin(ClassifierMixin):
+    """Mixin for linear classifiers.
+
+    Handles prediction for sparse and dense X.
+    """
+
+    def decision_function(self, X):
+        """Predict confidence scores for samples.
+
+        The confidence score for a sample is the signed distance of that
+        sample to the hyperplane.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Samples.
+
+        Returns
+        -------
+        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
+            Confidence scores per (sample, class) combination. In the binary
+            case, confidence score for the "positive" class.
+        """
+        X = atleast2d_or_csr(X)
+
+        n_features = self.coef_.shape[1]
+        if X.shape[1] != n_features:
+            raise ValueError("X has %d features per sample; expecting %d"
+                             % (X.shape[1], n_features))
+
+        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return scores.ravel() if scores.shape[1] == 1 else scores
+
+    def predict(self, X):
+        """Predict class labels for samples in X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Samples.
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Predicted class label per sample.
+        """
+        scores = self.decision_function(X)
+        if len(scores.shape) == 1:
+            indices = (scores > 0).astype(np.int)
+        else:
+            indices = scores.argmax(axis=1)
+        return self.classes_[indices]
 
 
 class LinearRegression(LinearModel, RegressorMixin):

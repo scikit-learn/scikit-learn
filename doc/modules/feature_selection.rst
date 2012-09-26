@@ -62,6 +62,9 @@ are the smallest are pruned from the current set features. That procedure is
 recursively repeated on the pruned set until the desired number of features to
 select is eventually reached.
 
+:class:`RFECV` performs RFE in a cross-validation loop to find the optimal
+number of features.
+
 .. topic:: Examples:
 
     * :ref:`example_plot_rfe_digits.py`: A recursive feature elimination example

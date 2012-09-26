@@ -3,8 +3,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-import copy
-import warnings
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \

@@ -1,9 +1,10 @@
-from ..base import ClassifierMixin, RegressorMixin
-from ..feature_selection.selector_mixin import SelectorMixin
 from .base import BaseLibLinear, BaseSVC, BaseLibSVM
+from ..base import RegressorMixin
+from ..linear_model.base import LinearClassifierMixin
+from ..feature_selection.selector_mixin import SelectorMixin
 
 
-class LinearSVC(BaseLibLinear, ClassifierMixin, SelectorMixin):
+class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
