@@ -255,7 +255,3 @@ Development
    support
    whats_new
    presentations
-
-.. only:: html
-
-
