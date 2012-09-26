@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - The table of contents has now been made expandible (on the
+     index page) - by Jaques Grobler.
+
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
 
