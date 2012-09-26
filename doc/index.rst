@@ -127,7 +127,7 @@
 		        if ($(this).children('ul').length > 0) {
                             $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
-                            $(this).children('ul').slideToggle(200);
+                            $(this).children('ul').toggle();
                         }
                         return true; //Makes links clickable
                     }
