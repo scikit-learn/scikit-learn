@@ -129,6 +129,11 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     and the samples vectors are constrained to all have the same number of
     features.
 
+    In case the file contains a pairwise preference constraint (known as
+    "qid" in svmlight format description) these are appended as an extra
+    column to the array y of target values, making it an array of shape
+    [n_samples, 2].
+
     Parameters
     ----------
     files : iterable over {str, file-like, int}

@@ -34,6 +34,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     data = ArrayBuilder(dtype=dtype)
     indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
     indices = ArrayBuilder(dtype=_INDICES_DTYPE)
+    qid = ArrayBuilder(dtype=np.double)
     if multilabel:
         labels = []
     else:
@@ -60,10 +61,18 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
         indptr.append(len(data))
 
         prev_idx = -1
-        for i in xrange(1, len(line_parts)):
+        n_features = len(features)
+        if n_features and line_parts[1].startswith('qid'):
+            _, value = line_parts[1].split(COLON, 1)
+            qid.append(int(value))
+            line_parts.pop(1)
+            n_features -= 1
+
+        for i in xrange(1, n_features + 1):
             idx_s, value = line_parts[i].split(COLON, 1)
             # XXX if we replace int with np.int32 in the line below, this
             # function becomes twice as slow.
+
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
@@ -83,5 +92,12 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
 
     if not multilabel:
         labels = labels.get()
+    if len(qid) > 0:
+        qid = qid.get()
+        if qid.shape[0] != labels.shape[0]:
+            raise ValueError(
+                """Malformed svmlight file: there should be one query id (qid) for
+                each sample""")
+        labels = np.vstack((labels, qid)).T
 
     return data, indices, indptr, labels

@@ -155,6 +155,16 @@ def test_load_zero_based_auto():
     assert_equal(X2.shape, (1, 4))
 
 
+def test_load_with_qid():
+    # load svmfile with qid attribute
+    data = """
+    3 qid:1 1:0.53 2:0.12
+    2 qid:1 1:0.13 2:0.1
+    7 qid:2 1:0.87 2:0.12"""
+    f1 = BytesIO(data)
+    X, y = load_svmlight_file(f1)
+    assert_array_equal(y[:, 1], [1, 1, 2])
+
 @raises(ValueError)
 def test_load_invalid_file2():
     load_svmlight_files([datafile, invalidfile, datafile])
