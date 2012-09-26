@@ -114,7 +114,7 @@
 	    img.src="_static/plusBox.png";
 	    img.src="_static/minBox.png";
 	    img.src="_static/plusBoxHighlight.png";
-	    img.src="_static/plusBoxHighlight.png";
+	    img.src="_static/minBoxHighlight.png";
 	    img.src="_static/noneBox.png";
 	}
 	preload_images();
@@ -123,7 +123,7 @@
 	$(function () {
             $('.toctree-l2')
                 .click(function(event){
-                    if (this == event.target) {
+                    if (event.target.tagName.toLowerCase() != "a") {
 		        if ($(this).children('ul').length > 0) {
                             $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
