@@ -71,7 +71,10 @@ class BaseLibSVM(BaseEstimator):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
+
+    Parameter documentation is in the derived `SVC` class.
     """
+    # see ./classes.py for SVC class.
 
     __metaclass__ = ABCMeta
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
@@ -79,7 +82,7 @@ class BaseLibSVM(BaseEstimator):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 sparse, class_weight, verbose):
+                 sparse, class_weight, verbose, iter_limit):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -107,6 +110,7 @@ class BaseLibSVM(BaseEstimator):
         self.sparse = sparse
         self.class_weight = class_weight
         self.verbose = verbose
+        self.iter_limit = iter_limit
 
     @property
     def _pairwise(self):
@@ -230,7 +234,8 @@ class BaseLibSVM(BaseEstimator):
             kernel=kernel, C=self.C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon,
+            iter_limit=self.iter_limit)
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
@@ -246,7 +251,7 @@ class BaseLibSVM(BaseEstimator):
                  kernel_type, self.degree, self._gamma, self.coef0, self.tol,
                  self.C, self.class_weight_label_, self.class_weight_,
                  sample_weight, self.nu, self.cache_size, self.epsilon,
-                 int(self.shrinking), int(self.probability))
+                 int(self.shrinking), int(self.probability), self.iter_limit)
 
         n_class = len(self.label_) - 1
         n_SV = self.support_vectors_.shape[0]

@@ -13,6 +13,7 @@ from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.svm import SolverTimeout
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -573,6 +574,12 @@ def test_svc_clone_with_callable_kernel():
     b.predict(X)
     b.predict_proba(X)
     b.decision_function(X)
+
+
+def test_timeout():
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
+            iter_limit=1)
+    assert_raises(SolverTimeout, a.fit, X, Y)
 
 
 if __name__ == '__main__':
