@@ -30,7 +30,7 @@ import pylab as pl
 from sklearn import cluster, datasets
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import kneighbors_graph
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 
 np.random.seed(0)
 
@@ -55,7 +55,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
                 no_structure]):
     X, y = dataset
     # normalize dataset for easier parameter selection
-    X = Scaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
 
     # estimate bandwidth for mean shift
     bandwidth = cluster.estimate_bandwidth(X, quantile=0.3)

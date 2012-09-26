@@ -113,7 +113,7 @@ class BaseLibSVM(BaseEstimator):
         kernel = self.kernel
         return kernel == "precomputed" or hasattr(kernel, "__call__")
 
-    def fit(self, X, y, class_weight=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -159,13 +159,6 @@ class BaseLibSVM(BaseEstimator):
         if self.impl != "one_class" and len(np.unique(y)) < 2:
             raise ValueError("The number of classes has to be greater than"
                     " one.")
-
-        if class_weight != None:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-            self.class_weight = class_weight
 
         sample_weight = np.asarray([] if sample_weight is None
                                       else sample_weight, dtype=np.float64)
@@ -624,7 +617,7 @@ class BaseLibLinear(BaseEstimator):
                              + error_string)
         return self._solver_type_dict[solver_type]
 
-    def fit(self, X, y, class_weight=None):
+    def fit(self, X, y):
         """Fit the model according to the given training data.
 
         Parameters
@@ -650,13 +643,6 @@ class BaseLibLinear(BaseEstimator):
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                     " one.")
-
-        if class_weight != None:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-            self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()
@@ -690,42 +676,6 @@ class BaseLibLinear(BaseEstimator):
             self.intercept_ = 0.
 
         return self
-
-    def predict(self, X):
-        """Predict target values of X according to the fitted model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-        """
-        scores = self.decision_function(X)
-        if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
-        else:
-            indices = scores.argmax(axis=1)
-        return self.classes_[indices]
-
-    def decision_function(self, X):
-        """Decision function value for X according to the trained model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_class]
-            Returns the decision function of the sample for each class
-            in the model.
-        """
-        X = atleast2d_or_csr(X)
-        self._check_n_features(X)
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
-        return scores.ravel() if scores.shape[1] == 1 else scores
 
     @property
     def classes_(self):

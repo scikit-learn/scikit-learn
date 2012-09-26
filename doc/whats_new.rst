@@ -8,6 +8,29 @@
 Changelog
 ---------
 
+   - :class:`feature_selection.SelectPercentile` now breaks ties
+     deterministically instead of returning all equally ranked features.
+
+   - Ridge regression and ridge classification fitting no longer has
+     quadratic memory complexity.
+
+   - Speed up of :func:`metrics.precision_recall_curve` by Conrad Lee.
+
+API changes summary
+-------------------
+
+   - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
+     was already integrated into the "regular" linear models.
+
+   - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
+     cumulated error, was removed. Use ``mean_squared_error`` instead.
+
+   - Passing ``class_weight`` parameters to ``fit`` methods is no longer
+     supported. Pass them to estimator constuctors instead.
+
+   - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
+     ``predict`` or ``sample`` methods instead.
+
 
 .. _changes_0_12:
 

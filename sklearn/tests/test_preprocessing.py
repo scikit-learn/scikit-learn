@@ -16,8 +16,9 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
+from sklearn.preprocessing import MinMaxScaler
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -37,7 +38,7 @@ def test_scaler_1d():
     X = rng.randn(5)
     X_orig_copy = X.copy()
 
-    scaler = Scaler()
+    scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=False)
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
@@ -48,7 +49,7 @@ def test_scaler_1d():
 
     # Test with 1D list
     X = [0., 1., 2, 0.4, 1.]
-    scaler = Scaler()
+    scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=False)
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
@@ -64,7 +65,7 @@ def test_scaler_2d_arrays():
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
 
-    scaler = Scaler()
+    scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
 
@@ -98,7 +99,7 @@ def test_scaler_2d_arrays():
 
     X = rng.randn(4, 5)
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
-    scaler = Scaler()
+    scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
     assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
@@ -107,17 +108,32 @@ def test_scaler_2d_arrays():
     assert_true(X_scaled is not X)
 
 
+def test_min_max_scaler():
+    X = iris.data
+    scaler = MinMaxScaler()
+    # default params
+    X_trans = scaler.fit_transform(X)
+    assert_equal(X_trans.min(axis=0), 0)
+    assert_equal(X_trans.max(axis=0), 1)
+
+    # not default params
+    scaler = MinMaxScaler(feature_range=(1, 2))
+    X_trans = scaler.fit_transform(X)
+    assert_equal(X_trans.min(axis=0), 1)
+    assert_equal(X_trans.max(axis=0), 2)
+
+
 def test_scaler_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sp.csr_matrix(X)
 
-    scaler = Scaler(with_mean=False).fit(X)
+    scaler = StandardScaler(with_mean=False).fit(X)
     X_scaled = scaler.transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
 
-    scaler_csr = Scaler(with_mean=False).fit(X_csr)
+    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert_false(np.any(np.isnan(X_csr_scaled.data)))
 
@@ -148,18 +164,18 @@ def test_scaler_without_centering():
 
 
 def test_scaler_without_copy():
-    """Check that Scaler.fit does not change input"""
+    """Check that StandardScaler.fit does not change input"""
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sp.csr_matrix(X)
 
     X_copy = X.copy()
-    Scaler(copy=False).fit(X)
+    StandardScaler(copy=False).fit(X)
     assert_array_equal(X, X_copy)
 
     X_csr_copy = X_csr.copy()
-    Scaler(with_mean=False, copy=False).fit(X_csr)
+    StandardScaler(with_mean=False, copy=False).fit(X_csr)
     assert_array_equal(X_csr.toarray(), X_csr_copy.toarray())
 
 
@@ -170,10 +186,10 @@ def test_scale_sparse_with_mean_raise_exception():
 
     # check scaling and fit with direct calls on sparse data
     assert_raises(ValueError, scale, X_csr, with_mean=True)
-    assert_raises(ValueError, Scaler(with_mean=True).fit, X_csr)
+    assert_raises(ValueError, StandardScaler(with_mean=True).fit, X_csr)
 
     # check transform and inverse_transform after a fit on a dense array
-    scaler = Scaler(with_mean=True).fit(X)
+    scaler = StandardScaler(with_mean=True).fit(X)
     assert_raises(ValueError, scaler.transform, X_csr)
 
     X_transformed_csr = sp.csr_matrix(scaler.transform(X))
@@ -497,10 +513,11 @@ def test_label_binarizer_multilabel_unlabeled():
 
 
 def test_center_kernel():
-    """Test that KernelCenterer is equivalent to Scaler in feature space"""
+    """Test that KernelCenterer is equivalent to StandardScaler
+       in feature space"""
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
-    scaler = Scaler(with_std=False)
+    scaler = StandardScaler(with_std=False)
     scaler.fit(X_fit)
     X_fit_centered = scaler.transform(X_fit)
     K_fit = np.dot(X_fit, X_fit.T)
@@ -523,7 +540,7 @@ def test_center_kernel():
 def test_fit_transform():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
-    for obj in ((Scaler(), Normalizer(), Binarizer())):
+    for obj in ((StandardScaler(), Normalizer(), Binarizer())):
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)
         assert_array_equal(X_transformed, X_transformed2)

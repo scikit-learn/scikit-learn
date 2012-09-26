@@ -184,7 +184,7 @@ reasonable (please see  the :ref:`reference documentation
           charset_error='strict', dtype=<type 'long'>, input='content',
           lowercase=True, max_df=1.0, max_features=None, max_n=None, min_df=1,
           min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'\\b\\w\\w+\\b', tokenizer=None,
+          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None,
           vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic

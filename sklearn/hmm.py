@@ -24,7 +24,6 @@ from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)
 from . import cluster
-from .utils import deprecated
 from . import _hmmc
 
 __all__ = ['GMMHMM',

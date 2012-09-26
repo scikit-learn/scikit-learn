@@ -3,6 +3,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
 from collections import Sequence
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -22,7 +23,7 @@ __all__ = ['Binarizer',
            'LabelBinarizer',
            'LabelEncoder',
            'Normalizer',
-           'Scaler',
+           'StandardScaler',
            'binarize',
            'normalize',
            'scale']
@@ -95,7 +96,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.Scaler` to perform centering and
+    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
@@ -133,7 +134,78 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(BaseEstimator, TransformerMixin):
+    """Standardizes features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    The standardization is given by::
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std / (max - min) + min
+    where min, max = feature_range.
+
+    This standardization is often used as an alternative to zero mean,
+    unit variance scaling.
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array).
+
+    Attributes
+    ----------
+    min_ : ndarray, shape (n_features,)
+        Per feature adjustment for minimum.
+
+    scale_ : ndarray, shape (n_features,)
+        Per feature relative scaling of the data.
+    """
+
+    def __init__(self, feature_range=(0, 1), copy=True):
+        self.feature_range = feature_range
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Compute the minimum and maximum to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to compute the per-feature minimum and maximum
+            used for later scaling along the features axis.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        feature_range = self.feature_range
+        if feature_range[0] >= feature_range[1]:
+            raise ValueError("Minimum of desired feature range must be smaller"
+                             " than maximum. Got %s." % str(feature_range))
+        min_ = np.min(X, axis=0)
+        scale_ = np.max(X, axis=0) - min_
+        self.scale_ = (feature_range[1] - feature_range[0]) / scale_
+        self.min_ = feature_range[0] - min_ / scale_
+        return self
+
+    def transform(self, X):
+        """Scaling features of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X *= self.scale_
+        X += self.min_
+        return X
+
+
+class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -164,7 +236,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         unit standard deviation).
 
     copy : boolean, optional, default is True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
@@ -191,7 +263,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Compute the mean and std to be used for later scaling
+        """Compute the mean and std to be used for later scaling.
 
         Parameters
         ----------
@@ -284,6 +356,13 @@ class Scaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
+
+
+class Scaler(StandardScaler):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        warnings.warn("Scaler was renamed to StandardScaler. The old name "
+                " will be removed in 0.15.", DeprecationWarning)
+        super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
@@ -848,7 +927,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
     This is equivalent to centering phi(X) with
-    sklearn.preprocessing.Scaler(with_std=False).
+    sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
     def fit(self, K, y=None):

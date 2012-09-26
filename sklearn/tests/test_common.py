@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
         TransformerMixin, ClusterMixin
 from sklearn.utils import shuffle
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler, Scaler
 #from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_iris, load_boston, make_blobs
 from sklearn.metrics import zero_one_score, adjusted_rand_score
@@ -117,7 +117,7 @@ def test_transformers():
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
             random_state=0, n_features=2, cluster_std=0.1)
     n_samples, n_features = X.shape
-    X = Scaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
     X -= X.min()
 
     succeeded = True
@@ -196,7 +196,7 @@ def test_transformers_sparse_data():
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
-            if Trans is Scaler:
+            if Trans in [Scaler, StandardScaler]:
                 trans = Trans(with_mean=False)
             else:
                 trans = Trans()
@@ -267,7 +267,7 @@ def test_clustering():
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=7)
     n_samples, n_features = X.shape
-    X = Scaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
     for name, Alg in clustering:
         if Alg is WardAgglomeration:
             # this is clustering on the features
@@ -308,7 +308,7 @@ def test_classifiers_train():
     iris = load_iris()
     X_m, y_m = iris.data, iris.target
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
-    X_m = Scaler().fit_transform(X_m)
+    X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
@@ -378,7 +378,7 @@ def test_classifiers_classes():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=7)
-    X = Scaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
     y = 2 * y + 1
     # TODO: make work with next line :)
     #y = y.astype(np.str)
@@ -409,7 +409,7 @@ def test_regressors_int():
     boston = load_boston()
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
-    X = Scaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
     y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
         if Reg in dont_test or Reg in meta_estimators or Reg in (CCA,):
@@ -449,8 +449,8 @@ def test_regressors_train():
     X, y = shuffle(X, y, random_state=0)
     # TODO: test with intercept
     # TODO: test with multiple responses
-    X = Scaler().fit_transform(X)
-    y = Scaler().fit_transform(y)
+    X = StandardScaler().fit_transform(X)
+    y = StandardScaler().fit_transform(y)
     succeeded = True
     for name, Reg in regressors:
         if Reg in dont_test or Reg in meta_estimators:
