@@ -111,7 +111,7 @@
 
 	//Function to make the index toctree collapsible
 	$(function () {
-            $('ul li ul li:has(ul)')
+            $('.toctree-l2')
                 .click(function(event){
                     if (this == event.target) {
                         $(this).css('list-style-image',
@@ -123,21 +123,29 @@
 			.mousedown(function(event){ return false; }) //Firefox highlighting fix
                         .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                         .children('ul').hide();
-                $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'none'});
+                $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+		$('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
                 var sidebarbutton = $('#sidebarbutton');
                 sidebarbutton.css({
 		    'display': 'none'
                 });
-	    $('ul li ul li:has(ul)').hover(
-	    	  function () {
-		      $(this).css('list-style-image',
-                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBoxHighlight.png)');
-           	  },
-           	  function () {
-		      $(this).css('list-style-image',
+
+	    $('.toctree-l2').hover(
+	        function () {
+                    $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
+		    if ($(this).children('ul').length > 0) {
+		        $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBoxHighlight.png)' : 'url(_static/plusBoxHighlight.png)');
+		    }
+                },
+                function () {
+                    $(this).css('background-color', 'white').children('ul').css('background-color', 'white');
+		    if ($(this).children('ul').length > 0) {
+		        $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBox.png)');
-           	  }
-	    );
+		    }
+                }
+            );
 	});
 
         </SCRIPT>
