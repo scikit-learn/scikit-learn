@@ -127,7 +127,7 @@
 		        if ($(this).children('ul').length > 0) {
                             $(this).css('list-style-image',
                             (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
-                             $(this).children('ul').slideToggle(200);
+                            $(this).children('ul').slideToggle(200);
                         }
                         return true; //Makes links clickable
                     }
@@ -135,8 +135,8 @@
 		.mousedown(function(event){ return false; }) //Firefox highlighting fix
                 .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                 .children('ul').hide();
-                $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
-		$('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+            $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+	    $('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
             var sidebarbutton = $('#sidebarbutton');
             sidebarbutton.css({
 	        'display': 'none'
