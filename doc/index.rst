@@ -126,7 +126,7 @@
                     if (event.target.tagName.toLowerCase() != "a") {
 		        if ($(this).children('ul').length > 0) {
                             $(this).css('list-style-image',
-                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBox.png)' : 'url(_static/minBox.png)');
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBoxHighlight.png)' : 'url(_static/minBoxHighlight.png)');
                             $(this).children('ul').toggle();
                         }
                         return true; //Makes links clickable
