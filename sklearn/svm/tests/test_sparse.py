@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal, \
 from nose.tools import assert_raises, assert_true
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
+from sklearn.svm import SolverTimeout
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -222,6 +223,12 @@ def test_sparse_svc_clone_with_callable_kernel():
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
+
+
+def test_timeout():
+    sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
+            iter_limit=1)
+    assert_raises(SolverTimeout, sp.fit, X_sp, Y)
 
 
 if __name__ == '__main__':
