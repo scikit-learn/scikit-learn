@@ -211,6 +211,7 @@ Samples generator
    decomposition.PCA
    decomposition.ProbabilisticPCA
    decomposition.ProjectedGradientNMF
+   decomposition.KLdivNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FactorAnalysis
