@@ -87,7 +87,7 @@ def test_elastic_net_find_kkt_violators():
     clf.fit(X, y)
     changed_coefs = clf.coef_
 
-    subset = [0, 1, 2, 3, 4, 7]
+    subset = np.array([0, 1, 2, 3, 4, 7])
     n_samples = X.shape[0]
     l1_reg = alpha * rho * n_samples
     l2_reg = alpha * (1.0 - rho) * n_samples
@@ -103,11 +103,11 @@ def test_elastic_net_find_kkt_violators():
     found_violators_in_subset = elastic_net_kkt_violating_features(
             changed_coefs, l1_reg, l2_reg, X, y, R, subset=subset)
     print found_violators_in_subset
-    assert_true(found_violators_in_subset == set([3, 7]))
+    assert_true(found_violators_in_subset == [3, 7])
 
     found_violators_in_full_set = elastic_net_kkt_violating_features(
             changed_coefs, l1_reg, l2_reg, X, y, R, subset=None)
-    assert_true(found_violators_in_full_set == set([3, 5, 7]))
+    assert_true(found_violators_in_full_set == [3, 5, 7])
 
 
 def test_enet_strong_rule_against_standart_enet():
