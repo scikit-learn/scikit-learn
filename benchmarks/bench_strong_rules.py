@@ -44,7 +44,7 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             X = np.asfortranarray(X)
             Xy = np.dot(X.T, y)
             # Express alpha as a fraction of alpha_max
-            alpha_max = np.max(np.abs(Xy)) / len(X)
+            alpha_max = np.max(np.abs(Xy)) / (ns * rho)
             this_alpha = alpha * alpha_max
 
             MAX_ITER = 10000
@@ -68,7 +68,7 @@ def compute_bench(alpha, rho, n_samples, n_features, precompute):
             tstart = time()
             clf_strong_rule.fit(X, y, Xy)
             enet_strong_rules_results.append(time() - tstart)
-            assert_array_almost_equal(clf_strong_rule.coef_, clf.coef_, 4)
+            assert_array_almost_equal(clf_strong_rule.coef_, clf.coef_, 3)
 
     return enet_results, enet_strong_rules_results
 
