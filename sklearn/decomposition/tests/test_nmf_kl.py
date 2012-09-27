@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from numpy.testing import assert_array_almost_equal
 import scipy.sparse as sp
 
 from ..nmf import (_generalized_KL, KLdivNMF, _normalize_sum, _scale,
@@ -41,7 +42,7 @@ class TestNormalizeSum(unittest.TestCase):
     def test_correct_on_1D(self):
         a = np.random.random((5,))
         norm = _normalize_sum(a, axis=0)
-        self.assertTrue(np.allclose(1., np.sum(norm)))
+        assert_array_almost_equal(1., np.sum(norm))
 
     def test_correct_on_2D_axis0(self):
         a = np.array([[0., 1., 3.], [2., 3., 3.]])
@@ -59,7 +60,7 @@ class TestNormalizeSum(unittest.TestCase):
         a = np.random.random((2, 4, 5))
         ax = np.random.randint(3)
         norm = _normalize_sum(a, axis=ax)
-        self.assertTrue(np.allclose(np.sum(norm, ax), 1.))
+        assert_array_almost_equal(np.sum(norm, ax), 1.)
 
     def test_error_on_wrong_axis(self):
         a = np.random.random((2, 3, 4))
@@ -103,14 +104,14 @@ class TestScale(unittest.TestCase):
         fact = np.array([2, 3])
         scaled = _scale(mtx, fact, axis=1)
         ok = np.array([[2, 4, 6], [12, 15, 18]])
-        self.assertTrue(np.allclose(ok, scaled))
+        assert_array_almost_equal(ok, scaled)
 
     def test_scale_columns(self):
         mtx = np.array([[1, 2, 3], [4, 5, 6]])
         fact = np.array([3, 2, 1])
         scaled = _scale(mtx, fact, axis=0)
         ok = np.array([[3, 4, 3], [12, 10, 6]])
-        self.assertTrue(np.allclose(ok, scaled))
+        assert_array_almost_equal(ok, scaled)
 
 
 class TestGenenralizedKL(unittest.TestCase):
@@ -134,13 +135,13 @@ class TestGenenralizedKL(unittest.TestCase):
         self.assertTrue(_generalized_KL(self.x, self.y) >= 0)
 
     def test_is_0_on_same(self):
-        self.assertTrue(np.allclose(_generalized_KL(self.x, self.x), 0))
+        assert_array_almost_equal(_generalized_KL(self.x, self.x), 0)
 
     def test_is_1_homogenous(self):
         dkl = _generalized_KL(self.x, self.y)
         a = np.random.random()
         adkl = _generalized_KL(a * self.x, a * self.y)
-        self.assertTrue(np.allclose(a * dkl, adkl))
+        assert_array_almost_equal(a * dkl, adkl)
 
     def test_values(self):
         x = np.zeros((4, 2))
@@ -149,7 +150,7 @@ class TestGenenralizedKL(unittest.TestCase):
         dkl = _generalized_KL(x, y)
         ok = np.log(2.) + 3.
         print dkl, ok
-        self.assertTrue(np.allclose(dkl, ok))
+        assert_array_almost_equal(dkl, ok)
 
 
 class TestError(unittest.TestCase):
@@ -171,14 +172,14 @@ class TestError(unittest.TestCase):
         Xdense = self.X.todense()
         err = self.nmf.error(Xdense, self.W, H=self.H)
         kl = _generalized_KL(Xdense, self.W.dot(self.H))
-        self.assertTrue(np.allclose(err, kl))
+        assert_array_almost_equal(err, kl)
 
     def test_error_sparse(self):
         err_dense = self.nmf.error(self.X.todense(), self.W, H=self.H)
         err_sparse = self.nmf.error(self.X, self.W, H=self.H)
         print err_dense
         print err_sparse
-        self.assertTrue(np.allclose(err_dense, err_sparse))
+        assert_array_almost_equal(err_dense, err_sparse)
 
     def test_error_is_gen_kl_with_compenents(self):
         Xdense = self.X.todense()
@@ -269,4 +270,4 @@ class TestSparseDot(unittest.TestCase):
     def test_correct(self):
         ok = np.multiply(np.dot(self.a, self.b), (self.ref.todense() != 0))
         ans = _sparse_dot(self.a, self.b, self.ref).todense()
-        self.assertTrue(np.allclose(ans, ok))
+        assert_array_almost_equal(ans, ok)
