@@ -154,7 +154,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                              copy=self.copy_X and self.fit_intercept)
-        print X.strides, X.shape
         # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
         # now all computation with X can be done inplace
