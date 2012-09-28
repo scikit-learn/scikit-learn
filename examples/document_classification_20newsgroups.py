@@ -191,7 +191,7 @@ def benchmark(clf):
 
 
 results = []
-for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+for clf, name in ((RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
                   (Perceptron(n_iter=50), "Perceptron"),
                   (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
