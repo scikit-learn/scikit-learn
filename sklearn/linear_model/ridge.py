@@ -311,7 +311,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         else:
             # The fit method should be removed from Ridge when this warning is
             # removed
-            warnings.warn("solver option in fit will be deprecated in v0.14.")
+            warnings.warn("""solver option in fit is deprecated and will be
+                          removed in v0.14.""")
 
         return _BaseRidge.fit(self, X, y, solver=solver,
                               sample_weight=sample_weight)
@@ -406,7 +407,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         if solver is None:
             solver = self.solver
         else:
-            warnings.warn("solver option in fit will be deprecated in v0.14.")
+            warnings.warn("""solver option in fit is deprecated and will be
+                          removed in v0.14.""")
 
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
