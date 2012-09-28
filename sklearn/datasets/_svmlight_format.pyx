@@ -25,7 +25,7 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
+def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_id):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef np.int32_t idx, prev_idx
@@ -34,7 +34,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     data = ArrayBuilder(dtype=dtype)
     indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
     indices = ArrayBuilder(dtype=_INDICES_DTYPE)
-    qid = ArrayBuilder(dtype=np.double)
+    query_values = ArrayBuilder(dtype=np.int)
     if multilabel:
         labels = []
     else:
@@ -62,9 +62,11 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
 
         prev_idx = -1
         n_features = len(features)
+
         if n_features and line_parts[1].startswith('qid'):
             _, value = line_parts[1].split(COLON, 1)
-            qid.append(int(value))
+            if query_id:
+                query_values.append(int(value))
             line_parts.pop(1)
             n_features -= 1
 
@@ -72,7 +74,6 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
             idx_s, value = line_parts[i].split(COLON, 1)
             # XXX if we replace int with np.int32 in the line below, this
             # function becomes twice as slow.
-
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
@@ -89,15 +90,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     indptr = indptr.get()
     data = data.get()
     indices = indices.get()
+    query_values = query_values.get()
 
     if not multilabel:
         labels = labels.get()
-    if len(qid) > 0:
-        qid = qid.get()
-        if qid.shape[0] != labels.shape[0]:
-            raise ValueError(
-                """Malformed svmlight file: there should be one query id (qid) for
-                each sample""")
-        labels = np.vstack((labels, qid)).T
 
-    return data, indices, indptr, labels
+    return data, indices, indptr, labels, query_values
