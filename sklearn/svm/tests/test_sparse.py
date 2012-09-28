@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
@@ -7,7 +8,7 @@ from numpy.testing import assert_array_almost_equal, \
 from nose.tools import assert_raises, assert_true
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
-from sklearn.svm import SolverTimeout
+from sklearn.utils import ConvergenceWarning
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -228,7 +229,9 @@ def test_sparse_svc_clone_with_callable_kernel():
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
             iter_limit=1)
-    assert_raises(SolverTimeout, sp.fit, X_sp, Y)
+    with warnings.catch_warnings(record=True) as foo:
+        sp.fit(X_sp, Y)
+    assert len(foo) == 1 and foo[0].category == ConvergenceWarning
 
 
 if __name__ == '__main__':

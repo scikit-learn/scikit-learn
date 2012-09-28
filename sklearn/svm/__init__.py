@@ -14,8 +14,6 @@ from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC
 from .bounds import l1_min_c
 from . import sparse, libsvm, liblinear, libsvm_sparse
 
-from exceptions import SolverTimeout
-
 __all__ = ['LinearSVC',
            'NuSVC',
            'NuSVR',

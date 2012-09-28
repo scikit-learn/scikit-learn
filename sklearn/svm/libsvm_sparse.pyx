@@ -1,8 +1,9 @@
 
+import warnings
 import  numpy as np
 cimport numpy as np
 from scipy import sparse
-from exceptions import SolverTimeout
+from ..utils import ConvergenceWarning
 
 ################################################################################
 # Includes
@@ -199,7 +200,8 @@ def libsvm_sparse_train ( int n_features,
     if fit_status == 0:
         return rval
     elif fit_status == 1:
-        raise SolverTimeout(rval)
+        warnings.warn('Solver reached iter_limit', ConvergenceWarning)
+        return rval
     else:
         raise NotImplementedError('unrecognized fit_status')
 

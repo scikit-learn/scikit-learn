@@ -30,11 +30,12 @@ Authors
       Gael Varoquaux <gael.varoquaux@normalesup.org>
 """
 
+import warnings
 import  numpy as np
 cimport numpy as np
 cimport libsvm
 from libc.stdlib cimport free
-from exceptions import SolverTimeout
+from ..utils import ConvergenceWarning
 
 
 ################################################################################
@@ -234,7 +235,8 @@ def fit(
     if fit_status == 0:
         return rval
     elif fit_status == 1:
-        raise SolverTimeout(rval)
+        warnings.warn('Solver reached iter_limit', ConvergenceWarning)
+        return rval
     else:
         raise NotImplementedError('unrecognized fit_status')
 
