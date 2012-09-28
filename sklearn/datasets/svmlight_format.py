@@ -30,7 +30,7 @@ from ..utils import atleast2d_or_csr
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
-                       multilabel=False, zero_based="auto"):
+                       multilabel=False, zero_based="auto", query_id=False):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -53,6 +53,14 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     to use an optimized loader such as:
 
       https://github.com/mblondel/svmlight-loader
+
+    In case the file contains a pairwise preference constraint (known
+    as "qid" in the svmlight format) these are ignored unless the
+    query_id parameter is set to True. These pairwise preference
+    constraints can be used to contraint the combination of samples
+    when using pairwise loss functions (as is the case in some
+    learning to rank problems) so that only pairs with the same
+    query_id value are considered.
 
     Parameters
     ----------
@@ -80,13 +88,19 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         but they are unfortunately not self-identifying. Using "auto" or True
         should always be safe.
 
+    query_id: boolean, defaults to False
+        If True, will return the query_id array for each file.
+
     Returns
     -------
-    (X, y)
+    X: scipy.sparse matrix of shape (n_samples, n_features)
 
-    where X is a scipy.sparse matrix of shape (n_samples, n_features),
-          y is a ndarray of shape (n_samples,), or, in the multilabel case,
-          a list of tuples of length n_samples.
+    y: ndarray of shape (n_samples,), or, in the multilabel a list of
+        tuples of length n_samples.
+
+    query_id: array of shape (n_samples,)
+       query_id for each sample. Only returned when query_id is set to
+       True.
 
     See also
     --------
@@ -94,7 +108,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     format, enforcing the same number of features/columns on all of them.
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                                     zero_based))
+                                     zero_based, query_id))
 
 
 def _gen_open(f):
@@ -112,22 +126,30 @@ def _gen_open(f):
         return open(f, "rb")
 
 
-def _open_and_load(f, dtype, multilabel, zero_based):
+def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
     # XXX remove closing when Python 2.7+/3.1+ required
     with closing(_gen_open(f)) as f:
-        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
-                        multilabel=False, zero_based="auto"):
+                        multilabel=False, zero_based="auto", query_id=False):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
     files, except that the results are concatenated into a single, flat list
     and the samples vectors are constrained to all have the same number of
     features.
+
+    In case the file contains a pairwise preference constraint (known
+    as "qid" in the svmlight format) these are ignored unless the
+    query_id parameter is set to True. These pairwise preference
+    constraints can be used to contraint the combination of samples
+    when using pairwise loss functions (as is the case in some
+    learning to rank problems) so that only pairs with the same
+    query_id value are considered.
 
     Parameters
     ----------
@@ -153,11 +175,17 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         but they are unfortunately not self-identifying. Using "auto" or True
         should always be safe.
 
+    query_id: boolean, defaults to False
+        If True, will return the query_id array for each file.
+
     Returns
     -------
     [X1, y1, ..., Xn, yn]
-
     where each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+
+    If query_id is set to True, this will return instead [X1, y1, q1,
+    ..., Xn, yn, qn] where (Xi, yi, qi) is the result from
+    load_svmlight_file(files[i])
 
     Rationale
     ---------
@@ -170,21 +198,24 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     --------
     load_svmlight_file
     """
-    r = [_open_and_load(f, dtype, multilabel, bool(zero_based)) for f in files]
+    r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id))
+         for f in files]
 
     if zero_based is False \
-     or zero_based == "auto" and all(np.min(indices) > 0
-                                     for _, indices, _, _ in r):
-        for _, indices, _, _ in r:
+     or zero_based == "auto" and all(np.min(tmp[1]) > 0 for tmp in r):
+        for ind in r:
+            indices = ind[1]
             indices -= 1
 
     if n_features is None:
-        n_features = max(indices.max() for _, indices, _, _ in r) + 1
+        n_features = max(ind[1].max() for ind in r) + 1
 
     result = []
-    for data, indices, indptr, y in r:
+    for data, indices, indptr, y, query_values in r:
         shape = (indptr.shape[0] - 1, n_features)
         result += sp.csr_matrix((data, indices, indptr), shape), y
+        if query_id:
+            result.append(query_values)
 
     return result
 
