@@ -293,7 +293,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None):
 
     y = np.asarray(y)
     if y.ndim != 1:
-        raise ValueError("expected y of shape [n_samples], got %r" % y)
+        raise ValueError("expected y of shape (n_samples,), got %r" % (y.shape,))
 
     X = atleast2d_or_csr(X)
     if X.shape[0] != y.shape[0]:
