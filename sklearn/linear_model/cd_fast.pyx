@@ -7,7 +7,7 @@
 
 cimport numpy as np
 import numpy as np
-import numpy.linalg as linalg
+from scipy import linalg
 cimport cython
 from cpython cimport bool
 import warnings
@@ -28,6 +28,10 @@ cdef inline double fsign(double f):
         return 1.0
     else:
         return -1.0
+
+cdef inline bint fclose(double a, double b, double rtol):
+    cdef double atol = 1e-08
+    return fabs(a - b) <= (atol + rtol * fabs(b))
 
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
@@ -56,7 +60,7 @@ cdef extern from "cblas.h":
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
-
+ctypedef np.intp_t POINTER
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -103,11 +107,53 @@ def sparse_std(unsigned int n_samples,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+def elastic_net_kkt_violating_features(np.ndarray[DOUBLE, ndim=1] coef,
+                                       double l1_reg, double l2_reg,
+                                       np.ndarray[DOUBLE, ndim=2] X,
+                                       np.ndarray[DOUBLE, ndim=1] y,
+                                       np.ndarray[DOUBLE, ndim=1] R=None,
+                                       np.ndarray[POINTER, ndim=1] subset=None,
+                                       double tol=0.09):
+    """ Function returns features that don't satisfy the elastic-net KKT.
+    The goal is to distinguish between coefficients that pass the
+    KKT only up to a certain tolerance and features that are inactive
+    (value of zero) but should be active.
+    """
+    kkt_violating_features = list()
+
+    if subset is None:
+        subset = np.arange(X.shape[1])
+
+    cdef int n_iter = subset.shape[0]
+    cdef unsigned int i
+    cdef double s
+    cdef double gradient
+    cdef unsigned int n_samples = X.shape[0]
+    for i in xrange(n_iter):
+        i = subset[i]
+        gradient = ddot(n_samples,
+                   <DOUBLE*>(X.data + i * n_samples * sizeof(DOUBLE)), 1,
+                   <DOUBLE*>R.data, 1)
+        s = fsign(coef[i])
+        if (coef[i] != 0 and
+                not fclose(gradient, s * l1_reg + l2_reg * coef[i], tol)):
+            kkt_violating_features.append(i)
+        elif coef[i] == 0 and fabs(gradient) >= l1_reg:
+            kkt_violating_features.append(i)
+    return kkt_violating_features
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive=False):
+                            int max_iter, double tol,
+                            bint positive=False, bint calc_dual_gap=True,
+                            np.ndarray[POINTER, ndim=1] iter_set=None,
+                            np.ndarray[DOUBLE, ndim=1] R=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -126,8 +172,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
-    # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=1] R
+    if R is None:
+        R = y - np.dot(X, w)
 
     cdef double tmp
     cdef double w_ii
@@ -143,14 +189,24 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
-    R = y - np.dot(X, w)
+    cdef bint iter_full_set
+    if iter_set is None:
+        n_features_iter = n_features
+        iter_full_set = True
+    else:
+        n_features_iter = iter_set.shape[0]
+        iter_full_set = False
 
     tol = tol * linalg.norm(y) ** 2
 
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in xrange(n_features):  # Loop over coordinates
+        for ii in xrange(n_features_iter):  # Loop over coordinates
+
+            if not iter_full_set:
+                ii = iter_set[ii]
+
             if norm_cols_X[ii] == 0.0:
                 continue
 
@@ -191,6 +247,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
             # criterion
+
+            # stop iterations if duality gap is not needed as stopping 
+            # criterion
+            if not calc_dual_gap:
+                break
 
             XtA = np.dot(X.T, R) - beta * w
             if positive:

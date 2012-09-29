@@ -113,7 +113,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     """
     def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
+                 use_strong_rule=False):
         self.alpha = alpha
         self.rho = rho
         self.coef_ = None
@@ -126,9 +127,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.warm_start = warm_start
         self.positive = positive
         self.intercept_ = 0.0
+        self.use_strong_rule = use_strong_rule
 
-    def fit(self, X, y, Xy=None, coef_init=None):
-        """Fit model with coordinate descent
+    def fit(self, X, y, Xy=None, coef_init=None, active_set_init=None,
+                    alpha_init=None, R_init=None):
+        """Fit Elastic Net model with coordinate descent
 
         Parameters
         -----------
@@ -157,11 +160,16 @@ class ElasticNet(LinearModel, RegressorMixin):
         # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
         # now all computation with X can be done inplace
-        fit = self._sparse_fit if sparse.isspmatrix(X) else self._dense_fit
-        fit(X, y, Xy, coef_init)
+        if sparse.isspmatrix(X):
+            self._sparse_fit(X, y, Xy, coef_init)
+        else:
+            self._dense_fit(X, y, Xy, coef_init, active_set_init, alpha_init,
+                                                                    R_init)
         return self
 
-    def _dense_fit(self, X, y, Xy=None, coef_init=None):
+    def _dense_fit(self, X, y, Xy=None, coef_init=None,
+                        active_set_init=None, alpha_init=None,
+                        R_init=None):
 
         X, y, X_mean, y_mean, X_std = center_data(X, y,
                 self.fit_intercept, self.normalize,
@@ -201,10 +209,16 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         for k in xrange(n_targets):
             if Gram is None:
-                coef_[k, :], dual_gap_[k], eps_[k] = \
-                        cd_fast.enet_coordinate_descent(coef_[k, :],
-                        l1_reg, l2_reg, X, y[:, k], self.max_iter, self.tol,
-                        self.positive)
+                if self.use_strong_rule:
+                    coef_[k, :], dual_gap_[k], eps_[k] = \
+                        self._fit_with_strong_rule(coef_[k, :], X,
+                        y[:, k], Xy, active_set_init=active_set_init,
+                        coef_init=coef_init, alpha_init=alpha_init, R=R_init)
+                else:
+                    coef_[k, :], dual_gap_[k], eps_[k] = \
+                            cd_fast.enet_coordinate_descent(coef_[k, :],
+                            l1_reg, l2_reg, X, y[:, k], self.max_iter,
+                            self.tol, self.positive)
             else:
                 Gram = Gram.copy()
                 if Xy is None:
@@ -290,6 +304,96 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         return coef_
 
+    def _fit_with_strong_rule(self, w, X, y, Xy=None,
+                    active_set_init=None, coef_init=None, alpha_init=None,
+                    R=None, max_iter_strong=100):
+
+        if (active_set_init is not None and not np.any(active_set_init)):
+            active_set_init = None
+
+        n_samples, n_features = X.shape
+
+        l1_reg = self.alpha * self.rho * n_samples
+        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
+
+        if R is None:
+            # calculate residuals
+            R = y.copy()
+            if coef_init is not None:
+                R -= np.dot(X, coef_init)
+
+        if Xy is None:
+            Xy = np.dot(X.T, y)
+
+        # the strong_set contains the features that are predicted by
+        # the strong rule to have nonzero coefs
+        strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy,
+                alpha=self.alpha, rho=self.rho, alpha_init=alpha_init,
+                                            coef_init=coef_init, R=R)
+
+        # the ever_active_set contains the features that had nonzero coefs
+        # while fitting with a higher alpha
+        if active_set_init is None:
+            active_set = strong_set
+        else:
+            active_set = active_set_init
+
+        pass_kkt_on_strong_set = False
+        pass_kkt_on_full_set = False
+
+        # tuning parameter for active-set estimation
+        sr_max_iter = 50
+        tol_kkt_check = 0.001
+
+        # add features to the active set till all
+        # zero features pass the KKT
+        for n_iter in range(max_iter_strong):
+
+            # add features to the active set till
+            # all zero features in the strong set pass the KKT
+            while not pass_kkt_on_strong_set:
+                cd_fast.enet_coordinate_descent(w, l1_reg,
+                    l2_reg, X, y, sr_max_iter, self.tol, self.positive,
+                    calc_dual_gap=False, iter_set=np.where(active_set)[0],
+                    R=R)
+                # check only zero features
+                zero_coefs = self.coef_ == 0
+                subset = np.where(strong_set & zero_coefs)[0]
+                kkt_violators = cd_fast.elastic_net_kkt_violating_features(
+                                self.coef_, l1_reg, l2_reg, X, y, R,
+                                subset=subset, tol=tol_kkt_check)
+                if kkt_violators:
+                    active_set[kkt_violators] = True
+                else:
+                    # This only garanties that no feature is missing it's still
+                    # possible that an active feature is failing kkt
+                    pass_kkt_on_strong_set = True
+
+            # check only on zero features
+            subset = np.where(np.logical_not(strong_set) & zero_coefs)[0]
+            kkt_violators = cd_fast.elastic_net_kkt_violating_features(
+                            self.coef_, l1_reg, l2_reg, X, y, R,
+                            subset=subset, tol=tol_kkt_check)
+
+            if kkt_violators:
+                active_set[kkt_violators] = True
+                strong_set = elastic_net_strong_rule_active_set(X, y, Xy=Xy,
+                            alpha=self.alpha, rho=self.rho,
+                            alpha_init=alpha_init, coef_init=coef_init, R=R)
+                pass_kkt_on_strong_set = False
+            else:
+                # This only garanties that no feature is missing it's still
+                # possible that an active feature is failing kkt
+                pass_kkt_on_full_set = True
+
+            if pass_kkt_on_full_set:
+                break
+
+        # now fit enet on active set up to specified tol
+        return cd_fast.enet_coordinate_descent(w, l1_reg,
+                    l2_reg, X, y, self.max_iter, self.tol, self.positive,
+                    iter_set=np.where(active_set)[0], R=R)
+
     @property
     def sparse_coef_(self):
         """ sparse representation of the fitted coef """
@@ -312,6 +416,42 @@ class ElasticNet(LinearModel, RegressorMixin):
                                         dense_output=True) + self.intercept_)
         else:
             return super(ElasticNet, self).decision_function(X)
+
+
+def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None,
+                              coef_init=None, alpha_init=None, R=None):
+
+    alpha_scaled = alpha * X.shape[0]
+
+    # use sequential strong rule if one other pair of
+    # alpha and coefs is given
+    # this makes only sense if alpha < alpha_max
+    # therefore check if at least one coef != 0
+    use_sequential_strong_rule = False
+
+    if alpha_init is not None and coef_init is not None:
+        if alpha_init > alpha and len(coef_init.nonzero()[0]) > 0:
+            use_sequential_strong_rule = True
+
+    # since no previous alpha is given.
+    if use_sequential_strong_rule:
+        if R is None:
+            gradient = np.abs(np.dot(X.T, y - np.dot(X, coef_init)))
+        else:
+            gradient = np.abs(np.dot(X.T, R))
+        alpha_init_scaled = alpha_init * X.shape[0]
+        strong_set = gradient >= rho * (2 * alpha_scaled -
+                                                alpha_init_scaled)
+#        print "sequential strong rule"
+        return strong_set
+
+    else:
+        if Xy is None:
+            Xy = np.dot(X.T, y)
+        alpha_max = np.max(np.abs(Xy))
+        strong_set = np.abs(Xy) >= rho * (2 * alpha_scaled - alpha_max)
+#        print "basic strong rule"
+        return strong_set
 
 
 ###############################################################################
