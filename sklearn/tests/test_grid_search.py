@@ -14,8 +14,10 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 
+from scipy.stats import distributions
+
 from sklearn.base import BaseEstimator
-from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
@@ -294,3 +296,12 @@ def test_bad_estimator():
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   score_func=adjusted_rand_score)
+
+
+def test_randomized_search():
+    # very basic smoke test
+    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+
+    params = dict(C=distributions.expon())
+    search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
+    search.fit(X, y)
