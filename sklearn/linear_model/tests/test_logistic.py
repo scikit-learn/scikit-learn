@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 import nose
 from nose.tools import assert_equal, assert_raises, raises
 
@@ -17,34 +18,39 @@ Y2 = [2, 1, 0]
 iris = datasets.load_iris()
 
 
+def check_predictions(clf, X, y):
+    """Check that the model is able to fit the classification data"""
+    n_samples = len(y)
+    classes = np.unique(y)
+    n_classes = classes.shape[0]
+
+    predicted = clf.fit(X, y).predict(X)
+    assert_array_equal(clf.classes_, classes)
+
+    assert_equal(predicted.shape, (n_samples,))
+    assert_array_equal(predicted, y)
+
+    probabilities = clf.predict_proba(X)
+    assert_equal(probabilities.shape, (n_samples, n_classes))
+    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+    assert_array_equal(probabilities.argmax(axis=1), y)
+
+
 def test_predict_2_classes():
     """Simple sanity check on a 2 classes dataset
 
     Make sure it predicts the correct result on simple datasets.
     """
-    clf = logistic.LogisticRegression().fit(X, Y1)
-    assert_array_equal(clf.predict(X), Y1)
-    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y1)
+    check_predictions(logistic.LogisticRegression(), X, Y1)
+    check_predictions(logistic.LogisticRegression(), X_sp, Y1)
 
-    clf = logistic.LogisticRegression().fit(X_sp, Y1)
-    assert_array_equal(clf.predict(X_sp), Y1)
-    assert_array_equal(clf.predict_proba(X_sp).argmax(axis=1), Y1)
+    check_predictions(logistic.LogisticRegression(C=100), X, Y1)
+    check_predictions(logistic.LogisticRegression(C=100), X_sp, Y1)
 
-    clf = logistic.LogisticRegression(C=100).fit(X, Y1)
-    assert_array_equal(clf.predict(X), Y1)
-    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y1)
-
-    clf = logistic.LogisticRegression(C=100).fit(X_sp, Y1)
-    assert_array_equal(clf.predict(X_sp), Y1)
-    assert_array_equal(clf.predict_proba(X_sp).argmax(axis=1), Y1)
-
-    clf = logistic.LogisticRegression(fit_intercept=False).fit(X, Y1)
-    assert_array_equal(clf.predict(X), Y1)
-    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y1)
-
-    clf = logistic.LogisticRegression(fit_intercept=False).fit(X_sp, Y1)
-    assert_array_equal(clf.predict(X_sp), Y1)
-    assert_array_equal(clf.predict_proba(X_sp).argmax(axis=1), Y1)
+    check_predictions(logistic.LogisticRegression(fit_intercept=False),
+                      X, Y1)
+    check_predictions(logistic.LogisticRegression(fit_intercept=False),
+                      X_sp, Y1)
 
 
 def test_error():
@@ -53,26 +59,25 @@ def test_error():
 
 
 def test_predict_3_classes():
-    clf = logistic.LogisticRegression(C=10).fit(X, Y2)
-    assert_array_equal(clf.predict(X), Y2)
-    assert_array_equal(clf.predict_proba(X).argmax(axis=1), Y2)
-
-    clf = logistic.LogisticRegression(C=10).fit(X_sp, Y2)
-    assert_array_equal(clf.predict(X_sp), Y2)
-    assert_array_equal(clf.predict_proba(X_sp).argmax(axis=1), Y2)
+    check_predictions(logistic.LogisticRegression(C=10), X, Y2)
+    check_predictions(logistic.LogisticRegression(C=10), X_sp, Y2)
 
 
 def test_predict_iris():
     """Test logisic regression with the iris dataset"""
+    n_samples, n_features = iris.data.shape
 
     target = iris.target_names[iris.target]
     clf = logistic.LogisticRegression(C=len(iris.data)).fit(iris.data, target)
-    assert_equal(set(target), set(clf.classes_))
+    assert_array_equal(np.unique(target), clf.classes_)
 
     pred = clf.predict(iris.data)
     assert_greater(np.mean(pred == target), .95)
 
-    pred = iris.target_names[clf.predict_proba(iris.data).argmax(axis=1)]
+    probabilities = clf.predict_proba(iris.data)
+    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+
+    pred = iris.target_names[probabilities.argmax(axis=1)]
     assert_greater(np.mean(pred == target), .95)
 
 
