@@ -44,6 +44,9 @@ API changes summary
      deprecated and will be removed in v0.14. Use the constructor option
      instead.
 
+   - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
+     instead of COO.
+
 .. _changes_0_12:
 
 0.12
