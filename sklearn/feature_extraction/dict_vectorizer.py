@@ -1,6 +1,7 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD-style.
 
+from array import array
 from collections import Mapping, Sequence
 from operator import itemgetter
 
@@ -180,31 +181,44 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        # Sanity check: Python's array has no way of explicitly requesting the
+        # signed 32-bit integers that scipy.sparse needs, so we use the next
+        # best thing: typecode "i" (int). However, if that gives larger or
+        # smaller integers than 32-bit ones, np.frombuffer screws up.
+        assert array("i").itemsize == 4, (
+            "sizeof(int) != 4 on your platform; please report this at"
+            " https://github.com/scikit-learn/scikit-learn/issues and"
+            " include the output from platform.platform() in your bug report")
+
         dtype = self.dtype
         vocab = self.vocabulary_
 
         if self.sparse:
             X = [X] if isinstance(X, Mapping) else X
 
-            i_ind = []
-            j_ind = []
+            indices = array("i")
+            indptr = array("i", [0])
+            # XXX we could change values to an array.array as well, but it
+            # would require (heuristic) conversion of dtype to typecode...
             values = []
 
-            for i, x in enumerate(X):
+            for x in X:
                 for f, v in x.iteritems():
                     if isinstance(v, basestring):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:
-                        j = vocab[f]
-                        i_ind.append(i)
-                        j_ind.append(j)
+                        indices.append(vocab[f])
                         values.append(dtype(v))
                     except KeyError:
                         pass
 
-            shape = (i + 1, len(vocab))
-            return sp.coo_matrix((values, (i_ind, j_ind)),
+                indptr.append(len(indices))
+
+            indices = np.frombuffer(indices, dtype=np.int32)
+            indptr = np.frombuffer(indptr, dtype=np.int32)
+            shape = (len(indptr) - 1, len(vocab))
+            return sp.csr_matrix((values, indices, indptr),
                                  shape=shape, dtype=dtype)
 
         else:
