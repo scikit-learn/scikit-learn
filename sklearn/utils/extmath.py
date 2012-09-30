@@ -21,7 +21,6 @@ except NotImplementedError:
     coo_todense_extra_arg = True
 
 
-
 def norm(v):
     v = np.asarray(v)
     __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
@@ -77,31 +76,50 @@ def density(w, **kwargs):
     return d
 
 
-def safe_sparse_dot(a, b, dense_output=False):
-    """Dot product that handle the sparse matrix case correctly"""
+def safe_sparse_dot(a, b, dense_output=False, out=None):
+    """Dot product that handle the sparse matrix case correctly
+
+    Computes the matrix multiplication a * b.
+
+    Parameters
+    ----------
+    a: array-like or sparse matrix, shape: [m, n]
+        Left factor in the matrix product.
+
+    b: array-like or sparse matrix, shape: [n, p]
+        Right factor in the matrix product.
+
+    dense_output: boolean, default: False
+        In case both a and b are sparse, their product can be compactly
+        stored as a sparse matrix itself, and this is the default behaviour.
+        If you want to override this, set `dense_output=True`. This doesn't
+        do anything if at least one of the factors is dense.
+
+    out: array, shape: [m, p] or None
+        If not None, use the dense preallocated array as storage. If a and b
+        are both sparse, this forces `dense_output=True`.
+    """
     from scipy import sparse
     if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
-        if isinstance(dense_output, bool) and dense_output is True \
-           and hasattr(ret, "toarray"):
+        if out is None and dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
     else:
         ret = np.dot(a, b)
-
-    if isinstance(dense_output, np.ndarray):
+    if out is not None:
         if hasattr(ret, "tocoo"):
             # Save time and space by using the preallocated output
             ret = ret.tocoo()
-            dense_output.fill(0.)
+            out.fill(0.)
             if coo_todense_extra_arg:
                 coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
-                            ret.col, ret.data, dense_output.ravel(), 0)
+                            ret.col, ret.data, out.ravel(), 0)
             else:
                 coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
-                            ret.col, ret.data, dense_output.ravel())
+                            ret.col, ret.data, out.ravel())
         else:
-            dense_output[:] = ret
-        return dense_output
+            out[:] = ret
+        return out
     else:
         return ret
 
