@@ -375,7 +375,16 @@ def fast_mcd(X, support_fraction=None,
         n_trials = max(10, n_trials_tot // n_subsets)
         n_best_tot = n_subsets * n_best_sub
         all_best_locations = np.zeros((n_best_tot, n_features))
-        all_best_covariances = np.zeros((n_best_tot, n_features, n_features))
+        try:
+            all_best_covariances = np.zeros((n_best_tot, n_features,
+                                             n_features))
+        except MemoryError:
+            # The above is too big. Let's try with something much small
+            # (and less optimal)
+            all_best_covariances = np.zeros((n_best_tot, n_features,
+                                             n_features))
+            n_best_tot = 10
+            n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets
             high_bound = low_bound + n_samples_subsets
