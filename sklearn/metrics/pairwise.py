@@ -102,9 +102,9 @@ def check_pairwise_arrays(X, Y):
 
 
 # Distances
-def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
-                        X_norm_precomputed=False, Y_norm_precomputed=False,
-                        out=None, squared=False):
+def euclidean_distances(X, Y=None, X_norm_preallocated=None,
+                        Y_norm_preallocated=None, X_norm_precomputed=None,
+                        Y_norm_precomputed=None, out=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -125,25 +125,23 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
 
     Y : {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
-    X_norm_squared : array-like, shape = [n_samples_1], optional
-        Pre-computed dot-products of vectors in X (e.g.,
-        ``(X**2).sum(axis=1)``) or simply a preallocated array of that shape.
+    X_norm_preallocated : array-like, shape = [n_samples_1], optional
+        Preallocated space for the dot-products of vectors in X. This is
+        mutually exclusive with `X_norm_precomputed`.
 
-    Y_norm_squared : array-like, shape = [n_samples_2], optional
-        Pre-computed dot-products of vectors in Y (e.g.,
-        ``(Y**2).sum(axis=1)``) or simply a preallocated array of that shape.
+    Y_norm_preallocated : array-like, shape = [n_samples_2], optional
+        Preallocated space for the dot-products of vectors in Y. This is
+        mutually exclusive with `Y_norm_precomputed`.
 
-    X_norm_precomputed : boolean, optional. Default: False
-        If True, assume the values in ``X_norm_squared`` are precomputed.
-        Otherwise, if an array is passed to ``X_norm_squared``, use it as
-        working buffer instead of allocating new memory, without making any
-        assumptions about its contents.
+    X_norm_precomputed : array-like, shape = [n_samples_1], optional.
+        Precomputed dot-products of vectors in X (e.g.,
+        ``(X**2).sum(axis=1)``). This is mutually exclusive with
+        `X_norm_preallocated`.
 
-    Y_norm_precomputed : boolean, optional. Default: False
-        If True, assume the values in ``Y_norm_squared`` are precomputed.
-        Otherwise, if an array is passed to ``Y_norm_squared``, use it as
-        working buffer instead of allocating new memory, without making any
-        assumptions about its contents.
+    Y_norm_precomputed : array-like, shape = [n_samples_2], optional.
+        Precomputed dot-products of vectors in Y (e.g.,
+        ``(Y**2).sum(axis=1)``). This is mutually exclusive with
+        `Y_norm_preallocated`.
 
     out : array, shape = [n_samples_1, n_samples_2], optional
         Preallocated array that will store the output.
@@ -183,38 +181,39 @@ def euclidean_distances(X, Y=None, X_norm_squared=None, Y_norm_squared=None,
     if issparse(X) or issparse(Y):
         if not issparse(X):
             out = out.T
-            euclidean_distances(Y, X, Y_norm_squared, X_norm_squared,
-                                Y_norm_precomputed, X_norm_precomputed,
-                                out, squared)
+            euclidean_distances(
+                Y, X, Y_norm_preallocated, X_norm_preallocated,
+                Y_norm_precomputed, X_norm_precomputed, out, squared)
             out = out.T
             return out
         X = csr_matrix(X)
         if issparse(Y):
             Y = csr_matrix(Y)
-        safe_sparse_dot(X, Y.T, dense_output=out)
+        safe_sparse_dot(X, Y.T, out=out)
         if X is Y:
             sparse_euclidean_distances_sym(
-                X_rows, X.data, X.indices, X.indptr, X_norm_squared,
+                X_rows, X.data, X.indices, X.indptr, X_norm_preallocated,
                 X_norm_precomputed, out, squared)
         elif issparse(Y):
             sparse_euclidean_distances(
                 X_rows, Y_rows, X.data, X.indices, X.indptr, Y.data, Y.indices,
-                Y.indptr, X_norm_squared, Y_norm_squared, X_norm_precomputed,
-                Y_norm_precomputed, out, squared)
+                Y.indptr, X_norm_preallocated, Y_norm_preallocated,
+                X_norm_precomputed, Y_norm_precomputed, out, squared)
         else:
             sparse_dense_euclidean_distances(
                 X_rows, X_cols, Y_rows, X.data, X.indices, X.indptr, Y,
-                X_norm_squared, Y_norm_squared, X_norm_precomputed,
+                X_norm_preallocated, Y_norm_preallocated, X_norm_precomputed,
                 Y_norm_precomputed, out, squared)
     else:
         if X is Y:
             dense_euclidean_distances_sym(
-                X_rows, X_cols, X, X_norm_squared, X_norm_precomputed, out,
-                squared)
+                X_rows, X_cols, X, X_norm_preallocated, X_norm_precomputed,
+                out, squared)
         else:
             dense_euclidean_distances(
-                X_rows, Y_rows, X_cols, X, Y, X_norm_squared, Y_norm_squared,
-                X_norm_precomputed, Y_norm_precomputed, out, squared)
+                X_rows, Y_rows, X_cols, X, Y, X_norm_preallocated,
+                Y_norm_preallocated, X_norm_precomputed, Y_norm_precomputed,
+                out, squared)
     return out
 
 
