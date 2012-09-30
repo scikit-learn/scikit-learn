@@ -17,85 +17,75 @@ from ..metrics.pairwise import rbf_kernel
 
 
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
-    """Spectral Embedding
+    """Spectral Embedding for Non-linear Dimensionality Reduction
 
-    Non-linear dimensionality reduction using spectral methods
+    Forms an affinity matrix given by the specified function and
+    applies spectral decomposition to the corresponding graph laplacian.
+    The resulting transformation is given by the value of the
+    eigenvectors for each data point.
 
     Parameters
     -----------
-    n_components: integer
+    n_components : integer, default: 2
         The dimension of the projected subspace.
-        #TODO if None is given how to select the default?
 
-    eigen_solver: {None, 'arpack' or 'amg'}
+    eigen_solver : {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities
+        but may also lead to instabilities.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None, default : None
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
 
-    affinity: string or callable
-        How to construct the adjacency graph.
-         - 'nearest_neighbors' : construct default knn graph.
-         - 'precomputed' : precomputed graph.
-         - [callable] : take in a array X (n_samples, n_features) and return
+    affinity : string or callable, default : "nearest_neighbors"
+        How to construct the affinity matrix.
+         - 'nearest_neighbors' : construct affinity matrix by knn graph
+         - 'rbf' : construct affinity matrix by rbf kernel
+         - 'precomputed' : precomputed affinity matrix
+         - callable : a specific function that takes in
+           data matrix (n_samples, n_features) and return
            affinity matrix (n_samples, n_samples).
 
-        Default: "nearest_neighbors"
-
-    gamma : float, optional
+    gamma : float, optional, default : 1/n_features
         Affinity coefficient for rbf graph.
 
-        Default: 1/n_features.
+    n_neighbors : int, default : max(n_samples/10 , 1)
+        Number of nearest neighbors for nearest_neighbors graph building.
 
-    n_neighbors : int
-        Number of nearest neighbors for nearest_neighbors graph building
-
-       Default: max(n_samples/10 , 1)
-
-    fit_inverse_transform : bool, optional
-       whether to fit the inverse transformation
-
+    fit_inverse_transform : bool, optional, default : False
+       Whether to fit the inverse transformation.
 
     Attributes
     ----------
 
-    `embedding_`
+    `embedding_` : array, shape = (n_samples, n_components)
         Spectral embedding of the training matrix
 
-    `affinity_matrix_`
+    `affinity_matrix_` : array, shape = (n_samples, n_samples)
         affinity_matrix constructed from samples or precomputed
 
     References
     ----------
     Spectral Embedding was intoduced in:
-    #TODO: We need several ref here ..
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
-
     - A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+
+    - On Spectral Clustering: Analysis and an algorithm, 2011
+      Andrew Y. Ng, Michael I. Jordan, Yair Weiss
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
+      
+    - Normalized cuts and image segmentation, 2000
+      Jianbo Shi, Jitendra Malik
+      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
 
-    def __init__(self, n_components=None, affinity="rbf", gamma=None,
-                 fit_inverse_transform=False, random_state=None,
-                 eigen_solver=None, n_neighbors=None):
+    def __init__(self, n_components=None, affinity="nearest_neighbors",
+                 gamma=None, fit_inverse_transform=False,
+                 random_state=None, eigen_solver=None, n_neighbors=None):
         self.n_components = n_components
-        if isinstance(affinity, str):
-            self.affinity = affinity.lower()
-            if affinity not in {'precomputed', 'rbf', 'nearest_neighbors'}:
-                raise ValueError(
-                    "Only precomputed, rbf,"
-                    "nearest_neighbors graph supported.")
-        else:
-            self.affinity = affinity
-        if fit_inverse_transform and graph == 'precomputed':
-            raise ValueError(
-                "Cannot fit_inverse_transform with a precomputed kernel.")
+        self.affinity = affinity
         self.gamma = gamma
         self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
@@ -155,15 +145,23 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-           array-like, shape (n_samples, n_samples)
-            If self.precomputed == true
-            Precomputed affinity matrix computed from samples
+            If self.precomputed is True
+            Precomputed affinity matrix computed from samples is used
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        if isinstance(affinity, str):
+            if self.affinity not in
+                {'precomputed', 'rbf', 'nearest_neighbors'}:
+                raise ValueError(
+                    "Only precomputed, rbf,"
+                    "nearest_neighbors graph supported.")
+        if fit_inverse_transform and graph == 'precomputed':
+            raise ValueError(
+                "Cannot fit_inverse_transform with a precomputed kernel.")
         affinity_matrix = self._get_affinity_matrix(X)
         self.embedding_ = self._spectra_embedding(affinity_matrix)
         return self
@@ -177,9 +175,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-           array-like, shape (n_samples, n_samples)
-            If self.precomputed == true
-            Precomputed affinity matrix computed from samples
+            If self.precomputed is True
+            Precomputed affinity matrix computed from samples is used
 
         Returns
         -------
@@ -187,36 +184,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         """
         self.fit(X)
         return self.embedding_
-
-    def transform(self, X):
-        """Transform new points
-
-        Parameters
-        ----------
-        X: array-like, shape (n_samples, n_features)
-
-        Returns
-        -------
-        X_new: array-like, shape (n_samples, n_components)
-        """
-        # out of sample not supported
-        raise NotImplementedError(
-            "Out of sample extension is currently not supported")
-
-    def fit_inverse_transform(self, X):
-        """Inverse transform new points
-
-        Parameters
-        ----------
-        X: array-like, shape (n_samples, n_components)
-
-        Returns
-        -------
-        X_new: array-like, shape (n_samples, n_features)
-        """
-        # inverse tranform not supported
-        raise NotImplementedError(
-            "Inverse transformation is not currently not supported")
 
     def _spectra_embedding(self, adjacency):
         """Project the sample on the first eigen vectors of the graph Laplacian
