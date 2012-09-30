@@ -85,6 +85,9 @@ i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
 
+
+.. _feature_union:
+
 ======================================
 FeatureUnion: Concatenating features
 ======================================
