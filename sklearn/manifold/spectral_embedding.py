@@ -20,7 +20,7 @@ from scipy.sparse.linalg import lobpcg
 
 
 def spectra_embedding(adjacency, n_components=2,
-                       eigen_solver=None, random_state=None):
+                      eigen_solver=None, random_state=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
