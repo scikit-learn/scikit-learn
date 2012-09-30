@@ -134,5 +134,6 @@ def test_safe_sparse_dot():
                            dense_output=True), ref)
         # test the use of preallocated space
         out = np.empty_like(ref)
-        safe_sparse_dot(fmt_l(X.T), fmt_r(X), dense_output=out)
+        safe_sparse_dot(fmt_l(X.T), fmt_r(X), out=out)
+        #print fmt_l, fmt_r
         assert_array_equal(out, ref)
