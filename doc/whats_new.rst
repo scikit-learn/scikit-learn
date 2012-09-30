@@ -21,9 +21,13 @@ Changelog
    - Speed up of :func:`metrics.precision_recall_curve` by Conrad Lee.
 
    - Added support for reading/writing svmlight files with pairwise
-   preference attribute (qid in svmlight file format) in
-   :func:`datasets.dump_svmlight_file` and
-   :func:`datasets.load_svmlight_file` by `Fabian Pedregosa`_.
+     preference attribute (qid in svmlight file format) in
+     :func:`datasets.dump_svmlight_file` and
+     :func:`datasets.load_svmlight_file` by `Fabian Pedregosa`_.
+
+   - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
+     of several transformers by `Andreas Müller`_.
+
 
 API changes summary
 -------------------
