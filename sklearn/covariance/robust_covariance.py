@@ -124,7 +124,9 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         raise ValueError(
             "Singular covariance matrix. "
             "Please check that the covariance matrix corresponding "
-            "to the dataset is full rank.")
+            "to the dataset is full rank and that MinCovDet is used with "
+            "Gaussian-distributed data (or at least data drawn from a "
+            "unimodal, symetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -448,7 +450,15 @@ def fast_mcd(X, support_fraction=None,
 
 
 class MinCovDet(EmpiricalCovariance):
-    """Minimum Covariance Determinant (MCD): robust estimator of covariance
+    """Minimum Covariance Determinant (MCD): robust estimator of covariance.
+
+    The Minimum Covariance Determinant covariance estimator is to be applied
+    on Gaussian-distributed data, but could still be relevant on data
+    drawn from a unimodal, symetric distribution. It is not meant to be used
+    with multimodal data (the algorithm used to fit a MinCovDet object is
+    likely to fail in such a case).
+    One should consider projection pursuit methods to deal with multimodal
+    datasets.
 
     Parameters
     ----------
