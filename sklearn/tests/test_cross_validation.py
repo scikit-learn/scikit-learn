@@ -19,7 +19,6 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
-from sklearn.svm.sparse import SVC as SparseSVC
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -275,7 +274,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SparseSVC(kernel='linear')
+    svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, zero_one_score, cv_sparse,
