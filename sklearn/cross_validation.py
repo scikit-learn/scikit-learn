@@ -10,6 +10,7 @@ validation and performance evaluation.
 
 from __future__ import print_function
 
+import warnings
 from itertools import combinations
 from math import ceil, floor, factorial
 import operator
@@ -212,8 +213,8 @@ class KFold(object):
     n: int
         Total number of elements
 
-    k: int
-        Number of folds
+    n_folds : int
+        Number of folds.
 
     indices: boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
@@ -255,16 +256,21 @@ class KFold(object):
     classification tasks).
     """
 
-    def __init__(self, n, k, indices=True, shuffle=False, random_state=None):
-        _validate_kfold(k, n)
+    def __init__(self, n, n_folds, indices=True, shuffle=False,
+            random_state=None, k=None):
+        if k is not None:
+            warnings.warn("The parameter k was renamed to n_folds and will be"
+                    " removed in 0.15.", DeprecationWarning)
+            n_folds = k
+        _validate_kfold(n_folds, n)
         random_state = check_random_state(random_state)
 
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
-        if abs(k - int(k)) >= np.finfo('f').eps:
-            raise ValueError("k must be an integer")
-        self.k = int(k)
+        if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
+            raise ValueError("n_folds must be an integer")
+        self.n_folds = int(n_folds)
         self.indices = indices
         self.idxs = np.arange(n)
         if shuffle:
@@ -272,12 +278,12 @@ class KFold(object):
 
     def __iter__(self):
         n = self.n
-        k = self.k
-        fold_size = n // k
+        n_folds = self.n_folds
+        fold_size = n // n_folds
 
-        for i in xrange(k):
+        for i in xrange(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
-            if i < k - 1:
+            if i < n_folds - 1:
                 test_index[self.idxs[i * fold_size:(i + 1) * fold_size]] = True
             else:
                 test_index[self.idxs[i * fold_size:]] = True
@@ -288,15 +294,15 @@ class KFold(object):
             yield train_index, test_index
 
     def __repr__(self):
-        return '%s.%s(n=%i, k=%i)' % (
+        return '%s.%s(n=%i, n_folds=%i)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,
-            self.k,
+            self.n_folds,
         )
 
     def __len__(self):
-        return self.k
+        return self.n_folds
 
 
 class StratifiedKFold(object):
@@ -313,8 +319,8 @@ class StratifiedKFold(object):
     y: array, [n_samples]
         Samples to split in K folds
 
-    k: int
-        Number of folds
+    n_folds : int
+        Number of folds.
 
     indices: boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
@@ -344,30 +350,35 @@ class StratifiedKFold(object):
     complementary.
     """
 
-    def __init__(self, y, k, indices=True):
+    def __init__(self, y, n_folds, indices=True, k=None):
+        if k is not None:
+            warnings.warn("The parameter k was renamed to n_folds and will be"
+                    " removed in 0.15.", DeprecationWarning)
+            n_folds = k
         y = np.asarray(y)
         n = y.shape[0]
-        _validate_kfold(k, n)
+        _validate_kfold(n_folds, n)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        if k > min_labels:
+        if n_folds > min_labels:
             raise ValueError("The least populated class in y has only %d"
                              " members, which is too few. The minimum"
                              " number of labels for any class cannot"
-                             " be less than k=%d." % (min_labels, k))
+                             " be less than n_folds=%d."
+                             % (min_labels, n_folds))
         self.y = y
-        self.k = k
+        self.n_folds = n_folds
         self.indices = indices
 
     def __iter__(self):
         y = self.y.copy()
-        k = self.k
+        n_folds = self.n_folds
         n = y.size
         idx = np.argsort(y)
 
-        for i in xrange(k):
+        for i in xrange(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
-            test_index[idx[i::k]] = True
+            test_index[idx[i::n_folds]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 ind = np.arange(n)
@@ -376,15 +387,15 @@ class StratifiedKFold(object):
             yield train_index, test_index
 
     def __repr__(self):
-        return '%s.%s(labels=%s, k=%i)' % (
+        return '%s.%s(labels=%s, n_folds=%i)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
-            self.k,
+            self.n_folds,
         )
 
     def __len__(self):
-        return self.k
+        return self.n_folds
 
 
 class LeaveOneLabelOut(object):
@@ -581,7 +592,7 @@ class Bootstrap(object):
     n : int
         Total number of elements in the dataset.
 
-    n_bootstraps : int (default is 3)
+    n_iterations : int (default is 3)
         Number of bootstrapping iterations
 
     train_size : int or float (default is 0.5)
@@ -612,7 +623,7 @@ class Bootstrap(object):
     >>> len(bs)
     3
     >>> print(bs)
-    Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
+    Bootstrap(9, n_iterations=3, train_size=5, test_size=4, random_state=0)
     >>> for train_index, test_index in bs:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...
@@ -628,10 +639,14 @@ class Bootstrap(object):
     # Static marker to be able to introspect the CV type
     indices = True
 
-    def __init__(self, n, n_bootstraps=3, train_size=.5, test_size=None,
-                 random_state=None):
+    def __init__(self, n, n_iterations=3, train_size=.5, test_size=None,
+                 random_state=None, n_bootstraps=None):
         self.n = n
-        self.n_bootstraps = n_bootstraps
+        if n_bootstraps is not None:
+            warnings.warn("n_bootstraps was renamed to n_iterations and will "
+                          "be removed in 0.15.", DeprecationWarning)
+            n_iterations = n_bootstraps
+        self.n_iterations = n_iterations
         if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
@@ -661,7 +676,7 @@ class Bootstrap(object):
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        for i in range(self.n_bootstraps):
+        for i in range(self.n_iterations):
             # random partition
             permutation = rng.permutation(self.n)
             ind_train = permutation[:self.train_size]
@@ -676,18 +691,18 @@ class Bootstrap(object):
             yield ind_train[train], ind_test[test]
 
     def __repr__(self):
-        return ('%s(%d, n_bootstraps=%d, train_size=%d, test_size=%d, '
+        return ('%s(%d, n_iterations=%d, train_size=%d, test_size=%d, '
                 'random_state=%d)' % (
                     self.__class__.__name__,
                     self.n,
-                    self.n_bootstraps,
+                    self.n_iterations,
                     self.train_size,
                     self.test_size,
                     self.random_state,
                 ))
 
     def __len__(self):
-        return self.n_bootstraps
+        return self.n_iterations
 
 
 class ShuffleSplit(object):
