@@ -52,10 +52,10 @@ class LeaveOneOut(object):
 
     Parameters
     ----------
-    n: int
-        Total number of elements
+    n : int
+        Total number of elements in dataset.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
@@ -81,7 +81,7 @@ class LeaveOneOut(object):
     [[1 2]] [[3 4]] [1] [2]
 
     See also
-    ========
+    --------
     LeaveOneLabelOut for splitting the data according to explicit,
     domain-specific stratification of the dataset.
     """
@@ -126,13 +126,13 @@ class LeavePOut(object):
 
     Parameters
     ----------
-    n: int
-        Total number of elements
+    n : int
+        Total number of elements in dataset.
 
-    p: int
-        Size of the test sets
+    p : int
+        Size of the test sets.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
@@ -200,7 +200,7 @@ def _validate_kfold(k, n_samples):
 
 
 class KFold(object):
-    """K-Folds cross validation iterator
+    """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling).
@@ -210,21 +210,21 @@ class KFold(object):
 
     Parameters
     ----------
-    n: int
-        Total number of elements
+    n : int
+        Total number of elements.
 
     n_folds : int
         Number of folds.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
 
-    shuffle: boolean, optional
-        whether to shuffle the data before splitting into batches
+    shuffle : boolean, optional
+        Whether to shuffle the data before splitting into batches.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
             Pseudo number generator state used for random sampling.
 
     Examples
@@ -316,13 +316,13 @@ class StratifiedKFold(object):
 
     Parameters
     ----------
-    y: array, [n_samples]
-        Samples to split in K folds
+    y : array-like, [n_samples]
+        Samples to split in K folds.
 
     n_folds : int
         Number of folds.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
@@ -414,7 +414,7 @@ class LeaveOneLabelOut(object):
         Arbitrary domain-specific stratification of the data to be used
         to draw the splits.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
@@ -499,7 +499,7 @@ class LeavePLabelOut(object):
     p : int
         Number of samples to leave out in the test split.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
@@ -574,7 +574,7 @@ class Bootstrap(object):
     """Random sampling with replacement cross-validation iterator
 
     Provides train/test indices to split data in train test sets
-    while resampling the input n_bootstraps times: each time a new
+    while resampling the input n_iterations times: each time a new
     random split of the data is performed and then samples are drawn
     (with replacement) on each side of the split to build the training
     and test sets.
@@ -911,7 +911,7 @@ class StratifiedShuffleSplit(object):
 
     Parameters
     ----------
-    y: array, [n_samples]
+    y : array, [n_samples]
         Labels of samples.
 
     n_iterations : int (default 10)
@@ -928,7 +928,7 @@ class StratifiedShuffleSplit(object):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test fraction.
 
-    indices: boolean, optional (default True)
+    indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
@@ -1044,36 +1044,37 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
     Parameters
     ----------
-    estimator: estimator object implementing 'fit'
-        The object to use to fit the data
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
 
-    X: array-like of shape at least 2D
+    X : array-like of shape at least 2D
         The data to fit.
 
-    y: array-like, optional
+    y : array-like, optional
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func: callable, optional
-        callable, has priority over the score function in the estimator.
+    score_func : callable, optional
+        Score function to use for evaluation.
+        Has priority over the score function in the estimator.
         In a non-supervised setting, where y is None, it takes the test
         data (X_test) as its only argument. In a supervised setting it takes
         the test target (y_true) and the test prediction (y_pred) as arguments.
 
-    cv: cross-validation generator, optional
+    cv : cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
         when y is supplied and estimator is a classifier.
 
-    n_jobs: integer, optional
+    n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    verbose: integer, optional
-        The verbosity level
+    verbose : integer, optional
+        The verbosity level.
 
     fit_params : dict, optional
-        parameters to pass to the fit method
+        Parameters to pass to the fit method of the estimator.
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -1120,20 +1121,20 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Parameters
     ----------
-    cv: an integer, a cv generator instance, or None
+    cv : int, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
         integer, in which case it is the number of folds in a KFold,
         None, in which case 3 fold is used, or another object, that
         will then be used as a cv generator.
 
-    X: 2D ndarray
-        the data the cross-val object will be applied on
+    X : array-like
+        The data the cross-val object will be applied on.
 
-    y: 1D ndarray
-        the target variable for a supervised learning problem
+    y : array-like
+        The target variable for a supervised learning problem.
 
-    classifier: boolean optional
-        whether the task is a classification task, in which case
+    classifier : boolean optional
+        Whether the task is a classification task, in which case
         stratified KFold will be used.
     """
     is_sparse = sp.issparse(X)
@@ -1161,17 +1162,17 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
     Parameters
     ----------
-    estimator: estimator object implementing 'fit'
-        The object to use to fit the data
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
 
-    X: array-like of shape at least 2D
+    X : array-like of shape at least 2D
         The data to fit.
 
-    y: array-like
+    y : array-like
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func: callable
+    score_func : callable
         Callable taking as arguments the test targets (y_test) and
         the predicted targets (y_pred) and returns a float. The score
         functions are expected to return a bigger value for a better result
@@ -1181,32 +1182,32 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+        sklearn.cross_validation module for the list of possible objects.
 
-    n_jobs: integer, optional
+    n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    labels: array-like of shape [n_samples] (optional)
+    labels : array-like of shape [n_samples] (optional)
         Labels constrain the permutation among groups of samples with
         a same label.
 
-    random_state: RandomState or an int seed (0 by default)
+    random_state : RandomState or an int seed (0 by default)
         A random number generator instance to define the state of the
         random permutations generator.
 
-    verbose: integer, optional
-        The verbosity level
+    verbose : integer, optional
+        The verbosity level.
 
     Returns
     -------
-    score: float
+    score : float
         The true score without permuting targets.
 
     permutation_scores : array, shape = [n_permutations]
         The scores obtained for each permutations.
 
-    pvalue: float
+    pvalue : float
         The returned value equals p-value if `score_func` returns bigger
         numbers for better scores (e.g., zero_one). If `score_func` is rather a
         loss function (i.e. when lower is better such as with
