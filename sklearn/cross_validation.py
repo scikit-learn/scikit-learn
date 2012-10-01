@@ -213,7 +213,7 @@ class KFold(object):
     n : int
         Total number of elements.
 
-    n_folds : int
+    n_folds : int, default=3
         Number of folds.
 
     indices : boolean, optional (default True)
@@ -232,11 +232,11 @@ class KFold(object):
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = cross_validation.KFold(4, k=2)
+    >>> kf = cross_validation.KFold(4, n_folds=2)
     >>> len(kf)
     2
     >>> print(kf)
-    sklearn.cross_validation.KFold(n=4, k=2)
+    sklearn.cross_validation.KFold(n=4, n_folds=2)
     >>> for train_index, test_index in kf:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -256,7 +256,7 @@ class KFold(object):
     classification tasks).
     """
 
-    def __init__(self, n, n_folds, indices=True, shuffle=False,
+    def __init__(self, n, n_folds=3, indices=True, shuffle=False,
             random_state=None, k=None):
         if k is not None:
             warnings.warn("The parameter k was renamed to n_folds and will be"
@@ -319,7 +319,7 @@ class StratifiedKFold(object):
     y : array-like, [n_samples]
         Samples to split in K folds.
 
-    n_folds : int
+    n_folds : int, default=3
         Number of folds.
 
     indices : boolean, optional (default True)
@@ -332,11 +332,11 @@ class StratifiedKFold(object):
     >>> from sklearn import cross_validation
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = cross_validation.StratifiedKFold(y, k=2)
+    >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
     >>> print(skf)
-    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], k=2)
+    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -350,7 +350,7 @@ class StratifiedKFold(object):
     complementary.
     """
 
-    def __init__(self, y, n_folds, indices=True, k=None):
+    def __init__(self, y, n_folds=3, indices=True, k=None):
         if k is not None:
             warnings.warn("The parameter k was renamed to n_folds and will be"
                     " removed in 0.15.", DeprecationWarning)
