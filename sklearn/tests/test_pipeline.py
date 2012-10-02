@@ -208,6 +208,26 @@ def test_feature_stacker():
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
 
 
+def test_pipeline_transform():
+    # Test whether pipeline works with a transformer at the end.
+    # Also test pipline.transform and pipeline.inverse_transform
+    iris = load_iris()
+    X = iris.data
+    pca = PCA(n_components=2)
+    pipeline = Pipeline([('pca', pca)])
+
+    # test transform and fit_transform:
+    X_trans = pipeline.fit(X).transform(X)
+    X_trans2 = pipeline.fit_transform(X)
+    X_trans3 = pca.fit_transform(X)
+    assert_array_almost_equal(X_trans, X_trans2)
+    assert_array_almost_equal(X_trans, X_trans3)
+
+    X_back = pipeline.inverse_transform(X_trans)
+    X_back2 = pca.inverse_transform(X_trans)
+    assert_array_almost_equal(X_back, X_back2)
+
+
 def test_feature_stacker_weights():
     # test feature stacker with transformer weights
     iris = load_iris()

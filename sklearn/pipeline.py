@@ -178,15 +178,15 @@ class Pipeline(BaseEstimator):
         final estimator. Valid only if the final estimator implements
         transform."""
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps:
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].transform(Xt)
+        return Xt
 
     def inverse_transform(self, X):
         if X.ndim == 1:
             X = X[None, :]
         Xt = X
-        for name, step in self.steps[:-1][::-1]:
+        for name, step in self.steps[::-1]:
             Xt = step.inverse_transform(Xt)
         return Xt
 
