@@ -808,7 +808,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff,
-                     distances=None):
+                     distances=None, random_reassign=False):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -834,6 +834,28 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     # Perform label assignement to nearest centers
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances)
+    if random_reassign:
+        # Reassign clusters that have very low counts
+        to_reassign = np.logical_and((counts <= 1),
+                                     counts <= .001 * counts.max())
+        print 'Reassigning % 3i centers' % to_reassign.sum()
+        # Pick new clusters amongst observations with a probability
+        # proportional to their closeness to their center
+        distance_to_centers = (centers[nearest_center] - X)
+        distance_to_centers **=2
+        distance_to_centers = distance_to_centers.sum(axis=1)
+        # Flip the ordering of the distances
+        distance_to_centers -= distance_to_centers.max()
+        distance_to_centers *= -1
+        rand_vals = np.random.random(to_reassign.sum())
+        rand_vals *= distance_to_centers.sum()
+        new_centers = np.searchsorted(distance_to_centers.cumsum(),
+                                      rand_vals)
+        #new_centers = np.random.randint((len(X)),
+        #                                 size=to_reassign.sum())
+        new_centers = X[new_centers]
+        centers[to_reassign] = new_centers
+
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
@@ -1146,7 +1168,9 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X[minibatch_indices], x_squared_norms[minibatch_indices],
                 self.cluster_centers_, self.counts_,
-                old_center_buffer, tol > 0.0, distances=distances)
+                old_center_buffer, tol > 0.0, distances=distances,
+                random_reassign=(iteration_idx + 1) % (10 +
+                                        self.counts_.min()) == 0)
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
@@ -1181,7 +1205,6 @@ class MiniBatchKMeans(KMeans):
             return self
 
         x_squared_norms = _squared_norms(X)
-
         if (not hasattr(self, 'counts_')
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
@@ -1192,9 +1215,17 @@ class MiniBatchKMeans(KMeans):
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
             self.counts_ = np.zeros(self.n_clusters, dtype=np.int32)
+            random_reassign = False
+        else:
+            # The lower the minimum count is, the more we do random
+            # reassignement, however, we don't want to do random
+            # reassignement to often, to allow for building up counts
+            random_reassign = self.random_state.randint(10*(1 +
+                                        self.counts_.min())) == 0
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
-                         self.counts_, np.zeros(0, np.double), 0)
+                         self.counts_, np.zeros(0, np.double), 0,
+                         random_reassign=random_reassign)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
