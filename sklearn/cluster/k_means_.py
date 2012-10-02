@@ -808,7 +808,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff,
-                     distances=None, random_reassign=False):
+                     distances=None, random_reassign=False,
+                     random_state=None):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -835,10 +836,10 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances)
     if random_reassign:
+        random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
-        to_reassign = np.logical_and((counts <= 1),
+        to_reassign = np.logical_or((counts <= 1),
                                      counts <= .001 * counts.max())
-        print 'Reassigning % 3i centers' % to_reassign.sum()
         # Pick new clusters amongst observations with a probability
         # proportional to their closeness to their center
         distance_to_centers = (centers[nearest_center] - X)
@@ -847,12 +848,10 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         # Flip the ordering of the distances
         distance_to_centers -= distance_to_centers.max()
         distance_to_centers *= -1
-        rand_vals = np.random.random(to_reassign.sum())
+        rand_vals = random_state.rand(to_reassign.sum())
         rand_vals *= distance_to_centers.sum()
         new_centers = np.searchsorted(distance_to_centers.cumsum(),
                                       rand_vals)
-        #new_centers = np.random.randint((len(X)),
-        #                                 size=to_reassign.sum())
         new_centers = X[new_centers]
         centers[to_reassign] = new_centers
 
@@ -1170,7 +1169,8 @@ class MiniBatchKMeans(KMeans):
                 self.cluster_centers_, self.counts_,
                 old_center_buffer, tol > 0.0, distances=distances,
                 random_reassign=(iteration_idx + 1) % (10 +
-                                        self.counts_.min()) == 0)
+                                        self.counts_.min()) == 0,
+                random_state=self.random_state)
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
@@ -1225,7 +1225,8 @@ class MiniBatchKMeans(KMeans):
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
-                         random_reassign=random_reassign)
+                         random_reassign=random_reassign,
+                         random_state=self.random_state)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
