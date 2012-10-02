@@ -503,6 +503,14 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     factor : double < 1 (default=.8)
         Scale factor between inner and outer circle.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels (0 or 1) for class membership of each sample.
     """
 
     if factor > 1 or factor < 0:
@@ -552,6 +560,13 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels (0 or 1) for class membership of each sample.
     """
 
     n_samples_out = n_samples / 2
