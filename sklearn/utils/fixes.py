@@ -187,5 +187,3 @@ else:
     # Before an 'order' argument was introduced, numpy wouldn't muck with
     # the ordering
     safe_copy = np.copy
-
-

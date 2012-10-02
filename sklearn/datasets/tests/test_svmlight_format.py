@@ -171,6 +171,7 @@ def test_load_with_qid():
         assert_array_equal(qid, [1, 1, 2])
         assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
 
+
 @raises(ValueError)
 def test_load_invalid_file2():
     load_svmlight_files([datafile, invalidfile, datafile])
@@ -261,6 +262,7 @@ def test_dump_invalid():
 
     f = BytesIO()
     assert_raises(ValueError, dump_svmlight_file, X, y[:-1], f)
+
 
 def test_dump_query_id():
     # test dumping a file with query_id

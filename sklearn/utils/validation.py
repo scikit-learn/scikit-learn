@@ -8,6 +8,7 @@ import warnings
 
 from .fixes import safe_copy
 
+
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
