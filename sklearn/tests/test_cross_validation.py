@@ -44,7 +44,7 @@ class MockClassifier(BaseEstimator):
     def predict(self, T):
         return T.shape[0]
 
-    def score(self, X=None, Y=None):
+    def score(self, X=None, Y=None, score_func=None):
         return 1. / (1 + np.abs(self.a))
 
 
