@@ -574,7 +574,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         n_samples = X.shape[0]
     elif n_samples < k:
             raise ValueError(
-                "n_samples=%d should be larger than k=%d" % (init_size, k))
+                "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
     if init == 'k-means++':
         centers = _k_init(X, k,
