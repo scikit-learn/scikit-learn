@@ -186,12 +186,13 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """Whether this is a multilabel classifier"""
         return self.label_binarizer_.multilabel
 
-    def score(self, X, y):
+    def score(self, X, y, score_func=None):
         if self.multilabel_:
             raise NotImplementedError(
                 "score is not supported for multilabel classifiers")
         else:
-            return super(OneVsRestClassifier, self).score(X, y)
+            return super(OneVsRestClassifier, self).score(X, y,
+                    score_func=score_func)
 
     @property
     def classes_(self):

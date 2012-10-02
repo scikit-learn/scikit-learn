@@ -17,6 +17,12 @@ import numpy as np
 from ..utils import check_arrays
 
 
+def requires_thresholds(f):
+    """Decorator to tag scores that need continuous inputs."""
+    f.requires_thresholds = True
+    return f
+
+
 def unique_labels(*lists_of_labels):
     """Extract an ordered array of unique labels"""
     labels = set()
@@ -180,6 +186,7 @@ def roc_curve(y_true, y_score):
     return fpr, tpr, thresholds[::-1]
 
 
+@requires_thresholds
 def average_precision_score(y_true, y_score):
     """Compute average precision (AP) from prediction scores.
 
@@ -215,6 +222,7 @@ def average_precision_score(y_true, y_score):
     return auc(recall, precision)
 
 
+@requires_thresholds
 def auc_score(y_true, y_score):
     """Compute Area Under the Curve (AUC) from prediction scores.
 
@@ -985,12 +993,12 @@ def zero_one_score(y_true, y_pred):
 # Loss functions
 
 def zero_one(y_true, y_pred):
-    """Zero-One classification loss
+    """Zero-One classification loss.
 
     Positive integer (number of misclassifications). The best performance
     is 0.
 
-    Return the number of errors
+    Return the number of errors.
 
     Parameters
     ----------

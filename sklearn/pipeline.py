@@ -190,14 +190,14 @@ class Pipeline(BaseEstimator):
             Xt = step.inverse_transform(Xt)
         return Xt
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, score_func=None):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
         score."""
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].score(Xt, y)
+        return self.steps[-1][-1].score(Xt, y, score_func)
 
     @property
     def _pairwise(self):

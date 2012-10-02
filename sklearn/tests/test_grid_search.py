@@ -28,7 +28,7 @@ class MockClassifier(BaseEstimator):
     def predict(self, T):
         return T.shape[0]
 
-    def score(self, X=None, Y=None):
+    def score(self, X=None, Y=None, score_func=None):
         if self.foo_param > 1:
             score = 1.
         else:
@@ -199,6 +199,9 @@ class BrokenClassifier(BaseEstimator):
 
     def predict(self, X):
         return np.zeros(X.shape[0])
+
+    def score(self, X, y, score_func=None):
+        return 0
 
 
 def test_refit():
