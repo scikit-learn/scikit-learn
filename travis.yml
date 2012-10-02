@@ -1,13 +1,13 @@
 language: python
+
 python:
   - "2.7"
-before_install:
-  - pip install numpy
-  - pip install scipy
+
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
   - python setup.py build_ext --inplace
 # # command to run tests, e.g. python setup.py test
+
 script:  
   - nosetests sklearn/
 
