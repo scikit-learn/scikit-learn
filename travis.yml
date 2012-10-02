@@ -5,6 +5,7 @@ python:
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
+  - pip install -r requirements.txt --use-mirrors
   - python setup.py build_ext --inplace
 # # command to run tests, e.g. python setup.py test
 
