@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.linalg as LA
 import scipy.sparse
-import scipy.sparse.linalg as SLA
+import sklearn.utils.arpack as SLA
 from sklearn.base import ClassifierMixin
 from sklearn.base import BaseEstimator
 import sklearn.metrics.pairwise as pairwise
