@@ -309,18 +309,22 @@ def homogeneity_score(labels_true, labels_pred):
     Non-pefect labelings that futher split classes into more clusters can be
     perfectly homogeneous::
 
-      >>> homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2])
-      1.0
-      >>> homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3])
-      1.0
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1],\
+                                            [0, 0, 1, 2])) # doctest: +ELLIPSIS
+      1.0...
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1],\
+                                            [0, 1, 2, 3])) # doctest: +ELLIPSIS
+      1.0...
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
 
-      >>> homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1])
-      0.0
-      >>> homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0])
-      0.0
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1],\
+                                            [0, 1, 0, 1])) # doctest: +ELLIPSIS
+      0.0...
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1],\
+                                            [0, 0, 0, 0])) # doctest: +ELLIPSIS
+      0.0...
 
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
@@ -376,17 +380,17 @@ def completeness_score(labels_true, labels_pred):
     Non-pefect labelings that assign all classes members to the same clusters
     are still complete::
 
-      >>> completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
+      >>> print completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
       1.0
-      >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
+      >>> print completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
       1.0
 
     If classes members are splitted across different clusters, the
     assignment cannot be complete::
 
-      >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
+      >>> print completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
-      >>> completeness_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> print completeness_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
     """
@@ -450,31 +454,37 @@ def v_measure_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not homogeneous, hence penalized::
 
-      >>> v_measure_score([0, 0, 1, 2], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 2],\
+                                         [0, 0, 1, 1])) # doctest: +ELLIPSIS
       0.8...
-      >>> v_measure_score([0, 1, 2, 3], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 1, 2, 3],\
+                                         [0, 0, 1, 1])) # doctest: +ELLIPSIS
       0.66...
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harms completeness
     and thus penalize V-measure as well::
 
-      >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1],\
+                                         [0, 0, 1, 2]))  # doctest: +ELLIPSIS
       0.8...
-      >>> v_measure_score([0, 0, 1, 1], [0, 1, 2, 3])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1],\
+                                         [0, 1, 2, 3]))  # doctest: +ELLIPSIS
       0.66...
 
     If classes members are completly splitted across different clusters,
     the assignment is totally in-complete, hence the v-measure is null::
 
-      >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
-      0.0
+      >>> print("%.6f" % v_measure_score([0, 0, 0, 0],\
+                                         [0, 1, 2, 3]))  # doctest: +ELLIPSIS
+      0.0...
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
-      >>> v_measure_score([0, 0, 1, 1], [0, 0, 0, 0])
-      0.0
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1],\
+                                         [0, 0, 0, 0])) # doctest: +ELLIPSIS
+      0.0...
 
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
