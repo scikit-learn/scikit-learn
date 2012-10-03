@@ -11,7 +11,7 @@ from .utils import array2d, check_random_state
 from .utils.extmath import safe_sparse_dot
 
 
-class RBM(BaseEstimator, TransformerMixin):
+class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     """
     Restricted Boltzmann Machine (RBM)
     
