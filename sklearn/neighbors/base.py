@@ -577,7 +577,7 @@ class SupervisedIntegerMixin(object):
             Target values, array of integer values.
         """
         X, y = check_arrays(X, y, sparse_format="csr")
-        self._classes, self._y = unique(y, return_inverse=True)
+        self.classes_, self._y = unique(y, return_inverse=True)
         return self._fit(X)
 
 
