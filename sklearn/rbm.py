@@ -8,6 +8,7 @@ import numpy as np
 
 from .base import BaseEstimator, TransformerMixin
 from .utils import array2d, check_random_state
+from .utils.extmath import safe_sparse_dot
 
 
 class RBM(BaseEstimator, TransformerMixin):
@@ -118,7 +119,7 @@ class RBM(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._sigmoid(np.dot(v, self.W) + self.b)
+        return self._sigmoid(safe_sparse_dot(v, self.W) + self.b)
     
     def sample_h(self, v):
         """
@@ -176,7 +177,7 @@ class RBM(BaseEstimator, TransformerMixin):
         free_energy: array-like, shape (n_samples,)
         """
         return - np.dot(v, self.c) \
-            - np.log(1. + np.exp(np.dot(v, self.W) + self.b)).sum(1)
+            - np.log(1. + np.exp(safe_sparse_dot(v, self.W) + self.b)).sum(1)
     
     def gibbs(self, v):
         """
@@ -219,7 +220,7 @@ class RBM(BaseEstimator, TransformerMixin):
         v_neg = self.sample_v(self.h_samples)
         h_neg = self.mean_h(v_neg)
         
-        self.W += self.epsilon * (np.dot(v_pos.T, h_pos)
+        self.W += self.epsilon * (safe_sparse_dot(v_pos.T, h_pos)
             - np.dot(v_neg.T, h_neg)) / self.n_particles
         self.b += self.epsilon * (h_pos.mean(0) - h_neg.mean(0))
         self.c += self.epsilon * (v_pos.mean(0) - v_neg.mean(0))
