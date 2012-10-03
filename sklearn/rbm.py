@@ -32,6 +32,9 @@ class RBM(BaseEstimator, TransformerMixin):
         Number of fantasy particles to use during learning
     epochs : int, optional
         Number of epochs to perform during learning
+    verbose: bool, optional
+        When True (False by default) the method outputs the progress
+        of learning after each epoch.
     random_state : RandomState or an int seed (0 by default)
         A random number generator instance to define the state of the
         random permutations generator.
@@ -65,11 +68,13 @@ class RBM(BaseEstimator, TransformerMixin):
                        epsilon=0.1,
                        n_samples=10,
                        epochs=10,
+                       verbose=False,
                        random_state=0):
         self.n_components = n_components
         self.epsilon = epsilon
         self.n_samples = n_samples
         self.epochs = epochs
+        self.verbose = verbose
         self.random_state = check_random_state(random_state)
     
     def _sigmoid(self, x):
@@ -243,7 +248,7 @@ class RBM(BaseEstimator, TransformerMixin):
         
         return v.shape[1] * np.log(self._sigmoid(fe_ - fe))
     
-    def fit(self, X, y=None, verbose=False):
+    def fit(self, X, y=None):
         """
         Fit the model to the data X.
         
@@ -252,9 +257,6 @@ class RBM(BaseEstimator, TransformerMixin):
         X: array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
-        verbose: bool, optional
-            When True (False by default) the method outputs the progress
-            of learning after each epoch.
         """
         X = array2d(X)
         
@@ -277,7 +279,7 @@ class RBM(BaseEstimator, TransformerMixin):
                 pl += self._fit(X[inds[minibatch::n_batches]]).sum()
             pl /= X.shape[0]
             
-            if verbose:
+            if self.verbose:
                 print "Epoch %d, Pseudo-Likelihood = %.2f" % (epoch, pl)
     
     def fit_transform(self, X, y=None, verbose=False):
@@ -289,11 +291,8 @@ class RBM(BaseEstimator, TransformerMixin):
         X: array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
-        verbose: bool, optional
-            When True (False by default) the method outputs the progress
-            of learning after each epoch.
         """
-        self.fit(X, y, verbose)
+        self.fit(X, y)
         
         return self.transform(X)
 
