@@ -30,8 +30,9 @@ class RBM(BaseEstimator, TransformerMixin):
         to tune this hyper-parameter. Possible values are 10**[0., -3.].
     n_samples : int, optional
         Number of fantasy particles to use during learning
-    epochs : int, optional
-        Number of epochs to perform during learning
+    n_epochs : int, optional
+        Number of epochs/sweeps over the training dataset to perform
+        during training.
     verbose: bool, optional
         When True (False by default) the method outputs the progress
         of learning after each epoch.
@@ -67,13 +68,13 @@ class RBM(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=1024,
                        epsilon=0.1,
                        n_samples=10,
-                       epochs=10,
+                       n_epochs=10,
                        verbose=False,
                        random_state=0):
         self.n_components = n_components
         self.epsilon = epsilon
         self.n_samples = n_samples
-        self.epochs = epochs
+        self.n_epochs = n_epochs
         self.verbose = verbose
         self.random_state = check_random_state(random_state)
     
@@ -273,7 +274,7 @@ class RBM(BaseEstimator, TransformerMixin):
         
         n_batches = int(np.ceil(len(inds) / float(self.n_samples)))
         
-        for epoch in range(self.epochs):
+        for epoch in range(self.n_epochs):
             pl = 0.
             for minibatch in range(n_batches):
                 pl += self._fit(X[inds[minibatch::n_batches]]).sum()
