@@ -28,8 +28,8 @@ class RBM(BaseEstimator, TransformerMixin):
     epsilon : float, optional
         Learning rate to use during learning. It is *highly* recommended
         to tune this hyper-parameter. Possible values are 10**[0., -3.].
-    n_samples : int, optional
-        Number of fantasy particles to use during learning
+    n_particles : int, optional
+        Number of fantasy particles to use during learning.
     n_epochs : int, optional
         Number of epochs/sweeps over the training dataset to perform
         during training.
@@ -67,13 +67,13 @@ class RBM(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=1024,
                        epsilon=0.1,
-                       n_samples=10,
+                       n_particles=10,
                        n_epochs=10,
                        verbose=False,
                        random_state=0):
         self.n_components = n_components
         self.epsilon = epsilon
-        self.n_samples = n_samples
+        self.n_particles = n_particles
         self.n_epochs = n_epochs
         self.verbose = verbose
         self.random_state = check_random_state(random_state)
@@ -220,7 +220,7 @@ class RBM(BaseEstimator, TransformerMixin):
         h_neg = self.mean_h(v_neg)
         
         self.W += self.epsilon * (np.dot(v_pos.T, h_pos)
-            - np.dot(v_neg.T, h_neg)) / self.n_samples
+            - np.dot(v_neg.T, h_neg)) / self.n_particles
         self.b += self.epsilon * (h_pos.mean(0) - h_neg.mean(0))
         self.c += self.epsilon * (v_pos.mean(0) - v_neg.mean(0))
         
@@ -265,14 +265,14 @@ class RBM(BaseEstimator, TransformerMixin):
             (X.shape[1], self.n_components)), dtype=X.dtype)
         self.b = np.zeros(self.n_components, dtype=X.dtype)
         self.c = np.zeros(X.shape[1], dtype=X.dtype)
-        self.h_samples = np.zeros((self.n_samples, self.n_components),
+        self.h_samples = np.zeros((self.n_particles, self.n_components),
             dtype=X.dtype)
         
         inds = range(X.shape[0])
         
         np.random.shuffle(inds)
         
-        n_batches = int(np.ceil(len(inds) / float(self.n_samples)))
+        n_batches = int(np.ceil(len(inds) / float(self.n_particles)))
         
         for epoch in range(self.n_epochs):
             pl = 0.
