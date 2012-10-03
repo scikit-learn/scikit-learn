@@ -93,6 +93,27 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         """
         return 1. / (1. + np.exp(-np.maximum(np.minimum(x, 30), -30)))
     
+    def _sample_binomial(self, p):
+        """
+        Compute the element-wise binomial using the probabilities p.
+        
+        Parameters
+        ----------
+        x: array-like, shape (M, N)
+
+        Notes
+        -----
+        This is equivalent to calling numpy.random.binomial(1, p) but is
+        faster because it uses in-place operations on p.
+
+        Returns
+        -------
+        x_new: array-like, shape (M, N)
+        """
+        p[self.random_state.uniform(size=p.shape) < p] = 1.
+        
+        return np.floor(p, p)
+    
     def transform(self, v):
         """
         Computes the probabilities P({\bf h}_j=1|{\bf v}).
@@ -134,7 +155,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self.random_state.binomial(1, self.mean_h(v))
+        return self._sample_binomial(self.mean_h(v))
     
     def mean_v(self, h):
         """
@@ -163,7 +184,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self.random_state.binomial(1, self.mean_v(h))
+        return self._sample_binomial(self.mean_v(h))
     
     def free_energy(self, v):
         """
@@ -229,7 +250,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self.intercept_visible_ += self.learning_rate * (v_pos.mean(0)
             - v_neg.mean(0))
         
-        self.h_samples = self.random_state.binomial(1, h_neg)
+        self.h_samples = self._sample_binomial(h_neg)
         
         return self.pseudo_likelihood(v_pos)
     
