@@ -155,7 +155,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self.random_state.binomial(1, self.mean_h(v))
+        return self._sample_binomial(self.mean_h(v))
     
     def mean_v(self, h):
         """
@@ -184,7 +184,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self.random_state.binomial(1, self.mean_v(h))
+        return self._sample_binomial(self.mean_v(h))
     
     def free_energy(self, v):
         """
@@ -250,7 +250,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self.intercept_visible_ += self.learning_rate * (v_pos.mean(0)
             - v_neg.mean(0))
         
-        self.h_samples = self.random_state.binomial(1, h_neg)
+        self.h_samples = self._sample_binomial(h_neg)
         
         return self.pseudo_likelihood(v_pos)
     
