@@ -26,7 +26,7 @@ class RBM(BaseEstimator, TransformerMixin):
     ----------
     n_components : int, optional
         Number of binary hidden units
-    epsilon : float, optional
+    learning_rate : float, optional
         Learning rate to use during learning. It is *highly* recommended
         to tune this hyper-parameter. Possible values are 10**[0., -3.].
     n_particles : int, optional
@@ -67,13 +67,13 @@ class RBM(BaseEstimator, TransformerMixin):
         deep belief nets. Neural Computation 18, pp 1527-1554.
     """
     def __init__(self, n_components=1024,
-                       epsilon=0.1,
+                       learning_rate=0.1,
                        n_particles=10,
                        n_epochs=10,
                        verbose=False,
                        random_state=0):
         self.n_components = n_components
-        self.epsilon = epsilon
+        self.learning_rate = learning_rate
         self.n_particles = n_particles
         self.n_epochs = n_epochs
         self.verbose = verbose
@@ -220,10 +220,10 @@ class RBM(BaseEstimator, TransformerMixin):
         v_neg = self.sample_v(self.h_samples)
         h_neg = self.mean_h(v_neg)
         
-        self.W += self.epsilon * (safe_sparse_dot(v_pos.T, h_pos)
+        self.W += self.learning_rate * (safe_sparse_dot(v_pos.T, h_pos)
             - np.dot(v_neg.T, h_neg)) / self.n_particles
-        self.b += self.epsilon * (h_pos.mean(0) - h_neg.mean(0))
-        self.c += self.epsilon * (v_pos.mean(0) - v_neg.mean(0))
+        self.b += self.learning_rate * (h_pos.mean(0) - h_neg.mean(0))
+        self.c += self.learning_rate * (v_pos.mean(0) - v_neg.mean(0))
         
         self.h_samples = self.random_state.binomial(1, h_neg)
         
