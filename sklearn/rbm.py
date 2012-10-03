@@ -19,8 +19,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     binary hiddens. Parameters are estimated using Stochastic Maximum
     Likelihood (SML).
     
-    The time complexity of this implementation is ``O(n ** 2)`` assuming
-    n ~ n_samples ~ n_features.
+    The time complexity of this implementation is ``O(d ** 2)`` assuming
+    d ~ n_features ~ n_components.
     
     Parameters
     ----------
