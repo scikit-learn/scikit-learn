@@ -312,10 +312,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                for (pl, w) in zip(pred_labels, weights)],
                               dtype=np.int)
 
-        modes = mode.flatten().astype(np.int)
+        mode = mode.flatten().astype(np.int)
         # map indices to classes
-        prediction = self.classes_.take(modes)
+        prediction = self.classes_.take(mode)
         if self.outlier_label:
             # reset outlier label
-            prediction[modes == outlier_label] = self.outlier_label
+            prediction[mode == outlier_label] = self.outlier_label
         return prediction
