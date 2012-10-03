@@ -243,12 +243,11 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         v_neg = self.sample_v(self.h_samples)
         h_neg = self.mean_h(v_neg)
         
-        self.components_ += self.learning_rate*(safe_sparse_dot(v_pos.T, h_pos)
-            - np.dot(v_neg.T, h_neg)) / self.n_particles
-        self.intercept_hidden_ += self.learning_rate * (h_pos.mean(0)
-            - h_neg.mean(0))
-        self.intercept_visible_ += self.learning_rate * (v_pos.mean(0)
-            - v_neg.mean(0))
+        lr = self.learning_rate / self.n_particles
+        self.components_ += safe_sparse_dot(lr * v_pos.T, h_pos)
+        self.components_ -= np.dot(lr * v_neg.T, h_neg)
+        self.intercept_hidden_ += lr * (h_pos.sum(0) - h_neg.sum(0))
+        self.intercept_visible_ += lr * (v_pos.sum(0) - v_neg.sum(0))
         
         self.h_samples = self._sample_binomial(h_neg)
         
