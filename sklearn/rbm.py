@@ -295,12 +295,3 @@ class RBM(BaseEstimator, TransformerMixin):
         self.fit(X, y)
         
         return self.transform(X)
-
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()
-
