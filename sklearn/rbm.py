@@ -43,12 +43,12 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     Attributes
     ----------
-    W : array-like, shape (n_features, n_components), optional
+    components_ : array-like, shape (n_features, n_components), optional
         Weight matrix, where n_features in the number of visible
         units and n_components is the number of hidden units.
-    b : array-like, shape (n_components,), optional
+    intercept_hidden_ : array-like, shape (n_components,), optional
         Biases of the hidden units
-    c : array-like, shape (n_features,), optional
+    intercept_visible_ : array-like, shape (n_features,), optional
         Biases of the visible units
     
     Examples
@@ -119,7 +119,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._sigmoid(safe_sparse_dot(v, self.W) + self.b)
+        return self._sigmoid(safe_sparse_dot(v, self.components_)
+            + self.intercept_hidden_)
     
     def sample_h(self, v):
         """
@@ -147,7 +148,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self._sigmoid(np.dot(h, self.W.T) + self.c)
+        return self._sigmoid(np.dot(h, self.components_.T)
+            + self.intercept_visible_)
     
     def sample_v(self, h):
         """
@@ -176,8 +178,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         free_energy: array-like, shape (n_samples,)
         """
-        return - np.dot(v, self.c) \
-            - np.log(1. + np.exp(safe_sparse_dot(v, self.W) + self.b)).sum(1)
+        return - np.dot(v, self.intercept_visible_) - np.log(1. + np.exp(
+            safe_sparse_dot(v, self.components_)+self.intercept_hidden_)).sum(1)
     
     def gibbs(self, v):
         """
@@ -220,10 +222,12 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         v_neg = self.sample_v(self.h_samples)
         h_neg = self.mean_h(v_neg)
         
-        self.W += self.learning_rate * (safe_sparse_dot(v_pos.T, h_pos)
+        self.components_ += self.learning_rate*(safe_sparse_dot(v_pos.T, h_pos)
             - np.dot(v_neg.T, h_neg)) / self.n_particles
-        self.b += self.learning_rate * (h_pos.mean(0) - h_neg.mean(0))
-        self.c += self.learning_rate * (v_pos.mean(0) - v_neg.mean(0))
+        self.intercept_hidden_ += self.learning_rate * (h_pos.mean(0)
+            - h_neg.mean(0))
+        self.intercept_visible_ += self.learning_rate * (v_pos.mean(0)
+            - v_neg.mean(0))
         
         self.h_samples = self.random_state.binomial(1, h_neg)
         
@@ -262,10 +266,10 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         
-        self.W = np.asarray(self.random_state.normal(0, 0.01,
+        self.components_ = np.asarray(self.random_state.normal(0, 0.01,
             (X.shape[1], self.n_components)), dtype=X.dtype)
-        self.b = np.zeros(self.n_components, dtype=X.dtype)
-        self.c = np.zeros(X.shape[1], dtype=X.dtype)
+        self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
+        self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
         self.h_samples = np.zeros((self.n_particles, self.n_components),
             dtype=X.dtype)
         
