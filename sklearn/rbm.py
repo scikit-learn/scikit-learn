@@ -258,7 +258,7 @@ class RBM(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         
-        self.W = np.asarray(np.random.normal(0, 0.01,
+        self.W = np.asarray(self.random_state.normal(0, 0.01,
             (X.shape[1], self.n_components)), dtype=X.dtype)
         self.b = np.zeros(self.n_components, dtype=X.dtype)
         self.c = np.zeros(X.shape[1], dtype=X.dtype)
