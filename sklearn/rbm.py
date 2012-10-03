@@ -282,7 +282,7 @@ class RBM(BaseEstimator, TransformerMixin):
             if self.verbose:
                 print "Epoch %d, Pseudo-Likelihood = %.2f" % (epoch, pl)
     
-    def fit_transform(self, X, y=None, verbose=False):
+    def fit_transform(self, X, y=None):
         """
         Fit the model to the data X and transform it.
         
