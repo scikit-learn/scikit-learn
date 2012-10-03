@@ -43,12 +43,12 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     Attributes
     ----------
-    W : array-like, shape (n_visibles, n_components), optional
-        Weight matrix, where n_visibles in the number of visible
+    W : array-like, shape (n_features, n_components), optional
+        Weight matrix, where n_features in the number of visible
         units and n_components is the number of hidden units.
     b : array-like, shape (n_components,), optional
         Biases of the hidden units
-    c : array-like, shape (n_visibles,), optional
+    c : array-like, shape (n_features,), optional
         Biases of the visible units
     
     Examples
@@ -99,7 +99,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
 
         Returns
         -------
@@ -113,7 +113,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
 
         Returns
         -------
@@ -127,7 +127,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
         
         Returns
         -------
@@ -145,7 +145,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Returns
         -------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
         """
         return self._sigmoid(np.dot(h, self.W.T) + self.c)
     
@@ -159,7 +159,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Returns
         -------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
         """
         return self.random_state.binomial(1, self.mean_v(h))
     
@@ -170,7 +170,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
         
         Returns
         -------
@@ -185,11 +185,11 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
         
         Returns
         -------
-        v_new: array-like, shape (n_samples, n_visibles)
+        v_new: array-like, shape (n_samples, n_features)
         """
         h_ = self.sample_h(v)
         v_ = self.sample_v(h_)
@@ -203,7 +203,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v_pos: array-like, shape (n_samples, n_visibles)
+        v_pos: array-like, shape (n_samples, n_features)
         
         Returns
         -------
@@ -235,7 +235,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_visibles)
+        v: array-like, shape (n_samples, n_features)
         
         Returns
         -------
