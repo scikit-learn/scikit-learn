@@ -117,7 +117,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def transform(self, X):
         """
-        Computes the probabilities P({\bf h}_j=1|{\bf X}).
+        Computes the probabilities P({\bf h}_j=1|{\bf v}={\bf X}).
         
         Parameters
         ----------
