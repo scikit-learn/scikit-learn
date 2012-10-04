@@ -126,7 +126,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self.mean_h(v)
+        return self.mean_h(X)
     
     def mean_h(self, v):
         """
