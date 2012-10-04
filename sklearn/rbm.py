@@ -117,7 +117,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def transform(self, X):
         """
-        Computes the probabilities P({\bf h}_j=1|{\bf v}={\bf X}).
+        Computes the probabilities ``P({\bf h}_j=1|{\bf v}={\bf X})``.
         
         Parameters
         ----------
@@ -131,7 +131,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def mean_h(self, v):
         """
-        Computes the probabilities P({\bf h}_j=1|{\bf v}).
+        Computes the probabilities ``P({\bf h}_j=1|{\bf v})``.
         
         Parameters
         ----------
@@ -146,7 +146,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def sample_h(self, v):
         """
-        Sample from the distribution P({\bf h}|{\bf v}).
+        Sample from the distribution ``P({\bf h}|{\bf v})``.
         
         Parameters
         ----------
@@ -160,7 +160,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def mean_v(self, h):
         """
-        Computes the probabilities P({\bf v}_i=1|{\bf h}).
+        Computes the probabilities ``P({\bf v}_i=1|{\bf h})``.
         
         Parameters
         ----------
@@ -175,7 +175,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def sample_v(self, h):
         """
-        Sample from the distribution P({\bf v}|{\bf h}).
+        Sample from the distribution ``P({\bf v}|{\bf h})``.
         
         Parameters
         ----------
@@ -190,7 +190,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     def free_energy(self, v):
         """
         Computes the free energy
-        \mathcal{F}({\bf v}) = - \log \sum_{\bf h} e^{-E({\bf v},{\bf h})}.
+        ``\mathcal{F}({\bf v}) = - \log \sum_{\bf h} e^{-E({\bf v},{\bf h})}``.
         
         Parameters
         ----------
@@ -222,7 +222,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def _fit(self, v_pos):
         """
-        Adjust the parameters to maximize the likelihood of {\bf v}
+        Adjust the parameters to maximize the likelihood of ``{\bf v}``
         using Stochastic Maximum Likelihood (SML) [1].
         
         Parameters
@@ -256,7 +256,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     def pseudo_likelihood(self, v):
         """
-        Compute the pseudo-likelihood of {\bf v}.
+        Compute the pseudo-likelihood of ``{\bf v}``.
         
         Parameters
         ----------
