@@ -177,7 +177,6 @@ def euclidean_distances(X, Y=None, X_norm_preallocated=None,
 
     if out is None:
         out = np.empty((X_rows, Y_rows), dtype=X.dtype)
-
     if issparse(X) or issparse(Y):
         if not issparse(X):
             out = out.T
@@ -186,9 +185,9 @@ def euclidean_distances(X, Y=None, X_norm_preallocated=None,
                 Y_norm_precomputed, X_norm_precomputed, out, squared)
             out = out.T
             return out
-        X = csr_matrix(X)
+        X = X.tocsr()
         if issparse(Y):
-            Y = csr_matrix(Y)
+            Y = Y.tocsr()
         safe_sparse_dot(X, Y.T, out=out)
         if X is Y:
             sparse_euclidean_distances_sym(
