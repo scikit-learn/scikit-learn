@@ -240,7 +240,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
             on Machine Learning (ICML) 2008
         """
         h_pos = self.mean_h(v_pos)
-        v_neg = self.sample_v(self.h_samples)
+        v_neg = self.sample_v(self.h_samples_)
         h_neg = self.mean_h(v_neg)
         
         lr = self.learning_rate / self.n_particles
@@ -249,7 +249,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self.intercept_hidden_ += lr * (h_pos.sum(0) - h_neg.sum(0))
         self.intercept_visible_ += lr * (v_pos.sum(0) - v_neg.sum(0))
         
-        self.h_samples = self._sample_binomial(h_neg)
+        self.h_samples_ = self._sample_binomial(h_neg)
         
         return self.pseudo_likelihood(v_pos)
     
@@ -290,7 +290,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
             (X.shape[1], self.n_components)), dtype=X.dtype)
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
-        self.h_samples = np.zeros((self.n_particles, self.n_components),
+        self.h_samples_ = np.zeros((self.n_particles, self.n_components),
             dtype=X.dtype)
         
         inds = range(X.shape[0])
