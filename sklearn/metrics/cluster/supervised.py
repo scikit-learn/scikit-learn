@@ -12,7 +12,6 @@ from math import log
 from scipy.misc import comb
 from scipy.special import gammaln
 from scipy.sparse import coo_matrix
-from ..metrics import confusion_matrix
 
 import numpy as np
 
