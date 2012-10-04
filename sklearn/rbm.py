@@ -114,13 +114,13 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         return np.floor(p, p)
     
-    def transform(self, v):
+    def transform(self, X):
         """
-        Computes the probabilities P({\bf h}_j=1|{\bf v}).
+        Computes the probabilities P({\bf h}_j=1|{\bf X}).
         
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_features)
+        X: array-like, shape (n_samples, n_features)
 
         Returns
         -------
