@@ -67,8 +67,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
         in predicted class j. If eps is None, the dtype of this array will be
         integer. If eps is given, the dtype will be float.
     """
-    classes, class_idx = np.unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
+    classes, class_idx = unique(labels_true, return_inverse=True)
+    clusters, cluster_idx = unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     # Using coo_matrix to accelerate simple histogram calculation,
