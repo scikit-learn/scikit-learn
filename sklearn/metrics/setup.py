@@ -22,8 +22,8 @@ def configuration(parent_package='', top_path=None):
         cblas_libs.append('m')
         libraries.append('m')
 
-    config.add_extension('euclidean_fast',
-         sources=['euclidean_fast.c'],
+    config.add_extension('_euclidean_fast',
+         sources=['_euclidean_fast.c'],
          libraries=cblas_libs,
          include_dirs=[join('..', 'src', 'cblas'),
                        numpy.get_include(),
