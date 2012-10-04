@@ -55,9 +55,9 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     --------
     
     >>> import numpy as np
-    >>> from sklearn.rbm import RBM
+    >>> from sklearn.rbm import RestrictedBolzmannMachine
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = RBM(n_components=2)
+    >>> model = RestrictedBolzmannMachine(n_components=2)
     >>> model.fit(X)
     
     References
