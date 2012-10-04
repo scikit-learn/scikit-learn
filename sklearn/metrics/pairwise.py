@@ -38,11 +38,11 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from .euclidean_fast import dense_euclidean_distances
-from .euclidean_fast import dense_euclidean_distances_sym
-from .euclidean_fast import sparse_euclidean_distances
-from .euclidean_fast import sparse_euclidean_distances_sym
-from .euclidean_fast import sparse_dense_euclidean_distances
+from ._euclidean_fast import dense_euclidean_distances
+from ._euclidean_fast import dense_euclidean_distances_sym
+from ._euclidean_fast import sparse_euclidean_distances
+from ._euclidean_fast import sparse_euclidean_distances_sym
+from ._euclidean_fast import sparse_dense_euclidean_distances
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
