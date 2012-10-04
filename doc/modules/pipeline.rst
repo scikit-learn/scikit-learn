@@ -88,9 +88,9 @@ pipeline.
 
 .. _feature_union:
 
-======================================
-FeatureUnion: Concatenating features
-======================================
+==========================================
+FeatureUnion: Combining feature extractors
+==========================================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -98,8 +98,8 @@ FeatureUnion: Concatenating features
 transformer that combines their output. A :class:`FeatureUnion` takes
 a list of transformer objects. During fitting, each of these
 is fit to the data independently. For transforming data, the
-transformers are applied in parallel, and their output combined into a
-single output array or matrix.
+transformers are applied in parallel, and the sample vectors they output
+are concatenated end-to-end into larger vectors.
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -107,13 +107,19 @@ convenience and joint parameter estimation and validation.
 :class:`FeatureUnion` and :class:`Pipeline` can be combined to
 create complex models.
 
+(A :class:`FeatureUnion` has no way of checking whether two transformers
+might produce identical features. It only produces a union when the
+feature sets are disjoint, and making sure they are is the caller's
+responsibility.)
+
 
 Usage
 =====
 
-The :class:`FeatureUnion` is build using a list of ``(key, value)`` pairs, where
-the ``key`` a string containing the name you want to give to a given transformation and ``value``
-is an estimator object::
+A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
+where the ``key`` is the name you want to give to a given transformation
+(an arbitrary string; it only serves as an identifier)
+and ``value`` is an estimator object::
 
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA
