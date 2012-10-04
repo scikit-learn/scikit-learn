@@ -11,6 +11,21 @@ from .utils import array2d, check_random_state
 from .utils.extmath import safe_sparse_dot
 
 
+def logistic_sigmoid(x):
+    """
+    Implements the logistic function.
+    
+    Parameters
+    ----------
+    x: array-like, shape (M, N)
+
+    Returns
+    -------
+    x_new: array-like, shape (M, N)
+    """
+    return 1. / (1. + np.exp(-np.maximum(np.minimum(x, 30), -30)))
+
+
 class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     """
     Restricted Boltzmann Machine (RBM)
@@ -80,20 +95,6 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = check_random_state(random_state)
     
-    def _logistic_sigmoid(self, x):
-        """
-        Implements the logistic function.
-        
-        Parameters
-        ----------
-        x: array-like, shape (M, N)
-
-        Returns
-        -------
-        x_new: array-like, shape (M, N)
-        """
-        return 1. / (1. + np.exp(-np.maximum(np.minimum(x, 30), -30)))
-    
     def _sample_binomial(self, p):
         """
         Compute the element-wise binomial using the probabilities p.
@@ -141,7 +142,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._logistic_sigmoid(safe_sparse_dot(v, self.components_)
+        return logistic_sigmoid(safe_sparse_dot(v, self.components_)
             + self.intercept_hidden_)
     
     def sample_h(self, v):
@@ -170,7 +171,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self._logistic_sigmoid(np.dot(h, self.components_.T)
+        return logistic_sigmoid(np.dot(h, self.components_.T)
             + self.intercept_visible_)
     
     def sample_v(self, h):
@@ -273,7 +274,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         v_[range(v.shape[0]), i_] = v_[range(v.shape[0]), i_] == 0
         fe_ = self.free_energy(v_)
         
-        return v.shape[1] * np.log(self._logistic_sigmoid(fe_ - fe))
+        return v.shape[1] * np.log(logistic_sigmoid(fe_ - fe))
     
     def fit(self, X, y=None):
         """
