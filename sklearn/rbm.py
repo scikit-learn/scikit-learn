@@ -65,6 +65,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     
     [1] Hinton, G. E., Osindero, S. and Teh, Y. A fast learning algorithm for
         deep belief nets. Neural Computation 18, pp 1527-1554.
+        http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
     """
     def __init__(self, n_components=1024,
                        learning_rate=0.1,
