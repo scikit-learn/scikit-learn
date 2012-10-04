@@ -80,7 +80,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = check_random_state(random_state)
     
-    def _sigmoid(self, x):
+    def _logistic_sigmoid(self, x):
         """
         Implements the logistic function.
         
@@ -141,7 +141,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._sigmoid(safe_sparse_dot(v, self.components_)
+        return self._logistic_sigmoid(safe_sparse_dot(v, self.components_)
             + self.intercept_hidden_)
     
     def sample_h(self, v):
@@ -170,7 +170,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self._sigmoid(np.dot(h, self.components_.T)
+        return self._logistic_sigmoid(np.dot(h, self.components_.T)
             + self.intercept_visible_)
     
     def sample_v(self, h):
@@ -273,7 +273,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         v_[range(v.shape[0]), i_] = v_[range(v.shape[0]), i_] == 0
         fe_ = self.free_energy(v_)
         
-        return v.shape[1] * np.log(self._sigmoid(fe_ - fe))
+        return v.shape[1] * np.log(self._logistic_sigmoid(fe_ - fe))
     
     def fit(self, X, y=None):
         """
