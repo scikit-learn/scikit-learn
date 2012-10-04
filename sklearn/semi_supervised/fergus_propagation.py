@@ -1,14 +1,14 @@
 import numpy as np
 import scipy.linalg as LA
 import scipy.sparse
-import sklearn.utils.arpack as SLA
-from sklearn.base import ClassifierMixin
-from sklearn.base import BaseEstimator
-import sklearn.metrics.pairwise as pairwise
-import sklearn.mixture as mixture
+import ..utils.arpack as SLA
+from ..base import ClassifierMixin
+from ..base import BaseEstimator
+import ..metrics.pairwise as pairwise
+import ..mixture as mixture
 
 class FergusPropagation(BaseEstimator, ClassifierMixin):
-    '''
+    """
     The Fergus et al 2009 eigenfunction propagation classifier.
 
     Parameters
@@ -43,7 +43,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
     Rob Fergus, Yair Weiss, Antonio Torralba. Semi-Supervised Learning in 
     Gigantic Image Collections (2009).
     http://eprints.pascal-network.org/archive/00005636/01/ssl-1.pdf
-    '''
+    """
 
     def __init__(self, kernel = 'rbf', k = -1, gamma = 20, n_neighbors = 7, lagrangian = 10, img_dims = (-1, -1)):
         # This doesn't iterate at all, so the parameters are very different
@@ -56,7 +56,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         self.img_dims = img_dims
 
     def fit(self, X, y):
-        '''
+        """
         Fit a semi-supervised eigenfunction label propagation model.
 
         All input data is provided in matrix X (labeled and unlabeled), and
@@ -74,7 +74,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         Returns
         -------
         self : An instance of self.
-        '''
+        """
         self.X_ = X
 
         # Construct the graph laplacian from the graph matrix.
@@ -125,7 +125,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         return self
 
 	def predict(self, X):
-		'''
+		"""
         Performs inductive inference across the model.
 
         Parameters
@@ -136,12 +136,12 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         -------
         y : array_like, shape = [n_samples]
             Predictions for input data
-        '''
+        """
         probas = self.predict_proba(X)
         return self.labels_[np.argmax(probas, axis=1)].ravel()
 
 	def predict_proba(self, X):
-		'''
+		"""
         Predict probability for each possible outcome.
 
         Compute the probability estimates for each single sample in X
@@ -157,7 +157,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         probabilities : array, shape = [n_samples, n_classes]
             Normalized probability distributions across
             class labels
-        '''
+        """
         X_2d = None
         if scipy.sparse.isspmatrix(X):
             X_2d = X
@@ -263,7 +263,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         return scipy.sparse.csc_matrix(A)
 
     def _normalized_graph_laplacian(self, A):
-        '''
+        """
         Calculates the normalized graph laplacian, as the sklearn utility 
         graph_laplacian(normed = True) does not seem to do this.
 
@@ -276,7 +276,7 @@ class FergusPropagation(BaseEstimator, ClassifierMixin):
         -------
         L : array, shape (n, n)
             Normalized graph laplacian.
-        '''
+        """
         L = None
         if scipy.sparse.isspmatrix(A):
 
