@@ -30,7 +30,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         Learning rate to use during learning. It is *highly* recommended
         to tune this hyper-parameter. Possible values are 10**[0., -3.].
     n_particles : int, optional
-        Number of fantasy particles to use during learning.
+        Number of MCMC particles to use during learning.
     n_epochs : int, optional
         Number of epochs/sweeps over the training dataset to perform
         during training.
