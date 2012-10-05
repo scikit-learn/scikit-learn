@@ -215,7 +215,10 @@ class BaseLibSVM(BaseEstimator):
         if self.fit_status_ == 0:
             pass
         elif self.fit_status_ == 1:
-            warnings.warn('Solver reached max_iter', ConvergenceWarning)
+            warnings.warn('Solver terminated early (max_iter=%i).'
+                          '  Consider pre-processing your data with'
+                          ' StandardScalar or MinMaxScalar.'
+                          % self.max_iter, ConvergenceWarning)
         else:
             raise NotImplementedError(
                 'unrecognized Solver fit_status', self.fit_status_)
