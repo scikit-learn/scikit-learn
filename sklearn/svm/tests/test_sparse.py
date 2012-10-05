@@ -228,10 +228,11 @@ def test_sparse_svc_clone_with_callable_kernel():
 
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
-            iter_limit=1)
+            max_iter=1)
     with warnings.catch_warnings(record=True) as foo:
         sp.fit(X_sp, Y)
-    assert len(foo) == 1 and foo[0].category == ConvergenceWarning
+        assert len(foo) == 1, foo
+        assert foo[0].category == ConvergenceWarning, foo[0].category
 
 
 if __name__ == '__main__':
