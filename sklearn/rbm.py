@@ -233,8 +233,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         Returns
         -------
-        pseudo_likelihood: array-like, shape (n_samples,), optional
-            Pseudo Likelihood estimate for this batch.
+        pseudo_likelihood: array-like, shape (n_samples,)
+            If verbose=True, Pseudo Likelihood estimate for this batch.
         
         References
         ----------
@@ -254,7 +254,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         self.h_samples_ = self._sample_binomial(h_neg)
         
-        return self.pseudo_likelihood(v_pos)
+        if self.verbose:
+            return self.pseudo_likelihood(v_pos)
     
     def pseudo_likelihood(self, v):
         """
@@ -305,7 +306,10 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         for epoch in range(self.n_epochs):
             pl = 0.
             for minibatch in range(n_batches):
-                pl += self._fit(X[inds[minibatch::n_batches]]).sum()
+                pl_batch = self._fit(X[inds[minibatch::n_batches]])
+                
+                if self.verbose:
+                    pl += pl_batch.sum()
             pl /= X.shape[0]
             
             if self.verbose:
