@@ -82,7 +82,7 @@ class BaseLibSVM(BaseEstimator):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 sparse, class_weight, verbose, iter_limit):
+                 sparse, class_weight, verbose, max_iter):
 
         if not impl in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -110,7 +110,7 @@ class BaseLibSVM(BaseEstimator):
         self.sparse = sparse
         self.class_weight = class_weight
         self.verbose = verbose
-        self.iter_limit = iter_limit
+        self.max_iter = max_iter
 
     @property
     def _pairwise(self):
@@ -235,7 +235,7 @@ class BaseLibSVM(BaseEstimator):
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon,
-            iter_limit=self.iter_limit)
+            max_iter=self.max_iter)
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
@@ -251,7 +251,7 @@ class BaseLibSVM(BaseEstimator):
                  kernel_type, self.degree, self._gamma, self.coef0, self.tol,
                  self.C, self.class_weight_label_, self.class_weight_,
                  sample_weight, self.nu, self.cache_size, self.epsilon,
-                 int(self.shrinking), int(self.probability), self.iter_limit)
+                 int(self.shrinking), int(self.probability), self.max_iter)
 
         n_class = len(self.label_) - 1
         n_SV = self.support_vectors_.shape[0]

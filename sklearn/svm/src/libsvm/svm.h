@@ -63,7 +63,7 @@ struct svm_parameter
 	double p;	/* for EPSILON_SVR */
 	int shrinking;	/* use the shrinking heuristics */
 	int probability; /* do probability estimates */
-        int iter_limit; /* ceiling on Solver runtime */
+	int max_iter; /* ceiling on Solver runtime */
 };
 
 //

@@ -578,11 +578,13 @@ def test_svc_clone_with_callable_kernel():
 
 
 def test_timeout():
-    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
-            iter_limit=1)
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+        probability=True,
+        max_iter=1)
     with warnings.catch_warnings(record=True) as foo:
         a.fit(X, Y)
-    assert len(foo) == 1 and foo[0].category == ConvergenceWarning
+        assert len(foo) == 1, foo
+        assert foo[0].category == ConvergenceWarning, foo[0].category
 
 
 if __name__ == '__main__':

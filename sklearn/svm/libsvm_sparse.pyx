@@ -69,7 +69,7 @@ def libsvm_sparse_train ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
                      double nu, double cache_size, double p, int
-                     shrinking, int probability, int iter_limit):
+                     shrinking, int probability, int max_iter):
     """
     Wrap svm_train from libsvm using a scipy.sparse.csr matrix
 
@@ -119,7 +119,7 @@ def libsvm_sparse_train ( int n_features,
     param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
                           nu, cache_size, C, eps, p, shrinking,
                           probability, <int> weight.shape[0],
-                          weight_label.data, weight.data, iter_limit)
+                          weight_label.data, weight.data, max_iter)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -195,16 +195,8 @@ def libsvm_sparse_train ( int n_features,
     free_problem(problem)
     free_param(param)
 
-    rval = (support_vectors_, sv_coef_data, intercept, label, n_class_SV,
-            probA, probB)
-    if fit_status == 0:
-        return rval
-    elif fit_status == 1:
-        warnings.warn('Solver reached iter_limit', ConvergenceWarning)
-        return rval
-    else:
-        raise NotImplementedError('unrecognized fit_status')
-
+    return (support_vectors_, sv_coef_data, intercept, label, n_class_SV,
+            probA, probB, fit_status)
 
 
 def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,

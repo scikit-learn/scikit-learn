@@ -35,7 +35,6 @@ import  numpy as np
 cimport numpy as np
 cimport libsvm
 from libc.stdlib cimport free
-from ..utils import ConvergenceWarning
 
 
 ################################################################################
@@ -60,7 +59,7 @@ def fit(
         sample_weight=np.empty(0),
     int shrinking=1, int probability=0,
     double cache_size=100.,
-    int iter_limit=-1):
+    int max_iter=-1):
     """
     Train the model using libsvm (low-level method)
 
@@ -101,7 +100,7 @@ def fit(
     cache_size : float64
         Cache size for gram matrix columns (in megabytes)
 
-    iter_limit: int (-1 for no limit)
+    max_iter: int (-1 for no limit)
         Stop solver after this many iterations regardless of accuracy
         (XXX Currently there is no API to know whether this kicked in.)
 
@@ -157,7 +156,7 @@ def fit(
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
-        class_weight_label.data, class_weight.data, iter_limit)
+        class_weight_label.data, class_weight.data, max_iter)
 
     # check parameters
     error_msg = svm_check_parameter(&problem, &param)
@@ -229,16 +228,8 @@ def fit(
     # memory deallocation
     svm_free_and_destroy_model(&model)
     free(problem.x)
-    rval = (support, support_vectors, n_class_SV, sv_coef, intercept, label,
-           probA, probB)
-
-    if fit_status == 0:
-        return rval
-    elif fit_status == 1:
-        warnings.warn('Solver reached iter_limit', ConvergenceWarning)
-        return rval
-    else:
-        raise NotImplementedError('unrecognized fit_status')
+    return (support, support_vectors, n_class_SV, sv_coef, intercept, label,
+           probA, probB, fit_status)
 
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
@@ -261,7 +252,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                 sample_weight=np.empty(0),
             int shrinking=0, int probability=0,
             double cache_size=100.,
-            int iter_limit=-1):
+            int max_iter=-1):
     """
     Predict target values of X given a model (low-level method)
 
@@ -312,7 +303,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                           nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data,
-                          iter_limit)
+                          max_iter)
 
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
@@ -348,7 +339,7 @@ def predict_proba(
         sample_weight=np.empty(0),
     int shrinking=0, int probability=0,
     double cache_size=100.,
-    int iter_limit=-1):
+    int max_iter=-1):
     """
     Predict probabilities
 
@@ -384,7 +375,7 @@ def predict_proba(
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, iter_limit)
+                          class_weight.data, max_iter)
 
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
@@ -421,7 +412,7 @@ def decision_function(
          sample_weight=np.empty(0),
     int shrinking=0, int probability=0,
     double cache_size=100.,
-    int iter_limit=-1):
+    int max_iter=-1):
     """
     Predict margin (libsvm name for this is predict_values)
 
@@ -437,7 +428,7 @@ def decision_function(
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, iter_limit)
+                          class_weight.data, max_iter)
 
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
@@ -471,7 +462,7 @@ def cross_validation(
     np.ndarray[np.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
     int shrinking=0, int probability=0, double cache_size=100.,
-    int iter_limit=-1):
+    int max_iter=-1):
     """
     Binding of the cross-validation routine (low-level routine)
 
@@ -547,7 +538,7 @@ def cross_validation(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
-        class_weight.data, iter_limit)
+        class_weight.data, max_iter)
 
     error_msg = svm_check_parameter(&problem, &param);
     if error_msg:
