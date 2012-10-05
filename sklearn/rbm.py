@@ -273,7 +273,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         v_ = v.copy()
         i_ = self.random_state.randint(0, v.shape[1], v.shape[0])
-        v_[range(v.shape[0]), i_] = v_[range(v.shape[0]), i_] == 0
+        v_[range(v.shape[0]), i_] = 1 - v_[range(v.shape[0]), i_]
         fe_ = self.free_energy(v_)
         
         return v.shape[1] * np.log(logistic_sigmoid(fe_ - fe))
