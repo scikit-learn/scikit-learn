@@ -235,9 +235,11 @@ class CountVectorizer(BaseEstimator):
             ngram_range = (min_n, max_n)
         self.ngram_range = ngram_range
         if vocabulary is not None:
-            self.fixed_vocabulary = True
             if not isinstance(vocabulary, Mapping):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+            if not vocabulary:
+                raise ValueError("empty vocabulary passed to fit")
+            self.fixed_vocabulary = True
             self.vocabulary_ = vocabulary
         else:
             self.fixed_vocabulary = False
@@ -501,7 +503,11 @@ class CountVectorizer(BaseEstimator):
         # the mapping from feature name to indices might depend on the memory
         # layout of the machine. Furthermore sorted terms might make it
         # possible to perform binary search in the feature names array.
-        self.vocabulary_ = dict(((t, i) for i, t in enumerate(sorted(terms))))
+        vocab = dict(((t, i) for i, t in enumerate(sorted(terms))))
+        if not vocab:
+            raise ValueError("empty vocabulary; training set may have"
+                             " contained only stop words")
+        self.vocabulary_ = vocab
 
         # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but
