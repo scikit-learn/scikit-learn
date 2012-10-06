@@ -772,7 +772,7 @@ class KMeans(BaseEstimator, ClusterMixin):
         x_squared_norms = _squared_norms(X)
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Opposite of the value of X on the K-means objective.
 
         Parameters
