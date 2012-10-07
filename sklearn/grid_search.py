@@ -70,19 +70,18 @@ class IterGrid(object):
 
 
 class ParamSampler(object):
-    def __init__(self, param_distributions, n_iterations, random_state=None):
+    def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
-        self.n_iterations = n_iterations
+        self.n_iter = n_iter
         self.random_state = random_state
 
     def __iter__(self):
         rnd = check_random_state(self.random_state)
         # Always sort the keys of a dictionary, for reproducibility
         items = sorted(self.param_distributions.items())
-        keys, values = zip(*items)
-        for i in range(self.n_iterations):
+        for i in range(self.n_iter):
             params = dict()
-            for k, v in zip(keys, values):
+            for k, v in items:
                 if hasattr(v, "rvs"):
                     params[k] = v.rvs()
                 else:
@@ -583,8 +582,6 @@ class RandomizedSearchCV(GridSearchCV):
                 best_score = score
                 best_params = params
 
-        if best_score is None:
-            raise ValueError('Best score could not be found')
         self.best_score_ = best_score
         self.best_params_ = best_params
 
@@ -597,8 +594,6 @@ class RandomizedSearchCV(GridSearchCV):
             self._set_methods()
 
         # Store the computed scores
-        # XXX: the name is too specific, it shouldn't have
-        # 'grid' in it. Also, we should be retrieving/storing variance
         self.estimator_scores_ = [
             (clf_params, score, all_scores)
             for clf_params, (score, _), all_scores
