@@ -196,6 +196,7 @@ class BaseEstimator(object):
         out = dict()
         for key in self._get_param_names():
             value = getattr(self, key, None)
+            # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -227,12 +228,6 @@ class BaseEstimator(object):
                     raise ValueError('Invalid parameter %s for estimator %s'
                             % (name, self))
                 sub_object = valid_params[name]
-                if not hasattr(sub_object, 'get_params'):
-                    raise TypeError(
-                    'Parameter %s of %s is not an estimator, cannot set '
-                    'sub parameter %s' %
-                        (sub_name, self.__class__.__name__, sub_name)
-                    )
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
