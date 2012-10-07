@@ -7,8 +7,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from sklearn.utils.testing import assert_less, assert_greater
-
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -20,6 +18,7 @@ from nose.tools import assert_equal, assert_equals, \
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
+from sklearn.utils.testing import assert_in, assert_less, assert_greater
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -235,6 +234,22 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
+
+
+def test_countvectorizer_empty_vocabulary():
+    try:
+        CountVectorizer(vocabulary=[])
+        assert False, "we shouldn't get here"
+    except ValueError as e:
+        assert_in("empty vocabulary", str(e))
+
+    try:
+        v = CountVectorizer(min_df=1, max_df=1.0, stop_words="english")
+        # fit on stopwords only
+        v.fit(["to be or not to be", "and me too", "and so do you"])
+        assert False, "we shouldn't get here"
+    except ValueError as e:
+        assert_in("empty vocabulary", str(e))
 
 
 def test_fit_countvectorizer_twice():
