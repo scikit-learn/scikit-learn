@@ -149,8 +149,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         X = random_state.rand(laplacian.shape[0], n_components + 4)
         X[:, 0] = 1. / dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
-                                        largest=False, maxiter=2000,
-                                        verbosityLevel=20)
+                                        largest=False, maxiter=2000)
         embedding = diffusion_map.T[:n_components] * dd
         if embedding.shape[0] == 1:
             raise ValueError
