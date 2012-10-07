@@ -383,7 +383,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         self.n_jobs = int(n_jobs)
 
     @property
-    @deprecated("to be removed in v0.13; use ``classes_`` instead.")
+    @deprecated("to be removed in v0.13; use `classes_` instead.")
     def classes(self):
         return self.classes_
 
