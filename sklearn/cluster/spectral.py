@@ -14,6 +14,29 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
+def _set_diag(laplacian, value):
+    from scipy import sparse
+    n_nodes = laplacian.shape[0]
+    # We need to put the diagonal at zero
+    if not sparse.isspmatrix(laplacian):
+        laplacian.flat[::n_nodes + 1] = value
+    else:
+        laplacian = laplacian.tocoo()
+        diag_idx = (laplacian.row == laplacian.col)
+        laplacian.data[diag_idx] = value
+        # If the matrix has a small number of diagonals (as in the
+        # case of structured matrices comming from images), the
+        # dia format might be best suited for matvec products:
+        n_diags = np.unique(laplacian.row - laplacian.col).size
+        if n_diags <= 7:
+            # 3 or less outer diagonals on each side
+            laplacian = laplacian.todia()
+        else:
+            # csr has the fastest matvec and is thus best suited to
+            # arpack
+            laplacian = laplacian.tocsr()
+    return laplacian
+
 
 def spectral_embedding(adjacency, n_components=8, mode=None,
                        random_state=None):
@@ -65,6 +88,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     from scipy import sparse
     from ..utils.arpack import eigsh
     from scipy.sparse.linalg import lobpcg
+    from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
@@ -87,25 +111,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         or not sparse.isspmatrix(laplacian)
         or n_nodes < 5 * n_components):
         # lobpcg used with mode='amg' has bugs for low number of nodes
-
-        # We need to put the diagonal at zero
-        if not sparse.isspmatrix(laplacian):
-            laplacian.flat[::n_nodes + 1] = 0
-        else:
-            laplacian = laplacian.tocoo()
-            diag_idx = (laplacian.row == laplacian.col)
-            laplacian.data[diag_idx] = 0
-            # If the matrix has a small number of diagonals (as in the
-            # case of structured matrices comming from images), the
-            # dia format might be best suited for matvec products:
-            n_diags = np.unique(laplacian.row - laplacian.col).size
-            if n_diags <= 7:
-                # 3 or less outer diagonals on each side
-                laplacian = laplacian.todia()
-            else:
-                # csr has the fastest matvec and is thus best suited to
-                # arpack
-                laplacian = laplacian.tocsr()
+        laplacian = _set_diag(laplacian, 0)
 
         # Here we'll use shift-invert mode for fast eigenvalues
         # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
@@ -137,22 +143,33 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         ml = smoothed_aggregation_solver(laplacian.tocsr())
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components)
-        X[:, 0] = 1. / dd.ravel()
+        #X[:, 0] = 1. / dd.ravel()
+        X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
         embedding = diffusion_map.T * dd
         if embedding.shape[0] == 1:
             raise ValueError
     elif mode == "lobpcg":
-        # We increase the number of eigenvectors requested, as lobpcg
-        # doesn't behave well in low dimension
-        X = random_state.rand(laplacian.shape[0], n_components + 4)
-        X[:, 0] = 1. / dd.ravel()
-        lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
-                                        largest=False, maxiter=2000)
-        embedding = diffusion_map.T[:n_components] * dd
-        if embedding.shape[0] == 1:
-            raise ValueError
+        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        if n_nodes < 5 * n_components + 1:
+            # lobpcg will fallback to symeig, so we short circuit it
+            if sparse.isspmatrix(laplacian):
+                laplacian = laplacian.todense()
+            lambdas, diffusion_map = symeig(laplacian)
+            embedding = diffusion_map.T[:n_components] * dd
+        else:
+            laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+            laplacian = _set_diag(laplacian, 1)
+            # We increase the number of eigenvectors requested, as lobpcg
+            # doesn't behave well in low dimension
+            X = random_state.rand(laplacian.shape[0], n_components + 1)
+            X[:, 0] = dd.ravel()
+            lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
+                                            largest=False, maxiter=2000)
+            embedding = diffusion_map.T[:n_components] * dd
+            if embedding.shape[0] == 1:
+                raise ValueError
     return embedding
 
 

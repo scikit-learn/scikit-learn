@@ -92,7 +92,6 @@ def test_spectral_unknown_mode():
 def test_spectral_clustering_sparse():
     # We need a large matrice, or the lobpcg solver will fallback to its
     # non-sparse and buggy mode
-    raise nose.SkipTest("XFailed Test")
     S = np.array([[1, 5, 2, 2, 1, 0, 0, 0, 0, 0],
                   [5, 1, 3, 2, 1, 0, 0, 0, 0, 0],
                   [2, 3, 1, 1, 1, 0, 0, 0, 0, 0],
