@@ -225,7 +225,8 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         estimates_list = n_trials
         n_trials = estimates_list[0].shape[0]
     else:
-        raise Exception("Bad 'n_trials' parameter (wrong type)")
+        raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
+                " integer, got %s" % type(n_trials))
 
     # compute `n_trials` location and shape estimates candidates in the subset
     all_estimates = []
