@@ -93,4 +93,18 @@ ax.yaxis.set_major_formatter(NullFormatter())
 pl.axis('tight')
 
 
+t0 = time()
+se = manifold.SpectralEmbedding(n_components = n_components,
+                                n_neighbors = 20)
+Y = se.fit_transform(X)
+t1 = time()
+print "SpectralEmbedding: %.2g sec" % (t1 - t0)
+ax = fig.add_subplot(248)
+pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
+pl.title("SpectralEmbedding (%.2g sec)" % (t1 - t0))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.yaxis.set_major_formatter(NullFormatter())
+pl.axis('tight')
+
+
 pl.show()
