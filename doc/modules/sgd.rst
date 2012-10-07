@@ -63,9 +63,9 @@ for the training samples::
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-           fit_intercept=True, learning_rate='optimal', loss='hinge', n_iter=5,
-           n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
-           shuffle=False, verbose=0, warm_start=False)
+           fit_intercept=True, l1_ratio=0.25, learning_rate='optimal',
+           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+           rho=None, seed=0, shuffle=False, verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
