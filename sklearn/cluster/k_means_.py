@@ -897,7 +897,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     return inertia, squared_diff
 
 
-def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
+def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
                             n_samples, centers_squared_diff, batch_inertia,
                             context, verbose=0):
     """Helper function to encapsulte the early stopping logic"""
@@ -926,7 +926,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
         progress_msg = (
             'Minibatch iteration %d/%d:'
             'mean batch inertia: %f, ewa inertia: %f ' % (
-                iteration_idx + 1, n_iterations, batch_inertia,
+                iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
         print progress_msg
 
@@ -935,7 +935,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
     if tol > 0.0 and ewa_diff < tol:
         if verbose:
             print 'Converged (small centers change) at iteration %d/%d' % (
-                iteration_idx + 1, n_iterations)
+                iteration_idx + 1, n_iter)
         return True
 
     # Early stopping heuristic due to lack of improvement on smoothed inertia
@@ -952,7 +952,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
         if verbose:
             print ('Converged (lack of improvement in inertia)'
                    ' at iteration %d/%d' % (
-                       iteration_idx + 1, n_iterations))
+                       iteration_idx + 1, n_iter))
         return True
 
     # update the convergence context to maintain state across sucessive calls:
@@ -1102,7 +1102,7 @@ class MiniBatchKMeans(KMeans):
 
         distances = np.zeros(self.batch_size, dtype=np.float64)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-        n_iterations = int(self.max_iter * n_batches)
+        n_iter = int(self.max_iter * n_batches)
 
         init_size = self.init_size
         if init_size is None:
@@ -1158,7 +1158,7 @@ class MiniBatchKMeans(KMeans):
 
         # Perform the iterative optimization untill the final convergence
         # criterion
-        for iteration_idx in xrange(n_iterations):
+        for iteration_idx in xrange(n_iter):
 
             # Sample the minibatch from the full dataset
             minibatch_indices = self.random_state.random_integers(
@@ -1172,7 +1172,7 @@ class MiniBatchKMeans(KMeans):
 
             # Monitor the convergence and do early stopping if necessary
             if _mini_batch_convergence(
-                self, iteration_idx, n_iterations, tol, n_samples,
+                self, iteration_idx, n_iter, tol, n_samples,
                 centers_squared_diff, batch_inertia, convergence_context,
                 verbose=self.verbose):
                 break

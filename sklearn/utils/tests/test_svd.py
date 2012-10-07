@@ -69,14 +69,14 @@ def test_randomized_svd_low_rank_with_noise():
 
     # compute the singular values of X using the fast approximate method
     # without the iterated power method
-    _, sa, _ = randomized_svd(X, k, n_iterations=0)
+    _, sa, _ = randomized_svd(X, k, n_iter=0)
 
     # the approximation does not tolerate the noise:
     assert_greater(np.abs(s[:k] - sa).max(), 0.05)
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
-    _, sap, _ = randomized_svd(X, k, n_iterations=5)
+    _, sap, _ = randomized_svd(X, k, n_iter=5)
 
     # the iterated power method is helping getting rid of the noise:
     assert_almost_equal(s[:k], sap, decimal=3)
@@ -100,14 +100,14 @@ def test_randomized_svd_infinite_rank():
 
     # compute the singular values of X using the fast approximate method
     # without the iterated power method
-    _, sa, _ = randomized_svd(X, k, n_iterations=0)
+    _, sa, _ = randomized_svd(X, k, n_iter=0)
 
     # the approximation does not tolerate the noise:
     assert_greater(np.abs(s[:k] - sa).max(), 0.1)
 
     # compute the singular values of X using the fast approximate method with
     # iterated power method
-    _, sap, _ = randomized_svd(X, k, n_iterations=5)
+    _, sap, _ = randomized_svd(X, k, n_iter=5)
 
     # the iterated power method is still managing to get most of the structure
     # at the requested rank
@@ -125,11 +125,11 @@ def test_randomized_svd_transpose_consistency():
         effective_rank=rank, tail_strength=0.5, random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
-    U1, s1, V1 = randomized_svd(X, k, n_iterations=3, transpose=False,
+    U1, s1, V1 = randomized_svd(X, k, n_iter=3, transpose=False,
                                 random_state=0)
-    U2, s2, V2 = randomized_svd(X, k, n_iterations=3, transpose=True,
+    U2, s2, V2 = randomized_svd(X, k, n_iter=3, transpose=True,
                                 random_state=0)
-    U3, s3, V3 = randomized_svd(X, k, n_iterations=3, transpose='auto',
+    U3, s3, V3 = randomized_svd(X, k, n_iter=3, transpose='auto',
                                 random_state=0)
     U4, s4, V4 = linalg.svd(X, full_matrices=False)
 

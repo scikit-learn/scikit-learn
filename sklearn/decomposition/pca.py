@@ -485,7 +485,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             n_components = self.n_components
 
         U, S, V = randomized_svd(X, n_components,
-                                 n_iterations=self.iterated_power,
+                                 n_iter=self.iterated_power,
                                  random_state=self.random_state)
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
