@@ -574,7 +574,7 @@ class Bootstrap(object):
     """Random sampling with replacement cross-validation iterator
 
     Provides train/test indices to split data in train test sets
-    while resampling the input n_iterations times: each time a new
+    while resampling the input n_iter times: each time a new
     random split of the data is performed and then samples are drawn
     (with replacement) on each side of the split to build the training
     and test sets.
@@ -592,7 +592,7 @@ class Bootstrap(object):
     n : int
         Total number of elements in the dataset.
 
-    n_iterations : int (default is 3)
+    n_iter : int (default is 3)
         Number of bootstrapping iterations
 
     train_size : int or float (default is 0.5)
@@ -623,7 +623,7 @@ class Bootstrap(object):
     >>> len(bs)
     3
     >>> print(bs)
-    Bootstrap(9, n_iterations=3, train_size=5, test_size=4, random_state=0)
+    Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
     >>> for train_index, test_index in bs:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...
@@ -639,14 +639,14 @@ class Bootstrap(object):
     # Static marker to be able to introspect the CV type
     indices = True
 
-    def __init__(self, n, n_iterations=3, train_size=.5, test_size=None,
+    def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
                  random_state=None, n_bootstraps=None):
         self.n = n
         if n_bootstraps is not None:
-            warnings.warn("n_bootstraps was renamed to n_iterations and will "
-                          "be removed in 0.15.", DeprecationWarning)
-            n_iterations = n_bootstraps
-        self.n_iterations = n_iterations
+            warnings.warn("n_bootstraps was renamed to n_iter and will "
+                          "be removed in 0.16.", DeprecationWarning)
+            n_iter = n_bootstraps
+        self.n_iter = n_iter
         if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
@@ -676,7 +676,7 @@ class Bootstrap(object):
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        for i in range(self.n_iterations):
+        for i in range(self.n_iter):
             # random partition
             permutation = rng.permutation(self.n)
             ind_train = permutation[:self.train_size]
@@ -691,18 +691,18 @@ class Bootstrap(object):
             yield ind_train[train], ind_test[test]
 
     def __repr__(self):
-        return ('%s(%d, n_iterations=%d, train_size=%d, test_size=%d, '
+        return ('%s(%d, n_iter=%d, train_size=%d, test_size=%d, '
                 'random_state=%d)' % (
                     self.__class__.__name__,
                     self.n,
-                    self.n_iterations,
+                    self.n_iter,
                     self.train_size,
                     self.test_size,
                     self.random_state,
                 ))
 
     def __len__(self):
-        return self.n_iterations
+        return self.n_iter
 
 
 class ShuffleSplit(object):
@@ -719,7 +719,7 @@ class ShuffleSplit(object):
     n : int
         Total number of elements in the dataset.
 
-    n_iterations : int (default 10)
+    n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.1) or int
@@ -744,13 +744,13 @@ class ShuffleSplit(object):
     Examples
     --------
     >>> from sklearn import cross_validation
-    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    >>> rs = cross_validation.ShuffleSplit(4, n_iter=3,
     ...     test_size=.25, random_state=0)
     >>> len(rs)
     3
     >>> print(rs)
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_iterations=3, test_size=0.25, indices=True, ...)
+    ShuffleSplit(4, n_iter=3, test_size=0.25, indices=True, ...)
     >>> for train_index, test_index in rs:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...
@@ -758,7 +758,7 @@ class ShuffleSplit(object):
     TRAIN: [2 1 3] TEST: [0]
     TRAIN: [0 2 1] TEST: [3]
 
-    >>> rs = cross_validation.ShuffleSplit(4, n_iterations=3,
+    >>> rs = cross_validation.ShuffleSplit(4, n_iter=3,
     ...     train_size=0.5, test_size=.25, random_state=0)
     >>> for train_index, test_index in rs:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
@@ -772,10 +772,14 @@ class ShuffleSplit(object):
     Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def __init__(self, n, n_iterations=10, test_size=0.1,
-                 train_size=None, indices=True, random_state=None):
+    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
+            indices=True, random_state=None, n_iterations=None):
         self.n = n
-        self.n_iterations = n_iterations
+        self.n_iter = n_iter
+        if n_iterations is not None:
+            warnings.warn("n_iterations was renamed to n_iter for consistency "
+                    " and will be removed in 0.16.")
+            self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
@@ -787,7 +791,7 @@ class ShuffleSplit(object):
 
     def __iter__(self):
         rng = check_random_state(self.random_state)
-        for i in range(self.n_iterations):
+        for i in range(self.n_iter):
             # random partition
             permutation = rng.permutation(self.n)
             ind_test = permutation[:self.n_test]
@@ -803,18 +807,18 @@ class ShuffleSplit(object):
                 yield train_mask, test_mask
 
     def __repr__(self):
-        return ('%s(%d, n_iterations=%d, test_size=%s, indices=%s, '
+        return ('%s(%d, n_iter=%d, test_size=%s, indices=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
-                    self.n_iterations,
+                    self.n_iter,
                     str(self.test_size),
                     self.indices,
                     self.random_state,
                 ))
 
     def __len__(self):
-        return self.n_iterations
+        return self.n_iter
 
 
 def _validate_shuffle_split(n, test_size, train_size):
@@ -914,7 +918,7 @@ class StratifiedShuffleSplit(object):
     y : array, [n_samples]
         Labels of samples.
 
-    n_iterations : int (default 10)
+    n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.1) or int
@@ -942,7 +946,7 @@ class StratifiedShuffleSplit(object):
     >>> len(sss)
     3
     >>> print(sss)       # doctest: +ELLIPSIS
-    StratifiedShuffleSplit(labels=[0 0 1 1], n_iterations=3, ...)
+    StratifiedShuffleSplit(labels=[0 0 1 1], n_iter=3, ...)
     >>> for train_index, test_index in sss:
     ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -952,12 +956,16 @@ class StratifiedShuffleSplit(object):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, y, n_iterations=10, test_size=0.1,
-                 train_size=None, indices=True, random_state=None):
+    def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
+            indices=True, random_state=None, n_iterations=None):
 
         self.y = np.array(y)
         self.n = self.y.size
-        self.n_iterations = n_iterations
+        self.n_iter = n_iter
+        if n_iterations is not None:
+            warnings.warn("n_iterations was renamed to n_iter for consistency "
+                   " and will be removed in 0.16.")
+            self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
@@ -973,7 +981,7 @@ class StratifiedShuffleSplit(object):
         t_i = np.minimum(cls_count - n_i,
                          np.round(self.n_test * p_i).astype(int))
 
-        for n in range(self.n_iterations):
+        for n in range(self.n_iter):
             train = []
             test = []
 
@@ -998,18 +1006,18 @@ class StratifiedShuffleSplit(object):
                 yield train_m, test_m
 
     def __repr__(self):
-        return ('%s(labels=%s, n_iterations=%d, test_size=%s, indices=%s, '
+        return ('%s(labels=%s, n_iter=%d, test_size=%s, indices=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.y,
-                    self.n_iterations,
+                    self.n_iter,
                     str(self.test_size),
                     self.indices,
                     self.random_state,
                 ))
 
     def __len__(self):
-        return self.n_iterations
+        return self.n_iter
 
 
 ##############################################################################
