@@ -609,7 +609,7 @@ class SGDClassifier(BaseSGD, ClassifierMixin, SelectorMixin):
         -------
         array, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in self.classes_.
+            where classes are ordered as they are in `self.classes_`.
 
         References
         ----------
