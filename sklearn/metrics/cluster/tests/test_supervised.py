@@ -27,13 +27,14 @@ score_funcs = [
 ]
 
 
-def assert_raise_message(exception, message, callable, *args, **kwargs):
+def assert_raise_message(exception, message_start, callable, *args, **kwargs):
     """Helper function to test error messages in exceptions"""
     try:
         callable(*args, **kwargs)
-        raise AssertionError("Should have raised %r" % exception(message))
+        raise AssertionError("Should have raised %r..." %
+                             exception(message_start))
     except exception as e:
-        assert str(e) == message
+        assert str(e).startswith(message_start)
 
 
 def test_error_messages_on_wrong_input():
@@ -43,11 +44,11 @@ def test_error_messages_on_wrong_input():
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1], [1, 1, 1])
 
-        expected = "labels_true must be 1D: shape is (2, 2)"
+        expected = "labels_true must be 1D: shape is (2"
         assert_raise_message(ValueError, expected, score_func,
                              [[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = "labels_pred must be 1D: shape is (2, 2)"
+        expected = "labels_pred must be 1D: shape is (2"
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1, 0], [[1, 1], [0, 0]])
 
