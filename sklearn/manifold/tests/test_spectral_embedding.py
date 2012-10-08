@@ -27,36 +27,35 @@ n_clusters, n_features = centers.shape
 S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 
+
 def test_spectral_embedding_two_components(seed=36):
     """Test spectral embedding with two components"""
     random_state = np.random.RandomState(seed)
-    n_samples_per_components = 10
-    affinity = np.zeros(shape=[n_samples_per_components * 2,
-                               n_samples_per_components * 2])
+    n_sample = 10
+    affinity = np.zeros(shape=[n_sample * 2,
+                               n_sample * 2])
     # first component
-    affinity[0:n_samples_per_components,
-             0:n_samples_per_components] = np.abs(random_state.randn(n_samples_per_components,
-                                                                     n_samples_per_components))+2
+    affinity[0:n_sample,
+             0:n_sample] = np.abs(random_state.randn(n_sample, n_sample)) + 2
     # second component
-    affinity[n_samples_per_components::,
-             n_samples_per_components::] = np.abs(random_state.randn(n_samples_per_components,
-                                                                     n_samples_per_components))+2
+    affinity[n_sample::,
+             n_sample::] = np.abs(random_state.randn(n_sample, n_sample)) + 2
     affinity = 0.5 * (affinity + affinity.T)
     # connection
-    affinity[0, n_samples_per_components+1] = 1
-    affinity[n_samples_per_components+1, 0] = 1
-    affinity.flat[::2*n_samples_per_components+1] = 0
+    affinity[0, n_sample + 1] = 1
+    affinity[n_sample + 1, 0] = 1
+    affinity.flat[::2 * n_sample + 1] = 0
 
-    true_label = np.zeros(shape=2*n_samples_per_components)
-    true_label[0:n_samples_per_components] = 1
-    
+    true_label = np.zeros(shape=2 * n_sample)
+    true_label[0:n_sample] = 1
+
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
     embedded_corrdinate = np.squeeze(se_precomp.fit_transform(affinity))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_corrdinate < 0, dtype="float")
-    assert_equal(normalized_mutual_info_score(true_label, label_),1.0)
-    
+    assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
+
 
 def test_spectral_embedding_precomputed_affinity(seed=36):
     """Test spectral embedding with precomputed kernel"""
@@ -97,14 +96,14 @@ def test_spectral_embedding_callable_affinity(seed=36):
 def test_pipline_spectral_clustering(seed=36):
     """Test using pipline to do spectral clustering"""
     SE = SpectralEmbedding()
-    # dummy transform for SpectralEmbedding
+    # dummy transform for SpectralEmbedding be pipelined
     SE.transform = lambda x: x
     spectral_clustering = Pipeline([
         ('se', SE),
         ('km', KMeans()),
     ])
     random_state = np.random.RandomState(seed)
-    
+
     spectral_clustering.set_params(km__n_clusters=n_clusters)
     spectral_clustering.set_params(se__n_components=n_clusters)
     spectral_clustering.set_params(se__n_neighbors=10)
@@ -112,11 +111,12 @@ def test_pipline_spectral_clustering(seed=36):
     spectral_clustering.set_params(se__random_state=random_state)
     spectral_clustering.set_params(km__random_state=random_state)
     spectral_clustering.fit(S)
-    
+
     assert_array_almost_equal(
         normalized_mutual_info_score(
             spectral_clustering.steps[1][1].labels_,
             true_labels), 1.0, 2)
+
 
 def test_spectral_embedding_unknown_eigensolver(seed=36):
     # Test that SpectralClustering fails with an unknown mode set.
@@ -128,12 +128,13 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
     X, true_labels = make_blobs(n_samples=100, centers=centers,
                                 cluster_std=1., random_state=42)
     D = rbf_kernel(X)  # Distance matrix
-    
+
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed),
                                    eigen_solver="<unknown>")
     assert_raises(ValueError, se_precomp.fit, S)
-    
+
+
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown mode set.
     centers = np.array([
@@ -144,8 +145,7 @@ def test_spectral_embedding_unknown_affinity(seed=36):
     X, true_labels = make_blobs(n_samples=100, centers=centers,
                                 cluster_std=1., random_state=42)
     D = rbf_kernel(X)  # Distance matrix
-    
+
     se_precomp = SpectralEmbedding(n_components=1, affinity="<unknown>",
                                    random_state=np.random.RandomState(seed))
     assert_raises(ValueError, se_precomp.fit, S)
-    
