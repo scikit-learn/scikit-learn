@@ -47,11 +47,11 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     n_particles : int, optional
         Number of MCMC particles to use during learning.
     n_iter : int, optional
-        Number of epochs/sweeps over the training dataset to perform
+        Number of iterations/sweeps over the training dataset to perform
         during training.
     verbose: bool, optional
         When True (False by default) the method outputs the progress
-        of learning after each epoch.
+        of learning after each iteration.
     random_state : RandomState or an int seed (0 by default)
         A random number generator instance to define the state of the
         random permutations generator.
@@ -303,7 +303,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         n_batches = int(np.ceil(len(inds) / float(self.n_particles)))
         
-        for epoch in range(self.n_iter):
+        for iteration in range(self.n_iter):
             pl = 0.
             for minibatch in range(n_batches):
                 pl_batch = self._fit(X[inds[minibatch::n_batches]])
@@ -313,7 +313,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
             pl /= X.shape[0]
             
             if self.verbose:
-                print "Epoch %d, Pseudo-Likelihood = %.2f" % (epoch, pl)
+                print "Iteration %d, Pseudo-Likelihood = %.2f" % (iteration, pl)
     
     def fit_transform(self, X, y=None):
         """
