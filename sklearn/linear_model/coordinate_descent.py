@@ -110,6 +110,14 @@ class ElasticNet(LinearModel, RegressorMixin):
     `intercept_` : float | array, shape = (n_targets,)
         independent term in decision function.
 
+    `dual_gap_` : float
+        the current fit is guaranteed to be epsilon-suboptimal with
+        epsilon := `dual_gap_`
+
+    `eps_` : float
+        `eps_` is used to check if the fit converged to the requested
+        `tol`
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -388,6 +396,14 @@ class Lasso(ElasticNet):
 
     `intercept_` : float
         independent term in decision function.
+
+    `dual_gap_` : float
+        the current fit is guaranteed to be epsilon-suboptimal with
+        epsilon := `dual_gap_`
+
+    `eps_` : float
+        `eps_` is used to check if the fit converged to the requested
+        `tol`
 
     Examples
     --------
