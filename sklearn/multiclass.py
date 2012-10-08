@@ -49,11 +49,12 @@ def _fit_binary(estimator, X, y, classes=None):
 
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
-    if hasattr(estimator, "decision_function"):
-        return np.ravel(estimator.decision_function(X))
-    else:
+    try:
+        score = np.ravel(estimator.decision_function(X))
+    except (AttributeError, NotImplementedError):
         # probabilities of the positive class
-        return estimator.predict_proba(X)[:, 1]
+        score = estimator.predict_proba(X)[:, 1]
+    return score
 
 
 def _check_estimator(estimator):

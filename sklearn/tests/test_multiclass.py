@@ -16,6 +16,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
+from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
 
@@ -68,7 +69,7 @@ def test_ovr_fit_predict():
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_true(np.mean(iris.target == pred) >= 0.65)
+    assert_greater(np.mean(iris.target == pred), 0.65)
 
 
 def test_ovr_always_present():
@@ -149,6 +150,18 @@ def test_ovr_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ovr_pipeline():
+    # test with pipeline with length one
+    # pipeline is a bit weird wrt duck-typing predict_proba and
+    # decision_function
+    clf = Pipeline([("tree", DecisionTreeClassifier())])
+    ovr_pipe = OneVsRestClassifier(clf)
+    ovr_pipe.fit(iris.data, iris.target)
+    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr.fit(iris.data, iris.target)
+    assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
 def test_ovr_coef_():
