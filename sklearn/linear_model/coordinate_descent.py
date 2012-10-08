@@ -112,10 +112,11 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     `dual_gap_` : float
         the current fit is guaranteed to be epsilon-suboptimal with
-        epsilon := dual_gap_
+        epsilon := `dual_gap_`
 
     `eps_` : float
-        eps_ := tol * norm(y, 2)^2
+        `eps_` is used to check if the fit converged to the requested
+        `tol`
 
     Notes
     -----
@@ -398,10 +399,11 @@ class Lasso(ElasticNet):
 
     `dual_gap_` : float
         the current fit is guaranteed to be epsilon-suboptimal with
-        epsilon := dual_gap_
+        epsilon := `dual_gap_`
 
     `eps_` : float
-        eps_ := tol * norm(y, 2)^2
+        `eps_` is used to check if the fit converged to the requested
+        `tol`
 
     Examples
     --------
