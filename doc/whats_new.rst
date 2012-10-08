@@ -71,7 +71,7 @@ Changelog
  - Doctest under windows 64bit by `Gael Varoquaux`_
 
  - Documentation fixes for elastic net by `Andreas Müller`_ and
- `Alexandre Gramfort`_
+   `Alexandre Gramfort`_
 
  - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
 
