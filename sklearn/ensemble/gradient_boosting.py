@@ -1034,3 +1034,41 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
         for y in self.staged_decision_function(X):
             yield y.ravel()
+
+
+def unique_rows(arr, dtype=np.float32):
+    return np.array([np.array(x, dtype=dtype)
+                     for x in set(tuple(x) for x in arr)],
+                    dtype=dtype)
+
+def unique_rows_iter(arr, dtype=np.float32):
+    return np.vstack((np.array(x, dtype=dtype)
+                        for x in set(tuple(x) for x in arr)))
+
+def feature_interactions(estimator, X, y, features):
+    assert isinstance(estimator, BaseGradientBoosting)
+    features = np.asarray(features)
+    n_features = features.shape[0]
+    if features.min() >= 0 and features.max() < X.shape[1]:
+        raise ValueError("features must be in [0, %d]" % X.shape[1])
+
+    # feature combinations up to cardinality n_features
+    feature_combinations = chain(combinations(features, card)
+                                 for card in range(n_features))
+    feature_combinations = list(feature_combinations)
+    print("There are %d feature combinations" % len(feature_combinations))
+
+    for feature_combination in feature_combinations:
+        eval_points = X[:, feature_combinations]
+
+
+def compute_interaction(gbrt, eval_points, features):
+    # does not support multi-class yet
+    assert estimator.estimators_.shape[1] == 1
+    n_estimators = gbrt.estimators_.shape[0]
+    for stage in xrange(n_estimators):
+        tree = gbrt.estimators_[stage, 0]
+
+
+
+
