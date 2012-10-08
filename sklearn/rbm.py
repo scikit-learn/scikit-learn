@@ -46,7 +46,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         to tune this hyper-parameter. Possible values are 10**[0., -3.].
     n_particles : int, optional
         Number of MCMC particles to use during learning.
-    n_epochs : int, optional
+    n_iter : int, optional
         Number of epochs/sweeps over the training dataset to perform
         during training.
     verbose: bool, optional
@@ -85,13 +85,13 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=1024,
                        learning_rate=0.1,
                        n_particles=10,
-                       n_epochs=10,
+                       n_iter=10,
                        verbose=False,
                        random_state=0):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.n_particles = n_particles
-        self.n_epochs = n_epochs
+        self.n_iter = n_iter
         self.verbose = verbose
         self.random_state = check_random_state(random_state)
     
@@ -303,7 +303,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         n_batches = int(np.ceil(len(inds) / float(self.n_particles)))
         
-        for epoch in range(self.n_epochs):
+        for epoch in range(self.n_iter):
             pl = 0.
             for minibatch in range(n_batches):
                 pl_batch = self._fit(X[inds[minibatch::n_batches]])
