@@ -247,6 +247,7 @@ Development
    developers/performance
    developers/utilities
    developers/debugging
+   developers/maintainer
    about
 
 .. toctree::
