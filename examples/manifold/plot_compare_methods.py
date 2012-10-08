@@ -108,8 +108,8 @@ pl.axis('tight')
 
 
 t0 = time()
-se = manifold.SpectralEmbedding(n_components = n_components,
-                                n_neighbors = n_neighbors)
+se = manifold.SpectralEmbedding(n_components=n_components,
+                                n_neighbors=n_neighbors)
 Y = se.fit_transform(X)
 t1 = time()
 print "SpectralEmbedding: %.2g sec" % (t1 - t0)

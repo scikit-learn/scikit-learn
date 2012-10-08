@@ -20,8 +20,8 @@ from scipy.sparse.linalg import lobpcg
 
 
 def spectral_embedding(adjacency, n_components=2,
-                      eigen_solver=None, random_state=None,
-                      norm_laplacian=True):
+                       eigen_solver=None, random_state=None,
+                       norm_laplacian=True):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -112,9 +112,9 @@ def spectral_embedding(adjacency, n_components=2,
         # near 1.0 and leads to much faster convergence: potentially an
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
-        lambdas, diffusion_map = eigsh(-laplacian, k=n_components+1,
+        lambdas, diffusion_map = eigsh(-laplacian, k=n_components + 1,
                                         sigma=1.0, which='LM')
-        embedding = diffusion_map.T[n_components-1::-1] * dd
+        embedding = diffusion_map.T[n_components - 1::-1] * dd
     elif eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
@@ -243,7 +243,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 self.n_neighbors = max(int(X.shape[0] / 10), 1)
             self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors)
             # currently only symmetric affinity_matrix supported
-            self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ + self.affinity_matrix_.T)
+            self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
+                                           self.affinity_matrix_.T)
             return self.affinity_matrix_
         if self.affinity == 'rbf':
             if self.gamma is None:
