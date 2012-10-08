@@ -10,9 +10,10 @@ at which the fixe is no longer needed.
 # License: BSD
 
 import collections
-import numpy as np
 from operator import itemgetter
+import inspect
 
+import numpy as np
 
 try:
     Counter = collections.Counter
@@ -176,3 +177,13 @@ try:
 except ImportError:
     def count_nonzero(X):
         return len(np.flatnonzero(X))
+
+# little danse to see if np.copy has an 'order' keyword argument
+if 'order' in inspect.getargspec(np.copy)[0]:
+    def safe_copy(X):
+        # Copy, but keep the order
+        return np.copy(X, order='K')
+else:
+    # Before an 'order' argument was introduced, numpy wouldn't muck with
+    # the ordering
+    safe_copy = np.copy

@@ -205,7 +205,6 @@
         <div class="clearer"></div>
       </div>
     </div>
-  
 {% endblock %}
 
 
@@ -246,7 +245,7 @@
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">
         {{loop.cycle('Previous', 'Next')}}
-      </a>  
+      </a>
     </div>
     {%- endfor %}
     {% endif %}
@@ -260,6 +259,11 @@
                $(this).css('background-color', '#A7D6E2');
            }
        );
+       var bodywrapper = $('.bodywrapper');
+   	var sidebarbutton = $('#sidebarbutton');
+        sidebarbutton.css({
+	    'height': '900px'
+       });
      </script>
 {%- endblock %}
 

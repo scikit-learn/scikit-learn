@@ -88,7 +88,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
   <1x6 sparse matrix of type '<type 'numpy.float64'>'
-      with 6 stored elements in COOrdinate format>
+      with 6 stored elements in Compressed Sparse Row format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
   >>> vec.get_feature_names()

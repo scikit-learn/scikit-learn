@@ -81,8 +81,8 @@ def setup_module(module):
     # It could have been provided in the environment
     _random_seed = os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
-        _random_seed = np.random.uniform()*(2**31-1)
+        _random_seed = np.random.uniform() * (2 ** 31 - 1)
     _random_seed = int(_random_seed)
-    print "I: Seeding RNGs with %r" % _random_seed
+    print("I: Seeding RNGs with %r" % _random_seed)
     np.random.seed(_random_seed)
     random.seed(_random_seed)

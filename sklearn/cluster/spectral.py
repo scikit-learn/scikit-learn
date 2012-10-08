@@ -352,7 +352,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         else:
             raise ValueError("Invalid 'affinity'. Expected 'rbf', "
                 "'nearest_neighbors' or 'precomputed', got '%s'."
-                % self.affinity_matrix)
+                % self.affinity)
 
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,

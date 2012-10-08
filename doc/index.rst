@@ -2,7 +2,7 @@
 ..
     We are putting the title as a raw HTML so that it doesn't appear in
     the contents
-    
+
 .. raw:: html
 
     <h1>scikit-learn: machine learning in Python</h1>
@@ -15,8 +15,8 @@
     }
     </style>
 
-..  
-   Here we are building a banner: a javascript selects randomly 4 images in 
+..
+   Here we are building a banner: a javascript selects randomly 4 images in
    the list
 
 .. only:: html
@@ -104,10 +104,65 @@
             size--;
             num_choices--;
           }
-          $('#banner').html(replace.html() ); // update our container div 
+          $('#banner').html(replace.html() ); // update our container div
                                               // with the new, randomized divs
         }
         shuffle ($('#banner a.external'));
+
+	function preload_images() {
+	    var img = new Image();
+	    img.src="_static/plusBox.png";
+	    img.src="_static/minBox.png";
+	    img.src="_static/plusBoxHighlight.png";
+	    img.src="_static/minBoxHighlight.png";
+	    img.src="_static/noneBox.png";
+	}
+	preload_images();
+
+	//Function to make the index toctree collapsible
+	$(function () {
+            $('.toctree-l2')
+                .click(function(event){
+                    if (event.target.tagName.toLowerCase() != "a") {
+		        if ($(this).children('ul').length > 0) {
+                            $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBoxHighlight.png)' : 'url(_static/minBoxHighlight.png)');
+                            $(this).children('ul').toggle();
+                        }
+                        return true; //Makes links clickable
+                    }
+		})
+		.mousedown(function(event){ return false; }) //Firefox highlighting fix
+                .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
+                .children('ul').hide();
+            $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+	    $('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+            var sidebarbutton = $('#sidebarbutton');
+            sidebarbutton.css({
+	        'display': 'none'
+            });
+
+	    $('.toctree-l2').hover(
+	        function () {
+		    if ($(this).children('ul').length > 0) {
+		        $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
+		        $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBoxHighlight.png)' : 'url(_static/plusBoxHighlight.png)');
+		    }
+		    else {
+		        $(this).css('background-color', '#F9F9F9');
+		    }
+                },
+                function () {
+                    $(this).css('background-color', 'white').children('ul').css('background-color', 'white');
+		    if ($(this).children('ul').length > 0) {
+		        $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBox.png)');
+		    }
+                }
+            );
+	});
+
         </SCRIPT>
 
     |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |banner12| |banner13| |banner14| |end-div|
@@ -170,7 +225,7 @@ User Guide
 ==========
 
 .. toctree::
-   :maxdepth: 2
+   :numbered:
 
    user_guide.rst
 
@@ -186,7 +241,7 @@ Example Gallery
 Development
 ===========
 .. toctree::
-   :maxdepth: 2
+   :numbered:
 
    developers/index
    developers/performance

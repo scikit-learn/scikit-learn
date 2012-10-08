@@ -122,7 +122,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR, not softmax, like Liblinear's predict_probability
-            prob /= prob.sum(axis=0)
+            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
             return prob
 
     def predict_log_proba(self, X):

@@ -124,7 +124,9 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         raise ValueError(
             "Singular covariance matrix. "
             "Please check that the covariance matrix corresponding "
-            "to the dataset is full rank.")
+            "to the dataset is full rank and that MinCovDet is used with "
+            "Gaussian-distributed data (or at least data drawn from a "
+            "unimodal, symetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -223,7 +225,8 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         estimates_list = n_trials
         n_trials = estimates_list[0].shape[0]
     else:
-        raise Exception("Bad 'n_trials' parameter (wrong type)")
+        raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
+                " integer, got %s (%s)" % (n_trials, type(n_trials)))
 
     # compute `n_trials` location and shape estimates candidates in the subset
     all_estimates = []
@@ -373,7 +376,16 @@ def fast_mcd(X, support_fraction=None,
         n_trials = max(10, n_trials_tot // n_subsets)
         n_best_tot = n_subsets * n_best_sub
         all_best_locations = np.zeros((n_best_tot, n_features))
-        all_best_covariances = np.zeros((n_best_tot, n_features, n_features))
+        try:
+            all_best_covariances = np.zeros((n_best_tot, n_features,
+                                             n_features))
+        except MemoryError:
+            # The above is too big. Let's try with something much small
+            # (and less optimal)
+            all_best_covariances = np.zeros((n_best_tot, n_features,
+                                             n_features))
+            n_best_tot = 10
+            n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets
             high_bound = low_bound + n_samples_subsets
@@ -448,7 +460,15 @@ def fast_mcd(X, support_fraction=None,
 
 
 class MinCovDet(EmpiricalCovariance):
-    """Minimum Covariance Determinant (MCD): robust estimator of covariance
+    """Minimum Covariance Determinant (MCD): robust estimator of covariance.
+
+    The Minimum Covariance Determinant covariance estimator is to be applied
+    on Gaussian-distributed data, but could still be relevant on data
+    drawn from a unimodal, symetric distribution. It is not meant to be used
+    with multimodal data (the algorithm used to fit a MinCovDet object is
+    likely to fail in such a case).
+    One should consider projection pursuit methods to deal with multimodal
+    datasets.
 
     Parameters
     ----------

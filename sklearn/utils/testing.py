@@ -138,13 +138,15 @@ def all_estimators():
     for importer, modname, ispkg in pkgutil.walk_packages(path=path,
                             prefix='sklearn.', onerror=lambda x: None):
         module = __import__(modname, fromlist="dummy")
+        if ".tests." in modname:
+            continue
         classes = inspect.getmembers(module, inspect.isclass)
-        # get rid of abstract base classes
         all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
     estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
+    # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
     # We sort in order to have reproducible test failures
     return sorted(estimators)

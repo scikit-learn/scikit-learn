@@ -8,13 +8,29 @@
 Changelog
 ---------
 
+   - The table of contents has now been made expandible (on the
+     index page) - by Jaques Grobler.
+
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
 
-   - Ridge regression and ridge classification fitting no longer has
-     quadratic memory complexity.
+   - Ridge regression and ridge classification fitting with ``sparse_cg`` solver
+     no longer has quadratic memory complexity, by `Lars Buitinck`_ and
+     `Fabian Pedregosa`_.
+
+   - Ridge regression and ridge classification now support a new fast solver
+     called ``lsqr``, by `Mathieu Blondel`_.
 
    - Speed up of :func:`metrics.precision_recall_curve` by Conrad Lee.
+
+   - Added support for reading/writing svmlight files with pairwise
+     preference attribute (qid in svmlight file format) in
+     :func:`datasets.dump_svmlight_file` and
+     :func:`datasets.load_svmlight_file` by `Fabian Pedregosa`_.
+
+   - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
+     of several transformers by `Andreas Müller`_.
+
 
 API changes summary
 -------------------
@@ -31,6 +47,57 @@ API changes summary
    - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
      ``predict`` or ``sample`` methods instead.
 
+   - The ``solver`` fit option in Ridge regression and classification is now
+     deprecated and will be removed in v0.14. Use the constructor option
+     instead.
+
+   - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
+     instead of COO.
+
+.. _changes_0_12.1:
+
+0.12.1
+=======
+
+The 0.12.1 release is a bug-fix release with no additional feature, but a
+set of bug fixed
+
+Changelog
+----------
+
+ - Improved numerical stability in spectral embedding by `Gael
+   Varoquaux`_
+
+ - Doctest under windows 64bit by `Gael Varoquaux`_
+
+ - Documentation fixes for elastic net by `Andreas Mueller`_ and
+ `Alexandre Gramfort`_
+
+ - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
+
+ - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
+
+ - Fix parallel computing in MDS by `Gael Varoquaux`_
+
+ - Fix unicode support in count vectorizer by `Andreas Mueller`_
+
+ - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
+
+ - Fix clone of SGD objects by `Peter Prettenhofer`_
+
+ - Stabilize GMM by `Virgile Fritsch`_
+
+People
+------
+
+ *  14  `Peter Prettenhofer`_
+ *  10  `Andreas Mueller`_
+ *  10  `Gael Varoquaux`_
+ *   5  `Lars Buitinck`_
+ *   3  `Virgile Fritsch`_
+ *   1  `Alexandre Gramfort`_
+ *   1  `Gilles Louppe`_
+ *   1  `Mathieu Blondel`_
 
 .. _changes_0_12:
 

@@ -189,6 +189,23 @@ def test_kneighbors_classifier(n_samples=40,
             assert_array_equal(y_pred, y[:n_test_pts])
 
 
+def test_kneighbors_classifier_float_labels(n_samples=40,
+                               n_features=5,
+                               n_test_pts=10,
+                               n_neighbors=5,
+                               random_state=0):
+    """Test k-neighbors classification"""
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn.fit(X, y.astype(np.float))
+    epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+    y_pred = knn.predict(X[:n_test_pts] + epsilon)
+    assert_array_equal(y_pred, y[:n_test_pts])
+
+
 def test_kneighbors_classifier_predict_proba():
     """Test KNeighborsClassifier.predict_proba() method"""
     X = np.array([[0, 2, 0],

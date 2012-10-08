@@ -84,3 +84,57 @@ The pipeline has all the methods that the last estimator in the pipline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
+
+
+.. _feature_union:
+
+==========================================
+FeatureUnion: Combining feature extractors
+==========================================
+
+.. currentmodule:: sklearn.pipeline
+
+:class:`FeatureUnion` combines several transformer objects into a new
+transformer that combines their output. A :class:`FeatureUnion` takes
+a list of transformer objects. During fitting, each of these
+is fit to the data independently. For transforming data, the
+transformers are applied in parallel, and the sample vectors they output
+are concatenated end-to-end into larger vectors.
+
+:class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
+convenience and joint parameter estimation and validation.
+
+:class:`FeatureUnion` and :class:`Pipeline` can be combined to
+create complex models.
+
+(A :class:`FeatureUnion` has no way of checking whether two transformers
+might produce identical features. It only produces a union when the
+feature sets are disjoint, and making sure they are is the caller's
+responsibility.)
+
+
+Usage
+=====
+
+A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
+where the ``key`` is the name you want to give to a given transformation
+(an arbitrary string; it only serves as an identifier)
+and ``value`` is an estimator object::
+
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from sklearn.decomposition import PCA
+    >>> from sklearn.decomposition import KernelPCA
+    >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
+    >>> combined = FeatureUnion(estimators)   
+    >>> combined # doctest: +NORMALIZE_WHITESPACE
+    FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
+        n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
+        coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
+        gamma=0, kernel='linear', max_iter=None, n_components=None, tol=0))],
+        transformer_weights=None)
+
+
+                                                                       
+.. topic:: Examples:
+
+ * :ref:`example_feature_stacker.py`

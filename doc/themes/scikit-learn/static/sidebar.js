@@ -111,6 +111,7 @@ $(function() {
     sidebarbutton.css({
         'border-left': '1px solid ' + dark_color,
 	'border-top-left-radius' : '15px',
+	'border-bottom-left-radius' : '15px',
         'font-size': '1.2em',
         'cursor': 'pointer',
         'height': bodywrapper.height(),

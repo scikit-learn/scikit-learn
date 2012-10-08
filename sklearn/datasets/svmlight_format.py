@@ -30,7 +30,7 @@ from ..utils import atleast2d_or_csr
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
-                       multilabel=False, zero_based="auto"):
+                       multilabel=False, zero_based="auto", query_id=False):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -53,6 +53,14 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     to use an optimized loader such as:
 
       https://github.com/mblondel/svmlight-loader
+
+    In case the file contains a pairwise preference constraint (known
+    as "qid" in the svmlight format) these are ignored unless the
+    query_id parameter is set to True. These pairwise preference
+    constraints can be used to contraint the combination of samples
+    when using pairwise loss functions (as is the case in some
+    learning to rank problems) so that only pairs with the same
+    query_id value are considered.
 
     Parameters
     ----------
@@ -80,13 +88,19 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         but they are unfortunately not self-identifying. Using "auto" or True
         should always be safe.
 
+    query_id: boolean, defaults to False
+        If True, will return the query_id array for each file.
+
     Returns
     -------
-    (X, y)
+    X: scipy.sparse matrix of shape (n_samples, n_features)
 
-    where X is a scipy.sparse matrix of shape (n_samples, n_features),
-          y is a ndarray of shape (n_samples,), or, in the multilabel case,
-          a list of tuples of length n_samples.
+    y: ndarray of shape (n_samples,), or, in the multilabel a list of
+        tuples of length n_samples.
+
+    query_id: array of shape (n_samples,)
+       query_id for each sample. Only returned when query_id is set to
+       True.
 
     See also
     --------
@@ -94,7 +108,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     format, enforcing the same number of features/columns on all of them.
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                                     zero_based))
+                                     zero_based, query_id))
 
 
 def _gen_open(f):
@@ -112,22 +126,30 @@ def _gen_open(f):
         return open(f, "rb")
 
 
-def _open_and_load(f, dtype, multilabel, zero_based):
+def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
     # XXX remove closing when Python 2.7+/3.1+ required
     with closing(_gen_open(f)) as f:
-        return _load_svmlight_file(f, dtype, multilabel, zero_based)
+        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
-                        multilabel=False, zero_based="auto"):
+                        multilabel=False, zero_based="auto", query_id=False):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
     files, except that the results are concatenated into a single, flat list
     and the samples vectors are constrained to all have the same number of
     features.
+
+    In case the file contains a pairwise preference constraint (known
+    as "qid" in the svmlight format) these are ignored unless the
+    query_id parameter is set to True. These pairwise preference
+    constraints can be used to constraint the combination of samples
+    when using pairwise loss functions (as is the case in some
+    learning to rank problems) so that only pairs with the same
+    query_id value are considered.
 
     Parameters
     ----------
@@ -153,11 +175,17 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         but they are unfortunately not self-identifying. Using "auto" or True
         should always be safe.
 
+    query_id: boolean, defaults to False
+        If True, will return the query_id array for each file.
+
     Returns
     -------
     [X1, y1, ..., Xn, yn]
-
     where each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+
+    If query_id is set to True, this will return instead [X1, y1, q1,
+    ..., Xn, yn, qn] where (Xi, yi, qi) is the result from
+    load_svmlight_file(files[i])
 
     Rationale
     ---------
@@ -170,26 +198,29 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     --------
     load_svmlight_file
     """
-    r = [_open_and_load(f, dtype, multilabel, bool(zero_based)) for f in files]
+    r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id))
+         for f in files]
 
     if zero_based is False \
-     or zero_based == "auto" and all(np.min(indices) > 0
-                                     for _, indices, _, _ in r):
-        for _, indices, _, _ in r:
+     or zero_based == "auto" and all(np.min(tmp[1]) > 0 for tmp in r):
+        for ind in r:
+            indices = ind[1]
             indices -= 1
 
     if n_features is None:
-        n_features = max(indices.max() for _, indices, _, _ in r) + 1
+        n_features = max(ind[1].max() for ind in r) + 1
 
     result = []
-    for data, indices, indptr, y in r:
+    for data, indices, indptr, y, query_values in r:
         shape = (indptr.shape[0] - 1, n_features)
         result += sp.csr_matrix((data, indices, indptr), shape), y
+        if query_id:
+            result.append(query_values)
 
     return result
 
 
-def _dump_svmlight(X, y, f, one_based, comment):
+def _dump_svmlight(X, y, f, one_based, comment, query_id):
     is_sp = int(hasattr(X, "tocsr"))
     if X.dtype == np.float64:
         value_pattern = u"%d:%0.16e"
@@ -197,9 +228,13 @@ def _dump_svmlight(X, y, f, one_based, comment):
         value_pattern = u"%d:%f"
 
     if y.dtype.kind == 'i':
-        line_pattern = u"%d %s\n"
+        line_pattern = u"%d"
     else:
-        line_pattern = u"%f %s\n"
+        line_pattern = u"%f"
+
+    if query_id is not None:
+        line_pattern += u" qid:%d"
+    line_pattern += u" %s\n"
 
     f.write("# Generated by dump_svmlight_file from scikit-learn %s\n"
             % __version__)
@@ -212,10 +247,14 @@ def _dump_svmlight(X, y, f, one_based, comment):
     for i in xrange(X.shape[0]):
         s = u" ".join([value_pattern % (j + one_based, X[i, j])
                        for j in X[i].nonzero()[is_sp]])
-        f.write((line_pattern % (y[i], s)).encode('ascii'))
+        if query_id is not None:
+            feat = (y[i], query_id[i], s)
+        else:
+            feat = (y[i], s)
+        f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f, zero_based=True, comment=None):
+def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
     """Dump the dataset in svmlight / libsvm file format.
 
     This format is a text-based format, with one sample per line. It does
@@ -246,6 +285,10 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None):
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
+
+    query_id : array-like, shape = [n_samples]
+        Array containing pairwise preference constraints (qid in svmlight
+        format).
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.
@@ -262,17 +305,22 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None):
 
     y = np.asarray(y)
     if y.ndim != 1:
-        raise ValueError("expected y of shape [n_samples], got %r" % y)
+        raise ValueError("expected y of shape (n_samples,), got %r" % (y.shape,))
 
     X = atleast2d_or_csr(X)
     if X.shape[0] != y.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, "
                          "got: %r and %r instead." % (X.shape[0], y.shape[0]))
 
+    if query_id is not None:
+        query_id = np.asarray(query_id)
+        if query_id.shape[0] != y.shape[0]:
+            raise ValueError("expected query_id of shape (n_samples,), got %r" % (query_id.shape,))
+
     one_based = not zero_based
 
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, one_based, comment)
+        _dump_svmlight(X, y, f, one_based, comment, query_id)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, one_based, comment)
+            _dump_svmlight(X, y, f, one_based, comment, query_id)

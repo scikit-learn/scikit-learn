@@ -42,29 +42,30 @@ def test_ridge():
     """
     alpha = 1.0
 
-    # With more samples than features
-    n_samples, n_features = 6, 5
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
+    for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
+        # With more samples than features
+        n_samples, n_features = 6, 5
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
 
-    ridge = Ridge(alpha=alpha)
-    ridge.fit(X, y)
-    assert_equal(ridge.coef_.shape, (X.shape[1], ))
-    assert_greater(ridge.score(X, y), 0.5)
+        ridge = Ridge(alpha=alpha, solver=solver)
+        ridge.fit(X, y)
+        assert_equal(ridge.coef_.shape, (X.shape[1], ))
+        assert_greater(ridge.score(X, y), 0.47)
 
-    ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert_greater(ridge.score(X, y), 0.5)
+        ridge.fit(X, y, sample_weight=np.ones(n_samples))
+        assert_greater(ridge.score(X, y), 0.47)
 
-    # With more features than samples
-    n_samples, n_features = 5, 10
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
-    ridge = Ridge(alpha=alpha)
-    ridge.fit(X, y)
-    assert_greater(ridge.score(X, y), .9)
+        # With more features than samples
+        n_samples, n_features = 5, 10
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        ridge = Ridge(alpha=alpha, solver=solver)
+        ridge.fit(X, y)
+        assert_greater(ridge.score(X, y), .9)
 
-    ridge.fit(X, y, sample_weight=np.ones(n_samples))
-    assert_greater(ridge.score(X, y), 0.9)
+        ridge.fit(X, y, sample_weight=np.ones(n_samples))
+        assert_greater(ridge.score(X, y), 0.9)
 
 
 def test_ridge_shapes():

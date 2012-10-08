@@ -1,10 +1,12 @@
 """Utilities for input validation"""
-# Authors: Olivier Grisel and others (please update me)
+# Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
 # License: BSD 3
 
 import numpy as np
 from scipy import sparse
 import warnings
+
+from .fixes import safe_copy
 
 
 def assert_all_finite(X):
@@ -68,7 +70,7 @@ def array2d(X, dtype=None, order=None, copy=False):
                         'is required. Use X.todense() to convert to dense.')
     X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
     if X is X_2d and copy:
-        X_2d = X_2d.copy()
+        X_2d = safe_copy(X_2d)
     return X_2d
 
 
@@ -77,7 +79,6 @@ def atleast2d_or_csc(X, dtype=None, order=None, copy=False):
 
     Also, converts np.matrix to np.ndarray.
     """
-    X_init = X
     if sparse.issparse(X):
         # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
@@ -85,10 +86,8 @@ def atleast2d_or_csc(X, dtype=None, order=None, copy=False):
         else:
             X = sparse.csc_matrix(X, dtype=dtype)
     else:
-        X = array2d(X, dtype=dtype, order=order)
+        X = array2d(X, dtype=dtype, order=order, copy=copy)
     assert_all_finite(X)
-    if X is X_init and copy:
-        X = X.copy()
     return X
 
 
@@ -97,7 +96,6 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False):
 
     Also, converts np.matrix to np.ndarray.
     """
-    X_init = X
     if sparse.issparse(X):
         # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
@@ -105,10 +103,8 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False):
         else:
             X = sparse.csr_matrix(X, dtype=dtype)
     else:
-        X = array2d(X, dtype=dtype, order=order)
+        X = array2d(X, dtype=dtype, order=order, copy=copy)
     assert_all_finite(X)
-    if X is X_init and copy:
-        X = X.copy()
     return X
 
 

@@ -138,7 +138,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         else:
             mode, _ = weighted_mode(pred_labels, weights, axis=1)
 
-        return mode.flatten().astype(np.int)
+        return self.classes_.take(mode.flatten().astype(np.int))
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -164,19 +164,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         if weights is None:
             weights = np.ones_like(pred_labels)
 
-        probabilities = np.zeros((X.shape[0], self._classes.size))
-
-        # Translate class label to a column index in probabilities array.
-        # This may not be needed provided classes labels are guaranteed to be
-        # np.arange(n_classes) (e.g. consecutive and starting with 0)
-        pred_indices = pred_labels.copy()
-        for k, c in enumerate(self._classes):
-            pred_indices[pred_labels == c] = k
+        probabilities = np.zeros((X.shape[0], self.classes_.size))
 
         # a simple ':' index doesn't work right
         all_rows = np.arange(X.shape[0])
 
-        for i, idx in enumerate(pred_indices.T):  # loop is O(n_neighbors)
+        for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
             probabilities[all_rows, idx] += weights[:, i]
 
         # normalize 'votes' into real [0,1] probabilities
@@ -319,4 +312,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                for (pl, w) in zip(pred_labels, weights)],
                               dtype=np.int)
 
-        return mode.flatten().astype(np.int)
+        mode = mode.flatten().astype(np.int)
+        # map indices to classes
+        prediction = self.classes_.take(mode)
+        if self.outlier_label:
+            # reset outlier label
+            prediction[mode == outlier_label] = self.outlier_label
+        return prediction

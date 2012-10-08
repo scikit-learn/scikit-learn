@@ -57,6 +57,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         Constant that multiplies the penalty terms. Defaults to 1.0
         See the notes for the exact mathematical meaning of this
         parameter
+        alpha = 0 is equivalent to an ordinary least square, solved
+        by the LinearRegression object in the scikit. For numerical
+        reasons, using alpha = 0 is with the Lasso object is not advised
+        and you should prefer the LinearRegression object.
 
     rho : float
         The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
@@ -152,6 +156,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        if self.alpha == 0:
+            warnings.warn("With alpha=0, this aglorithm does not converge"
+                "well. You are advised to use the LinearRegression estimator",
+                stacklevel=2)
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                              copy=self.copy_X and self.fit_intercept)
         # From now on X can be touched inplace
@@ -331,6 +339,10 @@ class Lasso(ElasticNet):
     ----------
     alpha : float, optional
         Constant that multiplies the L1 term. Defaults to 1.0
+        alpha = 0 is equivalent to an ordinary least square, solved
+        by the LinearRegression object in the scikit. For numerical
+        reasons, using alpha = 0 is with the Lasso object is not advised
+        and you should prefer the LinearRegression object.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set

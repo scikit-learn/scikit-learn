@@ -817,6 +817,7 @@ Pairwise metrics
    :template: class.rst
 
    pipeline.Pipeline
+   pipeline.FeatureUnion
 
 
 .. _preprocessing_ref:

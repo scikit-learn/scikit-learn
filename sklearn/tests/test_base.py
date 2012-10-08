@@ -44,6 +44,23 @@ class Buggy(BaseEstimator):
         self.a = 1
 
 
+class NoEstimator(object):
+    def __init__(self):
+        pass
+
+    def fit(self, X=None, y=None):
+        return self
+
+    def predict(self, X=None):
+        return None
+
+
+class VargEstimator(BaseEstimator):
+    """Sklearn estimators shouldn't have vargs."""
+    def __init__(self, *vargs):
+        pass
+
+
 #############################################################################
 # The tests
 
@@ -88,6 +105,12 @@ def test_clone_buggy():
     buggy.a = 2
     assert_raises(RuntimeError, clone, buggy)
 
+    no_estimator = NoEstimator()
+    assert_raises(TypeError, clone, no_estimator)
+
+    varg_est = VargEstimator()
+    assert_raises(RuntimeError, clone, varg_est)
+
 
 def test_clone_empty_array():
     """Regression test for cloning estimators with empty arrays"""
@@ -109,6 +132,9 @@ def test_repr():
         repr(test),
         "T(a=K(c=None, d=None), b=K(c=None, d=None))"
     )
+
+    some_est = T(a=["long_params"] * 1000)
+    assert_equal(len(repr(some_est)), 415)
 
 
 def test_str():
@@ -135,3 +161,16 @@ def test_is_classifier():
     assert_true(is_classifier(Pipeline([('svc', svc)])))
     assert_true(is_classifier(Pipeline([('svc_cv',
                               GridSearchCV(svc, {'C': [0.1, 1]}))])))
+
+
+def test_set_params():
+    # test nested estimator parameter setting
+    clf = Pipeline([("svc", SVC())])
+    # non-existing parameter in svc
+    assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
+    # non-existing parameter of pipeline
+    assert_raises(ValueError, clf.set_params, svm__stupid_param=True)
+    # we don't currently catch if the things in pipeline are estimators
+    #bad_pipeline = Pipeline([("bad", NoEstimator())])
+    #assert_raises(AttributeError, bad_pipeline.set_params,
+            #bad__stupid_param=True)

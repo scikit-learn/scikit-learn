@@ -283,7 +283,7 @@ def load_digits(n_class=10):
 
         >>> from sklearn.datasets import load_digits
         >>> digits = load_digits()
-        >>> digits.data.shape
+        >>> print digits.data.shape
         (1797, 64)
         >>> import pylab as pl #doctest: +SKIP
         >>> pl.gray() #doctest: +SKIP
@@ -391,7 +391,7 @@ def load_boston():
     --------
     >>> from sklearn.datasets import load_boston
     >>> boston = load_boston()
-    >>> boston.data.shape
+    >>> print boston.data.shape
     (506, 13)
     """
     module_path = dirname(__file__)
