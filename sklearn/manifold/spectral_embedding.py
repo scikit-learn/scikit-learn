@@ -19,8 +19,9 @@ from scipy import sparse
 from scipy.sparse.linalg import lobpcg
 
 
-def spectra_embedding(adjacency, n_components=2,
-                      eigen_solver=None, random_state=None):
+def spectral_embedding(adjacency, n_components=2,
+                      eigen_solver=None, random_state=None,
+                      norm_laplacian=True):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -39,16 +40,20 @@ def spectra_embedding(adjacency, n_components=2,
 
     Parameters
     -----------
-    adjacency: array-like or sparse matrix, shape: (n_samples, n_samples)
+    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
+    norm_laplacian : bool, default: False
+        Use normalized graph laplacian (True) or un-normalized graph
+        laplacian (False)
+
     Returns
     --------
-    embedding: array, shape: (n_samples, n_components)
-        The reduced samples
+    embedding : array, shape: (n_samples, n_components)
+        The reduced samples.
 
     Notes
     ------
@@ -107,9 +112,9 @@ def spectra_embedding(adjacency, n_components=2,
         # near 1.0 and leads to much faster convergence: potentially an
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
-        lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
-                                       sigma=1.0, which='LM')
-        embedding = diffusion_map.T[::-1] * dd
+        lambdas, diffusion_map = eigsh(-laplacian, k=n_components+1,
+                                        sigma=1.0, which='LM')
+        embedding = diffusion_map.T[n_components-1::-1] * dd
     elif eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
@@ -132,7 +137,7 @@ def spectra_embedding(adjacency, n_components=2,
 
 
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
-    """Spectral Embedding for Non-linear Dimensionality Reduction
+    """Spectral Embedding for Non-linear Dimensionality Reduction.
 
     Forms an affinity matrix given by the specified function and
     applies spectral decomposition to the corresponding graph laplacian.
@@ -157,10 +162,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         How to construct the affinity matrix.
          - 'nearest_neighbors' : construct affinity matrix by knn graph
          - 'rbf' : construct affinity matrix by rbf kernel
-         - 'precomputed' : precomputed affinity matrix
-         - callable : a specific function that takes in
-           data matrix (n_samples, n_features) and return
-           affinity matrix (n_samples, n_samples).
+         - 'precomputed' : interpret X as precomputed affinity matrix
+         - callable : use passed in function as affinity
+           the function takes in data matrix (n_samples, n_features)
+           and return affinity matrix (n_samples, n_samples).
 
     gamma : float, optional, default : 1/n_features
         Kernel coefficient for rbf kernel.
@@ -175,10 +180,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     ----------
 
     `embedding_` : array, shape = (n_samples, n_components)
-        Spectral embedding of the training matrix
+        Spectral embedding of the training matrix.
 
     `affinity_matrix_` : array, shape = (n_samples, n_samples)
-        affinity_matrix constructed from samples or precomputed
+        Affinity_matrix constructed from samples or precomputed.
 
     References
     ----------
@@ -215,13 +220,14 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         """Caclulate the affinity matrix from data
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-           array-like, shape (n_samples, n_samples)
-            If self.precomputed == true
-            Precomputed adjacency graph computed from samples
+            If affinity is "precomputed"
+            X : array-like, shape (n_samples, n_samples),
+            Interpret X as precomputed adjacency graph computed from
+            samples.
 
         Returns
         -------
@@ -236,6 +242,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             if self.n_neighbors is None:
                 self.n_neighbors = max(int(X.shape[0] / 10), 1)
             self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors)
+            # currently only symmetric affinity_matrix supported
+            self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ + self.affinity_matrix_.T)
             return self.affinity_matrix_
         if self.affinity == 'rbf':
             if self.gamma is None:
@@ -260,8 +268,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-            If self.precomputed is True
-            Precomputed affinity matrix computed from samples is used
+            If affinity is "precomputed"
+            X : array-like, shape (n_samples, n_samples),
+            Interpret X as precomputed adjacency graph computed from
+            samples.
 
         Returns
         -------
@@ -278,7 +288,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectra_embedding(affinity_matrix,
+        self.embedding_ = spectral_embedding(affinity_matrix,
                                              n_components=self.n_components,
                                              eigen_solver=self.eigen_solver,
                                              random_state=self.random_state)
@@ -293,8 +303,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-            If self.precomputed is True
-            Precomputed affinity matrix computed from samples is used
+            If affinity is "precomputed"
+            X : array-like, shape (n_samples, n_samples),
+            Interpret X as precomputed adjacency graph computed from
+            samples.
 
         Returns
         -------
