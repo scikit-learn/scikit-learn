@@ -76,7 +76,7 @@ class _BaseHMM(BaseEstimator):
     See the instance documentation for details specific to a
     particular object.
 
-    Attributes
+    Parameters
     ----------
     n_components : int
         Number of states in the model.
