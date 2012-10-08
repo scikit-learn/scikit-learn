@@ -46,7 +46,7 @@ class BaseSGD(BaseEstimator):
     __metaclass__ = ABCMeta
 
     def __init__(self, loss, penalty='l2', alpha=0.0001,
-                 l1_ratio=0.25, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, seed=0, learning_rate="optimal",
                  eta0=0.0, power_t=0.5, warm_start=False, rho=None):
         self.loss = loss
@@ -56,7 +56,7 @@ class BaseSGD(BaseEstimator):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         if rho is not None:
-            self.l1_ratio = rho
+            self.l1_ratio = 1 - rho
             warnings.warn("rho was renamed to l1_ratio and will be removed "
                     "in 0.15", DeprecationWarning)
         self.fit_intercept = fit_intercept
@@ -273,7 +273,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 < l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-        Defaults to 0.25.
+        Defaults to 0.15.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -343,9 +343,9 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-            fit_intercept=True, learning_rate='optimal', loss='hinge',
-            n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, l1_ratio=0.25,
-            seed=0, shuffle=False, verbose=0, warm_start=False)
+            fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
+            loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+            rho=None, seed=0, shuffle=False, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -366,7 +366,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     }
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.25, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
@@ -716,7 +716,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 < l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-        Defaults to 0.25.
+        Defaults to 0.15.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -776,9 +776,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
-           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=None,
-           penalty='l2', power_t=0.25, l1_ratio=0.25, seed=0, shuffle=False,
-           verbose=0, warm_start=False)
+           l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
+           n_iter=5, p=None, penalty='l2', power_t=0.25, rho=None, seed=0,
+           shuffle=False, verbose=0, warm_start=False)
 
     See also
     --------
@@ -793,7 +793,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     }
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-            l1_ratio=0.25, fit_intercept=True, n_iter=5, shuffle=False,
+            l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
             verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
             learning_rate="invscaling", eta0=0.01, power_t=0.25,
             warm_start=False, rho=None):

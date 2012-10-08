@@ -1098,7 +1098,7 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            max_iter=1000, normalize=False, l1_ratio=0.5, tol=0.0001,
+            l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
             warm_start=False)
     >>> print clf.coef_
     [[ 0.45663524  0.45612256]
