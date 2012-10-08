@@ -37,8 +37,8 @@ People
 ------
 
  *  14  `Peter Prettenhofer`_
+ *  12  `Gael Varoquaux`_
  *  10  `Andreas Mueller`_
- *  10  `Gael Varoquaux`_
  *   5  `Lars Buitinck`_
  *   3  `Virgile Fritsch`_
  *   1  `Alexandre Gramfort`_
