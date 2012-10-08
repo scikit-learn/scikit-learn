@@ -230,6 +230,10 @@ def test_kneighbors_classifier_predict_proba():
                           [2. / 3, 1. / 3, 0],
                           [2. / 3, 1. / 3, 0]])
     assert_array_equal(real_prob, y_prob)
+    # Check that it also works with non integer labels
+    cls.fit(X, y.astype(str))
+    y_prob = cls.predict_proba(X)
+    assert_array_equal(real_prob, y_prob)
 
 
 def test_radius_neighbors_classifier(n_samples=40,
