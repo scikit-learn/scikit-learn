@@ -16,7 +16,7 @@ Changelog
 
  - Doctest under windows 64bit by `Gael Varoquaux`_
 
- - Documentation fixes for elastic net by `Andreas Mueller`_ and
+ - Documentation fixes for elastic net by `Andreas Müller`_ and
  `Alexandre Gramfort`_
 
  - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
@@ -25,7 +25,7 @@ Changelog
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
- - Fix unicode support in count vectorizer by `Andreas Mueller`_
+ - Fix unicode support in count vectorizer by `Andreas Müller`_
 
  - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
 
@@ -38,7 +38,7 @@ People
 
  *  14  `Peter Prettenhofer`_
  *  12  `Gael Varoquaux`_
- *  10  `Andreas Mueller`_
+ *  10  `Andreas Müller`_
  *   5  `Lars Buitinck`_
  *   3  `Virgile Fritsch`_
  *   1  `Alexandre Gramfort`_
