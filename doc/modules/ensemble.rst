@@ -135,7 +135,7 @@ for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). The best results are also usually reached when setting
 ``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developping the trees). Bear in mind though that these values
+when fully developing the trees). Bear in mind though that these values
 are usually not optimal. The best parameter values should always be cross-
 validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
