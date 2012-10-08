@@ -128,9 +128,9 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self.mean_h(X)
+        return self.mean_hiddens(X)
     
-    def mean_h(self, v):
+    def mean_hiddens(self, v):
         """
         Computes the probabilities ``P({\bf h}_j=1|{\bf v})``.
         
@@ -145,7 +145,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
             + self.intercept_hidden_)
     
-    def sample_h(self, v):
+    def sample_hiddens(self, v):
         """
         Sample from the distribution ``P({\bf h}|{\bf v})``.
         
@@ -157,9 +157,9 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._sample_binomial(self.mean_h(v))
+        return self._sample_binomial(self.mean_hiddens(v))
     
-    def mean_v(self, h):
+    def mean_visibles(self, h):
         """
         Computes the probabilities ``P({\bf v}_i=1|{\bf h})``.
         
@@ -174,7 +174,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         return logistic_sigmoid(np.dot(h, self.components_)
             + self.intercept_visible_)
     
-    def sample_v(self, h):
+    def sample_visibles(self, h):
         """
         Sample from the distribution ``P({\bf v}|{\bf h})``.
         
@@ -186,7 +186,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self._sample_binomial(self.mean_v(h))
+        return self._sample_binomial(self.mean_visibles(h))
     
     def free_energy(self, v):
         """
@@ -217,8 +217,8 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         v_new: array-like, shape (n_samples, n_features)
         """
-        h_ = self.sample_h(v)
-        v_ = self.sample_v(h_)
+        h_ = self.sample_hiddens(v)
+        v_ = self.sample_visibles(h_)
         
         return v_
     
@@ -242,9 +242,9 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
             Approximations to the Likelihood Gradient. International Conference
             on Machine Learning (ICML) 2008
         """
-        h_pos = self.mean_h(v_pos)
-        v_neg = self.sample_v(self.h_samples_)
-        h_neg = self.mean_h(v_neg)
+        h_pos = self.mean_hiddens(v_pos)
+        v_neg = self.sample_visibles(self.h_samples_)
+        h_neg = self.mean_hiddens(v_neg)
         
         lr = self.learning_rate / self.n_particles
         self.components_ += safe_sparse_dot(lr * v_pos.T, h_pos).T
