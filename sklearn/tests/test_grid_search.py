@@ -113,7 +113,7 @@ def test_grid_search_sparse():
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    cv.fit(X_[:180], y_[:180])
+    cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 

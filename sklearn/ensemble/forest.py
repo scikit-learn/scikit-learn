@@ -474,7 +474,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         # Reduce
         p = all_p[0]
 
-        for j in xrange(1, self.n_jobs):
+        for j in xrange(1, len(all_p)):
             for k in xrange(self.n_outputs_):
                 p[k] += all_p[j][k]
 
