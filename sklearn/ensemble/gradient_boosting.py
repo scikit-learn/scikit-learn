@@ -7,7 +7,7 @@ The module structure is the following:
 
 - The ``BaseGradientBoosting`` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
-  only differ the the concrete ``LossFunction`` used.
+  only differ in the concrete ``LossFunction`` used.
 
 - ``GradientBoostingClassifier`` implements gradient boosting for
   classification problems.
@@ -424,7 +424,7 @@ class BaseGradientBoosting(BaseEnsemble):
     @abstractmethod
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample,
-                 max_features, random_state, alpha=0.9):
+                 max_features, random_state, alpha=0.9, verbose=False):
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
@@ -465,6 +465,8 @@ class BaseGradientBoosting(BaseEnsemble):
         if not (0.0 < alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
         self.alpha = alpha
+
+        self.verbose = verbose
 
         self.estimators_ = None
 
@@ -569,6 +571,8 @@ class BaseGradientBoosting(BaseEnsemble):
                 # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   self.random_state)
+            if self.verbose:
+                print("building tree %d of %d" % (i + 1, self.n_estimators))
 
             # fit next stage of trees
             y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
@@ -718,6 +722,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
+    verbose : bool, default: False
+        Enable verbose output. Prints the tree being constructed.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -767,12 +774,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None):
+                 max_features=None, verbose=False):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state)
+            random_state, verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -947,6 +954,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
+    verbose : bool, default: False
+        Enable verbose output. Prints the tree being constructed.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -975,7 +985,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> gb = GradientBoostingRegressor().fit(samples, labels)
-    >>> print gb.predict([[0, 0, 0]])  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> print gb.predict([[0, 0, 0]])
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     [  1.32806...
 
     See also
@@ -996,12 +1007,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9):
+                 max_features=None, alpha=0.9, verbose=False):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha)
+            random_state, alpha, verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
