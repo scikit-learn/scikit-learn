@@ -79,7 +79,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
 
-    X, y = check_arrays(X, y)
+    X, y = check_arrays(X, y, sparse_format="csr")
     # update parameters of the classifier after a copy of its base structure
     clf = clone(base_clf)
     clf.set_params(**clf_params)
