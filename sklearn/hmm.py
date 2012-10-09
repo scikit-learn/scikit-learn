@@ -938,8 +938,6 @@ class MultinomialHMM(_BaseHMM):
                           thresh=thresh,
                           params=params,
                           init_params=init_params)
-        if startprob != None:
-            self.n_symbols = len(startprob)
 
 
     def _get_emissionprob(self):
