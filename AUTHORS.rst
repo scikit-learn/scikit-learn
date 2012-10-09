@@ -44,7 +44,7 @@ People
 
   * Pearu Peterson
 
-  * `Fabian Pedregosa <http://fseoane.net/blog/>`_ (maintainer)
+  * `Fabian Pedregosa <http://fseoane.net/blog/>`_
 
   * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
 
@@ -96,9 +96,9 @@ People
 
   * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
 
-  * `Andreas Müller <http://www.ais.uni-bonn.de/~amueller/>`_
+  * `Andreas Müller <http://www.ais.uni-bonn.de/~amueller/>`_ (release manager)
 
-  * `Satra Ghosh <www.mit.edu/~satra>`_
+  * `Satra Ghosh <http://www.mit.edu/~satra>`_
 
 
 If I forgot anyone, do not hesitate to send me an email to

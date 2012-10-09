@@ -138,7 +138,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         else:
             mode, _ = weighted_mode(pred_labels, weights, axis=1)
 
-        return mode.flatten().astype(np.int)
+        return mode.flatten().astype(self._y.dtype)
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -312,11 +312,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
 
         if weights is None:
-            mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
-                              dtype=np.int)
+            mode = np.array([stats.mode(pl)[0] for pl in pred_labels],
+                            dtype=self._y.dtype)
         else:
-            mode = np.asarray([weighted_mode(pl, w)[0]
-                               for (pl, w) in zip(pred_labels, weights)],
-                              dtype=np.int)
+            mode = np.array([weighted_mode(pl, w)[0]
+                             for (pl, w) in zip(pred_labels, weights)],
+                            dtype=self._y.dtype)
 
-        return mode.flatten().astype(np.int)
+        return mode.flatten()
