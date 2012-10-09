@@ -232,7 +232,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # L is too ill-conditionned
             i = 0
             L_ = L[:n_active, :n_active].copy()
-            while not np.isfinite(AA):
+            while not np.isfinite(AA) and i < 63:
                 L_.flat[::n_active + 1] += (2 ** i) * eps
                 least_squares, info = solve_cholesky(L_,
                                     sign_active[:n_active], lower=True)
