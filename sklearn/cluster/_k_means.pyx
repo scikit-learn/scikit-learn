@@ -273,20 +273,81 @@ def csr_row_norm_l2(X, squared=True):
     return norms
 
 
-def _centers(X, labels, n_clusters, distances):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
+        np.ndarray[INT, ndim=1] labels, int n_clusters,
+        np.ndarray[DOUBLE, ndim=1] distances):
     """M step of the K-means EM algorithm
 
     Computation of cluster centers / means.
 
     Parameters
     ----------
-    X: array, shape (n_samples, n_features)
+    X: array-like, shape (n_samples, n_features)
 
     labels: array of integers, shape (n_samples)
         Current label assignment
 
     n_clusters: int
         Number of desired clusters
+
+    distances: array-like, shape (n_samples)
+        Distance to closest cluster for each sample.
+
+    Returns
+    -------
+    centers: array, shape (n_clusters, n_features)
+        The resulting centers
+    """
+    ## TODO: add support for CSR input
+    cdef int n_samples, n_features
+    n_samples = X.shape[0]
+    n_features = X.shape[1]
+    cdef int i, j, c
+    cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
+    n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
+    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    # maybe also relocate small clusters?
+
+    if len(empty_clusters):
+        # find points to reassign empty clusters to
+        far_from_centers = distances.argsort()[::-1]
+
+    for i, cluster_id in enumerate(empty_clusters):
+        # XXX two relocated clusters could be close to each other
+        new_center = X[far_from_centers[i]]
+        centers[cluster_id] = new_center
+        n_samples_in_cluster[cluster_id] = 1
+
+    for i in range(n_samples):
+        for j in range(n_features):
+            centers[labels[i], j] += X[i, j]
+
+    centers /= n_samples_in_cluster[:, np.newaxis]
+
+    return centers
+
+
+def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
+        np.ndarray[DOUBLE, ndim=1] distances):
+    """M step of the K-means EM algorithm
+
+    Computation of cluster centers / means.
+
+    Parameters
+    ----------
+    X: sparse matrix, shape (n_samples, n_features)
+
+    labels: array of integers, shape (n_samples)
+        Current label assignment
+
+    n_clusters: int
+        Number of desired clusters
+
+    distances: array-like, shape (n_samples)
+        Distance to closest cluster for each sample.
 
     Returns
     -------
@@ -295,9 +356,6 @@ def _centers(X, labels, n_clusters, distances):
     """
     ## TODO: add support for CSR input
     n_features = X.shape[1]
-
-    ## TODO: explicit dtype handling
-    sparse_X = sp.issparse(X)
 
     centers = np.zeros((n_clusters, n_features))
     n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
@@ -311,8 +369,7 @@ def _centers(X, labels, n_clusters, distances):
     for i, cluster_id in enumerate(empty_clusters):
         # XXX two relocated clusters could be close to each other
         new_center = X[far_from_centers[i]]
-        if sparse_X:
-            new_center = new_center.todense().ravel()
+        new_center = new_center.todense().ravel()
         centers[cluster_id] = new_center
         n_samples_in_cluster[cluster_id] = 1
 
