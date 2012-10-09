@@ -496,6 +496,27 @@ class MultinomialHMMTestCase(TestCase):
 
     def test_fit_emissionprob(self):
         self.test_fit('e')
+        
+    def test_fit_with_init(self, params='ste', n_iter=5, verbose=False, **kwargs):
+        h = self.h
+        learner = hmm.MultinomialHMM(self.n_components)
+
+        # Create training data by sampling from the HMM.
+        train_obs = [h.sample(n=10)[0] for x in xrange(10)]
+
+
+        # use init_function to initialize paramerters
+        learner._init(train_obs, params)
+
+        trainll = train_hmm_and_keep_track_of_log_likelihood(
+            learner, train_obs, n_iter=n_iter, params=params, **kwargs)[1:]
+
+        # Check that the loglik is always increasing during training
+        if not np.all(np.diff(trainll) > 0) and verbose:
+            print
+            print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
+                                                    np.diff(trainll))
+        self.assertTrue(np.all(np.diff(trainll) > - 1.e-3))
 
 
 def create_random_gmm(n_mix, n_features, covariance_type, prng=0):
