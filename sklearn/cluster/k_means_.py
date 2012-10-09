@@ -385,7 +385,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
                                 distances=distances)
 
         # computation of the means is also called the M-step of EM
-        centers = _centers(X, labels, n_clusters, distances)
+        centers = _k_means._centers(X, labels, n_clusters, distances)
 
         if verbose:
             print 'Iteration %i, inertia %s' % (i, inertia)
@@ -474,53 +474,6 @@ def _labels_inertia(X, x_squared_norms, centers,
         inertia = _k_means._assign_labels_array(
             X, x_squared_norms, centers, labels, distances=distances)
     return labels, inertia
-
-
-def _centers(X, labels, n_clusters, distances):
-    """M step of the K-means EM algorithm
-
-    Computation of cluster centers / means.
-
-    Parameters
-    ----------
-    X: array, shape (n_samples, n_features)
-
-    labels: array of integers, shape (n_samples)
-        Current label assignment
-
-    n_clusters: int
-        Number of desired clusters
-
-    Returns
-    -------
-    centers: array, shape (n_clusters, n_features)
-        The resulting centers
-    """
-    # TODO: add support for CSR input
-    n_features = X.shape[1]
-
-    # TODO: explicit dtype handling
-    centers = np.empty((n_clusters, n_features))
-    far_from_centers = None
-    reallocated_idx = 0
-    sparse_X = sp.issparse(X)
-
-    for center_id in range(n_clusters):
-        center_mask = labels == center_id
-        if sparse_X:
-            center_mask = np.arange(len(labels))[center_mask]
-        if not np.any(center_mask):
-            # Reassign empty cluster center to sample far from any cluster
-            if far_from_centers is None:
-                far_from_centers = distances.argsort()[::-1]
-            new_centers = X[far_from_centers[reallocated_idx]]
-            if sparse_X:
-                new_centers = new_centers.todense().ravel()
-            centers[center_id] = new_centers
-            reallocated_idx += 1
-        else:
-            centers[center_id] = X[center_mask].mean(axis=0)
-    return centers
 
 
 def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,

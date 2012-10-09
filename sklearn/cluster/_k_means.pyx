@@ -8,6 +8,7 @@
 # License: BSD Style.
 
 import numpy as np
+import scipy.sparse as sp
 from ..utils.extmath import norm
 cimport numpy as np
 cimport cython
@@ -270,3 +271,54 @@ def csr_row_norm_l2(X, squared=True):
 
         norms[i] = sum_
     return norms
+
+
+def _centers(X, labels, n_clusters, distances):
+    """M step of the K-means EM algorithm
+
+    Computation of cluster centers / means.
+
+    Parameters
+    ----------
+    X: array, shape (n_samples, n_features)
+
+    labels: array of integers, shape (n_samples)
+        Current label assignment
+
+    n_clusters: int
+        Number of desired clusters
+
+    Returns
+    -------
+    centers: array, shape (n_clusters, n_features)
+        The resulting centers
+    """
+    ## TODO: add support for CSR input
+    n_features = X.shape[1]
+
+    ## TODO: explicit dtype handling
+    sparse_X = sp.issparse(X)
+
+    centers = np.zeros((n_clusters, n_features))
+    n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
+    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    # maybe also relocate small clusters?
+
+    if len(empty_clusters):
+        # find points to reassign empty clusters to
+        far_from_centers = distances.argsort()[::-1]
+
+    for i, cluster_id in enumerate(empty_clusters):
+        # XXX two relocated clusters could be close to each other
+        new_center = X[far_from_centers[i]]
+        if sparse_X:
+            new_center = new_center.todense().ravel()
+        centers[cluster_id] = new_center
+        n_samples_in_cluster[cluster_id] = 1
+
+    for label, sample in zip(labels, X):
+        centers[label, :] += sample
+
+    centers /= n_samples_in_cluster[:, np.newaxis]
+
+    return centers
