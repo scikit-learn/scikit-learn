@@ -155,7 +155,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     Parameters
     ----------
-    X: array-like of floats, shape (n_samples, n_features)
+    X: array-like or sparse matrix, shape (n_samples, n_features)
         The observations to cluster.
 
     n_clusters: int
@@ -385,7 +385,11 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
                                 distances=distances)
 
         # computation of the means is also called the M-step of EM
-        centers = _k_means._centers(X, labels, n_clusters, distances)
+        if sp.issparse(X):
+            centers = _k_means._centers_sparse(X, labels, n_clusters,
+                    distances)
+        else:
+            centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
             print 'Iteration %i, inertia %s' % (i, inertia)
@@ -690,7 +694,12 @@ class KMeans(BaseEstimator, ClusterMixin):
             raise AttributeError("Model has not been trained yet.")
 
     def fit(self, X, y=None):
-        """Compute k-means"""
+        """Compute k-means clustering
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        """
 
         if not self.k is None:
             n_clusters = self.k
