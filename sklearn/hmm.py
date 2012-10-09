@@ -938,6 +938,9 @@ class MultinomialHMM(_BaseHMM):
                           thresh=thresh,
                           params=params,
                           init_params=init_params)
+        if startprob != None:
+            self.n_symbols = len(startprob)
+
 
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
@@ -972,6 +975,11 @@ class MultinomialHMM(_BaseHMM):
         self.random_state = check_random_state(self.random_state)
 
         if 'e' in params:
+            if not hasattr(self, 'n_symbols'):
+                symbols = set()
+                for o in obs:
+                    symbols = symbols.union(set(o))
+                self.n_symbols = len(symbols)
             emissionprob = normalize(self.random_state.rand(self.n_components,
                 self.n_symbols), 1)
             self.emissionprob_ = emissionprob
