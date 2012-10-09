@@ -1,3 +1,9 @@
+scikit-learn (0.12.1-1) experimental; urgency=low
+
+  * Fresh upstream bugfix release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 08 Oct 2012 20:07:45 -0400
+
 scikit-learn (0.12.0-1) experimental; urgency=low
 
   * Fresh upstream release:
