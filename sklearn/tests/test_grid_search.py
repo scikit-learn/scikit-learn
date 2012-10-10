@@ -222,6 +222,6 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = MockClassifier()
-    cv = KFold(n=len(X), k=3)
+    cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
