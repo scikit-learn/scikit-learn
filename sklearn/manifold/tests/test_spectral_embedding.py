@@ -90,23 +90,23 @@ def test_spectral_embedding_callable_affinity(seed=36):
     embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_array_almost_equal(np.abs(embed_rbf), np.abs(embed_callable), 0)
+    assert_array_almost_equal(np.abs(embed_rbf), np.abs(embed_callable), 2)
 
 
 def test_spectral_embedding_amg_solver(seed=36):
     """Test spectral embedding with amg solver"""
     gamma = 0.9
-    se_amg = SpectralEmbedding(n_components=3,affinity="rbf",
-                                    gamma=gamma,eigen_solver="amg",
-                                    random_state=np.random.RandomState(seed))
-    se_arpack = SpectralEmbedding(n_components=3, affinity="rbf",
-                               gamma=gamma,eigen_solver="arpack",
+    se_amg = SpectralEmbedding(n_components=3, affinity="rbf",
+                               gamma=gamma, eigen_solver="amg",
                                random_state=np.random.RandomState(seed))
+    se_arpack = SpectralEmbedding(n_components=3, affinity="rbf",
+                                  gamma=gamma, eigen_solver="arpack",
+                                  random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
     assert_array_almost_equal(
         se_amg.affinity_matrix_, se_arpack.affinity_matrix_)
-    assert_array_almost_equal(np.abs(embed_amg), np.abs(embed_arpack), 0)
+    assert_array_almost_equal(np.abs(embed_amg), np.abs(embed_arpack), 2)
 
 
 def test_pipline_spectral_clustering(seed=36):
