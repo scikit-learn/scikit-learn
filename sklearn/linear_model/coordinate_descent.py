@@ -357,10 +357,10 @@ class ElasticNet(LinearModel, RegressorMixin):
                     calc_dual_gap=False, iter_set=np.where(active_set)[0],
                     R=R)
                 # check only zero features
-                zero_coefs = self.coef_ == 0
+                zero_coefs = w == 0
                 subset = np.where(strong_set & zero_coefs)[0]
                 kkt_violators = cd_fast.elastic_net_kkt_violating_features(
-                                self.coef_, l1_reg, l2_reg, X, y, R,
+                                w, l1_reg, l2_reg, X, y, R,
                                 subset=subset, tol=tol_kkt_check)
                 if kkt_violators:
                     active_set[kkt_violators] = True
@@ -369,7 +369,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                     # possible that an active feature is failing kkt
                     pass_kkt_on_strong_set = True
 
-            # check only on zero features
+            # check only on zero features 
             subset = np.where(np.logical_not(strong_set) & zero_coefs)[0]
             kkt_violators = cd_fast.elastic_net_kkt_violating_features(
                             self.coef_, l1_reg, l2_reg, X, y, R,
@@ -434,9 +434,7 @@ def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None,
 
     alpha_scaled = alpha * X.shape[0]
 
-    # use sequential strong rule if one other pair of
-    # alpha and coefs is given
-    # this makes only sense if alpha < alpha_max
+    # use sequential strong-rule only if alpha < alpha_max
     # therefore check if at least one coef != 0
     use_sequential_strong_rule = False
 
