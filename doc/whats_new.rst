@@ -34,6 +34,8 @@ Changelog
    - Faster and more robust :func:`metrics.confusion_matrix` and
      :ref:`clustering_evaluation`_ by Wei Li.
 
+   - Improved speed of :class:`cluster.KMeans` by `Andreas Müller`_.
+
 
 API changes summary
 -------------------
