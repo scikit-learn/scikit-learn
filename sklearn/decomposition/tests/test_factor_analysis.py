@@ -12,16 +12,17 @@ from sklearn.decomposition import FactorAnalysis
 def test_factor_analysis():
     """Test FactorAnalysis ability to recover the data covariance structure
     """
+    rng = np.random.RandomState(0)
     n_samples, n_features, n_components = 20, 5, 3
 
     # Some random settings for the generative model
-    W = np.random.randn(n_components, n_features)
+    W = rng.randn(n_components, n_features)
     # latent variable of dim 3, 20 of it
-    h = np.random.randn(n_samples, n_components)
+    h = rng.randn(n_samples, n_components)
     # using gamma to model different noise variance
     # per component
-    noise = np.random.gamma(1, size=n_features) \
-                * np.random.randn(n_samples, n_features)
+    noise = rng.gamma(1, size=n_features) \
+                * rng.randn(n_samples, n_features)
 
     # generate observations
     # wlog, mean is 0
