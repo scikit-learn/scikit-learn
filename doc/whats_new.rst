@@ -31,8 +31,8 @@ Changelog
    - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
      of several transformers by `Andreas Müller`_.
 
-   - Faster and more robust :func:`metrics.confusion_matrix` and :ref:`clustering_evaluation`_
-     by Wei Li.
+   - Faster and more robust :func:`metrics.confusion_matrix` and
+     :ref:`clustering_evaluation`_ by Wei Li.
 
 
 API changes summary
@@ -56,6 +56,15 @@ API changes summary
 
    - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
      instead of COO.
+
+   - Renamed ``k`` in :class:`cross_validation.KFold` and
+     :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
+     ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
+
+   - Renamed all occurences of ``n_iterations`` to ``n_iter`` for consistency.
+     This applies to :class:`cross_validation.ShuffleSplit`,
+     :class:`cross_validation.StratifiedShuffleSplit`,
+     :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
 
 .. _changes_0_12.1:
 
