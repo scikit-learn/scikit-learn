@@ -70,6 +70,9 @@ estimators = [
      decomposition.RandomizedPCA(n_components=n_components, whiten=True),
      True),
 
+    ('Factor Analysis components - FA',
+     decomposition.FactorAnalysis(n_components=n_components), True),
+
     ('Non-negative components - NMF',
      decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
                        tol=5e-3, sparseness='components'),
