@@ -305,7 +305,8 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
 
     y = np.asarray(y)
     if y.ndim != 1:
-        raise ValueError("expected y of shape (n_samples,), got %r" % (y.shape,))
+        raise ValueError("expected y of shape (n_samples,), got %r"
+                         % (y.shape,))
 
     X = atleast2d_or_csr(X)
     if X.shape[0] != y.shape[0]:
@@ -315,7 +316,8 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
     if query_id is not None:
         query_id = np.asarray(query_id)
         if query_id.shape[0] != y.shape[0]:
-            raise ValueError("expected query_id of shape (n_samples,), got %r" % (query_id.shape,))
+            raise ValueError("expected query_id of shape (n_samples,), got %r"
+                             % (query_id.shape,))
 
     one_based = not zero_based
 
