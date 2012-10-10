@@ -496,14 +496,14 @@ class MultinomialHMMTestCase(TestCase):
 
     def test_fit_emissionprob(self):
         self.test_fit('e')
-        
-    def test_fit_with_init(self, params='ste', n_iter=5, verbose=False, **kwargs):
+
+    def test_fit_with_init(self, params='ste', n_iter=5,
+                            verbose=False, **kwargs):
         h = self.h
         learner = hmm.MultinomialHMM(self.n_components)
 
         # Create training data by sampling from the HMM.
         train_obs = [h.sample(n=10)[0] for x in xrange(10)]
-
 
         # use init_function to initialize paramerters
         learner._init(train_obs, params)
