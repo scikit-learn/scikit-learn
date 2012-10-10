@@ -301,7 +301,6 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     centers: array, shape (n_clusters, n_features)
         The resulting centers
     """
-    ## TODO: add support for CSR input
     cdef int n_samples, n_features
     n_samples = X.shape[0]
     n_features = X.shape[1]
@@ -354,7 +353,6 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     centers: array, shape (n_clusters, n_features)
         The resulting centers
     """
-    ## TODO: add support for CSR input
     n_features = X.shape[1]
 
     centers = np.zeros((n_clusters, n_features))
