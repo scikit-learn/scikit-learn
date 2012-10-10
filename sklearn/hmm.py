@@ -370,7 +370,7 @@ class _BaseHMM(BaseEstimator):
         currstate = (startprob_cdf > rand).argmax()
         hidden_states = [currstate]
         obs = [self._generate_sample_from_state(
-                                currstate, random_state=random_state)]
+            currstate, random_state=random_state)]
 
         for _ in xrange(n - 1):
             rand = random_state.rand()
@@ -759,7 +759,7 @@ class GaussianHMM(_BaseHMM):
         super(GaussianHMM, self)._init(obs, params=params)
 
         if (hasattr(self, 'n_features')
-            and self.n_features != obs[0].shape[1]):
+                and self.n_features != obs[0].shape[1]):
             raise ValueError('Unexpected number of dimensions, got %s but '
                              'expected %s' % (obs[0].shape[1],
                                               self.n_features))
@@ -939,7 +939,6 @@ class MultinomialHMM(_BaseHMM):
                           params=params,
                           init_params=init_params)
 
-
     def _get_emissionprob(self):
         """Emission probability distribution for each state."""
         return np.exp(self._log_emissionprob)
@@ -947,7 +946,7 @@ class MultinomialHMM(_BaseHMM):
     def _set_emissionprob(self, emissionprob):
         emissionprob = np.asarray(emissionprob)
         if hasattr(self, 'n_symbols') and \
-               emissionprob.shape != (self.n_components, self.n_symbols):
+                emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '
                              '(n_components, n_symbols)')
 
