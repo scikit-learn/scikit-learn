@@ -297,6 +297,46 @@ The overall complexity of standard HLLE is
      high-dimensional data" <http://www.pnas.org/content/100/10/5591>`_
      Donoho, D. & Grimes, C. Proc Natl Acad Sci USA. 100:5591 (2003)
 
+Spectral Embedding
+====================
+
+Spectral Embedding (also known as Laplacian Eigenmap) is one method
+to calculate nonlinear embedding .  It revolves around a
+hessian-based quadratic form at each neighborhood which is used to recover
+the locally linear structure.  Though other implementations note its poor
+scaling with data size, ``sklearn`` implements some algorithmic
+improvements which make its cost comparable to that of other LLE variants
+for small output dimension.  Spectral embedding can be  performed with 
+function :func:`spectral_embedding` or its object-oriented counterpart
+:class:`SpectralEmbedding`.
+
+Complexity
+----------
+
+The Spectral Embedding algorithm comprises three stages:
+
+1. **Affinity Graph Construction**. Represent the graph as
+
+2. **Graph Laplacian Construction**. Normalized graph laplacian
+   is constructed as :math:`L = D^{-\frac{1}{2}}`.  
+
+3. **Partial Eigenvalue Decomposition**. Same as standard LLE
+
+The overall complexity of standard HLLE is
+:math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
+
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
+
+.. topic:: References:
+
+   * `"Hessian Eigenmaps: Locally linear embedding techniques for
+     high-dimensional data" <http://www.pnas.org/content/100/10/5591>`_
+     Donoho, D. & Grimes, C. Proc Natl Acad Sci USA. 100:5591 (2003)
+
+
 
 Local Tangent Space Alignment
 =============================
