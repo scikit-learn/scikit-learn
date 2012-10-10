@@ -420,6 +420,17 @@ class ElasticNet(LinearModel, RegressorMixin):
 
 def elastic_net_strong_rule_active_set(X, y, alpha, rho, Xy=None,
                               coef_init=None, alpha_init=None, R=None):
+    """Predict features that are nonzero in the ElastiNet solution.
+        The basic strong-rule and the sequential strong-rule are implemented.
+        The sequential strong-rule needs a converged solution (with a higher
+        alpha as the current) as input but selects a smaller set of features.
+        If possible the sequential strong-rule is used.
+
+    Returns
+    -------
+    strong_set : bool | array, shape = (n_features)
+                 True marks features that are predicted to be nonzero
+    """
 
     alpha_scaled = alpha * X.shape[0]
 
