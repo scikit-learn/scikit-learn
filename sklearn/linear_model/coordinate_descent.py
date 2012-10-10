@@ -212,7 +212,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                 if self.use_strong_rule:
                     coef_[k, :], dual_gap_[k], eps_[k] = \
                         self._fit_with_strong_rule(coef_[k, :], X,
-                        y[:, k], Xy, active_set_init=active_set_init,
+                        y[:, k], Xy[:,k], active_set_init=active_set_init,
                         coef_init=coef_init, alpha_init=alpha_init, R=R_init)
                 else:
                     coef_[k, :], dual_gap_[k], eps_[k] = \
@@ -372,7 +372,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             # check only on zero features 
             subset = np.where(np.logical_not(strong_set) & zero_coefs)[0]
             kkt_violators = cd_fast.elastic_net_kkt_violating_features(
-                            self.coef_, l1_reg, l2_reg, X, y, R,
+                            w, l1_reg, l2_reg, X, y, R,
                             subset=subset, tol=tol_kkt_check)
 
             if kkt_violators:
