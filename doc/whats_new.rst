@@ -31,6 +31,9 @@ Changelog
    - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
      of several transformers by `Andreas Müller`_.
 
+   - Faster and more robust :func:`metrics.confusion_matrix` and :ref:`clustering_evaluation`_
+     by Wei Li.
+
 
 API changes summary
 -------------------
