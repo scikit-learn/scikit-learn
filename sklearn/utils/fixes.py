@@ -107,6 +107,19 @@ else:
     unique = np.unique
 
 
+def _bincount(X, weights=None, minlength=None):
+    """Replacing np.bincount in numpy < 1.6 to provide minlength."""
+    out = np.zeros(minlength, np.int)
+    result = np.bincount(X, weights)
+    out[:len(result)] = result
+    return out
+
+if int(np_version[0]) < 2 and int(np_version[1]) < 6:
+    bincount = _bincount
+else:
+    bincount = np.bincount
+
+
 def _copysign(x1, x2):
     """Slow replacement for np.copysign, which was introduced in numpy 1.4"""
     return np.abs(x1) * np.sign(x2)
