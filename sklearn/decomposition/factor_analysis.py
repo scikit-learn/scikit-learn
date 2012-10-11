@@ -136,9 +136,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         loglike = []
         old_ll = -np.inf
-        SMALL = 1e-8
+        SMALL = 1e-12
         for i in xrange(self.max_iter):
             # SMALL helps numerics
+            print psi
             sqrt_psi = np.sqrt(psi) + SMALL
             Xtilde = X / (sqrt_psi * nsqrt)
             _, s, V = linalg.svd(Xtilde, full_matrices=False)
@@ -157,7 +158,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                 break
             old_ll = ll
 
-            psi = var - np.sum(W ** 2, axis=0)
+            psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
         else:
             if self.verbose:
                 print "Did not converge"
