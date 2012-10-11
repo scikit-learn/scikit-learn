@@ -169,6 +169,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         """Apply dimensionality reduction to X using the model.
+
         Compute the expected mean of the latent variables.
         See Barber, 21.2.33 (or Bishop, 12.66).
 
