@@ -421,7 +421,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
     k = centers.shape[0]
     distances = euclidean_distances(centers, X, x_squared_norms,
                                     squared=True)
-    labels = np.empty(n_samples, dtype=np.int)
+    labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
