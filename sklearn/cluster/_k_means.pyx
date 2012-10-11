@@ -362,7 +362,11 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     n_features = X.shape[1]
 
     centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
+    n_samples_in_cluster = np.bincount(labels)
+    # old numpy doesn't have minlength in bincount:
+    if len(n_samples_in_cluster < n_clusters):
+        zeros = np.zeros(n_clusters - len(n_samples_in_cluster))
+        n_samples_in_cluster = np.hstack([n_samples_in_cluster, zeros])
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
