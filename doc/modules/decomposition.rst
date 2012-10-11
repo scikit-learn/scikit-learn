@@ -57,8 +57,30 @@ structure of the error covariance :math:`\Psi`:
   `factor loading matrix`.
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
-One gets very different models (e.g. :class:`ICA`) if non-Gaussian
-priors on the latent variables are assumed.
+Because both models are probilistic they can be integrated in more complex
+models, e.g. Mixture of Factor Analysers.One gets very different models (e.g.
+:class:`ICA`) if non-Gaussian priors on the latent variables are assumed.
+
+
+Factor Analysis `can` produce similar components (the columns of its loading
+matrix) to :class:`PCA`. However, one can not make any general statements
+about these components (e.g. whether they are orthogonal):
+
+.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
+
+.. |fa_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_9.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
+
+The main advantage for Factor Analysis here is that it can model the variance
+in every direction of the input space independently:
+
+.. |fa_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :scale: 60%
+
 
 Principal component analysis (PCA)
 ==================================
