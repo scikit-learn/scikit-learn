@@ -555,7 +555,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         -------
         array, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in self.classes_.
+            where classes are ordered as they are in `self.classes_`.
 
         References
         ----------
@@ -596,7 +596,8 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         -------
         T : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in self.classes_.
+            model, where classes are ordered as they are in
+            `self.classes_`.
         """
         return np.log(self.predict_proba(X))
 

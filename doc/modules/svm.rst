@@ -553,7 +553,7 @@ The decision function is:
 
     While SVM models derived from libsvm and liblinear use *C* as regularization
     parameter, most other estimators use *alpha*. The relation between both is
-    :math:`C = \frac{n_samples}{alpha}`.
+    :math:`C = \frac{n\_samples}{alpha}`.
 
 .. TODO multiclass case ?/
 
