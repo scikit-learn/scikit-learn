@@ -14,6 +14,12 @@ Changelog
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
 
+   - :class:`feature_selection.SelectKBest` and
+     :class:`feature_selection.SelectPercentile` are more numerically stable
+     since they use scores, rather than p-values, to rank results. This means
+     that they might sometimes select different features than they did
+     previously.
+
    - Ridge regression and ridge classification fitting with ``sparse_cg`` solver
      no longer has quadratic memory complexity, by `Lars Buitinck`_ and
      `Fabian Pedregosa`_.
