@@ -474,6 +474,11 @@ class _BaseHMM(BaseEstimator):
         if startprob is None:
             startprob = np.tile(1.0 / self.n_components, self.n_components)
 
+        # check if there exists a component whose value is exactly zero
+        # if so, add a small number and re-normalize
+        if not np.alltrue(startprob):
+            normalize(startprob)
+            
         if len(startprob) != self.n_components:
             raise ValueError('startprob must have length n_components')
         if not np.allclose(np.sum(startprob), 1.0):
@@ -491,6 +496,11 @@ class _BaseHMM(BaseEstimator):
         if transmat is None:
             transmat = np.tile(1.0 / self.n_components,
                     (self.n_components, self.n_components))
+            
+        # check if there exists a component whose value is exactly zero
+        # if so, add a small number and re-normalize
+        if not np.alltrue(transmat):
+            normalize(transmat, 1)
 
         if (np.asarray(transmat).shape
                 != (self.n_components, self.n_components)):
@@ -587,9 +597,10 @@ class _BaseHMM(BaseEstimator):
             self.startprob_ = normalize(
                 np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20))
         if 't' in params:
-            self.transmat_ = normalize(
+            transmat_ = normalize(
                 np.maximum(self.transmat_prior - 1.0 + stats['trans'], 1e-20),
                 axis=1)
+            self.transmat_ = transmat_
 
 
 class GaussianHMM(_BaseHMM):
@@ -949,6 +960,11 @@ class MultinomialHMM(_BaseHMM):
                 emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '
                              '(n_components, n_symbols)')
+       
+        # check if there exists a component whose value is exactly zero
+        # if so, add a small number and re-normalize
+        if not np.alltrue(emissionprob):
+            normalize(emissionprob)
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
