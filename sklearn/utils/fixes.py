@@ -100,8 +100,8 @@ def _unique(ar, return_index=False, return_inverse=False):
         flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
-np_version = np.__version__.split('.')
-if int(np_version[0]) < 2 and int(np_version[1]) < 5:
+np_version = [int(x) for x in np.__version__.split('.')]
+if np_version[:2] < (1, 5):
     unique = _unique
 else:
     unique = np.unique
@@ -114,7 +114,7 @@ def _bincount(X, weights=None, minlength=None):
     out[:len(result)] = result
     return out
 
-if int(np_version[0]) < 2 and int(np_version[1]) < 6:
+if np_version[:2] < (1, 6):
     bincount = _bincount
 else:
     bincount = np.bincount
