@@ -139,7 +139,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         SMALL = 1e-12
         for i in xrange(self.max_iter):
             # SMALL helps numerics
-            print psi
             sqrt_psi = np.sqrt(psi) + SMALL
             Xtilde = X / (sqrt_psi * nsqrt)
             _, s, V = linalg.svd(Xtilde, full_matrices=False)
@@ -196,15 +195,35 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         return X_transformed
 
     def get_covariance(self):
-        """Compute data covariance with the FactorAnalysis model
+        """Compute data covariance with the FactorAnalysis model.
 
         cov = components_.T * components_ + diag(noise_variance)
 
         Returns
         -------
         cov : array, shape=(n_features, n_features)
-            The covariance
+            Estimated covariance of data.
         """
         cov = np.dot(self.components_.T, self.components_) \
               + np.diag(self.noise_variance_)
         return cov
+
+    def score(self, X):
+        """Compute score of X under FactorAnalysis model.
+        """
+        n, d = X.shape
+        X = X - self.mean_
+
+        psi = self.noise_variance_
+        W = self.components_
+
+        Ih = np.eye(self.n_components)
+        const = -d / 2. * np.log(2 * np.pi)
+        fac = W / psi
+
+        cov_z = linalg.inv(Ih + np.dot(fac, W.T))
+        inv_cov_x = np.diag(1. / psi) - np.dot(fac.T, np.dot(cov_z, fac))
+        _, _det = np.linalg.slogdet(inv_cov_x)
+
+        ll = n * (const + 0.5 * _det) - 0.5 * np.sum(np.dot(X, inv_cov_x) * X)
+        return ll
