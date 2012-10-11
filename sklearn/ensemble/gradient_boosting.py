@@ -1076,20 +1076,19 @@ def unique_rows(arr, dtype=np.float32):
 ##         eval_points = X[:, feature_combinations]
 
 
-def partial_dependency(gbrt, target_variables, grid):
+def partial_dependency(model, target_variables, grid):
     # does not support multi-class yet
-    assert estimator.estimators_.shape[1] == 1
+    assert model.estimators_.shape[1] == 1
 
     target_variables = np.asarray(target_variables, dtype=np.int)
-    X = unique_rows(X, dtype=DTYPE)
     try:
-        out = gbrt.init.predict(grid)
+        out = model.init.predict(grid)
     except ValueError:
         raise ValueError("init model must be constant to support dependency plots")
 
-    n_estimators = gbrt.estimators_.shape[0]
+    n_estimators = model.estimators_.shape[0]
     for stage in xrange(n_estimators):
-        tree = gbrt.estimators_[stage, 0]
+        tree = model.estimators_[stage, 0]
         _partial_dependency_tree(tree, grid, target_variables, out)
     return out
 
