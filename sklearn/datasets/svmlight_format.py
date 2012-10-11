@@ -83,10 +83,12 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     zero_based: boolean or "auto", optional
         Whether column indices in f are zero-based (True) or one-based
-        (False). If set to "auto", a heuristic check is applied to determine
-        this from the file contents. Both kinds of files occur "in the wild",
-        but they are unfortunately not self-identifying. Using "auto" or True
-        should always be safe.
+        (False). If column indices are one-based, they are transformed to
+        zero-based to match Python/NumPy conventions.
+        If set to "auto", a heuristic check is applied to determine this from
+        the file contents. Both kinds of files occur "in the wild", but they
+        are unfortunately not self-identifying. Using "auto" or True should
+        always be safe.
 
     query_id: boolean, defaults to False
         If True, will return the query_id array for each file.
@@ -169,11 +171,13 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
     zero_based: boolean or "auto", optional
-        Whether column indices in files are zero-based (True) or one-based
-        (False). If set to "auto", a heuristic check is applied to determine
-        this from the files' contents. Both kinds of files occur "in the wild",
-        but they are unfortunately not self-identifying. Using "auto" or True
-        should always be safe.
+        Whether column indices in f are zero-based (True) or one-based
+        (False). If column indices are one-based, they are transformed to
+        zero-based to match Python/NumPy conventions.
+        If set to "auto", a heuristic check is applied to determine this from
+        the file contents. Both kinds of files occur "in the wild", but they
+        are unfortunately not self-identifying. Using "auto" or True should
+        always be safe.
 
     query_id: boolean, defaults to False
         If True, will return the query_id array for each file.
