@@ -1036,38 +1036,62 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             yield y.ravel()
 
 
+
+def unique_rows2(X):
+    """Slower than 1 but can be cythonized!"""
+    for i in range(X.shape[1]):
+        indices = np.argsort(X[:, i])
+        X = X[indices]
+    indices = []
+    counts = []
+    n_equal = 1
+    for i in range(1, X.shape[0]):
+        if np.all(X[i] == X[i - 1]):
+            n_equal += 1
+        else:
+            indices.append(i - 1)
+            counts.append(n_equal)
+            n_equal = 1
+    return X[indices]
+
 def unique_rows(arr, dtype=np.float32):
     return np.array([np.array(x, dtype=dtype)
                      for x in set(tuple(x) for x in arr)],
                     dtype=dtype)
 
-def unique_rows_iter(arr, dtype=np.float32):
-    return np.vstack((np.array(x, dtype=dtype)
-                        for x in set(tuple(x) for x in arr)))
+## def partial_dependency_plot(estimator, X, y, features):
+##     assert isinstance(estimator, BaseGradientBoosting)
+##     features = np.asarray(features)
+##     n_features = features.shape[0]
+##     if features.min() >= 0 and features.max() < X.shape[1]:
+##         raise ValueError("features must be in [0, %d]" % X.shape[1])
 
-def feature_interactions(estimator, X, y, features):
-    assert isinstance(estimator, BaseGradientBoosting)
-    features = np.asarray(features)
-    n_features = features.shape[0]
-    if features.min() >= 0 and features.max() < X.shape[1]:
-        raise ValueError("features must be in [0, %d]" % X.shape[1])
+##     # feature combinations up to cardinality n_features
+##     feature_combinations = chain(combinations(features, card)
+##                                  for card in range(n_features))
+##     feature_combinations = list(feature_combinations)
+##     print("There are %d feature combinations" % len(feature_combinations))
 
-    # feature combinations up to cardinality n_features
-    feature_combinations = chain(combinations(features, card)
-                                 for card in range(n_features))
-    feature_combinations = list(feature_combinations)
-    print("There are %d feature combinations" % len(feature_combinations))
-
-    for feature_combination in feature_combinations:
-        eval_points = X[:, feature_combinations]
+##     for feature_combination in feature_combinations:
+##         eval_points = X[:, feature_combinations]
 
 
-def compute_interaction(gbrt, eval_points, features):
+def partial_dependency(gbrt, target_variables, grid):
     # does not support multi-class yet
     assert estimator.estimators_.shape[1] == 1
+
+    target_variables = np.asarray(target_variables, dtype=np.int)
+    X = unique_rows(X, dtype=DTYPE)
+    try:
+        out = gbrt.init.predict(grid)
+    except ValueError:
+        raise ValueError("init model must be constant to support dependency plots")
+
     n_estimators = gbrt.estimators_.shape[0]
     for stage in xrange(n_estimators):
         tree = gbrt.estimators_[stage, 0]
+        _partial_dependency_tree(tree, grid, target_variables, out)
+    return out
 
 
 
