@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from nose.tools import assert_true, assert_raises
+from nose.tools import assert_true, assert_raises, assert_almost_equal
 
 from sklearn.decomposition import FactorAnalysis
 
@@ -32,6 +32,8 @@ def test_factor_analysis():
     fa.fit(X)
     X_t = fa.transform(X)
     assert_true(X_t.shape == (n_samples, n_components))
+
+    assert_almost_equal(fa.loglike_[-1], fa.score(X))
 
     # Make log likelihood increases at each iteration
     assert_true(np.all(np.diff(fa.loglike_) > 0.))
