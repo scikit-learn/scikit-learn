@@ -10,6 +10,56 @@ Decomposing signals in components (matrix factorization problems)
 
 .. _PCA:
 
+Factor Analysis
+===============
+In unsupervised learning we only have a dataset :math:`X = \{x_1, x_2, \dots, x_n
+\}`. How can this dataset be described mathematically? A very simple
+`continuous latent variabel` model for :math:`X` is
+
+.. math:: x_i = W h_i + \mu + \epsilon
+
+The vector :math:`h_i` is called `latent` because it is unobserved. :math:`\epsilon` is
+considered a noise term distributed according to a Gaussian with mean 0 and
+covariance :math:`\Psi` (i.e. :math:`\epsilon \sim \mathcal{N}(0, \Psi)`), :math:`\mu` is some
+arbitrary offset vector. Such a model is called `generative` as it describes
+how :math:`x_i` is generated from :math:`h_i`. If we use all the :math:`x_i`'s as columns to form
+a matrix :math:`\mathbf{X}` and all the :math:`h_i`'s as columns of a matrix :math:`\mathbf{H}`
+then we can write (with suitably defined :math:`\mathbf{M}` and :math:`\mathbf{E}`):
+
+.. math::
+    \mathbf{X} = W \mathbf{H} + \mathbf{M} + \mathbf{E}
+
+In other words, we `decomposed` matrix :math:`\mathbf{X}`.
+
+If :math:`h_i` is given, the above equation automatically implies the following
+probabilistic interpretation:
+
+.. math:: p(x_i|h_i) = \mathcal{N}(Wh_i + \mu, \Psi)
+
+For a complete probabilistic model we also need a prior distribution for the
+latent variable :math:`h`. The most straightforward assumption (based on the nice
+properties of the Gaussian distribution) is :math:`h \sim \mathcal{N}(0,
+\mathbf{I})`.  This yields a Gaussian as the marginal distribution of :math:`x`:
+
+.. math:: p(x) = \mathcal{N}(\mu, WW^T + \Psi)
+
+Now, without any further assumptions the idea of having a latent variable :math:`h`
+would be superfluous -- :math:`x` can be completely modelled with a mean
+and a covariance. We need to impose some more specific structure on one
+of these two parameters. A simple additional assumption regards the
+structure of the error covariance :math:`\Psi`:
+
+* :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
+  :class:`ProbabilisticPCA`.
+
+* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
+  Analysis, a classical statistical model. The matrix W is sometimtes called
+  `factor loading matrix`.
+
+Both model essentially estimate a Gaussian with a low-rank covariance matrix.
+One gets very different models (e.g. :class:`ICA`) if non-Gaussian
+priors on the latent variables are assumed.
+
 Principal component analysis (PCA)
 ==================================
 
