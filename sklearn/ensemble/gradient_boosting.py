@@ -39,6 +39,7 @@ from ..tree._tree import DTYPE, TREE_LEAF, TREE_SPLIT_BEST
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
+from ._gradient_boosting import _partial_dependency_tree
 
 
 class QuantileEstimator(BaseEstimator):
@@ -1079,19 +1080,20 @@ def unique_rows(arr, dtype=np.float32):
 def partial_dependency(model, target_variables, grid):
     # does not support multi-class yet
     assert model.estimators_.shape[1] == 1
+    target_variables = np.asarray(target_variables, dtype=np.int32, order='C')
 
-    target_variables = np.asarray(target_variables, dtype=np.int)
     try:
-        out = model.init.predict(grid)
+        partial_dep = model.init.predict(grid).ravel()
     except ValueError:
         raise ValueError("init model must be constant to support dependency plots")
 
     n_estimators = model.estimators_.shape[0]
+
     for stage in xrange(n_estimators):
+        print("processing tree %d" % stage)
+        out = np.zeros(partial_dep.shape, dtype=np.float64)
         tree = model.estimators_[stage, 0]
         _partial_dependency_tree(tree, grid, target_variables, out)
-    return out
+        partial_dep += out
 
-
-
-
+    return partial_dep
