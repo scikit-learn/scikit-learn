@@ -109,8 +109,10 @@ else:
 
 def _bincount(X, weights=None, minlength=None):
     """Replacing np.bincount in numpy < 1.6 to provide minlength."""
-    out = np.zeros(minlength, np.int)
     result = np.bincount(X, weights)
+    if len(result) >= minlength:
+        return result
+    out = np.zeros(minlength, np.int)
     out[:len(result)] = result
     return out
 
