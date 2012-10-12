@@ -15,8 +15,10 @@ from math import sqrt
 import numpy as np
 from scipy import linalg
 
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_arrays
+from ..utils.extmath import fast_logdet
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -210,20 +212,23 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     def score(self, X):
         """Compute score of X under FactorAnalysis model.
+
+        Parameters
+        ----------
+        X: array of shape(n_samples, n_features)
+            The data to test
+
+        Returns
+        -------
+        ll: array of shape (n_samples),
+            log-likelihood of each row of X under the current model
         """
-        n, d = X.shape
-        X = X - self.mean_
-
-        psi = self.noise_variance_
-        W = self.components_
-
-        Ih = np.eye(self.n_components)
-        const = -d / 2. * np.log(2 * np.pi)
-        fac = W / psi
-
-        cov_z = linalg.inv(Ih + np.dot(fac, W.T))
-        inv_cov_x = np.diag(1. / psi) - np.dot(fac.T, np.dot(cov_z, fac))
-        _, _det = np.linalg.slogdet(inv_cov_x)
-
-        ll = n * (const + 0.5 * _det) - 0.5 * np.sum(np.dot(X, inv_cov_x) * X)
-        return ll
+        Xr = X - self.mean_
+        cov = self.get_covariance()
+        n_features = X.shape[1]
+        log_like = np.zeros(X.shape[0])
+        self.precision_ = linalg.inv(cov)
+        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
+        log_like -= .5 * (fast_logdet(cov) + \
+                n_features * np.log(2 * np.pi))
+        return log_like
