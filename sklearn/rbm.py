@@ -4,6 +4,8 @@
 # Author: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
 # License: BSD Style.
 
+import time
+
 import numpy as np
 
 from .base import BaseEstimator, TransformerMixin
@@ -305,15 +307,18 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         
         for iteration in range(self.n_iter):
             pl = 0.
+            begin = time.time()
             for minibatch in range(n_batches):
                 pl_batch = self._fit(X[inds[minibatch::n_batches]])
                 
                 if self.verbose:
                     pl += pl_batch.sum()
+            end = time.time()
             pl /= X.shape[0]
             
             if self.verbose:
-                print "Iteration %d, Pseudo-Likelihood = %.2f" % (iteration, pl)
+                print "Iteration %d, Pseudo-Likelihood = %.2f, time = %.2fs" \
+                    % (iteration, pl, end-begin)
     
     def fit_transform(self, X, y=None):
         """
