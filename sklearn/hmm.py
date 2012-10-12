@@ -478,7 +478,7 @@ class _BaseHMM(BaseEstimator):
         # if so, add a small number and re-normalize
         if not np.alltrue(startprob):
             normalize(startprob)
-            
+
         if len(startprob) != self.n_components:
             raise ValueError('startprob must have length n_components')
         if not np.allclose(np.sum(startprob), 1.0):
@@ -496,7 +496,7 @@ class _BaseHMM(BaseEstimator):
         if transmat is None:
             transmat = np.tile(1.0 / self.n_components,
                     (self.n_components, self.n_components))
-            
+
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
         if not np.alltrue(transmat):
@@ -960,7 +960,7 @@ class MultinomialHMM(_BaseHMM):
                 emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '
                              '(n_components, n_symbols)')
-       
+
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
         if not np.alltrue(emissionprob):
@@ -1017,6 +1017,42 @@ class MultinomialHMM(_BaseHMM):
         if 'e' in params:
             self.emissionprob_ = (stats['obs']
                                  / stats['obs'].sum(1)[:, np.newaxis])
+
+    def _check_input_symbols(self, obs):
+        """check if input can be used for Multinomial.fit input must be both
+        positive integer array and every element must be continuous.
+        e.g. x = [0, 0, 2, 1, 3, 1, 1] is OK and y = [0, 0, 3, 5, 10] not
+        """
+
+        symb = np.asanyarray(obs).flatten()
+
+        if symb.dtype != np.int:
+            # input symbols must be integer
+            return False
+
+        if len(symb) == 1:
+            # input too short
+            return False
+
+        if np.any(symb < 0):
+            # input containes negative intiger
+            return False
+
+        symb.sort()
+        if np.any(np.diff(symb) > 1):
+            # input is discontinous
+            return False
+
+        return True
+
+    def fit(self, obs, **kwargs):
+        err_msg = """ERROR input must be both  positive integer array and
+        every element must be continuous."""
+
+        if not self._check_input_symbols(obs):
+            raise ValueError(err_msg)
+
+        return _BaseHMM.fit(self, obs, **kwargs)
 
 
 class GMMHMM(_BaseHMM):
