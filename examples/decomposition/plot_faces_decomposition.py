@@ -98,7 +98,7 @@ estimators = [
      True),
 
     ('Factor Analysis components - FA',
-     decomposition.FactorAnalysis(n_components=n_components), True),
+     decomposition.FactorAnalysis(n_components=n_components, max_iter=2), True),
 ]
 
 
