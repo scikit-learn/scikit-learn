@@ -7,12 +7,12 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state
+from ..utils import check_random_state, as_float_array
+from ..utils.extmath import norm
 from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
-
 
 def _set_diag(laplacian, value):
     """Set the diagonal of the laplacian matrix and convert it to a
@@ -206,8 +206,9 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     return embedding
 
 
-def discretization(eigen_vec):
-    """Search for a partition matrix (clustring) which is closest to the 
+def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
+               random_state=None):
+    """Search for a partition matrix (clustering) which is closest to the 
     eigenvector embedding.
 
     The eigenvector embedding is used to iteratively search for the closest 
@@ -222,8 +223,22 @@ def discretization(eigen_vec):
 
     Parameters
     ----------
-    eigen_vec : array-like, shape: (n_samples, n_clusters)
+    vectors : array-like, shape: (n_samples, n_clusters)
         The embedding space of the samples.
+
+    copy : boolean, optional, default: True
+        Whether to copy vectors, or perform in-place normalization.
+
+    max_svd_restarts : int, optional, default: 30
+        Maximum number of attempts to restart SVD if convergence fails
+
+    n_iter_max : int, optional, default: 30
+        Maximum number of iterations to attempt in rotation and partition
+        matrix search if machine precision convergence is not reached
+
+    random_state: int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization of the
+        of the rotation matrix
 
     Returns
     -------
@@ -235,17 +250,19 @@ def discretization(eigen_vec):
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-
-    - A whole brain fMRI atlas generated via spatially constrained spectral
-      clustering, 2011
-      R.C. Craddock, G.A. James, P.E. Holtzheimer III, X.P. Hu, H.S. Mayberg
+      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     """
+
     from scipy.sparse import csc_matrix
     from scipy.linalg import LinAlgError
 
+    random_state = check_random_state(random_state)
+
+    vectors = as_float_array(vectors, copy=copy)
+    
     eps = np.finfo(float).eps
-    n_samples, n_components = eigen_vec.shape
+    n_samples, n_components = vectors.shape
 
     # Normalize the eigenvectors to an equal length of a vector of ones.
     # Reorient the eigenvectors to point in the negative direction with respect
@@ -253,17 +270,16 @@ def discretization(eigen_vec):
     # eigenvectors to lie in a specific quadrant to make the discretization
     # search easier.
     norm_ones = np.sqrt(n_samples)
-    for i in range(eigen_vec.shape[1]):
-        eigen_vec[:, i] = (eigen_vec[:, i] / np.linalg.norm(eigen_vec[:, i])) \
+    for i in range(vectors.shape[1]):
+        vectors[:, i] = (vectors[:, i] / norm(vectors[:, i])) \
             * norm_ones
-        if eigen_vec[0, i] != 0:
-            eigen_vec[:, i] = -1 * eigen_vec[:, i] * np.sign(eigen_vec[0, i])
+        if vectors[0, i] != 0:
+            vectors[:, i] = -1 * vectors[:, i] * np.sign(vectors[0, i])
 
     # Normalize the rows of the eigenvectors.  Samples should lie on the unit
     # hypersphere centered at the origin.  This transforms the samples in the
     # embedding space to the space of partition matrices.
-    vm = np.sqrt((eigen_vec ** 2).sum(1))[:, np.newaxis]
-    eigen_vec = eigen_vec / vm
+    vectors = vectors / np.sqrt((vectors ** 2).sum(axis=1))[:, np.newaxis]
 
     svd_restarts = 0
     has_converged = False
@@ -272,30 +288,35 @@ def discretization(eigen_vec):
     # do this 30 times.
     while (svd_restarts < 30) and not has_converged:
 
-        # Initialize algorithm with a random ordering of eigenvectors
-        R = np.zeros((n_components, n_components))
-        R[:, 0] = eigen_vec[np.random.randint(n_samples), :].T
+        # Initialize first column of rotation matrix with a row of the
+        # eigenvectors
+        rotation = np.zeros((n_components, n_components))
+        rotation[:, 0] = vectors[random_state.randint(n_samples), :].T
 
-        c = np.zeros((n_samples, 1))
+        # To initialize the rest of the rotation matrix, find the rows
+        # of the eigenvectors that are as orthogonal to each other as
+        # possible
+        c = np.zeros(n_samples)
         for j in range(1, n_components):
-            c = c + np.abs(eigen_vec.dot(R[:, j - 1]))
-            R[:, j] = eigen_vec[c.argmin(), :].T
+            # Accumulate c to ensure row is as orthogonal as possible to
+            # previous picks as well as current one
+            c += np.abs(vectors.dot(rotation[:, j - 1]))
+            rotation[:, j] = vectors[c.argmin(), :].T
 
         last_objective_value = 0.0
         n_iter = 0
-        n_iter_max = 20
 
         while not has_converged:
             n_iter += 1
 
-            t_discrete = eigen_vec.dot(R)
+            t_discrete = vectors.dot(rotation)
 
-            j = np.reshape(np.asarray(t_discrete.argmax(1)), n_samples)
-            eigenvec_discrete = csc_matrix(
-                (np.ones(len(j)), (range(0, n_samples), np.array(j))),
+            labels = t_discrete.argmax(axis=1)
+            vectors_discrete = csc_matrix(
+                (np.ones(len(labels)), (np.arange(0, n_samples), labels)),
                 shape=(n_samples, n_components))
 
-            t_svd = eigenvec_discrete.T * eigen_vec
+            t_svd = vectors_discrete.T * vectors
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
@@ -311,13 +332,10 @@ def discretization(eigen_vec):
             else:
                 # otherwise calculate rotation and continue
                 last_objective_value = ncut_value
-                R = Vh.T.dot(U.T)
+                rotation = Vh.T.dot(U.T)
 
     if not has_converged:
-        raise ValueError('SVD did not converge')
-
-    labels = eigenvec_discrete.toarray(
-    ).dot(np.diag(np.arange(n_components))).sum(axis=1)
+        raise LinAlgError('SVD did not converge')
 
     return labels
 
@@ -335,11 +353,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
 
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
-
-    There are two ways of solving the clustering of the laplacian 
-    embedding.  k-means can be applied and is a popular choice. But it can 
-    also be sensitive to initialization.  Discretization is another approach
-    which is less sensitive to random initialization.
 
     Parameters
     -----------
@@ -379,7 +392,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
 
     embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
         The strategy to use to solve the clustering problem in the embedding
-        space.
+        space.  There are two ways of solving the clustering of the laplacian 
+        embedding.  k-means can be applied and is a popular choice. But it can 
+        also be sensitive to initialization.  Discretization is another approach
+        which is less sensitive to random initialization.
 
     Returns
     -------
@@ -399,6 +415,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
+      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     ------
@@ -422,7 +439,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
         _, labels, _ = k_means(maps.T, n_clusters, random_state=random_state,
                                n_init=n_init)
     else:
-        labels = discretization(maps.T)
+        labels = discretize(maps.T, random_state=random_state)
 
     return labels
 
@@ -438,11 +455,6 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
-
-    There are two ways of solving the clustering of the laplacian 
-    embedding.  k-means can be applied and is a popular choice. But it can 
-    also be sensitive to initialization.  Discretization is another approach
-    which is less sensitive to random initialization.
 
     When calling ``fit``, an affinity matrix is constructed using either the
     Gaussian (aka RBF) kernel of the euclidean distanced ``d(X, X)``::
@@ -490,7 +502,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
         The strategy to use to solve the clustering problem in the embedding
-        space.
+        space.  There are two ways of solving the clustering of the laplacian 
+        embedding.  k-means can be applied and is a popular choice. But it can 
+        also be sensitive to initialization.  Discretization is another approach
+        which is less sensitive to random initialization.
 
     Attributes
     ----------
@@ -530,6 +545,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
       
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
+      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
