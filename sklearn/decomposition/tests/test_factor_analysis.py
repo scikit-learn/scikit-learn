@@ -33,7 +33,7 @@ def test_factor_analysis():
     X_t = fa.transform(X)
     assert_true(X_t.shape == (n_samples, n_components))
 
-    assert_almost_equal(fa.loglike_[-1], fa.score(X))
+    assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
 
     # Make log likelihood increases at each iteration
     assert_true(np.all(np.diff(fa.loglike_) > 0.))
