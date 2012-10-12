@@ -389,25 +389,25 @@ class GaussianHMMBaseTester(object):
                    % (self.covariance_type, params, trainll, np.diff(trainll)))
         # XXX: Why such a large tolerance?
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
-        
+
     def test_fit_non_ergodic_transmat(self):
-        startprob = np.array([1,0,0,0,0])
-        transmat = np.array([[0.9,0.1,0,0,0],
-        [0,0.9,0.1,0,0],
-        [0,0,0.9,0.1,0],
-        [0,0,0,0.9,0.1],
-        [0,0,0,0,1.0]])
-        
-        h = hmm.GaussianHMM(n_components=5, 
-        covariance_type='full', 
-        startprob=startprob, 
+        startprob = np.array([1, 0, 0, 0, 0])
+        transmat = np.array([[0.9, 0.1, 0, 0, 0],
+        [0, 0.9, 0.1, 0, 0],
+        [0, 0, 0.9, 0.1, 0],
+        [0, 0, 0, 0.9, 0.1],
+        [0, 0, 0, 0, 1.0]])
+
+        h = hmm.GaussianHMM(n_components=5,
+        covariance_type='full',
+        startprob=startprob,
         transmat=transmat)
-        
-        h.means_ = np.zeros((5,10))
+
+        h.means_ = np.zeros((5, 10))
         h.covars_ = np.tile(np.identity(10), (5, 1, 1))
-        
+
         obs = [h.sample(10)[0] for _ in range(10)]
-        
+
         h.fit(obs=obs, n_iter=100, init_params='st')
 
 
@@ -449,7 +449,7 @@ class MultinomialHMMTestCase(TestCase):
                                startprob=self.startprob,
                                transmat=self.transmat)
         self.h.emissionprob_ = self.emissionprob
-        
+
     def test_set_emissionprob(self):
         h = hmm.MultinomialHMM(self.n_components)
         emissionprob = np.array([[0.8, 0.2, 0.0], [0.7, 0.2, 1.0]])
