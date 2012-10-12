@@ -18,13 +18,12 @@ def test_isotonic_regression():
     assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
     assert_array_equal(ir.transform(x), ir.predict(x))
 
-    # check the same thing but permute the order
+    # check that it is immune to permutation
     perm = np.random.permutation(len(y))
-    x, y = x[perm], y[perm]
     ir = IsotonicRegression(y_min=0., y_max=1.)
-    ir.fit(x, y)
-    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
-    assert_array_equal(ir.transform(x), ir.predict(x))
+    assert_array_equal(ir.fit(x[perm], y[perm]).y_, ir.fit(x, y).y_[perm])
+    assert_array_equal(ir.transform(x[perm]), ir.transform(x)[perm])
+
 
 def test_assert_raises_exceptions():
     ir = IsotonicRegression()

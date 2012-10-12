@@ -161,14 +161,13 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        self; object
+        self: object
             returns an instance of self
 
         Note
         ----
-        X doesn't influence the result of `fit`. It is however stored
-        for future use, as `transform` needs X to interpolate new
-        input data.
+        X is stored for future use, as `transform` needs X to interpolate
+        new input data.
         """
         X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
         y = as_float_array(y)
@@ -199,7 +198,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             raise ValueError("X should be a vector")
 
         order = np.argsort(self.X_)
-        f = interpolate.interp1d(self.X_[order], self.y_[order], 
+        f = interpolate.interp1d(self.X_[order], self.y_[order],
             kind='linear', bounds_error=True)
         return f(T)
 
