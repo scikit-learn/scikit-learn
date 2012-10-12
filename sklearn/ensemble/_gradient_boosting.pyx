@@ -172,44 +172,63 @@ cdef inline int array_index(int val, int[::1] arr):
     return res
 
 
-cdef void _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
+cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
                               int[::1] target_feature,
                               double[::1] out):
     """Partial dependency of ``target_feature`` set on the response.
 
     For each row in ``X`` a tree traversal is performed.
     Each traversal starts from the root with weight 1.0.
+
     At each non-terminal node that splits on a target variable either
     the left child or the right child is visited based on the feature
     value of the current sample and the weight is not modified.
     At each non-terminal node that splits on a complementary feature
     both children are visited and the weight is multiplied by the fraction
     of training samples which went to each child.
-    At each terminal node the value of the node
+
+    At each terminal node the value of the node is multiplied by the
+    current weight (weights sum to 1 for all visited terminal nodes).
+
+    Parameters
+    ----------
+    tree : sklearn.tree.Tree
+        A regression tree; tree.values.shape[1] == 1
+    X : memory view on 2d ndarray
+        The grid points on which the partial dependency
+        should be evaluated. X.shape[1] == target_feature.shape[0].
+    target_feature : memory view on 1d ndarray
+        The set of target features for which the partial dependency
+        should be evaluated. X.shape[1] == target_feature.shape[0].
+    out : memory view on 1d ndarray
+        The value of the partial dependency function on each grid
+        point.
     """
     cdef Py_ssize_t i = 0
     cdef Py_ssize_t n_features = X.shape[1]
     cdef int *children_left = tree.children_left
     cdef int *children_right = tree.children_right
-    cdef int* feature = tree.feature
-    cdef double* value = tree.value
-    cdef double* threshold = tree.threshold
-    cdef int* n_samples = tree.n_samples
+    cdef int *feature = tree.feature
+    cdef double *value = tree.value
+    cdef double *threshold = tree.threshold
+    cdef int *n_samples = tree.n_samples
     cdef int node_count = tree.node_count
 
-    cdef int[::1] node_stack = np.zeros((node_count,), dtype=np.int)
+    cdef int[::1] node_stack = np.zeros((node_count,), dtype=np.int32)
     cdef double[::1] weight_stack = np.ones((node_count,), dtype=np.float64)
     cdef int stack_size = 1
     cdef double left_sample_frac
     cdef double current_weight
 
     for i in range(X.shape[0]):
+        # init stacks for new example
+        stack_size = 1
+        node_stack[0] = 0
+        weight_stack[0] = 1.0
 
-        #for j in range(node_count):
         while stack_size > 0:
-            stack_size -= 1
-
             # get top node on stack
+            stack_size -= 1
             current_node = node_stack[stack_size]
 
             if children_left[current_node] == LEAF:
@@ -220,7 +239,7 @@ cdef void _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
                 if feature_index != -1:
                     # split feature in target set
                     # push left or right child on stack
-                    if X[i, feature_index] < threshold[current_node]:
+                    if X[i, feature_index] <= threshold[current_node]:
                         # left
                         node_stack[stack_size] = children_left[current_node]
                     else:
@@ -234,12 +253,20 @@ cdef void _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # push left child
                     node_stack[stack_size] = children_left[current_node]
                     current_weight = weight_stack[stack_size]
-                    left_sample_frac = n_samples[children_left[current_node]] / n_samples[current_node]
-                    assert 0.0 < left_sample_frac < 1.0
+                    left_sample_frac = n_samples[children_left[current_node]] / \
+                                       <double>n_samples[current_node]
+                    if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
+                        raise ValueError("left_sample_frac:%f, "
+                                         "n_samples current: %d, "
+                                         "n_samples left: %d"
+                                         % (left_sample_frac,
+                                            n_samples[current_node],
+                                            n_samples[children_left[current_node]]))
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size +=1
 
                     # push right child
                     node_stack[stack_size] = children_right[current_node]
-                    weight_stack[stack_size] = current_weight * (1.0 - left_sample_frac)
+                    weight_stack[stack_size] = current_weight * \
+                                               (1.0 - left_sample_frac)
                     stack_size +=1
