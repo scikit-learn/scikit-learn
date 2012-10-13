@@ -15,9 +15,26 @@ from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
 def _set_diag(laplacian, value):
+    """ Set the diagonal of the laplacian matrix and convert it to a
+        sparse format well suited for eigenvalue decomposition
+
+        Parameters
+        ==========
+        laplacian: array or sparse matrix
+            The graph laplacian
+        value: float
+            The value of the diagonal
+
+        Returns
+        =======
+        laplacian: array of sparse matrix
+            An array of matrix in a form that is well suited to fast
+            eigenvalue decomposition, depending on the band width of the
+            matrix.
+    """
     from scipy import sparse
     n_nodes = laplacian.shape[0]
-    # We need to put the diagonal at zero
+    # We need all entries in the diagonal to values
     if not sparse.isspmatrix(laplacian):
         laplacian.flat[::n_nodes + 1] = value
     else:
@@ -104,12 +121,12 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         mode = 'arpack'
     elif not mode in ('arpack', 'lobpcg', 'amg'):
         raise ValueError("Unknown value for mode: '%s'."
-                         "Should be 'amg' or 'arpack'" % mode)
+                         "Should be 'amg', 'arpack', or 'lobpcg'" % mode)
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
     if (mode == 'arpack'
-        or not sparse.isspmatrix(laplacian)
-        or n_nodes < 5 * n_components):
+        or mode != 'lobpcg' and (not sparse.isspmatrix(laplacian)
+        or n_nodes < 5 * n_components)):
         # lobpcg used with mode='amg' has bugs for low number of nodes
         laplacian = _set_diag(laplacian, 0)
 
