@@ -369,6 +369,7 @@ does not fit into the memory.
 
 Factor Analysis
 ===============
+
 In unsupervised learning we only have a dataset :math:`X = \{x_1, x_2, \dots, x_n
 \}`. How can this dataset be described mathematically? A very simple
 `continuous latent variabel` model for :math:`X` is

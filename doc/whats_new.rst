@@ -40,6 +40,9 @@ Changelog
    - Faster and more robust :func:`metrics.confusion_matrix` and
      :ref:`clustering_evaluation`_ by Wei Li.
 
+   - New estimator :class:`decomposition.FactorAnalysis` by
+     `Christian Osendorfer`_ and `Alexandre Gramfort`_
+
 
 API changes summary
 -------------------
@@ -1251,7 +1254,7 @@ People that made this release possible preceeded by number of commits:
 
    * 2  Ronan Amicel
 
-   * 1 `Christian Osendorfer <http://osdf.github.com/>`_
+   * 1 `Christian Osendorfer`_
 
 
 
@@ -1487,3 +1490,4 @@ of commits):
 
 .. _@kernc: http://github.com/kernc
 
+.. _Christian Osendorfer: http://osdf.github.com
