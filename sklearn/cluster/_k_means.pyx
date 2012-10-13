@@ -361,7 +361,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     ## TODO: add support for CSR input
     n_features = X.shape[1]
 
-    centers = np.zeros((n_clusters, n_features))
+    centers = np.zeros((n_clusters, n_features), dtype=X.dtype)
     n_samples_in_cluster = np.bincount(labels)
     # old numpy doesn't have minlength in bincount:
     if len(n_samples_in_cluster < n_clusters):
@@ -382,7 +382,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         n_samples_in_cluster[cluster_id] = 1
 
     for label, sample in zip(labels, X):
-        centers[label, :] += sample
+        centers[label, :] += np.asarray(sample.todense()).ravel()
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 
