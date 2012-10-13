@@ -43,7 +43,7 @@ from sklearn.grid_search import GridSearchCV
 # Load Data
 digits = datasets.fetch_mldata('MNIST original')
 X = np.asarray(digits.data, 'float32') / digits.data.max()
-Y = digits.target == 5 # Classification of class 5 vs all
+Y = digits.target == 8 # Classification of class 8 vs all
 
 # Models we will use
 logistic = linear_model.LogisticRegression()
