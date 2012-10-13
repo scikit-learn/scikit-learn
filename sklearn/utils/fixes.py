@@ -100,7 +100,14 @@ def _unique(ar, return_index=False, return_inverse=False):
         flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
-np_version = [int(x) for x in np.__version__.split('.')]
+np_version = []
+for x in np.__version__.split('.'):
+    try:
+        np_version.append(int(x))
+    except ValueError:
+        # x may be of the form dev-1ea1592
+        np_version.append(x)
+
 if np_version[:2] < (1, 5):
     unique = _unique
 else:
