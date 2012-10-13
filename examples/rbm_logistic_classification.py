@@ -74,7 +74,7 @@ classifier = estimator.best_estimator_
 logistic_estimator = GridSearchCV(logistic_pipe,
                                   dict(logistic__C=np.logspace(-4, 4, 2)))
 logistic_estimator.fit(X[:60000], Y[:60000])
-logistic_classifier = estimator.best_estimator_
+logistic_classifier = logistic_estimator.best_estimator_
 
 
 ###############################################################################
