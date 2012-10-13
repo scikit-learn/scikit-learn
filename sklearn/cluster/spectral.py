@@ -125,8 +125,9 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=True, return_diag=True)
     if (mode == 'arpack'
-        or mode != 'lobpcg' and (not sparse.isspmatrix(laplacian)
-        or n_nodes < 5 * n_components)):
+        or mode != 'lobpcg' and
+            (not sparse.isspmatrix(laplacian)
+             or n_nodes < 5 * n_components)):
         # lobpcg used with mode='amg' has bugs for low number of nodes
         laplacian = _set_diag(laplacian, 0)
 
