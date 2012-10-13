@@ -10,6 +10,7 @@
 import numpy as np
 import scipy.sparse as sp
 from ..utils.extmath import norm
+from ..utils.fixes import bincount
 cimport numpy as np
 cimport cython
 
@@ -307,11 +308,7 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     n_features = X.shape[1]
     cdef int i, j, c
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = np.bincount(labels)
-    # old numpy doesn't have minlength in bincount:
-    if len(n_samples_in_cluster < n_clusters):
-        zeros = np.zeros(n_clusters - len(n_samples_in_cluster))
-        n_samples_in_cluster = np.hstack([n_samples_in_cluster, zeros])
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
@@ -362,11 +359,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     n_features = X.shape[1]
 
     centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = np.bincount(labels)
-    # old numpy doesn't have minlength in bincount:
-    if len(n_samples_in_cluster < n_clusters):
-        zeros = np.zeros(n_clusters - len(n_samples_in_cluster))
-        n_samples_in_cluster = np.hstack([n_samples_in_cluster, zeros])
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
