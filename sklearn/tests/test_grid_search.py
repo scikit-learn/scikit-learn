@@ -10,10 +10,11 @@ import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
-from sklearn.datasets.samples_generator import make_classification
+from sklearn.datasets import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
 from sklearn.cross_validation import KFold
+from sklearn.cluster import KMeans
 
 
 class MockClassifier(BaseEstimator):
@@ -225,3 +226,17 @@ def test_X_as_list():
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
+
+
+def test_unsupervised():
+    """Use GridSearch for k in kmeans.
+
+    The scoreing function is not really helpful,
+    so this is a smoke test for long-forgotten API.
+    """
+    X, y = make_blobs()
+    param_grid = dict(n_clusters=np.arange(1, 5))
+
+    # be verbose for that extra test coverage
+    grid_search = GridSearchCV(KMeans(), param_grid, verbose=2)
+    grid_search.fit(X)
