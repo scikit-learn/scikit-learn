@@ -375,7 +375,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         n_samples_in_cluster[cluster_id] = 1
 
     for label, sample in zip(labels, X):
-        centers[label, :] += np.asarray(sample.todense()).ravel()
+        centers[label, :] += sample.toarray().ravel()
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 
