@@ -6,13 +6,13 @@ import warnings
 
 import numpy as np
 
-
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
+
 
 def _set_diag(laplacian, value):
     """Set the diagonal of the laplacian matrix and convert it to a
