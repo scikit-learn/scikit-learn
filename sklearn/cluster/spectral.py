@@ -15,22 +15,22 @@ from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
 def _set_diag(laplacian, value):
-    """ Set the diagonal of the laplacian matrix and convert it to a
-        sparse format well suited for eigenvalue decomposition
+    """Set the diagonal of the laplacian matrix and convert it to a
+    sparse format well suited for eigenvalue decomposition
 
-        Parameters
-        ==========
-        laplacian: array or sparse matrix
-            The graph laplacian
-        value: float
-            The value of the diagonal
+    Parameters
+    ----------
+    laplacian: array or sparse matrix
+        The graph laplacian
+    value: float
+        The value of the diagonal
 
-        Returns
-        =======
-        laplacian: array of sparse matrix
-            An array of matrix in a form that is well suited to fast
-            eigenvalue decomposition, depending on the band width of the
-            matrix.
+    Returns
+    -------
+    laplacian: array of sparse matrix
+        An array of matrix in a form that is well suited to fast
+        eigenvalue decomposition, depending on the band width of the
+        matrix.
     """
     from scipy import sparse
     n_nodes = laplacian.shape[0]
@@ -161,7 +161,6 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         ml = smoothed_aggregation_solver(laplacian.tocsr())
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components)
-        #X[:, 0] = 1. / dd.ravel()
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
