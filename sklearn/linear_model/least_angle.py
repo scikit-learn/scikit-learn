@@ -223,6 +223,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
+            if np.log(diag) < -10:
+                # The system is becoming too ill-conditionned.
+                # We have degenerate vectors in our active set.
+                # Time to bail out.
+                warnings.warn('Regressors in active set degenerate'
+                    'Stopping the LARS path early.')
+                break
+
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
