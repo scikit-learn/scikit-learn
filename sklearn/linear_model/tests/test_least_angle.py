@@ -169,7 +169,7 @@ def test_singular_matrix():
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
     alphas, active, coef_path = linear_model.lars_path(X1, y1)
-    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0], [1, 0]])
+    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
@@ -238,6 +238,35 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd.fit(X, y)
         error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
+
+
+def test_lasso_lars_vs_lasso_cd_ill_conditionned():
+    # Test lasso lars on a very ill-conditionned design, and check that
+    # it does not blow up, and stays somewhat close to a solution given
+    # by the coordinate descent solver
+    rng = np.random.RandomState(42)
+
+    # Generate data
+    n, m = 80, 100
+    k = 5
+    X = rng.randn(n, m)
+    w = np.zeros((m, 1))
+    i = np.arange(0, m)
+    rng.shuffle(i)
+    supp = i[:k]
+    w[supp] = np.sign(rng.randn(k, 1)) * (rng.rand(k, 1) + 1)
+    y = np.dot(X, w)
+    sigma = 0.2
+    y +=  sigma * rng.rand(*y.shape)
+    y = y.squeeze()
+
+    lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method='lasso')
+    lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
+    for i, model in enumerate(linear_model.lasso_path(X, y,
+                                alphas=lars_alphas)):
+        lasso_coef[:,i] = model.coef_
+    np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
+
 
 
 def test_lars_add_features():
