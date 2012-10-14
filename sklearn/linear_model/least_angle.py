@@ -223,12 +223,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
-            if np.log(diag) < -10:
-                # The system is becoming too ill-conditionned.
+            if diag < 1e-7:
+                # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # Time to bail out.
-                warnings.warn('Regressors in active set degenerate'
-                    'Stopping the LARS path early.')
+                warnings.warn(('Regressors in active set degenerate. '
+                    'Stopping the LARS path early, after %i iterations, '
+                    'i.e. alpha=%.3f, '
+                    'with an active set of %i regressors, and '
+                    'the smallest eigenvalue being %.3f')
+                    % (n_iter, alphas[n_iter], n_active, diag)
+                    )
                 break
 
         # least squares solution
@@ -239,7 +244,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
 
         if not np.isfinite(AA):
-            # L is too ill-conditionned
+            # L is too ill-conditioned
             i = 0
             L_ = L[:n_active, :n_active].copy()
             while not np.isfinite(AA):

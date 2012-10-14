@@ -1,6 +1,8 @@
-import numpy as np
+import warnings
 
+import numpy as np
 from nose.tools import assert_equal
+
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -169,7 +171,12 @@ def test_singular_matrix():
     """
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
-    alphas, active, coef_path = linear_model.lars_path(X1, y1)
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        alphas, active, coef_path = linear_model.lars_path(X1, y1)
+    assert_equal(len(warning_list), 1)
+    assert_true('Stopping the LARS' in warning_list[0].message.args[0])
+
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -252,8 +259,8 @@ def test_lasso_lars_path_length():
     assert_true(np.all(np.diff(lasso.alphas_) < 0))
 
 
-def test_lasso_lars_vs_lasso_cd_ill_conditionned():
-    # Test lasso lars on a very ill-conditionned design, and check that
+def test_lasso_lars_vs_lasso_cd_ill_conditioned():
+    # Test lasso lars on a very ill-conditioned design, and check that
     # it does not blow up, and stays somewhat close to a solution given
     # by the coordinate descent solver
     rng = np.random.RandomState(42)
@@ -269,14 +276,20 @@ def test_lasso_lars_vs_lasso_cd_ill_conditionned():
     w[supp] = np.sign(rng.randn(k, 1)) * (rng.rand(k, 1) + 1)
     y = np.dot(X, w)
     sigma = 0.2
-    y +=  sigma * rng.rand(*y.shape)
+    y += sigma * rng.rand(*y.shape)
     y = y.squeeze()
 
-    lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method='lasso')
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
+                                                    method='lasso')
+    assert_equal(len(warning_list), 1)
+    assert_true('Stopping the LARS' in warning_list[0].message.args[0])
+
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y,
                                 alphas=lars_alphas)):
-        lasso_coef[:,i] = model.coef_
+        lasso_coef[:, i] = model.coef_
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
 
 
