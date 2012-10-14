@@ -75,6 +75,14 @@ API changes summary
      :class:`cross_validation.StratifiedShuffleSplit`,
      :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
 
+   - Replaced `rho` in :class:`linear_model.ElasticNet` and
+     :class:`linear_model.SGDClassifier` by ``l1_ratio``. The `rho` parameter
+     had different meanings; ``l1_ratio`` was introduced to avoid confusion.
+     It has the same meaning as previously rho in
+     :class:`linear_model.ElasticNet` and ``(1-rho)`` in
+     :class:`linear_model.SGDClassifier`,
+
+
 .. _changes_0_12.1:
 
 0.12.1
