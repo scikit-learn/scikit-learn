@@ -440,7 +440,4 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         return self
 
     def score(self, X, y=None):
-        if hasattr(self.best_estimator_, 'score'):
-            return self.best_estimator_.score(X, y)
-        y_predicted = self.predict(X)
-        return self.score_func(y, y_predicted)
+        return self.best_estimator_.score(X, y)
