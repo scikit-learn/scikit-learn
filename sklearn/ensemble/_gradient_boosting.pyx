@@ -214,17 +214,20 @@ cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
     cdef int *n_samples = tree.n_samples
     cdef int node_count = tree.node_count
 
-    cdef int[::1] node_stack = np.zeros((node_count,), dtype=np.int32)
-    cdef double[::1] weight_stack = np.ones((node_count,), dtype=np.float64)
+    cdef int stack_capacity = node_count * 2
+    cdef int[::1] node_stack = np.zeros((stack_capacity,), dtype=np.int32)
+    cdef double[::1] weight_stack = np.ones((stack_capacity,), dtype=np.float64)
     cdef int stack_size = 1
     cdef double left_sample_frac
     cdef double current_weight
+    cdef double total_weight = 0.0
 
     for i in range(X.shape[0]):
         # init stacks for new example
         stack_size = 1
         node_stack[0] = 0
         weight_stack[0] = 1.0
+        total_weight = 0.0
 
         while stack_size > 0:
             # get top node on stack
@@ -233,6 +236,7 @@ cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
 
             if children_left[current_node] == LEAF:
                 out[i] += weight_stack[stack_size] * value[current_node]
+                total_weight += weight_stack[stack_size]
             else:
                 # non-terminal node
                 feature_index = array_index(feature[current_node], target_feature)
@@ -270,3 +274,7 @@ cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
                     weight_stack[stack_size] = current_weight * \
                                                (1.0 - left_sample_frac)
                     stack_size +=1
+
+        if not (0.999 < total_weight < 1.001):
+            raise ValueError("Total weight should be 1.0 but was %.9f" %
+                             total_weight)
