@@ -88,14 +88,14 @@ class BaseSGD(BaseEstimator):
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
         if self.n_iter <= 0:
-            raise ValueError("n_iter must be greater than zero")
+            raise ValueError("n_iter must be > zero")
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
-            raise ValueError("alpha must be greater than zero")
+            raise ValueError("alpha must be >= 0")
         if self.learning_rate != "optimal":
             if self.eta0 <= 0.0:
-                raise ValueError("eta0 must be greater than 0.0")
+                raise ValueError("eta0 must be > 0")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
