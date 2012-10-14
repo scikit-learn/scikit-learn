@@ -57,7 +57,7 @@ class BaseSGD(BaseEstimator):
         self.l1_ratio = l1_ratio
         if rho is not None:
             self.l1_ratio = 1 - rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
+            warnings.warn("rho was replaced by l1_ratio and will be removed "
                     "in 0.15", DeprecationWarning)
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
@@ -271,7 +271,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         Constant that multiplies the regularization term. Defaults to 0.0001
 
     l1_ratio : float
-        The Elastic Net mixing parameter, with 0 < l1_ratio <= 1.
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
@@ -371,16 +371,12 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                             alpha=alpha, l1_ratio=l1_ratio,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, epsilon=epsilon,
-                                            seed=seed,
+                                            seed=seed, rho=rho,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
                                             warm_start=warm_start)
@@ -714,7 +710,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         Constant that multiplies the regularization term. Defaults to 0.0001
 
     l1_ratio : float
-        The Elastic Net mixing parameter, with 0 < l1_ratio <= 1.
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
@@ -797,11 +793,6 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
             learning_rate="invscaling", eta0=0.01, power_t=0.25,
             warm_start=False, rho=None):
-        if rho is not None:
-            l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
-
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "
                           "scikit-learn 0.14, use epsilon instead.",
@@ -814,7 +805,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, epsilon=epsilon,
-                                           seed=seed,
+                                           seed=seed, rho=rho,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
