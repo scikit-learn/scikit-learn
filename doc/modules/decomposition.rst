@@ -431,12 +431,15 @@ about these components (e.g. whether they are orthogonal):
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
+.. centered:: |pca_img3| |fa_img3|
+
 The main advantage for Factor Analysis (over :class:`ProbabilisticPCA` is that
 it can model the variance in every direction of the input space independently:
 
-.. |fa_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
+.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
-    :scale: 60%
+    :align: center
+    :scale: 75%
 
 .. _ICA:
 
@@ -460,15 +463,15 @@ It is classically used to separate mixed signals (a problem known as
 ICA can also be used as yet another non linear decomposition that finds
 components with some sparsity:
 
-.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |ica_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
+.. |ica_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. centered:: |pca_img3| |ica_img3|
+.. centered:: |pca_img4| |ica_img4|
 
 .. topic:: Examples:
 
@@ -497,15 +500,15 @@ resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
 faces dataset, in comparison with the PCA eigenfaces.
 
-.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |nmf_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
+.. |nmf_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. centered:: |pca_img4| |nmf_img4|
+.. centered:: |pca_img5| |nmf_img5|
 
 
 The :attr:`init` attribute determines the initialization method applied, which
