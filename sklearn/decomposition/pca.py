@@ -424,7 +424,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
-           random_state=<mtrand.RandomState object at 0x...>, whiten=False)
+           random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
@@ -468,7 +468,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
             # not a sparse matrix, ensure this is a 2D array
             X = np.atleast_2d(as_float_array(X, copy=self.copy))
@@ -486,7 +486,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         U, S, V = randomized_svd(X, n_components,
                                  n_iter=self.iterated_power,
-                                 random_state=self.random_state)
+                                 random_state=random_state)
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
         self.explained_variance_ratio_ = exp_var / exp_var.sum()

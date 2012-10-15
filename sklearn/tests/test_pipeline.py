@@ -194,16 +194,13 @@ def test_feature_union():
     assert_equal(X_transformed.shape, (X.shape[0], 3))
 
     # check if it does the expected thing
-    # We use a different pca object to control the random_state stream
-    pca2 = RandomizedPCA(n_components=2, random_state=0)
-    assert_array_almost_equal(X_transformed[:, :-1], pca2.fit(X).transform(X))
+    assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
             select.fit_transform(X, y).ravel())
 
     # test if it also works for sparse input
     # We use a different pca object to control the random_state stream
-    pca3 = RandomizedPCA(n_components=2, random_state=0)
-    fs = FeatureUnion([("pca", pca3), ("select", select)])
+    fs = FeatureUnion([("pca", pca), ("select", select)])
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
@@ -247,9 +244,8 @@ def test_feature_union_weights():
     # check against expected result
 
     # We use a different pca object to control the random_state stream
-    pca2 = RandomizedPCA(n_components=2, random_state=0)
     assert_array_almost_equal(X_transformed[:, :-1],
-                    10 * pca2.fit(X).transform(X))
+                    10 * pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
             select.fit_transform(X, y).ravel())
 
