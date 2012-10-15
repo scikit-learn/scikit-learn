@@ -285,8 +285,8 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     has_converged = False
 
     # If there is an exception we try to randomize and rerun SVD again
-    # do this 30 times.
-    while (svd_restarts < 30) and not has_converged:
+    # do this max_svd_restarts times.
+    while (svd_restarts < max_svd_restarts) and not has_converged:
 
         # Initialize first column of rotation matrix with a row of the
         # eigenvectors
