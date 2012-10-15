@@ -171,13 +171,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         """
         X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
         y = as_float_array(y)
-        self.X_ = as_float_array(X, copy=True)
-        self._check_fit_data(self.X_, y, weight)
+        self._check_fit_data(X, y, weight)
         order = np.argsort(X)
-        order_inv = np.zeros(len(y), dtype=np.int)
-        order_inv[order] = np.arange(len(y))
-        result = isotonic_regression(y[order], weight, self.y_min, self.y_max)
-        self.y_ = result[order_inv]
+        self.X_ = as_float_array(X[order], copy=False)
+        self.y_ = isotonic_regression(y[order], weight, self.y_min, self.y_max)
         return self
 
     def transform(self, T):
@@ -197,9 +194,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if len(T.shape) != 1:
             raise ValueError("X should be a vector")
 
-        order = np.argsort(self.X_)
-        f = interpolate.interp1d(self.X_[order], self.y_[order],
-            kind='linear', bounds_error=True)
+        f = interpolate.interp1d(self.X_, self.y_, kind='linear',
+            bounds_error=True)
         return f(T)
 
     def fit_transform(self, X, y, weight=None):
@@ -228,8 +224,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         for future use, as `transform` needs X to interpolate new input
         data.
         """
-        self.fit(X, y, weight)
-        return self.y_
+        X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
+        y = as_float_array(y)
+        self._check_fit_data(X, y, weight)
+        order = np.argsort(X)
+        order_inv = np.zeros(len(y), dtype=np.int)
+        order_inv[order] = np.arange(len(y))
+        self.X_ = as_float_array(X[order], copy=False)
+        self.y_ = isotonic_regression(y[order], weight, self.y_min, self.y_max)
+        return self.y_[order_inv]
 
     def predict(self, T):
         """Predict new data by linear interpolation.
