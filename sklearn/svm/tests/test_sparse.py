@@ -6,6 +6,7 @@ from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
 from nose.tools import assert_raises, assert_true
+from nose.tools import assert_equal as nose_assert_equal
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
 from sklearn.utils import ConvergenceWarning
@@ -231,8 +232,10 @@ def test_timeout():
             max_iter=1)
     with warnings.catch_warnings(record=True) as foo:
         sp.fit(X_sp, Y)
-        assert len(foo) == 1, foo
-        assert foo[0].category == ConvergenceWarning, foo[0].category
+        nose_assert_equal(len(foo), 1,
+            msg=foo)
+        nose_assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':

@@ -583,8 +583,10 @@ def test_timeout():
         max_iter=1)
     with warnings.catch_warnings(record=True) as foo:
         a.fit(X, Y)
-        assert len(foo) == 1, foo
-        assert foo[0].category == ConvergenceWarning, foo[0].category
+        assert_equal(len(foo), 1,
+            msg=foo)
+        assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':
