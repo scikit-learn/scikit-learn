@@ -180,13 +180,13 @@ def test_pipeline_methods_preprocessing_svm():
         pipe.score(X, y)
 
 
-def test_feature_stacker():
-    # basic sanity check for feature stacker
+def test_feature_union():
+    # basic sanity check for feature union
     iris = load_iris()
     X = iris.data
     X -= X.mean(axis=0)
     y = iris.target
-    pca = RandomizedPCA(n_components=2)
+    pca = RandomizedPCA(n_components=2, random_state=0)
     select = SelectKBest(k=1)
     fs = FeatureUnion([("pca", pca), ("select", select)])
     fs.fit(X, y)
@@ -194,11 +194,16 @@ def test_feature_stacker():
     assert_equal(X_transformed.shape, (X.shape[0], 3))
 
     # check if it does the expected thing
-    assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
+    # We use a different pca object to control the random_state stream
+    pca2 = RandomizedPCA(n_components=2, random_state=0)
+    assert_array_almost_equal(X_transformed[:, :-1], pca2.fit(X).transform(X))
     assert_array_equal(X_transformed[:, -1],
             select.fit_transform(X, y).ravel())
 
     # test if it also works for sparse input
+    # We use a different pca object to control the random_state stream
+    pca3 = RandomizedPCA(n_components=2, random_state=0)
+    fs = FeatureUnion([("pca", pca3), ("select", select)])
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
@@ -228,24 +233,28 @@ def test_pipeline_transform():
     assert_array_almost_equal(X_back, X_back2)
 
 
-def test_feature_stacker_weights():
-    # test feature stacker with transformer weights
+def test_feature_union_weights():
+    # test feature union with transformer weights
     iris = load_iris()
     X = iris.data
     y = iris.target
-    pca = RandomizedPCA(n_components=2)
+    pca = RandomizedPCA(n_components=2, random_state=0)
     select = SelectKBest(k=1)
     fs = FeatureUnion([("pca", pca), ("select", select)],
             transformer_weights={"pca": 10})
     fs.fit(X, y)
     X_transformed = fs.transform(X)
     # check against expected result
-    assert_array_almost_equal(X_transformed[:, :-1], 10 * pca.fit_transform(X))
+
+    # We use a different pca object to control the random_state stream
+    pca2 = RandomizedPCA(n_components=2, random_state=0)
+    assert_array_almost_equal(X_transformed[:, :-1],
+                    10 * pca2.fit(X).transform(X))
     assert_array_equal(X_transformed[:, -1],
             select.fit_transform(X, y).ravel())
 
 
-def test_feature_stacker_feature_names():
+def test_feature_union_feature_names():
     JUNK_FOOD_DOCS = (
         "the pizza pizza beer copyright",
         "the pizza burger beer copyright",
