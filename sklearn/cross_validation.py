@@ -1020,8 +1020,6 @@ class StratifiedShuffleSplit(object):
         return self.n_iter
 
 
-##############################################################################
-
 def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
@@ -1031,16 +1029,14 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
                     for k, v in fit_params.items()])
     if y is None:
         estimator.fit(X[train], **fit_params)
+        # XXX this should be handled in estimator.score
         if score_func is None:
             score = estimator.score(X[test])
         else:
             score = score_func(X[test])
     else:
         estimator.fit(X[train], y[train], **fit_params)
-        if score_func is None:
-            score = estimator.score(X[test], y[test])
-        else:
-            score = score_func(y[test], estimator.predict(X[test]))
+        score = estimator.score(X[test], y[test], score_func)
     if verbose > 1:
         print("score: %f" % score)
     return score

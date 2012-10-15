@@ -13,6 +13,8 @@ from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.metrics import auc_score
+from sklearn.grid_search import GridSearchCV
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -573,6 +575,17 @@ def test_svc_clone_with_callable_kernel():
     b.predict(X)
     b.predict_proba(X)
     b.decision_function(X)
+
+
+def test_auc_grid_search():
+    X, y = make_classification(n_classes=2, random_state=0)
+    clf = svm.SVC()
+    param_grid = {'C': [0.01, 0.1, 1]}
+    grid = GridSearchCV(clf, param_grid, score_func=auc_score)
+    grid.fit(X, y)
+    clf2 = svm.SVC(probability=True)
+    grid2 = GridSearchCV(clf2, param_grid, score_func=auc_score)
+    grid2.fit(X, y)
 
 
 if __name__ == '__main__':

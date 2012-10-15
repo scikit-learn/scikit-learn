@@ -7,10 +7,9 @@ import inspect
 import numpy as np
 from scipy import sparse
 
-from .metrics import r2_score
+from .metrics import r2_score, zero_one_score
 
 
-###############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
@@ -96,7 +95,6 @@ def clone(estimator, safe=True):
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -148,7 +146,6 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
 class BaseEstimator(object):
     """Base class for all estimators in scikit-learn
 
@@ -257,11 +254,10 @@ class BaseEstimator(object):
             )
 
 
-###############################################################################
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
 
-    def score(self, X, y):
+    def score(self, X, y, score_func=None):
         """Returns the mean accuracy on the given test data and labels.
 
         Parameters
@@ -277,14 +273,23 @@ class ClassifierMixin(object):
         z : float
 
         """
-        return np.mean(self.predict(X) == y)
+        if score_func is None:
+            score_func = zero_one_score
+
+        if getattr(score_func, "requires_thresholds", False):
+            try:
+                score = score_func(y, self.predict_proba(X)[:, 0])
+            except (AttributeError, NotImplementedError):
+                score = score_func(y, self.decision_function(X))
+        else:
+            score = score_func(y, self.predict(X))
+        return score
 
 
-###############################################################################
 class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn"""
 
-    def score(self, X, y):
+    def score(self, X, y, score_func=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the
@@ -304,10 +309,11 @@ class RegressorMixin(object):
         -------
         z : float
         """
-        return r2_score(y, self.predict(X))
+        if score_func is None:
+            score_func = r2_score
+        return score_func(y, self.predict(X))
 
 
-###############################################################################
 class ClusterMixin(object):
     """Mixin class for all cluster estimators in scikit-learn"""
     def fit_predict(self, X, y=None):
@@ -329,7 +335,6 @@ class ClusterMixin(object):
         return self.labels_
 
 
-###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn"""
 
@@ -367,13 +372,11 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-###############################################################################
 class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn"""
     # this is just a tag for the moment
 
 
-###############################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):
