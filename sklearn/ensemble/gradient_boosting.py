@@ -584,14 +584,14 @@ class BaseGradientBoosting(BaseEnsemble):
                 self.oob_score_[i] = loss(y[~sample_mask],
                                           y_pred[~sample_mask])
                 if self.verbose > 1:
-                    print("built tree %d of %d, train score = %g, "
-                          "oob score = %g\r" % (i + 1, self.n_estimators,
+                    print("built tree %d of %d, train score = %.6e, "
+                          "oob score = %.6e" % (i + 1, self.n_estimators,
                            self.train_score_[i], self.oob_score_[i]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss(y, y_pred)
                 if self.verbose > 1:
-                    print("built tree %d of %d, train score = %g\r" %
+                    print("built tree %d of %d, train score = %.6e" %
                         (i + 1, self.n_estimators, self.train_score_[i]))
             if self.verbose == 1:
                 print(end='.')
