@@ -16,12 +16,6 @@ We also train a simple logistic regression for comparison. The example shows
 that the features extracted by the RestrictedBolzmannMachine help improve
 the classification accuracy.
 
-Note
-----
-
-Much better performance can be achieved by using larger n_components and n_iter
-for the RestrictedBolzmannMachine.
-
 """
 print __doc__
 
@@ -40,26 +34,34 @@ from sklearn.grid_search import GridSearchCV
 ###############################################################################
 # Setting up
 
+np.random.seed(0xfeeb)
+
 # Load Data
-digits = datasets.fetch_mldata('MNIST original')
+digits = datasets.load_digits()
 X = np.asarray(digits.data, 'float32') / digits.data.max()
-Y = digits.target == 8 # Classification of class 8 vs all
+Y = digits.target
+train_size = int(0.8 * X.shape[0])
+
+# Shuffle train-test split
+inds = range(X.shape[0])
+np.random.shuffle(inds)
+X = X[inds]
+Y = Y[inds]
 
 # Models we will use
 logistic = linear_model.LogisticRegression()
 rbm = RestrictedBolzmannMachine()
 
 pipe = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
-logistic_pipe = Pipeline(steps=[('logistic', logistic)])
 
 ###############################################################################
 # Training
 
 # Hyper-parameters
-n_components = [256]
-learning_rate = [0.01]
-Cs = [10000]
-n_iter = [5]
+n_components = [350, 400, 450]
+learning_rate = [0.01, 0.01]
+Cs = np.logspace(-4, 4, 2)
+n_iter = [20, 30]
 
 # Training RBM-Logistic Pipeline
 estimator = GridSearchCV(pipe,
@@ -67,13 +69,13 @@ estimator = GridSearchCV(pipe,
                               rbm__learning_rate=learning_rate,
                               rbm__n_iter=n_iter,
                               logistic__C=Cs))
-estimator.fit(X[:60000], Y[:60000])
+estimator.fit(X[:train_size], Y[:train_size])
 classifier = estimator.best_estimator_
 
 # Training Logistic regression
-logistic_estimator = GridSearchCV(logistic_pipe,
-                                  dict(logistic__C=np.logspace(-4, 4, 2)))
-logistic_estimator.fit(X[:60000], Y[:60000])
+logistic_estimator = GridSearchCV(logistic,
+                                  dict(C=Cs))
+logistic_estimator.fit(X[:train_size], Y[:train_size])
 logistic_classifier = logistic_estimator.best_estimator_
 
 
@@ -81,9 +83,9 @@ logistic_classifier = logistic_estimator.best_estimator_
 # Evaluation
 
 print "Classification report for classifier %s:\n%s\n" % (
-    classifier, metrics.classification_report(Y[60000:],
-        classifier.predict(X[60000:])))
+    classifier, metrics.classification_report(Y[train_size:],
+        classifier.predict(X[train_size:])))
 
 print "Classification report for classifier %s:\n%s\n" % (
-    logistic_classifier, metrics.classification_report(Y[60000:],
-        logistic_classifier.predict(X[60000:])))
+    logistic_classifier, metrics.classification_report(Y[train_size:],
+        logistic_classifier.predict(X[train_size:])))
