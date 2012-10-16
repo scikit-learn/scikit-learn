@@ -579,8 +579,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
-            max_iter=-1 nu=0.1, probability=False, shrinking=True, tol=0.001,
-            verbose=False)
+       max_iter=-1, nu=0.1, probability=False, shrinking=True, tol=0.001,
+       verbose=False)
 
     See also
     --------
