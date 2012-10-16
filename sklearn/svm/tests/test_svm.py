@@ -4,6 +4,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
+import warnings
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
@@ -12,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_equal
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
+from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_less
 
 # toy sample
@@ -573,6 +575,18 @@ def test_svc_clone_with_callable_kernel():
     b.predict(X)
     b.predict_proba(X)
     b.decision_function(X)
+
+
+def test_timeout():
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+        probability=True,
+        max_iter=1)
+    with warnings.catch_warnings(record=True) as foo:
+        a.fit(X, Y)
+        assert_equal(len(foo), 1,
+            msg=foo)
+        assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':
