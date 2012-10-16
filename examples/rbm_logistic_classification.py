@@ -27,7 +27,7 @@ print __doc__
 import numpy as np
 
 from sklearn import linear_model, datasets, metrics, preprocessing
-from sklearn.rbm import RestrictedBolzmannMachine
+from sklearn.neural_networks import RestrictedBolzmannMachine
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 

@@ -8,9 +8,9 @@ import time
 
 import numpy as np
 
-from .base import BaseEstimator, TransformerMixin
-from .utils import array2d, check_random_state
-from .utils.extmath import safe_sparse_dot
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import array2d, check_random_state
+from ..utils.extmath import safe_sparse_dot
 
 
 def logistic_sigmoid(x):
@@ -72,7 +72,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     --------
     
     >>> import numpy as np
-    >>> from sklearn.rbm import RestrictedBolzmannMachine
+    >>> from sklearn.neural_networks import RestrictedBolzmannMachine
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = RestrictedBolzmannMachine(n_components=2)
     >>> model.fit(X)
