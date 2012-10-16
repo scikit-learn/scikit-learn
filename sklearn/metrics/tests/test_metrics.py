@@ -299,6 +299,21 @@ def test_confusion_matrix_multiclass():
                             [5, 20,  5]])
 
 
+def test_confusion_matrix_multiclass_nonexist_label():
+    """Test confusion matrix - multi-class case with non-existing labels"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute confusion matrix with default labels introspection
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    assert_array_equal(cm, [[23, 2],
+                            [5,  5]])
+
+    # compute confusion matrix with explicit label ordering
+    cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
+    assert_array_equal(cm, [[18,  2],
+                            [20,  5]])
+
+
 def test_classification_report():
     """Test performance report"""
     iris = datasets.load_iris()
@@ -387,9 +402,9 @@ def test_symmetry():
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
     # not symmetric
-    assert_true(explained_variance_score(y_true, y_pred) != \
+    assert_true(explained_variance_score(y_true, y_pred) !=
             explained_variance_score(y_pred, y_true))
-    assert_true(r2_score(y_true, y_pred) != \
+    assert_true(r2_score(y_true, y_pred) !=
             r2_score(y_pred, y_true))
     # FIXME: precision and recall aren't symmetric either
 
