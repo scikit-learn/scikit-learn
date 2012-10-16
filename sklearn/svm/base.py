@@ -7,7 +7,7 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..utils import atleast2d_or_csr, array2d
+from ..utils import atleast2d_or_csr, array2d, check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils import ConvergenceWarning
 
@@ -222,7 +222,6 @@ class BaseLibSVM(BaseEstimator):
         else:
             raise NotImplementedError(
                 'unrecognized Solver fit_status', self.fit_status_)
-
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
 
@@ -584,7 +583,7 @@ class BaseLibLinear(BaseEstimator):
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-            class_weight=None, verbose=0):
+            class_weight=None, verbose=0, random_state=None):
 
         if C is None:
             warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
@@ -603,6 +602,7 @@ class BaseLibLinear(BaseEstimator):
         self.multi_class = multi_class
         self.class_weight = class_weight
         self.verbose = verbose
+        self.random_state = random_state
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -685,11 +685,13 @@ class BaseLibLinear(BaseEstimator):
         else:
             train = liblinear.train_wrap
 
+        rnd = check_random_state(self.random_state)
         if self.verbose:
             print '[LibLinear]',
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
-                               self.class_weight_label_, self.class_weight_)
+                               self.class_weight_label_, self.class_weight_,
+                               rnd.randint(1000))
 
         if self.fit_intercept:
             self.coef_ = self.raw_coef_[:, :-1]
