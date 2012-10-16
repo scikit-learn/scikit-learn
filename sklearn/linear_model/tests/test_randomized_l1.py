@@ -10,7 +10,6 @@ from sklearn.linear_model.randomized_l1 import lasso_stability_path, \
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import Scaler
 from sklearn.linear_model.base import center_data
 
 diabetes = load_diabetes()
