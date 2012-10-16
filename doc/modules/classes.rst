@@ -213,6 +213,7 @@ Samples generator
    decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
+   decomposition.FactorAnalysis
    decomposition.FastICA
    decomposition.NMF
    decomposition.SparsePCA

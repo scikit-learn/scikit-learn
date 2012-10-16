@@ -172,7 +172,7 @@ names = dict((i, name) for name, i in index_map.iteritems())
 
 print "Computing the principal singular vectors using randomized_svd"
 t0 = time()
-U, s, V = randomized_svd(X, 5, n_iterations=3)
+U, s, V = randomized_svd(X, 5, n_iter=3)
 print "done in %0.3fs" % (time() - t0)
 
 # print the names of the wikipedia related strongest compenents of the the

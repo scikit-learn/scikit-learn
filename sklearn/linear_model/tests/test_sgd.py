@@ -183,7 +183,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
-        self.factory(penalty='foobar', rho=0.85)
+        self.factory(penalty='foobar', l1_ratio=0.85)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -549,7 +549,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
-        self.factory(penalty='foobar', rho=0.85)
+        self.factory(penalty='foobar', l1_ratio=0.85)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
@@ -643,15 +643,16 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
 
         # XXX: alpha = 0.1 seems to cause convergence problems
         for alpha in [0.01, 0.001]:
-            for rho in [0.5, 0.8, 1.0]:
-                cd = linear_model.ElasticNet(alpha=alpha, rho=rho,
+            for l1_ratio in [0.5, 0.8, 1.0]:
+                cd = linear_model.ElasticNet(alpha=alpha, l1_ratio=l1_ratio,
                                              fit_intercept=False)
                 cd.fit(X, y)
                 sgd = self.factory(penalty='elasticnet', n_iter=50,
-                                   alpha=alpha, rho=rho, fit_intercept=False)
+                        alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
                 sgd.fit(X, y)
                 err_msg = ("cd and sgd did not converge to comparable "
-                           "results for alpha=%f and rho=%f" % (alpha, rho))
+                        "results for alpha=%f and l1_ratio=%f"
+                        % (alpha, l1_ratio))
                 assert_almost_equal(cd.coef_, sgd.coef_, decimal=2,
                                     err_msg=err_msg)
 

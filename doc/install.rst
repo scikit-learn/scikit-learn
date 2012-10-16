@@ -5,8 +5,8 @@ Installing `scikit-learn`
 There are different ways to get scikit-learn installed:
 
   * Install the version of scikit-learn provided by your
-    :ref:`operating system distribution <install_by_distribution>` . This
-    is the quickest option for those who have operating systems that
+    :ref:`operating system or Python distribution <install_by_distribution>`.
+    This is the quickest option for those who have operating systems that
     distribute scikit-learn.
 
   * :ref:`Install an official release <install_official_release>`. This
@@ -72,7 +72,7 @@ From source package
 ~~~~~~~~~~~~~~~~~~~
 
 Download the package from http://pypi.python.org/pypi/scikit-learn/
-, unpack the sources and cd into archive.
+, unpack the sources and cd into the source directory.
 
 This packages uses distutils, which is the default way of installing
 python modules. The install command is::
@@ -83,16 +83,16 @@ python modules. The install command is::
 Windows installer
 -----------------
 
-You can download a windows installer from `downloads
+You can download a Windows installer from `downloads
 <https://sourceforge.net/projects/scikit-learn/files/>`_ in the
 project's web page. Note that must also have installed the packages
 numpy and setuptools.
 
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
-.. topic:: **Installing on Windows 64bit**
+.. topic:: **Installing on Windows 64-bit**
 
-   To install a 64bit version of the scikit, you can download the
+   To install a 64-bit version of scikit-learn, you can download the
    binaries from http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn
    Note that this will require a compatible version of numpy, scipy and
    matplotlib. The easiest option is to also download them from the same
@@ -103,7 +103,7 @@ Building on windows
 
 To build scikit-learn on windows you will need a C/C++ compiler in
 addition to numpy, scipy and setuptools. At least
-`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and the
+`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and
 Microsoft Visual C++ 2008 should work out of the box. To force the use
 of a particular compiler, write a file named ``setup.cfg`` in the
 source directory with the content::
@@ -146,8 +146,8 @@ These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
 dependencies (numpy, scipy) that scikit-learn requires.
 
-The following is a list of Linux distributions that provide their own
-version of scikit-learn:
+The following is an imcomplete list of Python and OS distributions
+that provide their own version of scikit-learn:
 
 
 Debian and derivatives (Ubuntu)
@@ -224,12 +224,12 @@ source directory::
     nosetests sklearn --exe
 
 This should give you a lot of output (and some warnings) but
-eventually should finish with the a text similar to::
+eventually should finish with a message similar to::
 
            Ran 601 tests in 27.920s
            OK (SKIP=2)
 
-otherwise please consider posting an issue into the `bug tracker
+Otherwise, please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists`.
 
@@ -252,7 +252,7 @@ Test can now be run using nosetests::
 
     nosetests sklearn/
 
-This is automated in the commands::
+This is automated by the commands::
 
     make in
 

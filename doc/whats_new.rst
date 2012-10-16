@@ -14,6 +14,12 @@ Changelog
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
 
+   - :class:`feature_selection.SelectKBest` and
+     :class:`feature_selection.SelectPercentile` are more numerically stable
+     since they use scores, rather than p-values, to rank results. This means
+     that they might sometimes select different features than they did
+     previously.
+
    - Ridge regression and ridge classification fitting with ``sparse_cg`` solver
      no longer has quadratic memory complexity, by `Lars Buitinck`_ and
      `Fabian Pedregosa`_.
@@ -30,6 +36,12 @@ Changelog
 
    - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
      of several transformers by `Andreas Müller`_.
+
+   - Faster and more robust :func:`metrics.confusion_matrix` and
+     :ref:`clustering_evaluation`_ by Wei Li.
+
+   - New estimator :class:`decomposition.FactorAnalysis` by
+     `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
 
 API changes summary
@@ -54,6 +66,23 @@ API changes summary
    - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
      instead of COO.
 
+   - Renamed ``k`` in :class:`cross_validation.KFold` and
+     :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
+     ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
+
+   - Renamed all occurences of ``n_iterations`` to ``n_iter`` for consistency.
+     This applies to :class:`cross_validation.ShuffleSplit`,
+     :class:`cross_validation.StratifiedShuffleSplit`,
+     :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
+
+   - Replaced `rho` in :class:`linear_model.ElasticNet` and
+     :class:`linear_model.SGDClassifier` by ``l1_ratio``. The `rho` parameter
+     had different meanings; ``l1_ratio`` was introduced to avoid confusion.
+     It has the same meaning as previously rho in
+     :class:`linear_model.ElasticNet` and ``(1-rho)`` in
+     :class:`linear_model.SGDClassifier`,
+
+
 .. _changes_0_12.1:
 
 0.12.1
@@ -70,8 +99,8 @@ Changelog
 
  - Doctest under windows 64bit by `Gael Varoquaux`_
 
- - Documentation fixes for elastic net by `Andreas Mueller`_ and
- `Alexandre Gramfort`_
+ - Documentation fixes for elastic net by `Andreas Müller`_ and
+   `Alexandre Gramfort`_
 
  - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
 
@@ -79,7 +108,7 @@ Changelog
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
- - Fix unicode support in count vectorizer by `Andreas Mueller`_
+ - Fix unicode support in count vectorizer by `Andreas Müller`_
 
  - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
 
@@ -91,8 +120,8 @@ People
 ------
 
  *  14  `Peter Prettenhofer`_
- *  10  `Andreas Mueller`_
- *  10  `Gael Varoquaux`_
+ *  12  `Gael Varoquaux`_
+ *  10  `Andreas Müller`_
  *   5  `Lars Buitinck`_
  *   3  `Virgile Fritsch`_
  *   1  `Alexandre Gramfort`_
@@ -1233,7 +1262,7 @@ People that made this release possible preceeded by number of commits:
 
    * 2  Ronan Amicel
 
-   * 1 `Christian Osendorfer <http://osdf.github.com/>`_
+   * 1 `Christian Osendorfer`_
 
 
 
@@ -1469,3 +1498,4 @@ of commits):
 
 .. _@kernc: http://github.com/kernc
 
+.. _Christian Osendorfer: http://osdf.github.com

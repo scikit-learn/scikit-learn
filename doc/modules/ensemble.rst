@@ -135,7 +135,7 @@ for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). The best results are also usually reached when setting
 ``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developping the trees). Bear in mind though that these values
+when fully developing the trees). Bear in mind though that these values
 are usually not optimal. The best parameter values should always be cross-
 validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
@@ -206,7 +206,7 @@ a :class:`ExtraTreesClassifier` model.
 In practice those estimates can be computed by explicitly passing
 ``compute_importances=True`` to the constructor of the decision trees,
 random forest and extremly randomized trees models. The result is stored
-as an attribute named ``features_importances_`` on the fitted model. This
+as an attribute named ``feature_importances_`` on the fitted model. This
 is an array with shape ``(n_features,)`` whose values are positive and sum
 to 1.0. The higher the value, the more important is the contribution of
 the matching feature to the prediction function.
@@ -309,7 +309,7 @@ with least squares loss and 500 base learners to the Boston house-price dataset
 (see :func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
 Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be optained via the ``feature_importance``
+shows the feature importances which can be optained via the ``feature_importances_``
 property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png

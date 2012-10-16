@@ -88,7 +88,7 @@ class Perceptron(SGDClassifier):
                  n_jobs=1, seed=0, class_weight=None, warm_start=False):
         super(Perceptron, self).__init__(loss="perceptron",
                                          penalty=penalty,
-                                         alpha=alpha, rho=0,
+                                         alpha=alpha, l1_ratio=0,
                                          fit_intercept=fit_intercept,
                                          n_iter=n_iter,
                                          shuffle=shuffle,
