@@ -299,16 +299,17 @@ def test_confusion_matrix_multiclass():
                             [5, 20,  5]])
 
 
-def test_confusion_matrix_multiclass_nonexist_label():
-    """Test confusion matrix - multi-class case with non-existing labels"""
+def test_confusion_matrix_multiclass_subset_labels():
+    """Test confusion matrix - multi-class case with subset of labels"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute confusion matrix with default labels introspection
+    # compute confusion matrix with only first two labels considered
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
     assert_array_equal(cm, [[23, 2],
                             [5,  5]])
 
-    # compute confusion matrix with explicit label ordering
+    # compute confusion matrix with explicit label ordering for only subset
+    # of labels
     cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
     assert_array_equal(cm, [[18,  2],
                             [20,  5]])
