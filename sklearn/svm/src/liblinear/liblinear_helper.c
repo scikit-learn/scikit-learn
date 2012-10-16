@@ -179,8 +179,9 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 
 
 /* Create a paramater struct with and return it */
-struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp nr_weight, char *weight_label, char *weight)
+struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp nr_weight, char *weight_label, char *weight, int seed)
 {
+    srand(seed);
     struct parameter *param;
     param = malloc(sizeof(struct parameter));
     if (param == NULL) return NULL;
