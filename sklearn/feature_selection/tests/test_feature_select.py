@@ -433,3 +433,18 @@ def test_tied_pvalues():
         Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
         assert_equal(Xt.shape, (2, 2))
         assert_not_in(9998, Xt)
+
+
+def test_nans():
+    """Assert that SelectKBest and SelectPercentile can handle NaNs."""
+    # First feature has zero variance to confuse f_classif (ANOVA) and
+    # make it return a NaN.
+    X = [[0, 1, 0],
+         [0, -1, -1],
+         [0, .5, .5]]
+    y = [1, 0, 1]
+
+    for select in (SelectKBest(f_classif, 2),
+                   SelectPercentile(f_classif, percentile=67)):
+        select.fit(X, y)
+        assert_array_equal(select.get_support(indices=True), np.array([1, 2]))

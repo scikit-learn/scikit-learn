@@ -15,9 +15,22 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, atleast2d_or_csr, check_arrays, safe_asarray,
-                     safe_sqr, safe_mask)
+from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
+                     safe_asarray, safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
+
+
+def _clean_nans(scores):
+    """
+    Fixes Issue #1240: NaNs can't be properly compared, so change them to the
+    smallest value of scores's dtype. -inf seems to be unreliable.
+    """
+    # XXX where should this function be called? fit? scoring functions
+    # themselves?
+    scores = as_float_array(scores, copy=True)
+    scores[np.isnan(scores)] = np.finfo(scores.dtype).min
+    return scores
+
 
 ######################################################################
 # Scoring functions
@@ -336,13 +349,15 @@ class SelectPercentile(_AbstractUnivariateFilter):
             return np.ones(len(self.scores_), dtype=np.bool)
         elif percentile == 0:
             return np.zeros(len(self.scores_), dtype=np.bool)
-        alpha = stats.scoreatpercentile(self.scores_, 100 - percentile)
+        scores = _clean_nans(self.scores_)
+
+        alpha = stats.scoreatpercentile(scores, 100 - percentile)
         # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(self.scores_ >= alpha)[0]
+        inds = np.where(scores >= alpha)[0]
         # if we selected too many features because of equal scores,
         # we throw them away now
-        inds = inds[:len(self.scores_) * percentile // 100]
-        mask = np.zeros(self.scores_.shape, dtype=np.bool)
+        inds = inds[:len(scores) * percentile // 100]
+        mask = np.zeros(scores.shape, dtype=np.bool)
         mask[inds] = True
         return mask
 
@@ -384,11 +399,12 @@ class SelectKBest(_AbstractUnivariateFilter):
             raise ValueError("cannot select %d features among %d"
                              % (k, len(self.scores_)))
 
+        scores = _clean_nans(self.scores_)
         # XXX This should be refactored; we're getting an array of indices
         # from argsort, which we transform to a mask, which we probably
         # transform back to indices later.
-        mask = np.zeros(self.scores_.shape, dtype=bool)
-        mask[np.argsort(self.scores_)[-k:]] = 1
+        mask = np.zeros(scores.shape, dtype=bool)
+        mask[np.argsort(scores)[-k:]] = 1
         return mask
 
 
