@@ -104,11 +104,13 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     The isotonic regression optimization problem is defined by::
         min sum w_i (y[i] - y_[i]) ** 2
 
-        subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
+        subject to y_[i] <= y_[j] whenever X[i] <= X[j]
+        and min(y_) = y_min, max(y_) = y_max
 
     where:
         - y[i] are inputs (real numbers)
         - y_[i] are fitted
+        - X specifies the order. If X is non-decreasing then y_ is non-decreasing.
         - w[i] are optional strictly positive weights (default to 1.0)
 
     Parameters
@@ -159,20 +161,20 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        self; object
+        self: object
             returns an instance of self
 
         Note
         ----
-        X doesn't influence the result of `fit`. It is however stored
-        for future use, as `transform` needs X to interpolate new
-        input data.
+        X is stored for future use, as `transform` needs X to interpolate
+        new input data.
         """
         X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
         y = as_float_array(y)
-        self.X_ = as_float_array(X, copy=True)
-        self._check_fit_data(self.X_, y, weight)
-        self.y_ = isotonic_regression(y, weight, self.y_min, self.y_max)
+        self._check_fit_data(X, y, weight)
+        order = np.argsort(X)
+        self.X_ = as_float_array(X[order], copy=False)
+        self.y_ = isotonic_regression(y[order], weight, self.y_min, self.y_max)
         return self
 
     def transform(self, T):
@@ -193,7 +195,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             raise ValueError("X should be a vector")
 
         f = interpolate.interp1d(self.X_, self.y_, kind='linear',
-                                 bounds_error=True)
+            bounds_error=True)
         return f(T)
 
     def fit_transform(self, X, y, weight=None):
@@ -222,8 +224,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         for future use, as `transform` needs X to interpolate new input
         data.
         """
-        self.fit(X, y, weight)
-        return self.y_
+        X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
+        y = as_float_array(y)
+        self._check_fit_data(X, y, weight)
+        order = np.argsort(X)
+        order_inv = np.zeros(len(y), dtype=np.int)
+        order_inv[order] = np.arange(len(y))
+        self.X_ = as_float_array(X[order], copy=False)
+        self.y_ = isotonic_regression(y[order], weight, self.y_min, self.y_max)
+        return self.y_[order_inv]
 
     def predict(self, T):
         """Predict new data by linear interpolation.
