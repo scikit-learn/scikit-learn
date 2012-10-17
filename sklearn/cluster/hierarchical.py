@@ -206,6 +206,180 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
 
 ###############################################################################
+# Single linkage algorithm
+
+def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
+              n_clusters=None):
+    """Single clustering based on a Feature matrix.
+
+    The inertia matrix uses a Heapq-based representation.
+
+    This is the structured version, that takes into account a some topological
+    structure between samples.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        feature matrix  representing n_samples samples to be clustered
+
+    connectivity : sparse matrix.
+        connectivity matrix. Defines for each sample the neigbhoring samples
+        following a given structure of the data. The matrix is assumed to
+        be symmetric and only the upper triangular half is used.
+        Default is None, i.e, the Ward algorithm is unstructured.
+
+    n_components : int (optional)
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+
+    copy : bool (optional)
+        Make a copy of connectivity or work inplace. If connectivity
+        is not of LIL type there will be a copy in any case.
+
+    n_clusters : int (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. In this case, the
+        complete tree is not computed, thus the 'children' output is of
+        limited use, and the 'parents' output should rather be used.
+        This option is valid only when specifying a connectivity matrix.
+
+    Returns
+    -------
+    children : 2D array, shape (n_nodes, 2)
+        list of the children of each nodes.
+        Leaves of the tree have empty list of children.
+
+    n_components : sparse matrix.
+        The number of connected components in the graph.
+
+    n_leaves : int
+        The number of leaves in the tree
+
+    parents : 1D array, shape (n_nodes, ) or None
+        The parent of each node. Only returned when a connectivity matrix
+        is specified, elsewhere 'None' is returned.
+    """
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = np.reshape(X, (-1, 1))
+    n_samples, n_features = X.shape
+
+    if connectivity is None:
+        if n_clusters is not None:
+            warnings.warn('Early stopping is implemented only for '
+                             'structured clustering (i.e. with '
+                             'explicit connectivity.', stacklevel=2)
+        out = hierarchy.single(X)
+        children_ = out[:, :2].astype(np.int)
+        return children_, 1, n_samples, None
+
+    # Compute the number of nodes
+    if n_components is None:
+        n_components, labels = cs_graph_components(connectivity)
+
+    # We need a coo version of the connectivity to compute distances
+    if not sparse.isspmatrix(connectivity):
+        if copy:
+            connectivity = connectivity.copy()
+        # Put the diagonal to zero
+        connectivity.flat[::n_samples + 1] = 0
+        connectivity = sparse.coo_matrix(connectivity)
+    else:
+        connectivity = connectivity.tocoo(copy=copy)
+        # Put the diagonal to zero
+        diag_mask = (connectivity.row == connectivity.col)
+        connectivity.row = connectivity.row[diag_mask]
+        connectivity.col = connectivity.col[diag_mask]
+        connectivity.data = connectivity.data[diag_mask]
+        del diag_mask
+    distances = X[connectivity.row] - X[connectivity.col]
+    distances **= 2
+    connectivity.data = distances.sum(axis=-1)
+
+    connectivity = connectivity.tolil()
+
+    if n_components > 1:
+        warnings.warn("the number of connected components of the"
+                      " connectivity matrix is %d > 1. Completing it to avoid"
+                      " stopping the tree early."
+                      % n_components)
+        # XXX: should silence the SparseEfficiencyWarning
+        # XXX: should retrieve the fixed indices, to complete the
+        # distances matrix
+        connectivity = _fix_connectivity(X, connectivity,
+                                            n_components, labels)
+        n_components = 1
+
+    if n_clusters is None:
+        n_nodes = 2 * n_samples - n_components
+    else:
+        assert n_clusters <= n_samples
+        n_nodes = 2 * n_samples - n_clusters
+
+    if (connectivity.shape[0] != n_samples or
+        connectivity.shape[1] != n_samples):
+        raise ValueError('Wrong shape for connectivity matrix: %s '
+                         'when X is %s' % (connectivity.shape, X.shape))
+
+    # create inertia heap and connection matrix
+    A = np.empty(n_nodes, dtype=object)
+    inertia = list()
+
+    for ind, (data, row)  in enumerate(zip(connectivity.data,
+                                           connectivity.rows)):
+        data_row_pair = zip(row, data)
+        A[ind] = data_row_pair
+        # We keep only the upper triangular for the heap
+        # Generator expressions are faster than arrays on the following
+        [inertia.append((d, ind, r))
+                            for r, d in data_row_pair
+                            if d < ind]
+    del connectivity
+
+    heapify(inertia)
+
+    # prepare the main fields
+    parent = np.arange(n_nodes, dtype=np.int)
+    used_node = np.ones(n_nodes, dtype=bool)
+    children = []
+
+    # recursive merge loop
+    for k in xrange(n_samples, n_nodes):
+        # identify the merge
+        while True:
+            inert, i, j = heappop(inertia)
+            if used_node[i] and used_node[j]:
+                break
+        parent[i] = parent[j] = k
+
+        children.append([i, j])
+        used_node[i] = used_node[j] = False
+
+        # update the structure matrix A and the inertia matrix
+        # a clever 'min' operation between A[i] and A[j]
+        coord_col = dict(A[i])
+        # Cheap trick: min(foo, object) is always foo
+        [coord_col.__setitem__(index, min(coord_col.get(index, object), dist))
+                    for index, dist in A[j]]
+        coord_col = coord_col.items()
+        # List comprehension is faster than a for loop
+        [A[l].append((k, d)) for l, d in coord_col]
+        A[k] = coord_col
+
+        # Here we use the information from coord_col (containing the
+        # distances) to update the heap
+        # List comprehension is faster than a for loop
+        [heappush(inertia, (d, k, l)) for l, d in coord_col]
+
+    # Separate leaves in children (empty lists up to now)
+    n_leaves = n_samples
+    children = np.array(children)  # return numpy array for efficient caching
+
+    return children, n_components, n_leaves, parent
+
+
+###############################################################################
 # For non fully-connected graphs
 
 def _fix_connectivity(X, connectivity, n_components, labels):
