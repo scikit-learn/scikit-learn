@@ -582,6 +582,10 @@ def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
         probability=True, max_iter=1)
     with warnings.catch_warnings(record=True) as foo:
+        # Hackish way to reset the  warning counter
+        from sklearn.svm import base
+        base.__warningregistry__ = {}
+        warnings.simplefilter("always")
         a.fit(X, Y)
         assert_equal(len(foo), 1,
             msg=foo)
