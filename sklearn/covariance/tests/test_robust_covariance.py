@@ -4,7 +4,8 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
+    assert_raises
 
 import numpy as np
 
@@ -67,15 +68,30 @@ def launch_mcd_on_dataset(
     assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
+def test_mcd_issue1127():
+    # Check that the code does not break with X.shape = (3, 1)
+    # (i.e. n_support = n_samples)
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(3, 1))
+    mcd = MinCovDet()
+    mcd.fit(X)
+
+
 def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
+    print clf.threshold
+    assert_raises(Exception, clf.predict, X)
+    assert_raises(Exception, clf.decision_function, X)
     clf.fit(X)
     y_pred = clf.predict(X)
+    decision = clf.decision_function(X, raw_values=True)
+    decision_transformed = clf.decision_function(X, raw_values=False)
 
     assert_array_almost_equal(
-        clf.decision_function(X, raw_values=True), clf.mahalanobis(X))
+        decision, clf.mahalanobis(X))
     assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
+    assert(sum(y_pred == -1) == sum(decision_transformed < 0))

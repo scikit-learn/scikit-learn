@@ -9,15 +9,13 @@ Quadratic Discriminant Analysis
 import warnings
 
 import numpy as np
-import scipy.ndimage as ndimage
 
 from .base import BaseEstimator, ClassifierMixin
+from .utils.fixes import unique
+from .utils import check_arrays
 
+__all__ = ['QDA']
 
-# FIXME :
-# - in fit(X, y) method, many checks are common with other models
-#   (in particular LDA model) and should be factorized:
-#   maybe in BaseEstimator ?
 
 class QDA(BaseEstimator, ClassifierMixin):
     """
@@ -78,32 +76,14 @@ class QDA(BaseEstimator, ClassifierMixin):
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
         """
-        X = np.asarray(X)
-        y = np.asarray(y)
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-        if X.shape[0] != y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while y '
-                'has %s' % (X.shape[0], y.shape[0]))
-        if y.dtype.char.lower() not in ('b', 'h', 'i'):
-            # We need integer values to be able to use
-            # ndimage.measurements and np.bincount on numpy >= 2.0.
-            # We currently support (u)int8, (u)int16 and (u)int32.
-            # Note that versions of scipy >= 0.8 can also accept
-            # (u)int64. We however don't support it for backwards
-            # compatibility.
-            y = y.astype(np.int32)
+        X, y = check_arrays(X, y)
+        self.classes_, y = unique(y, return_inverse=True)
         n_samples, n_features = X.shape
-        classes = np.unique(y)
-        n_classes = classes.size
+        n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
-        classes_indices = [(y == c).ravel() for c in classes]
         if self.priors is None:
-            counts = np.array(ndimage.measurements.sum(
-                np.ones(n_samples, dtype=y.dtype), y, index=classes))
-            self.priors_ = counts / float(n_samples)
+            self.priors_ = np.bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 
@@ -113,8 +93,8 @@ class QDA(BaseEstimator, ClassifierMixin):
         means = []
         scalings = []
         rotations = []
-        for group_indices in classes_indices:
-            Xg = X[group_indices, :]
+        for ind in xrange(n_classes):
+            Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
             Xgc = Xg - meang
@@ -134,8 +114,27 @@ class QDA(BaseEstimator, ClassifierMixin):
         self.means_ = np.asarray(means)
         self.scalings = np.asarray(scalings)
         self.rotations = rotations
-        self.classes = classes
         return self
+
+    @property
+    def classes(self):
+        warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
+                      "Use QDA.classes_ instead.", DeprecationWarning,
+                      stacklevel=2)
+        return self.classes_
+
+    def _decision_function(self, X):
+        X = np.asarray(X)
+        norm2 = []
+        for i in range(len(self.classes_)):
+            R = self.rotations[i]
+            S = self.scalings[i]
+            Xm = X - self.means_[i]
+            X2 = np.dot(Xm, R * (S ** (-0.5)))
+            norm2.append(np.sum(X2 ** 2, 1))
+        norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
+        return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
+                + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
@@ -147,20 +146,16 @@ class QDA(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : array, shape = [n_samples, n_classes] or [n_samples,]
             Decision function values related to each class, per sample.
+            In the two-class case, the shape is [n_samples,], giving the
+            log likelihood ratio of the positive class.
         """
-        X = np.asarray(X)
-        norm2 = []
-        for i in range(len(self.classes)):
-            R = self.rotations[i]
-            S = self.scalings[i]
-            Xm = X - self.means_[i]
-            X2 = np.dot(Xm, R * (S ** (-0.5)))
-            norm2.append(np.sum(X2 ** 2, 1))
-        norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
-                + np.log(self.priors_))
+        dec_func = self._decision_function(X)
+        # handle special case of two classes
+        if len(self.classes_) == 2:
+            return dec_func[:, 1] - dec_func[:, 0]
+        return dec_func
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -175,8 +170,8 @@ class QDA(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
-        d = self.decision_function(X)
-        y_pred = self.classes[d.argmax(1)]
+        d = self._decision_function(X)
+        y_pred = self.classes_.take(d.argmax(1))
         return y_pred
 
     def predict_proba(self, X):
@@ -192,7 +187,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
             Posterior probabilities of classification per class.
         """
-        values = self.decision_function(X)
+        values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])

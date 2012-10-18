@@ -5,19 +5,22 @@ better.
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
+#          Wei LI <kuantkid@gmail.com>
 # License: BSD Style.
 
 from math import log
 from scipy.misc import comb
 from scipy.special import gammaln
+from scipy.sparse import coo_matrix
 
 import numpy as np
 
 from ...utils.fixes import unique
 
-
 # the exact version if faster for k == 2: use it by default globally in
 # this module instead of the float approximate variant
+
+
 def comb2(n):
     return comb(n, 2, exact=1)
 
@@ -64,18 +67,17 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
         in predicted class j. If eps is None, the dtype of this array will be
         integer. If eps is given, the dtype will be float.
     """
-    classes = np.unique(labels_true)
-    clusters = np.unique(labels_pred)
-    # The cluster and class ids are not necessarily consecutive integers
-    # starting at 0 hence build a map
-    class_idx = dict((k, v) for v, k in enumerate(classes))
-    cluster_idx = dict((k, v) for v, k in enumerate(clusters))
-    # Build the contingency table
+    classes, class_idx = unique(labels_true, return_inverse=True)
+    clusters, cluster_idx = unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    contingency = np.zeros((n_classes, n_clusters), dtype=np.int)
-    for c, k in zip(labels_true, labels_pred):
-        contingency[class_idx[c], cluster_idx[k]] += 1
+    # Using coo_matrix to accelerate simple histogram calculation,
+    # i.e. bins are consecutive integers
+    # Currently, coo_matrix is faster than histogram2d for simple cases
+    contingency = np.asarray(coo_matrix((np.ones(class_idx.shape[0]),
+                                         (class_idx, cluster_idx)),
+                                        shape=(n_classes, n_clusters),
+                                        dtype=np.int).todense())
     if eps is not None:
         # Must be a float matrix to accept float eps
         contingency = np.array(contingency, dtype='float') + eps
@@ -235,37 +237,17 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     v_measure_score
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples = labels_true.shape[0]
 
-    entropy_K_given_C = 0.
-    entropy_C_given_K = 0.
-    entropy_C = 0.
-    entropy_K = 0.
+    if len(labels_true) == 0:
+        return 1.0, 1.0, 1.0
 
-    classes = np.unique(labels_true)
-    clusters = np.unique(labels_pred)
+    entropy_C = entropy(labels_true)
+    entropy_K = entropy(labels_pred)
 
-    n_C = [float(np.sum(labels_true == c)) for c in classes]
-    n_K = [float(np.sum(labels_pred == k)) for k in clusters]
+    MI = mutual_info_score(labels_true, labels_pred)
 
-    for i in xrange(len(classes)):
-        entropy_C -= n_C[i] / n_samples * log(n_C[i] / n_samples)
-
-    for j in xrange(len(clusters)):
-        entropy_K -= n_K[j] / n_samples * log(n_K[j] / n_samples)
-
-    for i, c in enumerate(classes):
-        for j, k in enumerate(clusters):
-            # count samples at the intersection of class c and cluster k
-            n_CK = float(np.sum((labels_true == c) * (labels_pred == k)))
-
-            if n_CK != 0.0:
-                # turn label assignments into contribution to entropies
-                entropy_C_given_K -= n_CK / n_samples * log(n_CK / n_K[j])
-                entropy_K_given_C -= n_CK / n_samples * log(n_CK / n_C[i])
-
-    homogeneity = 1.0 - entropy_C_given_K / entropy_C if entropy_C else 1.0
-    completeness = 1.0 - entropy_K_given_C / entropy_K if entropy_K else 1.0
+    homogeneity = MI / (entropy_C) if entropy_C else 1.0
+    completeness = MI / (entropy_K) if entropy_K else 1.0
 
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
@@ -326,18 +308,22 @@ def homogeneity_score(labels_true, labels_pred):
     Non-pefect labelings that futher split classes into more clusters can be
     perfectly homogeneous::
 
-      >>> homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2])
-      1.0
-      >>> homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3])
-      1.0
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
+      ...                                                  # doctest: +ELLIPSIS
+      1.0...
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
+      ...                                                  # doctest: +ELLIPSIS
+      1.0...
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
 
-      >>> homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1])
-      0.0
-      >>> homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0])
-      0.0
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1]))
+      ...                                                  # doctest: +ELLIPSIS
+      0.0...
+      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
+      ...                                                  # doctest: +ELLIPSIS
+      0.0...
 
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
@@ -393,17 +379,17 @@ def completeness_score(labels_true, labels_pred):
     Non-pefect labelings that assign all classes members to the same clusters
     are still complete::
 
-      >>> completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
+      >>> print completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
       1.0
-      >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
+      >>> print completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
       1.0
 
     If classes members are splitted across different clusters, the
     assignment cannot be complete::
 
-      >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
+      >>> print completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
-      >>> completeness_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> print completeness_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
     """
@@ -467,31 +453,37 @@ def v_measure_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not homogeneous, hence penalized::
 
-      >>> v_measure_score([0, 0, 1, 2], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
+      ...                                                  # doctest: +ELLIPSIS
       0.8...
-      >>> v_measure_score([0, 1, 2, 3], [0, 0, 1, 1])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
+      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harms completeness
     and thus penalize V-measure as well::
 
-      >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 2])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
+      ...                                                  # doctest: +ELLIPSIS
       0.8...
-      >>> v_measure_score([0, 0, 1, 1], [0, 1, 2, 3])     # doctest: +ELLIPSIS
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
+      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     If classes members are completly splitted across different clusters,
     the assignment is totally in-complete, hence the v-measure is null::
 
-      >>> v_measure_score([0, 0, 0, 0], [0, 1, 2, 3])
-      0.0
+      >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
+      ...                                                  # doctest: +ELLIPSIS
+      0.0...
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
-      >>> v_measure_score([0, 0, 1, 1], [0, 0, 0, 0])
-      0.0
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
+      ...                                                  # doctest: +ELLIPSIS
+      0.0...
 
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
@@ -549,14 +541,20 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred)
     contingency = np.array(contingency, dtype='float')
-    contingency /= np.sum(contingency)
+    contingency_sum = np.sum(contingency)
     pi = np.sum(contingency, axis=1)
-    pi /= np.sum(pi)
     pj = np.sum(contingency, axis=0)
-    pj /= np.sum(pj)
     outer = np.outer(pi, pj)
     nnz = contingency != 0.0
-    mi = contingency[nnz] * np.log(contingency[nnz] / outer[nnz])
+    # normalized contingency
+    contingency_nm = contingency[nnz]
+    log_contingency_nm = np.log(contingency_nm)
+    contingency_nm /= contingency_sum
+    # log(a / b) should be calculated as log(a) - log(b) for
+    # possible loss of precision
+    log_outer = -np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())
+    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum))
+          + contingency_nm * log_outer)
     return mi.sum()
 
 
@@ -621,12 +619,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     References
     ----------
-    .. [3] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+    .. [1] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
        Clusterings Comparison: Variants, Properties, Normalization and
        Correction for Chance}, JMLR
        http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
 
-    .. [4] `Wikipedia entry for the Adjusted Mutual Information
+    .. [2] `Wikipedia entry for the Adjusted Mutual Information
        <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
@@ -657,7 +655,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
-    information) and 1 (perfect correlation).
+    information) and 1 (perfect correlation). In this function, mutual
+    information is normalized by sqrt(H(labels_true) * H(labels_pred))
 
     This measure is not adjusted for chance. Therefore
     ``adjusted_mustual_info_score`` might be preferred.
@@ -687,7 +686,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    adjusted_mutual_information_score: Adjusted Mutual Information (adjusted
+    adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
         against chance)
 
     Examples
@@ -778,8 +777,12 @@ def expected_mutual_information(contingency, n_samples):
 
 def entropy(labels):
     """Calculates the entropy for a labeling."""
+    if len(labels) == 0:
+        return 1.0
     label_idx = unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
-    pi /= np.sum(pi)
-    return -np.sum(pi * np.log(pi))
+    pi_sum = np.sum(pi)
+    # log(a / b) should be calculated as log(a) - log(b) for
+    # possible loss of precision
+    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))

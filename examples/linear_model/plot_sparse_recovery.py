@@ -50,9 +50,10 @@ from scipy import linalg
 from sklearn.linear_model import RandomizedLasso, lasso_stability_path, \
                                  LassoLarsCV
 from sklearn.feature_selection import f_regression
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.utils.extmath import pinvh
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
@@ -60,7 +61,7 @@ def mutual_incoherence(X_relevant, X_irelevant):
     """
     projector = np.dot(
                     np.dot(X_irelevant.T, X_relevant),
-                    linalg.pinv(np.dot(X_relevant.T, X_relevant))
+                    pinvh(np.dot(X_relevant.T, X_relevant))
                     )
     return np.max(np.abs(projector).sum(axis=1))
 
@@ -96,7 +97,7 @@ for conditionning in (1, 1e-4):
     # Keep [Wainwright2006] (26c) constant
     X[:n_relevant_features] /= np.abs(
             linalg.svdvals(X[:n_relevant_features])).max()
-    X = Scaler().fit_transform(X.copy())
+    X = StandardScaler().fit_transform(X.copy())
 
     # The output variable
     y = np.dot(X, coef)

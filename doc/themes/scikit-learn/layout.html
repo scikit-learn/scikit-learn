@@ -152,7 +152,7 @@
     {% else %}
     <h3>News</h3>
 
-    <p>scikit-learn 0.11 is available
+    <p>scikit-learn 0.12 is available
     for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
     See <a href="{{pathto('whats_new')}}">what's new</a> and tips
     on <a href="{{pathto('install')}}">installing</a>.</p>
@@ -205,7 +205,6 @@
         <div class="clearer"></div>
       </div>
     </div>
-  
 {% endblock %}
 
 
@@ -246,7 +245,7 @@
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">
         {{loop.cycle('Previous', 'Next')}}
-      </a>  
+      </a>
     </div>
     {%- endfor %}
     {% endif %}
@@ -260,6 +259,11 @@
                $(this).css('background-color', '#A7D6E2');
            }
        );
+       var bodywrapper = $('.bodywrapper');
+   	var sidebarbutton = $('#sidebarbutton');
+        sidebarbutton.css({
+	    'height': '900px'
+       });
      </script>
 {%- endblock %}
 

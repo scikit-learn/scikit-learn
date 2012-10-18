@@ -20,16 +20,17 @@ currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
 multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
 invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
+invalidfile2 = os.path.join(currdir, "data", "svmlight_invalid_order.txt")
 
 
 def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
     # test X's shape
-    assert_equal(X.indptr.shape[0], 5)
-    assert_equal(X.shape[0], 4)
+    assert_equal(X.indptr.shape[0], 7)
+    assert_equal(X.shape[0], 6)
     assert_equal(X.shape[1], 21)
-    assert_equal(y.shape[0], 4)
+    assert_equal(y.shape[0], 6)
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
@@ -50,7 +51,7 @@ def test_load_svmlight_file():
     assert_equal(X[0, 2], 5)
 
     # test y
-    assert_array_equal(y, [1, 2, 3, 4])
+    assert_array_equal(y, [1, 2, 3, 4, 1, 2])
 
 
 def test_load_svmlight_file_fd():
@@ -90,8 +91,8 @@ def test_load_svmlight_file_n_features():
     X, y = load_svmlight_file(datafile, n_features=20)
 
     # test X'shape
-    assert_equal(X.indptr.shape[0], 5)
-    assert_equal(X.shape[0], 4)
+    assert_equal(X.indptr.shape[0], 7)
+    assert_equal(X.shape[0], 6)
     assert_equal(X.shape[1], 20)
 
     # test X's non-zero values
@@ -129,6 +130,11 @@ def test_load_invalid_file():
 
 
 @raises(ValueError)
+def test_load_invalid_order_file():
+    load_svmlight_file(invalidfile2)
+
+
+@raises(ValueError)
 def test_load_zero_based():
     f = BytesIO("-1 4:1.\n1 0:1\n")
     load_svmlight_file(f, zero_based=False)
@@ -147,6 +153,23 @@ def test_load_zero_based_auto():
     X1, y1, X2, y2 = load_svmlight_files([f1, f2], zero_based="auto")
     assert_equal(X1.shape, (1, 4))
     assert_equal(X2.shape, (1, 4))
+
+
+def test_load_with_qid():
+    # load svmfile with qid attribute
+    data = """
+    3 qid:1 1:0.53 2:0.12
+    2 qid:1 1:0.13 2:0.1
+    7 qid:2 1:0.87 2:0.12"""
+    X, y = load_svmlight_file(BytesIO(data), query_id=False)
+    assert_array_equal(y, [3, 2, 7])
+    assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
+    res1 = load_svmlight_files([BytesIO(data)], query_id=True)
+    res2 = load_svmlight_file(BytesIO(data), query_id=True)
+    for X, y, qid in (res1, res2):
+        assert_array_equal(y, [3, 2, 7])
+        assert_array_equal(qid, [1, 1, 2])
+        assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
 @raises(ValueError)
@@ -239,3 +262,18 @@ def test_dump_invalid():
 
     f = BytesIO()
     assert_raises(ValueError, dump_svmlight_file, X, y[:-1], f)
+
+
+def test_dump_query_id():
+    # test dumping a file with query_id
+    X, y = load_svmlight_file(datafile)
+    X = X.toarray()
+    query_id = np.arange(X.shape[0]) // 2
+    f = BytesIO()
+    dump_svmlight_file(X, y, f, query_id=query_id, zero_based=True)
+
+    f.seek(0)
+    X1, y1, query_id1 = load_svmlight_file(f, query_id=True, zero_based=True)
+    assert_array_almost_equal(X, X1.toarray())
+    assert_array_almost_equal(y, y1)
+    assert_array_almost_equal(query_id, query_id1)

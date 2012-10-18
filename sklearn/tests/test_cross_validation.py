@@ -1,12 +1,12 @@
 """Test the cross_validation module"""
 
-import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
 from nose.tools import assert_true, assert_equal
 from nose.tools import assert_raises
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.fixes import unique
 
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
@@ -19,7 +19,6 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
-from sklearn.svm.sparse import SVC as SparseSVC
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -31,7 +30,15 @@ class MockClassifier(BaseEstimator):
     def __init__(self, a=0):
         self.a = a
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_weight=None, class_prior=None):
+        if sample_weight is not None:
+            assert_true(sample_weight.shape[0] == X.shape[0],
+            'MockClassifier extra fit_param sample_weight.shape[0] is {0}, '
+            'should be {1}'.format(sample_weight.shape[0], X.shape[0]))
+        if class_prior is not None:
+            assert_true(class_prior.shape[0] == len(np.unique(y)),
+            'MockClassifier extra fit_param class_prior.shape[0] is {0}, '
+            'should be {1}'.format(class_prior.shape[0], len(np.unique(y))))
         return self
 
     def predict(self, T):
@@ -79,11 +86,11 @@ def test_shuffle_kfold():
         all_folds = None
         for train, test in kf:
             sorted_array = np.arange(100)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             sorted_array = np.arange(101, 200)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             sorted_array = np.arange(201, 300)
-            assert np.any(sorted_array != ind[train])
+            assert_true(np.any(sorted_array != ind[train]))
             if all_folds is None:
                 all_folds = ind[test].copy()
             else:
@@ -112,26 +119,41 @@ def test_stratified_shuffle_split():
     # Check that error is raised if there is a class with only one sample
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.2)
 
+    # Check that error is raised if the test set size is smaller than n_classes
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 2)
+    # Check that error is raised if the train set size is smaller than
+    # n_classes
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 3, 2)
+
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 8, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.6, 8)
 
-    # Check if returns better balanced classes than ShuffleSplit
-    sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33, random_state=0)
-    ss = cval.ShuffleSplit(y.size, 6, 0.33, random_state=0)
+    ys = [
+        np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+        np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+        np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+        np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+        np.array([-1] * 800 + [1] * 50)
+        ]
 
-    train_std = []
-    test_std = []
-
-    for train, test in sss:
-        train_std.append(np.std(np.bincount(y[train])))
-        test_std.append(np.std(np.bincount(y[test])))
-
-    for i, [train, test] in enumerate(ss):
-        assert_true(train_std[i] <= np.std(np.bincount(y[train])))
-        assert_true(test_std[i] <= np.std(np.bincount(y[test])))
+    for y in ys:
+        sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
+                                          random_state=0, indices=True)
+        for train, test in sss:
+            assert_array_equal(unique(y[train]), unique(y[test]))
+            # Checks if folds keep classes proportions
+            p_train = np.bincount(
+                unique(y[train], return_inverse=True)[1]
+                ) / float(len(y[train]))
+            p_test = np.bincount(
+                unique(y[test], return_inverse=True)[1]
+                ) / float(len(y[test]))
+            assert_array_almost_equal(p_train, p_test, 1)
+            assert_equal(y[train].size + y[test].size, y.size)
+            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
 def test_cross_val_score():
@@ -144,6 +166,15 @@ def test_cross_val_score():
 
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+
+def test_cross_val_score_fit_params():
+    clf = MockClassifier()
+    n_samples = X.shape[0]
+    n_classes = len(np.unique(y))
+    fit_params = {'sample_weight': np.ones(n_samples),
+                  'class_prior': np.ones(n_classes) / n_classes}
+    cval.cross_val_score(clf, X, y, fit_params=fit_params)
 
 
 def test_train_test_split_errors():
@@ -161,25 +192,6 @@ def test_train_test_split_errors():
     assert_raises(TypeError, cval.train_test_split, range(3),
             some_argument=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3), range(42))
-
-
-def test_shuffle_split_warnings():
-    expected_message = ("test_fraction is deprecated in 0.11 and scheduled "
-                        "for removal in 0.12, use test_size instead",
-                        "train_fraction is deprecated in 0.11 and scheduled "
-                        "for removal in 0.12, use train_size instead")
-
-    with warnings.catch_warnings(record=True) as warn_queue:
-        cval.ShuffleSplit(10, 3, test_fraction=0.1)
-        cval.ShuffleSplit(10, 3, train_fraction=0.1)
-        cval.train_test_split(range(3), test_fraction=0.1)
-        cval.train_test_split(range(3), train_fraction=0.1)
-
-    assert_equal(len(warn_queue), 4)
-    assert_equal(str(warn_queue[0].message), expected_message[0])
-    assert_equal(str(warn_queue[1].message), expected_message[1])
-    assert_equal(str(warn_queue[2].message), expected_message[0])
-    assert_equal(str(warn_queue[3].message), expected_message[1])
 
 
 def test_train_test_split():
@@ -262,7 +274,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SparseSVC(kernel='linear')
+    svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, zero_one_score, cv_sparse,

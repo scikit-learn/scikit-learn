@@ -5,7 +5,9 @@
 #          L. Buitinck
 # License: BSD 3 clause
 
+
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 import numpy as np
 from scipy import stats
@@ -13,8 +15,22 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import array2d, atleast2d_or_csr, deprecated, as_float_array
+from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
+                     safe_asarray, safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
+
+
+def _clean_nans(scores):
+    """
+    Fixes Issue #1240: NaNs can't be properly compared, so change them to the
+    smallest value of scores's dtype. -inf seems to be unreliable.
+    """
+    # XXX where should this function be called? fit? scoring functions
+    # themselves?
+    scores = as_float_array(scores, copy=True)
+    scores[np.isnan(scores)] = np.finfo(scores.dtype).min
+    return scores
+
 
 ######################################################################
 # Scoring functions
@@ -32,7 +48,7 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    sample1, sample2, ... : array_like
+    sample1, sample2, ... : array_like, sparse matrices
         The sample measurements should be given as arguments.
 
     Returns
@@ -50,11 +66,11 @@ def f_oneway(*args):
     1. The samples are independent
     2. Each sample is from a normally distributed population
     3. The population standard deviations of the groups are all equal. This
-       property is known as homocedasticity.
+       property is known as homoscedasticity.
 
     If these assumptions are not true for a given set of data, it may still be
-    possible to use the Kruskal-Wallis H-test (`stats.kruskal`_) although with
-    some loss of power.
+    possible to use the Kruskal-Wallis H-test (`scipy.stats.kruskal`_) although
+    with some loss of power.
 
     The algorithm is from Heiman[2], pp.394-7.
 
@@ -72,13 +88,14 @@ def f_oneway(*args):
 
     """
     n_classes = len(args)
-    n_samples_per_class = np.array([len(a) for a in args])
+    args = [safe_asarray(a) for a in args]
+    n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
     ss_alldata = reduce(lambda x, y: x + y,
-            [np.sum(a ** 2, axis=0) for a in args])
-    sums_args = [np.sum(a, axis=0) for a in args]
-    square_of_sums_alldata = reduce(lambda x, y: x + y, sums_args) ** 2
-    square_of_sums_args = [s ** 2 for s in sums_args]
+            [safe_sqr(a).sum(axis=0) for a in args])
+    sums_args = [a.sum(axis=0) for a in args]
+    square_of_sums_alldata = safe_sqr(reduce(lambda x, y: x + y, sums_args))
+    square_of_sums_args = [safe_sqr(s) for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.
     for k, _ in enumerate(args):
@@ -90,6 +107,8 @@ def f_oneway(*args):
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
     f = msb / msw
+    # flatten matrix to vector in sparse case
+    f = np.asarray(f).ravel()
     prob = stats.fprob(dfbn, dfwn, f)
     return f, prob
 
@@ -99,47 +118,53 @@ def f_classif(X, y):
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
-        the set of regressors sthat will tested sequentially
+    X : {array-like, sparse matrix} shape = [n_samples, n_features]
+        The set of regressors that will tested sequentially
     y : array of shape(n_samples)
-        the data matrix
+        The data matrix
 
     Returns
     -------
-    F : array of shape (m),
-        the set of F values
-    pval : array of shape(m),
-        the set of p-values
+    F : array, shape = [n_features,]
+        The set of F values
+    pval : array, shape = [n_features,]
+        The set of p-values
     """
-    X = array2d(X)
-    y = np.asarray(y).ravel()
-    args = [X[y == k] for k in np.unique(y)]
+    X, y = check_arrays(X, y)
+    args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
 
 def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
-    This transformer can be used to select the n_features features with the
+    This score can be used to select the n_features features with the
     highest values for the χ² (chi-square) statistic from either boolean or
     multinomially distributed data (e.g., term counts in document
     classification) relative to the classes.
 
     Recall that the χ² statistic measures dependence between stochastic
-    variables, so a transformer based on this function "weeds out" the features
-    that are the most likely to be independent of class and therefore
-    irrelevant for classification.
+    variables, so using this function "weeds out" the features that are the
+    most likely to be independent of class and therefore irrelevant for
+    classification.
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features_in]
+    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
         Sample vectors.
 
-    y : array-like, shape = n_samples
+    y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
+    Returns
+    -------
+    chi2 : array, shape = (n_features,)
+        chi2 statistics of each feature.
+    pval : array, shape = (n_features,)
+        p-values of each feature.
+
     Notes
-    ----------
+    -----
     Complexity of this algorithm is O(n_classes * n_features).
     """
 
@@ -154,7 +179,7 @@ def chi2(X, y):
 
     feature_count = array2d(X.sum(axis=0))
     class_prob = array2d(Y.mean(axis=0))
-    expected = safe_sparse_dot(class_prob.T, feature_count)
+    expected = np.dot(class_prob.T, feature_count)
 
     return stats.chisquare(observed, expected)
 
@@ -173,32 +198,34 @@ def f_regression(X, y, center=True):
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
-        the set of regressors sthat will tested sequentially
-    y : array of shape(n_samples)
-        the data matrix
+    X : {array-like, sparse matrix}  shape = (n_samples, n_features)
+        The set of regressors that will tested sequentially.
+    y : array of shape(n_samples).
+        The data matrix
 
     center : True, bool,
-        If true, X and y are centered
+        If true, X and y will be centered.
 
     Returns
     -------
-    F : array of shape (m),
-        the set of F values
-    pval : array of shape(m)
-        the set of p-values
+    F : array, shape=(n_features,)
+        F values of features.
+    pval : array, shape=(n_features,)
+        p-values of F-scores.
     """
-    y = as_float_array(y, copy=False).ravel()
-    X = as_float_array(X, copy=False)  # copy only if center
+    if issparse(X) and center:
+        raise ValueError("center=True only allowed for dense data")
+    X, y = check_arrays(X, y, dtype=np.float)
+    y = y.ravel()
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran
-        X -= np.mean(X, axis=0)
+        X -= X.mean(axis=0)
 
     # compute the correlation
-    corr = np.dot(y, X)
-    corr /= np.sqrt(np.sum(X ** 2, 0))
-    corr /= np.sqrt(np.sum(y ** 2))
+    corr = safe_sparse_dot(y, X)
+    corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
+    corr /= np.asarray(np.sqrt(safe_sqr(y).sum())).ravel()
 
     # convert to p-value
     dof = y.size - 2
@@ -217,14 +244,14 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """ Initialize the univariate feature selection.
 
         Parameters
-        ===========
-        score_func: callable
-            function taking two arrays X and y, and returning 2 arrays:
-            both scores and pvalues
+        ----------
+        score_func : callable
+            Function taking two arrays X and y, and returning a pair of arrays
+            (scores, pvalues).
         """
         if not callable(score_func):
             raise TypeError(
-                "The score function should be a callable, '%s' (type %s) "
+                "The score function should be a callable, %r "
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
@@ -232,22 +259,12 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         Evaluate the function
         """
-        scores = self.score_func(X, y)
-        self.scores_ = scores[0]
-        self.pvalues_ = scores[1]
+        self.scores_, self.pvalues_ = self.score_func(X, y)
+        if len(np.unique(self.pvalues_)) < len(self.pvalues_):
+            warn("Duplicate p-values. Result may depend on feature ordering."
+                 "There are probably duplicate features, or you used a "
+                 "classification score for a regression task.")
         return self
-
-    @property
-    @deprecated('``_scores`` is deprecated and will be removed in '
-                'version 0.12. Please use ``scores_`` instead.')
-    def _scores(self):
-        return self.scores_
-
-    @property
-    @deprecated('``_pvalues`` is deprecated and will be removed in '
-                'version 0.12. Please use ``scores_`` instead.')
-    def _pvalues(self):
-        return self.pvalues_
 
     def get_support(self, indices=False):
         """
@@ -266,7 +283,11 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         Transform a new matrix using the selected features
         """
-        return atleast2d_or_csr(X)[:, self.get_support(indices=issparse(X))]
+        X = atleast2d_or_csr(X)
+        mask = self._get_support_mask()
+        if len(mask) != X.shape[1]:
+            raise ValueError("X has a different shape than during fitting.")
+        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """
@@ -285,48 +306,24 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
 ######################################################################
 
 class SelectPercentile(_AbstractUnivariateFilter):
-    """Filter: Select the best percentile of the p_values
-
-    Parameters
-    ===========
-    score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
-
-    percentile: int, optional
-        percent of features to keep
-
-    """
-
-    def __init__(self, score_func=f_classif, percentile=10):
-        self.percentile = percentile
-        _AbstractUnivariateFilter.__init__(self, score_func)
-
-    def _get_support_mask(self):
-        percentile = self.percentile
-        if percentile > 100:
-            raise ValueError("percentile should be between 0 and 100"
-                             " (%f given)" % (percentile))
-        # Cater for Nans
-        if percentile == 100:
-            return np.ones(len(self.pvalues_), dtype=np.bool)
-        elif percentile == 0:
-            return np.zeros(len(self.pvalues_), dtype=np.bool)
-        alpha = stats.scoreatpercentile(self.pvalues_, percentile)
-        return (self.pvalues_ <= alpha)
-
-
-class SelectKBest(_AbstractUnivariateFilter):
-    """Filter: Select the k lowest p-values.
+    """Select features according to a percentile of the highest scores.
 
     Parameters
     ----------
-    score_func: callable
+    score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
 
-    k: int, optional
-        Number of top features to select.
+    percentile : int, optional, default=10
+        Percent of features to keep.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
 
     Notes
     -----
@@ -335,21 +332,79 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     """
 
+    def __init__(self, score_func=f_classif, percentile=10):
+        if not 0 <= percentile <= 100:
+            raise ValueError("percentile should be >=0, <=100; got %r"
+                             % percentile)
+        self.percentile = percentile
+        super(SelectPercentile, self).__init__(score_func)
+
+    def _get_support_mask(self):
+        percentile = self.percentile
+        if percentile > 100:
+            raise ValueError("percentile should be between 0 and 100"
+                             " (%f given)" % (percentile))
+        # Cater for NaNs
+        if percentile == 100:
+            return np.ones(len(self.scores_), dtype=np.bool)
+        elif percentile == 0:
+            return np.zeros(len(self.scores_), dtype=np.bool)
+        scores = _clean_nans(self.scores_)
+
+        alpha = stats.scoreatpercentile(scores, 100 - percentile)
+        # XXX refactor the indices -> mask -> indices -> mask thing
+        inds = np.where(scores >= alpha)[0]
+        # if we selected too many features because of equal scores,
+        # we throw them away now
+        inds = inds[:len(scores) * percentile // 100]
+        mask = np.zeros(scores.shape, dtype=np.bool)
+        mask[inds] = True
+        return mask
+
+
+class SelectKBest(_AbstractUnivariateFilter):
+    """Select features according to the k highest scores.
+
+    Parameters
+    ----------
+    score_func : callable
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
+
+    k : int, optional, default=10
+        Number of top features to select.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    """
+
     def __init__(self, score_func=f_classif, k=10):
         self.k = k
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectKBest, self).__init__(score_func)
 
     def _get_support_mask(self):
         k = self.k
-        if k > len(self.pvalues_):
+        if k > len(self.scores_):
             raise ValueError("cannot select %d features among %d"
-                             % (k, len(self.pvalues_)))
+                             % (k, len(self.scores_)))
 
+        scores = _clean_nans(self.scores_)
         # XXX This should be refactored; we're getting an array of indices
         # from argsort, which we transform to a mask, which we probably
         # transform back to indices later.
-        mask = np.zeros(self.pvalues_.shape, dtype=bool)
-        mask[np.argsort(self.pvalues_)[:k]] = 1
+        mask = np.zeros(scores.shape, dtype=bool)
+        mask[np.argsort(scores)[-k:]] = 1
         return mask
 
 
@@ -361,17 +416,25 @@ class SelectFpr(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+    score_func : callable
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
-    alpha: float, optional
-        the highest p-value for features to be kept
+    alpha : float, optional
+        The highest p-value for features to be kept.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectFpr, self).__init__(score_func)
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -386,18 +449,26 @@ class SelectFdr(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+    score_func : callable
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
-    alpha: float, optional
-        the highest uncorrected p-value for features to keep
+    alpha : float, optional
+        The highest uncorrected p-value for features to keep.
 
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectFdr, self).__init__(score_func)
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -411,18 +482,25 @@ class SelectFwe(_AbstractUnivariateFilter):
 
     Parameters
     ----------
-    score_func: callable
-        function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+    score_func : callable
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
-    alpha: float, optional
-        the highest uncorrected p-value for features to keep
+    alpha : float, optional
+        The highest uncorrected p-value for features to keep.
 
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        _AbstractUnivariateFilter.__init__(self, score_func)
+        super(SelectFwe, self).__init__(score_func)
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -434,19 +512,27 @@ class SelectFwe(_AbstractUnivariateFilter):
 ######################################################################
 
 class GenericUnivariateSelect(_AbstractUnivariateFilter):
-    """Univariate feature selector with configurable strategy
+    """Univariate feature selector with configurable strategy.
 
     Parameters
     ----------
-    score_func: callable
-        Function taking two arrays X and y, and returning 2 arrays:
-        both scores and pvalues
+    score_func : callable
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
 
-    mode: {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
-        Feature selection mode
+    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
+        Feature selection mode.
 
-    param: float or int depending on the feature selection mode
-        Parameter of the corresponding mode
+    param : float or int depending on the feature selection mode
+        Parameter of the corresponding mode.
+
+    Attributes
+    ----------
+    scores_ : array-like, shape=(n_features,)
+        Scores of features.
+
+    pvalues_ : array-like, shape=(n_features,)
+        p-values of feature scores.
     """
 
     _selection_modes = {'percentile':   SelectPercentile,
@@ -459,15 +545,15 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
         if not callable(score_func):
             raise TypeError(
-                "The score function should be a callable, '%s' (type %s) "
+                "The score function should be a callable, %r (type %s) "
                 "was passed." % (score_func, type(score_func)))
         if mode not in self._selection_modes:
             raise ValueError(
-                "The mode passed should be one of %s, '%s', (type %s) "
+                "The mode passed should be one of %s, %r, (type %s) "
                 "was passed." % (
                         self._selection_modes.keys(),
                         mode, type(mode)))
-        self.score_func = score_func
+        super(GenericUnivariateSelect, self).__init__(score_func)
         self.mode = mode
         self.param = param
 

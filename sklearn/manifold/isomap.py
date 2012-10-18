@@ -4,15 +4,15 @@
 # License: BSD, (C) 2011
 
 import numpy as np
-import warnings
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils import check_arrays
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
 
-class Isomap(BaseEstimator):
+class Isomap(BaseEstimator, TransformerMixin):
     """Isomap Embedding
 
     Non-linear dimensionality reduction through Isometric Mapping
@@ -26,48 +26,48 @@ class Isomap(BaseEstimator):
         number of coordinates for the manifold
 
     eigen_solver : ['auto'|'arpack'|'dense']
-        'auto' : attempt to choose the most efficient solver
+        'auto' : Attempt to choose the most efficient solver
             for the given problem.
-        'arpack' : use Arnoldi decomposition to find the eigenvalues
-            and eigenvectors.  Note that arpack can handle both dense
-            and sparse data efficiently
-        'dense' : use a direct solver (i.e. LAPACK)
+        'arpack' : Use Arnoldi decomposition to find the eigenvalues
+            and eigenvectors.
+        'dense' : Use a direct solver (i.e. LAPACK)
             for the eigenvalue decomposition.
 
     tol : float
-        convergence tolerance passed to arpack or lobpcg.
-        not used if eigen_solver == 'dense'
+        Convergence tolerance passed to arpack or lobpcg.
+        not used if eigen_solver == 'dense'.
 
     max_iter : integer
-        maximum number of iterations for the arpack solver.
-        not used if eigen_solver == 'dense'
+        Maximum number of iterations for the arpack solver.
+        not used if eigen_solver == 'dense'.
 
     path_method : string ['auto'|'FW'|'D']
-        method to use in finding shortest path.
+        Method to use in finding shortest path.
         'auto' : attempt to choose the best algorithm automatically
         'FW' : Floyd-Warshall algorithm
         'D' : Dijkstra algorithm with Fibonacci Heaps
 
     neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
-        algorithm to use for nearest neighbors search,
-        passed to neighbors.NearestNeighbors instance
+        Algorithm to use for nearest neighbors search,
+        passed to neighbors.NearestNeighbors instance.
 
     Attributes
     ----------
     `embedding_` : array-like, shape (n_samples, n_components)
-        Stores the embedding vectors
+        Stores the embedding vectors.
 
-    `kernel_pca_` : `KernelPCA` object used to implement the embedding
+    `kernel_pca_` : object
+        `KernelPCA` object used to implement the embedding.
 
     `training_data_` : array-like, shape (n_samples, n_features)
-        Stores the training data
+        Stores the training data.
 
     `nbrs_` : sklearn.neighbors.NearestNeighbors instance
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
     `dist_matrix_` : array-like, shape (n_samples, n_samples)
-        Stores the geodesic distance matrix of training data
+        Stores the geodesic distance matrix of training data.
 
     References
     ----------
@@ -78,13 +78,8 @@ class Isomap(BaseEstimator):
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
             tol=0, max_iter=None, path_method='auto',
-            neighbors_algorithm='auto', out_dim=None):
+            neighbors_algorithm='auto'):
 
-        if out_dim:
-            warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=2)
-        self.out_dim = out_dim
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
@@ -96,18 +91,12 @@ class Isomap(BaseEstimator):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
-        if self.out_dim:
-            warnings.warn("Parameter ``out_dim`` was renamed to "
-                "``n_components`` and is now deprecated.", DeprecationWarning,
-                stacklevel=3)
-            self.n_components = self.out_dim
-            self.out_dim = None
+        X, = check_arrays(X, sparse_format='dense')
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
-                                     eigen_solver=self.eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter)
+                kernel="precomputed", eigen_solver=self.eigen_solver,
+                tol=self.tol, max_iter=self.max_iter)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')
@@ -151,7 +140,7 @@ class Isomap(BaseEstimator):
         ----------
         X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
-            numpy array, sparse array, precomputed tree, or NearestNeighbors
+            numpy array, precomputed tree, or NearestNeighbors
             object.
 
         Returns

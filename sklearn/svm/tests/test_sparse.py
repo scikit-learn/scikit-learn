@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
@@ -5,8 +6,10 @@ from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
 from nose.tools import assert_raises, assert_true
+from nose.tools import assert_equal as nose_assert_equal
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
+from sklearn.utils import ConvergenceWarning
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -122,7 +125,6 @@ def test_linearsvc_iris():
     sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
     clf = svm.LinearSVC().fit(iris.data.todense(), iris.target)
 
-    assert_array_almost_equal(clf.label_, sp_clf.label_)
     assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
@@ -204,13 +206,36 @@ def test_sparse_realdata():
 
 
 def test_sparse_svc_clone_with_callable_kernel():
+    # first, test that we raise a value error for "sparse kernels"
+    # this test is only relevant for the deprecated sparse.SVC class.
+    sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    assert_raises(ValueError, sp.fit, X_sp, Y)
+
+    # Test that the "dense_fit" is called even though we use sparse input
+    # meaning that everything works fine.
     a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
     b = base.clone(a)
 
     b.fit(X_sp, Y)
-    b.predict(X_sp)
+    pred = b.predict(X_sp)
     b.predict_proba(X_sp)
+
+    dense_svm = svm.SVC(C=1, kernel=lambda x, y: np.dot(x, y.T),
+            probability=True)
+    pred_dense = dense_svm.fit(X, Y).predict(X)
+    assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
+
+
+def test_timeout():
+    sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
+            max_iter=1)
+    with warnings.catch_warnings(record=True) as foo:
+        sp.fit(X_sp, Y)
+        nose_assert_equal(len(foo), 1,
+            msg=foo)
+        nose_assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':

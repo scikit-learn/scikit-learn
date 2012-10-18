@@ -144,7 +144,7 @@ efficiently process ``scipy.sparse`` data.
 - :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
   columns of a CSR matrix by a constant scale (one scale per column).
   Used for scaling features to unit standard deviation in
-  :class:`sklearn.preprocessing.Scaler`.
+  :class:`sklearn.preprocessing.StandardScaler`.
 
 
 Graph Routines
@@ -261,6 +261,9 @@ Helper Functions
   by the numpy array or scipy sparse matrix on which to use it (sparse
   matrices support integer indices only while numpy arrays support both
   boolean masks and integer indices).
+
+- :func:`safe_sqr`: Helper function for unified squaring (``**2``) of
+  array-likes, matrices and sparse matrices.
 
 
 Hash Functions

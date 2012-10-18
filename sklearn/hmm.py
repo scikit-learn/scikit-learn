@@ -24,9 +24,13 @@ from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)
 from . import cluster
-from .utils import deprecated
 from . import _hmmc
 
+__all__ = ['GMMHMM',
+           'GaussianHMM',
+           'MultinomialHMM',
+           'decoder_algorithms',
+           'normalize']
 
 ZEROLOGPROB = -1e200
 EPS = np.finfo(float).eps
@@ -377,11 +381,6 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
-    @deprecated("rvs is deprecated in 0.11 will be removed in 0.13:"
-            + " use sample instead")
-    def rvs(self, n=1, random_state=None):
-        return self.sample(n, random_state)
-
     def fit(self, obs, **kwargs):
         """Estimate model parameters.
 
@@ -411,8 +410,9 @@ class _BaseHMM(BaseEstimator):
 
         if kwargs:
             warnings.warn("Setting parameters in the 'fit' method is"
-                    "deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
+                          "deprecated and will be removed in 0.14. Set it on "
+                          "initialization instead.", DeprecationWarning,
+                          stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
             if 'n_iter' in kwargs:

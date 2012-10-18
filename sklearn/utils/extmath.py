@@ -4,11 +4,11 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
+import warnings
 import numpy as np
 from scipy import linalg
 
 from . import check_random_state
-from . import deprecated
 from .fixes import qr_economic
 
 
@@ -79,7 +79,8 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iterations, random_state=None):
+def randomized_range_finder(A, size, n_iter, random_state=None,
+        n_iterations=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -88,7 +89,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
         The input data matrix
     size: integer
         Size of the return array
-    n_iterations: integer
+    n_iter: integer
         Number of power iterations used to stabilize the result
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
@@ -107,6 +108,10 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     approximate matrix decompositions
     Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
     """
+    if n_iterations is not None:
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                "and will be removed in 0.16.", DeprecationWarning)
+        n_iter = n_iterations
     random_state = check_random_state(random_state)
 
     # generating random gaussian vectors r with shape: (A.shape[1], size)
@@ -118,7 +123,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
 
     # perform power iterations with Y to further 'imprint' the top
     # singular vectors of A in Y
-    for i in xrange(n_iterations):
+    for i in xrange(n_iter):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
@@ -126,8 +131,8 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
-                   transpose='auto', random_state=0):
+def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
+                   transpose='auto', random_state=0, n_iterations=None):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -143,7 +148,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples.
 
-    n_iterations: int (default is 0)
+    n_iter: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
         problems).
 
@@ -173,6 +178,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
+    if n_iterations is not None:
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                "and will be removed in 0.16.", DeprecationWarning)
+        n_iter = n_iterations
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -183,7 +193,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iterations, random_state)
+    Q = randomized_range_finder(M, n_random, n_iter, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -198,13 +208,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
         return U[:, :n_components], s[:n_components], V[:n_components, :]
-
-
-@deprecated("fast_svd is deprecated in 0.10 and will be removed in 0.12: "
-            "use randomized_svd instead")
-def fast_svd(M, k, p=10, n_iterations=0, transpose='auto', random_state=0):
-    return randomized_svd(M, k, n_oversamples=p, n_iterations=n_iterations,
-                          transpose=transpose, random_state=random_state)
 
 
 def logsumexp(arr, axis=0):
@@ -305,3 +308,62 @@ def weighted_mode(a, w, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
+
+
+def pinvh(a, cond=None, rcond=None, lower=True):
+    """Compute the (Moore-Penrose) pseudo-inverse of a hermetian matrix.
+
+    Calculate a generalized inverse of a symmetric matrix using its
+    eigenvalue decomposition and including all 'large' eigenvalues.
+
+    Parameters
+    ----------
+    a : array, shape (N, N)
+        Real symmetric or complex hermetian matrix to be pseudo-inverted
+    cond, rcond : float or None
+        Cutoff for 'small' eigenvalues.
+        Singular values smaller than rcond * largest_eigenvalue are considered
+        zero.
+
+        If None or -1, suitable machine precision is used.
+    lower : boolean
+        Whether the pertinent array data is taken from the lower or upper
+        triangle of a. (Default: lower)
+
+    Returns
+    -------
+    B : array, shape (N, N)
+
+    Raises
+    ------
+    LinAlgError
+        If eigenvalue does not converge
+
+    Examples
+    --------
+    >>> from numpy import *
+    >>> a = random.randn(9, 6)
+    >>> a = np.dot(a, a.T)
+    >>> B = pinvh(a)
+    >>> allclose(a, dot(a, dot(B, a)))
+    True
+    >>> allclose(B, dot(B, dot(a, B)))
+    True
+
+    """
+    a = np.asarray_chkfinite(a)
+    s, u = linalg.eigh(a, lower=lower)
+
+    if rcond is not None:
+        cond = rcond
+    if cond in [None, -1]:
+        t = u.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+        cond = factor[t] * np.finfo(t).eps
+
+    # unlike svd case, eigh can lead to negative eigenvalues
+    above_cutoff = (abs(s) > cond * np.max(abs(s)))
+    psigma_diag = np.zeros_like(s)
+    psigma_diag[above_cutoff] = 1.0 / s[above_cutoff]
+
+    return np.dot(u * psigma_diag, np.conjugate(u).T)

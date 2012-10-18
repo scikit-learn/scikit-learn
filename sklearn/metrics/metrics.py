@@ -15,7 +15,7 @@ better
 import numpy as np
 
 from ..utils import check_arrays
-from ..utils import deprecated
+from scipy.sparse import coo_matrix
 
 
 def unique_labels(*lists_of_labels):
@@ -64,18 +64,18 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
+    # convert yt, yp into index
+    y_pred = np.array([label_to_ind[x] for x in y_pred])
+    y_true = np.array([label_to_ind[x] for x in y_true])
 
-    if n_labels >= 15:
-        CM = np.zeros((n_labels, n_labels), dtype=np.long)
-        for yt, yp in zip(y_true, y_pred):
-            CM[label_to_ind[yt], label_to_ind[yp]] += 1
-    else:
-        CM = np.empty((n_labels, n_labels), dtype=np.long)
-        for i, label_i in enumerate(labels):
-            for j, label_j in enumerate(labels):
-                CM[i, j] = np.sum(
-                    np.logical_and(y_true == label_i, y_pred == label_j))
+    # intersect y_pred, y_true with labels
+    y_pred = y_pred[y_pred < n_labels]
+    y_true = y_true[y_true < n_labels]
 
+    CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
+                                    (y_true, y_pred)),
+                               shape=(n_labels, n_labels),
+                               dtype=np.int).todense())
     return CM
 
 
@@ -181,8 +181,78 @@ def roc_curve(y_true, y_score):
     return fpr, tpr, thresholds[::-1]
 
 
+def average_precision_score(y_true, y_score):
+    """Compute average precision (AP) from prediction scores.
+
+    This score corresponds to the area under the precision-recall curve.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    average_precision : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
+
+
+    See also
+    --------
+    auc_score: Area under the ROC curve
+    """
+    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+
+    return auc(recall, precision)
+
+
+def auc_score(y_true, y_score):
+    """Compute Area Under the Curve (AUC) from prediction scores.
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        true binary labels
+
+    y_score : array, shape = [n_samples]
+        target scores, can either be probability estimates of
+        the positive class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    auc : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+
+    See also
+    --------
+    average_precision_score: Area under the precision-recall curve
+    """
+
+    fpr, tpr, tresholds = roc_curve(y_true, y_score)
+    return auc(fpr, tpr)
+
+
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
+
+    This is a general fuction, given points on a curve.
+    For computing the area under the ROC-curve, see auc_score.
 
     Parameters
     ----------
@@ -205,6 +275,10 @@ def auc(x, y):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
     >>> metrics.auc(fpr, tpr)
     0.75
+
+    See also
+    --------
+    auc_score Computes the area under the ROC curve
 
     """
     x, y = check_arrays(x, y)
@@ -759,7 +833,10 @@ def precision_recall_curve(y_true, probas_pred):
         Thresholds on y_score used to compute precision and recall
 
     """
-    y_true = y_true.ravel()
+    y_true = np.ravel(y_true)
+    probas_pred = np.ravel(probas_pred)
+
+    # Make sure input is boolean
     labels = np.unique(y_true)
     if np.all(labels == np.array([-1, 1])):
         # convert {-1, 1} to boolean {0, 1} repr
@@ -768,18 +845,46 @@ def precision_recall_curve(y_true, probas_pred):
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
-    probas_pred = probas_pred.ravel()
-    thresholds = np.sort(np.unique(probas_pred))
-    n_thresholds = thresholds.size + 1
-    precision = np.empty(n_thresholds)
-    recall = np.empty(n_thresholds)
-    for i, t in enumerate(thresholds):
-        y_pred = (probas_pred >= t).astype(np.int)
-        p, r, _, _ = precision_recall_fscore_support(y_true, y_pred)
-        precision[i] = p[1]
-        recall[i] = r[1]
-    precision[-1] = 1.0
-    recall[-1] = 0.0
+    # Initialize true and false positive counts, precision and recall
+    total_positive = float(y_true.sum())
+    tp_count, fp_count = 0., 0.
+    last_prob_val = 1.
+    thresholds = []
+    precision = [1.]
+    recall = [0.]
+    last_recorded_idx = -1
+
+    # Iterate over (predict_prob, true_val) pairs, in order of highest
+    # to lowest predicted probabilities. Incrementally keep track of how
+    # many true and false labels have been encountered. If several of the
+    # predicted probabilities are the same, then create only one new point
+    # in the curve that represents all of these "tied" predictions.
+    # (In other words, add new points only when new values of prob_val
+    # are encountered)
+    sorted_pred_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
+    pairs = np.vstack((probas_pred, y_true)).T
+    for idx, (prob_val, class_val) in enumerate(pairs[sorted_pred_idxs, :]):
+        if class_val:
+            tp_count += 1.
+        else:
+            fp_count += 1.
+        if (prob_val < last_prob_val) and (prob_val > 0.):
+            thresholds.append(prob_val)
+            fn_count = float(total_positive - tp_count)
+            precision.append(tp_count / (tp_count + fp_count))
+            recall.append(tp_count / (tp_count + fn_count))
+            last_prob_val = prob_val
+            last_recorded_idx = idx
+    # Don't forget to include the last point in the PR-curve if
+    # it wasn't yet recorded.
+    if last_recorded_idx != idx:
+        recall.append(1.0)
+        precision.append(total_positive / (tp_count + fp_count))
+
+    # Sklearn expects these in reverse order
+    thresholds = np.array(thresholds)[::-1]
+    precision = np.array(precision)[::-1]
+    recall = np.array(recall)[::-1]
     return precision, recall, thresholds
 
 
@@ -837,6 +942,9 @@ def r2_score(y_true, y_pred):
     http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+    if len(y_true) == 1:
+        raise ValueError("r2_score can only be computed given more than one"
+                         " sample.")
     numerator = ((y_true - y_pred) ** 2).sum()
     denominator = ((y_true - y_true.mean()) ** 2).sum()
     if denominator == 0.0:
@@ -917,30 +1025,6 @@ def mean_squared_error(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean((y_pred - y_true) ** 2)
-
-
-@deprecated("""Incorrectly returns the cumulated error: use mean_squared_error
-            instead; to be removed in v0.12""")
-def mean_square_error(y_true, y_pred):
-    """Cumulated square error regression loss
-
-    Positive floating point value: the best value is 0.0.
-
-    return the mean square error
-
-    Parameters
-    ----------
-    y_true : array-like
-
-    y_pred : array-like
-
-    Returns
-    -------
-    loss : float
-
-    """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.linalg.norm(y_pred - y_true) ** 2
 
 
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):

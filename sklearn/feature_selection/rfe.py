@@ -7,6 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+from ..utils import check_arrays, safe_sqr, safe_mask
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -20,7 +21,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
     Given an external estimator that assigns weights to features (e.g., the
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
-    sets of features.  First, the estimator is trained on the initial set of
+    sets of features. First, the estimator is trained on the initial set of
     features and weights are assigned to each one of them. Then, features whose
     absolute weights are the smallest are pruned from the current set features.
     That procedure is recursively repeated on the pruned set until the desired
@@ -37,14 +38,19 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         algorithms such as Support Vector Classifiers and Generalized
         Linear Models from the `svm` and `linear_model` modules.
 
-    n_features_to_select : int
-        The number of features to select.
+    n_features_to_select : int or None (default=None)
+        The number of features to select. If `None`, half of the features
+        are selected.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then `step` corresponds to the (integer)
         number of features to remove at each iteration.
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
+
+    estimator_params : dict
+        Parameters for the external estimator.
+        Useful for doing grid searches.
 
     Attributes
     ----------
@@ -58,6 +64,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         The feature ranking, such that `ranking_[i]` corresponds to the \
         ranking position of the i-th feature. Selected (i.e., estimated \
         best) features are assigned rank 1.
+
+    `estimator_` : object
+        The external estimator fit on the reduced dataset.
 
     Examples
     --------
@@ -84,10 +93,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, n_features_to_select=None, step=1):
+    def __init__(self, estimator, n_features_to_select=None, step=1,
+                 estimator_params={}, verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
+        self.estimator_params = estimator_params
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
@@ -95,12 +107,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The training input samples.
 
-        y : array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             The target values.
         """
+        X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -117,7 +130,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
-
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
@@ -125,12 +137,19 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
 
             # Rank the remaining features
             estimator = clone(self.estimator)
+            estimator.set_params(**self.estimator_params)
+            if self.verbose > 0:
+                print("Fitting estimator with %d features." % np.sum(support_))
+
             estimator.fit(X[:, features], y)
 
             if estimator.coef_.ndim > 1:
-                ranks = np.argsort(np.sum(estimator.coef_ ** 2, axis=0))
+                ranks = np.argsort(safe_sqr(estimator.coef_).sum(axis=0))
             else:
-                ranks = np.argsort(estimator.coef_ ** 2)
+                ranks = np.argsort(safe_sqr(estimator.coef_))
+
+            # for sparse case ranks is matrix
+            ranks = np.ravel(ranks)
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
@@ -138,7 +157,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
             ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
-        self.estimator.fit(X[:, support_], y)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.set_params(**self.estimator_params)
+        self.estimator_.fit(X[:, support_], y)
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
@@ -159,7 +180,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        return self.estimator.predict(X[:, self.support_])
+        return self.estimator_.predict(X[:, safe_mask(X, self.support_)])
 
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
@@ -173,7 +194,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        return self.estimator.score(X[:, self.support_], y)
+        return self.estimator_.score(X[:, safe_mask(X, self.support_)], y)
 
     def transform(self, X):
         """Reduce X to the selected features during the elimination.
@@ -189,7 +210,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
             The input samples with only the features selected during the \
             elimination.
         """
-        return X[:, self.support_]
+        return X[:, safe_mask(X, self.support_)]
+
+    def decision_function(self, X):
+        return self.estimator_.decision_function(self.transform(X))
+
+    def predict_proba(self, X):
+        return self.estimator_.predict_proba(self.transform(X))
 
 
 class RFECV(RFE, MetaEstimatorMixin):
@@ -223,6 +250,13 @@ class RFECV(RFE, MetaEstimatorMixin):
         The loss function to minimize by cross-validation. If None, then the
         score function of the estimator is maximized.
 
+    estimator_params : dict
+        Parameters for the external estimator.
+        Useful for doing grid searches.
+
+    verbose : int, default=0
+        Controls verbosity of output.
+
     Attributes
     ----------
     `n_features_` : int
@@ -241,6 +275,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         The cross-validation scores such that
         `cv_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
+
+    `estimator_` : object
+        The external estimator fit on the reduced dataset.
 
     Examples
     --------
@@ -267,11 +304,14 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, loss_func=None):
+    def __init__(self, estimator, step=1, cv=None, loss_func=None,
+            estimator_params={}, verbose=0):
         self.estimator = estimator
-        self.step = 1
+        self.step = step
         self.cv = cv
         self.loss_func = loss_func
+        self.estimator_params = estimator_params
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit the RFE model and automatically tune the number of selected
@@ -279,17 +319,19 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the total number of features.
 
-        y : array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             Target values (integers for classification, real numbers for
             regression).
         """
+        X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
-                step=self.step)
+                step=self.step, estimator_params=self.estimator_params,
+                verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
         scores = {}
@@ -300,10 +342,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         for train, test in cv:
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
-
             # Score each subset of features
-            for k in xrange(1, max(ranking_)):
-                mask = ranking_ <= k
+            for k in xrange(1, max(ranking_) + 1):
+                mask = np.where(ranking_ <= k)[0]
                 estimator = clone(self.estimator)
                 estimator.fit(X[train][:, mask], y[train])
 
@@ -319,6 +360,9 @@ class RFECV(RFE, MetaEstimatorMixin):
                 if not k in scores:
                     scores[k] = 0.0
 
+                if self.verbose > 0:
+                    print("Finished fold with %d / %d feature ranks, loss=%f"
+                          % (k, max(ranking_), score_k))
                 scores[k] += score_k
 
             n += 1
@@ -335,12 +379,14 @@ class RFECV(RFE, MetaEstimatorMixin):
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=best_k,
-                  step=self.step)
+                  step=self.step, estimator_params=self.estimator_params)
 
         rfe.fit(X, y)
 
         # Set final attributes
-        self.estimator.fit(X[:, rfe.support_], y)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.set_params(**self.estimator_params)
+        self.estimator_.fit(X[:, safe_mask(X, rfe.support_)], y)
         self.n_features_ = rfe.n_features_
         self.support_ = rfe.support_
         self.ranking_ = rfe.ranking_

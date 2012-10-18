@@ -4,9 +4,11 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
+    assert_equal, assert_raises
 
 import numpy as np
+import warnings
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
@@ -25,16 +27,19 @@ def test_covariance():
     # test covariance fit from data
     cov = EmpiricalCovariance()
     cov.fit(X)
-    assert_array_almost_equal(empirical_covariance(X), cov.covariance_, 4)
-    assert_almost_equal(cov.error_norm(empirical_covariance(X)), 0)
+    emp_cov = empirical_covariance(X)
+    assert_array_almost_equal(emp_cov, cov.covariance_, 4)
+    assert_almost_equal(cov.error_norm(emp_cov), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), norm='spectral'), 0)
+        cov.error_norm(emp_cov, norm='spectral'), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), norm='frobenius'), 0)
+        cov.error_norm(emp_cov, norm='frobenius'), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), scaling=False), 0)
+        cov.error_norm(emp_cov, scaling=False), 0)
     assert_almost_equal(
-        cov.error_norm(empirical_covariance(X), squared=False), 0)
+        cov.error_norm(emp_cov, squared=False), 0)
+    assert_raises(NotImplementedError,
+                  cov.error_norm, emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
     print np.amin(mahal_dist), np.amax(mahal_dist)
@@ -49,10 +54,21 @@ def test_covariance():
     assert_almost_equal(
         cov.error_norm(empirical_covariance(X_1d), norm='spectral'), 0)
 
+    # test with one sample
+    X_1sample = np.arange(5)
+    cov = EmpiricalCovariance()
+    with warnings.catch_warnings(record=True):
+        cov.fit(X_1sample)
+
     # test integer type
     X_integer = np.asarray([[0, 1], [1, 0]])
     result = np.asarray([[0.25, -0.25], [-0.25, 0.25]])
     assert_array_almost_equal(empirical_covariance(X_integer), result)
+
+    # test centered case
+    cov = EmpiricalCovariance(assume_centered=True)
+    cov.fit(X)
+    assert_equal(cov.location_, np.zeros(X.shape[1]))
 
 
 def test_shrunk_covariance():
@@ -131,6 +147,10 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.score(X_centered), score_, 4)
     assert(lw.precision_ is None)
 
+    # (too) large data set
+    X_large = np.ones((20, 200))
+    assert_raises(MemoryError, ledoit_wolf, X_large, block_size=100)
+
     # Same tests without assuming centered data
     # test shrinkage coeff on a simple data set
     lw = LedoitWolf()
@@ -156,6 +176,12 @@ def test_ledoit_wolf():
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
     assert_array_almost_equal(empirical_covariance(X_1d), lw.covariance_, 4)
+
+    # test with one sample
+    X_1sample = np.arange(5)
+    lw = LedoitWolf()
+    with warnings.catch_warnings(record=True):
+        lw.fit(X_1sample)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
@@ -222,6 +248,12 @@ def test_oas():
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shinkrage_from_mle, oa.shrinkage_)
     assert_array_almost_equal(empirical_covariance(X_1d), oa.covariance_, 4)
+
+    # test with one sample
+    X_1sample = np.arange(5)
+    oa = OAS()
+    with warnings.catch_warnings(record=True):
+        oa.fit(X_1sample)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)

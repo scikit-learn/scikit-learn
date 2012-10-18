@@ -503,6 +503,14 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     factor : double < 1 (default=.8)
         Scale factor between inner and outer circle.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels (0 or 1) for class membership of each sample.
     """
 
     if factor > 1 or factor < 0:
@@ -518,8 +526,10 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     n_samples_out, n_samples_in = n_samples_out + 1, n_samples_in + 1
     outer_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
     outer_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    inner_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
-    inner_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1]) * factor
+    inner_circ_x = (np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
+                    * factor)
+    inner_circ_y = (np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
+                    * factor)
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
            np.append(outer_circ_y, inner_circ_y))).T
@@ -550,6 +560,13 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
+    Returns
+    -------
+    X : array of shape [n_samples, 2]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels (0 or 1) for class membership of each sample.
     """
 
     n_samples_out = n_samples / 2
@@ -620,14 +637,14 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     >>> from sklearn.datasets.samples_generator import make_blobs
     >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2,
     ...                   random_state=0)
-    >>> X.shape
+    >>> print X.shape
     (10, 2)
     >>> y
     array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, int):
+    if isinstance(centers, (int, np.integer)):
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:

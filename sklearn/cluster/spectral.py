@@ -7,9 +7,11 @@ import warnings
 import numpy as np
 
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
+from ..metrics.pairwise import rbf_kernel
+from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
 
@@ -65,16 +67,15 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     from scipy.sparse.linalg import lobpcg
     try:
         from pyamg import smoothed_aggregation_solver
-        amg_loaded = True
     except ImportError:
-        amg_loaded = False
+        if mode == "amg":
+            raise ValueError("The mode was set to 'amg', but pyamg is "
+                             "not available.")
 
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
     # XXX: Should we check that the matrices given is symmetric
-    if not amg_loaded:
-        warnings.warn('pyamg not available, using scipy.sparse')
     if mode is None:
         mode = 'arpack'
     laplacian, dd = graph_laplacian(adjacency,
@@ -86,7 +87,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
         # We need to put the diagonal at zero
         if not sparse.isspmatrix(laplacian):
-            laplacian[::n_nodes + 1] = 0
+            laplacian.flat[::n_nodes + 1] = 0
         else:
             laplacian = laplacian.tocoo()
             diag_idx = (laplacian.row == laplacian.col)
@@ -189,9 +190,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     labels: array of integers, shape: n_samples
         The labels of the clusters.
 
-    centers: array of integers, shape: k
-        The indices of the cluster centers
-
     References
     ----------
 
@@ -224,7 +222,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     return labels
 
 
-class SpectralClustering(BaseEstimator):
+class SpectralClustering(BaseEstimator, ClusterMixin):
     """Apply k-means to a projection to the normalized laplacian
 
     In practice Spectral Clustering is very useful when the structure of
@@ -236,12 +234,32 @@ class SpectralClustering(BaseEstimator):
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
+    When calling ``fit``, an affinity matrix is constructed using either the
+    Gaussian (aka RBF) kernel of the euclidean distanced ``d(X, X)``::
+
+            np.exp(-gamma * d(X,X) ** 2)
+
+    or a k-nearest neighbors connectivity matrix.
+
+    Alternatively, using ``precomputed``, a user-provided affinity
+    matrix can be used.
+
     Parameters
     -----------
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
-    mode : {None, 'arpack' or 'amg'}
+    affinity: string, 'nearest_neighbors', 'rbf' or 'precomputed'
+
+    gamma: float
+        Scaling factor of Gaussian (rbf) affinity kernel. Ignored for
+        ``affinity='nearest_neighbors'``.
+
+    n_neighbors: integer
+        Number of neighbors to use when constructing the affinity matrix using
+        the nearest neighbors method. Ignored for ``affinity='rbf'``.
+
+    mode: {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
@@ -256,11 +274,31 @@ class SpectralClustering(BaseEstimator):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+
     Attributes
     ----------
+    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
+        Affinity matrix used for clustering. Available only if after calling
+        ``fit``.
 
     `labels_` :
         Labels of each point
+
+    Notes
+    -----
+    If you have an affinity matrix, such as a distance matrix,
+    for which 0 means identical elements, and high values means
+    very dissimilar elements, it can be transformed in a
+    similarity matrix that is well suited for the algorithm by
+    applying the Gaussian (RBF, heat) kernel::
+
+        np.exp(- X ** 2 / (2. * delta ** 2))
+
+    Another alternative is to take a symmetric version of the k
+    nearest neighbors connectivity matrix of the points.
+
+    If the pyamg package is installed, it is used: this greatly
+    speeds up computation.
 
     References
     ----------
@@ -275,7 +313,8 @@ class SpectralClustering(BaseEstimator):
     """
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
-            k=None):
+            gamma=1., affinity='rbf', n_neighbors=10, k=None,
+            precomputed=False):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
@@ -283,37 +322,44 @@ class SpectralClustering(BaseEstimator):
         self.mode = mode
         self.random_state = random_state
         self.n_init = n_init
+        self.gamma = gamma
+        self.affinity = affinity
+        self.n_neighbors = n_neighbors
 
     def fit(self, X):
-        """Compute the spectral clustering from the affinity matrix
+        """Creates an affinity matrix for X using the selected affinity,
+        then applies spectral clustering to this affinity matrix.
 
         Parameters
-        -----------
-        X: array-like or sparse matrix, shape: (n_samples, n_samples)
-            An affinity matrix describing the pairwise similarity of the
-            data. If can also be an adjacency matrix of the graph to embed.
-            X must be symmetric and its entries must be positive or
-            zero. Zero means that elements have nothing in common,
-            whereas high values mean that elements are strongly similar.
-
-        Notes
-        ------
-        If you have an affinity matrix, such as a distance matrix,
-        for which 0 means identical elements, and high values means
-        very dissimilar elements, it can be transformed in a
-        similarity matrix that is well suited for the algorithm by
-        applying the gaussian (heat) kernel::
-
-            np.exp(- X ** 2 / (2. * delta ** 2))
-
-        Another alternative is to take a symmetric version of the k
-        nearest neighbors connectivity matrix of the points.
-
-        If the pyamg package is installed, it is used: this greatly
-        speeds up computation.
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            OR, if affinity==`precomputed`, a precomputed affinity
+            matrix of shape (n_samples, n_samples)
         """
+        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
+            warnings.warn("The spectral clustering API has changed. ``fit``"
+                    "now constructs an affinity matrix from data. To use "
+                    "a custom affinity matrix, set ``affinity=precomputed``.")
+
+        if self.affinity == 'rbf':
+            self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
+
+        elif self.affinity == 'nearest_neighbors':
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+        elif self.affinity == 'precomputed':
+            self.affinity_matrix_ = X
+        else:
+            raise ValueError("Invalid 'affinity'. Expected 'rbf', "
+                "'nearest_neighbors' or 'precomputed', got '%s'."
+                % self.affinity)
+
         self.random_state = check_random_state(self.random_state)
-        self.labels_ = spectral_clustering(X, n_clusters=self.n_clusters,
-                mode=self.mode, random_state=self.random_state,
-                n_init=self.n_init)
+        self.labels_ = spectral_clustering(self.affinity_matrix_,
+                n_clusters=self.n_clusters, mode=self.mode,
+                random_state=self.random_state, n_init=self.n_init)
         return self
+
+    @property
+    def _pairwise(self):
+        return self.affinity == "precomputed"

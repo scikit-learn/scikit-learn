@@ -10,7 +10,6 @@ Between Data Points", Science Feb. 2007
 """
 print __doc__
 
-import numpy as np
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
 from sklearn.datasets.samples_generator import make_blobs
@@ -18,17 +17,12 @@ from sklearn.datasets.samples_generator import make_blobs
 ##############################################################################
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
-X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.5)
-
-##############################################################################
-# Compute similarities
-X_norms = np.sum(X ** 2, axis=1)
-S = - X_norms[:, np.newaxis] - X_norms[np.newaxis, :] + 2 * np.dot(X, X.T)
-p = 10 * np.median(S)
+X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.5,
+        random_state=0)
 
 ##############################################################################
 # Compute Affinity Propagation
-af = AffinityPropagation().fit(S, p)
+af = AffinityPropagation(preference=-50).fit(X)
 cluster_centers_indices = af.cluster_centers_indices_
 labels = af.labels_
 
@@ -42,9 +36,8 @@ print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels_true, labels)
 print "Adjusted Mutual Information: %0.3f" % \
     metrics.adjusted_mutual_info_score(labels_true, labels)
-D = (S / np.min(S))
 print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(D, labels, metric='precomputed'))
+        metrics.silhouette_score(X, labels, metric='sqeuclidean'))
 
 ##############################################################################
 # Plot result

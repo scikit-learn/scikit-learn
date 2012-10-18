@@ -29,12 +29,17 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 
 
-def _fit_binary(estimator, X, y):
+def _fit_binary(estimator, X, y, classes=None):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)
     if len(unique_y) == 1:
-        warnings.warn("Label %s is present in all training examples." %
-                str(unique_y))
+        if classes is not None:
+            if y[0] == -1:
+                c = 0
+            else:
+                c = y[0]
+            warnings.warn("Label %s is present in all training examples." %
+                    str(classes[c]))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -44,11 +49,12 @@ def _fit_binary(estimator, X, y):
 
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
-    if hasattr(estimator, "decision_function"):
-        return np.ravel(estimator.decision_function(X))
-    else:
+    try:
+        score = np.ravel(estimator.decision_function(X))
+    except (AttributeError, NotImplementedError):
         # probabilities of the positive class
-        return estimator.predict_proba(X)[:, 1]
+        score = estimator.predict_proba(X)[:, 1]
+    return score
 
 
 def _check_estimator(estimator):
@@ -65,7 +71,8 @@ def fit_ovr(estimator, X, y):
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    estimators = [_fit_binary(estimator, X, Y[:, i])
+    estimators = [_fit_binary(estimator, X, Y[:, i],
+                             classes=["not %s" % str(i), i])
                   for i in range(Y.shape[1])]
     return estimators, lb
 
@@ -107,6 +114,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     of sequences of labels (e.g., a list of tuples) rather than a single
     target vector. For multilabel learning, the number of classes must be at
     least three, since otherwise OvR reduces to binary classification.
+
+    In the multilabel learning literature, OvR is also known as the binary
+    relevance method.
 
     Parameters
     ----------
@@ -212,7 +222,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y)
+    return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
 
 
 def fit_ovo(estimator, X, y):
@@ -357,7 +367,8 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
-    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])])
+    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
+            dtype=np.int)
 
     estimators = [_fit_binary(estimator, X, Y[:, i])
                   for i in range(Y.shape[1])]

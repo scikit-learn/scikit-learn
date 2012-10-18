@@ -17,6 +17,11 @@ from ..utils.fixes import in1d
 from ..utils import array2d, check_random_state
 from ..base import BaseEstimator
 
+__all__ = ['PatchExtractor',
+           'extract_patches_2d',
+           'grid_to_graph',
+           'img_to_graph',
+           'reconstruct_from_patches_2d']
 
 ###############################################################################
 # From an image to a graph
@@ -218,7 +223,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
-    >>> patches.shape
+    >>> print patches.shape
     (9, 2, 2)
     >>> patches[0]
     array([[0, 1],
@@ -244,9 +249,11 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if isinstance(max_patches, int) and max_patches < all_patches:
+        if (isinstance(max_patches, (int, np.integer))
+                and max_patches < all_patches):
             n_patches = max_patches
-        elif isinstance(max_patches, float) and 0 < max_patches < 1:
+        elif (isinstance(max_patches, (float, np.floating))
+                and 0 < max_patches < 1):
             n_patches = int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)

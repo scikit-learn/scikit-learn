@@ -214,7 +214,7 @@ transposed data.
    >>> agglo = cluster.WardAgglomeration(connectivity=connectivity,
    ...                                   n_clusters=32)
    >>> agglo.fit(X) # doctest: +ELLIPSIS
-   WardAgglomeration(connectivity=...
+   WardAgglomeration(compute_full_tree='auto',...
    >>> X_reduced = agglo.transform(X)
 
    >>> X_approx = agglo.inverse_transform(X_reduced)

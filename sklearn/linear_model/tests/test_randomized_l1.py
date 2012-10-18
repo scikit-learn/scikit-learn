@@ -3,17 +3,19 @@
 
 import numpy as np
 from numpy.testing import assert_equal, assert_raises
+from scipy import sparse
 
 from sklearn.linear_model.randomized_l1 import lasso_stability_path, \
         RandomizedLasso, RandomizedLogisticRegression
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model.base import center_data
 
 diabetes = load_diabetes()
 X = diabetes.data
 y = diabetes.target
-X = Scaler().fit_transform(X)
+X = StandardScaler().fit_transform(X)
 X = X[:, [2, 3, 6, 7, 8]]
 
 # test that the feature score of the best features
@@ -86,3 +88,28 @@ def test_randomized_logistic():
             random_state=42, scaling=scaling, n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(np.argsort(F), np.argsort(feature_scores))
+
+
+def test_randomized_logistic_sparse():
+    """Check randomized sparse logistic regression on sparse data"""
+    iris = load_iris()
+    X = iris.data[:, [0, 2]]
+    y = iris.target
+    X = X[y != 2]
+    y = y[y != 2]
+
+    # center here because sparse matrices are usually not centered
+    X, y, _, _, _ = center_data(X, y, True, True)
+
+    X_sp = sparse.csr_matrix(X)
+
+    F, _ = f_classif(X, y)
+
+    scaling = 0.3
+    clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
+                                scaling=scaling, n_resampling=50, tol=1e-3)
+    feature_scores = clf.fit(X, y).scores_
+    clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
+                                scaling=scaling, n_resampling=50, tol=1e-3)
+    feature_scores_sp = clf.fit(X_sp, y).scores_
+    assert_equal(feature_scores, feature_scores_sp)

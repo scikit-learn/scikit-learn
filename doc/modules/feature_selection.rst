@@ -17,12 +17,13 @@ Univariate feature selection
 
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can seen as a preprocessing step
-to an estimator. Scikit-Learn exposes feature selection routines
-a objects that implement the `transform` method:
+to an estimator. Scikit-learn exposes feature selection routines
+as objects that implement the `transform` method:
 
- * selecting the k-best features :class:`SelectKBest`
+ * :class:`SelectKBest` removes all but the `k` highest scoring features
 
- * setting a percentile of features to keep :class:`SelectPercentile`
+ * :class:`SelectPercentile` removes all but a user-specified highest scoring
+   percentile of features
 
  * using common univariate statistical tests for each feature:
    false positive rate :class:`SelectFpr`, false discovery rate
@@ -61,6 +62,9 @@ weights are assigned to each one of them. Then, features whose absolute weights
 are the smallest are pruned from the current set features. That procedure is
 recursively repeated on the pruned set until the desired number of features to
 select is eventually reached.
+
+:class:`RFECV` performs RFE in a cross-validation loop to find the optimal
+number of features.
 
 .. topic:: Examples:
 

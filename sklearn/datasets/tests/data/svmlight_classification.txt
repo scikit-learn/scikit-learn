@@ -5,3 +5,5 @@
 # another comment
 3.0 21:27
 4.0 2:1.234567890123456e10 # double precision value
+1.0     # empty line, all zeros
+2.0 3:0 # explicit zeros

@@ -145,7 +145,6 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
-   datasets.load_20newsgroups
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
@@ -214,6 +213,7 @@ Samples generator
    decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
+   decomposition.FactorAnalysis
    decomposition.FastICA
    decomposition.NMF
    decomposition.SparsePCA
@@ -503,69 +503,49 @@ From text
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
-For dense data
---------------
-
 .. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
+   linear_model.ARDRegression
+   linear_model.BayesianRidge
+   linear_model.ElasticNet
+   linear_model.ElasticNetCV
+   linear_model.IsotonicRegression
+   linear_model.Lars
+   linear_model.LarsCV
+   linear_model.Lasso
+   linear_model.LassoCV
+   linear_model.LassoLars
+   linear_model.LassoLarsCV
+   linear_model.LassoLarsIC
    linear_model.LinearRegression
+   linear_model.LogisticRegression
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskElasticNet
+   linear_model.OrthogonalMatchingPursuit
+   linear_model.Perceptron
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogisticRegression
    linear_model.Ridge
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
    linear_model.RidgeCV
-   linear_model.Lasso
-   linear_model.LassoCV
-   linear_model.ElasticNet
-   linear_model.ElasticNetCV
-   linear_model.Lars
-   linear_model.LassoLars
-   linear_model.LarsCV
-   linear_model.LassoLarsCV
-   linear_model.LassoLarsIC
-   linear_model.LogisticRegression
-   linear_model.OrthogonalMatchingPursuit
-   linear_model.Perceptron
    linear_model.SGDClassifier
    linear_model.SGDRegressor
-   linear_model.BayesianRidge
-   linear_model.ARDRegression
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   linear_model.lasso_path
+   linear_model.isotonic_regression
    linear_model.lars_path
+   linear_model.lasso_path
+   linear_model.lasso_stability_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
-   linear_model.lasso_stability_path
-
-For sparse data
----------------
-
-.. automodule:: sklearn.linear_model.sparse
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`linear_model` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   linear_model.Lasso
-   linear_model.ElasticNet
-   linear_model.sparse.SGDClassifier
-   linear_model.sparse.SGDRegressor
-   linear_model.LogisticRegression
 
 
 .. _manifold_ref:
@@ -621,6 +601,8 @@ Classification metrics
    metrics.recall_score
    metrics.fbeta_score
    metrics.f1_score
+   metrics.auc_score
+   metrics.average_precision_score
    metrics.precision_recall_fscore_support
    metrics.classification_report
    metrics.precision_recall_curve
@@ -836,6 +818,7 @@ Pairwise metrics
    :template: class.rst
 
    pipeline.Pipeline
+   pipeline.FeatureUnion
 
 
 .. _preprocessing_ref:
@@ -855,11 +838,13 @@ Pairwise metrics
    :toctree: generated/
    :template: class.rst
 
-   preprocessing.Scaler
-   preprocessing.Normalizer
    preprocessing.Binarizer
-   preprocessing.LabelBinarizer
    preprocessing.KernelCenterer
+   preprocessing.LabelBinarizer
+   preprocessing.LabelEncoder
+   preprocessing.MinMaxScaler
+   preprocessing.Normalizer
+   preprocessing.StandardScaler
 
 .. autosummary::
    :toctree: generated/

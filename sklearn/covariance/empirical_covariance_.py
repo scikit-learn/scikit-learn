@@ -17,7 +17,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import array2d
-from ..utils.extmath import fast_logdet
+from ..utils.extmath import fast_logdet, pinvh
 
 
 def log_likelihood(emp_cov, precision):
@@ -113,7 +113,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = linalg.pinv(covariance)
+            self.precision_ = pinvh(covariance)
         else:
             self.precision_ = None
 
@@ -129,7 +129,7 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = linalg.pinv(self.covariance_)
+            precision = pinvh(self.covariance_)
         return precision
 
     def fit(self, X):

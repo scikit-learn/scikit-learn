@@ -57,7 +57,7 @@ The `sklearn` exposes cross-validation generators to generate list
 of indices for this purpose::
 
     >>> from sklearn import cross_validation
-    >>> k_fold = cross_validation.KFold(n=6, k=3, indices=True)
+    >>> k_fold = cross_validation.KFold(n=6, n_folds=3, indices=True)
     >>> for train_indices, test_indices in k_fold:
     ...      print 'Train: %s | test: %s' % (train_indices, test_indices)
     Train: [2 3 4 5] | test: [0 1]
@@ -66,7 +66,7 @@ of indices for this purpose::
 
 The cross-validation can then be implemented easily::
 
-    >>> kfold = cross_validation.KFold(len(X_digits), k=3)
+    >>> kfold = cross_validation.KFold(len(X_digits), n_folds=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in kfold]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
@@ -193,12 +193,11 @@ automatically by cross-validation::
     >>> X_diabetes = diabetes.data
     >>> y_diabetes = diabetes.target
     >>> lasso.fit(X_diabetes, y_diabetes)
-    LassoCV(alphas=array([ 2.14804,  2.00327, ...,  0.0023 ,  0.00215]),
-        copy_X=True, cv=None, eps=0.001, fit_intercept=True, max_iter=1000,
-        n_alphas=100, normalize=False, precompute='auto', tol=0.0001,
-        verbose=False)
+    LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
+        max_iter=1000, n_alphas=100, normalize=False, precompute='auto',
+        tol=0.0001, verbose=False)
     >>> # The estimator chose automatically its lambda:
-    >>> lasso.alpha # doctest: +ELLIPSIS
+    >>> lasso.alpha_ # doctest: +ELLIPSIS
     0.01318...
 
 These estimators are called similarly to their counterparts, with 'CV'

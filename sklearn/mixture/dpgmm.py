@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..utils import check_random_state
-from ..utils.extmath import norm, logsumexp
+from ..utils.extmath import norm, logsumexp, pinvh
 from .. import cluster
 from .gmm import GMM
 
@@ -215,7 +215,7 @@ class DPGMM(GMM):
             return [self.precs_] * self.n_components
 
     def _get_covars(self):
-        return [linalg.pinv(c) for c in self._get_precisions()]
+        return [pinvh(c) for c in self._get_precisions()]
 
     def _set_covars(self, covars):
         raise NotImplementedError("""The variational algorithm does
@@ -332,7 +332,7 @@ class DPGMM(GMM):
             for k in xrange(self.n_components):
                     diff = X - self.means_[k]
                     self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
-            self.scale_ = linalg.pinv(self.scale_)
+            self.scale_ = pinvh(self.scale_)
             self.precs_ = self.dof_ * self.scale_
             self.det_scale_ = linalg.det(self.scale_)
             self.bound_prec_ = 0.5 * wishart_log_det(
@@ -346,7 +346,7 @@ class DPGMM(GMM):
                 self.scale_[k] = (sum_resp + 1) * np.identity(n_features)
                 diff = X - self.means_[k]
                 self.scale_[k] += np.dot(diff.T, z[:, k:k + 1] * diff)
-                self.scale_[k] = linalg.pinv(self.scale_[k])
+                self.scale_[k] = pinvh(self.scale_[k])
                 self.precs_[k] = self.dof_[k] * self.scale_[k]
                 self.det_scale_[k] = linalg.det(self.scale_[k])
                 self.bound_prec_[k] = 0.5 * wishart_log_det(self.dof_[k],

@@ -113,7 +113,7 @@ def test_grid_search_sparse():
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    cv.fit(X_[:180], y_[:180])
+    cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
@@ -222,6 +222,6 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = MockClassifier()
-    cv = KFold(n=len(X), k=3)
+    cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)

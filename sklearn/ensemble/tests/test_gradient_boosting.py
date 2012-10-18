@@ -202,7 +202,7 @@ def test_regression_synthetic():
 #     feature_importances = clf.feature_importances_
 
 #     # true feature importance ranking
-#     true_ranking = np.array([ 3,  1,  8,  2, 10,  9,  4, 11,  0,  6,  7,  5, 12])
+#     true_ranking = np.array([3, 1, 8, 2, 10, 9, 4, 11, 0, 6, 7, 5, 12])
 
 #     assert_array_equal(true_ranking, feature_importances.argsort())
 
@@ -234,10 +234,10 @@ def test_check_inputs():
     from scipy import sparse
     X_sparse = sparse.csr_matrix(X)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    assert_raises(ValueError, clf.fit, X_sparse, y)
+    assert_raises(TypeError, clf.fit, X_sparse, y)
 
     clf = GradientBoostingClassifier().fit(X, y)
-    assert_raises(ValueError, clf.predict, X_sparse)
+    assert_raises(TypeError, clf.predict, X_sparse)
 
 
 def test_check_inputs_predict():
@@ -370,7 +370,8 @@ def test_float_class_labels():
     float_y = np.asarray(y, dtype=np.float32)
 
     clf.fit(X, float_y)
-    assert_array_equal(clf.predict(T), np.asarray(true_result, dtype=np.float32))
+    assert_array_equal(clf.predict(T),
+                       np.asarray(true_result, dtype=np.float32))
     assert_equal(100, len(clf.estimators_))
 
 
