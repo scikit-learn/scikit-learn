@@ -169,6 +169,42 @@ def max_merge(IntFloatDict a, IntFloatDict b,
     return out_obj
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def mean_merge(IntFloatDict a, IntFloatDict b,
+              np.ndarray[ITYPE_t, ndim=1] mask):
+    cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
+    cdef ITYPE_t key
+    cdef DTYPE_t value
+    # First copy a into out
+    while a_it != a_end:
+        key = deref(a_it).first
+        if mask[key]:
+            out_obj.my_map[key] = deref(a_it).second
+        inc(a_it)
+
+    # Then merge b into out
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    while b_it != b_end:
+        key = deref(b_it).first
+        value = deref(b_it).second
+        if mask[key]:
+            out_it = out_obj.my_map.find(key)
+            if out_it == out_end:
+                # Key not found
+                out_obj.my_map[key] = value
+            else:
+                deref(out_it).second = .5*(deref(out_it).second + value)
+        inc(b_it)
+    return out_obj
+
+
+
 ###############################################################################
 # An edge object for fast comparisons 
 
