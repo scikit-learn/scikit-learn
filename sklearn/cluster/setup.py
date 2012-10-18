@@ -34,6 +34,13 @@ def configuration(parent_package='', top_path=None):
         extra_compile_args=blas_info.pop('extra_compile_args', []),
         **blas_info
     )
+
+    config.add_extension('fast_dict',
+                         sources=['fast_dict.cpp'],
+                         language="c++",
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
     return config
 
 if __name__ == '__main__':

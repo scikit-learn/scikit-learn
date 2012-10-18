@@ -23,6 +23,7 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
+from .fast_dict import IntFloatDict, min_merge
 
 
 ###############################################################################
@@ -208,6 +209,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 ###############################################################################
 # Single linkage algorithm
 
+@profile
 def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Single clustering based on a Feature matrix.
@@ -288,7 +290,7 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
     else:
         connectivity = connectivity.tocoo(copy=copy)
         # Put the diagonal to zero
-        diag_mask = (connectivity.row == connectivity.col)
+        diag_mask = (connectivity.row != connectivity.col)
         connectivity.row = connectivity.row[diag_mask]
         connectivity.col = connectivity.col[diag_mask]
         connectivity.data = connectivity.data[diag_mask]
@@ -296,6 +298,7 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
     distances = X[connectivity.row] - X[connectivity.col]
     distances **= 2
     connectivity.data = distances.sum(axis=-1)
+    del distances
 
     connectivity = connectivity.tolil()
 
@@ -326,14 +329,15 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
 
+    # XXX: we probably don't need a LIL anymore, but a CSR would do
     for ind, (data, row)  in enumerate(zip(connectivity.data,
                                            connectivity.rows)):
-        data_row_pair = zip(row, data)
-        A[ind] = data_row_pair
+        A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
+                        np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
         [inertia.append((d, ind, r))
-                            for r, d in data_row_pair
+                            for r, d in zip(row, data)
                             if d < ind]
     del connectivity
 
@@ -352,25 +356,22 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
             if used_node[i] and used_node[j]:
                 break
         parent[i] = parent[j] = k
-
         children.append([i, j])
         used_node[i] = used_node[j] = False
 
         # update the structure matrix A and the inertia matrix
         # a clever 'min' operation between A[i] and A[j]
-        coord_col = dict(A[i])
-        # Cheap trick: min(foo, object) is always foo
-        [coord_col.__setitem__(index, min(coord_col.get(index, object), dist))
-                    for index, dist in A[j]]
-        coord_col = coord_col.items()
-        # List comprehension is faster than a for loop
-        [A[l].append((k, d)) for l, d in coord_col]
+        coord_col = min_merge(A[i], A[j],
+                              used_node.astype(np.int32, copy=False))
+        for l, d in coord_col:
+            if used_node[l]:
+                A[l][k] = d
+                # Here we use the information from coord_col (containing the
+                # distances) to update the heap
+                heappush(inertia, (d, k, l))
         A[k] = coord_col
-
-        # Here we use the information from coord_col (containing the
-        # distances) to update the heap
-        # List comprehension is faster than a for loop
-        [heappush(inertia, (d, k, l)) for l, d in coord_col]
+        # Clear A[i] and A[j] to save memory
+        A[i] = A[j] = 0
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
@@ -643,3 +644,64 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         self
         """
         return Ward.fit(self, X.T, **params)
+
+###############################################################################
+
+class Linkage(Ward):
+    def fit(self, X):
+        """Fit the hierarchical clustering on the data
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            The samples a.k.a. observations.
+
+        Returns
+        -------
+        self
+        """
+        memory = self.memory
+        if isinstance(memory, basestring):
+            memory = Memory(cachedir=memory)
+
+        if not self.connectivity is None:
+            if not sparse.issparse(self.connectivity):
+                raise TypeError("`connectivity` should be a sparse matrix or "
+                        "None, got: %r" % type(self.connectivity))
+
+            if (self.connectivity.shape[0] != X.shape[0] or
+                    self.connectivity.shape[1] != X.shape[0]):
+                raise ValueError("`connectivity` does not have shape "
+                        "(n_samples, n_samples)")
+
+        n_samples = len(X)
+        compute_full_tree = self.compute_full_tree
+        if self.connectivity is None:
+            compute_full_tree = True
+        if compute_full_tree == 'auto':
+            # Early stopping is likely to give a speed up only for
+            # a large number of clusters. The actual threshold
+            # implemented here is heuristic
+            compute_full_tree = self.n_clusters > max(100, .02 * n_samples)
+        n_clusters = self.n_clusters
+        if compute_full_tree:
+            n_clusters = None
+
+        # Construct the tree
+        self.children_, self.n_components, self.n_leaves_, parents = \
+                memory.cache(single_linkage_tree)(X, self.connectivity,
+                            n_components=self.n_components,
+                            copy=self.copy, n_clusters=n_clusters)
+        # Cut the tree
+        if compute_full_tree:
+            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+                                   self.n_leaves_)
+        else:
+            labels = _hierarchical.hc_get_heads(parents, copy=False)
+            # copy to avoid holding a reference on the original array
+            labels = np.copy(labels[:n_samples])
+            # Reasign cluster numbers
+            self.labels_ = np.searchsorted(np.unique(labels), labels)
+        return self
+
+
