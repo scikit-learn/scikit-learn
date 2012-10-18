@@ -30,7 +30,6 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, array2d
 from ..utils import check_random_state, array2d, check_arrays
 from ..utils.extmath import logsumexp
 
@@ -485,8 +484,7 @@ class BaseGradientBoosting(BaseEnsemble):
                         self.min_samples_split, self.min_samples_leaf, 0.0,
                         self.max_features, TREE_SPLIT_BEST, self.random_state)
 
-            tree.build(X, residual[:, np.newaxis],
-                       sample_mask, X_argsorted)
+            tree.build(X, residual[:, np.newaxis], sample_mask, X_argsorted)
 
             # update tree leaves
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
