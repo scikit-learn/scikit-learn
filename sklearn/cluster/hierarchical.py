@@ -24,7 +24,8 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from .fast_dict import IntFloatDict, min_merge, max_merge, WeightedEdge
+from .fast_dict import IntFloatDict, mean_merge, min_merge, max_merge,\
+        WeightedEdge
 
 
 ###############################################################################
@@ -157,7 +158,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.intp)
-    heights = np.zeros(n_nodes)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
 
@@ -170,8 +170,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
             inert, i, j = heappop(inertia)
             if used_node[i] and used_node[j]:
                 break
-        parent[i], parent[j], heights[k] = k, k, inert
-        children.append([i, j])
+        parent[i], parent[j] = k, k
+        children.append((i, j))
         used_node[i] = used_node[j] = False
 
         # update the moments
@@ -270,6 +270,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     linkage_choices = {
                         'complete': (hierarchy.complete, max_merge),
                         'single':   (hierarchy.single,   min_merge),
+                        'weighted': (hierarchy.weighted, mean_merge),
                       }
     try:
         scipy_func, join_func = linkage_choices[linkage]
@@ -372,7 +373,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         i = edge.a
         j = edge.b
         parent[i] = parent[j] = k
-        children.append([i, j])
+        children.append((i, j))
         used_node[i] = used_node[j] = False
 
         # update the structure matrix A and the inertia matrix
@@ -381,6 +382,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         if k % 100 == 0:
             print 'Iteration % 3i out of %i, len(coord_col) % 6i' % (
                         k, n_nodes, len(coord_col))
+        # XXX: pruning doesn't happen right
         for l, d in coord_col:
             A[l].append(k, d)
             # Here we use the information from coord_col (containing the
