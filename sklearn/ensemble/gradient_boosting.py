@@ -114,6 +114,7 @@ class LossFunction(object):
         self.K = n_classes
 
     def init_estimator(self, X, y):
+        """Default ``init`` estimator for loss function. """
         raise NotImplementedError()
 
     @abstractmethod
@@ -714,6 +715,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -728,6 +734,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
+
+    `loss_` : LossFunction
+        The concrete ``LossFunction`` object.
+
+    `init` : BaseEstimator
+        The estimator that provides the initial predictions.
+        Set via the ``init`` argument or ``loss.init_estimator``.
 
     Examples
     --------
@@ -931,6 +944,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -945,6 +963,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
+
+    `loss_` : LossFunction
+        The concrete ``LossFunction`` object.
+
+    `init` : BaseEstimator
+        The estimator that provides the initial predictions.
+        Set via the ``init`` argument or ``loss.init_estimator``.
 
     Examples
     --------
