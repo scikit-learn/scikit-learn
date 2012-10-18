@@ -209,7 +209,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 ###############################################################################
 # Single linkage algorithm
 
-@profile
+#@profile
 def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Single clustering based on a Feature matrix.
@@ -345,7 +345,7 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
-    used_node = np.ones(n_nodes, dtype=bool)
+    used_node = np.ones(n_nodes, dtype=np.int32)
     children = []
 
     # recursive merge loop
@@ -361,14 +361,13 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
 
         # update the structure matrix A and the inertia matrix
         # a clever 'min' operation between A[i] and A[j]
-        coord_col = min_merge(A[i], A[j],
-                              used_node.astype(np.int32, copy=False))
+        coord_col = min_merge(A[i], A[j], used_node)
         for l, d in coord_col:
-            if used_node[l]:
-                A[l][k] = d
-                # Here we use the information from coord_col (containing the
-                # distances) to update the heap
-                heappush(inertia, (d, k, l))
+            A[l].append(k, d)
+            #A[l][k] = d
+            # Here we use the information from coord_col (containing the
+            # distances) to update the heap
+            heappush(inertia, (d, k, l))
         A[k] = coord_col
         # Clear A[i] and A[j] to save memory
         A[i] = A[j] = 0

@@ -8,7 +8,9 @@ integers, and values float.
 cimport cython
 
 # C++
-from cython.operator cimport dereference as deref, preincrement as inc
+from cython.operator cimport dereference as deref, preincrement as inc, \
+    predecrement as dec
+from libcpp.utility cimport pair
 from libcpp.map cimport map as cpp_map
 from libc.math cimport fmin
 
@@ -83,6 +85,16 @@ cdef class IntFloatDict:
         out_obj.my_map = self.my_map
         return out_obj
 
+    def append(self, ITYPE_t key, DTYPE_t value):
+        cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
+        # Decrement the iterator
+        dec(end)
+        # Construct our arguments
+        cdef pair[ITYPE_t, DTYPE_t] args
+        args.first = key
+        args.second = value
+        self.my_map.insert(end, args)
+
 
 ###############################################################################
 # An object with a specific merge strategy
@@ -91,24 +103,34 @@ cdef class IntFloatDict:
 @cython.wraparound(False)
 def min_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask):
-    a = a.copy()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator my_it = a.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator my_end = a.my_map.end()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator other_it = b.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator other_end = b.my_map.end()
-    cdef ITYPE_t other_key
-    cdef DTYPE_t other_value
-    while other_it != other_end:
-        other_key = deref(other_it).first
-        other_value = deref(other_it).second
-        if mask[other_key]:
-            my_it = a.my_map.find(other_key)
-            if my_it == my_end:
+    cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
+    cdef ITYPE_t key
+    cdef DTYPE_t value
+    # First copy a into out
+    while a_it != a_end:
+        key = deref(a_it).first
+        if mask[key]:
+            out_obj.my_map[key] = deref(a_it).second
+        inc(a_it)
+
+    # Then merge b into out
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    while b_it != b_end:
+        key = deref(b_it).first
+        value = deref(b_it).second
+        if mask[key]:
+            out_it = out_obj.my_map.find(key)
+            if out_it == out_end:
                 # Key not found
-                a.my_map[other_key] = other_value
+                out_obj.my_map[key] = value
             else:
-                deref(my_it).second = fmin(deref(my_it).second, other_value)
-        inc(other_it)
-    return a
+                deref(out_it).second = fmin(deref(out_it).second, value)
+        inc(b_it)
+    return out_obj
 
 
