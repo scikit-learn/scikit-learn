@@ -136,6 +136,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     coord_col = []
     A = []
     for ind, row in enumerate(connectivity.rows):
+        A.append(row)
         # We keep only the upper triangular for the moments
         # Generator expressions are faster than arrays on the following
         row = [i for i in row if i < ind]
