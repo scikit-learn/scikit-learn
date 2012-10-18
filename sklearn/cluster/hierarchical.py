@@ -9,6 +9,7 @@ License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
+import sys
 
 import numpy as np
 from scipy import sparse
@@ -23,7 +24,7 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from .fast_dict import IntFloatDict, min_merge
+from .fast_dict import IntFloatDict, min_merge, max_merge, WeightedEdge
 
 
 ###############################################################################
@@ -134,7 +135,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     coord_col = []
     A = []
     for ind, row in enumerate(connectivity.rows):
-        A.append(row)
         # We keep only the upper triangular for the moments
         # Generator expressions are faster than arrays on the following
         row = [i for i in row if i < ind]
@@ -207,12 +207,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
 
 ###############################################################################
-# Single linkage algorithm
+# Linkage algorithm
 
 #@profile
-def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
-              n_clusters=None):
-    """Single clustering based on a Feature matrix.
+def linkage_tree(X, connectivity=None, n_components=None, copy=True,
+              n_clusters=None, linkage='complete'):
+    """Linkage agglomerative clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
 
@@ -267,12 +267,22 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
         X = np.reshape(X, (-1, 1))
     n_samples, n_features = X.shape
 
+    linkage_choices = {
+                        'complete': (hierarchy.complete, max_merge),
+                        'single':   (hierarchy.single,   min_merge),
+                      }
+    try:
+        scipy_func, join_func = linkage_choices[linkage]
+    except KeyError:
+        raise ValueError('Unknown linkage option, linkage should be one '
+            'of %s, but %s was given' % (linkage_choices.keys(), linkage))
+
     if connectivity is None:
         if n_clusters is not None:
             warnings.warn('Early stopping is implemented only for '
                              'structured clustering (i.e. with '
                              'explicit connectivity.', stacklevel=2)
-        out = hierarchy.single(X)
+        out = scipy_func(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
 
@@ -300,6 +310,8 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
     connectivity.data = distances.sum(axis=-1)
     del distances
 
+    print >>sys.stderr, 'To LIL'
+
     connectivity = connectivity.tolil()
 
     if n_components > 1:
@@ -325,6 +337,8 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
 
+    print >>sys.stderr, 'Create distance matrix'
+
     # create inertia heap and connection matrix
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
@@ -336,9 +350,9 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
                         np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
-        [inertia.append((d, ind, r))
+        [inertia.append(WeightedEdge(d, ind, r))
                             for r, d in zip(row, data)
-                            if d < ind]
+                            if r < ind]
     del connectivity
 
     heapify(inertia)
@@ -352,22 +366,26 @@ def single_linkage_tree(X, connectivity=None, n_components=None, copy=True,
     for k in xrange(n_samples, n_nodes):
         # identify the merge
         while True:
-            inert, i, j = heappop(inertia)
-            if used_node[i] and used_node[j]:
+            edge = heappop(inertia)
+            if used_node[edge.a] and used_node[edge.b]:
                 break
+        i = edge.a
+        j = edge.b
         parent[i] = parent[j] = k
         children.append([i, j])
         used_node[i] = used_node[j] = False
 
         # update the structure matrix A and the inertia matrix
         # a clever 'min' operation between A[i] and A[j]
-        coord_col = min_merge(A[i], A[j], used_node)
+        coord_col = join_func(A[i], A[j], used_node)
+        if k % 100 == 0:
+            print 'Iteration % 3i out of %i, len(coord_col) % 6i' % (
+                        k, n_nodes, len(coord_col))
         for l, d in coord_col:
             A[l].append(k, d)
-            #A[l][k] = d
             # Here we use the information from coord_col (containing the
             # distances) to update the heap
-            heappush(inertia, (d, k, l))
+            heappush(inertia, WeightedEdge(d, k, l))
         A[k] = coord_col
         # Clear A[i] and A[j] to save memory
         A[i] = A[j] = 0
@@ -647,6 +665,17 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 ###############################################################################
 
 class Linkage(Ward):
+    def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
+                 connectivity=None, copy=True, n_components=None,
+                 compute_full_tree='auto', linkage='complete'):
+        self.n_clusters = n_clusters
+        self.memory = memory
+        self.copy = copy
+        self.n_components = n_components
+        self.connectivity = connectivity
+        self.compute_full_tree = compute_full_tree
+        self.linkage = linkage
+
     def fit(self, X):
         """Fit the hierarchical clustering on the data
 
@@ -688,9 +717,10 @@ class Linkage(Ward):
 
         # Construct the tree
         self.children_, self.n_components, self.n_leaves_, parents = \
-                memory.cache(single_linkage_tree)(X, self.connectivity,
+                memory.cache(linkage_tree)(X, self.connectivity,
                             n_components=self.n_components,
-                            copy=self.copy, n_clusters=n_clusters)
+                            copy=self.copy, n_clusters=n_clusters,
+                            linkage=self.linkage)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
@@ -702,5 +732,21 @@ class Linkage(Ward):
             # Reasign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
+
+
+class LinkageAgglomeration(Linkage, AgglomerationTransform):
+    def fit(self, X, y=None, **params):
+        """Fit the hierarchical clustering on the data
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            The data
+
+        Returns
+        -------
+        self
+        """
+        return Linkage.fit(self, X.T, **params)
 
 
