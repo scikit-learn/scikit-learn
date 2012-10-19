@@ -2,12 +2,14 @@
 Todo: cross-check the F-value with stats model
 """
 
+import itertools
 import numpy as np
+from scipy import stats, sparse
 import warnings
 
 from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from scipy import stats, sparse
+from sklearn.utils.testing import assert_not_in
 
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
@@ -402,7 +404,7 @@ def test_selectkbest_tiebreaking():
 
 
 def test_selectpercentile_tiebreaking():
-    """Test if SelectPercentile actually selects k features in case of ties.
+    """Test if SelectPercentile selects the right n_features in case of ties.
     """
     X = [[1, 0, 0], [0, 1, 1]]
     y = [0, 1]
@@ -413,3 +415,36 @@ def test_selectpercentile_tiebreaking():
 
         X2 = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
         assert_equal(X2.shape[1], 2)
+
+
+def test_tied_pvalues():
+    """Test whether k-best and percentiles work with tied pvalues from chi2."""
+    # chi2 will return the same p-values for the following features, but it
+    # will return different scores.
+    X0 = np.array([[10000, 9999, 9998], [1, 1, 1]])
+    y = [0, 1]
+
+    for perm in itertools.permutations((0, 1, 2)):
+        X = X0[:, perm]
+        Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
+        assert_equal(Xt.shape, (2, 2))
+        assert_not_in(9998, Xt)
+
+        Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
+        assert_equal(Xt.shape, (2, 2))
+        assert_not_in(9998, Xt)
+
+
+def test_nans():
+    """Assert that SelectKBest and SelectPercentile can handle NaNs."""
+    # First feature has zero variance to confuse f_classif (ANOVA) and
+    # make it return a NaN.
+    X = [[0, 1, 0],
+         [0, -1, -1],
+         [0, .5, .5]]
+    y = [1, 0, 1]
+
+    for select in (SelectKBest(f_classif, 2),
+                   SelectPercentile(f_classif, percentile=67)):
+        select.fit(X, y)
+        assert_array_equal(select.get_support(indices=True), np.array([1, 2]))

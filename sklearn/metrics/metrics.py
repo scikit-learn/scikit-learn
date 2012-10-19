@@ -65,12 +65,13 @@ def confusion_matrix(y_true, y_pred, labels=None):
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
     # convert yt, yp into index
-    y_pred = np.array([label_to_ind[x] for x in y_pred])
-    y_true = np.array([label_to_ind[x] for x in y_true])
+    y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
+    y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
 
-    # intersect y_pred, y_true with labels
-    y_pred = y_pred[y_pred < n_labels]
-    y_true = y_true[y_true < n_labels]
+    # intersect y_pred, y_true with labels, eliminate items not in labels
+    ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
+    y_pred = y_pred[ind]
+    y_true = y_true[ind]
 
     CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
                                     (y_true, y_pred)),

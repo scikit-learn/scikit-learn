@@ -4,6 +4,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
+import warnings
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
@@ -12,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_equal
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.utils import check_random_state
+from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_less
 
 # toy sample
@@ -75,7 +77,7 @@ def test_single_sample_1d():
     clf = svm.SVC().fit(X, Y)
     clf.predict(X[0])
 
-    clf = svm.LinearSVC().fit(X, Y)
+    clf = svm.LinearSVC(random_state=0).fit(X, Y)
     clf.predict(X[0])
 
 
@@ -295,7 +297,7 @@ def test_weight():
                                  weights=[0.833, 0.167], random_state=0)
 
     for clf in (linear_model.LogisticRegression(),
-            svm.LinearSVC(), svm.SVC()):
+            svm.LinearSVC(random_state=0), svm.SVC()):
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[: 180], y_[: 180])
         y_pred = clf.predict(X_[180:])
@@ -329,7 +331,7 @@ def test_auto_weight():
     assert_true(np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2)
 
     for clf in (svm.SVC(kernel='linear'),
-            svm.LinearSVC(), LogisticRegression()):
+            svm.LinearSVC(random_state=0), LogisticRegression()):
         # check that score is better when class='auto' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='auto')
@@ -353,7 +355,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(random_state=0)):
         Xf = np.asfortranarray(X)
         assert_true(Xf.flags['C_CONTIGUOUS'] == False)
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -402,7 +404,7 @@ def test_linearsvc():
     """
     Test basic routines using LinearSVC
     """
-    clf = svm.LinearSVC().fit(X, Y)
+    clf = svm.LinearSVC(random_state=0).fit(X, Y)
 
     # by default should have intercept
     assert_true(clf.fit_intercept)
@@ -411,15 +413,16 @@ def test_linearsvc():
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', dual=False).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', dual=False, random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
-    clf = svm.LinearSVC(penalty='l2', dual=True).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l2', dual=True, random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty, l1 loss
-    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True, random_state=0)
+    clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # test also decision function
@@ -430,8 +433,8 @@ def test_linearsvc():
 
 def test_linearsvc_crammer_singer():
     """Test LinearSVC with crammer_singer multi-class svm"""
-    ovr_clf = svm.LinearSVC().fit(iris.data, iris.target)
-    cs_clf = svm.LinearSVC(multi_class='crammer_singer')
+    ovr_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
+    cs_clf = svm.LinearSVC(multi_class='crammer_singer', random_state=0)
     cs_clf.fit(iris.data, iris.target)
 
     # similar prediction for ovr and crammer-singer:
@@ -455,7 +458,7 @@ def test_linearsvc_iris():
     Also, test symbolic class names (classes_).
     """
     target = iris.target_names[iris.target]
-    clf = svm.LinearSVC().fit(iris.data, target)
+    clf = svm.LinearSVC(random_state=0).fit(iris.data, target)
     assert_equal(set(clf.classes_), set(iris.target_names))
     assert_greater(np.mean(clf.predict(iris.data) == target), 0.8)
 
@@ -474,7 +477,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [2, 3]]
     y = [0, 0, 1, 1]
     clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
-                     dual=False, C=4, tol=1e-7)
+                     dual=False, C=4, tol=1e-7, random_state=0)
     assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
     assert_true(clf.fit_intercept)
 
@@ -573,6 +576,21 @@ def test_svc_clone_with_callable_kernel():
     b.predict(X)
     b.predict_proba(X)
     b.decision_function(X)
+
+
+def test_timeout():
+    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+        probability=True, max_iter=1)
+    with warnings.catch_warnings(record=True) as foo:
+        # Hackish way to reset the  warning counter
+        from sklearn.svm import base
+        base.__warningregistry__ = {}
+        warnings.simplefilter("always")
+        a.fit(X, Y)
+        assert_equal(len(foo), 1,
+            msg=foo)
+        assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':

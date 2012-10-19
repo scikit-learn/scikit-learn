@@ -305,12 +305,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
 
         if weights is None:
-            mode = np.asarray([stats.mode(pl)[0] for pl in pred_labels],
-                              dtype=np.int)
+            mode = np.array([stats.mode(pl)[0] for pl in pred_labels],
+                            dtype=np.int)
         else:
-            mode = np.asarray([weighted_mode(pl, w)[0]
-                               for (pl, w) in zip(pred_labels, weights)],
-                              dtype=np.int)
+            mode = np.array([weighted_mode(pl, w)[0]
+                             for (pl, w) in zip(pred_labels, weights)],
+                            dtype=np.int)
 
         mode = mode.flatten().astype(np.int)
         # map indices to classes

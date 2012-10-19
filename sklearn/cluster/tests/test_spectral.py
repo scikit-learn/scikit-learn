@@ -109,7 +109,7 @@ def test_spectral_clustering_sparse():
     if labels[0] == 0:
         labels = 1 - labels
 
-    assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .9)
+    assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .89)
 
 
 def test_affinities():

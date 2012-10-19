@@ -46,15 +46,19 @@ class BaseSGD(BaseEstimator):
     __metaclass__ = ABCMeta
 
     def __init__(self, loss, penalty='l2', alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, seed=0, learning_rate="optimal",
-                 eta0=0.0, power_t=0.5, warm_start=False):
+                 eta0=0.0, power_t=0.5, warm_start=False, rho=None):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.alpha = alpha
-        self.rho = rho
+        self.l1_ratio = l1_ratio
+        if rho is not None:
+            self.l1_ratio = 1 - rho
+            warnings.warn("rho was replaced by l1_ratio and will be removed "
+                    "in 0.15", DeprecationWarning)
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
         self.shuffle = shuffle
@@ -84,14 +88,14 @@ class BaseSGD(BaseEstimator):
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
         if self.n_iter <= 0:
-            raise ValueError("n_iter must be greater than zero")
-        if not (0.0 <= self.rho <= 1.0):
-            raise ValueError("rho must be in [0, 1]")
+            raise ValueError("n_iter must be > zero")
+        if not (0.0 <= self.l1_ratio <= 1.0):
+            raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
-            raise ValueError("alpha must be greater than zero")
+            raise ValueError("alpha must be >= 0")
         if self.learning_rate != "optimal":
             if self.eta0 <= 0.0:
-                raise ValueError("eta0 must be greater than 0.0")
+                raise ValueError("eta0 must be > 0")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -266,9 +270,10 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
 
-    rho : float
-        The Elastic Net mixing parameter, with 0 < rho <= 1.
-        Defaults to 0.85.
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
+        Defaults to 0.15.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -338,9 +343,9 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-            fit_intercept=True, learning_rate='optimal', loss='hinge',
-            n_iter=5, n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
-            shuffle=False, verbose=0, warm_start=False)
+            fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
+            loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+            rho=None, seed=0, shuffle=False, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -361,16 +366,17 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     }
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 rho=0.85, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False):
+                 class_weight=None, warm_start=False, rho=None):
+
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
-                                            alpha=alpha, rho=rho,
+                                            alpha=alpha, l1_ratio=l1_ratio,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, epsilon=epsilon,
-                                            seed=seed,
+                                            seed=seed, rho=rho,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
                                             warm_start=warm_start)
@@ -662,7 +668,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     learning_rate_type = est._get_learning_rate_type(est.learning_rate)
 
     return plain_sgd(coef, intercept, est.loss_function,
-                     penalty_type, est.alpha, est.rho,
+                     penalty_type, est.alpha, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), est.seed,
                      pos_weight, neg_weight,
@@ -703,9 +709,10 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
 
-    rho : float
-        The Elastic Net mixing parameter, with 0 < rho <= 1.
-        Defaults to 0.85.
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
+        Defaults to 0.15.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -765,9 +772,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
-           learning_rate='invscaling', loss='squared_loss', n_iter=5, p=None,
-           penalty='l2', power_t=0.25, rho=0.85, seed=0, shuffle=False,
-           verbose=0, warm_start=False)
+           l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
+           n_iter=5, p=None, penalty='l2', power_t=0.25, rho=None, seed=0,
+           shuffle=False, verbose=0, warm_start=False)
 
     See also
     --------
@@ -782,11 +789,10 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     }
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-            rho=0.85, fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-            epsilon=DEFAULT_EPSILON, p=None, seed=0,
-            learning_rate="invscaling", eta0=0.01,
-            power_t=0.25, warm_start=False):
-
+            l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+            verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
+            learning_rate="invscaling", eta0=0.01, power_t=0.25,
+            warm_start=False, rho=None):
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "
                           "scikit-learn 0.14, use epsilon instead.",
@@ -795,11 +801,11 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             epsilon = p
 
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                           alpha=alpha, rho=rho,
+                                           alpha=alpha, l1_ratio=l1_ratio,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, epsilon=epsilon,
-                                           seed=seed,
+                                           seed=seed, rho=rho,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
@@ -933,7 +939,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           self.intercept_[0],
                                           loss_function,
                                           penalty_type,
-                                          self.alpha, self.rho,
+                                          self.alpha, self.l1_ratio,
                                           dataset,
                                           n_iter,
                                           int(self.fit_intercept),

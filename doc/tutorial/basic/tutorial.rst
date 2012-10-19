@@ -165,10 +165,10 @@ done by passing our training set to the ``fit`` method. As a training
 set, let us use all the images of our dataset apart from the last
 one::
 
-  >>> clf.fit(digits.data[:-1], digits.target[:-1])
+  >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.001, kernel='rbf', probability=False, shrinking=True, tol=0.001,
-    verbose=False)
+    gamma=0.001, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
+    tol=0.001, verbose=False)
 
 Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the `digits` dataset,
@@ -203,9 +203,9 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> clf = svm.SVC()
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> clf.fit(X, y)
+  >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-    kernel='rbf', probability=False, shrinking=True, tol=0.001,
+    kernel='rbf', max_iter=-1, probability=False, shrinking=True, tol=0.001,
     verbose=False)
 
   >>> import pickle

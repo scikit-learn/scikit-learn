@@ -37,8 +37,8 @@ is an estimator object::
     >>> clf # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', probability=False,
-        shrinking=True, tol=0.001, verbose=False))])
+        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
+        probability=False, shrinking=True, tol=0.001, verbose=False))])
 
 The estimators of the pipeline are stored as a list in the ``steps`` attribute::
 
@@ -53,10 +53,11 @@ and as a ``dict`` in ``named_steps``::
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
-    >>> clf.set_params(svm__C=10) # NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None, whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='rbf', probability=False, shrinking=True, tol=0.001,
-      verbose=False))])
+    >>> clf.set_params(svm__C=10) # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
+        whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
+        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
+        probability=False, shrinking=True, tol=0.001, verbose=False))])
 
 This is particularly important for doing grid searches::
 

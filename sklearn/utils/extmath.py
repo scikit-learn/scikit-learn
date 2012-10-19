@@ -4,6 +4,7 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -78,7 +79,8 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iterations, random_state=None):
+def randomized_range_finder(A, size, n_iter, random_state=None,
+        n_iterations=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -87,7 +89,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
         The input data matrix
     size: integer
         Size of the return array
-    n_iterations: integer
+    n_iter: integer
         Number of power iterations used to stabilize the result
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
@@ -106,6 +108,10 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     approximate matrix decompositions
     Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
     """
+    if n_iterations is not None:
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                "and will be removed in 0.16.", DeprecationWarning)
+        n_iter = n_iterations
     random_state = check_random_state(random_state)
 
     # generating random gaussian vectors r with shape: (A.shape[1], size)
@@ -117,7 +123,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
 
     # perform power iterations with Y to further 'imprint' the top
     # singular vectors of A in Y
-    for i in xrange(n_iterations):
+    for i in xrange(n_iter):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
@@ -125,8 +131,8 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
-                   transpose='auto', random_state=0):
+def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
+                   transpose='auto', random_state=0, n_iterations=None):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -142,7 +148,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples.
 
-    n_iterations: int (default is 0)
+    n_iter: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
         problems).
 
@@ -172,6 +178,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
+    if n_iterations is not None:
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                "and will be removed in 0.16.", DeprecationWarning)
+        n_iter = n_iterations
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -182,7 +193,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iterations, random_state)
+    Q = randomized_range_finder(M, n_random, n_iter, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)

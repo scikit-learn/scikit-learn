@@ -49,7 +49,7 @@ print "Dataset consists of %d faces" % n_samples
 
 
 ###############################################################################
-def plot_gallery(title, images):
+def plot_gallery(title, images, n_col=n_col, n_row=n_row):
     pl.figure(figsize=(2. * n_col, 2.26 * n_row))
     pl.suptitle(title, size=16)
     for i, comp in enumerate(images):
@@ -95,8 +95,12 @@ estimators = [
     ('Cluster centers - MiniBatchKMeans',
      MiniBatchKMeans(n_clusters=n_components, tol=1e-3, batch_size=20,
          max_iter=50, random_state=rng),
-     True)
+     True),
+
+    ('Factor Analysis components - FA',
+     decomposition.FactorAnalysis(n_components=n_components, max_iter=2), True),
 ]
+
 
 ###############################################################################
 # Plot a sample of the input data
@@ -119,6 +123,10 @@ for name, estimator, center in estimators:
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
+    if hasattr(estimator, 'noise_variance_'):
+        plot_gallery("Pixelwise variance",
+                estimator.noise_variance_.reshape(1,-1),
+                n_col=1, n_row=1)
     plot_gallery('%s - Train time %.1fs' % (name, train_time),
                  components_[:n_components])
 

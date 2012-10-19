@@ -11,12 +11,13 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy import sparse
 from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import as_float_array, check_random_state, safe_asarray, \
-        check_arrays
+        check_arrays, safe_mask
 from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
@@ -85,7 +86,7 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
         self : object
             returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format='dense')
+        X, y = check_arrays(X, y)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
@@ -129,10 +130,10 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
     # Should we add an intermediate base class?
     def transform(self, X):
         """Transform a new matrix using the selected features"""
-        mask = self.get_support(indices=issparse(X))
+        mask = self.get_support()
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return safe_asarray(X)[:, mask]
+        return safe_asarray(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """Transform a new matrix using the selected features"""
@@ -150,7 +151,7 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
 def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
                       precompute=False, eps=np.finfo(np.float).eps,
                       max_iter=500):
-    X = X[mask]
+    X = X[safe_mask(X, mask)]
     y = y[mask]
 
     # Center X and y to avoid fit the intercept
@@ -332,9 +333,14 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
 def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
                          fit_intercept=True, tol=1e-3):
-    X = X[mask]
+    X = X[safe_mask(X, mask)]
     y = y[mask]
-    X = (1 - weights) * X
+    if issparse(X):
+        size = len(weights)
+        weight_dia = sparse.dia_matrix((1 - weights, 0), (size, size))
+        X = X * weight_dia
+    else:
+        X = (1 - weights) * X
 
     C = np.atleast_1d(np.asarray(C, dtype=np.float))
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
@@ -484,7 +490,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 def _lasso_stability_path(X, y, mask, weights, eps):
     "Inner loop of lasso_stability_path"
     X = X * weights[np.newaxis, :]
-    X = X[mask, :]
+    X = X[safe_mask(X, mask), :]
     y = y[mask]
 
     alpha_max = np.max(np.abs(np.dot(X.T, y))) / X.shape[0]

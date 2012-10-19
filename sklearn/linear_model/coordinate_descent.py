@@ -35,7 +35,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     Minimizes the objective function::
 
             1 / (2 * n_samples) * ||y - Xw||^2_2 +
-            + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+            + alpha * l1_ratio * ||w||_1
+            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
@@ -44,12 +45,12 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     where::
 
-            alpha = a + b and rho = a / (a + b)
+            alpha = a + b and l1_ratio = a / (a + b)
 
-    The parameter rho corresponds to alpha in the glmnet R package while
-    alpha corresponds to the lambda parameter in glmnet. Specifically, rho =
-    1 is the lasso penalty. Currently, rho <= 0.01 is not reliable, unless
-    you supply your own sequence of alpha.
+    The parameter l1_ratio corresponds to alpha in the glmnet R package while
+    alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
+    = 1 is the lasso penalty. Currently, l1_ratio <= 0.01 is not reliable,
+    unless you supply your own sequence of alpha.
 
     Parameters
     ----------
@@ -62,10 +63,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         reasons, using alpha = 0 is with the Lasso object is not advised
         and you should prefer the LinearRegression object.
 
-    rho : float
-        The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
-        the penalty is an L2 penalty. For rho = 1 it is an L1 penalty.
-        For 0 < rho < 1, the penalty is a combination of L1 and L2
+    l1_ratio : float
+        The ElasticNet mixing parameter, with 0 <= l1_ratio <= 1. For
+        l1_ratio = 0 the penalty is an L2 penalty. For l1_ratio = 1 it is an L1
+        penalty.  For 0 < l1_ratio < 1, the penalty is a combination of L1 and
+        L2.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -110,16 +112,28 @@ class ElasticNet(LinearModel, RegressorMixin):
     `intercept_` : float | array, shape = (n_targets,)
         independent term in decision function.
 
+    `dual_gap_` : float
+        the current fit is guaranteed to be epsilon-suboptimal with
+        epsilon := `dual_gap_`
+
+    `eps_` : float
+        `eps_` is used to check if the fit converged to the requested
+        `tol`
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
     """
-    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
+    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+            normalize=False, precompute='auto', max_iter=1000, copy_X=True,
+            tol=1e-4, warm_start=False, positive=False, rho=None):
         self.alpha = alpha
-        self.rho = rho
+        self.l1_ratio = l1_ratio
+        if rho is not None:
+            self.l1_ratio = rho
+            warnings.warn("rho was renamed to l1_ratio and will be removed "
+                    "in 0.15", DeprecationWarning)
         self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -195,8 +209,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         dual_gap_ = np.empty(n_targets)
         eps_ = np.empty(n_targets)
 
-        l1_reg = self.alpha * self.rho * n_samples
-        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
+        l1_reg = self.alpha * self.l1_ratio * n_samples
+        l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
 
         # precompute if n_samples > n_features
         if hasattr(precompute, '__array__'):
@@ -259,8 +273,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         dual_gap_ = np.empty(n_targets)
         eps_ = np.empty(n_targets)
 
-        l1_reg = self.alpha * self.rho * n_samples
-        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
+        l1_reg = self.alpha * self.l1_ratio * n_samples
+        l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
 
         for k in xrange(n_targets):
             coef_[k, :], dual_gap_[k], eps_[k] = \
@@ -333,7 +347,7 @@ class Lasso(ElasticNet):
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Technically the Lasso model is optimizing the same objective function as
-    the Elastic Net with rho=1.0 (no L2 penalty).
+    the Elastic Net with l1_ratio=1.0 (no L2 penalty).
 
     Parameters
     ----------
@@ -389,6 +403,14 @@ class Lasso(ElasticNet):
     `intercept_` : float
         independent term in decision function.
 
+    `dual_gap_` : float
+        the current fit is guaranteed to be epsilon-suboptimal with
+        epsilon := `dual_gap_`
+
+    `eps_` : float
+        `eps_` is used to check if the fit converged to the requested
+        `tol`
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -422,7 +444,7 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False):
-        super(Lasso, self).__init__(alpha=alpha, rho=1.0,
+        super(Lasso, self).__init__(alpha=alpha, l1_ratio=1.0,
                             fit_intercept=fit_intercept, normalize=normalize,
                             precompute=precompute, copy_X=copy_X,
                             max_iter=max_iter, tol=tol, warm_start=warm_start,
@@ -507,22 +529,23 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     LassoLarsCV
     sklearn.decomposition.sparse_encode
     """
-    return enet_path(X, y, rho=1., eps=eps, n_alphas=n_alphas, alphas=alphas,
-                     precompute=precompute, Xy=Xy,
-                     fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose, **params)
+    return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
+            alphas=alphas, precompute=precompute, Xy=Xy,
+            fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
+            verbose=verbose, **params)
 
 
-def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
+def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, verbose=False,
+              normalize=False, copy_X=True, verbose=False, rho=None,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
     The Elastic Net optimization function is::
 
         1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+        + alpha * l1_ratio * ||w||_1
+        + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     Parameters
     ----------
@@ -533,9 +556,9 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     y : ndarray, shape = (n_samples,)
         Target values
 
-    rho : float, optional
+    l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties). rho=1 corresponds to the Lasso
+        l1 and l2 penalties). l1_ratio=1 corresponds to the Lasso
 
     eps : float
         Length of the path. eps=1e-3 means that
@@ -585,6 +608,12 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
+
+    if rho is not None:
+        l1_ratio = rho
+        warnings.warn("rho was renamed to l1_ratio and will be removed "
+                "in 0.15", DeprecationWarning)
+
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                         copy=copy_X and fit_intercept)
     # From now on X can be touched inplace
@@ -616,7 +645,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_samples = X.shape[0]
     if alphas is None:
-        alpha_max = np.abs(Xy).max() / (n_samples * rho)
+        alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
         alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                              num=n_alphas)[::-1]
     else:
@@ -626,7 +655,7 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
-        model = ElasticNet(alpha=alpha, rho=rho,
+        model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
             precompute=precompute)
         model.set_params(**params)
@@ -646,16 +675,16 @@ def enet_path(X, y, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 
-def _path_residuals(X, y, train, test, path, path_params, rho=1):
+def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1):
     this_mses = list()
-    if 'rho' in path_params:
-        path_params['rho'] = rho
+    if 'l1_ratio' in path_params:
+        path_params['l1_ratio'] = l1_ratio
     models_train = path(X[train], y[train], **path_params)
     this_mses = np.empty(len(models_train))
     for i_model, model in enumerate(models_train):
         y_ = model.predict(X[test])
         this_mses[i_model] = ((y_ - y[test]) ** 2).mean()
-    return this_mses, rho
+    return this_mses, l1_ratio
 
 
 class LinearModelCV(LinearModel):
@@ -704,12 +733,12 @@ class LinearModelCV(LinearModel):
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
-        if 'rho' in path_params:
-            rhos = np.atleast_1d(path_params['rho'])
-            # For the first path, we need to set rho
-            path_params['rho'] = rhos[0]
+        if 'l1_ratio' in path_params:
+            l1_ratios = np.atleast_1d(path_params['l1_ratio'])
+            # For the first path, we need to set l1_ratio
+            path_params['l1_ratio'] = l1_ratios[0]
         else:
-            rhos = [1, ]
+            l1_ratios = [1, ]
         path_params.pop('cv', None)
         path_params.pop('n_jobs', None)
 
@@ -732,12 +761,12 @@ class LinearModelCV(LinearModel):
         all_mse_paths = list()
 
         # We do a double for loop folded in one, in order to be able to
-        # iterate in parallel on rho and folds
-        for rho, mse_alphas in itertools.groupby(
+        # iterate in parallel on l1_ratio and folds
+        for l1_ratio, mse_alphas in itertools.groupby(
                     Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                         delayed(_path_residuals)(X, y, train, test,
-                                    self.path, path_params, rho=rho)
-                            for rho in rhos for train, test in folds
+                                    self.path, path_params, l1_ratio=l1_ratio)
+                            for l1_ratio in l1_ratios for train, test in folds
                     ), operator.itemgetter(1)):
 
             mse_alphas = [m[0] for m in mse_alphas]
@@ -748,14 +777,14 @@ class LinearModelCV(LinearModel):
             all_mse_paths.append(mse_alphas.T)
             if this_best_mse < best_mse:
                 model = models[i_best_alpha]
-                best_rho = rho
+                best_l1_ratio = l1_ratio
 
-        if hasattr(model, 'rho'):
-            if model.rho != best_rho:
+        if hasattr(model, 'l1_ratio'):
+            if model.l1_ratio != best_l1_ratio:
                 # Need to refit the model
-                model.rho = best_rho
+                model.l1_ratio = best_l1_ratio
                 model.fit(X, y)
-            self.rho_ = model.rho
+            self.l1_ratio_ = model.l1_ratio
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.alpha_ = model.alpha
@@ -765,8 +794,14 @@ class LinearModelCV(LinearModel):
         return self
 
     @property
+    def rho_(self):
+        warnings.warn("rho was renamed to l1_ratio and will be removed "
+                "in 0.15", DeprecationWarning)
+        return self.l1_ratio_
+
+    @property
     def alpha(self):
-        warnings.warn("Use alpha_. Using alpha is deprecated"
+        warnings.warn("Use alpha_. Using alpha is deprecated "
                 "since version 0.12, and backward compatibility "
                 "won't be maintained from version 0.14 onward. ",
                 DeprecationWarning, stacklevel=1)
@@ -869,15 +904,15 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Parameters
     ----------
-    rho : float, optional
+    l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties). For rho = 0
-        the penalty is an L2 penalty. For rho = 1 it is an L1 penalty.
-        For 0 < rho < 1, the penalty is a combination of L1 and L2
+        l1 and l2 penalties). For l1_ratio = 0
+        the penalty is an L2 penalty. For l1_ratio = 1 it is an L1 penalty.
+        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2
         This parameter can be a list, in which case the different
         values are tested by cross-validation and the one giving the best
         prediction score is used. Note that a good choice of list of
-        values for rho is often to put more values close to 1
+        values for l1_ratio is often to put more values close to 1
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in [.1, .5, .7,
         .9, .95, .99, 1]
 
@@ -917,26 +952,26 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If '-1', use
         all the CPUs. Note that this is used only if multiple values for
-        rho are given.
+        l1_ratio are given.
 
     Attributes
     ----------
     `alpha_` : float
         The amount of penalization choosen by cross validation
 
-    `rho_` : float
+    `l1_ratio_` : float
         The compromise between l1 and l2 penalization choosen by
         cross validation
 
     `coef_` : array, shape = (n_features,)
-        parameter vector (w in the cost function formula)
+        Parameter vector (w in the cost function formula),
 
     `intercept_` : float
-        independent term in decision function.
+        Independent term in the decision function.
 
-    `mse_path_` : array, shape = (n_rho, n_alpha, n_folds)
-        mean square error for the test set on each fold, varying rho and
-        alpha
+    `mse_path_` : array, shape = (n_l1_ratio, n_alpha, n_folds)
+        Mean square error for the test set on each fold, varying l1_ratio and
+        alpha.
 
     Notes
     -----
@@ -946,12 +981,13 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
 
-    The parameter rho corresponds to alpha in the glmnet R package
+    The parameter l1_ratio corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
         1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * rho * ||w||_1 + 0.5 * alpha * (1 - rho) * ||w||^2_2
+        + alpha * l1_ratio * ||w||_1
+        + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
@@ -960,7 +996,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     for::
 
-        alpha = a + b and rho = a / (a + b)
+        alpha = a + b and l1_ratio = a / (a + b).
 
     See also
     --------
@@ -970,11 +1006,15 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, rho=0.5, eps=1e-3, n_alphas=100, alphas=None,
+    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1):
-        self.rho = rho
+                 verbose=0, n_jobs=1, rho=None):
+        self.l1_ratio = l1_ratio
+        if rho is not None:
+            self.l1_ratio = rho
+            warnings.warn("rho was renamed to l1_ratio and will be removed "
+                    "in 0.15", DeprecationWarning)
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -998,7 +1038,8 @@ class MultiTaskElasticNet(Lasso):
     The optimization objective for Lasso is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
-        + alpha * rho * ||W||_21 + 0.5 * alpha * (1 - rho) * ||W||_Fro^2
+        + alpha * l1_ratio * ||W||_21
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
     Where::
 
@@ -1011,10 +1052,11 @@ class MultiTaskElasticNet(Lasso):
     alpha : float, optional
         Constant that multiplies the L1/L2 term. Defaults to 1.0
 
-    rho : float
-        The ElasticNet mixing parameter, with 0 < rho <= 1. For rho = 0
-        the penalty is an L1/L2 penalty. For rho = 1 it is an L1 penalty.
-        For 0 < rho < 1, the penalty is a combination of L1/L2 and L2
+    l1_ratio : float
+        The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
+        is an L1 penalty.
+        For 0 < l1_ratio < 1, the penalty is a combination of L1/L2 and L2.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1056,7 +1098,7 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            max_iter=1000, normalize=False, rho=0.5, tol=0.0001,
+            l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
             warm_start=False)
     >>> print clf.coef_
     [[ 0.45663524  0.45612256]
@@ -1075,8 +1117,14 @@ class MultiTaskElasticNet(Lasso):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
     """
-    def __init__(self, alpha=1.0, rho=0.5, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
+    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+            normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
+            warm_start=False, rho=None):
+        self.l1_ratio = l1_ratio
+        if rho is not None:
+            self.l1_ratio = rho
+            warnings.warn("rho was renamed to l1_ratio and will be removed "
+                    "in 0.15", DeprecationWarning)
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1085,7 +1133,6 @@ class MultiTaskElasticNet(Lasso):
         self.copy_X = copy_X
         self.tol = tol
         self.warm_start = warm_start
-        self.rho = rho
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit MultiTaskLasso model with coordinate descent
@@ -1132,8 +1179,8 @@ class MultiTaskElasticNet(Lasso):
         else:
             self.coef_ = coef_init
 
-        l1_reg = self.alpha * self.rho * n_samples
-        l2_reg = self.alpha * (1.0 - self.rho) * n_samples
+        l1_reg = self.alpha * self.l1_ratio * n_samples
+        l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
 
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
@@ -1240,4 +1287,4 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.copy_X = copy_X
         self.tol = tol
         self.warm_start = warm_start
-        self.rho = 1.0
+        self.l1_ratio = 1.0

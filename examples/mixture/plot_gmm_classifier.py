@@ -52,7 +52,7 @@ iris = datasets.load_iris()
 
 # Break up the dataset into non-overlapping training (75%) and testing
 # (25%) sets.
-skf = StratifiedKFold(iris.target, k=4)
+skf = StratifiedKFold(iris.target, n_folds=4)
 # Only take the first fold.
 train_index, test_index = next(iter(skf))
 

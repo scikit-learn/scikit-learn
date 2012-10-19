@@ -39,7 +39,7 @@ from cd_fast import sparse_std
 
 def sparse_center_data(X, y, fit_intercept, normalize=False):
     """
-    Compute informations needed to center data to have mean zero along
+    Compute information needed to center data to have mean zero along
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """

@@ -365,7 +365,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     """
     Gram = array2d(Gram, order='F', copy=copy_Gram)
     Xy = np.asarray(Xy)
-    if Xy.ndim > 1 and Xy.shape[1] > 1:  # or subsequent target will be affected
+    if Xy.ndim > 1 and Xy.shape[1] > 1:
+        # or subsequent target will be affected
         copy_Gram = True
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]

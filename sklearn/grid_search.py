@@ -118,16 +118,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     else:
         this_score = clf.score(X_test, y_test)
 
-    if y is not None:
-        if hasattr(y, 'shape'):
-            this_n_test_samples = y.shape[0]
-        else:
-            this_n_test_samples = len(y)
+    if hasattr(X, 'shape'):
+        this_n_test_samples = X.shape[0]
     else:
-        if hasattr(X, 'shape'):
-            this_n_test_samples = X.shape[0]
-        else:
-            this_n_test_samples = len(X)
+        this_n_test_samples = len(X)
+
     if verbose > 2:
         msg += ", score=%f" % this_score
     if verbose > 1:
@@ -248,7 +243,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
         estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
-            gamma=..., kernel='rbf', probability=False,
+            gamma=..., kernel='rbf', max_iter=-1, probability=False,
             shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,
             param_grid=...,
@@ -424,8 +419,6 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                 best_score = score
                 best_params = params
 
-        if best_score is None:
-            raise ValueError('Best score could not be found')
         self.best_score_ = best_score
         self.best_params_ = best_params
 

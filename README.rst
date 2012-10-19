@@ -74,7 +74,7 @@ Testing
 After installation, you can launch the test suite from outside the
 source directory (you will need to have nosetest installed)::
 
-    python -c "import sklearn; sklearn.test()"
+   $ nosetest --exe sklearn 
 
 See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.

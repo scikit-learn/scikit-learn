@@ -334,7 +334,7 @@ class ProbabilisticPCA(PCA):
         self.covariance_ = np.diag(delta)
         n_components = self.n_components
         if n_components is None:
-            n_components = self.dim
+            n_components = n_features
         for k in range(n_components):
             add_cov = np.outer(self.components_[k], self.components_[k])
             self.covariance_ += self.explained_variance_[k] * add_cov
@@ -342,7 +342,7 @@ class ProbabilisticPCA(PCA):
 
     @property
     def dim(self):
-        warnings.warn("Using dim is deprecated"
+        warnings.warn("Using dim is deprecated "
                 "since version 0.12, and backward compatibility "
                 "won't be maintained from version 0.14 onward. ",
                 DeprecationWarning, stacklevel=2)
@@ -424,7 +424,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
-           random_state=<mtrand.RandomState object at 0x...>, whiten=False)
+           random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
@@ -468,7 +468,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
             # not a sparse matrix, ensure this is a 2D array
             X = np.atleast_2d(as_float_array(X, copy=self.copy))
@@ -485,8 +485,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             n_components = self.n_components
 
         U, S, V = randomized_svd(X, n_components,
-                                 n_iterations=self.iterated_power,
-                                 random_state=self.random_state)
+                                 n_iter=self.iterated_power,
+                                 random_state=random_state)
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
         self.explained_variance_ratio_ = exp_var / exp_var.sum()

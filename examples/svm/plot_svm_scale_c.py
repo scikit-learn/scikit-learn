@@ -128,7 +128,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
                         cv=ShuffleSplit(n=n_samples, train_size=train_size,
-                                        n_iterations=250, random_state=1))
+                                        n_iter=250, random_state=1))
         grid.fit(X, y)
         scores = [x[1] for x in grid.grid_scores_]
 

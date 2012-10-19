@@ -100,11 +100,33 @@ def _unique(ar, return_index=False, return_inverse=False):
         flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
-np_version = np.__version__.split('.')
-if int(np_version[0]) < 2 and int(np_version[1]) < 5:
+np_version = []
+for x in np.__version__.split('.'):
+    try:
+        np_version.append(int(x))
+    except ValueError:
+        # x may be of the form dev-1ea1592
+        np_version.append(x)
+
+if np_version[:2] < (1, 5):
     unique = _unique
 else:
     unique = np.unique
+
+
+def _bincount(X, weights=None, minlength=None):
+    """Replacing np.bincount in numpy < 1.6 to provide minlength."""
+    result = np.bincount(X, weights)
+    if len(result) >= minlength:
+        return result
+    out = np.zeros(minlength, np.int)
+    out[:len(result)] = result
+    return out
+
+if np_version[:2] < (1, 6):
+    bincount = _bincount
+else:
+    bincount = np.bincount
 
 
 def _copysign(x1, x2):
