@@ -24,7 +24,7 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from .fast_dict import IntFloatDict, mean_merge, min_merge, max_merge,\
+from .fast_dict import IntFloatDict, average_merge, min_merge, max_merge,\
         WeightedEdge
 
 
@@ -271,7 +271,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     linkage_choices = {
                         'complete': (hierarchy.complete, max_merge),
                         'single':   (hierarchy.single,   min_merge),
-                        'weighted': (hierarchy.weighted, mean_merge),
+                        'average': (hierarchy.weighted, average_merge),
                       }
     try:
         scipy_func, join_func = linkage_choices[linkage]
@@ -309,10 +309,11 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         del diag_mask
     distances = X[connectivity.row] - X[connectivity.col]
     distances **= 2
-    connectivity.data = distances.sum(axis=-1)
+    if linkage == 'average':
+        connectivity.data = np.sqrt(distances.sum(axis=-1))
+    else:
+        connectivity.data = distances.sum(axis=-1)
     del distances
-
-    print >>sys.stderr, 'To LIL'
 
     connectivity = connectivity.tolil()
 
@@ -338,8 +339,6 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
-
-    print >>sys.stderr, 'Create distance matrix'
 
     # create inertia heap and connection matrix
     A = np.empty(n_nodes, dtype=object)
@@ -375,15 +374,18 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         j = edge.b
         parent[i] = parent[j] = k
         children.append((i, j))
+        # Keep track of the number of elements per cluster
+        n_i = used_node[i]
+        n_j = used_node[j]
+        used_node[k] = n_i + n_j
         used_node[i] = used_node[j] = False
 
         # update the structure matrix A and the inertia matrix
         # a clever 'min' operation between A[i] and A[j]
-        coord_col = join_func(A[i], A[j], used_node)
+        coord_col = join_func(A[i], A[j], used_node, n_i, n_j)
         if k % 100 == 0:
-            print 'Iteration % 3i out of %i, len(coord_col) % 6i' % (
-                        k, n_nodes, len(coord_col))
-        # XXX: pruning doesn't happen right
+            print 'Iteration % 3i out of %i, d %.3f' % (
+                        k, n_nodes, d)
         for l, d in coord_col:
             A[l].append(k, d)
             # Here we use the information from coord_col (containing the
