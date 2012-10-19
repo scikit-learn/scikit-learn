@@ -12,10 +12,25 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 
+from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 from sklearn.utils.extmath import weighted_mode
+
+
+def test_density():
+    rng = np.random.RandomState(0)
+    X = rng.randint(10, size=(10, 5))
+    X[1,2] = 0
+    X[5, 3] = 0
+    X_csr = sparse.csr_matrix(X)
+    X_csc = sparse.csc_matrix(X)
+    X_coo = sparse.coo_matrix(X)
+    X_lil = sparse.lil_matrix(X)
+
+    for X_ in (X_csr, X_csc, X_coo, X_lil):
+        assert_equal(density(X_), density(X))
 
 
 def test_uniform_weights():
