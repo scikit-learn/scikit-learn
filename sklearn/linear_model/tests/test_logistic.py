@@ -122,5 +122,13 @@ def test_nan():
     logistic.LogisticRegression().fit(Xnan, Y1)
 
 
+def test_liblinear_random_state():
+    X, y = datasets.make_classification(n_samples=20)
+    lr1 = logistic.LogisticRegression(random_state=0)
+    lr1.fit(X, y)
+    lr2 = logistic.LogisticRegression(random_state=0)
+    lr2.fit(X, y)
+    assert_array_equal(lr1.coef_, lr2.coef_)
+
 if __name__ == '__main__':
     nose.runmodule()

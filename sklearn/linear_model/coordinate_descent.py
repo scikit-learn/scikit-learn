@@ -801,7 +801,7 @@ class LinearModelCV(LinearModel):
 
     @property
     def alpha(self):
-        warnings.warn("Use alpha_. Using alpha is deprecated"
+        warnings.warn("Use alpha_. Using alpha is deprecated "
                 "since version 0.12, and backward compatibility "
                 "won't be maintained from version 0.14 onward. ",
                 DeprecationWarning, stacklevel=1)

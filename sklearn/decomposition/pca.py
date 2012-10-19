@@ -334,7 +334,7 @@ class ProbabilisticPCA(PCA):
         self.covariance_ = np.diag(delta)
         n_components = self.n_components
         if n_components is None:
-            n_components = self.dim
+            n_components = n_features
         for k in range(n_components):
             add_cov = np.outer(self.components_[k], self.components_[k])
             self.covariance_ += self.explained_variance_[k] * add_cov
@@ -342,7 +342,7 @@ class ProbabilisticPCA(PCA):
 
     @property
     def dim(self):
-        warnings.warn("Using dim is deprecated"
+        warnings.warn("Using dim is deprecated "
                 "since version 0.12, and backward compatibility "
                 "won't be maintained from version 0.14 onward. ",
                 DeprecationWarning, stacklevel=2)

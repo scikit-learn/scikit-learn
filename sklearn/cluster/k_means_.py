@@ -1118,11 +1118,11 @@ class MiniBatchKMeans(KMeans):
         # Empty context to be used inplace by the convergence check routine
         convergence_context = {}
 
-        # Perform the iterative optimization untill the final convergence
+        # Perform the iterative optimization until the final convergence
         # criterion
         for iteration_idx in xrange(n_iter):
 
-            # Sample the minibatch from the full dataset
+            # Sample a minibatch from the full dataset
             minibatch_indices = self.random_state.random_integers(
                 0, n_samples - 1, self.batch_size)
 
@@ -1132,7 +1132,7 @@ class MiniBatchKMeans(KMeans):
                 self.cluster_centers_, self.counts_,
                 old_center_buffer, tol > 0.0, distances=distances)
 
-            # Monitor the convergence and do early stopping if necessary
+            # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
                 self, iteration_idx, n_iter, tol, n_samples,
                 centers_squared_diff, batch_inertia, convergence_context,
