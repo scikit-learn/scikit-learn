@@ -157,6 +157,15 @@ def test_euclidean_distances():
     assert_array_almost_equal(D, [[1., 2.]])
 
 
+def test_euclidean_distances_dense_sparse():
+    X = csr_matrix([[0]])
+    Y = np.array([[1], [2]], dtype=np.float)
+    D1 = euclidean_distances(X, Y)
+    D2 = euclidean_distances(Y, X)
+    assert_array_almost_equal(D1, [[1., 2.]])
+    assert_array_almost_equal(D2, [[1.], [2.]])
+
+
 def test_kernel_symmetry():
     """ Valid kernels should be symmetric"""
     rng = np.random.RandomState(0)
