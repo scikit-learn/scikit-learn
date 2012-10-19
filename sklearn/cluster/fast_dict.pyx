@@ -97,12 +97,13 @@ cdef class IntFloatDict:
 
 
 ###############################################################################
-# An object with a specific merge strategy
+# merge strategies
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def min_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask):
+              np.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t n_a, ITYPE_t n_b):
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
@@ -137,7 +138,8 @@ def min_merge(IntFloatDict a, IntFloatDict b,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def max_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask):
+              np.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t n_a, ITYPE_t n_b):
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
@@ -171,13 +173,15 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def mean_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask):
+def average_merge(IntFloatDict a, IntFloatDict b,
+              np.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t n_a, ITYPE_t n_b):
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
     cdef ITYPE_t key
     cdef DTYPE_t value
+    cdef DTYPE_t n_out = <DTYPE_t> (n_a + n_b)
     # First copy a into out
     while a_it != a_end:
         key = deref(a_it).first
@@ -198,8 +202,10 @@ def mean_merge(IntFloatDict a, IntFloatDict b,
             if out_it == out_end:
                 # Key not found
                 out_obj.my_map[key] = value
+                print 'should never happen'
             else:
-                deref(out_it).second = .5*(deref(out_it).second + value)
+                deref(out_it).second = (n_a * deref(out_it).second
+                                        + n_b * value) / n_out
         inc(b_it)
     return out_obj
 
