@@ -202,7 +202,6 @@ def average_merge(IntFloatDict a, IntFloatDict b,
             if out_it == out_end:
                 # Key not found
                 out_obj.my_map[key] = value
-                print 'should never happen'
             else:
                 deref(out_it).second = (n_a * deref(out_it).second
                                         + n_b * value) / n_out
