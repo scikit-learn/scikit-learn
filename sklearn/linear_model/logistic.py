@@ -90,11 +90,13 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-            fit_intercept=True, intercept_scaling=1, class_weight=None):
+            fit_intercept=True, intercept_scaling=1, class_weight=None,
+            random_state=None):
 
         super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,
                 loss='lr', tol=tol, C=C, fit_intercept=fit_intercept,
-                intercept_scaling=intercept_scaling, class_weight=class_weight)
+                intercept_scaling=intercept_scaling, class_weight=class_weight,
+                random_state=None)
 
     def predict_proba(self, X):
         """Probability estimates.

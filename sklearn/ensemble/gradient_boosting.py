@@ -16,7 +16,7 @@ The module structure is the following:
   regression problems.
 """
 
-# Authors: Peter Prettenhofer, Scott White, Gilles Louppe
+# Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti
 # License: BSD Style.
 
 from __future__ import division
@@ -31,6 +31,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
+from ..utils.extmath import logsumexp
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -112,6 +113,7 @@ class LossFunction(object):
         self.K = n_classes
 
     def init_estimator(self, X, y):
+        """Default ``init`` estimator for loss function. """
         raise NotImplementedError()
 
     @abstractmethod
@@ -380,11 +382,12 @@ class MultinomialDeviance(LossFunction):
             Y[:, k] = y == k
 
         return np.sum(-1 * (Y * pred).sum(axis=1) +
-                      np.log(np.exp(pred).sum(axis=1)))
+                      logsumexp(pred, axis=1))
 
     def negative_gradient(self, y, pred, k=0):
         """Compute negative gradient for the ``k``-th class. """
-        return y - np.exp(pred[:, k]) / np.sum(np.exp(pred), axis=1)
+        return y - np.nan_to_num(np.exp(pred[:, k] -
+                                        logsumexp(pred, axis=1)))
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
@@ -481,8 +484,7 @@ class BaseGradientBoosting(BaseEnsemble):
                         self.min_samples_split, self.min_samples_leaf, 0.0,
                         self.max_features, TREE_SPLIT_BEST, self.random_state)
 
-            tree.build(X, residual[:, np.newaxis],
-                       sample_mask, X_argsorted)
+            tree.build(X, residual[:, np.newaxis], sample_mask, X_argsorted)
 
             # update tree leaves
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
@@ -711,6 +713,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -725,6 +732,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
+
+    `loss_` : LossFunction
+        The concrete ``LossFunction`` object.
+
+    `init` : BaseEstimator
+        The estimator that provides the initial predictions.
+        Set via the ``init`` argument or ``loss.init_estimator``.
 
     Examples
     --------
@@ -796,8 +810,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
             proba[:, 0] -= proba[:, 1]
         else:
-            proba = (np.exp(score)
-                     / np.sum(np.exp(score), axis=1)[:, np.newaxis])
+            proba = np.nan_to_num(
+                np.exp(score - (logsumexp(score, axis=1)[:, np.newaxis])))
         return proba
 
     def predict_proba(self, X):
@@ -928,6 +942,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -942,6 +961,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
+
+    `loss_` : LossFunction
+        The concrete ``LossFunction`` object.
+
+    `init` : BaseEstimator
+        The estimator that provides the initial predictions.
+        Set via the ``init`` argument or ``loss.init_estimator``.
 
     Examples
     --------

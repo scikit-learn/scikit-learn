@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
@@ -5,8 +6,10 @@ from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
 from nose.tools import assert_raises, assert_true
+from nose.tools import assert_equal as nose_assert_equal
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
+from sklearn.utils import ConvergenceWarning
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -222,6 +225,17 @@ def test_sparse_svc_clone_with_callable_kernel():
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
+
+
+def test_timeout():
+    sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
+            max_iter=1)
+    with warnings.catch_warnings(record=True) as foo:
+        sp.fit(X_sp, Y)
+        nose_assert_equal(len(foo), 1,
+            msg=foo)
+        nose_assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':
