@@ -509,6 +509,12 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_partial_fit_equal_fit_pa1(self):
+        self._test_partial_fit_equal_fit("pa1")
+
+    def test_partial_fit_equal_fit_pa2(self):
+        self._test_partial_fit_equal_fit("pa2")
+
     def test_regression_losses(self):
         clf = self.factory(alpha=0.01, learning_rate="constant",
                            eta0=0.1, loss="epsilon_insensitive")
@@ -695,6 +701,12 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
 
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
+
+    def test_partial_fit_equal_fit_pa1(self):
+        self._test_partial_fit_equal_fit("pa1")
+
+    def test_partial_fit_equal_fit_pa2(self):
+        self._test_partial_fit_equal_fit("pa2")
 
     def test_loss_function_epsilon(self):
         clf = self.factory(epsilon=0.9)
