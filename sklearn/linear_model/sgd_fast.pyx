@@ -39,6 +39,9 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
+DEF PA = 4
+DEF PA1 = 5
+DEF PA2 = 6
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -315,6 +318,9 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(t+t0)
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
+        (4) Passive Agressive, 
+        (5) Passive Agressive-I,
+        (6) Passive Agressive-II,
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -380,11 +386,19 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
                          &sample_weight)
 
+            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+            elif learning_rate == PA:
+                eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+            elif learning_rate == PA1:
+                eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                eta = min(alpha/loss.dloss(p,y), eta)
+            elif learning_rate == PA2:
+                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 1.0/2*alpha)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
@@ -434,6 +448,14 @@ cdef inline double max(double a, double b):
 cdef inline double min(double a, double b):
     return a if a <= b else b
 
+cdef double sqnorm(DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
+    cdef double x_norm = 0.0
+    cdef int j = 0
+    for j in range(xnnz):
+        idx = x_ind_ptr[j]
+        z = w_data_ptr[idx]
+        x_norm += z*z
+    return sqrt(x_norm)
 
 cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
                     INTEGER *x_ind_ptr, int xnnz, double u):
