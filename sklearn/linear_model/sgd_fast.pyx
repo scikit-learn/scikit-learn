@@ -450,7 +450,7 @@ cdef double sqnorm(DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = x_data_ptr[idx]
-        x_norm += z*z
+        x_norm += z * z
     return x_norm
 
 cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
