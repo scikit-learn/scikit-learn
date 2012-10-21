@@ -449,7 +449,7 @@ cdef double sqnorm(DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
     cdef int j = 0
     for j in range(xnnz):
         idx = x_ind_ptr[j]
-        z = w_data_ptr[idx]
+        z = x_data_ptr[idx]
         x_norm += z*z
     return x_norm
 
