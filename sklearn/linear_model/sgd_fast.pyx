@@ -318,9 +318,9 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(t+t0)
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive, 
-        (5) Passive Agressive-I,
-        (6) Passive Agressive-II,
+        (4) Passive Agressive, eta = 1.0 / norm(x)
+        (5) Passive Agressive-I, eta = min(alpha, loss/norm(x))
+        (6) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -398,7 +398,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 eta = min(alpha/loss.dloss(p,y), eta)
             elif learning_rate == PA2:
-                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 1.0/2*alpha)
+                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5*alpha)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)

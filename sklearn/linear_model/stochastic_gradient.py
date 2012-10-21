@@ -28,7 +28,8 @@ from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 
 
-LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3}
+LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3, 
+                       "pa" : 4, "pa1" : 5, "pa2" : 6}
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
@@ -304,7 +305,10 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         constant: eta = eta0
         optimal: eta = 1.0/(t+t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
-
+        pa (passive aggressive):  eta = 1.0 / norm(x)     
+        pa1: eta = min(alpha, loss/norm(x))
+        pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
+        
     eta0 : double
         The initial learning rate [default 0.01].
 
