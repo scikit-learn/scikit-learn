@@ -358,6 +358,9 @@ user via ``eta0`` and ``power_t``, resp.
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
+For passive-aggressive learning rate use ``learning_rate='pa'``, ``learning_rate='pa1'``
+or ``learning_rate='pa2'``.
+
 The model parameters can be accessed through the members ``coef_`` and
 ``intercept\_``:
 
@@ -377,6 +380,9 @@ The model parameters can be accessed through the members ``coef_`` and
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
    67 (2), 301-320.
 
+* `"Online Passive-Aggressive Algorithms"
+  <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+  K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 Implementation details
 ======================
