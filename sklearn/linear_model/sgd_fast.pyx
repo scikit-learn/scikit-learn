@@ -394,7 +394,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 eta = min(alpha/loss.dloss(p,y), eta)
             elif learning_rate == PA2:
-                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5*alpha)
+                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5 * alpha)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
