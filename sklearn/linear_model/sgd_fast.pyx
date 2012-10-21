@@ -343,8 +343,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     cdef WeightVector w = WeightVector(weights)
 
-    cdef DOUBLE *x_data_ptr = NULL
-    cdef INTEGER *x_ind_ptr = NULL
+    cdef DOUBLE * x_data_ptr = NULL
+    cdef INTEGER * x_ind_ptr = NULL
 
     # helper variable
     cdef int xnnz
@@ -360,11 +360,11 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef unsigned int i = 0
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
-    cdef DOUBLE *q_data_ptr = NULL
+    cdef np.ndarray[DOUBLE, ndim = 1, mode = "c"] q = None
+    cdef DOUBLE * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <DOUBLE *> q.data
+        q_data_ptr = <DOUBLE * > q.data
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -381,8 +381,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         if shuffle:
             dataset.shuffle(seed)
         for i in range(n_samples):
-            dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
-                         &sample_weight)
+            dataset.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
+                         & sample_weight)
 
             p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
 
@@ -392,7 +392,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = eta0 / pow(t, power_t)
             elif learning_rate == PA1:
                 eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                eta = min(alpha/loss.dloss(p,y), eta)
+                eta = min(alpha / loss.dloss(p, y), eta)
             elif learning_rate == PA2:
                 eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5 * alpha)
 
@@ -420,7 +420,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
         # report epoch information
         if verbose > 0:
-            print("Norm: %.2f, NNZs: %d, "\
+            print("Norm: %.2f, NNZs: %d, "
             "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
                                                     weights.nonzero()[0].shape[0],
                                                     intercept, count,
@@ -444,7 +444,7 @@ cdef inline double max(double a, double b):
 cdef inline double min(double a, double b):
     return a if a <= b else b
 
-cdef double sqnorm(DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
+cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double x_norm = 0.0
     cdef int j = 0
     for j in range(xnnz):
@@ -453,8 +453,8 @@ cdef double sqnorm(DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
         x_norm += z * z
     return x_norm
 
-cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
-                    INTEGER *x_ind_ptr, int xnnz, double u):
+cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
+                    INTEGER * x_ind_ptr, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by
@@ -464,7 +464,7 @@ cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
     cdef int j = 0
     cdef int idx = 0
     cdef double wscale = w.wscale
-    cdef double* w_data_ptr = w.w_data_ptr
+    cdef double * w_data_ptr = w.w_data_ptr
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = w_data_ptr[idx]

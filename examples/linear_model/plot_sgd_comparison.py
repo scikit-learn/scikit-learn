@@ -23,24 +23,24 @@ digits = datasets.load_digits()
 classifiers = [
     ("SGD", SGDClassifier()),
     ("Perceptron", Perceptron()),
-    ("PA-I",  SGDClassifier(learning_rate='pa1', 
+    ("PA-I", SGDClassifier(learning_rate='pa1',
+                           eta0=0.001, alpha=0.01)),
+    ("PA-II", SGDClassifier(learning_rate='pa2',
                             eta0=0.001, alpha=0.01)),
-    ("PA-II", SGDClassifier(learning_rate='pa2', 
-                            eta0=0.001, alpha=0.01)),
-    ]
+]
 
-xx = 1-np.array(heldout)
-for name,clf in classifiers:
+xx = 1 - np.array(heldout)
+for name, clf in classifiers:
     yy = []
     for i in heldout:
         yy_ = []
         for r in range(rounds):
-            X_train, X_test, y_train, y_test = train_test_split(digits.data, 
-                                                                digits.target, 
+            X_train, X_test, y_train, y_test = train_test_split(digits.data,
+                                                                digits.target,
                                                                 test_size=i)
-            clf.fit(X_train,y_train)
+            clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
-            yy_.append(1-np.mean(y_pred==y_test))
+            yy_.append(1 - np.mean(y_pred == y_test))
         yy.append(np.mean(yy_))
     pl.plot(xx, yy, label=name)
 

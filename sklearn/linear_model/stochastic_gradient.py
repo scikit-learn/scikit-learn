@@ -28,8 +28,8 @@ from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 
 
-LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3, 
-                       "pa1" : 4, "pa2" : 5}
+LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
+                       "pa1": 4, "pa2": 5}
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
@@ -59,7 +59,7 @@ class BaseSGD(BaseEstimator):
         if rho is not None:
             self.l1_ratio = 1 - rho
             warnings.warn("rho was replaced by l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
+                          "in 0.15", DeprecationWarning)
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
         self.shuffle = shuffle
@@ -184,7 +184,7 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes, ):
-                    raise ValueError("Provided intercept_init " \
+                    raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
                 self.intercept_ = intercept_init
             else:
@@ -197,7 +197,7 @@ class BaseSGD(BaseEstimator):
                                        order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
-                    raise ValueError("Provided coef_init does not " \
+                    raise ValueError("Provided coef_init does not "
                                      "match dataset.")
                 self.coef_ = coef_init
             else:
@@ -207,7 +207,7 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
-                    raise ValueError("Provided intercept_init " \
+                    raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
             else:
@@ -307,7 +307,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         invscaling: eta = eta0 / pow(t, power_t)
         pa1: eta = min(alpha, loss/norm(x))
         pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
-        
+
     eta0 : double
         The initial learning rate [default 0.01].
 
@@ -792,14 +792,14 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     }
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-            l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-            verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
-            learning_rate="invscaling", eta0=0.01, power_t=0.25,
-            warm_start=False, rho=None):
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
+                 learning_rate="invscaling", eta0=0.01, power_t=0.25,
+                 warm_start=False, rho=None):
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "
                           "scikit-learn 0.14, use epsilon instead.",
-                           DeprecationWarning, stacklevel=2)
+                          DeprecationWarning, stacklevel=2)
             self.p = float(p)
             epsilon = p
 
