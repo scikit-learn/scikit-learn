@@ -358,8 +358,22 @@ user via ``eta0`` and ``power_t``, resp.
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
-For passive-aggressive learning rate use ``learning_rate='pa'``, ``learning_rate='pa1'``
-or ``learning_rate='pa2'``.
+For passive-aggressive algorithms, there is no learning rate, instead 
+step-size is taken as large as would guarantee the example would have
+been correctly classified. In practice, this only works on seperable
+data. A regularization parameter :math:`\alpha` is used to tradeoff
+the margin violation and the step-size. PA-1 scales linearly with
+margin violation, PA-2 scales quadratically.
+
+For PA-1 use ``learning_rate='pa1'``, and ``learning-rate='pa2'`` for
+PA-2 respectively. Setting ``alpha`` to 0 gives the vanilla passive-
+aggressive algorithm.
+
+..math::
+
+     \eta = \frac{1}{|x|^2} (PA)
+     \eta = \text{min} (\alpha, \frac{1}{|x|^2} (PA-1)
+     \eta = \frac{1}{|x|^2 + 0.5 \alpha} (PA-2)
 
 The model parameters can be accessed through the members ``coef_`` and
 ``intercept\_``:
