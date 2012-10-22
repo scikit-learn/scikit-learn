@@ -471,7 +471,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.estimators_ = None
 
-    def fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
+    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -574,7 +574,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                   self.random_state)
 
             # fit next stage of trees
-            y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
+            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
