@@ -790,7 +790,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         super(GradientBoostingClassifier, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose)
+            random_state, verbose=verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
