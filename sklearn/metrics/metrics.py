@@ -74,7 +74,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_true = y_true[ind]
 
     CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
-                                    (y_true, y_pred)),
+                                (y_true, y_pred)),
                                shape=(n_labels, n_labels),
                                dtype=np.int).todense())
     return CM
@@ -130,6 +130,10 @@ def roc_curve(y_true, y_score):
     y_true = np.ravel(y_true)
     classes = np.unique(y_true)
 
+    # Test for one-class case
+    if classes.shape[0] == 1:
+        raise ValueError("y_true should have exactly 2 distinct possible "
+                         "labels: got only one instead.")
     # ROC only for binary classification
     if classes.shape[0] != 2:
         raise ValueError("ROC is defined for binary classification only")
