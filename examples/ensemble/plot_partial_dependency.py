@@ -2,8 +2,6 @@ import numpy as np
 import pylab as pl
 import matplotlib
 
-from operator import itemgetter
-
 from scipy.stats.mstats import mquantiles
 
 from sklearn.cross_validation import train_test_split
@@ -81,9 +79,9 @@ for i, fx in enumerate([7, 6, 2, 3]):
     ax = pl.subplot(2, 2, i + 1)
 
     # plot partial dependency
-    pdp, grid = gradient_boosting.partial_dependency(clf, target_feature,
-                                                     X=X_train)
-    ax.plot(grid.ravel(), pdp, 'g-')
+    pdp, (axis,) = gradient_boosting.partial_dependency(clf, target_feature,
+                                                        X=X_train)
+    ax.plot(axis, pdp.ravel(), 'g-')
 
     # plot data deciles
     deciles = mquantiles(X_train[:, fx], prob=np.arange(0.1, 1.0, 0.1))
@@ -102,10 +100,28 @@ y_max = max((ax.get_ylim()[1] for ax in sub_plots))
 for ax in sub_plots:
     ax.set_ylim((y_min, y_max))
 
-## pl.figure()
+pl.tight_layout()
 
-## ax = pl.subplot(1, 1, 1)
 
-## target_feature = np.array([7, 2], dtype=np.int32)
-## pdp, grid = gradient_boosting.partial_dependency(clf, target_feature,
-##                                                  X=X_train)
+from mpl_toolkits.mplot3d import Axes3D
+fig = pl.figure()
+
+
+target_feature = np.array([2, 6], dtype=np.int32)
+pdp, (x_axis, y_axis) = gradient_boosting.partial_dependency(clf, target_feature,
+                                                             X=X_train,
+                                                             grid_resolution=50)
+XX, YY = np.meshgrid(x_axis, y_axis)
+
+Z = pdp.T.reshape(XX.shape).T
+ax = Axes3D(fig)
+surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=pl.cm.BuPu)
+
+ax.set_xlabel(names[target_feature[0]])
+ax.set_ylabel(names[target_feature[1]])
+ax.set_zlabel('Partial dependency')
+
+#  pretty init view
+ax.view_init(elev=22, azim=122)
+
+pl.colorbar(surf)
