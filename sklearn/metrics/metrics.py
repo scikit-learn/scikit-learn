@@ -74,7 +74,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_true = y_true[ind]
 
     CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
-                                    (y_true, y_pred)),
+                                (y_true, y_pred)),
                                shape=(n_labels, n_labels),
                                dtype=np.int).todense())
     return CM
