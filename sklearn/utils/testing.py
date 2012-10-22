@@ -1,7 +1,10 @@
 """Testing utilities."""
 
-# Copyright (c) 2011 Pietro Berkes
-# License: Simplified BSD
+# Copyright (c) 2011, 2012
+# Authors: Pietro Berkes,
+#          Andreas Muller
+#          Mathieu Blondel
+# License: BSD
 import inspect
 import pkgutil
 
@@ -13,11 +16,21 @@ from sklearn.base import BaseEstimator
 from .fixes import savemat
 
 
+# Conveniently import all assertions in one place.
+from nose.tools import assert_equal
+from nose.tools import assert_almost_equal
+from nose.tools import assert_true
+from nose.tools import assert_false
+from nose.tools import assert_raises
+
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+
+
 try:
     from nose.tools import assert_in, assert_not_in
 except ImportError:
     # Nose < 1.0.0
-    from nose.tools import assert_true, assert_false
 
     def assert_in(x, container):
         assert_true(x in container, msg="%r in %r" % (x, container))
