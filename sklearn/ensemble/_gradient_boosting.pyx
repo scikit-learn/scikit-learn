@@ -173,8 +173,9 @@ cdef inline int array_index(int val, int[::1] arr):
 
 
 cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
-                              int[::1] target_feature,
-                              double[::1] out):
+                               int[::1] target_feature,
+                               double learn_rate,
+                               double[::1] out):
     """Partial dependency of ``target_feature`` set on the response.
 
     For each row in ``X`` a tree traversal is performed.
@@ -200,6 +201,8 @@ cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
     target_feature : memory view on 1d ndarray
         The set of target features for which the partial dependency
         should be evaluated. X.shape[1] == target_feature.shape[0].
+    learn_rate : double
+        Constant scaling factor for the leaf predictions.
     out : memory view on 1d ndarray
         The value of the partial dependency function on each grid
         point.
@@ -235,7 +238,8 @@ cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
             current_node = node_stack[stack_size]
 
             if children_left[current_node] == LEAF:
-                out[i] += weight_stack[stack_size] * value[current_node]
+                out[i] += weight_stack[stack_size] * value[current_node] * \
+                          learn_rate
                 total_weight += weight_stack[stack_size]
             else:
                 # non-terminal node

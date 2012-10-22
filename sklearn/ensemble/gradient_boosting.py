@@ -1188,6 +1188,7 @@ def partial_dependency(model, target_variables, grid=None, X=None,
 
     try:
         pdp = model.init.predict(grid).ravel()
+        pdp *= 0.0  # FIXME
     except ValueError:
         raise ValueError("init model must be constant to support dependency plots")
 
@@ -1195,6 +1196,7 @@ def partial_dependency(model, target_variables, grid=None, X=None,
 
     for stage in xrange(n_estimators):
         tree = model.estimators_[stage, 0]
-        _partial_dependency_tree(tree, grid, target_variables, pdp)
+        _partial_dependency_tree(tree, grid, target_variables,
+                                 model.learn_rate, pdp)
 
     return pdp, grid
