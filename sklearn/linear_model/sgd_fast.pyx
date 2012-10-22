@@ -24,6 +24,7 @@ cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double sqrt(double x)
     cdef extern double pow(double x, double y)
+    cdef extern double fabs(double x)
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
@@ -392,7 +393,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = eta0 / pow(t, power_t)
             elif learning_rate == PA1:
                 eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                eta = min(alpha / loss.dloss(p, y), eta)
+                eta = min(fabs(alpha / loss.dloss(p, y)), eta)
             elif learning_rate == PA2:
                 eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5 * alpha)
 
