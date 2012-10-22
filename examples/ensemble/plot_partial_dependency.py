@@ -2,6 +2,8 @@ import numpy as np
 import pylab as pl
 import matplotlib
 
+from operator import itemgetter
+
 from scipy.stats.mstats import mquantiles
 
 from sklearn.cross_validation import train_test_split
@@ -36,7 +38,8 @@ X[:, 6] = X[:, 5] / X[:, 6]
 y = y / 100000.0
 
 clf = GradientBoostingRegressor(n_estimators=800, max_depth=4,
-                                learn_rate=0.1, loss='huber')
+                                learn_rate=0.1, loss='huber',
+                                random_state=1)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
                                                     random_state=1)
@@ -69,6 +72,8 @@ pl.ylabel('Deviance')
 
 pl.figure()
 
+sub_plots = []
+
 for i, fx in enumerate([7, 6, 2, 3]):
     name = names[fx]
     target_feature = np.array([fx], dtype=np.int32)
@@ -89,10 +94,18 @@ for i, fx in enumerate([7, 6, 2, 3]):
     pl.xlabel(name)
     pl.ylabel('Partial Dependency')
 
-pl.figure()
+    sub_plots.append(ax)
 
-ax = pl.subplot(1, 1, 1)
+# set common ylim
+y_min = min((ax.get_ylim()[0] for ax in sub_plots))
+y_max = max((ax.get_ylim()[1] for ax in sub_plots))
+for ax in sub_plots:
+    ax.set_ylim((y_min, y_max))
 
-target_feature = np.array([7, 2], dtype=np.int32)
-pdp, grid = gradient_boosting.partial_dependency(clf, target_feature,
-                                                 X=X_train)
+## pl.figure()
+
+## ax = pl.subplot(1, 1, 1)
+
+## target_feature = np.array([7, 2], dtype=np.int32)
+## pdp, grid = gradient_boosting.partial_dependency(clf, target_feature,
+##                                                  X=X_train)
