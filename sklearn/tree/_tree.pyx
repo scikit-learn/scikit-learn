@@ -643,8 +643,6 @@ cdef class Tree:
 
             return
 
-        best_error = initial_error
-
         # Features to consider
         features = np.arange(n_features, dtype=np.int32)
 
@@ -750,8 +748,6 @@ cdef class Tree:
             _initial_error[0] = initial_error
 
             return
-
-        best_error = initial_error
 
         # Features to consider
         features = np.arange(n_features, dtype=np.int32)
