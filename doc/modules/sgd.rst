@@ -338,7 +338,7 @@ is given by
 
     \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
 
-where :math:`t` is the time step (there are a total of `n_samples * epochs`
+where :math:`t` is the time step (there are a total of `n_samples * n_iter`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
@@ -359,7 +359,7 @@ For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
 The model parameters can be accessed through the members ``coef_`` and
-``intercept\_``:
+``intercept_``:
 
      - Member ``coef_`` holds the weights :math:`w`
 
