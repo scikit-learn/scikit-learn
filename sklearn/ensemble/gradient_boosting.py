@@ -764,7 +764,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> gb = GradientBoostingClassifier().fit(samples, labels)
-    >>> print gb.predict([[0.5, 0, 0]])
+    >>> print(gb.predict([[0.5, 0, 0]]))
     [0]
 
     See also
@@ -997,7 +997,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> gb = GradientBoostingRegressor().fit(samples, labels)
-    >>> print gb.predict([[0, 0, 0]])
+    >>> print(gb.predict([[0, 0, 0]]))
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     [  1.32806...
 
