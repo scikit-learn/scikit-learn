@@ -2,48 +2,35 @@ import numpy as np
 import pylab as pl
 import matplotlib
 
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats.mstats import mquantiles
 
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import gradient_boosting
+from sklearn.datasets.cal_housing import fetch_cal_housing
 
-X = np.loadtxt('/home/pprett/corpora/cal-housing/cal_housing.data',
-               delimiter=',')
+# fetch California housing dataset
+cal_housing = fetch_cal_housing()
 
-names = ['Longitude',
-         'Latitude',
-         'HouseAge',
-         'AveRooms',   # 'totalRooms',
-         'AveBedrms',  # 'totalBedrooms',
-         'Population',
-         'AveOccup',   #  'households',
-         'MedInc',
-         'medianHouseValue']
-
-y = X[:, -1]
-X = X[:, :-1]
-
-# avg rooms
-X[:, 3] /= X[:, 6]
-
-# avg bed rooms
-X[:, 4] /= X[:, 6]
-
-# avg occupancy
-X[:, 6] = X[:, 5] / X[:, 6]
-
-y = y / 100000.0
+# split 80/20 train-test
+X_train, X_test, y_train, y_test = train_test_split(cal_housing.data,
+                                                    cal_housing.target,
+                                                    test_size=0.2,
+                                                    random_state=1)
+names = cal_housing.feature_names
 
 clf = GradientBoostingRegressor(n_estimators=800, max_depth=4,
                                 learn_rate=0.1, loss='huber',
                                 random_state=1)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                    random_state=1)
-print("training...")
+print('_' * 80)
+print("Training GBRT...")
 clf.fit(X_train, y_train)
 print("fin.")
+
+print('_' * 80)
+print('Plot train-test deviance')
+print
 
 
 def aae(y_true, y_pred):
@@ -68,11 +55,14 @@ pl.legend(loc='upper right')
 pl.xlabel('Boosting Iterations')
 pl.ylabel('Deviance')
 
-pl.figure()
+print('_' * 80)
+print('One-way partial dependence plots')
+print
 
+pl.figure()
 sub_plots = []
 
-for i, fx in enumerate([7, 6, 2, 3]):
+for i, fx in enumerate([0, 5, 1, 2]):
     name = names[fx]
     target_feature = np.array([fx], dtype=np.int32)
 
@@ -102,13 +92,15 @@ for ax in sub_plots:
 
 pl.tight_layout()
 
+print('_' * 80)
+print('Two-way partial dependence plot')
+print
 
-from mpl_toolkits.mplot3d import Axes3D
 fig = pl.figure()
 
-
-target_feature = np.array([2, 6], dtype=np.int32)
-pdp, (x_axis, y_axis) = gradient_boosting.partial_dependency(clf, target_feature,
+target_feature = np.array([1, 5], dtype=np.int32)
+pdp, (x_axis, y_axis) = gradient_boosting.partial_dependency(clf,
+                                                             target_feature,
                                                              X=X_train,
                                                              grid_resolution=50)
 XX, YY = np.meshgrid(x_axis, y_axis)
