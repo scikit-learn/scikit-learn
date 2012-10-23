@@ -26,6 +26,4 @@ class TestBaseRBM(TestCase):
         rbm.fit(X)
         
         assert_array_almost_equal(-20., rbm.pseudo_likelihood(X).mean(),
-            decimal=0)
-        
-        
+            decimal=0)        
