@@ -615,6 +615,7 @@ cdef class Tree:
         cdef Criterion criterion = self.criterion
         cdef int n_features = self.n_features
         cdef int max_features = self.max_features
+        cdef int visited_features = 0
         cdef int min_samples_leaf = self.min_samples_leaf
         cdef object random_state = self.random_state
 
@@ -643,8 +644,6 @@ cdef class Tree:
 
             return
 
-        best_error = initial_error
-
         # Features to consider
         features = np.arange(n_features, dtype=np.int32)
 
@@ -652,10 +651,10 @@ cdef class Tree:
             max_features = n_features
 
         else:
-            features = random_state.permutation(features)[:max_features]
+            features = random_state.permutation(features)
 
         # Look for the best split
-        for feature_idx from 0 <= feature_idx < max_features:
+        for feature_idx from 0 <= feature_idx < n_features:
             i = features[feature_idx]
 
             # Get i-th col of X and X_sorted
@@ -670,6 +669,13 @@ cdef class Tree:
 
             while sample_mask_ptr[X_argsorted_i[a]] == 0:
                 a = a + 1
+
+            # Check that the feature is not constant
+            b = _smallest_sample_larger_than(a, X_i, X_argsorted_i,
+                                             sample_mask_ptr, n_total_samples)
+
+            if b == -1:
+                continue # Skip that feature and don't count it as visited
 
             # Consider splits between two consecutive samples
             while True:
@@ -704,6 +710,13 @@ cdef class Tree:
                 # Proceed to the next interval
                 a = b
 
+            # Count one more visited feature
+            visited_features += 1
+
+            if visited_features >= max_features:
+                break
+
+
         _best_i[0] = best_i
         _best_t[0] = best_t
         _best_error[0] = best_error
@@ -722,6 +735,7 @@ cdef class Tree:
         cdef Criterion criterion = self.criterion
         cdef int n_features = self.n_features
         cdef int max_features = self.max_features
+        cdef int visited_features = 0
         cdef int min_samples_leaf = self.min_samples_leaf
         cdef object random_state = self.random_state
 
@@ -751,8 +765,6 @@ cdef class Tree:
 
             return
 
-        best_error = initial_error
-
         # Features to consider
         features = np.arange(n_features, dtype=np.int32)
 
@@ -760,10 +772,10 @@ cdef class Tree:
             max_features = n_features
 
         else:
-            features = random_state.permutation(features)[:max_features]
+            features = random_state.permutation(features)
 
         # Look for the best split
-        for feature_idx from 0 <= feature_idx < max_features:
+        for feature_idx from 0 <= feature_idx < n_features:
             i = features[feature_idx]
 
             # Get i-th col of X and X_sorted
@@ -785,7 +797,7 @@ cdef class Tree:
             X_b = X_i[X_argsorted_i[b]]
 
             if b <= a or X_a == X_b:
-                continue
+                continue # Skip that feature and don't count it as visited
 
             # Draw a random threshold in [a, b)
             random = random_state.rand()
@@ -815,6 +827,12 @@ cdef class Tree:
                 best_i = i
                 best_t = t
                 best_error = error
+
+            # Count one more visited feature
+            visited_features += 1
+
+            if visited_features >= max_features:
+                break
 
         _best_i[0] = best_i
         _best_t[0] = best_t

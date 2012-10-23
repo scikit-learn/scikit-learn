@@ -63,6 +63,33 @@ def test_regression_toy():
     assert_almost_equal(clf.predict(T), true_result)
 
 
+def test_xor():
+    """Check on a XOR problem"""
+    y = np.zeros((10, 10))
+    y[:5, :5] = 1
+    y[5:, 5:] = 1
+
+    gridx, gridy = np.indices(y.shape)
+
+    X = np.vstack([gridx.ravel(), gridy.ravel()]).T
+    y = y.ravel()
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+    clf = tree.DecisionTreeClassifier(max_features=1)
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+    clf = tree.ExtraTreeClassifier()
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+    clf = tree.ExtraTreeClassifier(max_features=1)
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)

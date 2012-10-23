@@ -7,7 +7,7 @@ The module structure is the following:
 
 - The ``BaseGradientBoosting`` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
-  only differ the the concrete ``LossFunction`` used.
+  only differ in the concrete ``LossFunction`` used.
 
 - ``GradientBoostingClassifier`` implements gradient boosting for
   classification problems.
@@ -19,8 +19,11 @@ The module structure is the following:
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti
 # License: BSD Style.
 
+from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
+
+import sys
 
 import numpy as np
 
@@ -427,7 +430,7 @@ class BaseGradientBoosting(BaseEnsemble):
     @abstractmethod
     def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample,
-                 max_features, random_state, alpha=0.9):
+                 max_features, random_state, alpha=0.9, verbose=0):
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
@@ -468,6 +471,8 @@ class BaseGradientBoosting(BaseEnsemble):
         if not (0.0 < alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
         self.alpha = alpha
+
+        self.verbose = verbose
 
         self.estimators_ = None
 
@@ -572,7 +577,6 @@ class BaseGradientBoosting(BaseEnsemble):
                 # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   self.random_state)
-
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
@@ -582,9 +586,19 @@ class BaseGradientBoosting(BaseEnsemble):
                                             y_pred[sample_mask])
                 self.oob_score_[i] = loss(y[~sample_mask],
                                           y_pred[~sample_mask])
+                if self.verbose > 1:
+                    print("built tree %d of %d, train score = %.6e, "
+                          "oob score = %.6e" % (i + 1, self.n_estimators,
+                           self.train_score_[i], self.oob_score_[i]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss(y, y_pred)
+                if self.verbose > 1:
+                    print("built tree %d of %d, train score = %.6e" %
+                        (i + 1, self.n_estimators, self.train_score_[i]))
+            if self.verbose == 1:
+                print(end='.')
+                sys.stdout.flush()
 
         return self
 
@@ -721,6 +735,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
+    verbose : int, default: 0
+        Enable verbose output. If 1 then it prints '.' for every tree built.
+        If greater than 1 then it prints the score for every tree.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -749,7 +767,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> gb = GradientBoostingClassifier().fit(samples, labels)
-    >>> print gb.predict([[0.5, 0, 0]])
+    >>> print(gb.predict([[0.5, 0, 0]]))
     [0]
 
     See also
@@ -770,12 +788,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None):
+                 max_features=None, verbose=0):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state)
+            random_state, verbose=verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -950,6 +968,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
+    verbose : int, default: 0
+        Enable verbose output. If 1 then it prints '.' for every tree built.
+        If greater than 1 then it prints the score for every tree.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -978,7 +1000,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> gb = GradientBoostingRegressor().fit(samples, labels)
-    >>> print gb.predict([[0, 0, 0]])  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> print(gb.predict([[0, 0, 0]]))
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     [  1.32806...
 
     See also
@@ -999,12 +1022,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9):
+                 max_features=None, alpha=0.9, verbose=0):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learn_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha)
+            random_state, alpha, verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
