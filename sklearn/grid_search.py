@@ -103,25 +103,26 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
+        clf.fit(X_train, y_train, **fit_params)
+        if loss_func is not None:
+            y_pred = clf.predict(X_test)
+            this_score = -loss_func(y_test, y_pred)
+        elif score_func is not None:
+            y_pred = clf.predict(X_test)
+            this_score = score_func(y_test, y_pred)
+        else:
+            this_score = clf.score(X_test, y_test)
+        if hasattr(y, 'shape'):
+            this_n_test_samples = y.shape[0]
+        else:
+            this_n_test_samples = len(y)
     else:
-        y_test = None
-        y_train = None
-
-    clf.fit(X_train, y_train, **fit_params)
-
-    if loss_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = -loss_func(y_test, y_pred)
-    elif score_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = score_func(y_test, y_pred)
-    else:
-        this_score = clf.score(X_test, y_test)
-
-    if hasattr(X, 'shape'):
-        this_n_test_samples = X.shape[0]
-    else:
-        this_n_test_samples = len(X)
+        clf.fit(X_train, **fit_params)
+        this_score = clf.score(X_test)
+        if hasattr(X, 'shape'):
+            this_n_test_samples = X.shape[0]
+        else:
+            this_n_test_samples = len(X)
 
     if verbose > 2:
         msg += ", score=%f" % this_score
@@ -373,7 +374,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         if _has_one_grid_point(self.param_grid):
             params = next(iter(grid))
             base_clf.set_params(**params)
-            base_clf.fit(X, y)
+            if y is not None:
+                base_clf.fit(X, y)
+            else:
+                base_clf.fit(X)
             self.best_estimator_ = base_clf
             self._set_methods()
             return self
@@ -426,7 +430,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
             best_estimator = clone(base_clf).set_params(**best_params)
-            best_estimator.fit(X, y, **self.fit_params)
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
             self._set_methods()
 

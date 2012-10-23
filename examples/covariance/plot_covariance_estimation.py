@@ -27,6 +27,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 from scipy import linalg
+from matplotlib.patches import Polygon
 
 ###############################################################################
 # Generate sample data
@@ -44,6 +45,7 @@ X_test = np.dot(base_X_test, coloring_matrix)
 
 from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
+from sklearn.grid_search import GridSearchCV
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
 lw = LedoitWolf()
@@ -58,6 +60,11 @@ shrinkages = np.logspace(-3, 0, 30)
 negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test)
                      for s in shrinkages]
 
+# GridSearch for an optimal shrinkage coefficient
+tuned_parameters = [{'shrinkage': shrinkages}]
+cv = GridSearchCV(ShrunkCovariance(), tuned_parameters)
+cv.fit(X_train)
+
 # getting the likelihood under the real model
 real_cov = np.dot(coloring_matrix.T, coloring_matrix)
 emp_cov = empirical_covariance(X_train)
@@ -65,7 +72,7 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 ###############################################################################
 # Plot results
-pl.figure()
+fig = pl.figure()
 pl.title("Regularized covariance: likelihood and shrinkage coefficient")
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')
@@ -84,14 +91,54 @@ lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)
 ylim0 = lik_min - 5. * np.log((pl.ylim()[1] - pl.ylim()[0]))
 ylim1 = lik_max + 10. * np.log(lik_max - lik_min)
+xlim0 = shrinkages[0]
+xlim1 = shrinkages[-1]
 # LW likelihood
-pl.vlines(lw.shrinkage_, ylim0, -loglik_lw, color='g',
+pl.vlines(lw.shrinkage_, ylim0, -loglik_lw, color='magenta',
           linewidth=3, label='Ledoit-Wolf estimate')
 # OAS likelihood
-pl.vlines(oa.shrinkage_, ylim0, -loglik_oa, color='orange',
+pl.vlines(oa.shrinkage_, ylim0, -loglik_oa, color='purple',
           linewidth=3, label='OAS estimate')
+# best CV estimator likelihood
+pl.vlines(cv.best_estimator_.shrinkage, ylim0,
+          -cv.best_estimator_.score(X_test), color='cyan',
+          linewidth=3, label='Cross-validation best estimate')
 
 pl.ylim(ylim0, ylim1)
-pl.xlim(shrinkages[0], shrinkages[-1])
+pl.xlim(xlim0, xlim1)
 pl.legend()
+
+# Zoom on interesting part
+xlim0_zoom = shrinkages[-0.25 * shrinkages.size]
+xlim1_zoom = shrinkages[-1]
+ylim0_zoom = loglik_real - 5
+ylim1_zoom = negative_logliks[np.argmin(np.abs(shrinkages - xlim0_zoom))]
+art = Polygon(
+    np.asarray([
+            [10 ** (0.57 * np.log10(xlim1 / xlim0) + np.log10(xlim0)),
+             10 ** (0.35 * np.log10(ylim1 / ylim0) + np.log10(ylim0))],
+            [10 ** (0.92 * np.log10(xlim1 / xlim0) + np.log10(xlim0)),
+             10 ** (0.35 * np.log10(ylim1 / ylim0) + np.log10(ylim0))],
+            [xlim1_zoom, ylim1_zoom], [xlim0_zoom, ylim1_zoom]]),
+    color="#eeeeee")
+pl.axes().add_artist(art)
+
+art2 = Polygon(
+    np.asarray([[xlim0_zoom, ylim1_zoom], [xlim1_zoom, ylim1_zoom],
+                [xlim1_zoom, ylim0_zoom], [xlim0_zoom, ylim0_zoom]]),
+    facecolor="#eeeeee", edgecolor="#aaaaaa", linewidth=2)
+pl.axes().add_artist(art2)
+
+fig.add_axes([0.57, 0.35, 0.3, 0.3], axis_bgcolor="#eeeeee")
+pl.loglog(shrinkages, negative_logliks)
+pl.plot(pl.xlim(), 2 * [loglik_real], '--r')
+pl.vlines(lw.shrinkage_, ylim0, -loglik_lw, color='magenta', linewidth=3)
+pl.vlines(oa.shrinkage_, ylim0, -loglik_oa, color='purple', linewidth=3)
+pl.vlines(cv.best_estimator_.shrinkage, ylim0,
+          -cv.best_estimator_.score(X_test), color='cyan', linewidth=3)
+pl.xticks([])
+pl.yticks([])
+pl.ylim(ylim0_zoom, ylim1_zoom)
+pl.xlim(xlim0_zoom, xlim1_zoom)
+
 pl.show()
