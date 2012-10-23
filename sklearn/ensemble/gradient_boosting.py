@@ -589,13 +589,14 @@ class BaseGradientBoosting(BaseEnsemble):
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e, "
                           "oob score = %.6e" % (i + 1, self.n_estimators,
-                           self.train_score_[i], self.oob_score_[i]))
+                                                self.train_score_[i],
+                                                self.oob_score_[i]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss(y, y_pred)
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e" %
-                        (i + 1, self.n_estimators, self.train_score_[i]))
+                          (i + 1, self.n_estimators, self.train_score_[i]))
             if self.verbose == 1:
                 print(end='.')
                 sys.stdout.flush()
@@ -1232,12 +1233,12 @@ def partial_dependency(gbrt, target_variables, grid=None, X=None,
                                   grid_resolution)
 
     grid = np.asarray(grid, dtype=DTYPE, order='C')
-
+    n_trees_per_stage = gbrt.estimators_.shape[1]
     n_estimators = gbrt.estimators_.shape[0]
     pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
                    order='C')
     for stage in xrange(n_estimators):
-        for k in range(gbrt.estimators_.shape[1]):
+        for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k]
             _partial_dependency_tree(tree, grid, target_variables,
                                      gbrt.learn_rate, pdp[k])
