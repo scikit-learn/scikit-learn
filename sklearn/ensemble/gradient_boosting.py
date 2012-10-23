@@ -1189,7 +1189,7 @@ def partial_dependency(gbrt, target_variables, grid=None, X=None,
     Parameters
     ----------
     gbrt : BaseGradientBoosting
-        A fitted gradient boosting model (multi-class not supported yet).
+        A fitted gradient boosting model.
     target_variables : array-like, dtype=int
         The target features for which the partial dependecy should be
         computed (size should be smaller than 3 for visual renderings).
