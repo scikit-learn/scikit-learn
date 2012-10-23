@@ -72,9 +72,9 @@ Testing
 -------
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have nosetest installed)::
+source directory (you will need to have nosetests installed)::
 
-   $ nosetest --exe sklearn 
+   $ nosetests --exe sklearn
 
 See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.
