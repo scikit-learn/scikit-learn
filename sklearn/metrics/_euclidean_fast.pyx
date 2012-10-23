@@ -11,11 +11,15 @@ import numpy as np
 cimport numpy as np
 
 cimport cython
-ctypedef np.int32_t INTEGER
+
 ctypedef np.float64_t DTYPE_t
 
-cdef extern from "math.h":
-    double sqrt "sqrt"(double x)
+from libc.math cimport sqrt
+
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 
 cdef extern from "cblas.h":
     void dgemm "cblas_dgemm"(char storage, char transa, char transb, int m,

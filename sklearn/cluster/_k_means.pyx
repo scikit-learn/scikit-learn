@@ -14,6 +14,11 @@ from ..utils.fixes import bincount
 cimport numpy as np
 cimport cython
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 

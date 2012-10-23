@@ -12,6 +12,11 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
+
 from sklearn.tree._tree cimport Tree
 
 # Define a datatype for the data array

@@ -8,6 +8,10 @@ import numpy as np
 import scipy.sparse as sp
 cimport cython
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 
 cdef extern from "math.h":
     double fabs(double f)

@@ -5,6 +5,10 @@ cimport cython
 cimport numpy as np
 import numpy as np
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 
 cdef class ArrayBuilder(object):
     """Helper class to incrementally build a 1-d numpy.ndarray"""

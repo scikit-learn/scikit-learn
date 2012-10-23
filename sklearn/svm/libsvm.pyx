@@ -36,6 +36,10 @@ cimport numpy as np
 cimport libsvm
 from libc.stdlib cimport free
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 
 ################################################################################
 # Internal variables

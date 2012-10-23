@@ -18,6 +18,10 @@ cimport cython
 cimport numpy as np
 import numpy as np
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 
 cpdef np.uint32_t murmurhash3_int_u32(int key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a int key at seed."""
