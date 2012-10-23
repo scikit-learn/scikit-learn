@@ -658,7 +658,7 @@ class RandomForestClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
@@ -796,7 +796,7 @@ class RandomForestRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
@@ -935,7 +935,7 @@ class ExtraTreesClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
@@ -1077,7 +1077,7 @@ class ExtraTreesRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
