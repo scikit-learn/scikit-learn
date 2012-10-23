@@ -22,9 +22,9 @@ builtins.__SKLEARN_SETUP__ = True
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
-MAINTAINER = 'Fabian Pedregosa'
-MAINTAINER_EMAIL = 'fabian.pedregosa@inria.fr'
-URL = 'http://scikit-learn.sourceforge.net'
+MAINTAINER = 'Andreas Mueller'
+MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
+URL = 'http://scikit-learn.org'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 
@@ -45,7 +45,7 @@ if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
             )).intersection(sys.argv)) > 0:
     import setuptools
     extra_setuptools_args = dict(
-            zip_safe=False, # the package can run out of an .egg file
+            zip_safe=False,  # the package can run out of an .egg file
             include_package_data=True,
         )
 else:
@@ -53,6 +53,7 @@ else:
 
 ###############################################################################
 from numpy.distutils.core import setup
+
 
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
@@ -98,7 +99,8 @@ if __name__ == "__main__":
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()  # supress noisy output
-            res = lib2to3.main.main("lib2to3.fixes", ['-x', 'import', '-w', local_path])
+            res = lib2to3.main.main("lib2to3.fixes",
+                                    ['-x', 'import', '-w', local_path])
         finally:
             sys.stdout = _old_stdout
 
