@@ -12,9 +12,11 @@ cimport cython
 from cpython cimport bool
 import warnings
 
-cdef extern from "math.h":
-    double fabs(double f)
-    double sqrt(double f)
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
+from libc.math cimport fabs, sqrt
 
 cdef inline double fmax(double x, double y):
     if x > y:

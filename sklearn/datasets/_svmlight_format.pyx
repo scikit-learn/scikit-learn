@@ -10,6 +10,10 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 from ..utils.arraybuilder import ArrayBuilder
 
 

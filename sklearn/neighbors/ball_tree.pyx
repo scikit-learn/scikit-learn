@@ -193,6 +193,12 @@ cimport numpy as np
 cimport cython
 from libc cimport stdlib
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
+
+
 from ..utils import array2d
 
 ######################################################################

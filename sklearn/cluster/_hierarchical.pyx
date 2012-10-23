@@ -5,6 +5,10 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int_t INT
 ctypedef np.int8_t INT8
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

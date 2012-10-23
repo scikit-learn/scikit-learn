@@ -2,8 +2,16 @@
 import warnings
 import  numpy as np
 cimport numpy as np
+
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
+
 from scipy import sparse
 from ..utils import ConvergenceWarning
+
+
 
 ################################################################################
 # Includes

@@ -12,6 +12,10 @@ the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 import numpy as np
 cimport numpy as np
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+np.import_array()
+
 from scipy.sparse import csr_matrix, isspmatrix, isspmatrix_csr
 
 cimport cython
