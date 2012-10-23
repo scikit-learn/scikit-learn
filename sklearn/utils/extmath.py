@@ -7,18 +7,9 @@ Extended math utilities.
 import warnings
 import numpy as np
 from scipy import linalg
-from scipy.sparse.sparsetools import coo_todense
 
 from . import check_random_state
 from .fixes import qr_economic
-
-# coo_todense has changed signature in Mars:
-coo_todense_extra_arg = False
-try:
-    coo_todense(2, 2, 2, np.array([1, 2], np.int32),
-                np.array([1, 2], np.int32), np.ones(2), np.ones(4))
-except NotImplementedError:
-    coo_todense_extra_arg = True
 
 
 def norm(v):
@@ -76,52 +67,16 @@ def density(w, **kwargs):
     return d
 
 
-def safe_sparse_dot(a, b, dense_output=False, out=None):
-    """Dot product that handle the sparse matrix case correctly
-
-    Computes the matrix multiplication a * b.
-
-    Parameters
-    ----------
-    a: array-like or sparse matrix, shape: [m, n]
-        Left factor in the matrix product.
-
-    b: array-like or sparse matrix, shape: [n, p]
-        Right factor in the matrix product.
-
-    dense_output: boolean, default: False
-        In case both a and b are sparse, their product can be compactly
-        stored as a sparse matrix itself, and this is the default behaviour.
-        If you want to override this, set `dense_output=True`. This doesn't
-        do anything if at least one of the factors is dense.
-
-    out: array, shape: [m, p] or None
-        If not None, use the dense preallocated array as storage. If a and b
-        are both sparse, this forces `dense_output=True`.
-    """
+def safe_sparse_dot(a, b, dense_output=False):
+    """Dot product that handle the sparse matrix case correctly"""
     from scipy import sparse
     if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
-        if out is None and dense_output and hasattr(ret, "toarray"):
+        if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
-    else:
-        ret = np.dot(a, b)
-    if out is not None:
-        if hasattr(ret, "tocoo"):
-            # Save time and space by using the preallocated output
-            ret = ret.tocoo()
-            out.fill(0.)
-            if coo_todense_extra_arg:
-                coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
-                            ret.col, ret.data, out.ravel(), 0)
-            else:
-                coo_todense(ret.shape[0], ret.shape[1], ret.nnz, ret.row,
-                            ret.col, ret.data, out.ravel())
-        else:
-            out[:] = ret
-        return out
-    else:
         return ret
+    else:
+        return np.dot(a, b)
 
 
 def randomized_range_finder(A, size, n_iter, random_state=None,

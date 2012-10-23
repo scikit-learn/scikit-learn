@@ -94,7 +94,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
     if x_squared_norms is None:
         x_squared_norms = _squared_norms(X)
     closest_dist_sq = euclidean_distances(
-        centers[0], X, Y_norm_precomputed=x_squared_norms, squared=True)
+        centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -106,8 +106,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_precomputed=x_squared_norms,
-            squared=True)
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
         # Decide which candidate is the best
         best_candidate = None
@@ -420,8 +419,7 @@ def _squared_norms(X):
 def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
     n_samples = X.shape[0]
     k = centers.shape[0]
-    distances = euclidean_distances(centers, X,
-                                    Y_norm_precomputed=x_squared_norms,
+    distances = euclidean_distances(centers, X, x_squared_norms,
                                     squared=True)
     labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)

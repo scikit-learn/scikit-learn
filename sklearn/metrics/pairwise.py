@@ -38,11 +38,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from ._euclidean_fast import dense_euclidean_distances
-from ._euclidean_fast import dense_euclidean_distances_sym
-from ._euclidean_fast import sparse_euclidean_distances
-from ._euclidean_fast import sparse_euclidean_distances_sym
-from ._euclidean_fast import sparse_dense_euclidean_distances
+
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
@@ -84,12 +80,12 @@ def check_pairwise_arrays(X, Y):
     """
     if Y is X or Y is None:
         X = safe_asarray(X)
-        X = Y = atleast2d_or_csr(X, dtype=np.float, order='c')
+        X = Y = atleast2d_or_csr(X, dtype=np.float)
     else:
         X = safe_asarray(X)
         Y = safe_asarray(Y)
-        X = atleast2d_or_csr(X, dtype=np.float, order='c')
-        Y = atleast2d_or_csr(Y, dtype=np.float, order='c')
+        X = atleast2d_or_csr(X, dtype=np.float)
+        Y = atleast2d_or_csr(Y, dtype=np.float)
     if len(X.shape) < 2:
         raise ValueError("X is required to be at least two dimensional.")
     if len(Y.shape) < 2:
@@ -102,9 +98,7 @@ def check_pairwise_arrays(X, Y):
 
 
 # Distances
-def euclidean_distances(X, Y=None, X_norm_preallocated=None,
-                        Y_norm_preallocated=None, X_norm_precomputed=None,
-                        Y_norm_precomputed=None, out=None, squared=False):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -125,26 +119,9 @@ def euclidean_distances(X, Y=None, X_norm_preallocated=None,
 
     Y : {array-like, sparse matrix}, shape = [n_samples_2, n_features]
 
-    X_norm_preallocated : array-like, shape = [n_samples_1], optional
-        Preallocated space for the dot-products of vectors in X. This is
-        mutually exclusive with `X_norm_precomputed`.
-
-    Y_norm_preallocated : array-like, shape = [n_samples_2], optional
-        Preallocated space for the dot-products of vectors in Y. This is
-        mutually exclusive with `Y_norm_precomputed`.
-
-    X_norm_precomputed : array-like, shape = [n_samples_1], optional.
-        Precomputed dot-products of vectors in X (e.g.,
-        ``(X**2).sum(axis=1)``). This is mutually exclusive with
-        `X_norm_preallocated`.
-
-    Y_norm_precomputed : array-like, shape = [n_samples_2], optional.
-        Precomputed dot-products of vectors in Y (e.g.,
-        ``(Y**2).sum(axis=1)``). This is mutually exclusive with
-        `Y_norm_preallocated`.
-
-    out : array, shape = [n_samples_1, n_samples_2], optional
-        Preallocated array that will store the output.
+    Y_norm_squared : array-like, shape = [n_samples_2], optional
+        Pre-computed dot-products of vectors in Y (e.g.,
+        ``(Y**2).sum(axis=1)``)
 
     squared : boolean, optional
         Return squared Euclidean distances.
@@ -169,51 +146,43 @@ def euclidean_distances(X, Y=None, X_norm_preallocated=None,
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
-    # @vene The only case where X_norm_squared is useful instead of
-    # Y_norm_squared is in the sparse-dense case, so I added it.
     X, Y = check_pairwise_arrays(X, Y)
-    X_rows, X_cols = X.shape
-    Y_rows = Y.shape[0]
-
-    if out is None:
-        out = np.empty((X_rows, Y_rows), dtype=X.dtype)
-    if issparse(X) or issparse(Y):
-        if not issparse(X):
-            out = out.T
-            euclidean_distances(
-                Y, X, Y_norm_preallocated, X_norm_preallocated,
-                Y_norm_precomputed, X_norm_precomputed, out, squared)
-            out = out.T
-            return out
-        X = X.tocsr()
-        if issparse(Y):
-            Y = Y.tocsr()
-        safe_sparse_dot(X, Y.T, out=out)
-        if X is Y:
-            sparse_euclidean_distances_sym(
-                X_rows, X.data, X.indices, X.indptr, X_norm_preallocated,
-                X_norm_precomputed, out, squared)
-        elif issparse(Y):
-            sparse_euclidean_distances(
-                X_rows, Y_rows, X.data, X.indices, X.indptr, Y.data, Y.indices,
-                Y.indptr, X_norm_preallocated, Y_norm_preallocated,
-                X_norm_precomputed, Y_norm_precomputed, out, squared)
-        else:
-            sparse_dense_euclidean_distances(
-                X_rows, X_cols, Y_rows, X.data, X.indices, X.indptr, Y,
-                X_norm_preallocated, Y_norm_preallocated, X_norm_precomputed,
-                Y_norm_precomputed, out, squared)
+    if issparse(X):
+        XX = X.multiply(X).sum(axis=1)
     else:
-        if X is Y:
-            dense_euclidean_distances_sym(
-                X_rows, X_cols, X, X_norm_preallocated, X_norm_precomputed,
-                out, squared)
+        XX = np.sum(X * X, axis=1)[:, np.newaxis]
+
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    elif Y_norm_squared is None:
+        if issparse(Y):
+            # scipy.sparse matrices don't have element-wise scalar
+            # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
+            YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
+            YY.data **= 2
+            YY = np.asarray(YY.sum(axis=1)).T
         else:
-            dense_euclidean_distances(
-                X_rows, Y_rows, X_cols, X, Y, X_norm_preallocated,
-                Y_norm_preallocated, X_norm_precomputed, Y_norm_precomputed,
-                out, squared)
-    return out
+            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+    else:
+        YY = atleast2d_or_csr(Y_norm_squared)
+        if YY.shape != (1, Y.shape[0]):
+            raise ValueError(
+                        "Incompatible dimensions for Y and Y_norm_squared")
+
+    # TODO: a faster Cython implementation would do the clipping of negative
+    # values in a single pass over the output matrix.
+    distances = safe_sparse_dot(X, Y.T, dense_output=True)
+    distances *= -2
+    distances += XX
+    distances += YY
+    np.maximum(distances, 0, distances)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        distances.flat[::distances.shape[0] + 1] = 0.0
+
+    return distances if squared else np.sqrt(distances)
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
