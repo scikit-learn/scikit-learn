@@ -1234,11 +1234,10 @@ def partial_dependency(gbrt, target_variables, grid=None, X=None,
     grid = np.asarray(grid, dtype=DTYPE, order='C')
 
     n_estimators = gbrt.estimators_.shape[0]
-    n_trees_per_stage = gbrt.estimators_.shape[1]
     pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
                    order='C')
     for stage in xrange(n_estimators):
-        for k in range(n_trees_per_stage):
+        for k in range(gbrt.estimators_.shape[1]):
             tree = gbrt.estimators_[stage, k]
             _partial_dependency_tree(tree, grid, target_variables,
                                      gbrt.learn_rate, pdp[k])
