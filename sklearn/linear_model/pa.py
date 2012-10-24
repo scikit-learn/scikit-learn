@@ -3,6 +3,7 @@
 
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 
+
 class PassiveAggressiveClassifier(SGDClassifier):
     """Passive Aggressive Classifier
 
@@ -14,7 +15,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
 
     C : float
         C parameter that scales the regularization term. Defaults to 0.001
-    
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
@@ -43,7 +44,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
         The learning rate:
         pa1: eta = min(alpha, loss/norm(x))
         pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
-    
+
     class_weight : dict, {class_label : weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
 
@@ -94,6 +95,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
                                                           class_weight=class_weight,
                                                           n_jobs=n_jobs)
 
+
 class PassiveAggressiveRegressor(SGDRegressor):
     """Passive Aggressive Regressor
 
@@ -105,7 +107,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
 
     C : float
         C parameter that scales the regularization term. Defaults to 0.001
-    
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
@@ -134,7 +136,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
         The learning rate:
         pa1: eta = min(alpha, loss/norm(x))
         pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
-    
+
     class_weight : dict, {class_label : weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
 
@@ -172,15 +174,16 @@ class PassiveAggressiveRegressor(SGDRegressor):
     def __init__(self, penalty=None, C=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, learning_rate="pa1",
                  n_jobs=1, seed=0, class_weight=None, warm_start=False):
-        super(PassiveAggressiveRegressor, self).__init__(loss="epsilon_insensitive",
-                                                          penalty=penalty,
-                                                          C=C, l1_ratio=0,
-                                                          fit_intercept=fit_intercept,
-                                                          n_iter=n_iter,
-                                                          shuffle=shuffle,
-                                                          verbose=verbose,
-                                                          seed=seed,
-                                                          learning_rate=learning_rate,
-                                                          warm_start=warm_start,
-                                                          class_weight=class_weight,
-                                                          n_jobs=n_jobs)
+        super(
+            PassiveAggressiveRegressor, self).__init__(loss="epsilon_insensitive",
+                                                       penalty=penalty,
+                                                       C=C, l1_ratio=0,
+                                                       fit_intercept=fit_intercept,
+                                                       n_iter=n_iter,
+                                                       shuffle=shuffle,
+                                                       verbose=verbose,
+                                                       seed=seed,
+                                                       learning_rate=learning_rate,
+                                                       warm_start=warm_start,
+                                                       class_weight=class_weight,
+                                                       n_jobs=n_jobs)
