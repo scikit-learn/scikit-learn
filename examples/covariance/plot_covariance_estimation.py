@@ -20,6 +20,9 @@ is asymptotic and we are working with a small number of observations.
 The OAS estimate deviates from the likelihood criterion optimal value
 but better approximate the MSE optimal value, especially for a small
 number a observations.
+We also show the best shrunk estimate that we obtained by cross-validating
+the likelihood on three folds according to a grid of potential shrinkage
+parameters.
 
 """
 print __doc__
@@ -77,7 +80,7 @@ pl.title("Regularized covariance: likelihood and shrinkage coefficient")
 pl.xlabel('Shrinkage')
 pl.ylabel('Negative log-likelihood')
 # range shrinkage curve
-pl.loglog(shrinkages, negative_logliks)
+pl.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
 
 # real likelihood reference
 # BUG: hlines(..., linestyle='--') breaks on some older versions of matplotlib
@@ -116,9 +119,9 @@ ylim1_zoom = negative_logliks[np.argmin(np.abs(shrinkages - xlim0_zoom))]
 art = Polygon(
     np.asarray([
             [10 ** (0.57 * np.log10(xlim1 / xlim0) + np.log10(xlim0)),
-             10 ** (0.35 * np.log10(ylim1 / ylim0) + np.log10(ylim0))],
+             10 ** (0.3 * np.log10(ylim1 / ylim0) + np.log10(ylim0))],
             [10 ** (0.92 * np.log10(xlim1 / xlim0) + np.log10(xlim0)),
-             10 ** (0.35 * np.log10(ylim1 / ylim0) + np.log10(ylim0))],
+             10 ** (0.3 * np.log10(ylim1 / ylim0) + np.log10(ylim0))],
             [xlim1_zoom, ylim1_zoom], [xlim0_zoom, ylim1_zoom]]),
     color="#eeeeee")
 pl.axes().add_artist(art)
@@ -129,7 +132,7 @@ art2 = Polygon(
     facecolor="#eeeeee", edgecolor="#aaaaaa", linewidth=2)
 pl.axes().add_artist(art2)
 
-fig.add_axes([0.57, 0.35, 0.3, 0.3], axis_bgcolor="#eeeeee")
+fig.add_axes([0.57, 0.3, 0.3, 0.3], axis_bgcolor="#eeeeee")
 pl.loglog(shrinkages, negative_logliks)
 pl.plot(pl.xlim(), 2 * [loglik_real], '--r')
 pl.vlines(lw.shrinkage_, ylim0, -loglik_lw, color='magenta', linewidth=3)
