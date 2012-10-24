@@ -10,6 +10,7 @@ extract features from images.
 # License: BSD
 
 from itertools import product
+import numbers
 import numpy as np
 from scipy import sparse
 
@@ -249,10 +250,10 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if (isinstance(max_patches, (int, np.integer))
+        if (isinstance(max_patches, (numbers.Integral))
                 and max_patches < all_patches):
             n_patches = max_patches
-        elif (isinstance(max_patches, (float, np.floating))
+        elif (isinstance(max_patches, (numbers.Real))
                 and 0 < max_patches < 1):
             n_patches = int(max_patches * all_patches)
         else:

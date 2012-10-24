@@ -13,7 +13,7 @@ from __future__ import print_function
 import warnings
 from itertools import combinations
 from math import ceil, floor, factorial
-import operator
+import numbers
 
 import numpy as np
 import scipy.sparse as sp
@@ -647,10 +647,10 @@ class Bootstrap(object):
                           "be removed in 0.16.", DeprecationWarning)
             n_iter = n_bootstraps
         self.n_iter = n_iter
-        if (isinstance(train_size, (float, np.floating)) and train_size >= 0.0
+        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
                             and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
-        elif isinstance(train_size, (int, np.integer)):
+        elif isinstance(train_size, numbers.Integral):
             self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
@@ -659,10 +659,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if (isinstance(test_size, (float, np.floating)) and test_size >= 0.0
+        if (isinstance(test_size, numbers.Real) and test_size >= 0.0
                     and test_size <= 1.0):
             self.test_size = ceil(test_size * n)
-        elif isinstance(test_size, (int, np.integer)):
+        elif isinstance(test_size, numbers.Integral):
             self.test_size = test_size
         elif test_size is None:
             self.test_size = self.n - self.train_size
@@ -1148,7 +1148,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
     is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
-    if operator.isNumberType(cv):
+    if isinstance(cv, numbers.Integral):
         if classifier:
             cv = StratifiedKFold(y, cv, indices=is_sparse)
         else:

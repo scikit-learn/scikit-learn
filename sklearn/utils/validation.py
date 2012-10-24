@@ -2,9 +2,11 @@
 # Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
 # License: BSD 3
 
+import warnings
+import numbers
+
 import numpy as np
 from scipy import sparse
-import warnings
 
 from .fixes import safe_copy
 
@@ -212,7 +214,7 @@ def check_random_state(seed):
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
-    if isinstance(seed, (int, np.integer)):
+    if isinstance(seed, numbers.Integral):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed

@@ -7,6 +7,7 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 from itertools import product
+import numbers
 import numpy as np
 from scipy import linalg
 
@@ -644,7 +645,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, (int, np.integer)):
+    if isinstance(centers, numbers.Integral):
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:
