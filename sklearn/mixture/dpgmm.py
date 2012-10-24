@@ -197,6 +197,8 @@ class DPGMM(GMM):
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
+        warnings.warn("DPGMM has known issues and might return incorrect"
+                " results.")
         self.alpha = alpha
         self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
@@ -654,6 +656,8 @@ class VBGMM(DPGMM):
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, thresh=1e-2, verbose=False,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
+        warnings.warn("VBGMM has known issues and might return incorrect"
+                " results.")
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
             thresh=thresh, verbose=verbose, min_covar=min_covar,
