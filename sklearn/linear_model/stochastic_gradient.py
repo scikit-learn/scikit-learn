@@ -46,7 +46,7 @@ class BaseSGD(BaseEstimator):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, loss, penalty='l2', alpha=0.0001,
+    def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, seed=0, learning_rate="optimal",
                  eta0=0.0, power_t=0.5, warm_start=False, rho=None):
@@ -55,6 +55,7 @@ class BaseSGD(BaseEstimator):
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.alpha = alpha
+        self.C = C
         self.l1_ratio = l1_ratio
         if rho is not None:
             self.l1_ratio = 1 - rho
@@ -94,7 +95,7 @@ class BaseSGD(BaseEstimator):
             raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
-        if self.learning_rate != "optimal":
+        if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
 
@@ -271,6 +272,9 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
 
+    C : float
+        C parameter that scales the regularization term. Defaults to 1.0
+
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
@@ -368,14 +372,14 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
-                                            alpha=alpha, l1_ratio=l1_ratio,
+                                            alpha=alpha, C=C, l1_ratio=l1_ratio,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, epsilon=epsilon,
@@ -671,7 +675,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     learning_rate_type = est._get_learning_rate_type(est.learning_rate)
 
     return plain_sgd(coef, intercept, est.loss_function,
-                     penalty_type, est.alpha, est.l1_ratio,
+                     penalty_type, est.alpha, est.C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), est.seed,
                      pos_weight, neg_weight,
@@ -711,6 +715,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
+
+    C : float
+        C parameter that scales the regularization term. Defaults to 1.0
 
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
@@ -791,7 +798,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON)
     }
 
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
@@ -804,7 +811,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             epsilon = p
 
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                           alpha=alpha, l1_ratio=l1_ratio,
+                                           alpha=alpha, C=C, l1_ratio=l1_ratio,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, epsilon=epsilon,
@@ -942,7 +949,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           self.intercept_[0],
                                           loss_function,
                                           penalty_type,
-                                          self.alpha, self.l1_ratio,
+                                          self.alpha, self.C,
+                                          self.l1_ratio,
                                           dataset,
                                           n_iter,
                                           int(self.fit_intercept),

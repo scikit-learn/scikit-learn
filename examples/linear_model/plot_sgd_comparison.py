@@ -15,6 +15,7 @@ import pylab as pl
 from sklearn import datasets
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import SGDClassifier, Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
 rounds = 20
@@ -23,10 +24,8 @@ digits = datasets.load_digits()
 classifiers = [
     ("SGD", SGDClassifier()),
     ("Perceptron", Perceptron()),
-    ("PA-I", SGDClassifier(learning_rate='pa1',
-                           eta0=0.001, alpha=0.01)),
-    ("PA-II", SGDClassifier(learning_rate='pa2',
-                            eta0=0.001, alpha=0.01)),
+    ("PA-I", PassiveAggressiveClassifier(learning_rate='pa1', C=0.01)),
+    ("PA-II", PassiveAggressiveClassifier(learning_rate='pa2', C=0.01)),
 ]
 
 xx = 1 - np.array(heldout)
