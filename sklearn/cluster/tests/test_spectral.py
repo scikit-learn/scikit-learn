@@ -25,21 +25,22 @@ def test_spectral_clustering():
                   [0, 0, 0, 1, 2, 4, 1],
                  ])
 
-    for mat in (S, sparse.csr_matrix(S)):
-        model = SpectralClustering(random_state=0, n_clusters=2,
-                affinity='precomputed').fit(mat)
-        labels = model.labels_
-        if labels[0] == 0:
-            labels = 1 - labels
+    for mode in ('arpack', 'lobpcg'):
+        for mat in (S, sparse.csr_matrix(S)):
+            model = SpectralClustering(random_state=0, n_clusters=2,
+                    affinity='precomputed', mode=mode).fit(mat)
+            labels = model.labels_
+            if labels[0] == 0:
+                labels = 1 - labels
 
-        assert_equal(labels, [1, 1, 1, 0, 0, 0, 0])
+            assert_equal(labels, [1, 1, 1, 0, 0, 0, 0])
 
-        model_copy = loads(dumps(model))
-        assert_equal(model_copy.n_clusters, model.n_clusters)
-        assert_equal(model_copy.mode, model.mode)
-        assert_equal(model_copy.random_state.get_state(),
-                     model.random_state.get_state())
-        assert_equal(model_copy.labels_, model.labels_)
+            model_copy = loads(dumps(model))
+            assert_equal(model_copy.n_clusters, model.n_clusters)
+            assert_equal(model_copy.mode, model.mode)
+            assert_equal(model_copy.random_state.get_state(),
+                        model.random_state.get_state())
+            assert_equal(model_copy.labels_, model.labels_)
 
 
 def test_spectral_amg_mode():
@@ -89,7 +90,6 @@ def test_spectral_unknown_mode():
 def test_spectral_clustering_sparse():
     # We need a large matrice, or the lobpcg solver will fallback to its
     # non-sparse and buggy mode
-    raise nose.SkipTest("XFailed Test")
     S = np.array([[1, 5, 2, 2, 1, 0, 0, 0, 0, 0],
                   [5, 1, 3, 2, 1, 0, 0, 0, 0, 0],
                   [2, 3, 1, 1, 1, 0, 0, 0, 0, 0],
