@@ -258,7 +258,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             observations were made.
 
         y : double array_like
-            An array with shape (n_features, ) with the observations of the
+            An array with shape (n_samples, ) with the observations of the
             scalar output to be predicted.
 
         Returns
