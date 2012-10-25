@@ -80,7 +80,7 @@ shrunk} = (1-\alpha)\hat{\Sigma} + \alpha\frac{{\rm
 Tr}\hat{\Sigma}}{p}\rm Id`.  
 
 Choosing the amount of shrinkage, :math:`\alpha` amounts to setting a
-bias/variance tradeoff, and is discussed below.
+bias/variance trade-off, and is discussed below.
 
 .. topic:: Examples:
 
@@ -135,7 +135,7 @@ object to the same sample.
    :align: center
    :scale: 65%
 
-   Bias-variance tradeoff when setting the shrinkage: comparing the
+   Bias-variance trade-off when setting the shrinkage: comparing the
    choices of Ledoit-Wolf and OAS estimators
 
 [2] Chen et al., "Shrinkage Algorithms for MMSE Covariance Estimation",
@@ -269,7 +269,7 @@ Minimum Covariance Determinant
 ------------------------------
 
 The Minimum Covariance Determinant estimator is a robust estimator of
-a data set's covariance introduced by P.J.Rousseuw in [3].  The idea
+a data set's covariance introduced by P.J.Rousseeuw in [3].  The idea
 is to find a given proportion (h) of "good" observations which are not
 outliers and compute their empirical covariance matrix.  This
 empirical covariance matrix is then rescaled to compensate the
@@ -279,7 +279,7 @@ weights to observations according to their Mahalanobis distance,
 leading the a reweighted estimate of the covariance matrix of the data
 set ("reweighting step").
 
-Rousseuw and Van Driessen [4] developed the FastMCD algorithm in order
+Rousseeuw and Van Driessen [4] developed the FastMCD algorithm in order
 to compute the Minimum Covariance Determinant. This algorithm is used
 in scikit-learn when fitting an MCD object to data. The FastMCD
 algorithm also computes a robust estimate of the data set location at
@@ -321,7 +321,7 @@ ____
     :header-rows: 1
 
     * - Influence of outliers on location and covariance estimates
-      - Separating inliers from outliers using a Mahalonis distance
+      - Separating inliers from outliers using a Mahalanobis distance
 
     * - |robust_vs_emp|
       - |mahalanobis|
