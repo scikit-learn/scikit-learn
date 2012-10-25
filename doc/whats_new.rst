@@ -38,13 +38,13 @@ Changelog
      of several transformers by `Andreas Müller`_.
 
    - Faster and more robust :func:`metrics.confusion_matrix` and
-     :ref:`clustering_evaluation`_ by Wei Li.
+     :ref:`clustering_evaluation` by Wei Li.
 
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
    - New estimator :class:`preprocessing.OneHotEncoder` to compute
-     binary encodings of categorial features by `Andreas Mueller`_.
+     binary encodings of categorical features by `Andreas Müller`_.
 
 
 API changes summary
