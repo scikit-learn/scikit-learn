@@ -55,6 +55,9 @@ Changelog
      regressors too correlated as well as to stop the path when
      numerical noise becomes predominant, by `Gael Varoquaux`_.
 
+   - New estimator :class:`preprocessing.OneHotEncoder` to compute
+     binary encodings of categorial features by `Andreas Mueller`_.
+
 
 API changes summary
 -------------------

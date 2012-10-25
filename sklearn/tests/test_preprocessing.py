@@ -14,6 +14,7 @@ from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
@@ -446,6 +447,41 @@ def test_label_binarizer_errors():
 
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
+
+
+def test_one_hot_encoder():
+    """Test OneHotEncoder's fit and transform."""
+    enc = OneHotEncoder()
+    X = [[3, 2, 1], [0, 1, 1]]
+    # discover max values automatically
+    X_trans = enc.fit_transform(X).toarray()
+    assert_equal(X_trans.shape, (2, 4 + 3 + 2))
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+
+    # check outcome
+    assert_array_equal(X_trans,
+              [[0, 0, 0, 1, 0, 0, 1, 0, 1],
+               [1, 0, 0, 0, 0, 1, 0, 0, 1]])
+
+    # max value given as 3
+    enc = OneHotEncoder(n_values=4)
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 4 * 3))
+    assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
+
+    # max value given per feature
+    enc = OneHotEncoder(n_values=[3, 2, 2])
+    X = [[1, 0, 1], [0, 1, 1]]
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 3 + 2 + 2))
+    assert_array_equal(enc.n_values_, [3, 2, 2])
+    # check that testing with larger feature works:
+    X = [[2, 0, 1], [0, 1, 1]]
+    enc.transform(X)
+
+    # test that an error is raise when out of bounds:
+    X_too_large = [[0, 2, 1], [0, 1, 1]]
+    assert_raises(ValueError, enc.transform, X_too_large)
 
 
 def test_label_encoder():
