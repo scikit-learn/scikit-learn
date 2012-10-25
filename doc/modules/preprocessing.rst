@@ -257,6 +257,43 @@ to be used when the transformer API is not necessary.
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
 
+
+Encoding Categorial Features
+----------------------------
+Often features are not given as continuous values but categorial.
+For example a person could have features ``["male", "female"]``, ``["from Europe", "from US", "from Asia"]``,
+``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
+Such features can be efficiently coded as integers, i.e.
+``["male", "from US", "uses Internet Explorer"]`` could be expressed as ``[0, 1, 3]``.
+
+Such integer representation can not be used directly with scikit-learn estimators, as these
+expect continuous input, and would interpret the categories as being ordered, which is often
+not desired (i.e. the set of browsers was ordered arbitrily).
+
+One possibility to convert categorial features to features that can be used
+with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
+implemented in :class:`OneHotEncoder`.  This estimator transforms each
+categorial feature with ``m`` possible values into ``m`` binary features, with
+only one active.
+
+Continuing the example above::
+    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
+    >>> enc.fit([[0, 1, 3]])
+    OneHotEncoder(n_values=[2, 3, 4])
+    >>> enc.transform([[0, 1, 3]]).toarray()
+    array([[1, 0, 0, 1, 0, 0, 1]])
+
+To construct the estimator, we specify how many values each feature can have in
+``n_values``. There are two genders, three possible continents and four
+web browsers in our dataset.
+Then we fit the estimator, and transform a data point. 
+In the result, the first two numbers encode the gender, the next set of three
+numbers the continent and the last four the web browser.
+
+See :ref:dict_feature_extraction for categorial features that are represented
+as a dict, not as integers.
+
+
 Label preprocessing
 ===================
 

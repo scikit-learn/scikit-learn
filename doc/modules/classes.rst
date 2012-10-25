@@ -844,6 +844,7 @@ Pairwise metrics
    preprocessing.LabelEncoder
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
+   preprocessing.OneHotEncoder
    preprocessing.StandardScaler
 
 .. autosummary::

@@ -43,6 +43,9 @@ Changelog
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
+   - New estimator :class:`preprocessing.OneHotEncoder` to compute
+     binary encodings of categorial features by `Andreas Mueller`_.
+
 
 API changes summary
 -------------------
