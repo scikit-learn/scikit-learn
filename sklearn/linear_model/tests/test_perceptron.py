@@ -1,8 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_true
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris

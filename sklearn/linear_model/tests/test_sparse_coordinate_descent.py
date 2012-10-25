@@ -1,12 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_equal
-
-from nose.tools import assert_true
-from sklearn.utils.testing import assert_less, assert_greater
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, ElasticNet, \
                                                     ElasticNetCV

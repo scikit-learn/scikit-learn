@@ -3,14 +3,16 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_array_almost_equal, assert_equal
 import numpy as np
 from scipy import sparse
 
-from ..base import LinearRegression
-from ...utils import check_random_state
-from ...datasets.samples_generator import make_sparse_uncorrelated
-from ...datasets.samples_generator import make_regression
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+
+from sklearn.linear_model.base import LinearRegression
+from sklearn.utils import check_random_state
+from sklearn.datasets.samples_generator import make_sparse_uncorrelated
+from sklearn.datasets.samples_generator import make_regression
 
 
 def test_linear_regression():

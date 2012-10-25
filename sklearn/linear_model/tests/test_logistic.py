@@ -1,11 +1,11 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-import nose
-from nose.tools import assert_equal, assert_raises, raises
-
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model import logistic
@@ -130,5 +130,3 @@ def test_liblinear_random_state():
     lr2.fit(X, y)
     assert_array_equal(lr1.coef_, lr2.coef_)
 
-if __name__ == '__main__':
-    nose.runmodule()
