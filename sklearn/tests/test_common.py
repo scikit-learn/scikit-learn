@@ -43,14 +43,14 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
-        Normalizer
+        Normalizer, OneHotEncoder
 from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
 from sklearn.linear_model import IsotonicRegression
 
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-        LabelEncoder, TfidfTransformer, IsotonicRegression]
+        LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
