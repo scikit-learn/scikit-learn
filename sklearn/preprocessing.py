@@ -606,16 +606,16 @@ def _is_multilabel(y):
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
-    """Encode categorial integer features using a one-hot scheme.
+    """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
-    The input is assumed to be integer and name categorial
+    The input is assumed to be integer and name categorical
     features numbered from ``0`` to ``n_values - 1``.
 
     Parameters
     ----------
     n_values : 'auto', int or array of int
         Number of values per feature.
-        'auto' : determin feature range from training data.
+        'auto' : determine feature range from training data.
         int : maximum value for all features.
         array : maximum value per feature.
 
@@ -633,7 +633,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Examples
     --------
     Given a dataset with three features and two
-    data points, we find the maximu value per feature
+    data points, we find the maximum value per feature
     and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
@@ -649,8 +649,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    LabelEncoder, performs a one-hot encoding on labels.
-    DictVectorizer, performs a one-hot encoding of dictionary items.
+    LabelEncoder : performs a one-hot encoding on arbitrary labels.
+    sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
+      dictionary items.
     """
     def __init__(self, n_values="auto"):
         self.n_values = n_values
@@ -707,7 +708,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
-            raise ValueError("X has different shape then during fitting."
+            raise ValueError("X has different shape than during fitting."
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
         features = X + indices[:-1]
