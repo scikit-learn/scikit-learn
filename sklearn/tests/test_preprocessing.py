@@ -2,12 +2,13 @@ import numpy as np
 import numpy.linalg as la
 import scipy.sparse as sp
 
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
-
-from nose.tools import assert_raises, assert_true, assert_false
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
@@ -113,14 +114,15 @@ def test_min_max_scaler():
     scaler = MinMaxScaler()
     # default params
     X_trans = scaler.fit_transform(X)
-    assert_equal(X_trans.min(axis=0), 0)
-    assert_equal(X_trans.max(axis=0), 1)
+    assert_array_equal(X_trans.min(axis=0), 0)
+    assert_array_equal(X_trans.min(axis=0), 0)
+    assert_array_equal(X_trans.max(axis=0), 1)
 
     # not default params
     scaler = MinMaxScaler(feature_range=(1, 2))
     X_trans = scaler.fit_transform(X)
-    assert_equal(X_trans.min(axis=0), 1)
-    assert_equal(X_trans.max(axis=0), 2)
+    assert_array_equal(X_trans.min(axis=0), 1)
+    assert_array_equal(X_trans.max(axis=0), 2)
 
 
 def test_scaler_without_centering():
@@ -509,7 +511,7 @@ def test_label_binarizer_multilabel_unlabeled():
     Y = np.array([[1, 1],
                   [1, 0],
                   [0, 0]])
-    assert_equal(lb.fit_transform(y), Y)
+    assert_array_equal(lb.fit_transform(y), Y)
 
 
 def test_center_kernel():

@@ -4,7 +4,7 @@ __author__ = 'Yaroslav Halchenko'
 __license__ = 'BSD'
 
 
-from nose.tools import assert_equal
+from sklearn.utils.testing import assert_equal
 
 try:
     from sklearn import *

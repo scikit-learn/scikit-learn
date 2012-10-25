@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
@@ -33,13 +36,13 @@ def test_additive_chi2_sampler():
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
+    assert_array_almost_equal(kernel, kernel_approx, 1)
 
     X_sp_trans = transform.fit_transform(csr_matrix(X))
     Y_sp_trans = transform.transform(csr_matrix(Y))
 
-    np.testing.assert_array_equal(X_trans, X_sp_trans.A)
-    np.testing.assert_array_equal(Y_trans, Y_sp_trans.A)
+    assert_array_equal(X_trans, X_sp_trans.A)
+    assert_array_equal(Y_trans, Y_sp_trans.A)
 
 
 def test_skewed_chi2_sampler():
@@ -64,7 +67,7 @@ def test_skewed_chi2_sampler():
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
-    np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
+    assert_array_almost_equal(kernel, kernel_approx, 1)
 
 
 def test_rbf_sampler():
@@ -79,7 +82,7 @@ def test_rbf_sampler():
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    np.testing.assert_array_almost_equal(kernel, kernel_approx, 1)
+    assert_array_almost_equal(kernel, kernel_approx, 1)
 
 
 def test_input_validation():

@@ -8,9 +8,12 @@ import traceback
 
 import numpy as np
 from scipy import sparse
-from nose.tools import assert_raises, assert_equal, assert_true
-from numpy.testing import assert_array_equal, \
-        assert_array_almost_equal
+
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 
 import sklearn
 from sklearn.utils.testing import all_estimators

@@ -4,12 +4,13 @@
 
 import numpy as np
 import scipy.sparse as sp
-from numpy.testing import assert_array_equal
 
-from nose.tools import assert_true
-from nose.tools import assert_false
-from nose.tools import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline

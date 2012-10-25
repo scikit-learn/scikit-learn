@@ -1,11 +1,11 @@
 import numpy as np
 import warnings
 
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal
-from nose.tools import assert_almost_equal
-from nose.tools import assert_true
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -138,9 +138,9 @@ def test_ovr_multilabel_dataset():
         Y_pred = clf.predict(X_test)
         assert_true(clf.multilabel_)
         assert_almost_equal(multilabel_precision(Y_test, Y_pred), prec,
-                            places=2)
+                            decimal=2)
         assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
-                            places=2)
+                            decimal=2)
 
 
 def test_ovr_gridsearch():

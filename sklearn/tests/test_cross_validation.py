@@ -3,9 +3,11 @@
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from nose.tools import assert_true, assert_equal
-from nose.tools import assert_raises
-from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
 from sklearn.utils.fixes import unique
 
 from sklearn import cross_validation as cval

@@ -1,8 +1,10 @@
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import assert_true
 
-from .. import qda
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true
+
+from sklearn import qda
 
 # Data is just 6 separable points in the plane
 X = np.array([[0, 0], [-2, -2], [-2, -1], [-1, -1], [-1, -2],
