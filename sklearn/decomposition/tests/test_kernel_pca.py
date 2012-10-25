@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles

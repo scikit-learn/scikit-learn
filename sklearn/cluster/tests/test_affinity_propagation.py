@@ -4,10 +4,10 @@ Testing for Clustering methods
 """
 
 import numpy as np
-from numpy.testing import assert_equal, assert_array_equal
 
-from sklearn.cluster.affinity_propagation_ import AffinityPropagation, \
-                                    affinity_propagation
+from sklearn.utils.testing import assert_equal, assert_array_equal
+from sklearn.cluster.affinity_propagation_ import AffinityPropagation
+from sklearn.cluster.affinity_propagation_ import affinity_propagation
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics import euclidean_distances
 

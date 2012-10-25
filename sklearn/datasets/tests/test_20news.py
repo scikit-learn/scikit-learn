@@ -1,9 +1,10 @@
 """Test the 20news downloader, if the data is available."""
 import numpy as np
 import scipy.sparse as sp
-from nose.tools import assert_equal
-from nose.tools import assert_true
-from nose.plugins.skip import SkipTest
+
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import SkipTest
 
 from sklearn import datasets
 

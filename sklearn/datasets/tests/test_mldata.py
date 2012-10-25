@@ -1,15 +1,21 @@
 """Test functionality of mldata fetching utilities."""
 
-from sklearn import datasets
-from sklearn.datasets import mldata_filename, fetch_mldata
-from sklearn.utils.testing import assert_in, assert_not_in, mock_urllib2
-from nose.tools import assert_equal, assert_raises
-from nose import with_setup
-from numpy.testing import assert_array_equal
 import os
 import shutil
 import tempfile
 import scipy as sp
+
+from sklearn import datasets
+from sklearn.datasets import mldata_filename, fetch_mldata
+
+from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_not_in
+from sklearn.utils.testing import mock_urllib2
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import with_setup
+from sklearn.utils.testing import assert_array_equal
+
 
 tmpdir = None
 

@@ -4,15 +4,17 @@ from cPickle import dumps, loads
 import nose
 
 import numpy as np
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
 from scipy import sparse
-from sklearn.datasets.samples_generator import make_blobs
+
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.metrics import pairwise_distances, adjusted_rand_score
+from sklearn.datasets.samples_generator import make_blobs
 
 
 def test_spectral_clustering():
@@ -32,14 +34,14 @@ def test_spectral_clustering():
         if labels[0] == 0:
             labels = 1 - labels
 
-        assert_equal(labels, [1, 1, 1, 0, 0, 0, 0])
+        assert_array_equal(labels, [1, 1, 1, 0, 0, 0, 0])
 
         model_copy = loads(dumps(model))
         assert_equal(model_copy.n_clusters, model.n_clusters)
         assert_equal(model_copy.mode, model.mode)
-        assert_equal(model_copy.random_state.get_state(),
-                     model.random_state.get_state())
-        assert_equal(model_copy.labels_, model.labels_)
+        assert_array_equal(model_copy.random_state.get_state()[1],
+                           model.random_state.get_state()[1])
+        assert_array_equal(model_copy.labels_, model.labels_)
 
 
 def test_spectral_amg_mode():

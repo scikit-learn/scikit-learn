@@ -24,10 +24,10 @@ except ImportError:
 from sklearn.datasets import load_lfw_pairs
 from sklearn.datasets import load_lfw_people
 
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
-from nose import SkipTest
-from nose.tools import raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")

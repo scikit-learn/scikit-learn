@@ -1,9 +1,12 @@
 import numpy as np
 from sklearn.decomposition import nmf
-from nose.tools import assert_true, assert_false, raises
-from numpy.testing import assert_array_almost_equal
 
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
+
 
 random_state = np.random.mtrand.RandomState(0)
 

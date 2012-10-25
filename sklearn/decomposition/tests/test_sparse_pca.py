@@ -4,13 +4,16 @@
 import sys
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_equal
 
-from nose import SkipTest
-from nose.tools import assert_true, assert_false
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 
-from .. import SparsePCA, MiniBatchSparsePCA
-from ...utils import check_random_state
+from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
+from sklearn.utils import check_random_state
 
 
 def generate_toy_data(n_atoms, n_samples, image_size, random_state=None):
@@ -114,7 +117,7 @@ def test_initialization():
     model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0,
                       random_state=rng)
     model.fit(rng.randn(5, 4))
-    assert_equal(model.components_, V_init)
+    assert_array_equal(model.components_, V_init)
 
 
 def test_mini_batch_correct_shapes():
