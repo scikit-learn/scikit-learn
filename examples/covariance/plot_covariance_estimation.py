@@ -9,9 +9,9 @@ converges to the true (population) covariance when given many
 observations. However, it can also be beneficial to regularize it, in
 order to reduce its variance; this, in turn, introduces some bias. This
 example illustrates the simple regularization used in
-:ref:`shrunk_covariance` estimators. It particular, it focuses on how to
+:ref:`shrunk_covariance` estimators. In particular, it focuses on how to
 set the amount of regularization, i.e. how to choose the bias-variance
-tradeoff.
+trade-off.
 
 Here we compare 3 approaches:
 
@@ -38,6 +38,7 @@ as it is close to the optimal and is computational not costly. In this
 example, the OAS estimate is a bit further away. Interestingly, both
 approaches outperform cross-validation, which is significantly most
 computationally costly.
+
 """
 print __doc__
 
