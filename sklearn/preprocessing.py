@@ -682,7 +682,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError("Wrong type for parameter `n_values`."
                         " Expected 'auto', int or array of ints, got %s"
                         % type(X))
-            if n_values.shape[0] != X.shape[1]:
+            if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is "
                         "an array, it has to be of shape (n_features,).")
         self.n_values_ = n_values
@@ -706,15 +706,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X, = check_arrays(X, sparse_format='dense', dtype=np.int)
         n_samples, n_features = X.shape
 
-        n_values_check = np.max(X, axis=0) + 1
-        if (n_values_check > self.n_values_).any():
-            raise ValueError("Feature out of bounds. Try setting n_values.")
-
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
             raise ValueError("X has different shape than during fitting."
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
+
+        n_values_check = np.max(X, axis=0) + 1
+        if (n_values_check > self.n_values_).any():
+            raise ValueError("Feature out of bounds. Try setting n_values.")
+
         column_indices = (X + indices[:-1]).ravel()
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)

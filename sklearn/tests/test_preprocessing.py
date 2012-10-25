@@ -476,12 +476,20 @@ def test_one_hot_encoder():
     assert_equal(X_trans.shape, (2, 3 + 2 + 2))
     assert_array_equal(enc.n_values_, [3, 2, 2])
     # check that testing with larger feature works:
-    X = [[2, 0, 1], [0, 1, 1]]
+    X = np.array([[2, 0, 1], [0, 1, 1]])
     enc.transform(X)
 
     # test that an error is raise when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
+
+    # test that error is raised when wrong number of features
+    assert_raises(ValueError, enc.transform, X[:, :-1])
+    # test that error is raised when wrong number of features in fit
+    # with prespecified n_values
+    assert_raises(ValueError, enc.fit, X[:, :-1])
+    # test value error on wrong init param
+    assert_raises(ValueError, OneHotEncoder(n_values=np.int).fit, X)
 
 
 def test_label_encoder():
