@@ -214,6 +214,6 @@ appended to their name.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
        :lines: 11-23
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_diabetes.py`
+   Solution: :ref:`example_exercises_plot_cv_diabetes.py`
 
 
