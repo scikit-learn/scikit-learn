@@ -10,9 +10,6 @@ class PassiveAggressiveClassifier(SGDClassifier):
     Parameters
     ----------
 
-    penalty : None, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to None.
-
     C : float
         C parameter that scales the regularization term. Defaults to 0.001
 
@@ -28,7 +25,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -70,7 +67,8 @@ class PassiveAggressiveClassifier(SGDClassifier):
     See also
     --------
 
-    SGDClassifier, Perceptron
+    SGDClassifier
+    Perceptron
 
     References
     ----------
@@ -79,17 +77,17 @@ class PassiveAggressiveClassifier(SGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
     """
-    def __init__(self, penalty=None, C=0.0001, fit_intercept=True,
+    def __init__(self, C=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, learning_rate="pa1",
-                 n_jobs=1, seed=0, class_weight=None, warm_start=False):
+                 n_jobs=1, random_state=0, class_weight=None, warm_start=False):
         super(PassiveAggressiveClassifier, self).__init__(loss="hinge",
-                                                          penalty=penalty,
+                                                          penalty=None,
                                                           C=C, l1_ratio=0,
                                                           fit_intercept=fit_intercept,
                                                           n_iter=n_iter,
                                                           shuffle=shuffle,
                                                           verbose=verbose,
-                                                          seed=seed,
+                                                          random_state=random_state,
                                                           learning_rate=learning_rate,
                                                           warm_start=warm_start,
                                                           class_weight=class_weight,
@@ -102,9 +100,6 @@ class PassiveAggressiveRegressor(SGDRegressor):
     Parameters
     ----------
 
-    penalty : None, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to None.
-
     C : float
         C parameter that scales the regularization term. Defaults to 0.001
 
@@ -120,7 +115,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -162,7 +157,8 @@ class PassiveAggressiveRegressor(SGDRegressor):
     See also
     --------
 
-    SGDClassifier, Perceptron
+    SGDClassifier
+    Perceptron
 
     References
     ----------
@@ -171,18 +167,18 @@ class PassiveAggressiveRegressor(SGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
     """
-    def __init__(self, penalty=None, C=0.0001, fit_intercept=True,
+    def __init__(self, C=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, learning_rate="pa1",
-                 n_jobs=1, seed=0, class_weight=None, warm_start=False):
+                 n_jobs=1, random_state=0, class_weight=None, warm_start=False):
         super(
             PassiveAggressiveRegressor, self).__init__(loss="epsilon_insensitive",
-                                                       penalty=penalty,
+                                                       penalty=None,
                                                        C=C, l1_ratio=0,
                                                        fit_intercept=fit_intercept,
                                                        n_iter=n_iter,
                                                        shuffle=shuffle,
                                                        verbose=verbose,
-                                                       seed=seed,
+                                                       random_state=random_state,
                                                        learning_rate=learning_rate,
                                                        warm_start=warm_start,
                                                        class_weight=class_weight,

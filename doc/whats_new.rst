@@ -7,7 +7,9 @@
 
 Changelog
 ---------
-
+   - New estimator :class: `linear_model.PassiveAggressiveClassifier` and
+     `linear_model.PassiverAggressiveRegressor` by `Rob Zinkov`
+   
    - The table of contents has now been made expandible (on the
      index page) - by Jaques Grobler.
 

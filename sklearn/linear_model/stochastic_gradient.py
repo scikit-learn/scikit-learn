@@ -48,7 +48,7 @@ class BaseSGD(BaseEstimator):
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1, seed=0, learning_rate="optimal",
+                 verbose=0, epsilon=0.1, random_state=0, learning_rate="optimal",
                  eta0=0.0, power_t=0.5, warm_start=False, rho=None):
         self.loss = loss
         self.penalty = penalty
@@ -64,7 +64,7 @@ class BaseSGD(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
         self.shuffle = shuffle
-        self.seed = seed
+        self.random_state = random_state
         self.verbose = verbose
         self.eta0 = eta0
         self.power_t = power_t
@@ -272,9 +272,6 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
 
-    C : float
-        C parameter that scales the regularization term. Defaults to 1.0
-
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
@@ -292,7 +289,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -309,8 +306,6 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         constant: eta = eta0
         optimal: eta = 1.0/(t+t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
-        pa1: eta = min(alpha, loss/norm(x))
-        pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
 
     eta0 : double
         The initial learning rate [default 0.01].
@@ -352,7 +347,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
             loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-            rho=None, seed=0, shuffle=False, verbose=0, warm_start=False)
+            rho=None, random_state=0, shuffle=False, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -374,7 +369,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
@@ -383,7 +378,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, epsilon=epsilon,
-                                            seed=seed, rho=rho,
+                                            random_state=random_state, rho=rho,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
                                             warm_start=warm_start)
@@ -677,7 +672,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, est.alpha, est.C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), est.seed,
+                     int(est.verbose), int(est.shuffle), est.random_state,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
@@ -716,9 +711,6 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
 
-    C : float
-        C parameter that scales the regularization term. Defaults to 1.0
-
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
@@ -736,7 +728,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -783,7 +775,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, rho=None, seed=0,
+           n_iter=5, p=None, penalty='l2', power_t=0.25, rho=None, random_state=0,
            shuffle=False, verbose=0, warm_start=False)
 
     See also
@@ -800,7 +792,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
+                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=0,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, rho=None):
         if p is not None:
@@ -815,7 +807,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, epsilon=epsilon,
-                                           seed=seed, rho=rho,
+                                           random_state=random_state, rho=rho,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
@@ -956,7 +948,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           int(self.fit_intercept),
                                           int(self.verbose),
                                           int(self.shuffle),
-                                          self.seed,
+                                          self.random_state,
                                           1.0, 1.0,
                                           learning_rate_type,
                                           self.eta0, self.power_t, self.t_,

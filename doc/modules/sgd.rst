@@ -358,23 +358,6 @@ user via ``eta0`` and ``power_t``, resp.
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
-For passive-aggressive algorithms, there is no learning rate, instead 
-step-size is taken as large as would guarantee the example would have
-been correctly classified. In practice, this only works on separable
-data. A regularization parameter :math:`\alpha` is used to tradeoff
-the margin violation and the step-size. PA-1 scales linearly with
-margin violation, PA-2 scales quadratically.
-
-For PA-1 use ``learning_rate='pa1'``, and ``learning-rate='pa2'`` for
-PA-2 respectively. Setting ``alpha`` to 0 gives the vanilla passive-
-aggressive algorithm.
-
-..math::
-
-     \eta = \frac{1}{|x|^2} (PA)
-     \eta = \text{min} (\alpha, \frac{1}{|x|^2} (PA-1)
-     \eta = \frac{1}{|x|^2 + 0.5 \alpha} (PA-2)
-
 The model parameters can be accessed through the members ``coef_`` and
 ``intercept\_``:
 
@@ -393,6 +376,38 @@ The model parameters can be accessed through the members ``coef_`` and
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
    67 (2), 301-320.
+
+Passive Aggressive Algorithms
+=============================
+
+For passive-aggressive algorithms, there is no learning rate, instead 
+step-size is taken as large as would guarantee the example would have
+been correctly classified. In practice, this only works on separable
+data. A regularization parameter :math:`\alpha` is used to tradeoff
+the margin violation and the step-size. PA-1 scales linearly with
+margin violation, PA-2 scales quadratically.
+
+For PA-1 use ``learning_rate='pa1'``, and ``learning-rate='pa2'`` for
+PA-2 respectively. Setting ``alpha`` to 0 gives the vanilla passive-
+aggressive algorithm.
+
+..math::
+
+     \eta = \frac{1}{|x|^2} (PA)
+     \eta = \text{min} (\alpha, \frac{1}{|x|^2} (PA-1)
+     \eta = \frac{1}{|x|^2 + 0.5 \alpha} (PA-2)
+
+Passive Aggressive Algorithms can be accessed through :class:`PassiveAggressiveClassifier`::
+  
+  from sklearn.linear_model import PassiveAggressiveClassifier
+  from sklearn import datasets
+  digits = datasets.load_digits()
+  X, y = digits.data, digits.target
+  clf = PassiveAggressiveClassifier(learning_rate='pa1', C=0.01)
+  clf.fit(X,y)
+
+.. topics:: References:
+
 
 * `"Online Passive-Aggressive Algorithms"
   <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
