@@ -619,6 +619,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         int : maximum value for all features.
         array : maximum value per feature.
 
+    dtype : number type, default=np.float
+        Desired dtype of output.
+
 
     Attributes
     ----------
@@ -639,22 +642,23 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
     >>> enc.fit([[1, 2, 1]])
-    OneHotEncoder(n_values='auto')
+    OneHotEncoder(dtype=<type 'float'>, n_values='auto')
     >>> enc.n_values_
     array([2, 3, 2])
     >>> enc.feature_indices_
     array([0, 2, 5, 7])
     >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[1, 0, 0, 1, 0, 0, 1]])
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.]])
 
     See also
     --------
-    LabelEncoder : performs a one-hot encoding on arbitrary labels.
+    LabelEncoder : performs a one-hot encoding on arbitrary class labels.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items.
     """
-    def __init__(self, n_values="auto"):
+    def __init__(self, n_values="auto", dtype=np.float):
         self.n_values = n_values
+        self.dtype = dtype
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -711,13 +715,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("X has different shape than during fitting."
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
-        features = X + indices[:-1]
-        column_indices = features.ravel()
-        row_indices = np.hstack([i * np.ones(n_features)
-                                    for i in range(n_samples)])
+        column_indices = (X + indices[:-1]).ravel()
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                n_features)
         data = np.ones(n_samples * n_features)
         out = sp.coo_matrix((data, (row_indices, column_indices)),
-                shape=(n_samples, indices[-1]), dtype=np.int)
+                shape=(n_samples, indices[-1]), dtype=self.dtype)
         return out.tocsr()
 
 
