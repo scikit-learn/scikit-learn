@@ -427,6 +427,11 @@ def oas(X, assume_centered=False):
 
     where mu = trace(cov) / n_features
 
+    The formula we used to implement the OAS
+    does not correspond to the one given in the article. It has been taken
+    from the MATLAB program available from the author's webpage
+    (https://tbayes.eecs.umich.edu/yilun/covestimation).
+
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
