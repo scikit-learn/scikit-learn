@@ -70,4 +70,3 @@ for embed_solve in embedding_solvers:
     plot_num += 1
         
 pl.show()
-pl.savefig('seg_compare.png')
