@@ -650,14 +650,14 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
-    >>> enc.fit([[1, 2, 1]])
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
     OneHotEncoder(dtype=<type 'float'>, n_values='auto', remove_zeros=True)
     >>> enc.n_values_
-    array([2, 3, 2])
+    array([2, 3, 4])
     >>> enc.feature_indices_
-    array([0, 2, 5, 7])
+    array([0, 2, 5, 9])
     >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.]])
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
     See also
     --------
