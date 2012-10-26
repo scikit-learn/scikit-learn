@@ -387,8 +387,8 @@ data. A regularization parameter :math:`\alpha` is used to tradeoff
 the margin violation and the step-size. PA-1 scales linearly with
 margin violation, PA-2 scales quadratically.
 
-For PA-1 use ``learning_rate='pa1'``, and ``learning-rate='pa2'`` for
-PA-2 respectively. Setting ``alpha`` to 0 gives the vanilla passive-
+For PA-1 use ``loss='pa1'``, and ``loss='pa2'`` for
+PA-2 respectively. Setting ``C`` to 0 gives the vanilla passive-
 aggressive algorithm.
 
 ..math::
