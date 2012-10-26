@@ -24,8 +24,8 @@ digits = datasets.load_digits()
 classifiers = [
     ("SGD", SGDClassifier()),
     ("Perceptron", Perceptron()),
-    ("PA-I", PassiveAggressiveClassifier(learning_rate='pa1', C=0.01)),
-    ("PA-II", PassiveAggressiveClassifier(learning_rate='pa2', C=0.01)),
+    ("PA-I", PassiveAggressiveClassifier(loss='pa1', C=0.01)),
+    ("PA-II", PassiveAggressiveClassifier(loss='pa2', C=0.01)),
 ]
 
 xx = 1 - np.array(heldout)

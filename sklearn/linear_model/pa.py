@@ -37,8 +37,8 @@ class PassiveAggressiveClassifier(SGDClassifier):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
-    learning_rate : string, optional
-        The learning rate:
+    loss : string, optional
+        The loss function to be used:
         pa1: eta = min(alpha, loss/norm(x))
         pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
 
@@ -78,7 +78,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
 
     """
     def __init__(self, C=0.0001, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, learning_rate="pa1",
+                 n_iter=5, shuffle=False, verbose=0, loss="pa1",
                  n_jobs=1, random_state=0, class_weight=None, warm_start=False):
         super(PassiveAggressiveClassifier, self).__init__(loss="hinge",
                                                           penalty=None,
@@ -88,7 +88,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
                                                           shuffle=shuffle,
                                                           verbose=verbose,
                                                           random_state=random_state,
-                                                          learning_rate=learning_rate,
+                                                          learning_rate=loss,
                                                           warm_start=warm_start,
                                                           class_weight=class_weight,
                                                           n_jobs=n_jobs)
@@ -127,8 +127,8 @@ class PassiveAggressiveRegressor(SGDRegressor):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
-    learning_rate : string, optional
-        The learning rate:
+    loss : string, optional
+        The loss function to be used:
         pa1: eta = min(alpha, loss/norm(x))
         pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
 
@@ -168,7 +168,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
 
     """
     def __init__(self, C=0.0001, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, learning_rate="pa1",
+                 n_iter=5, shuffle=False, verbose=0, loss="pa1",
                  n_jobs=1, random_state=0, class_weight=None, warm_start=False):
         super(
             PassiveAggressiveRegressor, self).__init__(loss="epsilon_insensitive",
@@ -179,7 +179,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
                                                        shuffle=shuffle,
                                                        verbose=verbose,
                                                        random_state=random_state,
-                                                       learning_rate=learning_rate,
+                                                       learning_rate=loss,
                                                        warm_start=warm_start,
                                                        class_weight=class_weight,
                                                        n_jobs=n_jobs)
