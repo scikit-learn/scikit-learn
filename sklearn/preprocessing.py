@@ -622,13 +622,22 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
+    remove_zeros : bool, default=True
+        Whether to remove features that are always zero.
+        Ignored if n_values is not 'auto'.
+
 
     Attributes
     ----------
+    `active_features_` : array
+        Indices for active features, meaning values that
+        actually occur in the training dataset. Only available
+        if n_values is ``'auto'`` and remove_zeros is ``True``.
     `feature_indices_` : array of shape (n_features,)
         Indices to feature ranges. Feature ``i`` in the
         original data is mapped to features
-        ``feature_indices_[i]`` to ``feature_indices_[i+1]``.
+        ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and potentially masked by `active_features_` afterwards)
     `n_values_` : array of shape (n_features,)
         Maximum number of values per feature.
 
@@ -642,7 +651,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
     >>> enc.fit([[1, 2, 1]])
-    OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+    OneHotEncoder(dtype=<type 'float'>, n_values='auto', remove_zeros=True)
     >>> enc.n_values_
     array([2, 3, 2])
     >>> enc.feature_indices_
@@ -656,11 +665,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items.
     """
-    def __init__(self, n_values="auto", dtype=np.float):
+    def __init__(self, n_values="auto", dtype=np.float, remove_zeros=True):
         self.n_values = n_values
         self.dtype = dtype
+        self.remove_zeros = remove_zeros
 
     def fit(self, X, y=None):
+        self.fit_transform(X)
+        return self
+
+    def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X.
 
         Parameters
@@ -669,7 +683,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             Input array of type int.
         """
         X, = check_arrays(X, sparse_format='dense', dtype=np.int)
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         if self.n_values == 'auto':
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
@@ -687,8 +701,23 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                         "an array, it has to be of shape (n_features,).")
         self.n_values_ = n_values
         n_values = np.hstack([[0], n_values])
-        self.feature_indices_ = np.cumsum(n_values)
-        return self
+        indices = np.cumsum(n_values)
+        self.feature_indices_ = indices
+
+        column_indices = (X + indices[:-1]).ravel()
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                n_features)
+        data = np.ones(n_samples * n_features)
+        out = sp.coo_matrix((data, (row_indices, column_indices)),
+                shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
+
+        if self.n_values == 'auto' and self.remove_zeros:
+            mask = np.array(out.sum(axis=0)).ravel() != 0
+            active_features = np.where(mask)[0]
+            out = out[:, active_features]
+            self.active_features_ = active_features
+
+        return out
 
     def transform(self, X):
         """Transform X using one-hot encoding.
@@ -721,8 +750,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 n_features)
         data = np.ones(n_samples * n_features)
         out = sp.coo_matrix((data, (row_indices, column_indices)),
-                shape=(n_samples, indices[-1]), dtype=self.dtype)
-        return out.tocsr()
+                shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
+        if self.n_values == 'auto' and self.remove_zeros:
+            out = out[:, self.active_features_]
+        return out
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
