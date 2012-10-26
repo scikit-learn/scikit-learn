@@ -523,9 +523,10 @@ class Lars(LinearModel, RegressorMixin):
                 self.coef_path_[k, :, :this_path_length] = coef_path
                 self.coef_[k, :] = coef_path[:, -1]
 
-            self.alphas_, self.active_, self.coef_path_, self.coef_ = [
-                np.squeeze(a) for a in (self.alphas_, self.active_,
-                                        self.coef_path_, self.coef_)]
+            if n_targets == 1:
+                self.alphas_, self.active_, self.coef_path_, self.coef_ = [
+                    a[0] for a in (self.alphas_, self.active_,
+                                            self.coef_path_, self.coef_)]
             # Shorten the paths and use a copy to avoid keeping a
             # reference on the full array
             self.alphas_, self.active_, self.coef_path_ = [
