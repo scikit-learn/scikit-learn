@@ -240,6 +240,15 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         assert_less(error, 0.01)
 
 
+def test_lasso_lars_path_length():
+    # Test that the path length of the LassoLars is right
+    lasso = linear_model.LassoLars()
+    lasso.fit(X, y)
+    lasso2 = linear_model.LassoLars(alpha=lasso.alphas_[2])
+    lasso2.fit(X, y)
+    np.testing.assert_array_equal(lasso.alphas_[:3], lasso2.alphas_)
+
+
 def test_lars_add_features():
     """
     assure that at least some features get added if necessary
@@ -274,10 +283,15 @@ def test_multitarget():
                                       estimator.coef_, estimator.coef_path_)
         for k in xrange(n_targets):
             estimator.fit(X, Y[:, k])
-            assert_array_almost_equal(alphas[k, :], estimator.alphas_)
-            assert_array_almost_equal(active[k, :], estimator.active_)
-            assert_array_almost_equal(coef[k, :], estimator.coef_)
-            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
+            path_length = len(estimator.alphas_)
+            assert_array_almost_equal(alphas[k, :path_length],
+                                      estimator.alphas_)
+            assert_array_almost_equal(active[k, :path_length],
+                                      estimator.active_)
+            assert_array_almost_equal(coef[k, :],
+                                      estimator.coef_)
+            assert_array_almost_equal(path[k, :, :path_length],
+                                      estimator.coef_path_)
 
 
 def test_lars_cv():

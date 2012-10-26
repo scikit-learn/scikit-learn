@@ -162,14 +162,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             prev_coef = coefs[n_iter - 1]
 
         alpha[0] = C / n_samples
-        if alpha[0] < alpha_min:  # early stopping
-            # interpolation factor 0 <= ss < 1
-            if n_iter > 0:
-                # In the first iteration, all alphas are zero, the formula
-                # below would make ss a NaN
-                ss = (prev_alpha[0] - alpha_min) / (prev_alpha[0] - alpha[0])
-                coef[:] = prev_coef + ss * (coef - prev_coef)
-            alpha[0] = alpha_min
+        if alpha[0] <= alpha_min:  # early stopping
+            if not alpha[0] == alpha_min:
+                # interpolation factor 0 <= ss < 1
+                if n_iter > 0:
+                    # In the first iteration, all alphas are zero, the formula
+                    # below would make ss a NaN
+                    ss = ((prev_alpha[0] - alpha_min) /
+                            (prev_alpha[0] - alpha[0]))
+                    coef[:] = prev_coef + ss * (coef - prev_coef)
+                alpha[0] = alpha_min
             if return_path:
                 coefs[n_iter] = coef
             break
@@ -503,9 +505,10 @@ class Lars(LinearModel, RegressorMixin):
             Gram = self._get_gram()
 
         if self.fit_path:
-            self.alphas_ = np.ones((n_targets, max_iter + 1))
+            self.alphas_ = np.zeros((n_targets, max_iter + 1))
             self.active_ = np.ones((n_targets, max_iter))
             self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
+            path_length = 0
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path = lars_path(
@@ -513,14 +516,21 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True)
-                self.alphas_[k, :len(alphas)] = alphas
-                self.active_[k, :len(active)] = active
-                self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
+                this_path_length = len(alphas)
+                path_length = max(this_path_length, path_length)
+                self.alphas_[k, :this_path_length] = alphas
+                self.active_[k, :this_path_length] = active
+                self.coef_path_[k, :, :this_path_length] = coef_path
                 self.coef_[k, :] = coef_path[:, -1]
 
-            self.alphas_, self.active_, self.coef_path_, self.coef_ = (
+            self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                 np.squeeze(a) for a in (self.alphas_, self.active_,
-                                        self.coef_path_, self.coef_))
+                                        self.coef_path_, self.coef_)]
+            # Shorten the paths and use a copy to avoid keeping a
+            # reference on the full array
+            self.alphas_, self.active_, self.coef_path_ = [
+                a[..., :path_length].copy() for a in (self.alphas_,
+                                self.active_, self.coef_path_)]
         else:
             self.alphas_ = np.empty(n_targets)
             for k in xrange(n_targets):
