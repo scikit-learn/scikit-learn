@@ -455,6 +455,17 @@ def test_one_hot_encoder():
     enc = OneHotEncoder()
     # discover max values automatically
     X_trans = enc.fit_transform(X).toarray()
+    assert_equal(X_trans.shape, (2, 5))
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+
+    # check outcome
+    assert_array_equal(X_trans,
+              [[0., 1., 0., 1., 1.],
+               [1., 0., 1., 0., 1.]])
+
+    # don't mask out zero features:
+    enc = OneHotEncoder(remove_zeros=False)
+    X_trans = enc.fit_transform(X).toarray()
     assert_equal(X_trans.shape, (2, 4 + 3 + 2))
     assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
 
