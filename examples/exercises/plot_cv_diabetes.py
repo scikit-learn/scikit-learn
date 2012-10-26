@@ -32,8 +32,11 @@ for alpha in alphas:
 
 pl.figure(figsize=(4, 3))
 pl.semilogx(alphas, scores)
-pl.semilogx(alphas, np.array(scores) + np.array(scores_std) / 20, 'b--')
-pl.semilogx(alphas, np.array(scores) - np.array(scores_std) / 20, 'b--')
+# plot error lines showing +/- std. errors of the scores
+pl.semilogx(alphas, np.array(scores) + np.array(scores_std) / np.sqrt(len(X)),
+    'b--')
+pl.semilogx(alphas, np.array(scores) - np.array(scores_std) / np.sqrt(len(X)),
+    'b--')
 pl.ylabel('CV score')
 pl.xlabel('alpha')
 pl.axhline(np.max(scores), linestyle='--', color='.5')
@@ -41,9 +44,11 @@ pl.axhline(np.max(scores), linestyle='--', color='.5')
 ##############################################################################
 # Bonus: how much can you trust the selection of alpha?
 
-# To answer this question, we use the LassoCV object that sets its alpha
-# parameter automatically from the data by cross-validation (i.e. taking
-# the maximum of the above curve.
+# To answer this question we use the LassoCV object that sets its alpha
+# parameter automatically from the data by internal cross-validation (i.e. it
+# performs cross-validation on the training data it receives).
+# We use external cross-validation to see how much the automatically obtained
+# alphas differ across different cross-validation folds.
 lasso_cv = linear_model.LassoCV(alphas=alphas)
 k_fold = cross_validation.KFold(len(X), 3)
 
@@ -53,5 +58,8 @@ print
 print "alpha parameter maximising the generalization score on different"
 print "subsets of the data:"
 print [lasso_cv.fit(X[train], y[train]).alpha_ for train, _ in k_fold]
+print
+print "Answer: Not very much since alphas for different subsets of data differ"
+print "quite a lot."
 
 pl.show()
