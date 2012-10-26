@@ -451,8 +451,8 @@ def test_label_binarizer_errors():
 
 def test_one_hot_encoder():
     """Test OneHotEncoder's fit and transform."""
-    enc = OneHotEncoder()
     X = [[3, 2, 1], [0, 1, 1]]
+    enc = OneHotEncoder()
     # discover max values automatically
     X_trans = enc.fit_transform(X).toarray()
     assert_equal(X_trans.shape, (2, 4 + 3 + 2))

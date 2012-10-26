@@ -280,7 +280,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1]])
-  OneHotEncoder(dtype=<type 'float'>, n_values=[2, 3, 4])
+  OneHotEncoder(dtype=<type 'float'>, n_values='auto', remove_zeros=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
