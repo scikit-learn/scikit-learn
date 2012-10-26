@@ -278,14 +278,14 @@ only one active.
 
 Continuing the example above::
 
-  >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
-  >>> enc.fit([[0, 1, 3]])
+  >>> enc = preprocessing.OneHotEncoder()
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1]])
   OneHotEncoder(dtype=<type 'float'>, n_values=[2, 3, 4])
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
-To construct the estimator, we specify how many values each feature can have in
-``n_values``. By default, this is inferred automatically from the dataset.
+By default, how many values each feature can take is inferred automatically from the dataset.
+It is possible to specify this explicitly using the parameter ``n_values``. 
 There are two genders, three possible continents and four web browsers in our
 dataset.
 Then we fit the estimator, and transform a data point. 
