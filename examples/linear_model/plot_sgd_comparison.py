@@ -1,6 +1,6 @@
 """
 ================================
-Comparsing various Stochastic Gradient Solvers
+Comparing various Stochastic Gradient Solvers
 ================================
 
 An example showing how the different SGDClassifiers perform
