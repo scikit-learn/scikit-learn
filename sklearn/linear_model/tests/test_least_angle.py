@@ -1,5 +1,6 @@
 import numpy as np
 
+from nose.tools import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -266,7 +267,10 @@ def test_lars_add_features():
 def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
     lars.fit(X, y)
-    assert_true(len(lars.coef_.nonzero()[0]) == 6)
+    assert_equal(len(lars.coef_.nonzero()[0]), 6)
+    # The path should be of length 6 + 1 in a Lars going down to 6
+    # non-zero coefs
+    assert_equal(len(lars.alphas_), 7)
 
 
 def test_multitarget():
