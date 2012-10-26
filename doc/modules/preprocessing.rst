@@ -263,12 +263,12 @@ Encoding Categorial Features
 Often features are not given as continuous values but categorical.
 For example a person could have features ``["male", "female"]``, ``["from Europe", "from US", "from Asia"]``,
 ``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
-Such features can be efficiently coded as integers, i.e.
+Such features can be efficiently coded as integers, for instance
 ``["male", "from US", "uses Internet Explorer"]`` could be expressed as ``[0, 1, 3]``.
 
 Such integer representation can not be used directly with scikit-learn estimators, as these
 expect continuous input, and would interpret the categories as being ordered, which is often
-not desired (i.e. the set of browsers was ordered arbitrily).
+not desired (i.e. the set of browsers was ordered arbitrarily).
 
 One possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
@@ -285,8 +285,9 @@ Continuing the example above::
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
 To construct the estimator, we specify how many values each feature can have in
-``n_values``. There are two genders, three possible continents and four
-web browsers in our dataset.
+``n_values``. By default, this is inferred automatically from the dataset.
+There are two genders, three possible continents and four web browsers in our
+dataset.
 Then we fit the estimator, and transform a data point. 
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
