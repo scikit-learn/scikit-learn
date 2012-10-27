@@ -210,6 +210,23 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         self.verbose = verbose
 
+    def apply(self, X):
+        """Apply trees in the forest to X, return leaf indices.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Input data.
+
+        Returns
+        -------
+        X_leafs : array_like, shape = [n_samples, n_estimators]
+            For each datapoint x in X and for each tree in the forest,
+            return the index of the leaf x ends up in.
+        """
+        X = array2d(X, dtype=np.float32, order='C')
+        return np.array([est.tree_.apply(X) for est in self.estimators_]).T
+
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
