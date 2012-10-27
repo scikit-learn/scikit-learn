@@ -365,6 +365,22 @@ def test_precision_recall_curve():
     assert_array_almost_equal(precision_recall_auc, 0.75, 3)
 
 
+def test_score_scale_invariance():
+    # Test that average_precision_score and auc_score are invariant by
+    # the scaling or shifting of probabilities
+    y_true, _, probas_pred = make_prediction(binary=True)
+    roc_auc = auc_score(y_true, probas_pred)
+    roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
+    roc_auc_shifted = auc_score(y_true, probas_pred - 10)
+    assert_equal(roc_auc, roc_auc_scaled)
+    assert_equal(roc_auc, roc_auc_shifted)
+    pr_auc = average_precision_score(y_true, probas_pred)
+    pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
+    pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
+    assert_equal(pr_auc, pr_auc_scaled)
+    assert_equal(pr_auc, pr_auc_shifted)
+
+
 def test_losses():
     """Test loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
