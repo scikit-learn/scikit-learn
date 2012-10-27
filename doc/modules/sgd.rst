@@ -413,9 +413,9 @@ Passive Aggressive Algorithms can be accessed through :class:`PassiveAggressiveC
 .. topics:: References:
 
 
-* `"Online Passive-Aggressive Algorithms"
-  <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-  K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+ * `"Online Passive-Aggressive Algorithms"
+   <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+   K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 Implementation details
 ======================
