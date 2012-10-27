@@ -57,6 +57,10 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
+
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
@@ -68,6 +72,10 @@ def test_classification_toy():
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
+
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
 
 
 def test_iris():
