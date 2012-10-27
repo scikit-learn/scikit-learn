@@ -1,7 +1,6 @@
 """Testing for Spectral Clustering methods"""
 
 from cPickle import dumps, loads
-import nose
 
 import numpy as np
 from scipy import sparse
@@ -35,7 +34,7 @@ def test_spectral_clustering():
             if labels[0] == 0:
                 labels = 1 - labels
 
-            assert_equal(labels, [1, 1, 1, 0, 0, 0, 0])
+            assert_array_equal(labels, [1, 1, 1, 0, 0, 0, 0])
 
             model_copy = loads(dumps(model))
             assert_equal(model_copy.n_clusters, model.n_clusters)
