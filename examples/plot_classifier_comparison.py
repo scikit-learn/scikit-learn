@@ -17,7 +17,7 @@ might lead to better generalization.
 
 The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
-points.
+set.
 """
 print __doc__
 

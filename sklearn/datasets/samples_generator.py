@@ -524,7 +524,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     outer_circ_x = np.cos(linspace)
     outer_circ_y = np.sin(linspace)
     inner_circ_x = outer_circ_x * factor
-    inner_circ_y = outer_circ_x * factor
+    inner_circ_y = outer_circ_y * factor
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
            np.append(outer_circ_y, inner_circ_y))).T
