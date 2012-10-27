@@ -303,7 +303,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         for j in range(1, n_components):
             # Accumulate c to ensure row is as orthogonal as possible to
             # previous picks as well as current one
-            c += np.abs(vectors.dot(rotation[:, j - 1]))
+            c += np.abs(np.dot(vectors, rotation[:, j - 1]))
             rotation[:, j] = vectors[c.argmin(), :].T
 
         last_objective_value = 0.0
@@ -312,7 +312,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         while not has_converged:
             n_iter += 1
 
-            t_discrete = vectors.dot(rotation)
+            t_discrete = np.dot(vectors, rotation)
 
             labels = t_discrete.argmax(axis=1)
             vectors_discrete = csc_matrix(
@@ -335,7 +335,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
             else:
                 # otherwise calculate rotation and continue
                 last_objective_value = ncut_value
-                rotation = Vh.T.dot(U.T)
+                rotation = np.dot(Vh.T, U.T)
 
     if not has_converged:
         raise LinAlgError('SVD did not converge')
