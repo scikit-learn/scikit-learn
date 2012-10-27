@@ -74,7 +74,7 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     so that the eigen vector decomposition works as expected.
 
     Parameters
-    -----------
+    ----------
     adjacency: array-like or sparse matrix, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
@@ -92,14 +92,19 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
         arpack is used.
 
     Returns
-    --------
+    -------
     embedding: array, shape: (n_samples, n_components)
         The reduced samples
 
     Notes
-    ------
+    -----
     The graph should contain only one connected component, elsewhere the
     results make little sense.
+
+    References
+    ----------
+    [1] http://en.wikipedia.org/wiki/LOBPCG
+    [2] LOBPCG: http://dx.doi.org/10.1137%2FS1064827500366124
     """
 
     from scipy import sparse
@@ -129,6 +134,10 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
             (not sparse.isspmatrix(laplacian)
              or n_nodes < 5 * n_components)):
         # lobpcg used with mode='amg' has bugs for low number of nodes
+        # for details see the source code in scipy:
+        # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen/lobpcg/lobpcg.py#L237
+        # or matlab:
+        # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
         laplacian = _set_diag(laplacian, 0)
 
         # Here we'll use shift-invert mode for fast eigenvalues
@@ -170,6 +179,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
     elif mode == "lobpcg":
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         if n_nodes < 5 * n_components + 1:
+            # see note above under arpack why lopbcg has problems with small
+            # number of nodes
             # lobpcg will fallback to symeig, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.todense()
