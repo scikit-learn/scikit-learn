@@ -622,17 +622,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    remove_zeros : bool, default=True
-        Whether to remove features that are always zero.
-        Ignored if n_values is not 'auto'.
-
 
     Attributes
     ----------
     `active_features_` : array
         Indices for active features, meaning values that
         actually occur in the training dataset. Only available
-        if n_values is ``'auto'`` and remove_zeros is ``True``.
+        if n_values is ``'auto'``.
     `feature_indices_` : array of shape (n_features,)
         Indices to feature ranges. Feature ``i`` in the
         original data is mapped to features
@@ -651,7 +647,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-    OneHotEncoder(dtype=<type 'float'>, n_values='auto', remove_zeros=True)
+    OneHotEncoder(dtype=<type 'float'>, n_values='auto')
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -665,10 +661,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items.
     """
-    def __init__(self, n_values="auto", dtype=np.float, remove_zeros=True):
+    def __init__(self, n_values="auto", dtype=np.float):
         self.n_values = n_values
         self.dtype = dtype
-        self.remove_zeros = remove_zeros
 
     def fit(self, X, y=None):
         self.fit_transform(X)
@@ -711,7 +706,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         out = sp.coo_matrix((data, (row_indices, column_indices)),
                 shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
 
-        if self.n_values == 'auto' and self.remove_zeros:
+        if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -751,7 +746,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         data = np.ones(n_samples * n_features)
         out = sp.coo_matrix((data, (row_indices, column_indices)),
                 shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
-        if self.n_values == 'auto' and self.remove_zeros:
+        if self.n_values == 'auto':
             out = out[:, self.active_features_]
         return out
 
