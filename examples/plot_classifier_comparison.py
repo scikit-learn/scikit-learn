@@ -15,6 +15,9 @@ In particular in high dimensional spaces data can more easily be separated
 linearly and the simplicity of classifiers such as naive Bayes and linear SVMs
 might lead to better generalization.
 
+The plots show training points in solid colors and testing points
+semi-transparent. The lower right shows the classification accuracy on the test
+points.
 """
 print __doc__
 
@@ -26,6 +29,8 @@ print __doc__
 
 import numpy as np
 import pylab as pl
+from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_blobs
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -53,12 +58,19 @@ datasets = [make_moons(noise=0.3, random_state=0),
             make_circles(noise=0.2, factor=0.5, random_state=0),
             make_blobs(centers=2, random_state=0)]
 
-figure, all_axes = pl.subplots(len(datasets), len(classifiers))
+figure, all_axes = pl.subplots(len(datasets), len(classifiers),
+                               figsize=(20, 8))
+# iterate over datasets
 for ds, axes in zip(datasets, all_axes):
+    # preprocess dataset, split into training and test part
     X, y = ds
-    # we create an instance of Neighbours Classifier and fit the data.
+    X = StandardScaler().fit_transform(X)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    # iterate over classifiers
     for name, clf, ax in zip(names, classifiers, axes):
-        clf.fit(X, y)
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
 
         # Plot the decision boundary. For that, we will asign a color to each
         # point in the mesh [x_min, m_max]x[y_min, y_max].
@@ -73,15 +85,21 @@ for ds, axes in zip(datasets, all_axes):
 
         # Put the result into a color plot
         Z = Z.reshape(xx.shape)
-        ax.contourf(xx, yy, Z, cmap=pl.cm.Spectral)
+        cm = pl.cm.Spectral
+        ax.contourf(xx, yy, Z, cmap=cm)
 
         # Plot also the training points
-        ax.scatter(X[:, 0], X[:, 1], c=y, cmap=pl.cm.Spectral)
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm)
+        # and testing points
+        ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm, alpha=0.5)
 
         ax.set_xlim(xx.min(), xx.max())
         ax.set_ylim(yy.min(), yy.max())
         ax.set_xticks(())
         ax.set_yticks(())
         ax.set_title(name)
+        ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
+                size=15, horizontalalignment='right')
 
+figure.subplots_adjust(left=.02, right=.98)
 pl.show()
