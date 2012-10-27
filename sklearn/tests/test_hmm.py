@@ -393,15 +393,15 @@ class GaussianHMMBaseTester(object):
     def test_fit_non_ergodic_transmat(self):
         startprob = np.array([1, 0, 0, 0, 0])
         transmat = np.array([[0.9, 0.1, 0, 0, 0],
-        [0, 0.9, 0.1, 0, 0],
-        [0, 0, 0.9, 0.1, 0],
-        [0, 0, 0, 0.9, 0.1],
-        [0, 0, 0, 0, 1.0]])
+                             [0, 0.9, 0.1, 0, 0],
+                             [0, 0, 0.9, 0.1, 0],
+                             [0, 0, 0, 0.9, 0.1],
+                             [0, 0, 0, 0, 1.0]])
 
         h = hmm.GaussianHMM(n_components=5,
-        covariance_type='full',
-        startprob=startprob,
-        transmat=transmat)
+                            covariance_type='full',
+                            startprob=startprob,
+                            transmat=transmat)
 
         h.means_ = np.zeros((5, 10))
         h.covars_ = np.tile(np.identity(10), (5, 1, 1))
