@@ -11,9 +11,9 @@ of different classifiers.
 This should be taken with a grain of salt, as the intuition conveyed by
 these examples does not necessarily carry over to real datasets.
 
-In high dimensional spaces, data can more easily be separated linearly and
-the simplicity of classifiers such as naive Bayes and linear SVMs might lead
-to better generalization.
+In particular in high dimensional spaces data can more easily be separated
+linearly and the simplicity of classifiers such as naive Bayes and linear SVMs
+might lead to better generalization.
 
 """
 print __doc__
@@ -39,18 +39,18 @@ h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
         "Random Forest", "Naive Bayes", "LDA", "QDA"]
-classifiers = [KNeighborsClassifier(),
-    SVC(kernel="linear", C=0.001),
-    SVC(gamma=1),
-    DecisionTreeClassifier(),
-    RandomForestClassifier(),
+classifiers = [KNeighborsClassifier(3),
+    SVC(kernel="linear", C=0.25),
+    SVC(gamma=2, C=1),
+    DecisionTreeClassifier(max_depth=5),
+    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
     GaussianNB(),
     LDA(),
     QDA()
     ]
 
-datasets = [make_moons(noise=0.1, random_state=0),
-            make_circles(noise=0.1, factor=0.5, random_state=0),
+datasets = [make_moons(noise=0.3, random_state=0),
+            make_circles(noise=0.2, factor=0.5, random_state=0),
             make_blobs(centers=2, random_state=0)]
 
 figure, all_axes = pl.subplots(len(datasets), len(classifiers))
