@@ -210,16 +210,6 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     """Search for a partition matrix (clustering) which is closest to the
     eigenvector embedding.
 
-    The eigenvector embedding is used to iteratively search for the closest
-    discrete partition.  First, the eigenvector embedding is normalized to
-    the space of partition matrices. An optimal discrete partition matrix
-    closest to this normalized embedding multiplied by an initial rotation is
-    calculated.  Fixing this discrete partition matrix, an optimal rotation
-    matrix is calculated.  These two calculations are performed until
-    convergence.  The discrete partition matrix is returned as the clustering
-    solution.  This method tends to be faster and more robust to random
-    initialization than k-means.
-
     Parameters
     ----------
     vectors : array-like, shape: (n_samples, n_clusters)
@@ -250,6 +240,20 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
       http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+
+    Notes
+    -----
+
+    The eigenvector embedding is used to iteratively search for the
+    closest discrete partition.  First, the eigenvector embedding is
+    normalized to the space of partition matrices. An optimal discrete
+    partition matrix closest to this normalized embedding multiplied by
+    an initial rotation is calculated.  Fixing this discrete partition
+    matrix, an optimal rotation matrix is calculated.  These two
+    calculations are performed until convergence.  The discrete partition
+    matrix is returned as the clustering solution.  Used in spectral
+    clustering, this method tends to be faster and more robust to random
+    initialization than k-means.
 
     """
 
