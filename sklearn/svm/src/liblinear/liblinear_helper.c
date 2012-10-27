@@ -179,12 +179,15 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 
 
 /* Create a paramater struct with and return it */
-struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp nr_weight, char *weight_label, char *weight, int seed)
+struct parameter *set_parameter(int solver_type, double eps, double C,
+                                npy_intp nr_weight, char *weight_label,
+                                char *weight, unsigned seed)
 {
+    struct parameter *param = malloc(sizeof(struct parameter));
+    if (param == NULL)
+        return NULL;
+
     srand(seed);
-    struct parameter *param;
-    param = malloc(sizeof(struct parameter));
-    if (param == NULL) return NULL;
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
@@ -198,7 +201,6 @@ struct parameter * set_parameter(int solver_type, double eps, double C, npy_intp
 void copy_w(void *data, struct model *model, int len)
 {
     memcpy(data, model->w, len * sizeof(double)); 
-    
 }
 
 double get_bias(struct model *model)
