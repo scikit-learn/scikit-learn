@@ -40,3 +40,13 @@ def test_error():
     base_estimator = DecisionTreeClassifier()
     assert_raises(ValueError, instantiate, class_name=BaseEnsemble,
                   base_estimator=base_estimator, n_estimators=-1)
+
+
+def test_init_estimator_params():
+    """ Test that estimator params are not unintentionally left open.
+    """
+    tree = DecisionTreeClassifier()
+    forest1 = BaseEnsemble(tree, n_estimators=10)
+    forest2 = BaseEnsemble(tree, n_estimators=10)
+    forest1.estimator_params.append('testtest')
+    assert_true('testtest' not in forest2.estimator_params)
