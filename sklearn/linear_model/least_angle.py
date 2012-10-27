@@ -231,7 +231,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                     'Stopping the LARS path early, after %i iterations, '
                     'i.e. alpha=%.3f, '
                     'with an active set of %i regressors, and '
-                    'the smallest eigenvalue being %.3f')
+                    'the small cholesky pivot element being %.3f')
                     % (n_iter, alphas[n_iter], n_active, diag)
                     )
                 break
