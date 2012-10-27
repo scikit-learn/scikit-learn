@@ -27,21 +27,42 @@ def test_spectral_clustering():
                  ])
 
     for mode in ('arpack', 'lobpcg'):
-        for mat in (S, sparse.csr_matrix(S)):
-            model = SpectralClustering(random_state=0, n_clusters=2,
-                    affinity='precomputed', mode=mode).fit(mat)
-            labels = model.labels_
-            if labels[0] == 0:
-                labels = 1 - labels
+        for assign_labels in ('kmeans', 'discretize'):
+            for mat in (S, sparse.csr_matrix(S)):
+                model = SpectralClustering(random_state=0, n_clusters=2,
+                        affinity='precomputed', mode=mode,
+                        assign_labels=assign_labels).fit(mat)
+                labels = model.labels_
+                if labels[0] == 0:
+                    labels = 1 - labels
 
-            assert_array_equal(labels, [1, 1, 1, 0, 0, 0, 0])
+                assert_array_equal(labels, [1, 1, 1, 0, 0, 0, 0])
 
-            model_copy = loads(dumps(model))
-            assert_equal(model_copy.n_clusters, model.n_clusters)
-            assert_equal(model_copy.mode, model.mode)
-            assert_array_equal(model_copy.random_state.get_state()[1],
-                        model.random_state.get_state()[1])
-            assert_array_equal(model_copy.labels_, model.labels_)
+                model_copy = loads(dumps(model))
+                assert_equal(model_copy.n_clusters, model.n_clusters)
+                assert_equal(model_copy.mode, model.mode)
+                assert_array_equal(model_copy.random_state.get_state()[1],
+                            model.random_state.get_state()[1])
+                assert_array_equal(model_copy.labels_, model.labels_)
+
+
+def test_spectral_lobpcg_mode():
+    # Test the lobpcg mode of SpectralClustering
+    # We need a fairly big data matrix, as lobpcg does not work with
+    # small data matrices
+    centers = np.array([
+        [0., 0.],
+        [10., 10.],
+    ])
+    X, true_labels = make_blobs(n_samples=100, centers=centers,
+                                cluster_std=1., random_state=42)
+    D = pairwise_distances(X)  # Distance matrix
+    S = np.max(D) - D  # Similarity matrix
+    labels = spectral_clustering(S, n_clusters=len(centers),
+                                     random_state=0, mode="lobpcg")
+    # We don't care too much that it's good, just that it *worked*.
+    # There does have to be some lower limit on the performance though.
+    assert_greater(np.mean(labels == true_labels), .3)
 
 
 def test_spectral_amg_mode():
