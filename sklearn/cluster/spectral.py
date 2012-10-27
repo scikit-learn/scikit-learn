@@ -54,7 +54,6 @@ def _set_diag(laplacian, value):
             laplacian = laplacian.tocsr()
     return laplacian
 
-
 def spectral_embedding(adjacency, n_components=8, mode=None,
                        random_state=None, eig_tol=0.0):
     """Project the sample on the first eigen vectors of the graph Laplacian
@@ -208,16 +207,16 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
 
 def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
                random_state=None):
-    """Search for a partition matrix (clustering) which is closest to the 
+    """Search for a partition matrix (clustering) which is closest to the
     eigenvector embedding.
 
-    The eigenvector embedding is used to iteratively search for the closest 
-    discrete partition.  First, the eigenvector embedding is normalized to 
-    the space of partition matrices. An optimal discrete partition matrix 
-    closest to this normalized embedding multiplied by an initial rotation is 
-    calculated.  Fixing this discrete partition matrix, an optimal rotation 
-    matrix is calculated.  These two calculations are performed until 
-    convergence.  The discrete partition matrix is returned as the clustering 
+    The eigenvector embedding is used to iteratively search for the closest
+    discrete partition.  First, the eigenvector embedding is normalized to
+    the space of partition matrices. An optimal discrete partition matrix
+    closest to this normalized embedding multiplied by an initial rotation is
+    calculated.  Fixing this discrete partition matrix, an optimal rotation
+    matrix is calculated.  These two calculations are performed until
+    convergence.  The discrete partition matrix is returned as the clustering
     solution.  This method tends to be faster and more robust to random
     initialization than k-means.
 
@@ -260,7 +259,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     random_state = check_random_state(random_state)
 
     vectors = as_float_array(vectors, copy=copy)
-    
+
     eps = np.finfo(float).eps
     n_samples, n_components = vectors.shape
 
@@ -342,7 +341,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
                         random_state=None, n_init=10, k=None, eig_tol=0.0,
-                        embed_solve='kmeans'):
+                        assign_labels='kmeans'):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -390,10 +389,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack mode.
 
-    embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
-        The strategy to use to solve the clustering problem in the embedding
-        space.  There are two ways of solving the clustering of the laplacian 
-        embedding.  k-means can be applied and is a popular choice. But it can 
+    assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
+        The strategy to use to assign labels in the embedding
+        space.  There are two ways to assign labels after the laplacian
+        embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization.  Discretization is another approach
         which is less sensitive to random initialization.
 
@@ -425,6 +424,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
+    if not assign_labels in ('kmeans', 'discretize'):
+        raise ValueError("The 'assign_labels' parameter should be "
+                    "'kmeans' or 'discretize', but '%s' was given"
+                    % assign_labels)
     if not k is None:
         warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
         n_clusters = k
@@ -434,7 +437,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
                               mode=mode, random_state=random_state,
                               eig_tol=eig_tol)
 
-    if embed_solve == 'kmeans':
+    if assign_labels == 'kmeans':
         maps = maps[1:]
         _, labels, _ = k_means(maps.T, n_clusters, random_state=random_state,
                                n_init=n_init)
@@ -500,10 +503,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack mode.
 
-    embed_solve : {'kmeans', 'discrete'}, default: 'kmeans'
-        The strategy to use to solve the clustering problem in the embedding
-        space.  There are two ways of solving the clustering of the laplacian 
-        embedding.  k-means can be applied and is a popular choice. But it can 
+    assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
+        The strategy to use to assign labels in the embedding
+        space.  There are two ways to assign labels after the laplacian
+        embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization.  Discretization is another approach
         which is less sensitive to random initialization.
 
@@ -542,7 +545,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     - A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
-      
+
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
       http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
@@ -550,7 +553,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
                  gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 precomputed=False, eig_tol=0.0, embed_solve='kmeans'):
+                 precomputed=False, eig_tol=0.0, assign_labels='kmeans'):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
@@ -562,7 +565,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.affinity = affinity
         self.n_neighbors = n_neighbors
         self.eig_tol = eig_tol
-        self.embed_solve = embed_solve
+        self.assign_labels = assign_labels
 
     def fit(self, X):
         """Creates an affinity matrix for X using the selected affinity,
@@ -594,9 +597,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
-                                           n_clusters=self.n_clusters, mode=self.mode,
-                                           random_state=self.random_state, n_init=self.n_init,
-                                           eig_tol=self.eig_tol, embed_solve=self.embed_solve)
+                            n_clusters=self.n_clusters, mode=self.mode,
+                            random_state=self.random_state, n_init=self.n_init,
+                            eig_tol=self.eig_tol,
+                            assign_labels=self.assign_labels)
         return self
 
     @property

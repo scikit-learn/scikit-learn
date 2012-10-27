@@ -50,13 +50,15 @@ graph.data = np.exp(-beta * graph.data / lena.std()) + eps
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed)
 N_REGIONS = 11
-embedding_solvers = ['kmeans', 'discrete']
+
 ###############################################################################
 # Visualize the resulting regions
-for embed_solve in embedding_solvers:
+
+for assign_labels in ('kmeans', 'discretize'):
     t0 = time.time()
     labels = spectral_clustering(graph, n_clusters=N_REGIONS,
-                                 embed_solve=embed_solve)
+                                 assign_labels=assign_labels,
+                                 random_state=1)
     t1 = time.time()
     labels = labels.reshape(lena.shape)
 
@@ -67,6 +69,6 @@ for embed_solve in embedding_solvers:
                 colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
     pl.xticks(())
     pl.yticks(())
-    pl.title('%s, %.2fs' % (embed_solve, (t1 - t0)))
+    pl.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
 
 pl.show()
