@@ -43,6 +43,8 @@ Changelog
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
+   - :func:`datasets.make_circles` now has the same number of inner and outer points.
+
 
 API changes summary
 -------------------
