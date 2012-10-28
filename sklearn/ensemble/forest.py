@@ -46,7 +46,7 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import array2d, check_random_state, check_arrays
+from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 
@@ -1264,7 +1264,8 @@ class RandomForestHasher(ExtraTreesClassifier):
         X_transformed: sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        y = np.arange(len(X))
+        X = safe_asarray(X)
+        y = np.arange(X.shape[0])
         super(RandomForestHasher, self).fit(X, y)
         self.one_hot_encoder_ = OneHotEncoder()
         return self.one_hot_encoder_.fit_transform(self.apply(X))
