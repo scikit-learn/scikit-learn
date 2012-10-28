@@ -38,7 +38,7 @@ template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
 template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
 #endif
 template <class S, class T> static inline void clone(T*& dst, S* src, int n)
-{   
+{
 	dst = new T[n];
 	memcpy((void *)dst,(void *)src,sizeof(T)*n);
 }
@@ -401,12 +401,12 @@ double l2r_l2_svr_fun::fun(double *w)
 	int l=prob->l;
 	int w_size=get_nr_variable();
 	double d;
-	
+
 	Xv(w, z);
 
 	for(i=0;i<w_size;i++)
 		f += w[i]*w[i];
-	f /= 2;	
+	f /= 2;
 	for(i=0;i<l;i++)
 	{
 		d = z[i] - y[i];
@@ -431,7 +431,7 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 	for(i=0;i<l;i++)
 	{
 		d = z[i] - y[i];
-		
+
 		// generate index set I
 		if(d < -p)
 		{
@@ -445,7 +445,7 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 			I[sizeI] = i;
 			sizeI++;
 		}
-	
+
 	}
 	subXTv(z, g);
 
@@ -582,7 +582,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		alpha[i] = 0;
 
 	for(i=0;i<w_size*nr_class;i++)
-		w[i] = 0; 
+		w[i] = 0;
 	for(i=0;i<l;i++)
 	{
 		for(m=0;m<nr_class;m++)
@@ -593,7 +593,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		{
 			double val = xi->value;
 			QD[i] += val*val;
-	
+
 			// Uncomment the for loop if initial alpha isn't zero
 			// for(m=0; m<nr_class; m++)
 			//	w[(xi->index-1)*nr_class+m] += alpha[i*nr_class+m]*val;
@@ -604,7 +604,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		index[i] = i;
 	}
 
-	while(iter < max_iter) 
+	while(iter < max_iter)
 	{
 		double stopping = -INF;
 		for(i=0;i<active_size;i++)
@@ -655,14 +655,14 @@ int Solver_MCSVM_CS::Solve(double *w)
 						active_size_i[i]--;
 						while(active_size_i[i]>m)
 						{
-							if(!be_shrunk(i, active_size_i[i], y_index[i], 
+							if(!be_shrunk(i, active_size_i[i], y_index[i],
 											alpha_i[alpha_index_i[active_size_i[i]]], minG))
 							{
 								swap(alpha_index_i[m], alpha_index_i[active_size_i[i]]);
 								swap(G[m], G[active_size_i[i]]);
 								if(y_index[i] == active_size_i[i])
 									y_index[i] = m;
-								else if(y_index[i] == m) 
+								else if(y_index[i] == m)
 									y_index[i] = active_size_i[i];
 								break;
 							}
@@ -675,7 +675,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 				{
 					active_size--;
 					swap(index[s], index[active_size]);
-					s--;	
+					s--;
 					continue;
 				}
 
@@ -800,7 +800,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 // To support weights for instances, use GETI(i) (i)
 
 static int solve_l2r_l1l2_svc(
-	const problem *prob, double *w, double eps, 
+	const problem *prob, double *w, double eps,
 	double Cp, double Cn, int solver_type, int max_iter)
 {
 	int l = prob->l;
@@ -834,7 +834,7 @@ static int solve_l2r_l1l2_svc(
 	{
 		if(prob->y[i] > 0)
 		{
-			y[i] = +1; 
+			y[i] = +1;
 		}
 		else
 		{
@@ -846,7 +846,7 @@ static int solve_l2r_l1l2_svc(
 	// 0 <= alpha[i] <= upper_bound[GETI(i)]
 	for(i=0; i<l; i++)
 		alpha[i] = 0;
-	
+
 	for(i=0; i<w_size; i++)
 		w[i] = 0;
 	for(i=0; i<l; i++)
@@ -1251,11 +1251,11 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	int w_size = prob->n;
 	int i, s, iter = 0;
 	double *xTx = new double[l];
-	int *index = new int[l];		
+	int *index = new int[l];
 	double *alpha = new double[2*l]; // store alpha and C - alpha
-	schar *y = new schar[l];	
+	schar *y = new schar[l];
 	int max_inner_iter = 100; // for inner Newton
-	double innereps = 1e-2; 
+	double innereps = 1e-2;
 	double innereps_min = min(1e-8, eps);
 	double upper_bound[3] = {Cn, 0, Cp};
 
@@ -1263,14 +1263,14 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	{
 		if(prob->y[i] > 0)
 		{
-			y[i] = +1; 
+			y[i] = +1;
 		}
 		else
 		{
 			y[i] = -1;
 		}
 	}
-		
+
 	// Initial alpha can be set here. Note that
 	// 0 < alpha[i] < upper_bound[GETI(i)]
 	// alpha[2*i] + alpha[2*i+1] = upper_bound[GETI(i)]
@@ -1322,7 +1322,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 
 			// Decide to minimize g_1(z) or g_2(z)
 			int ind1 = 2*i, ind2 = 2*i+1, sign = 1;
-			if(0.5*a*(alpha[ind2]-alpha[ind1])+b < 0) 
+			if(0.5*a*(alpha[ind2]-alpha[ind1])+b < 0)
 			{
 				ind1 = 2*i+1;
 				ind2 = 2*i;
@@ -1332,7 +1332,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 			//  g_t(z) = z*log(z) + (C-z)*log(C-z) + 0.5a(z-alpha_old)^2 + sign*b(z-alpha_old)
 			double alpha_old = alpha[ind1];
 			double z = alpha_old;
-			if(C - z < 0.5 * C) 
+			if(C - z < 0.5 * C)
 				z = 0.1*z;
 			double gp = a*(z-alpha_old)+sign*b+log(z/(C-z));
 			Gmax = max(Gmax, fabs(gp));
@@ -1340,13 +1340,13 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 			// Newton method on the sub-problem
 			const double eta = 0.1; // xi in the paper
 			int inner_iter = 0;
-			while (inner_iter <= max_inner_iter) 
+			while (inner_iter <= max_inner_iter)
 			{
 				if(fabs(gp) < innereps)
 					break;
 				double gpp = a + C/(C-z)/z;
 				double tmpz = z - gp/gpp;
-				if(tmpz <= 0) 
+				if(tmpz <= 0)
 					z *= eta;
 				else // tmpz in (0, C)
 					z = tmpz;
@@ -1364,7 +1364,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 				{
 					w[xi->index-1] += sign*(z-alpha_old)*yi*xi->value;
 					xi++;
-				}  
+				}
 			}
 		}
 
@@ -1372,10 +1372,10 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 		if(iter % 10 == 0)
 			info(".");
 
-		if(Gmax < eps) 
+		if(Gmax < eps)
 			break;
 
-		if(newton_iter <= l/10) 
+		if(newton_iter <= l/10)
 			innereps = max(innereps_min, 0.1*innereps);
 
 	}
@@ -1385,13 +1385,13 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 		info("\nWARNING: reaching max number of iterations\nUsing -s 0 may be faster (also see FAQ)\n\n");
 
 	// calculate objective value
-	
+
 	double v = 0;
 	for(i=0; i<w_size; i++)
 		v += w[i] * w[i];
 	v *= 0.5;
 	for(i=0; i<l; i++)
-		v += alpha[2*i] * log(alpha[2*i]) + alpha[2*i+1] * log(alpha[2*i+1]) 
+		v += alpha[2*i] * log(alpha[2*i]) + alpha[2*i+1] * log(alpha[2*i+1])
 			- upper_bound[GETI(i)] * log(upper_bound[GETI(i)]);
 	info("Objective value = %lf\n", v);
 
@@ -1402,12 +1402,12 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	return iter;
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-regularized L2-loss support vector classification
 //
 //  min_w \sum |wj| + C \sum max(0, 1-yi w^T xi)^2,
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
@@ -1420,7 +1420,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 // To support weights for instances, use GETI(i) (i)
 
 static int solve_l1r_l2_svc(
-	problem *prob_col, double *w, double eps, 
+	problem *prob_col, double *w, double eps,
 	double Cp, double Cn, int max_iter)
 {
 	int l = prob_col->l;
@@ -1689,12 +1689,12 @@ static int solve_l1r_l2_svc(
 	return iter;
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-regularized logistic regression problems
 //
 //  min_w \sum |wj| + C \sum log(1+exp(-yi w^T xi)),
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
@@ -1707,7 +1707,7 @@ static int solve_l1r_l2_svc(
 // To support weights for instances, use GETI(i) (i)
 
 static int solve_l1r_lr(
-	const problem *prob_col, double *w, double eps, 
+	const problem *prob_col, double *w, double eps,
 	double Cp, double Cn, int max_newton_iter)
 {
 	int l = prob_col->l;
@@ -2038,7 +2038,7 @@ static int solve_l1r_lr(
 		info("WARNING: reaching max number of iterations\n");
 
 	// calculate objective value
-	
+
 	double v = 0;
 	int nnz = 0;
 	for(j=0; j<w_size; j++)
@@ -2166,7 +2166,7 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 	}
 
         /* START MOD: Sort labels and apply to array count --dyamins */
-        
+
         int j;
         for (j=1; j<nr_class; j++)
         {
@@ -2229,7 +2229,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 		if(prob->y[i] > 0)
 			pos++;
 	neg = prob->l - pos;
-	
+
 	double primal_solver_tol = eps*max(min(pos,neg), 1)/prob->l;
 
 	function *fun_obj=NULL;
@@ -2307,7 +2307,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			double *C = new double[prob->l];
 			for(int i = 0; i < prob->l; i++)
 				C[i] = param->C;
-			
+
 			fun_obj=new l2r_l2_svr_fun(prob, C, param->p);
 			TRON tron_obj(fun_obj, param->eps, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
@@ -2610,7 +2610,7 @@ double predict_probability(const struct model *model_, const struct feature_node
 				prob_estimates[i]=prob_estimates[i]/sum;
 		}
 
-		return label;		
+		return label;
 	}
 	else
 		return 0;
@@ -2650,7 +2650,7 @@ int save_model(const char *model_file_name, const struct model *model_)
 
 	fprintf(fp, "solver_type %s\n", solver_type_table[param.solver_type]);
 	fprintf(fp, "nr_class %d\n", model_->nr_class);
-	
+
 	if(model_->label)
 	{
 		fprintf(fp, "label");
@@ -2693,7 +2693,7 @@ struct model *load_model(const char *model_file_name)
 	parameter& param = model_->param;
 
 	model_->label = NULL;
-	
+
 	char *old_locale = strdup(setlocale(LC_ALL, NULL));
 	setlocale(LC_ALL, "C");
 
@@ -2716,7 +2716,7 @@ struct model *load_model(const char *model_file_name)
 			if(solver_type_table[i] == NULL)
 			{
 				fprintf(stderr,"unknown solver type.\n");
-				
+
 				setlocale(LC_ALL, old_locale);
 				free(model_->label);
 				free(model_);
@@ -2781,10 +2781,10 @@ struct model *load_model(const char *model_file_name)
 			fscanf(fp, "%lf ", &model_->w[i*nr_w+j]);
 		fscanf(fp, "\n");
 	}
-	
+
 	setlocale(LC_ALL, old_locale);
 	free(old_locale);
-	
+
 	if (ferror(fp) != 0 || fclose(fp) != 0) return NULL;
 
 	return model_;
@@ -2853,7 +2853,7 @@ const char *check_parameter(const problem *prob, const parameter *param)
 
 	if(param->C <= 0)
 		return "C <= 0";
-	
+
 	if(param->p < 0)
 		return "p < 0";
 
@@ -2884,7 +2884,7 @@ int check_probability_model(const struct model *model_)
 
 void set_print_string_function(void (*print_func)(const char*))
 {
-	if (print_func == NULL) 
+	if (print_func == NULL)
 		liblinear_print_string = &print_string_stdout;
 	else
 		liblinear_print_string = print_func;
