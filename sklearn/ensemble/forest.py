@@ -48,6 +48,7 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays
 from ..metrics import r2_score
+from ..preprocessing import OneHotEncoder
 
 from .base import BaseEnsemble
 
@@ -1156,3 +1157,40 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
+
+
+class RandomHashingForest(ExtraTreesClassifier):
+    def __init__(self, n_estimators=10,
+                       max_depth=5,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
+                       min_density=0.1,
+                       n_jobs=1,
+                       random_state=None,
+                       verbose=0):
+        super(RandomHashingForest, self).__init__(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                min_samples_split=min_samples_split,
+                min_samples_leaf=min_samples_leaf,
+                min_density=min_density,
+                max_features=1,
+                bootstrap=False,
+                compute_importances=False,
+                oob_score=False,
+                n_jobs=n_jobs,
+                random_state=random_state,
+                verbose=verbose)
+
+    def fit(self, X, y=None):
+        self.fit_transform(X, y)
+        return self
+
+    def fit_transform(self, X, y=None):
+        y = np.arange(len(X))
+        super(RandomHashingForest, self).fit(X, y)
+        self.one_hot_encoder_ = OneHotEncoder()
+        return self.one_hot_encoder_.fit_transform(self.apply(X))
+
+    def transform(self, X):
+        return self.one_hot_encoder_.transform(self.apply(X))
