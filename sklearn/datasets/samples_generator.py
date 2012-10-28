@@ -7,6 +7,7 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 from itertools import product
+import numbers
 import numpy as np
 from scipy import linalg
 
@@ -485,7 +486,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
 
 def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         factor=.8):
-    """Make a large circle containing a smaller circle in 2di
+    """Make a large circle containing a smaller circle in 2d.
 
     A simple toy dataset to visualize clustering and classification
     algorithms.
@@ -516,24 +517,18 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if factor > 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
-    n_samples_out = int(n_samples / float(1 + factor))
-    n_samples_in = n_samples - n_samples_out
-
     generator = check_random_state(random_state)
-
     # so as not to have the first point = last point, we add one and then
     # remove it.
-    n_samples_out, n_samples_in = n_samples_out + 1, n_samples_in + 1
-    outer_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    outer_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    inner_circ_x = (np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
-                    * factor)
-    inner_circ_y = (np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
-                    * factor)
+    linspace = np.linspace(0, 2 * np.pi, n_samples / 2 + 1)[:-1]
+    outer_circ_x = np.cos(linspace)
+    outer_circ_y = np.sin(linspace)
+    inner_circ_x = outer_circ_x * factor
+    inner_circ_y = outer_circ_y * factor
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
            np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples_out - 1), np.ones(n_samples_in - 1)])
+    y = np.hstack([np.zeros(n_samples / 2), np.ones(n_samples / 2)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
@@ -644,7 +639,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, (int, np.integer)):
+    if isinstance(centers, numbers.Integral):
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:

@@ -15,6 +15,7 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
+import numbers
 
 import numpy as np
 import scipy.sparse as sp
@@ -470,9 +471,9 @@ class CountVectorizer(BaseEstimator):
         max_df = self.max_df
         min_df = self.min_df
 
-        max_doc_count = (max_df if isinstance(max_df, (int, np.integer))
+        max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
                                 else max_df * n_doc)
-        min_doc_count = (min_df if isinstance(min_df,  (int, np.integer))
+        min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
                                 else min_df * n_doc)
 
         # filter out stop words: terms that occur in almost all documents

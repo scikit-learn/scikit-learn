@@ -1,13 +1,18 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, \
-                          assert_equal
-from nose import SkipTest
-from nose.tools import assert_true
+
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_true
 
 from sklearn.utils.testing import assert_less
 
-from .. import DictionaryLearning, MiniBatchDictionaryLearning, SparseCoder, \
-               dict_learning_online, sparse_encode
+from sklearn.decomposition import DictionaryLearning
+from sklearn.decomposition import MiniBatchDictionaryLearning
+from sklearn.decomposition import SparseCoder
+from sklearn.decomposition import dict_learning_online
+from sklearn.decomposition import sparse_encode
 
 
 rng = np.random.RandomState(0)

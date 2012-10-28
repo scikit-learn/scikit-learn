@@ -1,8 +1,10 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_true
 
-from sklearn.utils.testing import assert_less, assert_greater
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_greater
+
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()

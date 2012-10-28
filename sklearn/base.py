@@ -313,8 +313,6 @@ class ClusterMixin(object):
     def fit_predict(self, X, y=None):
         """Performs clustering on X and returns cluster labels.
 
-        This is a non-optimized default implementation.
-
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
@@ -325,6 +323,8 @@ class ClusterMixin(object):
         y : ndarray, shape (n_samples,)
             cluster labels
         """
+        # non-optimized default implementation; override when a better
+        # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
 
@@ -352,13 +352,9 @@ class TransformerMixin(object):
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
 
-        Notes
-        -----
-        This method just calls fit and transform consecutively, i.e., it is not
-        an optimized implementation of fit_transform, unlike other transformers
-        such as PCA.
-
         """
+        # non-optimized default implementation; override when a better
+        # method is possible for a given clustering algorithm
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
             return self.fit(X, **fit_params).transform(X)

@@ -1,18 +1,23 @@
+import unittest
+
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_equal, assert_approx_equal
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
 
 from sklearn import linear_model, datasets, metrics
 from sklearn import preprocessing
 from sklearn.linear_model import SGDClassifier, SGDRegressor
-from sklearn.utils.testing import assert_greater, assert_less
 from sklearn.base import clone
-
-import unittest
-from nose.tools import raises
-from nose.tools import assert_raises, assert_true, assert_equal
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -381,12 +386,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = y[idx]
         clf = self.factory(alpha=0.0001, n_iter=1000,
                            class_weight=None).fit(X, y)
-        assert_approx_equal(metrics.f1_score(y, clf.predict(X)), 0.96, 2)
+        assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.96,
+                            decimal=1)
 
         # make the same prediction using automated class_weight
         clf_auto = self.factory(alpha=0.0001, n_iter=1000,
                                 class_weight="auto").fit(X, y)
-        assert_approx_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.96, 2)
+        assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.96,
+                            decimal=1)
 
         # Make sure that in the balanced case it does not change anything
         # to use "auto"

@@ -10,14 +10,16 @@
 
 from __future__ import division
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr, check_random_state
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+import warnings
+import numbers
 
 import numpy as np
 from scipy.optimize import nnls
 import scipy.sparse as sp
-import warnings
+
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import atleast2d_or_csr, check_random_state
+from ..utils.extmath import randomized_svd, safe_sparse_dot
 
 
 def _pos(x):
@@ -377,7 +379,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        if isinstance(init, (int, np.integer, np.random.RandomState)):
+        if isinstance(init, (numbers.Integral, np.random.RandomState)):
             random_state = check_random_state(init)
             init = "random"
             warnings.warn("Passing a random seed or generator as init "

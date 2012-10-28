@@ -1,10 +1,10 @@
 import numpy as np
-from numpy.testing import assert_array_equal
 
 from sklearn.linear_model.isotonic_regression_ import isotonic_regression
 from sklearn.linear_model import IsotonicRegression
 
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_equal
 
 
 def test_isotonic_regression():

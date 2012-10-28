@@ -80,9 +80,9 @@ training samples::
 
     >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
-    >>> Y = [0, 1]
+    >>> y = [0, 1]
     >>> clf = svm.SVC()
-    >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
     gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
     tol=0.001, verbose=False)

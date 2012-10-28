@@ -18,6 +18,7 @@ import warnings
 import numpy as np
 
 from .utils import check_random_state
+from .utils.validation import as_float_array
 from .utils.extmath import logsumexp
 from .base import BaseEstimator
 from .mixture import (
@@ -370,7 +371,7 @@ class _BaseHMM(BaseEstimator):
         currstate = (startprob_cdf > rand).argmax()
         hidden_states = [currstate]
         obs = [self._generate_sample_from_state(
-                                currstate, random_state=random_state)]
+            currstate, random_state=random_state)]
 
         for _ in xrange(n - 1):
             rand = random_state.rand()
@@ -473,6 +474,13 @@ class _BaseHMM(BaseEstimator):
     def _set_startprob(self, startprob):
         if startprob is None:
             startprob = np.tile(1.0 / self.n_components, self.n_components)
+        else:
+            startprob = as_float_array(startprob, copy=False)
+
+        # check if there exists a component whose value is exactly zero
+        # if so, add a small number and re-normalize
+        if not np.alltrue(startprob):
+            normalize(startprob)
 
         if len(startprob) != self.n_components:
             raise ValueError('startprob must have length n_components')
@@ -491,6 +499,11 @@ class _BaseHMM(BaseEstimator):
         if transmat is None:
             transmat = np.tile(1.0 / self.n_components,
                     (self.n_components, self.n_components))
+
+        # check if there exists a component whose value is exactly zero
+        # if so, add a small number and re-normalize
+        if not np.alltrue(transmat):
+            normalize(transmat, axis=1)
 
         if (np.asarray(transmat).shape
                 != (self.n_components, self.n_components)):
@@ -587,9 +600,10 @@ class _BaseHMM(BaseEstimator):
             self.startprob_ = normalize(
                 np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20))
         if 't' in params:
-            self.transmat_ = normalize(
+            transmat_ = normalize(
                 np.maximum(self.transmat_prior - 1.0 + stats['trans'], 1e-20),
                 axis=1)
+            self.transmat_ = transmat_
 
 
 class GaussianHMM(_BaseHMM):
@@ -759,7 +773,7 @@ class GaussianHMM(_BaseHMM):
         super(GaussianHMM, self)._init(obs, params=params)
 
         if (hasattr(self, 'n_features')
-            and self.n_features != obs[0].shape[1]):
+                and self.n_features != obs[0].shape[1]):
             raise ValueError('Unexpected number of dimensions, got %s but '
                              'expected %s' % (obs[0].shape[1],
                                               self.n_features))
@@ -946,9 +960,14 @@ class MultinomialHMM(_BaseHMM):
     def _set_emissionprob(self, emissionprob):
         emissionprob = np.asarray(emissionprob)
         if hasattr(self, 'n_symbols') and \
-               emissionprob.shape != (self.n_components, self.n_symbols):
+                emissionprob.shape != (self.n_components, self.n_symbols):
             raise ValueError('emissionprob must have shape '
                              '(n_components, n_symbols)')
+
+        # check if there exists a component whose value is exactly zero
+        # if so, add a small number and re-normalize
+        if not np.alltrue(emissionprob):
+            normalize(emissionprob)
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
@@ -972,6 +991,11 @@ class MultinomialHMM(_BaseHMM):
         self.random_state = check_random_state(self.random_state)
 
         if 'e' in params:
+            if not hasattr(self, 'n_symbols'):
+                symbols = set()
+                for o in obs:
+                    symbols = symbols.union(set(o))
+                self.n_symbols = len(symbols)
             emissionprob = normalize(self.random_state.rand(self.n_components,
                 self.n_symbols), 1)
             self.emissionprob_ = emissionprob
@@ -996,6 +1020,42 @@ class MultinomialHMM(_BaseHMM):
         if 'e' in params:
             self.emissionprob_ = (stats['obs']
                                  / stats['obs'].sum(1)[:, np.newaxis])
+
+    def _check_input_symbols(self, obs):
+        """check if input can be used for Multinomial.fit input must be both
+        positive integer array and every element must be continuous.
+        e.g. x = [0, 0, 2, 1, 3, 1, 1] is OK and y = [0, 0, 3, 5, 10] not
+        """
+
+        symbols = np.asanyarray(obs).flatten()
+
+        if symbols.dtype.kind != 'i':
+            # input symbols must be integer
+            return False
+
+        if len(symbols) == 1:
+            # input too short
+            return False
+
+        if np.any(symbols < 0):
+            # input containes negative intiger
+            return False
+
+        symbols.sort()
+        if np.any(np.diff(symbols) > 1):
+            # input is discontinous
+            return False
+
+        return True
+
+    def fit(self, obs, **kwargs):
+        err_msg = ("Input must be both positive integer array and "
+                   "every element must be continuous, but %s was given.")
+
+        if not self._check_input_symbols(obs):
+            raise ValueError(err_msg % obs)
+
+        return _BaseHMM.fit(self, obs, **kwargs)
 
 
 class GMMHMM(_BaseHMM):

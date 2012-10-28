@@ -7,11 +7,12 @@ from sys import version_info
 
 import numpy as np
 from scipy import interpolate
-from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
-                          assert_equal
-from nose import SkipTest
-from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \

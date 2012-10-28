@@ -9,11 +9,20 @@ partly-homogenous regions.
 
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
+
+There are two options to assign labels:
+
+* with 'kmeans' spectral clustering will cluster samples in the embedding space
+  using a kmeans algorithm
+* whereas 'discrete' will iteratively search for the closest partition
+  space to the embedding space.
 """
 print __doc__
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
+# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD
+
+import time
 
 import numpy as np
 import scipy as sp
@@ -41,16 +50,25 @@ graph.data = np.exp(-beta * graph.data / lena.std()) + eps
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed)
 N_REGIONS = 11
-labels = spectral_clustering(graph, n_clusters=N_REGIONS)
-labels = labels.reshape(lena.shape)
 
 ###############################################################################
 # Visualize the resulting regions
-pl.figure(figsize=(5, 5))
-pl.imshow(lena,   cmap=pl.cm.gray)
-for l in range(N_REGIONS):
-    pl.contour(labels == l, contours=1,
-            colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
-pl.xticks(())
-pl.yticks(())
+
+for assign_labels in ('kmeans', 'discretize'):
+    t0 = time.time()
+    labels = spectral_clustering(graph, n_clusters=N_REGIONS,
+                                 assign_labels=assign_labels,
+                                 random_state=1)
+    t1 = time.time()
+    labels = labels.reshape(lena.shape)
+
+    pl.figure(figsize=(5, 5))
+    pl.imshow(lena,   cmap=pl.cm.gray)
+    for l in range(N_REGIONS):
+        pl.contour(labels == l, contours=1,
+                colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
+    pl.xticks(())
+    pl.yticks(())
+    pl.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
+
 pl.show()

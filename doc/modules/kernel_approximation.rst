@@ -32,7 +32,23 @@ Radial Basis Function Kernel
 .. currentmodule:: sklearn.kernel_approximation
 
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
-function kernel. 
+function kernel. This transformation can be used to explicitly model a kernel map,
+prior to applying a linear algorithm, for example a linear SVM::
+
+    >>> from sklearn.kernel_approximation import RBFSampler
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
+    >>> y = [0, 0, 1, 1]
+    >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
+    >>> X_features = rbf_feature.fit_transform(X)
+    >>> clf = SGDClassifier()   # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X_features, y)
+    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
+           fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
+           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+           rho=None, seed=0, shuffle=False, verbose=0, warm_start=False)
+    >>> clf.score(X_features, y)
+    1.0
 
 The mapping relies on a Monte Carlo approximation to the
 kernel values. The ``fit`` function performs the Monte Carlo sampling, whereas

@@ -43,6 +43,8 @@ Changelog
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
+   - :func:`datasets.make_circles` now has the same number of inner and outer points.
+
 
 API changes summary
 -------------------
@@ -75,10 +77,10 @@ API changes summary
      :class:`cross_validation.StratifiedShuffleSplit`,
      :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
 
-   - Replaced `rho` in :class:`linear_model.ElasticNet` and
-     :class:`linear_model.SGDClassifier` by ``l1_ratio``. The `rho` parameter
+   - Replaced ``rho`` in :class:`linear_model.ElasticNet` and
+     :class:`linear_model.SGDClassifier` by ``l1_ratio``. The ``rho`` parameter
      had different meanings; ``l1_ratio`` was introduced to avoid confusion.
-     It has the same meaning as previously rho in
+     It has the same meaning as previously ``rho`` in
      :class:`linear_model.ElasticNet` and ``(1-rho)`` in
      :class:`linear_model.SGDClassifier`,
 
@@ -192,7 +194,7 @@ Changelog
      by `Andreas Müller`_.
 
    - In :class:`feature_extraction.text.CountVectorizer`, added an option to
-     infrequent words, ``min_df`` by  `Andreas Müller`_.
+     ignore infrequent words, ``min_df`` by  `Andreas Müller`_.
 
    - Add support for multiple targets in some linear models (ElasticNet, Lasso
      and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and

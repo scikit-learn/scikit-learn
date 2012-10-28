@@ -212,8 +212,8 @@ appended to their name.
    **Bonus**: How much can you trust the selection of alpha?
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
-       :lines: 11-23
+       :lines: 11-22
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_diabetes.py`
+   Solution: :ref:`example_exercises_plot_cv_diabetes.py`
 
 

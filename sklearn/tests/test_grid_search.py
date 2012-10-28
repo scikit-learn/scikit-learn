@@ -2,8 +2,10 @@
 Testing for grid search module (sklearn.grid_search)
 
 """
-from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
 
 import numpy as np
 import scipy.sparse as sp

@@ -691,7 +691,8 @@ class BaseLibLinear(BaseEstimator):
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_label_, self.class_weight_,
-                               rnd.randint(1000))
+                               # seed for srand in range [0..UINT_MAX]
+                               rnd.randint(np.uintc(-1) + 1))
 
         if self.fit_intercept:
             self.coef_ = self.raw_coef_[:, :-1]
