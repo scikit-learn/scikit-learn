@@ -216,6 +216,28 @@ the matching feature to the prediction function.
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
 
+.. _random_hashing:
+
+Random Forest Hashing
+---------------------
+:class:`RandomForestHasher` implements an unsupervised transformation of the
+data.  Using a forest of completely random trees, :class:`RandomForestHasher`
+encodes the data by the indices of the leaves a data point ends up in.  This
+index is then encoded in a one-of-K manner, leading to a high dimensional,
+sparse binary coding.
+This coding can be computed very efficiently and can then be used as a basis
+for other learning tasks.
+The size and sparsity of the code can be influenced by choosing the number of
+trees and the maximum depth per tree. For each tree in the ensemble, the coding
+contains one entry of one. The size of the coding is at most ``n_estimators * 2
+** max_depth``, the maximum number of leafs in the forest.
+
+As neighboring data points are more likely to lie within the same leaf of a tree,
+the transformation performs an implicit, non-parametric density estimation.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_random_forest_hasher.py`
 
 .. _gradient_boosting:
 
