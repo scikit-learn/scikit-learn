@@ -1159,7 +1159,65 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
 
 
-class RandomHashingForest(ExtraTreesClassifier):
+class RandomForestHasher(ExtraTreesClassifier):
+    """Use a completely random forest to create sparse, binary represenations.
+
+    An unsupervised transformation of a dataset to a high-dimensional
+    sparse representation. A datapoint is coded according to which leaf of
+    each tree it is sorted into. Using a one-hot encoding of the leafs,
+    this leads to a binary coding with as many ones as trees in the forest.
+
+    The dimensionality of the resulting representation is approximately
+    ``n_estimators * 2 ** max_depth``.
+
+    Parameters
+    ----------
+    n_estimators : int
+        Number of trees in the forest.
+
+    max_depth : int
+        Maximum depth of each tree.
+
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_density : float, optional (default=0.1)
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
+
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the tree building process.
+
+    Attributes
+    ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
+    """
+
     def __init__(self, n_estimators=10,
                        max_depth=5,
                        min_samples_split=1,
@@ -1168,7 +1226,7 @@ class RandomHashingForest(ExtraTreesClassifier):
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        super(RandomHashingForest, self).__init__(
+        super(RandomForestHasher, self).__init__(
                 n_estimators=n_estimators,
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
@@ -1183,14 +1241,45 @@ class RandomHashingForest(ExtraTreesClassifier):
                 verbose=verbose)
 
     def fit(self, X, y=None):
+        """Fit estimator.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data used to build forests.
+        """
         self.fit_transform(X, y)
         return self
 
     def fit_transform(self, X, y=None):
+        """Fit estimator and transform dataset.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data used to build forests.
+
+        Returns
+        -------
+        X_transformed: sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
         y = np.arange(len(X))
-        super(RandomHashingForest, self).fit(X, y)
+        super(RandomForestHasher, self).fit(X, y)
         self.one_hot_encoder_ = OneHotEncoder()
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):
+        """Transform dataset.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_transformed: sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
         return self.one_hot_encoder_.transform(self.apply(X))
