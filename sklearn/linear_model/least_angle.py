@@ -227,9 +227,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # Time to bail out.
                 warnings.warn(('Regressors in active set degenerate. '
                     'Stopping the LARS path early, after %i iterations, '
-                    'i.e. alpha=%.3f, '
+                    'i.e. alpha=%.3e, '
                     'with an active set of %i regressors, and '
-                    'the small cholesky pivot element being %.3f')
+                    'the small cholesky pivot element being %.3e')
                     % (n_iter, alphas[n_iter], n_active, diag)
                     )
                 break
