@@ -580,7 +580,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
             proba[:, 1] = 1. / (1. + np.exp(-scores))
 
         elif self.loss == "modified_huber":
-            proba[:, 1] = (np.minimum(1, np.maximum(-1, scores)) + 1) / 2.0
+            proba[:, 1] = (np.clip(scores, -1, 1) + 1) / 2.
 
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
