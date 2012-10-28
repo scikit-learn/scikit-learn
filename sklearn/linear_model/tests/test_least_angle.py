@@ -174,8 +174,8 @@ def test_singular_matrix():
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", UserWarning)
         alphas, active, coef_path = linear_model.lars_path(X1, y1)
-    assert_equal(len(warning_list), 1)
-    assert_true('Stopping the LARS' in warning_list[0].message.args[0])
+    assert_true(len(warning_list) > 0)
+    assert_true('Dropping a regressor' in warning_list[0].message.args[0])
 
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
@@ -283,12 +283,12 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
         warnings.simplefilter("always", UserWarning)
         lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
                                                     method='lasso')
-    assert_equal(len(warning_list), 1)
-    assert_true('Stopping the LARS' in warning_list[0].message.args[0])
+    assert_true(len(warning_list) > 0)
+    assert_true('Dropping a regressor' in warning_list[0].message.args[0])
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y,
-                                alphas=lars_alphas)):
+                                alphas=lars_alphas, tol=1e-6)):
         lasso_coef[:, i] = model.coef_
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
 

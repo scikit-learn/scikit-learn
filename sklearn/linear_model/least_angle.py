@@ -195,6 +195,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
             indices[n], indices[m] = indices[m], indices[n]
+            Cov_not_shortened = Cov
             Cov = Cov[1:]  # remove Cov[0]
 
             if Gram is None:
@@ -217,24 +218,29 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             diag = max(np.sqrt(np.abs(c - v)), eps)
             L[n_active, n_active] = diag
 
+            if diag < 1e-7:
+                # The system is becoming too ill-conditioned.
+                # We have degenerate vectors in our active set.
+                # We'll 'drop for good' the last regressor added
+                warnings.warn(('Regressors in active set degenerate. '
+                    'Dropping a regressor, after %i iterations, '
+                    'i.e. alpha=%.3e, '
+                    'with an active set of %i regressors, and '
+                    'the smallest cholesky pivot element being %.3e')
+                    % (n_iter, alphas[n_iter], n_active, diag)
+                    )
+                # XXX: need to figure a 'drop for good' way
+                Cov = Cov_not_shortened
+                Cov[0] = 0
+                Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
+                continue
+
             active.append(indices[n_active])
             n_active += 1
 
             if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
-            if diag < 1e-7:
-                # The system is becoming too ill-conditioned.
-                # We have degenerate vectors in our active set.
-                # Time to bail out.
-                warnings.warn(('Regressors in active set degenerate. '
-                    'Stopping the LARS path early, after %i iterations, '
-                    'i.e. alpha=%.3f, '
-                    'with an active set of %i regressors, and '
-                    'the small cholesky pivot element being %.3f')
-                    % (n_iter, alphas[n_iter], n_active, diag)
-                    )
-                break
 
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
