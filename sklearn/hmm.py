@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 
 from .utils import check_random_state
-from .utils.validation import as_float_array
 from .utils.extmath import logsumexp
 from .base import BaseEstimator
 from .mixture import (
@@ -475,7 +474,7 @@ class _BaseHMM(BaseEstimator):
         if startprob is None:
             startprob = np.tile(1.0 / self.n_components, self.n_components)
         else:
-            startprob = as_float_array(startprob, copy=False)
+            startprob = np.array(startprob, dtype=np.float)
 
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
