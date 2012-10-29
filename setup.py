@@ -54,7 +54,6 @@ else:
 ###############################################################################
 from numpy.distutils.core import setup
 
-
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
         os.remove('MANIFEST')
