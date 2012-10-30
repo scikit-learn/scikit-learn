@@ -274,11 +274,24 @@ class ClassifierMixin(object):
         """Set self.classes and self.y_inverse_"""
         if self.classes is None:
             self.classes_, self.y_inverse_ = unique(y, return_inverse=True)
+            self.n_classes_ = len(self.classes_)
         else:
             self._check_classes(self.classes)
             self.classes_ = self.classes
-            assoc = {v:k for k,v in enumerate(y)}
-            self.y_inverse_ = np.array([assoc[k] for k in y])
+            classidx = dict((v,k) for k,v in enumerate(self.classes))
+            # check that all y classes are expected
+            y_inverse = np.array([classidx.get(k, None) for k in y])
+            if any(y is None for y in y_inverse):
+                bad_classes = [classidx[k] for k in np.unique(self.classes[y_inverse == None])]
+                raise ValueError("unknown classes in y vector: %s" % bad_classes)
+            self.y_inverse_ = y_inverse
+            self.n_classes_ = len(self.classes_)
+
+    def _check_found_classes(self, found_classes):
+        if self.classes is not None:
+            diff = set(found_classes) - set(self.classes)
+            if len(diff) > 0:
+                raise ValueError("unknown classes in y vector: %s" % diff)
 
     def score(self, X, y):
         """Returns the mean accuracy on the given test data and labels.
