@@ -1227,7 +1227,7 @@ class RandomForestHasher(BaseForest):
                        random_state=None,
                        verbose=0):
         super(RandomForestHasher, self).__init__(
-            base_estimator=ExtraTreeClassifier(),
+            base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                 "min_samples_leaf", "min_density", "max_features",
@@ -1239,7 +1239,7 @@ class RandomForestHasher(BaseForest):
             random_state=random_state,
             verbose=verbose)
 
-        self.criterion = 'gini'
+        self.criterion = 'mse'
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -1271,7 +1271,8 @@ class RandomForestHasher(BaseForest):
             Transformed dataset.
         """
         X = safe_asarray(X)
-        y = np.arange(X.shape[0])
+        rnd = check_random_state(self.random_state)
+        y = rnd.uniform(size=X.shape[0])
         super(RandomForestHasher, self).fit(X, y)
         self.one_hot_encoder_ = OneHotEncoder()
         return self.one_hot_encoder_.fit_transform(self.apply(X))
