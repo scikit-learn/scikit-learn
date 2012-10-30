@@ -849,7 +849,6 @@ def precision_recall_curve(y_true, probas_pred):
     # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
     tp_count, fp_count = 0., 0.
-    last_prob_val = 1.
     thresholds = []
     precision = [1.]
     recall = [0.]
@@ -864,12 +863,14 @@ def precision_recall_curve(y_true, probas_pred):
     # are encountered)
     sorted_pred_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
     pairs = np.vstack((probas_pred, y_true)).T
+    last_prob_val = probas_pred[sorted_pred_idxs[0]]
+    smallest_prob_val = probas_pred[sorted_pred_idxs[-1]]
     for idx, (prob_val, class_val) in enumerate(pairs[sorted_pred_idxs, :]):
         if class_val:
             tp_count += 1.
         else:
             fp_count += 1.
-        if (prob_val < last_prob_val) and (prob_val > 0.):
+        if (prob_val < last_prob_val) and (prob_val > smallest_prob_val):
             thresholds.append(prob_val)
             fn_count = float(total_positive - tp_count)
             precision.append(tp_count / (tp_count + fp_count))
