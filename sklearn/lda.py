@@ -70,9 +70,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, priors=None):
+    def __init__(self, n_components=None, priors=None, classes=None):
         self.n_components = n_components
         self.priors = np.asarray(priors) if priors is not None else None
+        self.classes = np.asarray(classes) if classes is not None else None
 
         if self.priors is not None:
             if (self.priors < 0).any():
@@ -97,13 +98,14 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             and stored in `self.covariance_` attribute.
         """
         X, y = check_arrays(X, y, sparse_format='dense')
-        self.classes_, y = unique(y, return_inverse=True)
+        self._prepare_classes(y)
+
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            self.priors_ = np.bincount(self.y_inverse_) / float(n_samples)
         else:
             self.priors_ = self.priors
 
@@ -114,7 +116,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         if store_covariance:
             cov = np.zeros((n_features, n_features))
         for ind in xrange(n_classes):
-            Xg = X[y == ind, :]
+            Xg = X[self.y_inverse_ == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
             # centered group data
@@ -168,13 +170,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.intercept_ = -0.5 * np.sum(self.coef_ ** 2, axis=1) + \
                            np.log(self.priors_)
         return self
-
-    @property
-    def classes(self):
-        warnings.warn("LDA.classes is deprecated and will be removed in 0.14. "
-                      "Use LDA.classes_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.classes_
 
     def _decision_function(self, X):
         X = array2d(X)
