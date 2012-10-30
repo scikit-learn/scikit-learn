@@ -479,6 +479,7 @@ can be controled via the ``max_features`` parameter.
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
  * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
+ * :ref:`example_ensemble_plot_partial_dependence.py`
 
 
 .. topic:: References
