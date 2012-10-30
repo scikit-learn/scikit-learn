@@ -8,7 +8,7 @@ and a set of 'target' features, marginalizing over the
 values of all other features (the complement features). Due to the limits
 of human perception the size of the target feature set must be small (usually,
 one or two) thus the target features are usually choosen among the most
-important features (see :meth:`ensemble.GradientBoostingRegressor.variable_importance_`).
+important features (see :meth:`ensemble.GradientBoostingRegressor.feature_importances_`).
 
 This example shows how to obtain partial dependence plots from a
 :class:`ensemble.GradientBoostingRegressor` trained on the California
