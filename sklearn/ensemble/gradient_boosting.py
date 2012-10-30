@@ -45,7 +45,7 @@ from ..tree._tree import DTYPE, TREE_LEAF, TREE_SPLIT_BEST
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _partial_dependency_tree
+from ._gradient_boosting import _partial_dependence_tree
 
 
 class QuantileEstimator(BaseEstimator):
@@ -1138,11 +1138,11 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def partial_dependency(gbrt, target_variables, grid=None, X=None,
+def partial_dependence(gbrt, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100):
-    """Partial dependency of ``target_variables``.
+    """Partial dependence of ``target_variables``.
 
-    Partial dependency plots show the dependency between the joint values
+    Partial dependence plots show the dependence between the joint values
     of the ``target_variables`` and the function represented
     by the ``gbrt``.
 
@@ -1171,7 +1171,7 @@ def partial_dependency(gbrt, target_variables, grid=None, X=None,
     Returns
     -------
     pdp : array, shape=(n_classes, n_points)
-        The partial dependency function evaluated on the ``grid``.
+        The partial dependence function evaluated on the ``grid``.
         For regression and binary classification ``n_classes==1``.
     grid : array, shape=(n_points, len(target_variables))
         The grid of target variable values for which ``pdp`` was evaluated.
@@ -1179,7 +1179,7 @@ def partial_dependency(gbrt, target_variables, grid=None, X=None,
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
     if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependency' %
+        raise ValueError('Call %s.fit before partial_dependence' %
                          gbrt.__class__.__name__)
     if grid is None and X is None:
         raise ValueError('Either grid or X must be specified')
@@ -1199,7 +1199,7 @@ def partial_dependency(gbrt, target_variables, grid=None, X=None,
     for stage in xrange(n_estimators):
         for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k]
-            _partial_dependency_tree(tree, grid, target_variables,
+            _partial_dependence_tree(tree, grid, target_variables,
                                      gbrt.learn_rate, pdp[k])
 
     return pdp, axes

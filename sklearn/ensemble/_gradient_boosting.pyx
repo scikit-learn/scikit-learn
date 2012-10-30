@@ -172,11 +172,11 @@ cdef inline int array_index(int val, int[::1] arr):
     return res
 
 
-cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
+cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                                int[::1] target_feature,
                                double learn_rate,
                                double[::1] out):
-    """Partial dependency of ``target_feature`` set on the response.
+    """Partial dependence of ``target_feature`` set on the response.
 
     For each row in ``X`` a tree traversal is performed.
     Each traversal starts from the root with weight 1.0.
@@ -196,15 +196,15 @@ cpdef _partial_dependency_tree(Tree tree, DTYPE_t[:, ::1] X,
     tree : sklearn.tree.Tree
         A regression tree; tree.values.shape[1] == 1
     X : memory view on 2d ndarray
-        The grid points on which the partial dependency
+        The grid points on which the partial dependence
         should be evaluated. X.shape[1] == target_feature.shape[0].
     target_feature : memory view on 1d ndarray
-        The set of target features for which the partial dependency
+        The set of target features for which the partial dependence
         should be evaluated. X.shape[1] == target_feature.shape[0].
     learn_rate : double
         Constant scaling factor for the leaf predictions.
     out : memory view on 1d ndarray
-        The value of the partial dependency function on each grid
+        The value of the partial dependence function on each grid
         point.
     """
     cdef Py_ssize_t i = 0
