@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from .metrics import r2_score
+from .utils.fixes import unique
 
 
 ###############################################################################
@@ -260,6 +261,24 @@ class BaseEstimator(object):
 ###############################################################################
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
+
+    def _check_classes(self, classes):
+        print classes
+        """Common error checking for the prepare functions below."""
+        if len(classes) is 0:
+            raise ValueError("no output classes")
+        if len(classes) != len(set(classes)):
+            raise ValueError("duplicate class label")
+
+    def _prepare_classes(self, y):
+        """Set self.classes and self.y_inverse_"""
+        if self.classes is None:
+            self.classes_, self.y_inverse_ = unique(y, return_inverse=True)
+        else:
+            self._check_classes(self.classes)
+            self.classes_ = self.classes
+            assoc = {v:k for k,v in enumerate(y)}
+            self.y_inverse_ = np.array([assoc[k] for k in y])
 
     def score(self, X, y):
         """Returns the mean accuracy on the given test data and labels.
