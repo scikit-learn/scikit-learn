@@ -41,5 +41,4 @@ pl.ylim(0, 1.1)
 #pl.axhline(np.max(scores), linestyle='--', color='.5')
 pl.text(C_s[np.argmax(scores)], .9 * np.max(scores), '%.3f' % np.max(scores),
         verticalalignment='top', horizontalalignment='center',)
-pl.savefig('more-extreme.png')
 pl.show()
