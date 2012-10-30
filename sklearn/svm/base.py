@@ -691,8 +691,11 @@ class BaseLibLinear(BaseEstimator):
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_label_, self.class_weight_,
-                               # seed for srand in range [0..UINT_MAX]
-                               rnd.randint(np.uintc(-1) + 1))
+                               # seed for srand in range [0..INT_MAX);
+                               # due to limitations in Numpy on 32-bit
+                               # platforms, we can't get to the UINT_MAX
+                               # limit that srand supports
+                               rnd.randint(np.iinfo('i').max))
 
         if self.fit_intercept:
             self.coef_ = self.raw_coef_[:, :-1]
