@@ -221,7 +221,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         Returns
         -------
-        X_leafs : array_like, shape = [n_samples, n_estimators]
+        X_leaves : array_like, shape = [n_samples, n_estimators]
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
@@ -1159,12 +1159,12 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
 
 
-class RandomForestHasher(ExtraTreesClassifier):
-    """Use a completely random forest to create sparse, binary represenations.
+class RandomForestHasher(BaseForest):
+    """Use a completely random forest to create sparse, binary representations.
 
     An unsupervised transformation of a dataset to a high-dimensional
     sparse representation. A datapoint is coded according to which leaf of
-    each tree it is sorted into. Using a one-hot encoding of the leafs,
+    each tree it is sorted into. Using a one-hot encoding of the leaves,
     this leads to a binary coding with as many ones as trees in the forest.
 
     The dimensionality of the resulting representation is approximately
@@ -1227,18 +1227,24 @@ class RandomForestHasher(ExtraTreesClassifier):
                        random_state=None,
                        verbose=0):
         super(RandomForestHasher, self).__init__(
-                n_estimators=n_estimators,
-                max_depth=max_depth,
-                min_samples_split=min_samples_split,
-                min_samples_leaf=min_samples_leaf,
-                min_density=min_density,
-                max_features=1,
-                bootstrap=False,
-                compute_importances=False,
-                oob_score=False,
-                n_jobs=n_jobs,
-                random_state=random_state,
-                verbose=verbose)
+            base_estimator=ExtraTreeClassifier(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
+            bootstrap=False,
+            compute_importances=False,
+            oob_score=False,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose)
+
+        self.criterion = 'gini'
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_density = min_density
+        self.max_features = 1
 
     def fit(self, X, y=None):
         """Fit estimator.
