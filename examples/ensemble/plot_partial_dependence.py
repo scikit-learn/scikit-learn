@@ -83,7 +83,7 @@ for i, fx in enumerate([0, 5, 1, 2]):
     ax = pl.subplot(2, 2, i + 1)
 
     # plot partial dependence
-    pdp, (axis,) = gradient_boosting.partial_dependency(clf, target_feature,
+    pdp, (axis,) = gradient_boosting.partial_dependence(clf, target_feature,
                                                         X=X_train)
     ax.plot(axis, pdp.ravel(), 'g-')
 
@@ -110,7 +110,7 @@ print('Two-way partial dependence plot')
 print
 fig = pl.figure()
 target_feature = np.array([1, 5], dtype=np.int32)
-pdp, (x_axis, y_axis) = gradient_boosting.partial_dependency(clf,
+pdp, (x_axis, y_axis) = gradient_boosting.partial_dependence(clf,
                                                              target_feature,
                                                              X=X_train,
                                                              grid_resolution=50)
