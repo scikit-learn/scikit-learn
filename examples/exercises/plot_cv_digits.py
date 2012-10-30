@@ -16,7 +16,7 @@ digits = datasets.load_digits()
 X = digits.data
 y = digits.target
 
-svc = svm.SVC()
+svc = svm.SVC(kernel='linear')
 C_s = np.logspace(-3, 3, 10)
 
 scores = list()
