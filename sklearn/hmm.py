@@ -474,7 +474,7 @@ class _BaseHMM(BaseEstimator):
         if startprob is None:
             startprob = np.tile(1.0 / self.n_components, self.n_components)
         else:
-            startprob = np.array(startprob, dtype=np.float)
+            startprob = np.asarray(startprob, dtype=np.float)
 
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
