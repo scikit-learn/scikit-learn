@@ -6,7 +6,7 @@ cdef extern from "math.h":
     double exp(double)
     double log(double)
 
-ctypedef np.float64_t dtype_t
+ctypedef np.float_t dtype_t
 
 
 @cython.boundscheck(False)
