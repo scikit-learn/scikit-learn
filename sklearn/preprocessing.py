@@ -918,12 +918,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([1, 2, 3])
     """
 
-    def __init__(self, neg_label=0, pos_label=1):
+    def __init__(self, neg_label=0, pos_label=1, classes=None):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
         self.neg_label = neg_label
         self.pos_label = pos_label
+        self.classes = np.asarray(classes) if classes is not None else None
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
@@ -943,14 +944,17 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         self.multilabel = _is_multilabel(y)
-        if self.multilabel:
-            self.indicator_matrix_ = _is_label_indicator_matrix(y)
-            if self.indicator_matrix_:
-                self.classes_ = np.arange(y.shape[1])
-            else:
-                self.classes_ = np.array(sorted(set.union(*map(set, y))))
+        if self.classes is not None:
+            self.classes_ = self.classes
         else:
-            self.classes_ = np.unique(y)
+            if self.multilabel:
+                self.indicator_matrix_ = _is_label_indicator_matrix(y)
+                if self.indicator_matrix_:
+                    self.classes_ = np.arange(y.shape[1])
+                else:
+                    self.classes_ = np.array(sorted(set.union(*map(set, y))))
+            else:
+                self.classes_ = np.unique(y)
         return self
 
     def transform(self, y):
