@@ -647,7 +647,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2:
+    elif n_labels == 2 and pos_label != None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
