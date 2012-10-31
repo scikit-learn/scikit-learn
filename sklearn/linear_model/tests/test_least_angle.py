@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-from nose.tools import assert_equal
+from scipy import linalg
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
@@ -178,6 +178,31 @@ def test_singular_matrix():
     assert_true('Dropping a regressor' in warning_list[0].message.args[0])
 
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
+
+
+def test_rank_deficient_design():
+    y = [5, 0, 5]
+    for X in (
+                [[  5,  0],
+                 [  0,  5],
+                 [ 10, 10]],
+
+                [[   10,  10,  0],
+                 [1e-32,   0,  0],
+                 [    0,   0,  1]],
+             ):
+        # To be able to use the coefs to compute the objective function,
+        # we need to turn off normalization
+        lars = linear_model.LassoLars(.1, normalize=False)
+        coef_lars_ = lars.fit(X, y).coef_
+        obj_lars = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
+                    + .1 * linalg.norm(coef_lars_, 1))
+        coord_descent = linear_model.Lasso(.1, tol=1e-6,
+                                            normalize=False)
+        coef_cd_ = coord_descent.fit(X, y).coef_
+        obj_cd = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
+                    + .1 * linalg.norm(coef_cd_, 1))
+        assert_array_almost_equal(obj_lars, obj_cd)
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
