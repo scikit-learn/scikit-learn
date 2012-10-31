@@ -86,13 +86,13 @@ def test_xor():
         clf.fit(X, y)
         assert_equal(clf.score(X, y), 1.0)
 
-    clf = tree.ExtraTreeClassifier()
-    clf.fit(X, y)
-    assert_equal(clf.score(X, y), 1.0)
+        clf = tree.ExtraTreeClassifier(classes=c)
+        clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0)
 
-    clf = tree.ExtraTreeClassifier(max_features=1)
-    clf.fit(X, y)
-    assert_equal(clf.score(X, y), 1.0)
+        clf = tree.ExtraTreeClassifier(max_features=1, classes=c)
+        clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0)
 
 
 def test_graphviz_toy():
@@ -377,13 +377,14 @@ def test_min_samples_leaf():
     y = iris.target
 
     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-        clf = tree_class(min_samples_leaf=5).fit(X, y)
+        for c in classes:
+            clf = tree_class(min_samples_leaf=5, classes=c).fit(X, y)
 
-        out = clf.tree_.apply(X)
-        node_counts = np.bincount(out)
-        leaf_count = node_counts[node_counts != 0]  # drop inner nodes
+            out = clf.tree_.apply(X)
+            node_counts = np.bincount(out)
+            leaf_count = node_counts[node_counts != 0]  # drop inner nodes
 
-        assert np.min(leaf_count) >= 5
+            assert np.min(leaf_count) >= 5
 
 
 def test_pickle():

@@ -690,7 +690,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
-                       random_state=None):
+                       random_state=None,
+                       classes=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
                                                   min_samples_split,
@@ -698,7 +699,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                                                   min_density,
                                                   max_features,
                                                   compute_importances,
-                                                  random_state)
+                                                  random_state,
+                                                  classes)
 
         self.find_split_ = _tree.TREE_SPLIT_RANDOM
 
