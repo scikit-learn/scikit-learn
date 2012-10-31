@@ -34,9 +34,7 @@ pl.axes([.1, .25, .8, .7])
 pl.semilogx(C_s, scores)
 pl.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 pl.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
-#pl.yticks(())
 locs,labels = pl.yticks()
-print locs
 pl.yticks(locs, map(lambda x: "%g" % x, locs))
 
 
