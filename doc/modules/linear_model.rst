@@ -398,9 +398,9 @@ function of the norm of its coefficients.
    >>> from sklearn import linear_model
    >>> clf = linear_model.LassoLars(alpha=.1)
    >>> clf.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
-        fit_path=True, max_iter=500, normalize=True, precompute='auto',
-        verbose=False)
+   LassoLars(alpha=0.1, copy_X=True, eps=...,
+        fit_intercept=True, fit_path=True, max_iter=500, normalize=True,
+        precompute='auto', stop_eps=1e-06, verbose=False)
    >>> clf.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 
