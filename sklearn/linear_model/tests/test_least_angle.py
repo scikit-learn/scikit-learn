@@ -284,7 +284,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
         lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
                                                     method='lasso')
     assert_true(len(warning_list) > 0)
-    assert_true('Dropping a regressor' in warning_list[0].message.args[0])
+    assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
+                or ('Early stopping' in warning_list[0].message.args[0]))
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y,
