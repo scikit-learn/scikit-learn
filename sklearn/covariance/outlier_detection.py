@@ -97,7 +97,7 @@ class OutlierDetectionMixin(object):
             values = self.decision_function(X, raw_values=True)
             is_inlier[values <= self.threshold] = 1
         else:
-            raise NotImplemented("You must provide a contamination rate.")
+            raise NotImplementedError("You must provide a contamination rate.")
 
         return is_inlier
 

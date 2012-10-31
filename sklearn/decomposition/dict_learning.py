@@ -128,7 +128,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         new_code = orthogonal_mp_gram(gram, cov, regularization, None,
                                       norms_squared, copy_Xy=copy_cov).T
     else:
-        raise NotImplemented('Sparse coding method %s not implemented' %
+        raise NotImplementedError('Sparse coding method %s not implemented' %
                              algorithm)
     return new_code
 

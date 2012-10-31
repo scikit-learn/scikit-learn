@@ -18,7 +18,7 @@ import numpy as np
 try:
     Counter = collections.Counter
 except AttributeError:
-    class Counter(collections.defaultdict):
+    class Counter(object, collections.defaultdict):
         """Partial replacement for Python 2.7 collections.Counter."""
         def __init__(self, iterable=(), **kwargs):
             super(Counter, self).__init__(int, **kwargs)
