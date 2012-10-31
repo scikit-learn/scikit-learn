@@ -2,6 +2,7 @@ scikit-learn (0.12.1-1) experimental; urgency=low
 
   * Fresh upstream bugfix release
     - for now excluded some labile tests from testing
+    - picked up after release fix: 552833 Robustify LARS. Fixes issue #487
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 31 Oct 2012 16:17:41 -0400
 
