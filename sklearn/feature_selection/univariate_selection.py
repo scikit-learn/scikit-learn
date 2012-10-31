@@ -251,7 +251,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         if not callable(score_func):
             raise TypeError(
-                "The score function should be a callable, %r "
+                "The score function should be a callable, %s (%s) "
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
@@ -543,10 +543,6 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
                         }
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        if not callable(score_func):
-            raise TypeError(
-                "The score function should be a callable, %r (type %s) "
-                "was passed." % (score_func, type(score_func)))
         if mode not in self._selection_modes:
             raise ValueError(
                 "The mode passed should be one of %s, %r, (type %s) "
