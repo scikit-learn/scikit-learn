@@ -246,21 +246,26 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
-        # is this really needed ?
-        AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
+        if least_squares.size == 1 and least_squares == 0:
+            # This happens because sign_active[:n_active] = 0
+            least_squares[...] = 1
+            AA = 1.
+        else:
+            # is this really needed ?
+            AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
 
-        if not np.isfinite(AA):
-            # L is too ill-conditioned
-            i = 0
-            L_ = L[:n_active, :n_active].copy()
-            while not np.isfinite(AA):
-                L_.flat[::n_active + 1] += (2 ** i) * eps
-                least_squares, info = solve_cholesky(L_,
-                                    sign_active[:n_active], lower=True)
-                tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
-                AA = 1. / np.sqrt(tmp)
-                i += 1
-        least_squares *= AA
+            if not np.isfinite(AA):
+                # L is too ill-conditioned
+                i = 0
+                L_ = L[:n_active, :n_active].copy()
+                while not np.isfinite(AA):
+                    L_.flat[::n_active + 1] += (2 ** i) * eps
+                    least_squares, info = solve_cholesky(L_,
+                                        sign_active[:n_active], lower=True)
+                    tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
+                    AA = 1. / np.sqrt(tmp)
+                    i += 1
+            least_squares *= AA
 
         if Gram is None:
             # equiangular direction of variables in the active set
