@@ -501,11 +501,11 @@ def test_duplicate_labels():
     y_hat = clf.fit(X_multi, y_multi)
 
 
-#@raises(ValueError)
-#def test_classes_shape():
-    #"""Check that all multi-output classes are lists."""
-    #clf = tree.DecisionTreeClassifier(classes=[[-1,1],9])
-    #y_hat = clf.fit(X_multi, y_multi)
+@raises(ValueError)
+def test_classes_shape():
+    """Check that all multi-output classes are lists."""
+    clf = tree.DecisionTreeClassifier(classes=[[-1,1],9])
+    y_hat = clf.fit(X_multi, y_multi)
 
 
 

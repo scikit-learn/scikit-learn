@@ -272,6 +272,15 @@ def is_multilabel(y):
         or is_label_indicator_matrix(y)
 
 
+def is_iterable(y):
+    """Check if an item implements the __iter__ protocol."""
+    try:
+        iter(y)
+        return True
+    except:
+        return False
+
+
 ###############################################################################
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
@@ -331,6 +340,10 @@ class ClassifierMixin(object):
                 self.classes_ = self.classes
             else:
                 self.classes_ = np.asarray([self.classes])
+
+            for x in self.classes_:
+                if not is_iterable(x):
+                    raise ValueError("classes in a multilabel class list must be sequences")
 
             self.classes_ = [np.unique(x) for x in self.classes_]
             self.n_classes_ = np.asarray([len(x) for x in self.classes_])
