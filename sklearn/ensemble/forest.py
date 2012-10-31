@@ -74,6 +74,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
         tree = forest._make_estimator(append=False)
         tree.set_params(compute_importances=forest.compute_importances)
         tree.set_params(random_state=check_random_state(seed))
+        tree.classes = forest.classes
 
         if forest.bootstrap:
             n_samples = X.shape[0]
@@ -285,12 +286,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         if isinstance(self.base_estimator, ClassifierMixin):
             y = np.copy(y)
-
-            for k in xrange(self.n_outputs_):
-                unique = np.unique(y[:, k])
-                self.classes_.append(unique)
-                self.n_classes_.append(unique.shape[0])
-                y[:, k] = np.searchsorted(unique, y[:, k])
+            y = self._prepare_classes(y)
 
         if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
