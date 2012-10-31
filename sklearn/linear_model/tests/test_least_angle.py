@@ -181,6 +181,9 @@ def test_singular_matrix():
 
 
 def test_rank_deficient_design():
+    # consistency test that checks that LARS Lasso is handling rank
+    # deficient input data (with n_features < rank) in the same way
+    # as coordinate descent Lasso
     y = [5, 0, 5]
     for X in (
                 [[  5,  0],
