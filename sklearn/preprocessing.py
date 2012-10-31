@@ -14,7 +14,7 @@ import scipy.sparse as sp
 from .utils import check_arrays, array2d, atleast2d_or_csr
 from .utils import warn_if_not_float
 from .utils.fixes import unique
-from .base import BaseEstimator, TransformerMixin
+from .base import BaseEstimator, TransformerMixin, is_multilabel
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -943,7 +943,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        self.multilabel = _is_multilabel(y)
+        self.multilabel = is_multilabel(y)
         if self.classes is not None:
             self.classes_ = self.classes
         else:
@@ -986,14 +986,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Y += self.neg_label
 
-        y_is_multilabel = _is_multilabel(y)
+        y_is_multilabel = is_multilabel(y)
 
         if y_is_multilabel and not self.multilabel:
             raise ValueError("The object was not " +
                     "fitted with multilabel input!")
 
         elif self.multilabel:
-            if not _is_multilabel(y):
+            if not is_multilabel(y):
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
 
