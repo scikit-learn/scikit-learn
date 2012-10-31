@@ -27,7 +27,8 @@ from ..externals.joblib import Parallel, delayed
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=False, return_path=True):
+              copy_Gram=True, verbose=False, return_path=True,
+              stop_eps=1e-6):
     """Compute Least Angle Regression and Lasso path
 
     The optimization objective for Lasso is::
@@ -62,6 +63,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
+
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
 
     copy_X: bool
         If False, X is overwritten.
@@ -221,7 +229,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
-            if diag < 1e-7:
+            if diag < stop_eps:
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # Time to bail out.
@@ -234,25 +242,30 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                     )
                 break
 
-        # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
-                               sign_active[:n_active], lower=True)
+                                sign_active[:n_active], lower=True)
 
-        # is this really needed ?
-        AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
+        if least_squares.size == 1 and least_squares == 0:
+            # This happens because sign_active[:n_active] = 0
+            least_squares[...] = 1.
+            AA = 1.
+        else:
+            # is this really needed ?
+            AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
 
-        if not np.isfinite(AA):
-            # L is too ill-conditioned
-            i = 0
-            L_ = L[:n_active, :n_active].copy()
-            while not np.isfinite(AA):
-                L_.flat[::n_active + 1] += (2 ** i) * eps
-                least_squares, info = solve_cholesky(L_,
-                                    sign_active[:n_active], lower=True)
-                tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
-                AA = 1. / np.sqrt(tmp)
-                i += 1
-        least_squares *= AA
+            if not np.isfinite(AA):
+                # L is too ill-conditioned
+                i = 0
+                L_ = L[:n_active, :n_active].copy()
+                while not np.isfinite(AA):
+                    L_.flat[::n_active + 1] += (2 ** i) * eps
+                    least_squares, info = solve_cholesky(L_,
+                                        sign_active[:n_active], lower=True)
+                    tmp = max(np.sum(least_squares * sign_active[:n_active]),
+                              eps)
+                    AA = 1. / np.sqrt(tmp)
+                    i += 1
+            least_squares *= AA
 
         if Gram is None:
             # equiangular direction of variables in the active set
@@ -403,6 +416,13 @@ class Lars(LinearModel, RegressorMixin):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
+
     fit_path : boolean
         If True the full path is stored in the `coef_path_` attribute.
         If you compute the solution for a large problem or many targets,
@@ -429,7 +449,8 @@ class Lars(LinearModel, RegressorMixin):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, precompute='auto', verbose=False)
+       n_nonzero_coefs=1, normalize=True, precompute='auto',
+       stop_eps=1e-06, verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
@@ -442,7 +463,8 @@ class Lars(LinearModel, RegressorMixin):
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 stop_eps=1e-6):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -452,6 +474,7 @@ class Lars(LinearModel, RegressorMixin):
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
+        self.stop_eps = stop_eps
 
     def _get_gram(self):
         # precompute if n_samples > n_features
@@ -525,7 +548,8 @@ class Lars(LinearModel, RegressorMixin):
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=True)
+                    eps=self.eps, return_path=True,
+                    stop_eps=self.stop_eps)
                 self.alphas_[k, :len(alphas)] = alphas
                 self.active_[k, :len(active)] = active
                 self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
@@ -542,7 +566,8 @@ class Lars(LinearModel, RegressorMixin):
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False)
+                    eps=self.eps, return_path=False,
+                    stop_eps=self.stop_eps)
             self.alphas_, self.coef_ = (np.squeeze(a) for a in (self.alphas_,
                                                                 self.coef_))
         self._set_intercept(X_mean, y_mean, X_std)
@@ -589,6 +614,13 @@ class LassoLars(Lars):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
+
     fit_path : boolean
         If True the full path is stored in the `coef_path_` attribute.
         If you compute the solution for a large problem or many targets,
@@ -615,7 +647,7 @@ class LassoLars(Lars):
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
          fit_path=True, max_iter=500, normalize=True, precompute='auto',
-         verbose=False)
+         stop_eps=1e-06, verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
@@ -633,7 +665,8 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 stop_eps=1e-6):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -644,6 +677,7 @@ class LassoLars(Lars):
         self.copy_X = copy_X
         self.eps = eps
         self.fit_path = fit_path
+        self.stop_eps = stop_eps
 
 
 ###############################################################################
@@ -652,7 +686,7 @@ class LassoLars(Lars):
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                         copy=True, method='lars', verbose=False,
                         fit_intercept=True, normalize=True, max_iter=500,
-                        eps=np.finfo(np.float).eps):
+                        eps=np.finfo(np.float).eps, stop_eps=1e-6):
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
@@ -691,7 +725,12 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         systems. Unlike the 'tol' parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
 
     Returns
     --------
@@ -732,7 +771,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     alphas, active, coefs = lars_path(X_train, y_train, Gram=Gram,
                             copy_X=False, copy_Gram=False,
                             method=method, verbose=max(0, verbose - 1),
-                            max_iter=max_iter, eps=eps)
+                            max_iter=max_iter, eps=eps, stop_eps=stop_eps)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
     residues = np.array([(np.dot(X_test, coef) - y_test)
@@ -784,6 +823,13 @@ class LarsCV(Lars):
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
+
 
     Attributes
     ----------
@@ -819,7 +865,7 @@ class LarsCV(Lars):
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
-                 copy_X=True):
+                 copy_X=True, stop_eps=1e-6):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
@@ -830,6 +876,7 @@ class LarsCV(Lars):
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
         self.eps = eps
+        self.stop_eps = stop_eps
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -863,7 +910,7 @@ class LarsCV(Lars):
                             normalize=self.normalize,
                             fit_intercept=self.fit_intercept,
                             max_iter=self.max_iter,
-                            eps=self.eps)
+                            eps=self.eps, stop_eps=self.stop_eps)
                     for train, test in cv)
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
@@ -965,6 +1012,13 @@ class LassoLarsCV(LarsCV):
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
+
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
@@ -1060,6 +1114,12 @@ class LassoLarsIC(LassoLars):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    stop_eps: float, optional
+        Stop the path when the pivot in the Cholesky of the Gram
+        matrix of the active set goes below this threshold. This
+        parameter controls the tradeoff between pursuing the path
+        further with ill-conditioned systems, which can lead to increased
+        numerical errors.
 
     Attributes
     ----------
@@ -1080,7 +1140,7 @@ class LassoLarsIC(LassoLars):
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
           max_iter=500, normalize=True, precompute='auto',
-          verbose=False)
+          stop_eps=1e-06, verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.  -1.11...]
 
@@ -1101,7 +1161,7 @@ class LassoLarsIC(LassoLars):
     """
     def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, stop_eps=1e-6):
         if criterion not in ['aic', 'bic']:
             raise ValueError('criterion should be either bic or aic')
         self.criterion = criterion
@@ -1112,6 +1172,7 @@ class LassoLarsIC(LassoLars):
         self.copy_X = copy_X
         self.precompute = precompute
         self.eps = eps
+        self.stop_eps = stop_eps
 
     def fit(self, X, y, copy_X=True):
         """Fit the model using X, y as training data.
@@ -1145,7 +1206,8 @@ class LassoLarsIC(LassoLars):
                   Gram=Gram, copy_X=copy_X,
                   copy_Gram=True, alpha_min=0.0,
                   method='lasso', verbose=self.verbose,
-                  max_iter=max_iter, eps=self.eps)
+                  max_iter=max_iter, eps=self.eps,
+                  stop_eps=self.stop_eps)
 
         n_samples = X.shape[0]
 
