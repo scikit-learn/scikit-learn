@@ -36,8 +36,6 @@ pl.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 pl.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
 locs,labels = pl.yticks()
 pl.yticks(locs, map(lambda x: "%g" % x, locs))
-
-
 pl.ylabel('CV score')
 pl.xlabel('Parameter C')
 pl.ylim(0, 1.1)
