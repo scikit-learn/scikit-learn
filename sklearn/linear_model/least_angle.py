@@ -176,18 +176,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 coefs[n_iter] = coef
             break
 
-        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
-            # alpha is increasing. This is because the updates of Cov are
-            # bringing in too much numerical error that is greater than
-            # than the remaining correlation with the
-            # regressors. Time to bail out
-            warnings.warn('Early stopping the lars path, as the residues '
-                'are small and the current value of alpha is no longer '
-                'well controled. %i iterations, alpha=%.3e, previous '
-                'alpha=%.3e, with an active set of %i regressors'
-                    % (n_iter, alpha, prev_alpha, n_active))
-            break
-
         if n_iter >= max_iter or n_active >= n_features:
             break
 
@@ -253,6 +241,18 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
+
+        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
+            # alpha is increasing. This is because the updates of Cov are
+            # bringing in too much numerical error that is greater than
+            # than the remaining correlation with the
+            # regressors. Time to bail out
+            warnings.warn('Early stopping the lars path, as the residues '
+                'are small and the current value of alpha is no longer '
+                'well controled. %i iterations, alpha=%.3e, previous '
+                'alpha=%.3e, with an active set of %i regressors'
+                    % (n_iter, alpha, prev_alpha, n_active))
+            break
 
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
