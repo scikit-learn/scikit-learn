@@ -260,7 +260,7 @@ class BaseEstimator(object):
 
 
 ###############################################################################
-def _is_label_indicator_matrix(y):
+def is_label_indicator_matrix(y):
     return hasattr(y, "shape") and len(y.shape) == 2
 
 
@@ -269,7 +269,7 @@ def is_multilabel(y):
     # versions of Numpy might want to register ndarray as a Sequence
     return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
        and not isinstance(y[0], basestring) \
-        or _is_label_indicator_matrix(y)
+        or is_label_indicator_matrix(y)
 
 
 ###############################################################################
@@ -288,7 +288,7 @@ class ClassifierMixin(object):
             if len(classes) != len(np.unique(classes)):
                 raise ValueError("duplicate class label")
 
-    def _prepare_classes(self, y):
+    def _prepare_single_label_classes(self, y):
         """Set self.classes and self.y_inverse_"""
         if self.classes is None:
             self.classes_, self.y_inverse_ = unique(y, return_inverse=True)
@@ -304,6 +304,7 @@ class ClassifierMixin(object):
                 raise ValueError("unknown classes in y vector: %s" % bad_classes)
             self.y_inverse_ = y_inverse
             self.n_classes_ = len(self.classes_)
+        return self.y_inverse_
 
     def _prepare_multilabel_classes(self, y):
         """Ensure that none of the output classes are different from
@@ -342,6 +343,13 @@ class ClassifierMixin(object):
         for k in xrange(self.n_outputs_):
             y[:, k] = np.searchsorted(self.classes_[k], y[:, k])
         return y
+
+    def _prepare_classes(self, y):
+        """Return y."""
+        if is_multilabel(y):
+            return self._prepare_multilabel_classes(y)
+        else:
+            return self._prepare_single_label_classes(y)
 
     def _check_found_classes(self, found_classes):
         if self.classes is not None:

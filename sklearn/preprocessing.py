@@ -14,7 +14,7 @@ import scipy.sparse as sp
 from .utils import check_arrays, array2d, atleast2d_or_csr
 from .utils import warn_if_not_float
 from .utils.fixes import unique
-from .base import BaseEstimator, TransformerMixin, is_multilabel
+from .base import BaseEstimator, TransformerMixin, is_multilabel, is_label_indicator_matrix
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -948,7 +948,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             self.classes_ = self.classes
         else:
             if self.multilabel:
-                self.indicator_matrix_ = _is_label_indicator_matrix(y)
+                self.indicator_matrix_ = is_label_indicator_matrix(y)
                 if self.indicator_matrix_:
                     self.classes_ = np.arange(y.shape[1])
                 else:
@@ -976,7 +976,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         if self.multilabel or len(self.classes_) > 2:
-            if _is_label_indicator_matrix(y):
+            if is_label_indicator_matrix(y):
                 # nothing to do as y is already a label indicator matrix
                 return y
 

@@ -233,7 +233,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         if is_classification:
             y = np.copy(y)
-            y = self._prepare_multilabel_classes(y)
+            y = self._prepare_classes(y)
         else:
             self.n_outputs_ = y.shape[1]
             self.classes_ = [None] * self.n_outputs_
