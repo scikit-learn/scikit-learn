@@ -1,8 +1,9 @@
 scikit-learn (0.12.1-1) experimental; urgency=low
 
   * Fresh upstream bugfix release
+    - for now excluded some labile tests from testing
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 08 Oct 2012 20:07:45 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 31 Oct 2012 16:17:41 -0400
 
 scikit-learn (0.12.0-1) experimental; urgency=low
 

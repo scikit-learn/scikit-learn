@@ -8,7 +8,7 @@ PYVERS = $(shell pyversions -vr)
 PYVER = $(shell pyversions  -vd)
 
 # Some tests are known to fail randomly so need to be excluded ATM
-NOSEARGS := --exclude='(test_sparse_svc_clone_with_callable_kernel)'
+NOSEARGS := --exclude='test_(sparse_svc_clone_with_callable_kernel|spectral_clustering_sparse|ovr_fit_predict)'
 
 # Mega rule
 %:
@@ -33,7 +33,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	export JOBLIB_MULTIPROCESSING=0; \
 	cd build/; python$* /usr/bin/nosetests -s -v $(NOSEARGS) sklearn && \
-			   { python$* /usr/bin/nosetests -v --with-doctest --doctest-extension=rst ../doc/ || : ; } # doctests are failing ATM
+	  { python$* /usr/bin/nosetests -v --with-doctest --doctest-extension=rst ../doc/ || : ; } # doctests are failing ATM
 else
 	: # Skip unittests due to nocheck
 endif
