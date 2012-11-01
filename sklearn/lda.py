@@ -216,7 +216,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         X_new : array, shape = [n_samples, n_components]
         """
-        X = np.asarray(X)
+        X = array2d(X)
         # center and scale data
         X = np.dot(X - self.xbar_, self.scaling)
         n_comp = X.shape[1] if self.n_components is None else self.n_components

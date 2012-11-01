@@ -1,6 +1,10 @@
 """
 General tests for all estimators in sklearn.
 """
+
+# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Gael Varoquaux gael.varoquaux@normalesup.org
+# License: BSD Style.
 import os
 import warnings
 import sys
@@ -220,9 +224,8 @@ def test_transformers_sparse_data():
             raise exc
 
 
-def test_classifiers_nan_inf():
-    # test classifiers trained on a single label always return this label
-    # or raise an sensible error message
+def test_estimators_nan_inf():
+    # Test that all estimators check their input for NaN's and infs
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))
     X_train_nan = rnd.uniform(size=(10, 3))
@@ -232,47 +235,77 @@ def test_classifiers_nan_inf():
     y = np.ones(10)
     y[:5] = 0
     estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators if issubclass(E,
-        ClassifierMixin)]
-    error_string_fit = "Classifier doesn't check for NaN and inf in fit."
-    error_string_predict = ("Classifier doesn't check for NaN and inf in"
+    estimators = [(name, E) for name, E in estimators if
+            issubclass(E, ClassifierMixin) or issubclass(E, RegressorMixin) or
+            issubclass(E, TransformerMixin) or issubclass(E, ClusterMixin)]
+    error_string_fit = "Estimator doesn't check for NaN and inf in fit."
+    error_string_predict = ("Estimator doesn't check for NaN and inf in"
         " predict.")
+    error_string_transform = ("Estimator doesn't check for NaN and inf in"
+        " transform.")
     for X_train in [X_train_nan, X_train_inf]:
-        for name, Clf in classifiers:
-            if Clf in dont_test or Clf in meta_estimators:
+        for name, Est in estimators:
+            if Est in dont_test or Est in meta_estimators:
+                continue
+            if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 continue
             # catch deprecation warnings
             with warnings.catch_warnings(record=True):
-                clf = Clf()
+                est = Est()
+                if "random_state" in est.get_params().keys():
+                    est.set_params(random_state=1)
                 # try to fit
                 try:
-                    clf.fit(X_train, y)
+                    if issubclass(Est, ClusterMixin):
+                        est.fit(X_train)
+                    else:
+                        est.fit(X_train, y)
                 except ValueError, e:
                     if not 'inf' in repr(e) and not 'NaN' in repr(e):
-                        print(error_string_fit, Clf, e)
+                        print(error_string_fit, Est, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
                 except Exception, exc:
-                        print(error_string_fit, Clf, exc)
+                        print(error_string_fit, Est, exc)
                         traceback.print_exc(file=sys.stdout)
                         raise exc
                 else:
-                    raise AssertionError(error_string_fit, Clf)
+                    raise AssertionError(error_string_fit, Est)
                 # actually fit
-                clf.fit(X_train_finite, y)
-                # predict
-                try:
-                    clf.predict(X_train)
-                except ValueError, e:
-                    if not 'inf' in repr(e) and not 'NaN' in repr(e):
-                        print(error_string_predict, Clf, e)
-                        traceback.print_exc(file=sys.stdout)
-                        raise e
-                except Exception, exc:
-                    print(error_string_predict, Clf, exc)
-                    traceback.print_exc(file=sys.stdout)
+                if issubclass(Est, ClusterMixin):
+                    est.fit(X_train_finite)
                 else:
-                    raise AssertionError(error_string_predict, Clf)
+                    est.fit(X_train_finite, y)
+
+                # predict
+                if hasattr(est, "predict"):
+                    try:
+                        est.predict(X_train)
+                    except ValueError, e:
+                        if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                            print(error_string_predict, Est, e)
+                            traceback.print_exc(file=sys.stdout)
+                            raise e
+                    except Exception, exc:
+                        print(error_string_predict, Est, exc)
+                        traceback.print_exc(file=sys.stdout)
+                    else:
+                        raise AssertionError(error_string_predict, Est)
+
+                # transform
+                if hasattr(est, "transform"):
+                    try:
+                        est.transform(X_train)
+                    except ValueError, e:
+                        if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                            print(error_string_transform, Est, e)
+                            traceback.print_exc(file=sys.stdout)
+                            raise e
+                    except Exception, exc:
+                        print(error_string_transform, Est, exc)
+                        traceback.print_exc(file=sys.stdout)
+                    else:
+                        raise AssertionError(error_string_transform, Est)
 
 
 def test_classifiers_one_label():

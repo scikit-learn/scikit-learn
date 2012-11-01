@@ -33,7 +33,7 @@ class AgglomerationTransform(TransformerMixin):
                        return an array of value of size M.
                        Defaut is np.mean
         """
-        X = np.asarray(X)
+        X = array2d(X)
         nX = []
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "

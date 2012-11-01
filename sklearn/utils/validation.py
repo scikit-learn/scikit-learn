@@ -103,6 +103,8 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False):
         # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
             X = X.tocsr()
+            if copy:
+                X = X.copy()
         else:
             X = sparse.csr_matrix(X, dtype=dtype)
     else:
