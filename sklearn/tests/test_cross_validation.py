@@ -170,6 +170,18 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, y))
 
 
+def test_cross_val_score_precomputed():
+    # test for svm with precomputed kernel
+    svm = SVC(kernel="precomputed")
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    linear_kernel = np.dot(X, X.T)
+    score_precomputed = cval.cross_val_score(svm, linear_kernel, y)
+    svm = SVC(kernel="linear")
+    score_linear = cval.cross_val_score(svm, X, y)
+    assert_array_equal(score_precomputed, score_linear)
+
+
 def test_cross_val_score_fit_params():
     clf = MockClassifier()
     n_samples = X.shape[0]

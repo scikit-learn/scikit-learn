@@ -19,7 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import check_arrays, check_random_state
+from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
@@ -1029,18 +1029,28 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
     fit_params = dict([(k, np.asarray(v)[train]
                     if hasattr(v, '__len__') and len(v) == n_samples else v)
                     for k, v in fit_params.items()])
-    if y is None:
-        estimator.fit(X[train], **fit_params)
-        if score_func is None:
-            score = estimator.score(X[test])
-        else:
-            score = score_func(X[test])
+    if getattr(estimator, "_pairwise", False):
+        # X is a precomputed square kernel matrix
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X should be a square kernel matrix")
+        X_train = X[np.ix_(train, train)]
+        X_test = X[np.ix_(test, train)]
     else:
-        estimator.fit(X[train], y[train], **fit_params)
+        X_train = X[safe_mask(X, train)]
+        X_test = X[safe_mask(X, test)]
+
+    if y is None:
+        estimator.fit(X_train, **fit_params)
         if score_func is None:
-            score = estimator.score(X[test], y[test])
+            score = estimator.score(X_test)
         else:
-            score = score_func(y[test], estimator.predict(X[test]))
+            score = score_func(X_test)
+    else:
+        estimator.fit(X_train, y[train], **fit_params)
+        if score_func is None:
+            score = estimator.score(X_test, y[test])
+        else:
+            score = score_func(y[test], estimator.predict(X_test))
     if verbose > 1:
         print("score: %f" % score)
     return score
