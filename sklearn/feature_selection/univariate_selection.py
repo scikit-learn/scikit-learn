@@ -139,9 +139,9 @@ def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
     This score can be used to select the n_features features with the
-    highest values for the χ² (chi-square) statistic from either boolean or
-    multinomially distributed data (e.g., term counts in document
-    classification) relative to the classes.
+    highest values for the χ² (chi-square) statistic from X, which must
+    contain booleans or frequencies (e.g., term counts in document
+    classification), relative to the classes.
 
     Recall that the χ² statistic measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
@@ -171,6 +171,9 @@ def chi2(X, y):
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
     X = atleast2d_or_csr(X)
+    if np.any((X.data if issparse(X) else X) < 0):
+        raise ValueError("Input X must be non-negative.")
+
     Y = LabelBinarizer().fit_transform(y)
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
