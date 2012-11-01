@@ -220,6 +220,61 @@ def test_transformers_sparse_data():
             raise exc
 
 
+def test_classifiers_nan_inf():
+    # test classifiers trained on a single label always return this label
+    # or raise an sensible error message
+    rnd = np.random.RandomState(0)
+    X_train_finite = rnd.uniform(size=(10, 3))
+    X_train_nan = rnd.uniform(size=(10, 3))
+    X_train_nan[0, 0] = np.nan
+    X_train_inf = rnd.uniform(size=(10, 3))
+    X_train_inf[0, 0] = np.inf
+    y = np.ones(10)
+    y[:5] = 0
+    estimators = all_estimators()
+    classifiers = [(name, E) for name, E in estimators if issubclass(E,
+        ClassifierMixin)]
+    error_string_fit = "Classifier doesn't check for NaN and inf in fit."
+    error_string_predict = ("Classifier doesn't check for NaN and inf in"
+        " predict.")
+    for X_train in [X_train_nan, X_train_inf]:
+        for name, Clf in classifiers:
+            if Clf in dont_test or Clf in meta_estimators:
+                continue
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True):
+                clf = Clf()
+                # try to fit
+                try:
+                    clf.fit(X_train, y)
+                except ValueError, e:
+                    if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                        print(error_string_fit, Clf, e)
+                        traceback.print_exc(file=sys.stdout)
+                        raise e
+                except Exception, exc:
+                        print(error_string_fit, Clf, exc)
+                        traceback.print_exc(file=sys.stdout)
+                        raise exc
+                else:
+                    raise AssertionError(error_string_fit, Clf)
+                # actually fit
+                clf.fit(X_train_finite, y)
+                # predict
+                try:
+                    clf.predict(X_train)
+                except ValueError, e:
+                    if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                        print(error_string_predict, Clf, e)
+                        traceback.print_exc(file=sys.stdout)
+                        raise e
+                except Exception, exc:
+                    print(error_string_predict, Clf, exc)
+                    traceback.print_exc(file=sys.stdout)
+                else:
+                    raise AssertionError(error_string_predict, Clf)
+
+
 def test_classifiers_one_label():
     # test classifiers trained on a single label always return this label
     # or raise an sensible error message

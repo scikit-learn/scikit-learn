@@ -21,7 +21,7 @@ def assert_all_finite(X):
     # prevent false positives from overflow in sum method.
     if X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum()) \
       and not np.isfinite(X.data if sparse.issparse(X) else X).all():
-            raise ValueError("array contains NaN or infinity")
+            raise ValueError("Array contains NaN or infinity.")
 
 
 def safe_asarray(X, dtype=None, order=None):
@@ -71,6 +71,7 @@ def array2d(X, dtype=None, order=None, copy=False):
         raise TypeError('A sparse matrix was passed, but dense data '
                         'is required. Use X.todense() to convert to dense.')
     X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
+    assert_all_finite(X_2d)
     if X is X_2d and copy:
         X_2d = safe_copy(X_2d)
     return X_2d
@@ -163,7 +164,6 @@ def check_arrays(*arrays, **options):
             # special case: ignore optional y=None kwarg pattern
             checked_arrays.append(array)
             continue
-
         size = _num_samples(array)
 
         if size != n_samples:
@@ -187,6 +187,8 @@ def check_arrays(*arrays, **options):
                 array = np.ascontiguousarray(array, dtype=dtype)
             else:
                 array = np.asarray(array, dtype=dtype)
+
+        assert_all_finite(array)
 
         if copy and array is array_orig:
             array = array.copy()

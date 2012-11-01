@@ -12,7 +12,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 from .utils.fixes import unique
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 
 __all__ = ['QDA']
 
@@ -124,7 +124,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         return self.classes_
 
     def _decision_function(self, X):
-        X = np.asarray(X)
+        X = array2d(X)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations[i]
