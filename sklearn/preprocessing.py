@@ -271,7 +271,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
-        X = atleast2d_or_csr(X, copy=self.copy)
+        X, = check_arrays(X, copy=self.copy, sparse_format="csr")
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -298,7 +298,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
-        X = atleast2d_or_csr(X, copy=copy)
+        X, = check_arrays(X, copy=copy, sparse_format="csr")
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
