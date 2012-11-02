@@ -47,3 +47,23 @@ def test_qda_priors():
     clf = qda.QDA(priors=np.array([0.0, 1.0]))
     y_pred = clf.fit(X, y).predict(X)
     assert (y_pred == 2).all()
+
+
+def test_qda_store_covariances():
+    # The default is to not set the covariances_ attribute
+    clf = qda.QDA().fit(X, y)
+    assert_true(not hasattr(clf, 'covariances_'))
+
+    # Test the actual attribute:
+    clf = qda.QDA().fit(X, y, store_covariances=True)
+    assert_true(hasattr(clf, 'covariances_'))
+
+    assert_array_almost_equal(
+        clf.covariances_[0],
+        np.array([[0.7, 0.45], [0.45, 0.7]])
+        )
+
+    assert_array_almost_equal(
+        clf.covariances_[1],
+        np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
+        )
