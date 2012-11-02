@@ -182,14 +182,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
     @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=None,
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        estimator_params = estimator_params or ()
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -387,7 +386,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
     @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=None,
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
@@ -395,7 +394,6 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        random_state=None,
                        verbose=0):
 
-        estimator_params = estimator_params or []
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -531,14 +529,13 @@ class ForestRegressor(BaseForest, RegressorMixin):
     @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=None,
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        estimator_params = estimator_params or ()
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
