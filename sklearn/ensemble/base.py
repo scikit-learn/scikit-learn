@@ -30,7 +30,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     """
 
     def __init__(self, base_estimator, n_estimators=10, estimator_params=None):
-        estimator_params = estimator_params or []
+        estimator_params = estimator_params or ()
 
         # Check parameters
         if not isinstance(base_estimator, BaseEstimator):
