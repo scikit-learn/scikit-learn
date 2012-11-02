@@ -15,8 +15,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import make_low_rank_matrix
 from sklearn.utils.extmath import weighted_mode
+from sklearn.utils.extmath import svd_flip
+from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
 def test_density():
@@ -207,3 +208,11 @@ def test_randomized_svd_transpose_consistency():
 
     # in this case 'auto' is equivalent to transpose
     assert_almost_equal(s2, s3)
+
+
+def test_svd_uniqueness():
+    a = np.eye(2)
+    u1, s1, v1 = svd_flip(*randomized_svd(a, 2, random_state=41))
+    u2, s2, v2 = svd_flip(*randomized_svd(a, 2, random_state=42))
+    assert_almost_equal(u1, u2)
+    assert_almost_equal(v1, v2)
