@@ -9,6 +9,7 @@ import os
 import warnings
 import sys
 import traceback
+import inspect
 
 import numpy as np
 from scipy import sparse
@@ -78,10 +79,33 @@ def test_all_estimators():
                 e = E(clf)
             else:
                 e = E()
-            #test cloning
+            # test cloning
             clone(e)
             # test __repr__
             repr(e)
+
+            # test if init does nothing but set parameters
+            # this is important for grid_search etc.
+            init = getattr(e.__init__, 'deprecated_original', e.__init__)
+            try:
+                args, varargs, kws, defaults = inspect.getargspec(init)
+            except TypeError:
+                # init is not a python function.
+                # true for mixins
+                continue
+            params = e.get_params()
+            if E in meta_estimators:
+                # they need a non-default argument
+                args = args[2:]
+            else:
+                args = args[1:]
+            if args:
+                # non-empty list
+                assert_equal(len(args), len(defaults))
+            else:
+                continue
+            for arg, default in zip(args[1:], defaults[1:]):
+                assert_equal(params[arg], default)
 
 
 def test_estimators_sparse_data():

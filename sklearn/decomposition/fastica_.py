@@ -404,16 +404,17 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.whiten = whiten
         self.fun = fun
         self.fun_prime = fun_prime
-        self.fun_args = {} if fun_args is None else fun_args
+        self.fun_args = fun_args
         self.max_iter = max_iter
         self.tol = tol
         self.w_init = w_init
         self.random_state = random_state
 
     def fit(self, X, y=None):
+        fun_args = {} if self.fun_args is None else self.fun_args
         whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
-                        self.fun, self.fun_prime, self.fun_args, self.max_iter,
+                        self.fun, self.fun_prime, fun_args, self.max_iter,
                         self.tol, self.w_init,
                         random_state=self.random_state)
         if self.whiten == True:
