@@ -189,7 +189,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        estimator_params = estimator_params or []
+        estimator_params = estimator_params or ()
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -538,7 +538,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        estimator_params = estimator_params or []
+        estimator_params = estimator_params or ()
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
