@@ -163,7 +163,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def fit(self, X, **params):
         """Perform DBSCAN clustering from vector array or distance matrix.
