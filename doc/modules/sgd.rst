@@ -392,7 +392,7 @@ For PA-1 use ``loss='pa1'``, and ``loss='pa2'`` for
 PA-2 respectively. Setting ``C`` to 0 gives the vanilla passive-
 aggressive algorithm.
 
-..math::
+.. math::
 
      \eta = \frac{1}{|x|^2} (PA)
      \eta = \text{min} (\alpha, \frac{1}{|x|^2} (PA-1)
