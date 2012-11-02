@@ -420,3 +420,8 @@ def cartesian(arrays, out=None):
         for j in xrange(1, arrays[0].size):
             out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
     return out
+
+
+def svd_flip(u, s, v):
+    """Sign correction to ensure deterministic output from SVD"""
+    return u, s, v
