@@ -478,6 +478,17 @@ class MultinomialHMMTestCase(TestCase):
         logprob, state_sequence = h.decode(observations)
         assert_array_equal(state_sequence, [1, 0, 0])
 
+    def test_predict(self):
+        observations = [0, 1, 2]
+        state_sequence = self.h.predict(observations)
+        posteriors = self.h.predict_proba(observations)
+        assert_array_equal(state_sequence, [1, 0, 0])
+        assert_array_almost_equal(posteriors, [
+            [0.23170303, 0.76829697],
+            [0.62406281, 0.37593719],
+            [0.86397706, 0.13602294],
+            ])
+
     def test_attributes(self):
         h = hmm.MultinomialHMM(self.n_components)
 
