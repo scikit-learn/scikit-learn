@@ -232,7 +232,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     if not k is None:
         n_clusters = k
-        warnings.warn("Parameter k has been renamed by 'n_clusters'"
+        warnings.warn("Parameter k has been renamed to 'n_clusters'"
                 " and will be removed in release 0.14.",
                 DeprecationWarning, stacklevel=2)
 

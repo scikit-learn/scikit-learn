@@ -48,6 +48,11 @@ Changelog
 
 API changes summary
 -------------------
+   - Renamed all occurences of ``learn_rate`` to ``learning_rate`` for consistency.
+     This applies to :class:`gradient_boosting.LossFunction`,
+     :class:`gradient_boosting.LeastSquaresError`,
+     :class:'gradient_boosting.BaseGradientBoosting',
+     :class:'gradient_boosting.GradientBoostingRegressor',
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.

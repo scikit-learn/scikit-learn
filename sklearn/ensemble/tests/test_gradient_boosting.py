@@ -59,8 +59,8 @@ def test_parameter_checks():
     assert_raises(ValueError, GradientBoostingClassifier, n_estimators=0)
     assert_raises(ValueError, GradientBoostingClassifier, n_estimators=-1)
 
-    assert_raises(ValueError, GradientBoostingClassifier, learn_rate=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier, learn_rate=-1.0)
+    assert_raises(ValueError, GradientBoostingClassifier, learning_rate=0.0)
+    assert_raises(ValueError, GradientBoostingClassifier, learning_rate=-1.0)
 
     assert_raises(ValueError, GradientBoostingRegressor, loss='foobar')
 
@@ -114,7 +114,7 @@ def test_classification_synthetic():
 
     gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
                                       max_depth=1,
-                                      learn_rate=1.0, random_state=0)
+                                      learning_rate=1.0, random_state=0)
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     assert error_rate < 0.085, \
@@ -122,7 +122,7 @@ def test_classification_synthetic():
 
     gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
                                       max_depth=1,
-                                      learn_rate=1.0, subsample=0.5,
+                                      learning_rate=1.0, subsample=0.5,
                                       random_state=0)
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
@@ -160,7 +160,7 @@ def test_regression_synthetic():
     `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996). """
     random_state = check_random_state(1)
     regression_params = {'n_estimators': 100, 'max_depth': 4,
-                         'min_samples_split': 1, 'learn_rate': 0.1,
+                         'min_samples_split': 1, 'learning_rate': 0.1,
                          'loss': 'ls'}
 
     # Friedman1
