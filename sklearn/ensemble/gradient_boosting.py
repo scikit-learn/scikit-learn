@@ -136,7 +136,8 @@ class LossFunction(object):
         """
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                sample_mask, learn_rate=1.0, k=0):
+                                sample_mask, learning_rate=1.0, k=0,
+                                learn_rate=None):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -154,6 +155,13 @@ class LossFunction(object):
         y_pred : np.ndarray, shape=(n,):
             The predictions.
         """
+
+        if not learn_rate is None:
+            learning_rate = learn_rate
+            warnings.warn("Parameter learn_rate has been renamed to"
+                 'learning_rate'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
+
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
 
@@ -168,7 +176,7 @@ class LossFunction(object):
                                          y_pred[:, k])
 
         # update predictions (both in-bag and out-of-bag)
-        y_pred[:, k] += learn_rate * tree.value[:, 0, 0].take(terminal_regions,
+        y_pred[:, k] += learning_rate * tree.value[:, 0, 0].take(terminal_regions,
                                                               axis=0)
 
     @abstractmethod
@@ -200,13 +208,20 @@ class LeastSquaresError(RegressionLossFunction):
         return y - pred.ravel()
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                sample_mask, learn_rate=1.0, k=0):
+                                sample_mask, learning_rate=1.0, k=0,
+                                learn_rate=None):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
         """
+        if not learn_rate is None:
+            learning_rate = learn_rate
+            warnings.warn("Parameter learn_rate has been renamed to"
+                 'learning_rate'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
+
         # update predictions
-        y_pred[:, k] += learn_rate * tree.predict(X).ravel()
+        y_pred[:, k] += learning_rate * tree.predict(X).ravel()
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
@@ -425,16 +440,23 @@ class BaseGradientBoosting(BaseEnsemble):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, loss, learn_rate, n_estimators, min_samples_split,
+    def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample,
-                 max_features, random_state, alpha=0.9, verbose=0):
+                 max_features, random_state, alpha=0.9, verbose=0, learn_rate=None):
+
+        if not learn_rate is None:
+            learning_rate = learn_rate
+            warnings.warn("Parameter learn_rate has been renamed to"
+                 'learning_rate'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
+
         if n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
 
-        if learn_rate <= 0.0:
-            raise ValueError("learn_rate must be greater than 0")
-        self.learn_rate = learn_rate
+        if learning_rate <= 0.0:
+            raise ValueError("learning_rate must be greater than 0")
+        self.learning_rate = learning_rate
 
         if loss not in LOSS_FUNCTIONS:
             raise ValueError("Loss '%s' not supported. " % loss)
@@ -493,7 +515,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # update tree leaves
             self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
-                                               sample_mask, self.learn_rate,
+                                               sample_mask, self.learning_rate,
                                                k=k)
 
             # add tree to ensemble
@@ -632,7 +654,7 @@ class BaseGradientBoosting(BaseEnsemble):
         """
         X = array2d(X, dtype=DTYPE, order='C')
         score = self._init_decision_function(X)
-        predict_stages(self.estimators_, X, self.learn_rate, score)
+        predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
 
     def staged_decision_function(self, X):
@@ -657,7 +679,7 @@ class BaseGradientBoosting(BaseEnsemble):
         X = array2d(X, dtype=DTYPE, order='C')
         score = self._init_decision_function(X)
         for i in range(self.n_estimators):
-            predict_stage(self.estimators_, i, X, self.learn_rate, score)
+            predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score
 
     @property
@@ -692,9 +714,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         deviance (= logistic regression) for classification
         with probabilistic outputs.
 
-    learn_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_estimators.
+    learning_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learning_rate`.
+        There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting
@@ -782,13 +804,19 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    def __init__(self, loss='deviance', learn_rate=0.1, n_estimators=100,
+    def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0):
+                 max_features=None, verbose=0, learn_rate=None):
+
+        if not learn_rate is None:
+            learning_rate = learn_rate
+            warnings.warn("Parameter learn_rate has been renamed to"
+                 'learning_rate'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learn_rate, n_estimators, min_samples_split,
+            loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, verbose=verbose)
 
@@ -921,9 +949,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
-    learn_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learn_rate`.
-        There is a trade-off between learn_rate and n_estimators.
+    learning_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learning_rate`.
+        There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting
@@ -1016,13 +1044,19 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    def __init__(self, loss='ls', learn_rate=0.1, n_estimators=100,
+    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=1, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0):
+                 max_features=None, alpha=0.9, verbose=0, learn_rate=None):
+
+        if not learn_rate is None:
+            learning_rate = learn_rate
+            warnings.warn("Parameter learn_rate has been renamed to"
+                 'learning_rate'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learn_rate, n_estimators, min_samples_split,
+            loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, alpha, verbose)
 
