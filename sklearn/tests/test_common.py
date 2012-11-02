@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 import sklearn
-from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import all_estimators, set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
         TransformerMixin, ClusterMixin
@@ -134,7 +134,7 @@ def test_transformers():
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             trans = Trans()
-
+        set_random_state(trans)
         if hasattr(trans, 'compute_importances'):
             trans.compute_importances = True
 
@@ -164,6 +164,7 @@ def test_transformers():
             print e
             print
             succeeded = False
+            continue
 
         if hasattr(trans, 'transform'):
             if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
