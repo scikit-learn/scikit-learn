@@ -210,9 +210,13 @@ class ElasticNet(LinearModel, RegressorMixin):
         for k in xrange(n_targets):
             if Gram is None:
                 if self.use_strong_rule:
+                    if Xy is not None:
+                        Xy_k = Xy[:, k]
+                    else:
+                        Xy_k = None
                     coef_[k, :], dual_gap_[k], eps_[k] = \
                         self._fit_with_strong_rule(coef_[k, :], X,
-                        y[:, k], Xy[:,k], active_set_init=active_set_init,
+                        y[:, k], Xy=Xy_k, active_set_init=active_set_init,
                         coef_init=coef_init, alpha_init=alpha_init, R=R_init)
                 else:
                     coef_[k, :], dual_gap_[k], eps_[k] = \
@@ -363,7 +367,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                                 w, l1_reg, l2_reg, X, y, R,
                                 subset=subset, tol=tol_kkt_check)
                 if kkt_violators:
-                    active_set[kkt_violators] = True
+                    active_set[kkt_violators] = True  # add violating features
                 else:
                     # This only garanties that no feature is missing it's still
                     # possible that an active feature is failing kkt
