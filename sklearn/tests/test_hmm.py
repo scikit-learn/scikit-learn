@@ -466,6 +466,18 @@ class MultinomialHMMTestCase(TestCase):
         self.assertAlmostEqual(np.exp(logprob), 0.01344)
         assert_array_equal(state_sequence, [1, 0, 0])
 
+    def test_decode_map_algorithm(self):
+        observations = [0, 1, 2]
+        h = hmm.MultinomialHMM(
+            self.n_components,
+            startprob=self.startprob,
+            transmat=self.transmat,
+            algorithm="map",
+            )
+        h.emissionprob_ = self.emissionprob
+        logprob, state_sequence = h.decode(observations)
+        assert_array_equal(state_sequence, [1, 0, 0])
+
     def test_attributes(self):
         h = hmm.MultinomialHMM(self.n_components)
 
