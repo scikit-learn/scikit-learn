@@ -41,3 +41,9 @@ def test_qda():
     y_pred3 = clf.fit(X, y3).predict(X)
     # QDA shouldn't be able to separate those
     assert_true(np.any(y_pred3 != y3))
+
+
+def test_qda_priors():
+    clf = qda.QDA(priors=np.array([0.0, 1.0]))
+    y_pred = clf.fit(X, y).predict(X)
+    assert (y_pred == 2).all()
