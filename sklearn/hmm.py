@@ -415,14 +415,9 @@ class _BaseHMM(BaseEstimator):
                           stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
-            if 'n_iter' in kwargs:
-                self.n_iter = kwargs['n_iter']
-            if 'thresh' in kwargs:
-                self.thresh = kwargs['thresh']
-            if 'params' in kwargs:
-                self.params = kwargs['params']
-            if 'init_params' in kwargs:
-                self.init_params = kwargs['init_params']
+            for name in ('n_iter', 'thresh', 'params', 'init_params'):
+                if name in kwargs:
+                    setattr(self, name, kwargs[name])
 
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
