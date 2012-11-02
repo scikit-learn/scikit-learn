@@ -423,5 +423,22 @@ def cartesian(arrays, out=None):
 
 
 def svd_flip(u, s, v):
-    """Sign correction to ensure deterministic output from SVD"""
-    return u, s, v
+    """Sign correction to ensure deterministic output from SVD
+
+    Adjusts the columns of u and the rows of v such that the loadings in the
+    columns in u that are largest in absolute value are always positive.
+
+    Parameters
+    ----------
+    u, s, v: arrays,
+        The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
+        with matching inner dimensions so one can compute `np.dot(u * s, v)`.
+
+    Returns
+    -------
+    u_adjusted, s, v_adjusted: arrays with the same dimensions as the input.
+
+    """
+    max_abs_cols = np.argmax(np.abs(u), axis=0)
+    signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+    return u * signs, s, v * signs[:, np.newaxis]
