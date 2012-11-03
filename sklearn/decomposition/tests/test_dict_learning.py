@@ -67,15 +67,16 @@ def test_dict_learning_split():
     dico.split_sign = True
     split_code = dico.transform(X)
 
-    assert_array_equal(split_code[:, :n_components] - split_code[:, n_components:], code)
+    assert_array_equal(split_code[:, :n_components] - \
+                       split_code[:, n_components:], code)
 
 
 def test_dict_learning_online_shapes():
 #    rng = np.random.RandomState(0)
 #    X = rng.randn(12, 10)
     n_components = 8
-    code, dictionary = dict_learning_online(X, n_components=n_components, alpha=1,
-                                            random_state=rng)
+    code, dictionary = dict_learning_online(X, n_components=n_components,
+                                            alpha=1, random_state=rng)
     assert_equal(code.shape, (n_samples, n_components))
     assert_equal(dictionary.shape, (n_components, n_features))
     assert_equal(np.dot(code, dictionary).shape, X.shape)
@@ -96,7 +97,8 @@ def test_dict_learning_online_overcomplete():
 def test_dict_learning_online_initialization():
     n_components = 12
     V = rng.randn(n_components, n_features)
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=0, dict_init=V).fit(X)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=0,
+                                        dict_init=V).fit(X)
     assert_array_equal(dico.components_, V)
 
 

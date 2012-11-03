@@ -332,7 +332,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None, n_atoms=None):
+                  callback=None, verbose=False, random_state=None,
+                  n_atoms=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -679,7 +680,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 class SparseCodingMixin(TransformerMixin):
     """Sparse coding mixin"""
 
-    def _set_sparse_coding_params(self, n_components, transform_algorithm='omp',
+    def _set_sparse_coding_params(self, n_components,
+                                  transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
                                   transform_alpha=None, split_sign=False,
                                   n_jobs=1):
@@ -921,8 +923,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         if not n_atoms is None:
             n_components = n_atoms
             warnings.warn("Parameter n_atoms has been renamed to"
-                          'n_components'" and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
+                        'n_components'" and will be removed in release 0.14.",
+                         DeprecationWarning, stacklevel=2)
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1079,8 +1081,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         if not n_atoms is None:
             n_components = n_atoms
             warnings.warn("Parameter n_atoms has been renamed to"
-                          'n_components'" and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
+                        'n_components'" and will be removed in release 0.14.",
+                         DeprecationWarning, stacklevel=2)
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
