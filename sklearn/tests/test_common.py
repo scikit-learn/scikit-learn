@@ -48,23 +48,17 @@ from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
 from sklearn.linear_model import IsotonicRegression
 
-dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
-        EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-        LabelEncoder, TfidfTransformer, IsotonicRegression]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, clonable
-    # and have working repr.
-    estimators = all_estimators()
+    # smoke Test that estimators are default-constructible, clonable
+    # and have working repr. ignore estimators on 'not_test' list
+    estimators = all_estimators(only_testable=True)
     clf = LDA()
 
     for name, E in estimators:
-        # some can just not be sensibly default constructed
-        if E in dont_test:
-            continue
         # test default-constructibility
         # get rid of deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -86,11 +80,11 @@ def test_estimators_sparse_data():
     X[X < .8] = 0
     X = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     estimators = [(name, E) for name, E in estimators
                         if issubclass(E, (ClassifierMixin, RegressorMixin))]
     for name, Clf in estimators:
-        if Clf in dont_test or Clf in meta_estimators:
+        if Clf in meta_estimators:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -114,7 +108,7 @@ def test_estimators_sparse_data():
 def test_transformers():
     # test if transformers do something sensible on training set
     # also test all shapes / shape errors
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     transformers = [(name, E) for name, E in estimators if issubclass(E,
         TransformerMixin)]
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
@@ -126,7 +120,7 @@ def test_transformers():
     succeeded = True
 
     for name, Trans in transformers:
-        if Trans in dont_test or Trans in meta_estimators:
+        if Trans in meta_estimators:
             continue
         # these don't actually fit the data:
         if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
@@ -192,11 +186,11 @@ def test_transformers_sparse_data():
     X[X < .8] = 0
     X = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     estimators = [(name, E) for name, E in estimators
                         if issubclass(E, TransformerMixin)]
     for name, Trans in estimators:
-        if Trans in dont_test or Trans in meta_estimators:
+        if Trans in meta_estimators:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -227,14 +221,14 @@ def test_classifiers_one_label():
     X_train = rnd.uniform(size=(10, 3))
     X_test = rnd.uniform(size=(10, 3))
     y = np.ones(10)
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
         "present.")
     for name, Clf in classifiers:
-        if Clf in dont_test or Clf in meta_estimators:
+        if Clf in meta_estimators:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -306,7 +300,7 @@ def test_clustering():
 def test_classifiers_train():
     # test if classifiers do something sensible on training set
     # also test all shapes / shape errors
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
     iris = load_iris()
@@ -322,7 +316,7 @@ def test_classifiers_train():
         n_classes = len(classes)
         n_samples, n_features = X.shape
         for name, Clf in classifiers:
-            if Clf in dont_test or Clf in meta_estimators:
+            if Clf in meta_estimators:
                 continue
             if Clf in [MultinomialNB, BernoulliNB]:
                 # TODO also test these!
@@ -392,7 +386,7 @@ def test_classifiers_train():
 
 def test_classifiers_classes():
     # test if classifiers can cope with non-consecutive classes
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
     iris = load_iris()
@@ -403,7 +397,7 @@ def test_classifiers_classes():
     # TODO: make work with next line :)
     #y = y.astype(np.str)
     for name, Clf in classifiers:
-        if Clf in dont_test or Clf in meta_estimators:
+        if Clf in meta_estimators:
             continue
         if Clf in [MultinomialNB, BernoulliNB]:
             # TODO also test these!
@@ -423,7 +417,7 @@ def test_classifiers_classes():
 def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     regressors = [(name, E) for name, E in estimators if issubclass(E,
         RegressorMixin)]
     boston = load_boston()
@@ -432,7 +426,7 @@ def test_regressors_int():
     X = StandardScaler().fit_transform(X)
     y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in meta_estimators or Reg in (CCA,):
+        if Reg in meta_estimators or Reg in (CCA,):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -461,7 +455,7 @@ def test_regressors_int():
 
 
 def test_regressors_train():
-    estimators = all_estimators()
+    estimators = all_estimators(only_testable=True)
     regressors = [(name, E) for name, E in estimators if issubclass(E,
         RegressorMixin)]
     boston = load_boston()
@@ -473,7 +467,7 @@ def test_regressors_train():
     y = StandardScaler().fit_transform(y)
     succeeded = True
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in meta_estimators:
+        if Reg in meta_estimators:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
