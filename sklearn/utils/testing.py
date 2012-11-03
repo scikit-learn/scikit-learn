@@ -30,6 +30,25 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
 
+# import "special" estimators
+from sklearn.grid_search import GridSearchCV
+from sklearn.decomposition import SparseCoder
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
+from sklearn.ensemble import BaseEnsemble
+from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
+        OutputCodeClassifier
+from sklearn.feature_selection import RFE, RFECV, SelectKBest
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.kernel_approximation import AdditiveChi2Sampler
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
+        Normalizer
+from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
+        SpectralClustering
+from sklearn.linear_model import IsotonicRegression
 
 try:
     from nose.tools import assert_in, assert_not_in
@@ -141,7 +160,21 @@ class mock_urllib2(object):
         return urllib2.quote(string, safe)
 
 
-def all_estimators():
+def get_estimators():
+
+    meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
+        OneVsRestClassifier, RFE, RFECV]
+
+    estimators = all_estimators()
+
+    estimators = [(name, E) for name, E in estimators
+                        if issubclass(E, (ClassifierMixin, RegressorMixin))]
+
+#                if Clf in dont_test or Clf in meta_estimators:
+#            continue
+
+
+def all_estimators(only_testable=False):
     def is_abstract(c):
         if not(hasattr(c, '__abstractmethods__')):
             return False
@@ -166,7 +199,17 @@ def all_estimators():
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
     # We sort in order to have reproducible test failures
-    return sorted(estimators)
+    estimators = sorted(estimators)
+
+    # TODO: find better definition and explanation for what needs to be tested
+    dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
+        EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
+        LabelEncoder, TfidfTransformer, IsotonicRegression]
+
+    if only_testable:
+        return [c for c in estimators if not c[1] in dont_test]
+
+    return estimators
 
 
 def set_random_state(estimator, random_state=0):
