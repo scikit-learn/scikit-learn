@@ -240,42 +240,6 @@ class GaussianHMMBaseTester(object):
         self.assertRaises(ValueError, hmm.GaussianHMM, 20,
                 'badcovariance_type')
 
-    def _test_attributes(self):
-        # XXX: This test is bugged and creates weird errors -- skipped
-        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
-
-        self.assertEquals(h.n_components, self.n_components)
-        self.assertEquals(h.covariance_type, self.covariance_type)
-
-        h.startprob_ = self.startprob
-        assert_array_almost_equal(h.startprob_, self.startprob)
-        self.assertRaises(ValueError, h.__setattr__, 'startprob_',
-                          2 * self.startprob)
-        self.assertRaises(ValueError, h.__setattr__, 'startprob_', [])
-        self.assertRaises(ValueError, h.__setattr__, 'startprob_',
-                          np.zeros((self.n_components - 2, self.n_features)))
-
-        h.transmat_ = self.transmat
-        assert_array_almost_equal(h.transmat_, self.transmat)
-        self.assertRaises(ValueError, h.__setattr__, 'transmat_',
-                          2 * self.transmat)
-        self.assertRaises(ValueError, h.__setattr__, 'transmat_', [])
-        self.assertRaises(ValueError, h.__setattr__, 'transmat_',
-                          np.zeros((self.n_components - 2, self.n_components)))
-
-        h.means_ = self.means
-        self.assertEquals(h.n_features, self.n_features)
-        self.assertRaises(ValueError, h.__setattr__, 'means_', [])
-        self.assertRaises(ValueError, h.__setattr__, 'means_',
-                          np.zeros((self.n_components - 2, self.n_features)))
-
-        h.covars_ = self.covars[self.covariance_type]
-        assert_array_almost_equal(h.covars_,
-                self.expanded_covars[self.covariance_type])
-        #self.assertRaises(ValueError, h.__setattr__, 'covars', [])
-        #self.assertRaises(ValueError, h.__setattr__, 'covars',
-        #                  np.zeros((self.n_components - 2, self.n_features)))
-
     def test_eval_and_decode(self):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.means_ = self.means
