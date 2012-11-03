@@ -45,6 +45,9 @@ Changelog
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
+   - :func:`cross_validation.cross_val_score` now works with precomputed kernels
+     and affinity matrices, by `Andreas Müller`_.
+
 
 API changes summary
 -------------------
