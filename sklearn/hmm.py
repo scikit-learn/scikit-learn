@@ -702,7 +702,6 @@ class GaussianHMM(_BaseHMM):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
 
-    # Read-only properties.
     @property
     def covariance_type(self):
         """Covariance type of the model.
