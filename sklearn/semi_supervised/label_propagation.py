@@ -87,7 +87,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     alpha : float
         Clamping factor
 
-    max_iters : float
+    max_iter : float
         Change maximum number of iterations allowed
 
     tol : float
@@ -97,8 +97,15 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     __metaclass__ = ABCMeta
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iters=30, tol=1e-3):
-        self.max_iters = max_iters
+                 alpha=1, max_iter=30, tol=1e-3, max_iters=None):
+
+        if not max_iters is None:
+            max_iter = max_iters
+            warnings.warn("Parameter max_iters has been renamed to"
+                 'max_iter'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
+
+        self.max_iter = max_iter
         self.tol = tol
 
         # kernel parameters
@@ -235,7 +242,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
-        remaining_iter = self.max_iters
+        remaining_iter = self.max_iter
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
@@ -271,7 +278,7 @@ class LabelPropagation(BaseLabelPropagation):
       parameter for knn kernel
     alpha : float
       clamping factor
-    max_iters : float
+    max_iter : float
       change maximum number of iterations allowed
     tol : float
       Convergence tolerance: threshold to consider the system at steady
@@ -336,7 +343,7 @@ class LabelSpreading(BaseLabelPropagation):
       parameter for knn kernel
     alpha : float
       clamping factor
-    max_iters : float
+    max_iter : float
       maximum number of iterations allowed
     tol : float
       Convergence tolerance: threshold to consider the system at steady
@@ -368,11 +375,18 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iters=30, tol=1e-3):
+                 max_iter=30, tol=1e-3, max_iters=None):
+
+        if not max_iters is None:
+            max_iter = max_iters
+            warnings.warn("Parameter max_iters has been renamed to"
+                 'max_iter'" and will be removed in release 0.14.",
+                  DeprecationWarning, stacklevel=2)
+
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                 n_neighbors=n_neighbors, alpha=alpha,
-                max_iters=max_iters, tol=tol)
+                max_iter=max_iter, tol=tol)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
