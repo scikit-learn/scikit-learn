@@ -51,6 +51,10 @@ Changelog
 
 API changes summary
 -------------------
+   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+     This applies to :class:`dic_learning.DictionaryLearning`, 
+     :class:`dic_learning.MiniBatchDictionaryLearning`,
+     :func:'dic_learning.dict_learning', :func:'dic_learning.dict_learning_online'
 
    - Renamed all occurences of ``max_iters`` to ``max_iter`` for consistency.
      This applies to :class:`label_propagation.BaseLabelPropagation`,
@@ -60,7 +64,7 @@ API changes summary
      This applies to :class:`gradient_boosting.LossFunction`,
      :class:`gradient_boosting.LeastSquaresError`,
      :class:'gradient_boosting.BaseGradientBoosting',
-     :class:'gradient_boosting.GradientBoostingRegressor',
+     :class:'gradient_boosting.GradientBoostingRegressor'
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.

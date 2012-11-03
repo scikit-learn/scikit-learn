@@ -70,7 +70,7 @@ print 'done in %.2fs.' % (time() - t0)
 
 print 'Learning the dictionary... '
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_atoms=100, alpha=1, n_iter=500)
+dico = MiniBatchDictionaryLearning(n_components=100, alpha=1, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
 print 'done in %.2fs.' % dt
