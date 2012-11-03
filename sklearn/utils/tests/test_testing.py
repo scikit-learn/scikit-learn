@@ -2,6 +2,7 @@ from nose.tools import assert_raises
 
 from sklearn.utils.testing import _assert_less, _assert_greater
 from sklearn.utils.testing import assert_equal, set_random_state
+from sklearn.utils.testing import all_estimators, get_estimators
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.lda import LDA
 
@@ -41,3 +42,9 @@ def test_set_random_state():
     set_random_state(lda, 3)
     set_random_state(tree, 3)
     assert_equal(tree.random_state, 3)
+
+
+def test_all_estimators_testable():
+    estimators = all_estimators()
+    testable_estimators = all_estimators(only_testable=True)
+    assert len(testable_estimators) < len(estimators)
