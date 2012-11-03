@@ -51,8 +51,10 @@ Changelog
 
 API changes summary
 -------------------
+
    - Renamed all occurences of ``max_iters`` to ``max_iter`` for consistency.
      This applies to :class:`label_propagation.BaseLabelPropagation`,
+     'label_propagation.LabelSpreading'
 
    - Renamed all occurences of ``learn_rate`` to ``learning_rate`` for consistency.
      This applies to :class:`gradient_boosting.LossFunction`,
