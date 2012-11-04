@@ -159,7 +159,7 @@ class LossFunction(object):
 
         if not learn_rate is None:
             learning_rate = learn_rate
-            warnings.warn("Parameter learn_rate has been renamed to"
+            warnings.warn("Parameter learn_rate has been renamed to "
                  'learning_rate'" and will be removed in release 0.14.",
                   DeprecationWarning, stacklevel=2)
 
