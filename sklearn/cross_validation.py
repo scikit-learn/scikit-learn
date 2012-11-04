@@ -258,7 +258,7 @@ class KFold(object):
 
     def __init__(self, n, n_folds=3, indices=True, shuffle=False,
             random_state=None, k=None):
-        if k is not None:
+        if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                     " removed in 0.15.", DeprecationWarning)
             n_folds = k
@@ -351,7 +351,7 @@ class StratifiedKFold(object):
     """
 
     def __init__(self, y, n_folds=3, indices=True, k=None):
-        if k is not None:
+        if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                     " removed in 0.15.", DeprecationWarning)
             n_folds = k
@@ -642,7 +642,7 @@ class Bootstrap(object):
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
                  random_state=None, n_bootstraps=None):
         self.n = n
-        if n_bootstraps is not None:
+        if n_bootstraps is not None:  # pragma: no cover
             warnings.warn("n_bootstraps was renamed to n_iter and will "
                           "be removed in 0.16.", DeprecationWarning)
             n_iter = n_bootstraps
@@ -659,8 +659,7 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if (isinstance(test_size, numbers.Real) and test_size >= 0.0
-                    and test_size <= 1.0):
+        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
             self.test_size = ceil(test_size * n)
         elif isinstance(test_size, numbers.Integral):
             self.test_size = test_size
@@ -776,7 +775,7 @@ class ShuffleSplit(object):
             indices=True, random_state=None, n_iterations=None):
         self.n = n
         self.n_iter = n_iter
-        if n_iterations is not None:
+        if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency "
                     " and will be removed in 0.16.")
             self.n_iter = n_iterations
@@ -962,7 +961,7 @@ class StratifiedShuffleSplit(object):
         self.y = np.array(y)
         self.n = self.y.size
         self.n_iter = n_iter
-        if n_iterations is not None:
+        if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency "
                    " and will be removed in 0.16.")
             self.n_iter = n_iterations

@@ -415,14 +415,9 @@ class _BaseHMM(BaseEstimator):
                           stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
-            if 'n_iter' in kwargs:
-                self.n_iter = kwargs['n_iter']
-            if 'thresh' in kwargs:
-                self.thresh = kwargs['thresh']
-            if 'params' in kwargs:
-                self.params = kwargs['params']
-            if 'init_params' in kwargs:
-                self.init_params = kwargs['init_params']
+            for name in ('n_iter', 'thresh', 'params', 'init_params'):
+                if name in kwargs:
+                    setattr(self, name, kwargs[name])
 
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
@@ -571,21 +566,14 @@ class _BaseHMM(BaseEstimator):
         if 's' in params:
             stats['start'] += posteriors[0]
         if 't' in params:
-            if _hmmc:
-                n_observations, n_components = framelogprob.shape
-                lneta = np.zeros((n_observations - 1,
-                            n_components, n_components))
-                lnP = logsumexp(fwdlattice[-1])
-                _hmmc._compute_lneta(n_observations, n_components,
-                        fwdlattice, self._log_transmat, bwdlattice,
-                        framelogprob, lnP, lneta)
-                stats["trans"] += np.exp(logsumexp(lneta, 0))
-            else:
-                for t in xrange(len(framelogprob)):
-                    zeta = (fwdlattice[t - 1][:, np.newaxis]
-                            + self._log_transmat + framelogprob[t]
-                            + bwdlattice[t])
-                    stats['trans'] += np.exp(zeta - logsumexp(zeta))
+            n_observations, n_components = framelogprob.shape
+            lneta = np.zeros((n_observations - 1,
+                        n_components, n_components))
+            lnP = logsumexp(fwdlattice[-1])
+            _hmmc._compute_lneta(n_observations, n_components,
+                    fwdlattice, self._log_transmat, bwdlattice,
+                    framelogprob, lnP, lneta)
+            stats["trans"] += np.exp(logsumexp(lneta, 0))
 
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
@@ -714,7 +702,6 @@ class GaussianHMM(_BaseHMM):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
 
-    # Read-only properties.
     @property
     def covariance_type(self):
         """Covariance type of the model.
