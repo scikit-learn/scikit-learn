@@ -204,7 +204,7 @@ class CountVectorizer(BaseEstimator):
     Attributes
     ----------
     `vocabulary_`: dict
-        A mapping of terms to frequencies.
+        A mapping of terms to feature indices.
 
     `stop_words_`: set
         Terms that were ignored because they occurred in either too
