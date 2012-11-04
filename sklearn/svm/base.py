@@ -85,11 +85,11 @@ class BaseLibSVM(BaseEstimator):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  sparse, class_weight, verbose, max_iter):
 
-        if not impl in LIBSVM_IMPL:
+        if not impl in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
-        if C is None:
+        if C is None:  # pragma: no cover
             warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
                     "since version 0.12, and backward compatibility "
                     "won't be maintained from version 0.14 onward. "
@@ -198,7 +198,7 @@ class BaseLibSVM(BaseEstimator):
             kernel = 'precomputed'
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        if self.verbose:
+        if self.verbose:  # pragma: no cover
             print '[LibSVM]',
         fit(X, y, sample_weight, solver_type, kernel)
 
@@ -212,16 +212,12 @@ class BaseLibSVM(BaseEstimator):
         return self
 
     def _warn_from_fit_status(self):
-        if self.fit_status_ == 0:
-            pass
-        elif self.fit_status_ == 1:
+        assert self.fit_status_ in (0, 1)
+        if self.fit_status_ == 1:
             warnings.warn('Solver terminated early (max_iter=%i).'
                           '  Consider pre-processing your data with'
                           ' StandardScalar or MinMaxScalar.'
                           % self.max_iter, ConvergenceWarning)
-        else:
-            raise NotImplementedError(
-                'unrecognized Solver fit_status', self.fit_status_)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
 
@@ -585,7 +581,7 @@ class BaseLibLinear(BaseEstimator):
             multi_class='ovr', fit_intercept=True, intercept_scaling=1,
             class_weight=None, verbose=0, random_state=None):
 
-        if C is None:
+        if C is None:  # pragma: no cover
             warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
                     "since version 0.12, and backward compatibility "
                     "won't be maintained from version 0.14 onward. "
@@ -709,12 +705,6 @@ class BaseLibLinear(BaseEstimator):
     @property
     def classes_(self):
         return self._enc.classes_
-
-    def _check_n_features(self, X):
-        n_features = self.coef_.shape[1]
-        if X.shape[1] != n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
-                                                                   X.shape[1]))
 
     def _get_bias(self):
         if self.fit_intercept:

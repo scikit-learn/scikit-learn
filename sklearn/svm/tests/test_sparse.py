@@ -40,8 +40,8 @@ iris.data = sparse.csr_matrix(iris.data)
 def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
 
-    clf = svm.SVC(kernel='linear').fit(X, Y)
-    sp_clf = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf = svm.SVC(kernel='linear', probability=True).fit(X, Y)
+    sp_clf = svm.SVC(kernel='linear', probability=True).fit(X_sp, Y)
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
@@ -64,6 +64,14 @@ def test_svc():
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
+    assert_array_almost_equal(clf.predict_proba(T2), sp_clf.predict_proba(T2))
+
+
+def test_svc_with_custom_kernel():
+    kfunc = lambda x, y: np.dot(x, y.T)
+    clf_lin = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf_mylin = svm.SVC(kernel=kfunc).fit(X_sp, Y)
+    assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
 
 
 def test_svc_iris():
