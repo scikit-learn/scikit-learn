@@ -46,7 +46,8 @@ class MyPassiveAggressive(ClassifierMixin):
 
                 if self.loss in ("hinge", "epsilon_insensitive"):
                     step = min(self.C, loss / sqnorm)
-                elif self.loss == "squared_hinge":
+                elif self.loss in ("squared_hinge",
+                                   "squared_epsilon_insensitive"):
                     step = loss / (sqnorm + 1.0 / (2 * self.C))
 
                 if self.loss in ("hinge", "squared_hinge"):
@@ -92,21 +93,24 @@ def test_classifier_correctness():
                                            n_iter=2)
         clf2.fit(X, y_bin)
 
-        assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
+        assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
+
 
 def test_regressor_correctness():
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    reg1 = MyPassiveAggressive(C=1.0,
-                               loss="epsilon_insensitive",
-                               fit_intercept=True,
-                               n_iter=2)
-    reg1.fit(X, y_bin)
+    for loss in ("epsilon_insensitive", "squared_epsilon_insensitive"):
+        reg1 = MyPassiveAggressive(C=1.0,
+                                   loss=loss,
+                                   fit_intercept=True,
+                                   n_iter=2)
+        reg1.fit(X, y_bin)
 
-    reg2 = PassiveAggressiveRegressor(C=1.0,
-                                      fit_intercept=True,
-                                      n_iter=2)
-    reg2.fit(X, y_bin)
+        reg2 = PassiveAggressiveRegressor(C=1.0,
+                                          loss=loss,
+                                          fit_intercept=True,
+                                          n_iter=2)
+        reg2.fit(X, y_bin)
 
-    assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
+        assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)

@@ -83,8 +83,6 @@ class PassiveAggressiveClassifier(SGDClassifier):
                  n_iter=5, shuffle=False, verbose=0, loss="hinge",
                  n_jobs=1, random_state=0, class_weight=None,
                  warm_start=False):
-        self.C = C
-        self.loss = loss
         SGDClassifier.__init__(self,
                                penalty=None,
                                fit_intercept=fit_intercept,
@@ -96,6 +94,8 @@ class PassiveAggressiveClassifier(SGDClassifier):
                                warm_start=warm_start,
                                class_weight=class_weight,
                                n_jobs=n_jobs)
+        self.C = C
+        self.loss = loss
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit linear model with Passive Aggressive algorithm.
@@ -194,8 +194,8 @@ class PassiveAggressiveRegressor(SGDRegressor):
 
     loss : string, optional
         The loss function to be used:
-        pa1: eta = min(alpha, loss/norm(x))
-        pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
+        epsilon_insensitive: equivalent to PA-I in the reference paper.
+        squared_epsilon_insensitive: equivalent to PA-II in the reference paper.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -224,12 +224,10 @@ class PassiveAggressiveRegressor(SGDRegressor):
 
     """
     def __init__(self, C=1.0, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, loss="pa1",
+                 n_iter=5, shuffle=False, verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON,
                  random_state=0, class_weight=None, warm_start=False):
-        self.C = C
         SGDRegressor.__init__(self,
-                              loss="epsilon_insensitive",
                               penalty=None,
                               l1_ratio=0,
                               epsilon=epsilon,
@@ -239,8 +237,9 @@ class PassiveAggressiveRegressor(SGDRegressor):
                               shuffle=shuffle,
                               verbose=verbose,
                               random_state=random_state,
-                              learning_rate=loss,
                               warm_start=warm_start)
+        self.C = C
+        self.loss = loss
 
     def partial_fit(self, X, y, sample_weight=None):
         """Fit linear model with Passive Aggressive algorithm.
@@ -261,8 +260,12 @@ class PassiveAggressiveRegressor(SGDRegressor):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, alpha=1.0, C=self.C, n_iter=1,
-                                 sample_weight=sample_weight)
+        lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
+        return self._partial_fit(X, y, alpha=1.0, C=self.C,
+                                 loss="epsilon_insensitive",
+                                 learning_rate=lr, n_iter=1,
+                                 sample_weight=sample_weight,
+                                 coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -289,7 +292,10 @@ class PassiveAggressiveRegressor(SGDRegressor):
         -------
         self : returns an instance of self.
         """
+        lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._fit(X, y, alpha=1.0, C=self.C,
+                         loss="epsilon_insensitive",
+                         learning_rate=lr,
                          coef_init=coef_init,
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
