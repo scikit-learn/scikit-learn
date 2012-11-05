@@ -8,25 +8,25 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
 
-from ... import datasets
-from ... import svm
-from ..metrics import auc
-from ..metrics import classification_report
-from ..metrics import confusion_matrix
-from ..metrics import explained_variance_score
-from ..metrics import r2_score
-from ..metrics import f1_score
-from ..metrics import matthews_corrcoef
-from ..metrics import mean_squared_error
-from ..metrics import precision_recall_curve
-from ..metrics import precision_recall_fscore_support
-from ..metrics import precision_score
-from ..metrics import recall_score
-from ..metrics import roc_curve
-from ..metrics import auc_score
-from ..metrics import average_precision_score
-from ..metrics import zero_one
-from ..metrics import hinge_loss
+from sklearn import datasets
+from sklearn import svm
+from sklearn.metrics import auc
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import explained_variance_score
+from sklearn.metrics import r2_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import roc_curve
+from sklearn.metrics import auc_score
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import zero_one
+from sklearn.metrics import hinge_loss
 
 
 def make_prediction(dataset=None, binary=False):
@@ -291,6 +291,20 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(r, [0.92, 0.90, 0.17], 2)
     assert_array_almost_equal(f, [0.87, 0.62, 0.26], 2)
     assert_array_equal(s, [25, 20, 30])
+
+
+def test_precision_recall_f1_score_multiclass_break():
+    """Test Precision Recall and F1 Score for multiclass classification task"""
+    # initialize data
+    y_true = np.array([0,1,0,0,1,1,0,1,0,0,1,0,1,0,1])
+    y_pred = np.array([1,1,0,1,0,1,1,1,1,0,1,0,1,0,1])
+    pos_label_ = None # to set it as a multi-class task
+
+    # compute scores with default labels introspection
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, 
+                                                 pos_label=pos_label_, 
+                                                 average='weighted')
+
 
 
 def test_zero_precision_recall():
