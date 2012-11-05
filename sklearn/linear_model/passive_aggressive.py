@@ -86,7 +86,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
         self.C = C
         self.loss = loss
 
-    def partial_fit(self, X, y):
+    def partial_fit(self, X, y, classes=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -97,6 +97,14 @@ class PassiveAggressiveClassifier(SGDClassifier):
         y : numpy array of shape [n_samples]
             Subset of the target values
 
+        classes : array, shape = [n_classes]
+            Classes across all calls to partial_fit.
+            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that y doesn't need to contain all labels in `classes`.
+
         Returns
         -------
         self : returns an instance of self.
@@ -104,6 +112,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="hinge", learning_rate=lr, n_iter=1,
+                                 classes=classes, sample_weight=None,
                                  coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):
@@ -232,6 +241,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",
                                  learning_rate=lr, n_iter=1,
+                                 sample_weight=None,
                                  coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):

@@ -76,6 +76,18 @@ def test_classifier_accuracy():
             assert_greater(score, 0.79)
 
 
+def test_classifier_partial_fit():
+    classes = np.unique(y)
+    for data in (X, X_csr):
+            clf = PassiveAggressiveClassifier(C=1.0,
+                                              fit_intercept=True,
+                                              random_state=0)
+            for t in xrange(30):
+                clf.partial_fit(data, y, classes)
+            score = clf.score(data, y)
+            assert_greater(score, 0.79)
+
+
 def test_classifier_correctness():
     y_bin = y.copy()
     y_bin[y != 1] = -1
@@ -107,6 +119,20 @@ def test_regressor_mse():
                                              fit_intercept=fit_intercept,
                                              random_state=0)
             reg.fit(data, y_bin)
+            pred = reg.predict(data)
+            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+
+
+def test_regressor_partial_fit():
+    y_bin = y.copy()
+    y_bin[y != 1] = -1
+
+    for data in (X, X_csr):
+            reg = PassiveAggressiveRegressor(C=1.0,
+                                             fit_intercept=True,
+                                             random_state=0)
+            for t in xrange(50):
+                reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
             assert_less(np.mean((pred - y_bin) ** 2), 1.7)
 
