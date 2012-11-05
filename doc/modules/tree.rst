@@ -123,9 +123,20 @@ Once trained, we can export the tree in `Graphviz
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
-    >>> from StringIO import StringIO
-    >>> out = StringIO()
-    >>> out = tree.export_graphviz(clf, out_file=out)
+    >>> with open("iris.dot", 'w') as f:
+    >>>     tree.export_graphviz(clf, out_file=f)
+
+Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
+supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
+
+Alternatively, if we have Python module ``pydot`` installed, we can generate
+a PDF file (or any other supported file type) directly in Python::
+
+    >>> import StringIO, pydot
+    >>> dot_data = StringIO.StringIO()
+    >>> tree.export_graphviz(clf, out_file=dot_data)
+    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())
+    >>> graph.write_pdf("iris.pdf")
 
 .. only:: html
 
