@@ -167,6 +167,38 @@ cdef class Hinge(Classification):
         return Hinge, (self.threshold,)
 
 
+cdef class SquaredHinge(LossFunction):
+    """Squared Hinge loss for binary classification tasks with y in {-1,1}
+
+    Parameters
+    ----------
+
+    threshold : float > 0.0
+        Margin threshold. When threshold=1.0, one gets the loss used by SVM.
+        When threshold=0.0, one gets the loss used by the Perceptron.
+    """
+
+    cdef double threshold
+
+    def __init__(self, double threshold=1.0):
+        self.threshold = threshold
+
+    cpdef double loss(self, double p, double y):
+        cdef double z = 1 - p * y
+        if z > 0:
+            return z * z
+        return 0.0
+
+    cpdef double dloss(self, double p, double y):
+        cdef double z = 1 - p * y
+        if z > 0:
+            return -2 * y * z
+        return 0.0
+
+    def __reduce__(self):
+        return SquaredHinge, (self.threshold,)
+
+
 cdef class Log(Classification):
     """Logistic regression loss for binary classification with y in {-1, 1}"""
 

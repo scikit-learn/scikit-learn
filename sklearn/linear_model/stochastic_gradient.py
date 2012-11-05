@@ -21,6 +21,7 @@ from ..utils.extmath import safe_sparse_dot
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from .sgd_fast import Hinge
+from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
 from .sgd_fast import ModifiedHuber
 from .sgd_fast import SquaredLoss
@@ -135,7 +136,7 @@ class BaseSGD(BaseEstimator):
         try:
             return LEARNING_RATE_TYPES[learning_rate]
         except KeyError:
-            raise ValueError("learning rate %s"
+            raise ValueError("learning rate %s "
                              "is not supported. " % learning_rate)
 
     def _get_penalty_type(self, penalty):
@@ -360,6 +361,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
+        "squared_hinge": (SquaredHinge, 1.0),
         "perceptron": (Hinge, 0.0),
         "log": (Log, ),
         "modified_huber": (ModifiedHuber, ),
@@ -833,8 +835,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
 
-    def _partial_fit(self, X, y, alpha, C, n_iter, sample_weight=None,
-                     coef_init=None, intercept_init=None):
+    def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
+                     n_iter, sample_weight,
+                     coef_init, intercept_init):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
         y = y.ravel()
@@ -851,7 +854,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
 
-        self._fit_regressor(X, y, alpha, C, sample_weight, n_iter)
+        self._fit_regressor(X, y, alpha, C, loss, learning_rate,
+                            sample_weight, n_iter)
 
         self.t_ += n_iter * n_samples
 
@@ -876,10 +880,14 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, self.alpha, C=1.0, n_iter=1,
-                                 sample_weight=sample_weight)
+        return self._partial_fit(X, y, self.alpha, C=1.0,
+                                 loss=self.loss,
+                                 learning_rate=self.learning_rate, n_iter=1,
+                                 sample_weight=sample_weight,
+                                 coef_init=None, intercept_init=None)
 
-    def _fit(self, X, y, alpha, C, coef_init=None, intercept_init=None,
+    def _fit(self, X, y, alpha, C, loss, learning_rate,
+             coef_init=None, intercept_init=None,
             sample_weight=None):
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
@@ -893,7 +901,8 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        return self._partial_fit(X, y, alpha, C, self.n_iter, sample_weight,
+        return self._partial_fit(X, y, alpha, C, self.loss, self.learning_rate,
+                                 self.n_iter, sample_weight,
                                  coef_init, intercept_init)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
@@ -922,6 +931,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         self : returns an instance of self.
         """
         return self._fit(X, y, alpha=self.alpha, C=1.0,
+                         loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
@@ -956,12 +966,13 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         """
         return self.decision_function(X)
 
-    def _fit_regressor(self, X, y, alpha, C, sample_weight, n_iter):
+    def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
+                       sample_weight, n_iter):
         dataset, intercept_decay = _make_dataset(X, y, sample_weight)
 
-        loss_function = self._get_loss_function(self.loss)
+        loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
-        learning_rate_type = self._get_learning_rate_type(self.learning_rate)
+        learning_rate_type = self._get_learning_rate_type(learning_rate)
 
         if self.t_ is None:
             self._init_t(loss_function)
