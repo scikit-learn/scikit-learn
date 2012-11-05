@@ -293,18 +293,19 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_equal(s, [25, 20, 30])
 
 
-def test_precision_recall_f1_score_multiclass_break():
-    """Test Precision Recall and F1 Score for multiclass classification task"""
+def test_precision_recall_f1_score_multiclass_pos_label_none():
+    """Test Precision Recall and F1 Score for multiclass classification task
+
+    GH Issue #1296
+    """
     # initialize data
-    y_true = np.array([0,1,0,0,1,1,0,1,0,0,1,0,1,0,1])
-    y_pred = np.array([1,1,0,1,0,1,1,1,1,0,1,0,1,0,1])
-    pos_label_ = None # to set it as a multi-class task
+    y_true = np.array([0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1])
+    y_pred = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1])
 
     # compute scores with default labels introspection
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                 pos_label=pos_label_,
+                                                 pos_label=None,
                                                  average='weighted')
-
 
 
 def test_zero_precision_recall():

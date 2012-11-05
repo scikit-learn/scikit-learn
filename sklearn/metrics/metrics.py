@@ -13,9 +13,9 @@ better
 # License: BSD Style.
 
 import numpy as np
-
-from sklearn.utils import check_arrays
 from scipy.sparse import coo_matrix
+
+from ..utils import check_arrays
 
 
 def unique_labels(*lists_of_labels):
@@ -647,7 +647,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2:# and pos_label != None:
+    elif n_labels == 2 and pos_label != None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
