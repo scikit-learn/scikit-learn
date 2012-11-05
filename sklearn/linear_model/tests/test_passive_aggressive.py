@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 
@@ -94,6 +95,20 @@ def test_classifier_correctness():
         clf2.fit(X, y_bin)
 
         assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
+
+
+def test_regressor_mse():
+    y_bin = y.copy()
+    y_bin[y != 1] = -1
+
+    for data in (X, X_csr):
+        for fit_intercept in (True, False):
+            reg = PassiveAggressiveRegressor(C=1.0, n_iter=50,
+                                             fit_intercept=fit_intercept,
+                                             random_state=0)
+            reg.fit(data, y_bin)
+            pred = reg.predict(data)
+            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
 
 
 def test_regressor_correctness():
