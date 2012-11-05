@@ -44,7 +44,7 @@ class MyPerceptron(object):
 
 def test_perceptron_accuracy():
     for data in (X, X_csr):
-        clf = Perceptron(n_iter=30, shuffle=False, seed=0)
+        clf = Perceptron(n_iter=30, shuffle=False, random_state=None)
         clf.fit(data, y)
         score = clf.score(data, y)
         assert_true(score >= 0.7)
