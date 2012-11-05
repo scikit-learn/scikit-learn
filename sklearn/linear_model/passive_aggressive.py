@@ -1,4 +1,4 @@
-# Author: Rob Zinkov
+# Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD Style.
 
 from .stochastic_gradient import SGDClassifier

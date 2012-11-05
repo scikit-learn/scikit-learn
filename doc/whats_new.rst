@@ -7,9 +7,10 @@
 
 Changelog
 ---------
-   - New estimator :class: `linear_model.PassiveAggressiveClassifier` and
-     `linear_model.PassiverAggressiveRegressor` by `Rob Zinkov`
-   
+   - New estimators :class: `linear_model.PassiveAggressiveClassifier` and
+     `linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
+     `Mathieu Blondel`_.
+
    - The table of contents has now been made expandible (on the
      index page) - by Jaques Grobler.
 
@@ -54,7 +55,7 @@ Changelog
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
-     This applies to :class:`dic_learning.DictionaryLearning`, 
+     This applies to :class:`dic_learning.DictionaryLearning`,
      :class:`dic_learning.MiniBatchDictionaryLearning`,
      :func:'dic_learning.dict_learning', :func:'dic_learning.dict_learning_online'
 
