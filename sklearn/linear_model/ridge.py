@@ -16,6 +16,8 @@ from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
+import numbers
+
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
@@ -155,38 +157,52 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         return coefs
     elif solver == "svd":
+        if isinstance(alpha, numbers.Number):
+            alpha = np.array([alpha])
+        if y.ndim == 1:
+            y1 = y[:, np.newaxis]
+        else:
+            y1 = y1
+        alpha = np.asanyarray(alpha)
         alphas = alpha.reshape(-1, alpha.shape[-1])
         U, s, VT = linalg.svd(X, full_matrices=False)
-        UT_y = np.dot(U.T, y)
+        UT_y = np.dot(U.T, y1)
         isvwp = inv_singular_values_with_penalties = \
             s[np.newaxis, :, np.newaxis] /\
             (s[np.newaxis, :, np.newaxis] ** 2 + alphas[:, np.newaxis, :])
         isvwp_times_UT_y = isvwp * UT_y[np.newaxis, :, :]
-        coefs = np.empty([alphas.shape[0], y.shape[1], X.shape[1]])
+        coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
         for i in range(alphas.shape[0]):
             coefs[i] = np.dot(VT.T, isvwp_times_UT_y[i]).T
 
         return coefs.reshape(list(alpha.shape[:-1]) + \
                              [coefs.shape[1], coefs.shape[2]])
     elif solver == "eigen":
+        if isinstance(alpha, numbers.Number):
+            alpha = np.array([alpha])
+        if y.ndim == 1:
+            y1 = y[:, np.newaxis]
+        else:
+            y1 = y1
+        alpha = np.asanyarray(alpha)
         alphas = alpha.reshape(-1, alpha.shape[-1])
         if n_features > n_samples:
             d, U = linalg.eigh(np.dot(X, X.T))
-            UT_y = np.dot(U.T, y)
+            UT_y = np.dot(U.T, y1)
             XT_U = np.dot(X.T, U)
             ievwp = inv_eigenvalues_with_penalties = \
                 1. / (d[np.newaxis, :, np.newaxis] + alphas[:, np.newaxis, :])
             ievwp_times_UT_y = ievwp * UT_y[np.newaxis, :, :]
-            coefs = np.empty([alphas.shape[0], y.shape[1], X.shape[1]])
+            coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
             for i in range(alphas.shape[0]):
                 coefs[i] = np.dot(XT_U, ievwp_times_UT_y[i]).T
         else:
             d, V = linalg.eigh(np.dot(X.T, X))
-            V_T_X_T_y = np.dot(V.T, np.dot(X.T, y))
+            V_T_X_T_y = np.dot(V.T, np.dot(X.T, y1))
             ievwp = inv_eigenvalues_with_penalties = \
                 1. / (d[np.newaxis, :, np.newaxis] + alphas[:, np.newaxis, :])
             ievwp_times_V_T_X_T_y = ievwp * V_T_X_T_y[np.newaxis, :, :]
-            coefs = np.empty([alphas.shape[0], y.shape[1], X.shape[1]])
+            coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
             for i in range(alphas.shape[0]):
                 coefs[i] = np.dot(V, ievwp_times_V_T_X_T_y[i]).T
 
