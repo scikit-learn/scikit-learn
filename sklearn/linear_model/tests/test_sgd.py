@@ -522,6 +522,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
+        clf = self.factory(alpha=0.01, learning_rate="constant",
+                           eta0=0.1, loss="squared_epsilon_insensitive")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
         clf = self.factory(alpha=0.01, loss="huber")
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))

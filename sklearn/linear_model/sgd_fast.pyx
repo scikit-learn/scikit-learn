@@ -299,6 +299,35 @@ cdef class EpsilonInsensitive(Regression):
         return EpsilonInsensitive, (self.epsilon,)
 
 
+cdef class SquaredEpsilonInsensitive(Regression):
+    """Epsilon-Insensitive loss.
+
+    loss = max(0, |y - p| - epsilon)^2
+    """
+
+    cdef double epsilon
+
+    def __init__(self, double epsilon):
+        self.epsilon = epsilon
+
+    cpdef double loss(self, double p, double y):
+        cdef double ret = abs(y - p) - self.epsilon
+        return ret * ret if ret > 0 else 0
+
+    cpdef double dloss(self, double p, double y):
+        cdef double z
+        z = y - p
+        if z > self.epsilon:
+            return -2 * (z - self.epsilon)
+        elif z < self.epsilon:
+            return 2 * (-z - self.epsilon)
+        else:
+            return 0
+
+    def __reduce__(self):
+        return SquaredEpsilonInsensitive, (self.epsilon,)
+
+
 def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,

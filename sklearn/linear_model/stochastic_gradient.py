@@ -27,6 +27,7 @@ from .sgd_fast import ModifiedHuber
 from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
+from .sgd_fast import SquaredEpsilonInsensitive
 
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
@@ -126,7 +127,8 @@ class BaseSGD(BaseEstimator):
         try:
             loss_ = self.loss_functions[loss]
             loss_class, args = loss_[0], loss_[1:]
-            if loss in ('huber', 'epsilon_insensitive'):
+            if loss in ('huber', 'epsilon_insensitive',
+                        'squared_epsilon_insensitive'):
                 args = (self.epsilon, )
             return loss_class(*args)
         except KeyError:
@@ -368,6 +370,8 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
+        "squared_epsilon_insensitive": (SquaredEpsilonInsensitive,
+                                        DEFAULT_EPSILON),
     }
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
@@ -810,7 +814,9 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     loss_functions = {
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
-        "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON)
+        "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
+        "squared_epsilon_insensitive": (SquaredEpsilonInsensitive,
+                                        DEFAULT_EPSILON),
     }
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
@@ -901,7 +907,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        return self._partial_fit(X, y, alpha, C, self.loss, self.learning_rate,
+        return self._partial_fit(X, y, alpha, C, loss, learning_rate,
                                  self.n_iter, sample_weight,
                                  coef_init, intercept_init)
 
