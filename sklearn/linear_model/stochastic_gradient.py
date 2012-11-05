@@ -412,9 +412,10 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
         self._expanded_class_weight = weight
 
-    def _partial_fit(self, X, y, alpha=0.0001, C=1.0, n_iter=1,
-                     classes=None, sample_weight=None,
-                     coef_init=None, intercept_init=None):
+    def _partial_fit(self, X, y, alpha, C,
+                     loss, learning_rate, n_iter,
+                     classes, sample_weight,
+                     coef_init, intercept_init):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y).ravel()
 
@@ -443,16 +444,18 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
-        self.loss_function = self._get_loss_function(self.loss)
+        self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
             self._init_t(self.loss_function)
 
         # delegate to concrete training procedure
         if n_classes > 2:
             self._fit_multiclass(X, y, alpha=alpha, C=C,
+                                 learning_rate=learning_rate,
                                  sample_weight=sample_weight, n_iter=n_iter)
         elif n_classes == 2:
             self._fit_binary(X, y, alpha=alpha, C=C,
+                             learning_rate=learning_rate,
                              sample_weight= sample_weight, n_iter=n_iter)
         else:
             raise ValueError("The number of class labels must be "
@@ -489,11 +492,14 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, n_iter=1,
-                                 classes=classes, sample_weight=sample_weight)
+        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
+                                 learning_rate=self.learning_rate, n_iter=1,
+                                 classes=classes, sample_weight=sample_weight,
+                                 coef_init=None, intercept_init=None)
 
-    def _fit(self, X, y, alpha=0.0001, C=1.0, coef_init=None,
-             intercept_init=None, class_weight=None, sample_weight=None):
+    def _fit(self, X, y, alpha, C, loss, learning_rate,
+             coef_init=None, intercept_init=None, class_weight=None,
+             sample_weight=None):
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                           "method is deprecated and will be removed in 0.13. "
@@ -521,8 +527,8 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        self._partial_fit(X, y, alpha, C, self.n_iter, classes,
-                          sample_weight, coef_init, intercept_init)
+        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
+                          classes, sample_weight, coef_init, intercept_init)
 
         # fitting is over, we can now transform coef_ to fortran order
         # for faster predictions
@@ -557,6 +563,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         self : returns an instance of self.
         """
         return self._fit(X, y, alpha=self.alpha, C=1.0,
+                         loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          class_weight=class_weight,
                          sample_weight=sample_weight)
@@ -620,9 +627,11 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         """
         return np.log(self.predict_proba(X))
 
-    def _fit_binary(self, X, y, alpha, C, sample_weight, n_iter):
+    def _fit_binary(self, X, y, alpha, C, sample_weight,
+                    learning_rate, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, intercept = fit_binary(self, 1, X, y, alpha, C, n_iter,
+        coef, intercept = fit_binary(self, 1, X, y, alpha, C,
+                                     learning_rate, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
                                      sample_weight)
@@ -631,7 +640,8 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.atleast_1d(intercept)
 
-    def _fit_multiclass(self, X, y, alpha, C, sample_weight, n_iter):
+    def _fit_multiclass(self, X, y, alpha, C, learning_rate,
+                        sample_weight, n_iter):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -639,8 +649,8 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         """
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary)(self, i, X, y, alpha, C, n_iter,
-                                self._expanded_class_weight[i], 1.,
+            delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
+                                n_iter, self._expanded_class_weight[i], 1.,
                                 sample_weight)
             for i in xrange(len(self.classes_)))
 
@@ -667,8 +677,8 @@ def _prepare_fit_binary(est, y, i):
     return y_i, coef, intercept
 
 
-def fit_binary(est, i, X, y, alpha, C, n_iter, pos_weight, neg_weight,
-               sample_weight):
+def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
+               pos_weight, neg_weight, sample_weight):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -678,7 +688,7 @@ def fit_binary(est, i, X, y, alpha, C, n_iter, pos_weight, neg_weight,
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
     penalty_type = est._get_penalty_type(est.penalty)
-    learning_rate_type = est._get_learning_rate_type(est.learning_rate)
+    learning_rate_type = est._get_learning_rate_type(learning_rate)
 
     return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,

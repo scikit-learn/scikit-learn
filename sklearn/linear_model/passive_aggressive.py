@@ -41,8 +41,8 @@ class PassiveAggressiveClassifier(SGDClassifier):
 
     loss : string, optional
         The loss function to be used:
-        pa1: eta = min(alpha, loss/norm(x))
-        pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
+        hinge: equivalent to PA-I in the reference paper.
+        squared_hinge: equivalent to PA-II in the reference paper.
 
     class_weight : dict, {class_label : weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
@@ -80,12 +80,12 @@ class PassiveAggressiveClassifier(SGDClassifier):
 
     """
     def __init__(self, C=1.0, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, loss="pa1",
+                 n_iter=5, shuffle=False, verbose=0, loss="hinge",
                  n_jobs=1, random_state=0, class_weight=None,
                  warm_start=False):
         self.C = C
+        self.loss = loss
         SGDClassifier.__init__(self,
-                               loss="hinge",
                                penalty=None,
                                fit_intercept=fit_intercept,
                                n_iter=n_iter,
@@ -93,7 +93,6 @@ class PassiveAggressiveClassifier(SGDClassifier):
                                verbose=verbose,
                                random_state=random_state,
                                eta0=1.0,
-                               learning_rate=loss,
                                warm_start=warm_start,
                                class_weight=class_weight,
                                n_jobs=n_jobs)
@@ -125,8 +124,11 @@ class PassiveAggressiveClassifier(SGDClassifier):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, alpha=1.0, C=self.C, n_iter=1,
-                                 classes=classes, sample_weight=sample_weight)
+        lr = "pa1" if self.loss == "hinge" else "pa2"
+        return self._partial_fit(X, y, alpha=1.0, C=self.C,
+                                 loss="hinge", learning_rate=lr, n_iter=1,
+                                 classes=classes, sample_weight=sample_weight,
+                                 coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             class_weight=None, sample_weight=None):
@@ -154,7 +156,9 @@ class PassiveAggressiveClassifier(SGDClassifier):
         -------
         self : returns an instance of self.
         """
+        lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(X, y, alpha=1.0, C=self.C,
+                         loss="hinge", learning_rate=lr,
                          coef_init=coef_init, intercept_init=intercept_init,
                          class_weight=class_weight,
                          sample_weight=sample_weight)

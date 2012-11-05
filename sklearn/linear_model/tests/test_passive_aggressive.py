@@ -78,17 +78,21 @@ def test_classifier_correctness():
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    clf1 = MyPassiveAggressive(C=1.0,
-                               fit_intercept=True,
-                               n_iter=2)
-    clf1.fit(X, y_bin)
+    for loss in ("hinge", "squared_hinge"):
 
-    clf2 = PassiveAggressiveClassifier(C=1.0,
-                                       fit_intercept=True,
-                                       n_iter=2)
-    clf2.fit(X, y_bin)
+        clf1 = MyPassiveAggressive(C=1.0,
+                                   loss=loss,
+                                   fit_intercept=True,
+                                   n_iter=2)
+        clf1.fit(X, y_bin)
 
-    assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
+        clf2 = PassiveAggressiveClassifier(C=1.0,
+                                           loss=loss,
+                                           fit_intercept=True,
+                                           n_iter=2)
+        clf2.fit(X, y_bin)
+
+        assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
 
 def test_regressor_correctness():
     y_bin = y.copy()
