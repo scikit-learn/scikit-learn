@@ -154,6 +154,45 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coefs = np.ravel(coefs)
 
         return coefs
+    elif solver == "svd":
+        alphas = alpha.reshape(-1, alpha.shape[-1])
+        U, s, VT = linalg.svd(X, full_matrices=False)
+        UT_y = np.dot(U.T, y)
+        isvwp = inv_singular_values_with_penalties = \
+            s[np.newaxis, :, np.newaxis] /\
+            (s[np.newaxis, :, np.newaxis] ** 2 + alphas[:, np.newaxis, :])
+        isvwp_times_UT_y = isvwp * UT_y[np.newaxis, :, :]
+        coefs = np.empty([alphas.shape[0], y.shape[1], X.shape[1]])
+        for i in range(alphas.shape[0]):
+            coefs[i] = np.dot(VT.T, isvwp_times_UT_y[i]).T
+
+        return coefs.reshape(list(alpha.shape[:-1]) + \
+                             [coefs.shape[1], coefs.shape[2]])
+    elif solver == "eigen":
+        alphas = alpha.reshape(-1, alpha.shape[-1])
+        if n_features > n_samples:
+            d, U = linalg.eigh(np.dot(X, X.T))
+            UT_y = np.dot(U.T, y)
+            XT_U = np.dot(X.T, U)
+            ievwp = inv_eigenvalues_with_penalties = \
+                1. / (d[np.newaxis, :, np.newaxis] + alphas[:, np.newaxis, :])
+            ievwp_times_UT_y = ievwp * UT_y[np.newaxis, :, :]
+            coefs = np.empty([alphas.shape[0], y.shape[1], X.shape[1]])
+            for i in range(alphas.shape[0]):
+                coefs[i] = np.dot(XT_U, ievwp_times_UT_y[i]).T
+        else:
+            d, V = linalg.eigh(np.dot(X.T, X))
+            V_T_X_T_y = np.dot(V.T, np.dot(X.T, y))
+            ievwp = inv_eigenvalues_with_penalties = \
+                1. / (d[np.newaxis, :, np.newaxis] + alphas[:, np.newaxis, :])
+            ievwp_times_V_T_X_T_y = ievwp * V_T_X_T_y[np.newaxis, :, :]
+            coefs = np.empty([alphas.shape[0], y.shape[1], X.shape[1]])
+            for i in range(alphas.shape[0]):
+                coefs[i] = np.dot(V, ievwp_times_V_T_X_T_y[i]).T
+
+        return coefs.reshape(list(alphas.shape[:-1]) + \
+                                 [coefs.shape[1], coefs.shape[2]])
+
     else:
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
