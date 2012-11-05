@@ -368,14 +368,14 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, C=1.0,
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
-                                            alpha=alpha, C=C, l1_ratio=l1_ratio,
+                                            alpha=alpha, l1_ratio=l1_ratio,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, epsilon=epsilon,
@@ -412,7 +412,8 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
         self._expanded_class_weight = weight
 
-    def _partial_fit(self, X, y, n_iter, classes=None, sample_weight=None,
+    def _partial_fit(self, X, y, alpha=0.0001, C=1.0, n_iter=1,
+                     classes=None, sample_weight=None,
                      coef_init=None, intercept_init=None):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y).ravel()
@@ -448,9 +449,11 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
         # delegate to concrete training procedure
         if n_classes > 2:
-            self._fit_multiclass(X, y, sample_weight, n_iter)
+            self._fit_multiclass(X, y, alpha=alpha, C=C,
+                                 sample_weight=sample_weight, n_iter=n_iter)
         elif n_classes == 2:
-            self._fit_binary(X, y, sample_weight, n_iter)
+            self._fit_binary(X, y, alpha=alpha, C=C,
+                             sample_weight= sample_weight, n_iter=n_iter)
         else:
             raise ValueError("The number of class labels must be "
                              "greater than one.")
@@ -486,35 +489,11 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, n_iter=1, classes=classes,
-                                 sample_weight=sample_weight)
+        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, n_iter=1,
+                                 classes=classes, sample_weight=sample_weight)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
-
-        y : numpy array of shape [n_samples]
-            Target values
-
-        coef_init : array, shape = [n_classes,n_features]
-            The initial coeffients to warm-start the optimization.
-
-        intercept_init : array, shape = [n_classes]
-            The initial intercept to warm-start the optimization.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
+    def _fit(self, X, y, alpha=0.0001, C=1.0, coef_init=None,
+             intercept_init=None, class_weight=None, sample_weight=None):
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                           "method is deprecated and will be removed in 0.13. "
@@ -542,7 +521,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        self._partial_fit(X, y, self.n_iter, classes,
+        self._partial_fit(X, y, alpha, C, self.n_iter, classes,
                           sample_weight, coef_init, intercept_init)
 
         # fitting is over, we can now transform coef_ to fortran order
@@ -550,6 +529,37 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         self._set_coef(self.coef_)
 
         return self
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            class_weight=None, sample_weight=None):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_classes,n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [n_classes]
+            The initial intercept to warm-start the optimization.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._fit(X, y, alpha=self.alpha, C=1.0,
+                         coef_init=coef_init, intercept_init=intercept_init,
+                         class_weight=class_weight,
+                         sample_weight=sample_weight)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -610,9 +620,9 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         """
         return np.log(self.predict_proba(X))
 
-    def _fit_binary(self, X, y, sample_weight, n_iter):
+    def _fit_binary(self, X, y, alpha, C, sample_weight, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, intercept = fit_binary(self, 1, X, y, n_iter,
+        coef, intercept = fit_binary(self, 1, X, y, alpha, C, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
                                      sample_weight)
@@ -621,7 +631,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.atleast_1d(intercept)
 
-    def _fit_multiclass(self, X, y, sample_weight, n_iter):
+    def _fit_multiclass(self, X, y, alpha, C, sample_weight, n_iter):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -629,7 +639,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         """
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary)(self, i, X, y, n_iter,
+            delayed(fit_binary)(self, i, X, y, alpha, C, n_iter,
                                 self._expanded_class_weight[i], 1.,
                                 sample_weight)
             for i in xrange(len(self.classes_)))
@@ -657,7 +667,7 @@ def _prepare_fit_binary(est, y, i):
     return y_i, coef, intercept
 
 
-def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
+def fit_binary(est, i, X, y, alpha, C, n_iter, pos_weight, neg_weight,
                sample_weight):
     """Fit a single binary classifier.
 
@@ -671,7 +681,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     learning_rate_type = est._get_learning_rate_type(est.learning_rate)
 
     return plain_sgd(coef, intercept, est.loss_function,
-                     penalty_type, est.alpha, est.C, est.l1_ratio,
+                     penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), est.random_state,
                      pos_weight, neg_weight,
@@ -791,7 +801,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON)
     }
 
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001, C=1.0,
+    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=0,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
@@ -804,7 +814,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             epsilon = p
 
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                           alpha=alpha, C=C, l1_ratio=l1_ratio,
+                                           alpha=alpha, l1_ratio=l1_ratio,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, epsilon=epsilon,
@@ -813,7 +823,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
 
-    def _partial_fit(self, X, y, n_iter, sample_weight=None,
+    def _partial_fit(self, X, y, alpha, C, n_iter, sample_weight=None,
                      coef_init=None, intercept_init=None):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
@@ -831,7 +841,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
 
-        self._fit_regressor(X, y, sample_weight, n_iter)
+        self._fit_regressor(X, y, alpha, C, sample_weight, n_iter)
 
         self.t_ += n_iter * n_samples
 
@@ -856,7 +866,25 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, n_iter=1, sample_weight=sample_weight)
+        return self._partial_fit(X, y, self.alpha, C=1.0, n_iter=1,
+                                 sample_weight=sample_weight)
+
+    def _fit(self, X, y, alpha, C, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        if self.warm_start and self.coef_ is not None:
+            if coef_init is None:
+                coef_init = self.coef_
+            if intercept_init is None:
+                intercept_init = self.intercept_
+        else:
+            self.coef_ = None
+            self.intercept_ = None
+
+        # Clear iteration count for multiple call to fit.
+        self.t_ = None
+
+        return self._partial_fit(X, y, alpha, C, self.n_iter, sample_weight,
+                                 coef_init, intercept_init)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -883,20 +911,10 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         -------
         self : returns an instance of self.
         """
-        if self.warm_start and self.coef_ is not None:
-            if coef_init is None:
-                coef_init = self.coef_
-            if intercept_init is None:
-                intercept_init = self.intercept_
-        else:
-            self.coef_ = None
-            self.intercept_ = None
-
-        # Clear iteration count for multiple call to fit.
-        self.t_ = None
-
-        return self._partial_fit(X, y, self.n_iter, sample_weight,
-                                 coef_init, intercept_init)
+        return self._fit(X, y, alpha=self.alpha, C=1.0,
+                         coef_init=coef_init,
+                         intercept_init=intercept_init,
+                         sample_weight=sample_weight)
 
     def decision_function(self, X):
         """Predict using the linear model
@@ -928,7 +946,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         """
         return self.decision_function(X)
 
-    def _fit_regressor(self, X, y, sample_weight, n_iter):
+    def _fit_regressor(self, X, y, alpha, C, sample_weight, n_iter):
         dataset, intercept_decay = _make_dataset(X, y, sample_weight)
 
         loss_function = self._get_loss_function(self.loss)
@@ -942,7 +960,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           self.intercept_[0],
                                           loss_function,
                                           penalty_type,
-                                          self.alpha, self.C,
+                                          alpha, C,
                                           self.l1_ratio,
                                           dataset,
                                           n_iter,

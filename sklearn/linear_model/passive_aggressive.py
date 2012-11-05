@@ -79,22 +79,85 @@ class PassiveAggressiveClassifier(SGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
     """
-    def __init__(self, C=0.0001, fit_intercept=True,
+    def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="pa1",
-                 n_jobs=1, random_state=0, class_weight=None, warm_start=False):
-        super(PassiveAggressiveClassifier, self).__init__(loss="hinge",
-                                                          penalty=None,
-                                                          C=C, l1_ratio=0,
-                                                          fit_intercept=fit_intercept,
-                                                          n_iter=n_iter,
-                                                          shuffle=shuffle,
-                                                          verbose=verbose,
-                                                          random_state=random_state,
-                                                          eta0=1.0,
-                                                          learning_rate=loss,
-                                                          warm_start=warm_start,
-                                                          class_weight=class_weight,
-                                                          n_jobs=n_jobs)
+                 n_jobs=1, random_state=0, class_weight=None,
+                 warm_start=False):
+        self.C = C
+        SGDClassifier.__init__(self,
+                               loss="hinge",
+                               penalty=None,
+                               fit_intercept=fit_intercept,
+                               n_iter=n_iter,
+                               shuffle=shuffle,
+                               verbose=verbose,
+                               random_state=random_state,
+                               eta0=1.0,
+                               learning_rate=loss,
+                               warm_start=warm_start,
+                               class_weight=class_weight,
+                               n_jobs=n_jobs)
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Fit linear model with Passive Aggressive algorithm.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Subset of the training data
+
+        y : numpy array of shape [n_samples]
+            Subset of the target values
+
+        classes : array, shape = [n_classes]
+            Classes across all calls to partial_fit.
+            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that y doesn't need to contain all labels in `classes`.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._partial_fit(X, y, alpha=1.0, C=self.C, n_iter=1,
+                                 classes=classes, sample_weight=sample_weight)
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            class_weight=None, sample_weight=None):
+        """Fit linear model with Passive Aggressive algorithm.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_classes,n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [n_classes]
+            The initial intercept to warm-start the optimization.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._fit(X, y, alpha=1.0, C=self.C,
+                         coef_init=coef_init, intercept_init=intercept_init,
+                         class_weight=class_weight,
+                         sample_weight=sample_weight)
 
 
 class PassiveAggressiveRegressor(SGDRegressor):
@@ -156,20 +219,73 @@ class PassiveAggressiveRegressor(SGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
     """
-    def __init__(self, C=0.0001, fit_intercept=True,
+    def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="pa1",
                  epsilon=DEFAULT_EPSILON,
                  random_state=0, class_weight=None, warm_start=False):
-        super(
-            PassiveAggressiveRegressor, self).__init__(loss="epsilon_insensitive",
-                                                       penalty=None,
-                                                       C=C, l1_ratio=0,
-                                                       epsilon=epsilon,
-                                                       eta0=1.0,
-                                                       fit_intercept=fit_intercept,
-                                                       n_iter=n_iter,
-                                                       shuffle=shuffle,
-                                                       verbose=verbose,
-                                                       random_state=random_state,
-                                                       learning_rate=loss,
-                                                       warm_start=warm_start)
+        self.C = C
+        SGDRegressor.__init__(self,
+                              loss="epsilon_insensitive",
+                              penalty=None,
+                              l1_ratio=0,
+                              epsilon=epsilon,
+                              eta0=1.0,
+                              fit_intercept=fit_intercept,
+                              n_iter=n_iter,
+                              shuffle=shuffle,
+                              verbose=verbose,
+                              random_state=random_state,
+                              learning_rate=loss,
+                              warm_start=warm_start)
+
+    def partial_fit(self, X, y, sample_weight=None):
+        """Fit linear model with Passive Aggressive algorithm.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Subset of training data
+
+        y : numpy array of shape [n_samples]
+            Subset of target values
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._partial_fit(X, y, alpha=1.0, C=self.C, n_iter=1,
+                                 sample_weight=sample_weight)
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        """Fit linear model with Passive Aggressive algorithm.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [1]
+            The initial intercept to warm-start the optimization.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._fit(X, y, alpha=1.0, C=self.C,
+                         coef_init=coef_init,
+                         intercept_init=intercept_init,
+                         sample_weight=sample_weight)
