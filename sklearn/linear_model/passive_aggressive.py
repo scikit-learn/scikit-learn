@@ -213,8 +213,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
     See also
     --------
 
-    SGDClassifier
-    Perceptron
+    SGDRegressor
 
     References
     ----------
