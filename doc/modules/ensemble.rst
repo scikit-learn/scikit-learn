@@ -130,7 +130,7 @@ addition, note that results will stop getting significantly better
 beyond a critical number of trees. The latter is the size of the random
 subsets of features to consider when splitting a node. The lower the
 greater the reduction of variance, but also the greater the increase in
-bias. Empiricial good default values are ``max_features=n_features``
+bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). The best results are also usually reached when setting
@@ -205,7 +205,7 @@ a :class:`ExtraTreesClassifier` model.
 
 In practice those estimates can be computed by explicitly passing
 ``compute_importances=True`` to the constructor of the decision trees,
-random forest and extremly randomized trees models. The result is stored
+random forest and extremely randomized trees models. The result is stored
 as an attribute named ``feature_importances_`` on the fitted model. This
 is an array with shape ``(n_features,)`` whose values are positive and sum
 to 1.0. The higher the value, the more important is the contribution of
@@ -309,7 +309,7 @@ with least squares loss and 500 base learners to the Boston house-price dataset
 (see :func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
 Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be optained via the ``feature_importances_``
+shows the feature importances which can be obtained via the ``feature_importances_``
 property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
@@ -341,8 +341,8 @@ a forward stagewise fashion:
 
     F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
 
-At each stage the decision tree :math:`h_m(x)` is choosen that
-minimizes the loss function :math:`L` given the current model
+At each stage the decision tree :math:`h_m(x)` is chosen to
+minimize the loss function :math:`L` given the current model
 :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
 
   .. math::
@@ -367,7 +367,7 @@ loss function:
     F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
-Where the step length :math:`\gamma_m` is choosen using line search:
+Where the step length :math:`\gamma_m` is chosen using line search:
 
   .. math::
 
