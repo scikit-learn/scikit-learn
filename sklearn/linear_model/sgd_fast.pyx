@@ -24,6 +24,7 @@ cdef extern from "math.h":
     cdef extern double log(double x)
     cdef extern double sqrt(double x)
     cdef extern double pow(double x, double y)
+    cdef extern double fabs(double x)
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
@@ -39,6 +40,8 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
+DEF PA1 = 4
+DEF PA2 = 5
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -268,7 +271,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
-              double alpha, double rho,
+              double alpha, double C,
+              double rho,
               SequentialDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
@@ -315,6 +319,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(t+t0)
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
+        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
+        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -339,8 +345,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     cdef WeightVector w = WeightVector(weights)
 
-    cdef DOUBLE *x_data_ptr = NULL
-    cdef INTEGER *x_ind_ptr = NULL
+    cdef DOUBLE * x_data_ptr = NULL
+    cdef INTEGER * x_ind_ptr = NULL
 
     # helper variable
     cdef int xnnz
@@ -356,11 +362,11 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef unsigned int i = 0
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
-    cdef DOUBLE *q_data_ptr = NULL
+    cdef np.ndarray[DOUBLE, ndim = 1, mode = "c"] q = None
+    cdef DOUBLE * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <DOUBLE *> q.data
+        q_data_ptr = <DOUBLE * > q.data
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -377,14 +383,20 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         if shuffle:
             dataset.shuffle(seed)
         for i in range(n_samples):
-            dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
-                         &sample_weight)
+            dataset.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
+                         & sample_weight)
+
+            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
 
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+            elif learning_rate == PA1:
+                eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                eta = min(fabs(C / loss.dloss(p, y)), eta)
+            elif learning_rate == PA2:
+                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5 * C)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
@@ -410,7 +422,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
         # report epoch information
         if verbose > 0:
-            print("Norm: %.2f, NNZs: %d, "\
+            print("Norm: %.2f, NNZs: %d, "
             "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
                                                     weights.nonzero()[0].shape[0],
                                                     intercept, count,
@@ -434,9 +446,17 @@ cdef inline double max(double a, double b):
 cdef inline double min(double a, double b):
     return a if a <= b else b
 
+cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
+    cdef double x_norm = 0.0
+    cdef int j = 0
+    for j in range(xnnz):
+        idx = x_ind_ptr[j]
+        z = x_data_ptr[idx]
+        x_norm += z * z
+    return x_norm
 
-cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
-                    INTEGER *x_ind_ptr, int xnnz, double u):
+cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
+                    INTEGER * x_ind_ptr, int xnnz, double u):
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by
@@ -446,7 +466,7 @@ cdef void l1penalty(WeightVector w, DOUBLE *q_data_ptr,
     cdef int j = 0
     cdef int idx = 0
     cdef double wscale = w.wscale
-    cdef double* w_data_ptr = w.w_data_ptr
+    cdef double * w_data_ptr = w.w_data_ptr
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = w_data_ptr[idx]

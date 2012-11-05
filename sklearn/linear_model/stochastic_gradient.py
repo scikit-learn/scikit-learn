@@ -28,7 +28,8 @@ from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 
 
-LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3}
+LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
+                       "pa1": 4, "pa2": 5}
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
@@ -45,24 +46,25 @@ class BaseSGD(BaseEstimator):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, loss, penalty='l2', alpha=0.0001,
+    def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1, seed=0, learning_rate="optimal",
+                 verbose=0, epsilon=0.1, random_state=0, learning_rate="optimal",
                  eta0=0.0, power_t=0.5, warm_start=False, rho=None):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.alpha = alpha
+        self.C = C
         self.l1_ratio = l1_ratio
         if rho is not None:
             self.l1_ratio = 1 - rho
             warnings.warn("rho was replaced by l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
+                          "in 0.15", DeprecationWarning)
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
         self.shuffle = shuffle
-        self.seed = seed
+        self.random_state = random_state
         self.verbose = verbose
         self.eta0 = eta0
         self.power_t = power_t
@@ -93,7 +95,7 @@ class BaseSGD(BaseEstimator):
             raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
-        if self.learning_rate != "optimal":
+        if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
 
@@ -183,7 +185,7 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, order="C")
                 if intercept_init.shape != (n_classes, ):
-                    raise ValueError("Provided intercept_init " \
+                    raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
                 self.intercept_ = intercept_init
             else:
@@ -196,7 +198,7 @@ class BaseSGD(BaseEstimator):
                                        order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
-                    raise ValueError("Provided coef_init does not " \
+                    raise ValueError("Provided coef_init does not "
                                      "match dataset.")
                 self.coef_ = coef_init
             else:
@@ -206,7 +208,7 @@ class BaseSGD(BaseEstimator):
             if intercept_init is not None:
                 intercept_init = np.asarray(intercept_init, dtype=np.float64)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
-                    raise ValueError("Provided intercept_init " \
+                    raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
             else:
@@ -287,7 +289,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -342,10 +344,11 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
+    SGDClassifier(C=1.0, alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
             loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-            rho=None, seed=0, shuffle=False, verbose=0, warm_start=False)
+            random_state=0, rho=None, shuffle=False, verbose=0,
+            warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -365,18 +368,18 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
         super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
-                                            alpha=alpha, l1_ratio=l1_ratio,
+                                            alpha=alpha, C=C, l1_ratio=l1_ratio,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose, epsilon=epsilon,
-                                            seed=seed, rho=rho,
+                                            random_state=random_state, rho=rho,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
                                             warm_start=warm_start)
@@ -668,9 +671,9 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     learning_rate_type = est._get_learning_rate_type(est.learning_rate)
 
     return plain_sgd(coef, intercept, est.loss_function,
-                     penalty_type, est.alpha, est.l1_ratio,
+                     penalty_type, est.alpha, est.C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), est.seed,
+                     int(est.verbose), int(est.shuffle), est.random_state,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
@@ -726,7 +729,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -771,10 +774,10 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
-    SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
+    SGDRegressor(C=1.0, alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, rho=None, seed=0,
-           shuffle=False, verbose=0, warm_start=False)
+           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=0,
+           rho=None, shuffle=False, verbose=0, warm_start=False)
 
     See also
     --------
@@ -788,24 +791,24 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON)
     }
 
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-            l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-            verbose=0, epsilon=DEFAULT_EPSILON, p=None, seed=0,
-            learning_rate="invscaling", eta0=0.01, power_t=0.25,
-            warm_start=False, rho=None):
+    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001, C=1.0,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=0,
+                 learning_rate="invscaling", eta0=0.01, power_t=0.25,
+                 warm_start=False, rho=None):
         if p is not None:
             warnings.warn("Using 'p' is deprecated and will be removed in "
                           "scikit-learn 0.14, use epsilon instead.",
-                           DeprecationWarning, stacklevel=2)
+                          DeprecationWarning, stacklevel=2)
             self.p = float(p)
             epsilon = p
 
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                           alpha=alpha, l1_ratio=l1_ratio,
+                                           alpha=alpha, C=C, l1_ratio=l1_ratio,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter, shuffle=shuffle,
                                            verbose=verbose, epsilon=epsilon,
-                                           seed=seed, rho=rho,
+                                           random_state=random_state, rho=rho,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=False)
@@ -939,13 +942,14 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           self.intercept_[0],
                                           loss_function,
                                           penalty_type,
-                                          self.alpha, self.l1_ratio,
+                                          self.alpha, self.C,
+                                          self.l1_ratio,
                                           dataset,
                                           n_iter,
                                           int(self.fit_intercept),
                                           int(self.verbose),
                                           int(self.shuffle),
-                                          self.seed,
+                                          self.random_state,
                                           1.0, 1.0,
                                           learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
