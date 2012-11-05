@@ -465,6 +465,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
             if learning_rate == PA1:
                 update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                if update == 0:
+                    continue
                 update = min(C, loss.loss(p, y) / update)
             elif learning_rate == PA2:
                 update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
