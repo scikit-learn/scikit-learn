@@ -360,6 +360,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
+    cdef int is_hinge = isinstance(loss, Hinge)
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[DOUBLE, ndim = 1, mode = "c"] q = None
@@ -392,11 +393,6 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            elif learning_rate == PA1:
-                eta = 1.0 / sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                eta = min(fabs(C / loss.dloss(p, y)), eta)
-            elif learning_rate == PA2:
-                eta = 1.0 / (sqnorm(x_data_ptr, x_ind_ptr, xnnz) + 0.5 * C)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
@@ -406,11 +402,29 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             else:
                 class_weight = weight_neg
 
-            update = eta * loss.dloss(p, y) * class_weight * sample_weight
+            if learning_rate == PA1:
+                update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                update = min(C, loss.loss(p, y) / update)
+            elif learning_rate == PA2:
+                update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                update = loss.loss(p, y) / (update + 0.5 / C)
+            else:
+                update = -eta * loss.dloss(p, y)
+
+            if learning_rate >= PA1:
+                if is_hinge:
+                    # classification
+                    update *= y
+                elif y - p < 0:
+                    # regression
+                    update *= -1
+
+            update *= class_weight * sample_weight
+
             if update != 0.0:
-                w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
+                w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                 if fit_intercept == 1:
-                    intercept -= update * intercept_decay
+                    intercept += update * intercept_decay
             if penalty_type >= L2:
                 w.scale(1.0 - (rho * eta * alpha))
 

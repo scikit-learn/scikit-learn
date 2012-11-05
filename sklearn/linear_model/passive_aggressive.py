@@ -1,7 +1,9 @@
 # Author: Rob Zinkov
 # License: BSD Style.
 
-from .stochastic_gradient import SGDClassifier, SGDRegressor
+from .stochastic_gradient import SGDClassifier
+from .stochastic_gradient import SGDRegressor
+from .stochastic_gradient import DEFAULT_EPSILON
 
 
 class PassiveAggressiveClassifier(SGDClassifier):
@@ -88,6 +90,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
                                                           shuffle=shuffle,
                                                           verbose=verbose,
                                                           random_state=random_state,
+                                                          eta0=1.0,
                                                           learning_rate=loss,
                                                           warm_start=warm_start,
                                                           class_weight=class_weight,
@@ -122,24 +125,10 @@ class PassiveAggressiveRegressor(SGDRegressor):
     verbose: integer, optional
         The verbosity level
 
-    n_jobs: integer, optional
-        The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
-
     loss : string, optional
         The loss function to be used:
         pa1: eta = min(alpha, loss/norm(x))
         pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
-
-    class_weight : dict, {class_label : weight} or "auto" or None, optional
-        Preset for the class_weight fit parameter.
-
-        Weights associated with classes. If not given, all classes
-        are supposed to have weight one.
-
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -169,17 +158,18 @@ class PassiveAggressiveRegressor(SGDRegressor):
     """
     def __init__(self, C=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="pa1",
-                 n_jobs=1, random_state=0, class_weight=None, warm_start=False):
+                 epsilon=DEFAULT_EPSILON,
+                 random_state=0, class_weight=None, warm_start=False):
         super(
             PassiveAggressiveRegressor, self).__init__(loss="epsilon_insensitive",
                                                        penalty=None,
                                                        C=C, l1_ratio=0,
+                                                       epsilon=epsilon,
+                                                       eta0=1.0,
                                                        fit_intercept=fit_intercept,
                                                        n_iter=n_iter,
                                                        shuffle=shuffle,
                                                        verbose=verbose,
                                                        random_state=random_state,
                                                        learning_rate=loss,
-                                                       warm_start=warm_start,
-                                                       class_weight=class_weight,
-                                                       n_jobs=n_jobs)
+                                                       warm_start=warm_start)
