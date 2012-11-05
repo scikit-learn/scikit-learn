@@ -132,10 +132,10 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
 Alternatively, if we have Python module ``pydot`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> import StringIO, pydot
-    >>> dot_data = StringIO.StringIO()
-    >>> tree.export_graphviz(clf, out_file=dot_data)
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())
+    >>> import StringIO, pydot # doctest: +SKIP
+    >>> dot_data = StringIO.StringIO() # doctest: +SKIP
+    >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
+    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf")
 
 .. only:: html
