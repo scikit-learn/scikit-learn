@@ -1,10 +1,10 @@
 """
-=============================================
-Comparing various Stochastic Gradient Solvers
-=============================================
+==================================
+Comparing various online solvers
+==================================
 
-An example showing how the different SGDClassifiers perform
-on the hand-written digits dataset
+An example showing how different online solvers perform
+on the hand-written digits dataset.
 
 """
 # Author: Rob Zinkov <rob at zinkov dot com>
@@ -24,8 +24,10 @@ digits = datasets.load_digits()
 classifiers = [
     ("SGD", SGDClassifier()),
     ("Perceptron", Perceptron()),
-    ("PA-I", PassiveAggressiveClassifier(loss='pa1', C=0.01)),
-    ("PA-II", PassiveAggressiveClassifier(loss='pa2', C=0.01)),
+    ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
+                                                         C=1.0)),
+    ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
+                                                          C=1.0)),
 ]
 
 xx = 1 - np.array(heldout)
