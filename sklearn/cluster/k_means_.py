@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, ClusterMixin
+from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils import check_arrays
@@ -232,7 +232,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     if not k is None:
         n_clusters = k
-        warnings.warn("Parameter k has been renamed by 'n_clusters'"
+        warnings.warn("Parameter k has been renamed to 'n_clusters'"
                 " and will be removed in release 0.14.",
                 DeprecationWarning, stacklevel=2)
 
@@ -554,7 +554,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-class KMeans(BaseEstimator, ClusterMixin):
+class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """K-Means clustering
 
     Parameters
@@ -694,7 +694,7 @@ class KMeans(BaseEstimator, ClusterMixin):
             raise AttributeError("Model has not been trained yet.")
 
     def fit(self, X, y=None):
-        """Compute k-means clustering
+        """Compute k-means clustering.
 
         Parameters
         ----------
@@ -729,8 +729,20 @@ class KMeans(BaseEstimator, ClusterMixin):
         """
         return self.fit(X).labels_
 
+    def fit_transform(self, X, y=None):
+        """Compute clustering and transform X to cluster-distance space.
+
+        Equivalent to fit(X).transform(X), but more efficiently implemented.
+        """
+        # Currently, this just skips a copy of the data if it is not in
+        # np.array or CSR format already.
+        # XXX This skips _check_test_data, which may change the dtype;
+        # we should refactor the input validation.
+        X = self._check_fit_data(X)
+        return self.fit(X)._transform(X)
+
     def transform(self, X, y=None):
-        """Transform the data to a cluster-distance space
+        """Transform X to a cluster-distance space
 
         In the new space, each dimension is the distance to the cluster
         centers.  Note that even if X is sparse, the array returned by
@@ -748,6 +760,10 @@ class KMeans(BaseEstimator, ClusterMixin):
         """
         self._check_fitted()
         X = self._check_test_data(X)
+        return self._transform(X)
+
+    def _transform(self, X):
+        """guts of transform method; no input validation"""
         return euclidean_distances(X, self.cluster_centers_)
 
     def predict(self, X):

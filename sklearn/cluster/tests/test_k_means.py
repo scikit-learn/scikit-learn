@@ -489,6 +489,12 @@ def test_transform():
                 assert_greater(X_new[c, c2], 0)
 
 
+def test_fit_transform():
+    X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
+    X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
+    assert_array_equal(X1, X2)
+
+
 def test_n_init():
     """Check that increasing the number of init increases the quality"""
     n_runs = 5

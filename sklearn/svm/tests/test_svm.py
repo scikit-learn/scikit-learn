@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
                           assert_almost_equal
+from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal
 
 from sklearn import svm, linear_model, datasets, metrics, base
@@ -165,6 +166,16 @@ def test_svr():
                 svm.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
+
+
+def test_svr_errors():
+    X = [[0.0], [1.0]]
+    y = [0.0, 0.5]
+
+    # Bad kernel
+    clf = svm.SVR(kernel=lambda x, y: np.array([[1.0]]))
+    clf.fit(X, y)
+    assert_raises(ValueError, clf.predict, X)
 
 
 def test_oneclass():
@@ -368,6 +379,14 @@ def test_bad_input():
     # error for precomputed kernelsx
     clf = svm.SVC(kernel='precomputed')
     assert_raises(ValueError, clf.fit, X, Y)
+
+    # sample_weight bad dimensions
+    clf = svm.SVC()
+    assert_raises(ValueError, clf.fit, X, Y, sample_weight=range(len(X) - 1))
+
+    # predict with sparse input when trained with dense
+    clf = svm.SVC().fit(X, Y)
+    assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
@@ -576,6 +595,11 @@ def test_svc_clone_with_callable_kernel():
     b.predict(X)
     b.predict_proba(X)
     b.decision_function(X)
+
+
+def test_svc_bad_kernel():
+    svc = svm.SVC(kernel=lambda x, y: x)
+    assert_raises(ValueError, svc.fit, X, Y)
 
 
 def test_timeout():

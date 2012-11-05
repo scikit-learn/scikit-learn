@@ -46,7 +46,7 @@ ctypedef np.float64_t DOUBLE
 
 def min_pos(np.ndarray X):
    """
-   Find the minimum value of an array over positivie values
+   Find the minimum value of an array over positive values
 
    Returns a huge value if none of the values are positive
    """
@@ -58,7 +58,7 @@ def min_pos(np.ndarray X):
       raise ValueError('Unsupported dtype for array X')
 
 
-cdef float _float_min_pos (float *X, Py_ssize_t size):
+cdef float _float_min_pos(float *X, Py_ssize_t size):
    cdef Py_ssize_t i
    cdef float min_val = DBL_MAX
    for i in range(size):
@@ -67,7 +67,7 @@ cdef float _float_min_pos (float *X, Py_ssize_t size):
    return min_val
 
 
-cdef double _double_min_pos (double *X, Py_ssize_t size):
+cdef double _double_min_pos(double *X, Py_ssize_t size):
    cdef Py_ssize_t i
    cdef np.float64_t min_val = FLT_MAX
    for i in range(size):
@@ -75,7 +75,8 @@ cdef double _double_min_pos (double *X, Py_ssize_t size):
          min_val = X[i]
    return min_val
 
-def solve_triangular (np.ndarray X, np.ndarray y):
+
+def solve_triangular(np.ndarray X, np.ndarray y):
     """
     Solves a triangular system (overwrites y)
 
@@ -87,22 +88,21 @@ def solve_triangular (np.ndarray X, np.ndarray y):
     if X.dtype.name == 'float64' and y.dtype.name == 'float64':
        lda = <int> X.strides[0] / sizeof(double)
 
-       cblas_dtrsv (CblasRowMajor, CblasLower, CblasNoTrans,
-                    CblasNonUnit, <int> X.shape[0], <double *> X.data,
-                    lda, <double *> y.data, 1);
+       cblas_dtrsv(CblasRowMajor, CblasLower, CblasNoTrans,
+                   CblasNonUnit, <int> X.shape[0], <double *> X.data,
+                   lda, <double *> y.data, 1)
 
     elif X.dtype.name == 'float32' and y.dtype.name == 'float32':
        lda = <int> X.strides[0] / sizeof(float)
 
-       cblas_strsv (CblasRowMajor, CblasLower, CblasNoTrans,
-                    CblasNonUnit, <int> X.shape[0], <float *> X.data,
-                    lda, <float *> y.data, 1);
+       cblas_strsv(CblasRowMajor, CblasLower, CblasNoTrans,
+                   CblasNonUnit, <int> X.shape[0], <float *> X.data,
+                   lda, <float *> y.data, 1)
     else:
        raise ValueError ('Unsupported or inconsistent dtype in arrays X, y')
 
 
-def cholesky_delete (np.ndarray L, int go_out):
-
+def cholesky_delete(np.ndarray L, int go_out):
     cdef int n = <int> L.shape[0]
     cdef int m
 

@@ -130,7 +130,7 @@ addition, note that results will stop getting significantly better
 beyond a critical number of trees. The latter is the size of the random
 subsets of features to consider when splitting a node. The lower the
 greater the reduction of variance, but also the greater the increase in
-bias. Empiricial good default values are ``max_features=n_features``
+bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). The best results are also usually reached when setting
@@ -205,7 +205,7 @@ a :class:`ExtraTreesClassifier` model.
 
 In practice those estimates can be computed by explicitly passing
 ``compute_importances=True`` to the constructor of the decision trees,
-random forest and extremly randomized trees models. The result is stored
+random forest and extremely randomized trees models. The result is stored
 as an attribute named ``feature_importances_`` on the fitted model. This
 is an array with shape ``(n_features,)`` whose values are positive and sum
 to 1.0. The higher the value, the more important is the contribution of
@@ -262,14 +262,14 @@ with 100 decision stumps as weak learners::
     >>> X_train, X_test = X[:2000], X[2000:]
     >>> y_train, y_test = y[:2000], y[2000:]
 
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learn_rate=1.0,
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
     0.913...
 
 The number of weak learners (i.e. regression trees) is controlled by the
 parameter ``n_estimators``; The maximum depth of each tree is controlled via
-``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
+``max_depth``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
 .. note::
@@ -299,7 +299,7 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> clf = GradientBoostingRegressor(n_estimators=100, learn_rate=1.0,
+    >>> clf = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
     >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
     6.90...
@@ -309,7 +309,7 @@ with least squares loss and 500 base learners to the Boston house-price dataset
 (see :func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
 Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be optained via the ``feature_importances_``
+shows the feature importances which can be obtained via the ``feature_importances_``
 property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
@@ -341,8 +341,8 @@ a forward stagewise fashion:
 
     F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
 
-At each stage the decision tree :math:`h_m(x)` is choosen that
-minimizes the loss function :math:`L` given the current model
+At each stage the decision tree :math:`h_m(x)` is chosen to
+minimize the loss function :math:`L` given the current model
 :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
 
   .. math::
@@ -367,7 +367,7 @@ loss function:
     F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
-Where the step length :math:`\gamma_m` is choosen using line search:
+Where the step length :math:`\gamma_m` is chosen using line search:
 
   .. math::
 
@@ -433,17 +433,17 @@ the contribution of each weak learner by a factor :math:`\nu`:
 
 The parameter :math:`\nu` is also called the **learning rate** because
 it scales the step length the the gradient descent procedure; it can
-be set via the ``learn_rate`` parameter.
+be set via the ``learning_rate`` parameter.
 
-The parameter ``learn_rate`` strongly interacts with the parameter
+The parameter ``learning_rate`` strongly interacts with the parameter
 ``n_estimators``, the number of weak learners to fit. Smaller values
-of ``learn_rate`` require larger numbers of weak learners to maintain
+of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
-values of ``learn_rate`` favor better test error. [HTF2009]_
+values of ``learning_rate`` favor better test error. [HTF2009]_
 recommend to set the learning rate to a small constant
-(e.g. ``learn_rate <= 0.1``) and choose ``n_estimators`` by early
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
 stopping. For a more detailed discussion of the interaction between
-``learn_rate`` and ``n_estimators`` see [R2007]_.
+``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
 ............

@@ -22,7 +22,7 @@ from sklearn.utils.extmath import weighted_mode
 def test_density():
     rng = np.random.RandomState(0)
     X = rng.randint(10, size=(10, 5))
-    X[1,2] = 0
+    X[1, 2] = 0
     X[5, 3] = 0
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)

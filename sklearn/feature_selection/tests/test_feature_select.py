@@ -448,3 +448,8 @@ def test_nans():
                    SelectPercentile(f_classif, percentile=67)):
         select.fit(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
+
+
+def test_score_func_error():
+    # test that score-func needs to be a callable
+    assert_raises(TypeError, SelectKBest, score_func=10)

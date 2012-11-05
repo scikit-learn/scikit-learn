@@ -131,6 +131,13 @@ A parameter can be given to allow K-means to be run in parallel, called
 on. Parallelization generally speeds up computation at the cost of memory (in
 this case, multiple copies of centroids need to be stored, one for each job).
 
+.. warning::
+
+    The parallel version of K-Means is broken on OS X when numpy uses the
+    Accelerate Framework. This is expected behavior: Accelerate can be called
+    after a fork but you need to execv the subprocess with the python binary
+    (which multiprocessing does not do under posix).
+
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
 

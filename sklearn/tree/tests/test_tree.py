@@ -90,6 +90,7 @@ def test_xor():
     clf.fit(X, y)
     assert_equal(clf.score(X, y), 1.0)
 
+
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)

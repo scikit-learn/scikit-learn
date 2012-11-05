@@ -188,6 +188,11 @@ div.sphinxsidebar h4 {
     margin: 25px 20px 0 10px;
 }
 
+div.sphinxsidebar h3 a,
+div.sphinxsidebar h4 a{
+    color: white;
+}
+
 div.sphinxsidebar img {
     margin: 5px;
 }

@@ -36,6 +36,7 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
@@ -193,6 +194,7 @@ def benchmark(clf):
 results = []
 for clf, name in ((RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
                   (Perceptron(n_iter=50), "Perceptron"),
+                  (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
                   (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
