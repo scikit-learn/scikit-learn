@@ -44,15 +44,6 @@ class PassiveAggressiveClassifier(SGDClassifier):
         hinge: equivalent to PA-I in the reference paper.
         squared_hinge: equivalent to PA-II in the reference paper.
 
-    class_weight : dict, {class_label : weight} or "auto" or None, optional
-        Preset for the class_weight fit parameter.
-
-        Weights associated with classes. If not given, all classes
-        are supposed to have weight one.
-
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies.
-
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
@@ -81,8 +72,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
     """
     def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="hinge",
-                 n_jobs=1, random_state=None, class_weight=None,
-                 warm_start=False):
+                 n_jobs=1, random_state=None, warm_start=False):
         SGDClassifier.__init__(self,
                                penalty=None,
                                fit_intercept=fit_intercept,
@@ -92,12 +82,11 @@ class PassiveAggressiveClassifier(SGDClassifier):
                                random_state=random_state,
                                eta0=1.0,
                                warm_start=warm_start,
-                               class_weight=class_weight,
                                n_jobs=n_jobs)
         self.C = C
         self.loss = loss
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None):
+    def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -108,18 +97,6 @@ class PassiveAggressiveClassifier(SGDClassifier):
         y : numpy array of shape [n_samples]
             Subset of the target values
 
-        classes : array, shape = [n_classes]
-            Classes across all calls to partial_fit.
-            Can be obtained by via `np.unique(y_all)`, where y_all is the
-            target vector of the entire dataset.
-            This argument is required for the first call to partial_fit
-            and can be omitted in the subsequent calls.
-            Note that y doesn't need to contain all labels in `classes`.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
-
         Returns
         -------
         self : returns an instance of self.
@@ -127,11 +104,9 @@ class PassiveAggressiveClassifier(SGDClassifier):
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="hinge", learning_rate=lr, n_iter=1,
-                                 classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -159,9 +134,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(X, y, alpha=1.0, C=self.C,
                          loss="hinge", learning_rate=lr,
-                         coef_init=coef_init, intercept_init=intercept_init,
-                         class_weight=class_weight,
-                         sample_weight=sample_weight)
+                         coef_init=coef_init, intercept_init=intercept_init)
 
 
 class PassiveAggressiveRegressor(SGDRegressor):
@@ -240,7 +213,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
         self.C = C
         self.loss = loss
 
-    def partial_fit(self, X, y, sample_weight=None):
+    def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -251,10 +224,6 @@ class PassiveAggressiveRegressor(SGDRegressor):
         y : numpy array of shape [n_samples]
             Subset of target values
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
-
         Returns
         -------
         self : returns an instance of self.
@@ -263,11 +232,9 @@ class PassiveAggressiveRegressor(SGDRegressor):
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",
                                  learning_rate=lr, n_iter=1,
-                                 sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -284,9 +251,6 @@ class PassiveAggressiveRegressor(SGDRegressor):
         intercept_init : array, shape = [1]
             The initial intercept to warm-start the optimization.
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
-
         Returns
         -------
         self : returns an instance of self.
@@ -296,5 +260,4 @@ class PassiveAggressiveRegressor(SGDRegressor):
                          loss="epsilon_insensitive",
                          learning_rate=lr,
                          coef_init=coef_init,
-                         intercept_init=intercept_init,
-                         sample_weight=sample_weight)
+                         intercept_init=intercept_init)
