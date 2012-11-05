@@ -175,8 +175,14 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         for i in range(alphas.shape[0]):
             coefs[i] = np.dot(VT.T, isvwp_times_UT_y[i]).T
 
-        return coefs.reshape(list(alpha.shape[:-1]) + \
+        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
                              [coefs.shape[1], coefs.shape[2]])
+
+        if y.ndim == 1:
+            return coefs.squeeze()
+
+        return coefs
+
     elif solver == "eigen":
         if isinstance(alpha, numbers.Number):
             alpha = np.array([alpha])
@@ -206,9 +212,13 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             for i in range(alphas.shape[0]):
                 coefs[i] = np.dot(V, ievwp_times_V_T_X_T_y[i]).T
 
-        return coefs.reshape(list(alphas.shape[:-1]) + \
+        coefs = coefs.reshape(list(alphas.shape[:-1]) + \
                                  [coefs.shape[1], coefs.shape[2]])
 
+        if y.ndim == 1:
+            return coefs.squeeze()
+
+        return coefs
     else:
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:

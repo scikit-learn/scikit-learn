@@ -46,7 +46,7 @@ def test_ridge():
     """
     alpha = 1.0
 
-    for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
+    for solver in ("sparse_cg", "dense_cholesky", "lsqr", "svd", "eigen"):
         # With more samples than features
         n_samples, n_features = 6, 5
         y = rng.randn(n_samples)
