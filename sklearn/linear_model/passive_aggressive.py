@@ -81,7 +81,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
     """
     def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="hinge",
-                 n_jobs=1, random_state=0, class_weight=None,
+                 n_jobs=1, random_state=None, class_weight=None,
                  warm_start=False):
         SGDClassifier.__init__(self,
                                penalty=None,
@@ -226,7 +226,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
     def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON,
-                 random_state=0, class_weight=None, warm_start=False):
+                 random_state=None, class_weight=None, warm_start=False):
         SGDRegressor.__init__(self,
                               penalty=None,
                               l1_ratio=0,

@@ -336,7 +336,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double rho,
               SequentialDataset dataset,
               int n_iter, int fit_intercept,
-              int verbose, int shuffle, int seed,
+              int verbose, int shuffle, seed,
               double weight_pos, double weight_neg,
               int learning_rate, double eta0,
               double power_t,
@@ -372,7 +372,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         The weight of the positive class.
     weight_neg : float
         The weight of the negative class.
-    seed : int
+    seed : int or RandomState object
         The seed of the pseudo random number generator to use when
         shuffling the data
     learning_rate : int

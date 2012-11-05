@@ -50,7 +50,7 @@ class BaseSGD(BaseEstimator):
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1, random_state=0, learning_rate="optimal",
+                 verbose=0, epsilon=0.1, random_state=None, learning_rate="optimal",
                  eta0=0.0, power_t=0.5, warm_start=False, rho=None):
         self.loss = loss
         self.penalty = penalty
@@ -350,7 +350,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     SGDClassifier(C=1.0, alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
             loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-            random_state=0, rho=None, shuffle=False, verbose=0,
+            random_state=None, rho=None, shuffle=False, verbose=0,
             warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -376,7 +376,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=0,
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
@@ -802,7 +802,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
     >>> clf.fit(X, y)
     SGDRegressor(C=1.0, alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=0,
+           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=None,
            rho=None, shuffle=False, verbose=0, warm_start=False)
 
     See also
@@ -821,7 +821,7 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=0,
+                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, rho=None):
         if p is not None:
