@@ -13,7 +13,7 @@ class PassiveAggressiveClassifier(SGDClassifier):
     ----------
 
     C : float
-        C parameter that scales the regularization term. Defaults to 0.001
+        Maximum step size (regularization). Defaults to 1.0.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
@@ -171,7 +171,7 @@ class PassiveAggressiveRegressor(SGDRegressor):
     ----------
 
     C : float
-        C parameter that scales the regularization term. Defaults to 0.001
+        Maximum step size (regularization). Defaults to 1.0.
 
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
