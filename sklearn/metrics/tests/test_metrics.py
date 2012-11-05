@@ -298,49 +298,13 @@ def test_precision_recall_f1_score_multiclass_break():
     # initialize data
     y_true = np.array([0,1,0,0,1,1,0,1,0,0,1,0,1,0,1])
     y_pred = np.array([1,1,0,1,0,1,1,1,1,0,1,0,1,0,1])
+    pos_label_ = None # to set it as a multi-class task
 
     # compute scores with default labels introspection
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, pos_label=None)
-    assert_array_almost_equal(p, [0.8, 0.6], 2)
-    assert_array_almost_equal(r, [0.5, 0.85], 2)
-    assert_array_almost_equal(f, [0.61, 0.70], 2)
-    assert_array_equal(s, [8, 7])
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 pos_label=pos_label_,
+                                                 average='weighted')
 
-    # averaging tests
-    ps = precision_score(y_true, y_pred, pos_label=None, average='micro')
-    assert_array_almost_equal(ps, 0.66, 2)
-
-    rs = recall_score(y_true, y_pred, pos_label=None, average='micro')
-    assert_array_almost_equal(rs, 0.66, 2)
-
-    fs = f1_score(y_true, y_pred, pos_label=None, average='micro')
-    assert_array_almost_equal(fs, 0.66, 2)
-
-    ps = precision_score(y_true, y_pred, pos_label=None, average='macro')
-    assert_array_almost_equal(ps, 0.69, 2)
-
-    rs = recall_score(y_true, y_pred, pos_label=None, average='macro')
-    assert_array_almost_equal(rs, 0.67, 2)
-
-    fs = f1_score(y_true, y_pred, pos_label=None, average='macro')
-    assert_array_almost_equal(fs, 0.66, 2)
-
-    ps = precision_score(y_true, y_pred, pos_label=None, average='weighted')
-    assert_array_almost_equal(ps, 0.70, 2)
-
-    rs = recall_score(y_true, y_pred, pos_label=None, average='weighted')
-    assert_array_almost_equal(rs, 0.66, 2)
-
-    fs = f1_score(y_true, y_pred, pos_label=None, average='weighted')
-    assert_array_almost_equal(fs, 0.65, 2)
-
-    # same prediction but with and explicit label ordering
-    p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[1,0], pos_label=None, average=None)
-    assert_array_almost_equal(p, [0.6, 0.8], 2)
-    assert_array_almost_equal(r, [0.85, 0.5], 2)
-    assert_array_almost_equal(f, [0.70, 0.61], 2)
-    assert_array_equal(s, [7, 8])
 
 
 def test_zero_precision_recall():
