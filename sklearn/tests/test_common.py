@@ -440,8 +440,8 @@ def test_regressors_int():
             reg1 = Reg()
             reg2 = Reg()
         if hasattr(reg1, 'alpha'):
-            reg1.set_params(alpha=0.01)
-            reg2.set_params(alpha=0.01)
+            reg1.alpha = 0.01
+            reg2.alpha = 0.01
         if hasattr(reg1, 'random_state'):
             reg1.set_params(random_state=0)
             reg2.set_params(random_state=0)
@@ -479,7 +479,7 @@ def test_regressors_train():
         with warnings.catch_warnings(record=True):
             reg = Reg()
         if hasattr(reg, 'alpha'):
-            reg.set_params(alpha=0.01)
+            reg.alpha = 0.01
 
         # raises error on malformed input for fit
         assert_raises(ValueError, reg.fit, X, y[:-1])
