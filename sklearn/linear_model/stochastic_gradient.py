@@ -299,6 +299,12 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     verbose: integer, optional
         The verbosity level
 
+    epsilon: float
+        Epsilon in the epsilon-insensitive loss functions;
+        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
+        If the difference between the current prediction and the correct label
+        is below this threshold, the model is not updated.
+
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
@@ -763,8 +769,10 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
         The verbosity level.
 
     epsilon: float
-        Epsilon in the epsilon-insensitive huber loss function;
-        only if `loss=='huber'`.
+        Epsilon in the epsilon-insensitive loss functions;
+        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
+        If the difference between the current prediction and the correct label
+        is below this threshold, the model is not updated.
 
     learning_rate : string, optional
         The learning rate:
