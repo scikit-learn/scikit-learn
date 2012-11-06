@@ -155,6 +155,10 @@ class PassiveAggressiveRegressor(SGDRegressor):
     C : float
         Maximum step size (regularization). Defaults to 1.0.
 
+    epsilon: float
+        If the difference between the current prediction and the correct label
+        is below this threshold, the model is not updated.
+
     fit_intercept: bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
