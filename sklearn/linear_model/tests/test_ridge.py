@@ -146,7 +146,7 @@ def test_ridge_multiple_targets_multiple_penalties():
                           n_penalties_per_target, False)
     alphas = alphas[:, np.newaxis] * (rng.rand(1, n_targets) * 9 + 1)
 
-    concerned_solvers = ["svd", "eigen", "lsqr"]
+    concerned_solvers = ["svd", "eigen", "lsqr", "sparse_cg"]
 
     def make_test_case(n_samples, n_features):
         n_informative = int(np.floor(n_features *\

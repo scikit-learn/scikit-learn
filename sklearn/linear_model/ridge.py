@@ -104,37 +104,51 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             y1 = np.reshape(y, (-1, 1))
         else:
             y1 = y
-        coefs = np.empty((y1.shape[1], n_features))
 
-        if n_features > n_samples:
-            def mv(x):
-                return X1.matvec(X1.rmatvec(x)) + alpha * x
-        else:
-            def mv(x):
-                return X1.rmatvec(X1.matvec(x)) + alpha * x
+        if isinstance(alpha, numbers.Number):
+            alpha = np.array([[alpha]])
+        if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
+            alpha = alpha[:, np.newaxis]
 
-        for i in range(y1.shape[1]):
-            y_column = y1[:, i]
-            if n_features > n_samples:
-                # kernel ridge
-                # w = X.T * inv(X X^t + alpha*Id) y
-                C = sp_linalg.LinearOperator(
-                    (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
-                coefs[i] = X1.rmatvec(coef)
-            else:
-                # ridge
-                # w = inv(X^t X + alpha*Id) * X.T y
-                y_column = X1.rmatvec(y_column)
-                C = sp_linalg.LinearOperator(
-                    (n_features, n_features), matvec=mv, dtype=X.dtype)
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                              tol=tol)
-            if info != 0:
-                raise ValueError("Failed with error code %d" % info)
+        # According to the lsqr documentation, alpha = damp^2.
+        alphas = alpha.reshape(-1, alpha.shape[-1])
 
+        coefs = np.empty((alphas.shape[0], y1.shape[1], n_features))
+
+        for i, alpha_line in enumerate(alphas):
+            if alpha_line.shape != n_features:
+                alpha_line = alpha_line * np.ones(y1.shape[1])
+
+            for j, (y_column, alpha) in enumerate(zip(y1.T, alpha_line)):
+
+                    if n_features > n_samples:
+                        # kernel ridge
+                        # w = X.T * inv(X X^t + alpha*Id) y
+                        def mv(x):
+                            return X1.matvec(X1.rmatvec(x)) + alpha * x
+
+                        C = sp_linalg.LinearOperator(
+                            (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+                        coef, info = sp_linalg.cg(C, y_column, tol=tol)
+                        coefs[i, j] = X1.rmatvec(coef)
+                    else:
+                        # ridge
+                        # w = inv(X^t X + alpha*Id) * X.T y
+                        def mv(x):
+                            return X1.rmatvec(X1.matvec(x)) + alpha * x
+
+                        y_column = X1.rmatvec(y_column)
+                        C = sp_linalg.LinearOperator(
+                            (n_features, n_features), matvec=mv, dtype=X.dtype)
+                        coefs[i, j], info = sp_linalg.cg(C,
+                                        y_column, maxiter=max_iter, tol=tol)
+                    if info != 0:
+                        raise ValueError("Failed with error code %d" % info)
+
+        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
+                             [coefs.shape[1], coefs.shape[2]])
         if y.ndim == 1:
-            coefs = np.ravel(coefs)
+            return coefs.squeeze()
 
         return coefs
     elif solver == "lsqr":
