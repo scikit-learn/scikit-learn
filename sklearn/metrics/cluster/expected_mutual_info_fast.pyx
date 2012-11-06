@@ -1,8 +1,9 @@
 # encoding: utf-8
 # cython: cdivision=True
 # cython: boundscheck=False
-# cython: wraparound=False
-#
+# cython: wraparound=False 
+# Authors: Robert Layton <robertlayton@gmail.com>
+           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD Style.
 
 from scipy.special import gammaln
