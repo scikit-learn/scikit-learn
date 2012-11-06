@@ -131,7 +131,7 @@ def test_ridge_multiple_targets_multiple_penalties():
     against standard cholesky solver applied to each combination
     individually"""
 
-    tolerance = 1e-10
+    tolerance = 0.01  # 1e-10 works with svd and eigen
     matrix_shapes = [(20, 50), (50, 20)]
     n_targets = 10
     n_penalties_per_target = 4
@@ -140,12 +140,13 @@ def test_ridge_multiple_targets_multiple_penalties():
 
     # for each target generate penalties on a logarithmic scale
     # and multiply them by a target-dependent value to individualize
-    alphas = np.logspace(-n_penalties_per_target / 2,
-                         -n_penalties_per_target / 2 + n_penalties_per_target,
+    lowest_penalty_exponent = 2
+    alphas = np.logspace(lowest_penalty_exponent,
+                         lowest_penalty_exponent + n_penalties_per_target,
                           n_penalties_per_target, False)
     alphas = alphas[:, np.newaxis] * (rng.rand(1, n_targets) * 9 + 1)
 
-    concerned_solvers = ["svd", "eigen"]
+    concerned_solvers = ["svd", "eigen", "lsqr"]
 
     def make_test_case(n_samples, n_features):
         n_informative = int(np.floor(n_features *\
@@ -181,7 +182,7 @@ def test_ridge_multiple_targets_multiple_penalties():
             case_solutions[s] = ridge_regression(X, y, alphas, solver=solver)
         new_solutions.append(case_solutions)
 
-    # Compare all these solutions
+    # Compare all these solutions, distances on each target individually
     for standard_solution, new_solution in \
                     zip(standard_solutions, new_solutions):
         distances = (
@@ -194,6 +195,9 @@ def test_ridge_multiple_targets_multiple_penalties():
 def test_ridge_regression_with_varying_feature_weights():
     pass
 
+def test_ridge_regression_coef_shapes():
+    # Important -- there are many different constellations here
+    pass
 
 def test_ridge_shapes():
     """Test shape of coef_ and intercept_

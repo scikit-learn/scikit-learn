@@ -142,18 +142,28 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             y1 = np.reshape(y, (-1, 1))
         else:
             y1 = y
-        coefs = np.empty((y1.shape[1], n_features))
+
+        if isinstance(alpha, numbers.Number):
+            alpha = np.array([[alpha]])
+        if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
+            alpha = alpha[:, np.newaxis]
 
         # According to the lsqr documentation, alpha = damp^2.
-        sqrt_alpha = np.sqrt(alpha)
+        sqrt_alphas = np.sqrt(alpha).reshape(-1, alpha.shape[-1])
 
-        for i in range(y1.shape[1]):
-            y_column = y1[:, i]
-            coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
-                                      atol=tol, btol=tol, iter_lim=max_iter)[0]
+        coefs = np.empty((sqrt_alphas.shape[0], y1.shape[1], n_features))
 
+        for i, alpha_line in enumerate(sqrt_alphas):
+            if alpha_line.shape != n_features:
+                alpha_line = alpha_line * np.ones(y1.shape[1])
+            for j, (y_column, sqrt_alpha) in enumerate(zip(y1.T, alpha_line)):
+                coefs[i, j] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
+                                    atol=tol, btol=tol, iter_lim=max_iter)[0]
+
+        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
+                             [coefs.shape[1], coefs.shape[2]])
         if y.ndim == 1:
-            coefs = np.ravel(coefs)
+            return coefs.squeeze()
 
         return coefs
     elif solver == "svd":
