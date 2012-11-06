@@ -17,9 +17,10 @@ from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
-
+from sklearn.linear_model.ridge import ridge_regression
 
 from sklearn.cross_validation import KFold
+from sklearn.metrics import euclidean_distances
 
 rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
@@ -70,6 +71,61 @@ def test_ridge():
 
         ridge.fit(X, y, sample_weight=np.ones(n_samples))
         assert_greater(ridge.score(X, y), 0.9)
+
+
+def test_ridge_compare_different_solvers():
+    """Compares regression results for all solvers
+
+    This test covers the cases n_samples > n_features
+    and n_samples < n_features using different penalties
+    on a noisy linear model with exactly one target.
+    """
+
+    tolerance = 0.02
+    # sparse_cg solver differs significantly from the others. Is this
+    # tolerance too permissive? (We are checking for general correctness
+    # of solution, nothing more)
+    # Somehow even with a fixed random seed in the data, sparse_cg seems
+    # to output different results each time. I guess this is due to design
+    # (randomness in gradient descent?). Set tolerance to e.g 0.007 and the
+    # tests will not pass every time. (Even 0.02 doesn't pass every time)
+
+    alphas = [.01, .1, 1., 10.]
+
+    solvers = ["sparse_cg", "dense_cholesky", "lsqr", "svd", "eigen"]
+
+    N, P = 20, 50
+    noise_level = .1
+
+    # N = n_samples < n_features = P
+    X_1 = rng.randn(N, P)
+    beta_1 = rng.randn(P)
+    noise_1 = noise_level * rng.randn(N)
+    y_1 = np.dot(X_1, beta_1) + noise_1
+
+    # P = n_samples > n_features = N
+    X_2 = rng.randn(P, N)
+    beta_2 = rng.randn(N)
+    noise_2 = noise_level * rng.randn(P)
+    y_2 = np.dot(X_2, beta_2) + noise_2
+
+    test_cases = [(X_1, y_1), (X_2, y_2)]
+
+    for i, (X, y) in enumerate(test_cases):
+        for alpha in alphas:
+            coef_vectors = [ridge_regression(X, y, alpha, solver=solver)
+                            for solver in solvers]
+
+            # pairwise comparison using sklearn.metric.euclidean_distances
+            coef_vectors = np.array(coef_vectors)
+            distances = euclidean_distances(coef_vectors)
+
+            # make sure these distances are close to 0
+            assert_greater(tolerance, distances.max())
+
+
+def test_ridge_multiple_targets_multiple_penalties():
+    pass
 
 
 def test_ridge_shapes():
