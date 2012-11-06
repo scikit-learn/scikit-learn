@@ -162,7 +162,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             y1 = y[:, np.newaxis]
         else:
-            y1 = y1
+            y1 = y
         alpha = np.asanyarray(alpha)
         alphas = alpha.reshape(-1, alpha.shape[-1])
         U, s, VT = linalg.svd(X, full_matrices=False)
@@ -189,7 +189,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             y1 = y[:, np.newaxis]
         else:
-            y1 = y1
+            y1 = y
         alpha = np.asanyarray(alpha)
         alphas = alpha.reshape(-1, alpha.shape[-1])
         if n_features > n_samples:

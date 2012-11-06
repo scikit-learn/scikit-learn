@@ -21,6 +21,7 @@ from sklearn.linear_model.ridge import ridge_regression
 
 from sklearn.cross_validation import KFold
 from sklearn.metrics import euclidean_distances
+from sklearn.datasets import make_regression
 
 rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
@@ -90,7 +91,7 @@ def test_ridge_compare_different_solvers():
     # (randomness in gradient descent?). Set tolerance to e.g 0.007 and the
     # tests will not pass every time. (Even 0.02 doesn't pass every time)
 
-    alphas = [.01, .1, 1., 10.]
+    alphas = [0., .01, .1, 1., 10.]
 
     solvers = ["sparse_cg", "dense_cholesky", "lsqr", "svd", "eigen"]
 
@@ -125,6 +126,72 @@ def test_ridge_compare_different_solvers():
 
 
 def test_ridge_multiple_targets_multiple_penalties():
+    """Tests multiple target, multiple individual penalties feature
+
+    against standard cholesky solver applied to each combination
+    individually"""
+
+    tolerance = 1e-10
+    matrix_shapes = [(20, 50), (50, 20)]
+    n_targets = 10
+    n_penalties_per_target = 4
+    noise_level = .01
+    relevant_features_proportion = 0.25
+
+    # for each target generate penalties on a logarithmic scale
+    # and multiply them by a target-dependent value to individualize
+    alphas = np.logspace(-n_penalties_per_target / 2,
+                         -n_penalties_per_target / 2 + n_penalties_per_target,
+                          n_penalties_per_target, False)
+    alphas = alphas[:, np.newaxis] * (rng.rand(1, n_targets) * 9 + 1)
+
+    concerned_solvers = ["svd", "eigen"]
+
+    def make_test_case(n_samples, n_features):
+        n_informative = int(np.floor(n_features *\
+                                     relevant_features_proportion))
+        return make_regression(n_samples=n_samples,
+                               n_features=n_features,
+                               n_informative=n_informative,
+                               n_targets=n_targets,
+                               noise=noise_level,
+                               random_state=rng,
+                               coef=False)
+
+    test_cases = [make_test_case(n_samples, n_features)
+                  for n_samples, n_features in matrix_shapes]
+
+    # Calculate everything individually using standard solver
+    standard_solutions = []
+    for X, y in test_cases:
+        case_solutions = np.empty([alphas.shape[0],
+                                   alphas.shape[1], X.shape[1]])
+        for i, alpha_line in enumerate(alphas):
+            for j, (target, alpha) in enumerate(zip(y.T, alpha_line)):
+                case_solutions[i, j, :] = ridge_regression(
+                    X, target, alpha, solver="dense_cholesky")
+        standard_solutions.append(case_solutions)
+
+    # now do the same with multiple targets/individual penalties
+    new_solutions = []
+    for X, y in test_cases:
+        case_solutions = np.empty([len(concerned_solvers),
+                        alphas.shape[0], alphas.shape[1], X.shape[1]])
+        for s, solver in enumerate(concerned_solvers):
+            case_solutions[s] = ridge_regression(X, y, alphas, solver=solver)
+        new_solutions.append(case_solutions)
+
+    # Compare all these solutions
+    for standard_solution, new_solution in \
+                    zip(standard_solutions, new_solutions):
+        distances = (
+            (standard_solution[np.newaxis, :] - new_solution) ** 2).sum(-1)
+
+        assert_greater(tolerance, distances.max())
+
+
+
+def test_ridge_regression_with_varying_feature_weights():
     pass
 
 
