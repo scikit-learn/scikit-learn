@@ -4,6 +4,7 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn.base import ClassifierMixin
 from sklearn.utils import check_random_state
@@ -107,6 +108,12 @@ def test_classifier_correctness():
         clf2.fit(X, y_bin)
 
         assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
+
+
+def test_predict_proba_undefined():
+    clf = PassiveAggressiveClassifier()
+    for meth in ("predict_proba", "predict_log_proba"):
+        assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
 
 
 def test_regressor_mse():

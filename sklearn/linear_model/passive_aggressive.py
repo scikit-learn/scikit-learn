@@ -1,12 +1,12 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD Style.
 
-from .stochastic_gradient import SGDClassifier
+from .stochastic_gradient import BaseSGDClassifier
 from .stochastic_gradient import SGDRegressor
 from .stochastic_gradient import DEFAULT_EPSILON
 
 
-class PassiveAggressiveClassifier(SGDClassifier):
+class PassiveAggressiveClassifier(BaseSGDClassifier):
     """Passive Aggressive Classifier
 
     Parameters
@@ -73,16 +73,16 @@ class PassiveAggressiveClassifier(SGDClassifier):
     def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=False, verbose=0, loss="hinge",
                  n_jobs=1, random_state=None, warm_start=False):
-        SGDClassifier.__init__(self,
-                               penalty=None,
-                               fit_intercept=fit_intercept,
-                               n_iter=n_iter,
-                               shuffle=shuffle,
-                               verbose=verbose,
-                               random_state=random_state,
-                               eta0=1.0,
-                               warm_start=warm_start,
-                               n_jobs=n_jobs)
+        BaseSGDClassifier.__init__(self,
+                                   penalty=None,
+                                   fit_intercept=fit_intercept,
+                                   n_iter=n_iter,
+                                   shuffle=shuffle,
+                                   verbose=verbose,
+                                   random_state=random_state,
+                                   eta0=1.0,
+                                   warm_start=warm_start,
+                                   n_jobs=n_jobs)
         self.C = C
         self.loss = loss
 

@@ -240,7 +240,297 @@ def _make_dataset(X, y_i, sample_weight):
     return dataset, intercept_decay
 
 
-class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
+def _prepare_fit_binary(est, y, i):
+    """Initialization for fit_binary.
+
+    Returns y, coef, intercept.
+    """
+    y_i = np.ones(y.shape, dtype=np.float64, order="C")
+    y_i[y != est.classes_[i]] = -1.0
+
+    if len(est.classes_) == 2:
+        coef = est.coef_.ravel()
+        intercept = est.intercept_[0]
+    else:
+        coef = est.coef_[i]
+        intercept = est.intercept_[i]
+
+    return y_i, coef, intercept
+
+
+def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
+               pos_weight, neg_weight, sample_weight):
+    """Fit a single binary classifier.
+
+    The i'th class is considered the "positive" class.
+    """
+    y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+    assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
+    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
+
+    penalty_type = est._get_penalty_type(est.penalty)
+    learning_rate_type = est._get_learning_rate_type(learning_rate)
+
+    return plain_sgd(coef, intercept, est.loss_function,
+                     penalty_type, alpha, C, est.l1_ratio,
+                     dataset, n_iter, int(est.fit_intercept),
+                     int(est.verbose), int(est.shuffle), est.random_state,
+                     pos_weight, neg_weight,
+                     learning_rate_type, est.eta0,
+                     est.power_t, est.t_, intercept_decay)
+
+
+class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
+
+    loss_functions = {
+        "hinge": (Hinge, 1.0),
+        "squared_hinge": (SquaredHinge, 1.0),
+        "perceptron": (Hinge, 0.0),
+        "log": (Log, ),
+        "modified_huber": (ModifiedHuber, ),
+        "squared_loss": (SquaredLoss, ),
+        "huber": (Huber, DEFAULT_EPSILON),
+        "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
+        "squared_epsilon_insensitive": (SquaredEpsilonInsensitive,
+                                        DEFAULT_EPSILON),
+    }
+
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False, rho=None):
+
+        super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
+                                                alpha=alpha, l1_ratio=l1_ratio,
+                                                fit_intercept=fit_intercept,
+                                                n_iter=n_iter, shuffle=shuffle,
+                                                verbose=verbose,
+                                                epsilon=epsilon,
+                                                random_state=random_state,
+                                                rho=rho,
+                                                learning_rate=learning_rate,
+                                                eta0=eta0, power_t=power_t,
+                                                warm_start=warm_start)
+        self.class_weight = class_weight
+        self.classes_ = None
+        self.n_jobs = int(n_jobs)
+
+    def _set_class_weight(self, class_weight, classes, y):
+        """Estimate class weights for unbalanced datasets."""
+        if class_weight is None or len(class_weight) == 0:
+            # uniform class weights
+            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+        elif class_weight == 'auto':
+            # proportional to the number of samples in the class
+            weight = np.array([1.0 / np.sum(y == i) for i in classes],
+                              dtype=np.float64, order='C')
+            weight *= classes.shape[0] / np.sum(weight)
+        else:
+            # user-defined dictionary
+            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+            if not isinstance(class_weight, dict):
+                raise ValueError("class_weight must be dict, 'auto', or None,"
+                                 " got: %r" % class_weight)
+            for c in class_weight:
+                i = np.searchsorted(classes, c)
+                if classes[i] != c:
+                    raise ValueError("Class label %d not present." % c)
+                else:
+                    weight[i] = class_weight[c]
+
+        self._expanded_class_weight = weight
+
+    def _partial_fit(self, X, y, alpha, C,
+                     loss, learning_rate, n_iter,
+                     classes, sample_weight,
+                     coef_init, intercept_init):
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y = np.asarray(y).ravel()
+
+        n_samples, n_features = X.shape
+        _check_fit_data(X, y)
+
+        self._validate_params()
+
+        if self.classes_ is None and classes is None:
+            raise ValueError("classes must be passed on the first call "
+                             "to partial_fit.")
+        elif classes is not None and self.classes_ is not None:
+            if not np.all(self.classes_ == np.unique(classes)):
+                raise ValueError("`classes` is not the same as on last call "
+                                 "to partial_fit.")
+        elif classes is not None:
+            self.classes_ = classes
+
+        n_classes = self.classes_.shape[0]
+
+        # Allocate datastructures from input arguments
+        self._set_class_weight(self.class_weight, self.classes_, y)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+
+        if self.coef_ is None:
+            self._allocate_parameter_mem(n_classes, n_features,
+                                         coef_init, intercept_init)
+
+        self.loss_function = self._get_loss_function(loss)
+        if self.t_ is None:
+            self._init_t(self.loss_function)
+
+        # delegate to concrete training procedure
+        if n_classes > 2:
+            self._fit_multiclass(X, y, alpha=alpha, C=C,
+                                 learning_rate=learning_rate,
+                                 sample_weight=sample_weight, n_iter=n_iter)
+        elif n_classes == 2:
+            self._fit_binary(X, y, alpha=alpha, C=C,
+                             learning_rate=learning_rate,
+                             sample_weight= sample_weight, n_iter=n_iter)
+        else:
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+
+        self.t_ += n_iter * n_samples
+
+        return self
+
+    def _fit(self, X, y, alpha, C, loss, learning_rate,
+             coef_init=None, intercept_init=None, class_weight=None,
+             sample_weight=None):
+        if class_weight is not None:
+            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
+                          "method is deprecated and will be removed in 0.13. "
+                          "Set it on initialization instead.",
+                          DeprecationWarning, stacklevel=2)
+
+            self.class_weight = class_weight
+
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        n_samples, n_features = X.shape
+
+        # labels can be encoded as float, int, or string literals
+        # np.unique sorts in asc order; largest class id is positive class
+        classes = np.unique(y)
+
+        if self.warm_start and self.coef_ is not None:
+            if coef_init is None:
+                coef_init = self.coef_
+            if intercept_init is None:
+                intercept_init = self.intercept_
+        else:
+            self.coef_ = None
+            self.intercept_ = None
+
+        # Clear iteration count for multiple call to fit.
+        self.t_ = None
+
+        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
+                          classes, sample_weight, coef_init, intercept_init)
+
+        # fitting is over, we can now transform coef_ to fortran order
+        # for faster predictions
+        self._set_coef(self.coef_)
+
+        return self
+
+    def _fit_binary(self, X, y, alpha, C, sample_weight,
+                    learning_rate, n_iter):
+        """Fit a binary classifier on X and y. """
+        coef, intercept = fit_binary(self, 1, X, y, alpha, C,
+                                     learning_rate, n_iter,
+                                     self._expanded_class_weight[1],
+                                     self._expanded_class_weight[0],
+                                     sample_weight)
+        # need to be 2d
+        self.coef_ = coef.reshape(1, -1)
+        # intercept is a float, need to convert it to an array of length 1
+        self.intercept_ = np.atleast_1d(intercept)
+
+    def _fit_multiclass(self, X, y, alpha, C, learning_rate,
+                        sample_weight, n_iter):
+        """Fit a multi-class classifier by combining binary classifiers
+
+        Each binary classifier predicts one class versus all others. This
+        strategy is called OVA: One Versus All.
+        """
+        # Use joblib to fit OvA in parallel
+        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+            delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
+                                n_iter, self._expanded_class_weight[i], 1.,
+                                sample_weight)
+            for i in xrange(len(self.classes_)))
+
+        for i, (coef, intercept) in enumerate(result):
+            self.coef_[i] = coef
+            self.intercept_[i] = intercept
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Subset of the training data
+
+        y : numpy array of shape [n_samples]
+            Subset of the target values
+
+        classes : array, shape = [n_classes]
+            Classes across all calls to partial_fit.
+            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that y doesn't need to contain all labels in `classes`.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
+                                 learning_rate=self.learning_rate, n_iter=1,
+                                 classes=classes, sample_weight=sample_weight,
+                                 coef_init=None, intercept_init=None)
+
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            class_weight=None, sample_weight=None):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_classes,n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [n_classes]
+            The initial intercept to warm-start the optimization.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        return self._fit(X, y, alpha=self.alpha, C=1.0,
+                         loss=self.loss, learning_rate=self.learning_rate,
+                         coef_init=coef_init, intercept_init=intercept_init,
+                         class_weight=class_weight,
+                         sample_weight=sample_weight)
+
+
+class SGDClassifier(BaseSGDClassifier):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -367,219 +657,6 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
     """
 
-    loss_functions = {
-        "hinge": (Hinge, 1.0),
-        "squared_hinge": (SquaredHinge, 1.0),
-        "perceptron": (Hinge, 0.0),
-        "log": (Log, ),
-        "modified_huber": (ModifiedHuber, ),
-        "squared_loss": (SquaredLoss, ),
-        "huber": (Huber, DEFAULT_EPSILON),
-        "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
-        "squared_epsilon_insensitive": (SquaredEpsilonInsensitive,
-                                        DEFAULT_EPSILON),
-    }
-
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
-                 learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, rho=None):
-
-        super(SGDClassifier, self).__init__(loss=loss, penalty=penalty,
-                                            alpha=alpha, l1_ratio=l1_ratio,
-                                            fit_intercept=fit_intercept,
-                                            n_iter=n_iter, shuffle=shuffle,
-                                            verbose=verbose, epsilon=epsilon,
-                                            random_state=random_state, rho=rho,
-                                            learning_rate=learning_rate,
-                                            eta0=eta0, power_t=power_t,
-                                            warm_start=warm_start)
-        self.class_weight = class_weight
-        self.classes_ = None
-        self.n_jobs = int(n_jobs)
-
-    def _set_class_weight(self, class_weight, classes, y):
-        """Estimate class weights for unbalanced datasets."""
-        if class_weight is None or len(class_weight) == 0:
-            # uniform class weights
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-        elif class_weight == 'auto':
-            # proportional to the number of samples in the class
-            weight = np.array([1.0 / np.sum(y == i) for i in classes],
-                              dtype=np.float64, order='C')
-            weight *= classes.shape[0] / np.sum(weight)
-        else:
-            # user-defined dictionary
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-            if not isinstance(class_weight, dict):
-                raise ValueError("class_weight must be dict, 'auto', or None,"
-                                 " got: %r" % class_weight)
-            for c in class_weight:
-                i = np.searchsorted(classes, c)
-                if classes[i] != c:
-                    raise ValueError("Class label %d not present." % c)
-                else:
-                    weight[i] = class_weight[c]
-
-        self._expanded_class_weight = weight
-
-    def _partial_fit(self, X, y, alpha, C,
-                     loss, learning_rate, n_iter,
-                     classes, sample_weight,
-                     coef_init, intercept_init):
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = np.asarray(y).ravel()
-
-        n_samples, n_features = X.shape
-        _check_fit_data(X, y)
-
-        self._validate_params()
-
-        if self.classes_ is None and classes is None:
-            raise ValueError("classes must be passed on the first call "
-                             "to partial_fit.")
-        elif classes is not None and self.classes_ is not None:
-            if not np.all(self.classes_ == np.unique(classes)):
-                raise ValueError("`classes` is not the same as on last call "
-                                 "to partial_fit.")
-        elif classes is not None:
-            self.classes_ = classes
-
-        n_classes = self.classes_.shape[0]
-
-        # Allocate datastructures from input arguments
-        self._set_class_weight(self.class_weight, self.classes_, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
-
-        if self.coef_ is None:
-            self._allocate_parameter_mem(n_classes, n_features,
-                                         coef_init, intercept_init)
-
-        self.loss_function = self._get_loss_function(loss)
-        if self.t_ is None:
-            self._init_t(self.loss_function)
-
-        # delegate to concrete training procedure
-        if n_classes > 2:
-            self._fit_multiclass(X, y, alpha=alpha, C=C,
-                                 learning_rate=learning_rate,
-                                 sample_weight=sample_weight, n_iter=n_iter)
-        elif n_classes == 2:
-            self._fit_binary(X, y, alpha=alpha, C=C,
-                             learning_rate=learning_rate,
-                             sample_weight= sample_weight, n_iter=n_iter)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-
-        self.t_ += n_iter * n_samples
-
-        return self
-
-    def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Subset of the training data
-
-        y : numpy array of shape [n_samples]
-            Subset of the target values
-
-        classes : array, shape = [n_classes]
-            Classes across all calls to partial_fit.
-            Can be obtained by via `np.unique(y_all)`, where y_all is the
-            target vector of the entire dataset.
-            This argument is required for the first call to partial_fit
-            and can be omitted in the subsequent calls.
-            Note that y doesn't need to contain all labels in `classes`.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
-                                 learning_rate=self.learning_rate, n_iter=1,
-                                 classes=classes, sample_weight=sample_weight,
-                                 coef_init=None, intercept_init=None)
-
-    def _fit(self, X, y, alpha, C, loss, learning_rate,
-             coef_init=None, intercept_init=None, class_weight=None,
-             sample_weight=None):
-        if class_weight is not None:
-            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
-                          "Set it on initialization instead.",
-                          DeprecationWarning, stacklevel=2)
-
-            self.class_weight = class_weight
-
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        n_samples, n_features = X.shape
-
-        # labels can be encoded as float, int, or string literals
-        # np.unique sorts in asc order; largest class id is positive class
-        classes = np.unique(y)
-
-        if self.warm_start and self.coef_ is not None:
-            if coef_init is None:
-                coef_init = self.coef_
-            if intercept_init is None:
-                intercept_init = self.intercept_
-        else:
-            self.coef_ = None
-            self.intercept_ = None
-
-        # Clear iteration count for multiple call to fit.
-        self.t_ = None
-
-        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
-                          classes, sample_weight, coef_init, intercept_init)
-
-        # fitting is over, we can now transform coef_ to fortran order
-        # for faster predictions
-        self._set_coef(self.coef_)
-
-        return self
-
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
-
-        y : numpy array of shape [n_samples]
-            Target values
-
-        coef_init : array, shape = [n_classes,n_features]
-            The initial coeffients to warm-start the optimization.
-
-        intercept_init : array, shape = [n_classes]
-            The initial intercept to warm-start the optimization.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        return self._fit(X, y, alpha=self.alpha, C=1.0,
-                         loss=self.loss, learning_rate=self.learning_rate,
-                         coef_init=coef_init, intercept_init=intercept_init,
-                         class_weight=class_weight,
-                         sample_weight=sample_weight)
-
     def predict_proba(self, X):
         """Probability estimates.
 
@@ -638,77 +715,6 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
             `self.classes_`.
         """
         return np.log(self.predict_proba(X))
-
-    def _fit_binary(self, X, y, alpha, C, sample_weight,
-                    learning_rate, n_iter):
-        """Fit a binary classifier on X and y. """
-        coef, intercept = fit_binary(self, 1, X, y, alpha, C,
-                                     learning_rate, n_iter,
-                                     self._expanded_class_weight[1],
-                                     self._expanded_class_weight[0],
-                                     sample_weight)
-        # need to be 2d
-        self.coef_ = coef.reshape(1, -1)
-        # intercept is a float, need to convert it to an array of length 1
-        self.intercept_ = np.atleast_1d(intercept)
-
-    def _fit_multiclass(self, X, y, alpha, C, learning_rate,
-                        sample_weight, n_iter):
-        """Fit a multi-class classifier by combining binary classifiers
-
-        Each binary classifier predicts one class versus all others. This
-        strategy is called OVA: One Versus All.
-        """
-        # Use joblib to fit OvA in parallel
-        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
-                                n_iter, self._expanded_class_weight[i], 1.,
-                                sample_weight)
-            for i in xrange(len(self.classes_)))
-
-        for i, (coef, intercept) in enumerate(result):
-            self.coef_[i] = coef
-            self.intercept_[i] = intercept
-
-
-def _prepare_fit_binary(est, y, i):
-    """Initialization for fit_binary.
-
-    Returns y, coef, intercept.
-    """
-    y_i = np.ones(y.shape, dtype=np.float64, order="C")
-    y_i[y != est.classes_[i]] = -1.0
-
-    if len(est.classes_) == 2:
-        coef = est.coef_.ravel()
-        intercept = est.intercept_[0]
-    else:
-        coef = est.coef_[i]
-        intercept = est.intercept_[i]
-
-    return y_i, coef, intercept
-
-
-def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
-               pos_weight, neg_weight, sample_weight):
-    """Fit a single binary classifier.
-
-    The i'th class is considered the "positive" class.
-    """
-    y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-    assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
-
-    penalty_type = est._get_penalty_type(est.penalty)
-    learning_rate_type = est._get_learning_rate_type(learning_rate)
-
-    return plain_sgd(coef, intercept, est.loss_function,
-                     penalty_type, alpha, C, est.l1_ratio,
-                     dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), est.random_state,
-                     pos_weight, neg_weight,
-                     learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay)
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):

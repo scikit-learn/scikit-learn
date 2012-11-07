@@ -1,10 +1,10 @@
 # Author: Mathieu Blondel
 # License: BSD Style.
 
-from .stochastic_gradient import SGDClassifier
+from .stochastic_gradient import BaseSGDClassifier
 
 
-class Perceptron(SGDClassifier):
+class Perceptron(BaseSGDClassifier):
     """Perceptron
 
     Parameters
