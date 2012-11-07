@@ -136,7 +136,7 @@ a PDF file (or any other supported file type) directly in Python::
     >>> dot_data = StringIO.StringIO() # doctest: +SKIP
     >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
     >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
-    >>> graph.write_pdf("iris.pdf")
+    >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
 .. only:: html
 
