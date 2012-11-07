@@ -289,15 +289,10 @@ def test_multitarget():
                                       estimator.coef_, estimator.coef_path_)
         for k in xrange(n_targets):
             estimator.fit(X, Y[:, k])
-            path_length = len(estimator.alphas_)
-            assert_array_almost_equal(alphas[k, :path_length],
-                                      estimator.alphas_)
-            assert_array_almost_equal(active[k, :path_length],
-                                      estimator.active_)
-            assert_array_almost_equal(coef[k, :],
-                                      estimator.coef_)
-            assert_array_almost_equal(path[k, :, :path_length],
-                                      estimator.coef_path_)
+            assert_array_almost_equal(alphas[k], estimator.alphas_)
+            assert_array_almost_equal(active[k], estimator.active_)
+            assert_array_almost_equal(coef[k], estimator.coef_)
+            assert_array_almost_equal(path[k], estimator.coef_path_)
 
 
 def test_lars_cv():
