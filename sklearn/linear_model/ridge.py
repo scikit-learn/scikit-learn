@@ -106,7 +106,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             y1 = y
 
         if isinstance(alpha, numbers.Number):
-            alpha = np.array([[alpha]])
+            alpha = np.array([alpha])
         if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
             alpha = alpha[:, np.newaxis]
 
@@ -150,8 +150,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             return coefs.squeeze()
 
-        return coefs.squeeze()  # need some serious refactoring because
-                                # of alphas shape
+        return coefs
     elif solver == "lsqr":
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
@@ -159,7 +158,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             y1 = y
 
         if isinstance(alpha, numbers.Number):
-            alpha = np.array([[alpha]])
+            alpha = np.array([alpha])
         if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
             alpha = alpha[:, np.newaxis]
 
