@@ -110,7 +110,6 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
             alpha = alpha[:, np.newaxis]
 
-        # According to the lsqr documentation, alpha = damp^2.
         alphas = alpha.reshape(-1, alpha.shape[-1])
 
         coefs = np.empty((alphas.shape[0], y1.shape[1], n_features))
@@ -244,23 +243,56 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         return coefs
     else:
+        if y.ndim == 1:
+            y1 = np.reshape(y, (-1, 1))
+        else:
+            y1 = y
+        if isinstance(alpha, numbers.Number):
+            alpha = np.array([alpha])
+        if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
+            alpha = alpha[:, np.newaxis]
+
+        alphas = alpha.reshape(-1, alpha.shape[-1])
+        coefs = np.empty((alphas.shape[0], y1.shape[1], n_features))
+
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             A = safe_sparse_dot(X, X.T, dense_output=True)
-            A.flat[::n_samples + 1] += alpha * sample_weight
-            Axy = linalg.solve(A, y, sym_pos=True, overwrite_a=True)
-            coef = safe_sparse_dot(X.T, Axy, dense_output=True)
+            for i, alpha_line in enumerate(alphas):
+                if alpha_line.shape != n_features:
+                    alpha_line = alpha_line * np.ones(y1.shape[1])
+
+                for j, (y_column, alpha_value) in enumerate(
+                                                  zip(y1.T, alpha_line)):
+                    A.flat[::n_samples + 1] += alpha * sample_weight
+                    Axy = linalg.solve(A, y_column,
+                                       sym_pos=True, overwrite_a=True)
+                    coefs[i, j] = safe_sparse_dot(X.T, Axy, dense_output=True)
+                    A.flat[::n_samples + 1] -= alpha * sample_weight
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
-            A.flat[::n_features + 1] += alpha
             Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            coef = linalg.solve(A, Xy, sym_pos=True, overwrite_a=True)
+            for i, alpha_line in enumerate(alphas):
+                if alpha_line.shape != n_features:
+                    alpha_line = alpha_line * np.ones(y1.shape[1])
 
-        return coef.T
+                for j, alpha_value in enumerate(alpha_line):
+                    A.flat[::n_features + 1] += alpha
+                    coefs[i, j] = linalg.solve(A, Xy[:, j],
+                                               sym_pos=True, overwrite_a=True)
+                    A.flat[::n_features + 1] -= alpha
+
+        coefs = coefs.reshape(list(alphas.shape[:-1]) + \
+                                 [coefs.shape[1], coefs.shape[2]])
+
+        if y.ndim == 1:
+            return coefs.squeeze()
+
+        return coefs
 
 
 class _BaseRidge(LinearModel):
