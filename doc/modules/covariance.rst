@@ -95,7 +95,7 @@ Ledoit-Wolf shrinkage
 In their 2004 paper [1], O. Ledoit and M. Wolf propose a formula so as
 to compute the optimal shrinkage coefficient :math:`\alpha` that
 minimizes the Mean Squared Error between the estimated and the real
-covariance matrix in.
+covariance matrix.
 
 The Ledoit-Wolf estimator of the covariance matrix can be computed on
 a sample with the :meth:`ledoit_wolf` function of the
