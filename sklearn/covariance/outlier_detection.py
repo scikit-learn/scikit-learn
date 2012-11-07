@@ -171,7 +171,7 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
                            random_state=random_state)
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """
         """
         MinCovDet.fit(self, X)
