@@ -20,6 +20,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from copy import deepcopy
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
@@ -548,6 +549,9 @@ class CountVectorizer(BaseEstimator):
         # The result was some 20% slower than the serial version.
         analyze = self.build_analyzer()
         term_counts_per_doc = [Counter(analyze(doc)) for doc in raw_documents]
+
+        self.test_term_counts_per_doc=deepcopy(term_counts_per_doc)
+
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def inverse_transform(self, X):
