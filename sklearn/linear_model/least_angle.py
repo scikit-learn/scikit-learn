@@ -494,8 +494,6 @@ class Lars(LinearModel, RegressorMixin):
         else:
             max_iter = self.max_iter
 
-        self.coef_ = np.zeros((n_targets, n_features))
-
         precompute = self.precompute
         if not hasattr(precompute, '__array__') and (precompute == True or
            (precompute == 'auto' and X.shape[0] > X.shape[1]) or
@@ -504,11 +502,12 @@ class Lars(LinearModel, RegressorMixin):
         else:
             Gram = self._get_gram()
 
+        self.alphas_ = []
+
         if self.fit_path:
-            self.alphas_ = np.zeros((n_targets, max_iter + 1))
-            self.active_ = np.ones((n_targets, max_iter))
-            self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
-            path_length = 0
+            self.coef_ = []
+            self.active_ = []
+            self.coef_path_ = []
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path = lars_path(
@@ -516,33 +515,27 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True)
-                this_path_length = len(alphas)
-                path_length = max(this_path_length, path_length)
-                self.alphas_[k, :this_path_length] = alphas
-                self.active_[k, :this_path_length] = active
-                self.coef_path_[k, :, :this_path_length] = coef_path
-                self.coef_[k, :] = coef_path[:, -1]
+                self.alphas_.append(alphas)
+                self.active_.append(active)
+                self.coef_path_.append(coef_path)
+                self.coef_.append(coef_path[:, -1])
 
             if n_targets == 1:
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                     a[0] for a in (self.alphas_, self.active_,
-                                            self.coef_path_, self.coef_)]
-            # Shorten the paths and use a copy to avoid keeping a
-            # reference on the full array
-            self.alphas_, self.active_, self.coef_path_ = [
-                a[..., :path_length].copy() for a in (self.alphas_,
-                                self.active_, self.coef_path_)]
+                                        self.coef_path_, self.coef_)]
         else:
-            self.alphas_ = np.empty(n_targets)
+            self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
-                self.alphas_[k], _, self.coef_[k, :] = lars_path(
+                alphas, _, self.coef_[k] = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=False)
-            self.alphas_, self.coef_ = (np.squeeze(a) for a in (self.alphas_,
-                                                                self.coef_))
+                self.alphas_.append(alphas)
+            if n_targets == 1:
+                self.alphas_ = self.alphas_[0]
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 

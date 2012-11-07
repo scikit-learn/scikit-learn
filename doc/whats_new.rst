@@ -104,6 +104,9 @@ API changes summary
      :class:`linear_model.ElasticNet` and ``(1-rho)`` in
      :class:`linear_model.SGDClassifier`,
 
+   - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
+     store a list of paths in the case of multiple targets, rather than
+     an array of paths.
 
 .. _changes_0_12.1:
 
