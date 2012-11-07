@@ -322,6 +322,25 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
 
 
+def test_lars_drop_for_good():
+    # Create an ill-conditioned situation in which the LARS has to good
+    # far in the path to converge, and check that LARS and coordinate
+    # descent give the same answers
+    X = [[    10, 10,  0],
+         [-1e-32,  0,  0],
+         [     1,  1,  1]]
+    y = [100, -100, 1]
+    lars = linear_model.LassoLars(.001, normalize=False)
+    lars_coef_ = lars.fit(X, y).coef_
+    lars_obj = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
+                + .1 * linalg.norm(lars_coef_, 1))
+    coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
+    cd_coef_ = coord_descent.fit(X, y).coef_
+    cd_obj = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
+                + .1 * linalg.norm(cd_coef_, 1))
+    np.testing.assert_allclose(lars_obj, cd_obj)
+
+
 def test_lars_add_features():
     """
     assure that at least some features get added if necessary
