@@ -166,9 +166,9 @@ def test_no_path_all_precomputed():
 
 
 def test_singular_matrix():
-    """
-    Test when input is a singular matrix
-    """
+    # Test when input is a singular matrix
+    # In this test the "drop for good strategy" of lars_path is necessary
+    # to give a good answer
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
     with warnings.catch_warnings(record=True) as warning_list:
