@@ -456,6 +456,8 @@ def test_one_hot_encoder():
     # discover max values automatically
     X_trans = enc.fit_transform(X).toarray()
     assert_equal(X_trans.shape, (2, 5))
+    assert_array_equal(enc.active_features_,
+                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
     assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
 
     # check outcome
@@ -488,8 +490,8 @@ def test_one_hot_encoder():
     # test that error is raised when wrong number of features in fit
     # with prespecified n_values
     assert_raises(ValueError, enc.fit, X[:, :-1])
-    # test value error on wrong init param
-    assert_raises(ValueError, OneHotEncoder(n_values=np.int).fit, X)
+    # test exception on wrong init param
+    assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
 
 
 def test_label_encoder():

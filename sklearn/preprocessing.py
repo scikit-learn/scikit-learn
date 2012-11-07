@@ -608,41 +608,43 @@ def _is_multilabel(y):
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
-    The input is assumed to be integer and name categorical
-    features numbered from ``0`` to ``n_values - 1``.
+    The input to this transformer should be a matrix of integers, denoting
+    the values taken on by categorical (discrete) features. The output will be
+    a sparse matrix were each column corresponds to one possible value of one
+    feature. It is assumed that input features take on values in the range
+    [0, n_values).
+
+    This encoding is needed for feeding categorical data to scikit-learn
+    estimators.
 
     Parameters
     ----------
     n_values : 'auto', int or array of int
         Number of values per feature.
-        'auto' : determine feature range from training data.
+        'auto' : determine value range from training data.
         int : maximum value for all features.
         array : maximum value per feature.
 
     dtype : number type, default=np.float
         Desired dtype of output.
 
-
     Attributes
     ----------
     `active_features_` : array
-        Indices for active features, meaning values that
-        actually occur in the training dataset. Only available
-        if n_values is ``'auto'``.
+        Indices for active features, meaning values that actually occur in the
+        training set. Only available when n_values is ``'auto'``.
     `feature_indices_` : array of shape (n_features,)
-        Indices to feature ranges. Feature ``i`` in the
-        original data is mapped to features
-        ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        Indices to feature ranges. Feature ``i`` in the original data is mapped
+        to features ``feature_indices_[i]`` to ``feature_indices_[i+1]``
         (and potentially masked by `active_features_` afterwards)
     `n_values_` : array of shape (n_features,)
         Maximum number of values per feature.
 
-
     Examples
     --------
-    Given a dataset with three features and two
-    data points, we find the maximum value per feature
-    and transform the data to a binary one-hot encoding.
+    Given a dataset with three features and two samples, we let the encoder
+    find the maximum value per feature and transform the data to a binary
+    one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
@@ -659,23 +661,32 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     --------
     LabelEncoder : performs a one-hot encoding on arbitrary class labels.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
-      dictionary items.
+      dictionary items (also handles string-valued features).
     """
     def __init__(self, n_values="auto", dtype=np.float):
         self.n_values = n_values
         self.dtype = dtype
 
     def fit(self, X, y=None):
-        self.fit_transform(X)
-        return self
-
-    def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X.
 
         Parameters
         ----------
         X : array-like, shape=(n_samples, n_feature)
             Input array of type int.
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit OneHotEncoder to X, then transform X.
+
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
         """
         X, = check_arrays(X, sparse_format='dense', dtype=np.int)
         n_samples, n_features = X.shape
@@ -688,8 +699,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             try:
                 n_values = np.asarray(self.n_values, dtype=int)
             except (ValueError, TypeError):
-                raise ValueError("Wrong type for parameter `n_values`."
-                        " Expected 'auto', int or array of ints, got %s"
+                raise TypeError("Wrong type for parameter `n_values`."
+                        " Expected 'auto', int or array of ints, got %r"
                         % type(X))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is "
