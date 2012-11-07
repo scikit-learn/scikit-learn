@@ -124,7 +124,7 @@ exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
     >>> with open("iris.dot", 'w') as f:
-    >>>     tree.export_graphviz(clf, out_file=f)
+    ...     f = tree.export_graphviz(clf, out_file=f)
 
 Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
 supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
