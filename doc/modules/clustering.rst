@@ -272,6 +272,33 @@ function of the gradient of the image.
  * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
    to split the image of lena in regions.
 
+.. |lena_kmeans| image:: ../auto_examples/cluster/images/plot_lena_segmentation_1.png
+    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+    :scale: 65
+
+.. |lena_discretize| image:: ../auto_examples/cluster/images/plot_lena_segmentation_2.png
+    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+    :scale: 65
+
+Different label assignement strategies
+---------------------------------------
+
+Different label assignement strategies can be used, corresponding to the
+`assign_labels` parameter of :class:`SpectralClustering`.
+The `kmeans` strategie can match finer details of the data, but it can be
+more unstable. In particular, unless you control the `random_state`, it
+may not be reproducible from run-to-run, as it depends on a random
+initialization. On the other hand, the `discretize` strategy is 100%
+reproducible, but it tends to create parcels of fairly even and
+geometrical shape.
+
+=====================================  =====================================
+ `assign_labels="kmeans"`               `assign_labels="discretize"`
+=====================================  =====================================
+|lena_kmeans|                          |lena_discretize|
+=====================================  =====================================
+
+
 .. topic:: References:
 
  * `"A Tutorial on Spectral Clustering"
