@@ -119,13 +119,13 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             if alpha_line.shape != n_features:
                 alpha_line = alpha_line * np.ones(y1.shape[1])
 
-            for j, (y_column, alpha) in enumerate(zip(y1.T, alpha_line)):
+            for j, (y_column, alpha_value) in enumerate(zip(y1.T, alpha_line)):
 
                     if n_features > n_samples:
                         # kernel ridge
                         # w = X.T * inv(X X^t + alpha*Id) y
                         def mv(x):
-                            return X1.matvec(X1.rmatvec(x)) + alpha * x
+                            return X1.matvec(X1.rmatvec(x)) + alpha_value * x
 
                         C = sp_linalg.LinearOperator(
                             (n_samples, n_samples), matvec=mv, dtype=X.dtype)
@@ -135,7 +135,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                         # ridge
                         # w = inv(X^t X + alpha*Id) * X.T y
                         def mv(x):
-                            return X1.rmatvec(X1.matvec(x)) + alpha * x
+                            return X1.rmatvec(X1.matvec(x)) + alpha_value * x
 
                         y_column = X1.rmatvec(y_column)
                         C = sp_linalg.LinearOperator(
@@ -150,7 +150,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if y.ndim == 1:
             return coefs.squeeze()
 
-        return coefs
+        return coefs.squeeze()  # need some serious refactoring because
+                                # of alphas shape
     elif solver == "lsqr":
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
