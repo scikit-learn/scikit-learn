@@ -16,8 +16,8 @@ digits = datasets.load_digits()
 X = digits.data
 y = digits.target
 
-svc = svm.SVC()
-C_s = np.logspace(-3, 3, 10)
+svc = svm.SVC(kernel='linear')
+C_s = np.logspace(-10, 0, 10)
 
 scores = list()
 scores_std = list()
@@ -27,18 +27,16 @@ for C in C_s:
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
+# Do the plotting
 import pylab as pl
-pl.figure(1, figsize=(2.5, 2))
+pl.figure(1, figsize=(4, 3))
 pl.clf()
-pl.axes([.1, .25, .8, .7])
 pl.semilogx(C_s, scores)
 pl.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 pl.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
-pl.yticks(())
+locs, labels = pl.yticks()
+pl.yticks(locs, map(lambda x: "%g" % x, locs))
 pl.ylabel('CV score')
 pl.xlabel('Parameter C')
 pl.ylim(0, 1.1)
-#pl.axhline(np.max(scores), linestyle='--', color='.5')
-pl.text(C_s[np.argmax(scores)], .9 * np.max(scores), '%.3f' % np.max(scores),
-        verticalalignment='top', horizontalalignment='center',)
 pl.show()

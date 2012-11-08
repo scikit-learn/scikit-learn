@@ -21,7 +21,8 @@ def test_isotonic_regression():
     # check that it is immune to permutation
     perm = np.random.permutation(len(y))
     ir = IsotonicRegression(y_min=0., y_max=1.)
-    assert_array_equal(ir.fit_transform(x[perm], y[perm]), ir.fit_transform(x, y)[perm])
+    assert_array_equal(ir.fit_transform(x[perm], y[perm]),
+                       ir.fit_transform(x, y)[perm])
     assert_array_equal(ir.transform(x[perm]), ir.transform(x)[perm])
 
 

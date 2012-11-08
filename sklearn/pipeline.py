@@ -40,12 +40,6 @@ class Pipeline(BaseEstimator):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    Attributes
-    ----------
-    `steps` : list of (name, object)
-        List of the named object that compose the pipeline, in the \
-        order that they are applied on the data.
-
     Examples
     --------
     >>> from sklearn import svm

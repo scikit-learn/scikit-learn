@@ -102,15 +102,16 @@ class ShrunkCovariance(EmpiricalCovariance):
                                      assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Fits the shrunk covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         assume_centered: Boolean
           If True, data are not centered before computation.
@@ -120,8 +121,8 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         Returns
         -------
-        self : object
-            Returns self.
+        self: object
+          Returns self.
 
         """
         # Not calling the parent object to fit, to avoid a potential
@@ -362,20 +363,21 @@ class LedoitWolf(EmpiricalCovariance):
                                      assume_centered=assume_centered)
         self.block_size = block_size
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Fits the Ledoit-Wolf shrunk covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------
-        self : object
-            Returns self.
+        self: object
+          Returns self.
 
         """
         # Not calling the parent object to fit, to avoid computing the
@@ -426,6 +428,11 @@ def oas(X, assume_centered=False):
       + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    The formula we used to implement the OAS
+    does not correspond to the one given in the article. It has been taken
+    from the MATLAB program available from the author's webpage
+    (https://tbayes.eecs.umich.edu/yilun/covestimation).
 
     """
     X = np.asarray(X)
@@ -509,20 +516,21 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     """
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------
-        self : object
-            Returns self.
+        self: object
+          Returns self.
 
         """
         # Not calling the parent object to fit, to avoid computing the

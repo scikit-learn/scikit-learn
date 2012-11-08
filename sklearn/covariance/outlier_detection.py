@@ -97,7 +97,7 @@ class OutlierDetectionMixin(object):
             values = self.decision_function(X, raw_values=True)
             is_inlier[values <= self.threshold] = 1
         else:
-            raise NotImplemented("You must provide a contamination rate.")
+            raise NotImplementedError("You must provide a contamination rate.")
 
         return is_inlier
 
@@ -171,7 +171,7 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
                            random_state=random_state)
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """
         """
         MinCovDet.fit(self, X)

@@ -273,9 +273,9 @@ features that will be used for supervised learning, because it allows the
 learning algorithm to assign different weights to negative loadings of a
 particular atom, from to the corresponding positive loading.
 
-The split code for a single sample has length `2 * n_atoms`
+The split code for a single sample has length `2 * n_components`
 and is constructed using the following rule: First, the regular code of length
-`n_atoms` is computed. Then, the first `n_atoms` entries of the split_code are
+`n_components` is computed. Then, the first `n_components` entries of the split_code are
 filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.

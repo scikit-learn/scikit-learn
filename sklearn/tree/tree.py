@@ -111,7 +111,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
         # Add node with description
         out_file.write('%d [label="%s", shape="box"] ;\n' %
-                (node_id, node_to_str(tree, node_id)))
+                       (node_id, node_to_str(tree, node_id)))
 
         if parent is not None:
             # Add edge to parent
@@ -176,7 +176,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The training input samples. Use ``dtype=np.float32``
             and ``order='F'`` for maximum efficiency.
 
@@ -185,6 +185,23 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             classification, real numbers in regression).
             Use ``dtype=np.float64`` and ``order='C'`` for maximum
             efficiency.
+
+        sample_mask : array-like, shape = [n_samples], dtype = bool or None
+            A bit mask that encodes the rows of ``X`` that should be
+            used to build the decision tree. It can be used for bagging
+            without the need to create of copy of ``X``.
+            If None a mask will be created that includes all samples.
+
+        X_argsorted : array-like, shape = [n_samples, n_features] or None
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            I.e. ``X[X_argsorted[i, k], k] <= X[X_argsorted[j, k], k]``
+            for each j > i.
+            If None, ``X_argsorted`` is computed internally.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
 
         Returns
         -------
@@ -271,14 +288,20 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("min_density must be in [0, 1]")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if sample_mask is not None and len(sample_mask) != n_samples:
-            raise ValueError("Length of sample_mask=%d does not match "
-                             "number of samples=%d" % (len(sample_mask),
-                                                       n_samples))
-        if X_argsorted is not None and len(X_argsorted) != n_samples:
-            raise ValueError("Length of X_argsorted=%d does not match "
-                             "number of samples=%d" % (len(X_argsorted),
-                                                       n_samples))
+        if sample_mask is not None:
+            sample_mask = np.asarray(sample_mask, dtype=np.bool)
+
+            if sample_mask.shape[0] != n_samples:
+                raise ValueError("Length of sample_mask=%d does not match "
+                                 "number of samples=%d" % (sample_mask.shape[0],
+                                                           n_samples))
+
+        if X_argsorted is not None:
+            X_argsorted = np.asarray(X_argsorted, dtype=np.int32,
+                                     order='F')
+            if X_argsorted.shape != X.shape:
+                raise ValueError("Shape of X_argsorted does not match "
+                                 "the shape of X")
 
         # Build tree
         self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,

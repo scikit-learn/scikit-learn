@@ -45,6 +45,8 @@ one may want to use the `assume_centered` parameter accurately.
      to data.
 
 
+.. _shrunk_covariance:
+
 Shrunk Covariance
 =================
 
@@ -57,24 +59,28 @@ eigenvalues of the covariance matrix, so the precision matrix obtained
 from its inversion is not accurate. Sometimes, it even occurs that the
 empirical covariance matrix cannot be inverted for numerical
 reasons. To avoid such an inversion problem, a transformation of the
-empirical covariance matrix has been introduced: the `shrinkage`. It
-consists in reducing the ratio between the smallest and the largest
-eigenvalue of the empirical covariance matrix. This can be done by
-simply shifting every eigenvalue according to a given offset, which is
-equivalent of finding the l2-penalized Maximum Likelihood Estimator of
-the covariance matrix, or by reducing the highest eigenvalue while
-increasing the smallest with the help of a convex transformation :
-:math:`\Sigma_{\rm shrunk} = (1-\alpha)\hat{\Sigma} +
-\alpha\frac{{\rm Tr}\hat{\Sigma}}{p}\rm Id`.  The latter approach has been
-implemented in scikit-learn.
+empirical covariance matrix has been introduced: the `shrinkage`. 
 
-A convex transformation (with a user-defined shrinkage coefficient)
-can be directly applied to a pre-computed covariance with the
-:func:`shrunk_covariance` method. Also, a shrunk estimator of the
-covariance can be fitted to data with a :class:`ShrunkCovariance`
-object and its :meth:`ShrunkCovariance.fit` method.  Again, depending
-whether the data are centered or not, the result will be different, so
-one may want to use the `assume_centered` parameter accurately.
+In the scikit-learn, this transformation (with a user-defined shrinkage
+coefficient) can be directly applied to a pre-computed covariance with
+the :func:`shrunk_covariance` method. Also, a shrunk estimator of the
+covariance can be fitted to data with a :class:`ShrunkCovariance` object
+and its :meth:`ShrunkCovariance.fit` method.  Again, depending whether
+the data are centered or not, the result will be different, so one may
+want to use the `assume_centered` parameter accurately.
+
+
+Mathematically, this shrinkage consists in reducing the ratio between the
+smallest and the largest eigenvalue of the empirical covariance matrix.
+It can be done by simply shifting every eigenvalue according to a given
+offset, which is equivalent of finding the l2-penalized Maximum
+Likelihood Estimator of the covariance matrix. In practice, shrinkage
+boils down to a simple a convex transformation : :math:`\Sigma_{\rm
+shrunk} = (1-\alpha)\hat{\Sigma} + \alpha\frac{{\rm
+Tr}\hat{\Sigma}}{p}\rm Id`.  
+
+Choosing the amount of shrinkage, :math:`\alpha` amounts to setting a
+bias/variance trade-off, and is discussed below.
 
 .. topic:: Examples:
 
@@ -89,16 +95,12 @@ Ledoit-Wolf shrinkage
 In their 2004 paper [1], O. Ledoit and M. Wolf propose a formula so as
 to compute the optimal shrinkage coefficient :math:`\alpha` that
 minimizes the Mean Squared Error between the estimated and the real
-covariance matrix in terms of Frobenius norm.
+covariance matrix.
 
 The Ledoit-Wolf estimator of the covariance matrix can be computed on
 a sample with the :meth:`ledoit_wolf` function of the
 `sklearn.covariance` package, or it can be otherwise obtained by
 fitting a :class:`LedoitWolf` object to the same sample.
-
-[1] O. Ledoit and M. Wolf, "A Well-Conditioned Estimator for Large-Dimensional
-    Covariance Matrices", Journal of Multivariate Analysis, Volume 88, Issue 2,
-    February 2004, pages 365-411.
 
 .. topic:: Examples:
 
@@ -107,11 +109,10 @@ fitting a :class:`LedoitWolf` object to the same sample.
      for visualizing the performances of the Ledoit-Wolf estimator in
      terms of likelihood.
 
-.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_1.png
-   :target: ../auto_examples/covariance/plot_covariance_estimation.html
-   :align: center
-   :scale: 65%
 
+[1] O. Ledoit and M. Wolf, "A Well-Conditioned Estimator for Large-Dimensional
+    Covariance Matrices", Journal of Multivariate Analysis, Volume 88, Issue 2,
+    February 2004, pages 365-411.
 
 .. _oracle_approximating_shrinkage:
 
@@ -127,11 +128,15 @@ Shrinkage Approximating estimator of the covariance.
 The OAS estimator of the covariance matrix can be computed on a sample
 with the :meth:`oas` function of the `sklearn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
-object to the same sample.  The formula we used to implement the OAS
-does not correspond to the one given in the article. It has been taken
-from the MATLAB program available from the author's webpage
-(https://tbayes.eecs.umich.edu/yilun/covestimation).
+object to the same sample.
 
+.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_1.png
+   :target: ../auto_examples/covariance/plot_covariance_estimation.html
+   :align: center
+   :scale: 65%
+
+   Bias-variance trade-off when setting the shrinkage: comparing the
+   choices of Ledoit-Wolf and OAS estimators
 
 [2] Chen et al., "Shrinkage Algorithms for MMSE Covariance Estimation",
     IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
@@ -151,6 +156,7 @@ from the MATLAB program available from the author's webpage
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
+
 
 .. _sparse_inverse_covariance:
 
@@ -263,7 +269,7 @@ Minimum Covariance Determinant
 ------------------------------
 
 The Minimum Covariance Determinant estimator is a robust estimator of
-a data set's covariance introduced by P.J.Rousseuw in [3].  The idea
+a data set's covariance introduced by P.J.Rousseeuw in [3].  The idea
 is to find a given proportion (h) of "good" observations which are not
 outliers and compute their empirical covariance matrix.  This
 empirical covariance matrix is then rescaled to compensate the
@@ -273,7 +279,7 @@ weights to observations according to their Mahalanobis distance,
 leading the a reweighted estimate of the covariance matrix of the data
 set ("reweighting step").
 
-Rousseuw and Van Driessen [4] developed the FastMCD algorithm in order
+Rousseeuw and Van Driessen [4] developed the FastMCD algorithm in order
 to compute the Minimum Covariance Determinant. This algorithm is used
 in scikit-learn when fitting an MCD object to data. The FastMCD
 algorithm also computes a robust estimate of the data set location at
@@ -315,7 +321,7 @@ ____
     :header-rows: 1
 
     * - Influence of outliers on location and covariance estimates
-      - Separating inliers from outliers using a Mahalonis distance
+      - Separating inliers from outliers using a Mahalanobis distance
 
     * - |robust_vs_emp|
       - |mahalanobis|

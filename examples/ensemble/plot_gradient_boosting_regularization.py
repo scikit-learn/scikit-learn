@@ -7,7 +7,7 @@ Illustration of the effect of different regularization strategies
 for Gradient Boosting. The example is taken from Hastie et al 2009.
 
 The loss function used is binomial deviance. Regularization via
-shrinkage (``learn_rate < 1.0``) improves performance considerably.
+shrinkage (``learning_rate < 1.0``) improves performance considerably.
 In combination with shrinkage, stochastic gradient boosting
 (``subsample < 1.0``) can produce more accurate models by reducing the
 variance via bagging.
@@ -43,15 +43,15 @@ original_params = {'n_estimators': 1000, 'max_depth': 2, 'random_state': 1,
 pl.figure()
 
 for label, color, setting in [('No shrinkage', 'orange',
-                               {'learn_rate': 1.0, 'subsample': 1.0}),
-                              ('learn_rate=0.1', 'turquoise',
-                               {'learn_rate': 0.1, 'subsample': 1.0}),
+                               {'learning_rate': 1.0, 'subsample': 1.0}),
+                              ('learning_rate=0.1', 'turquoise',
+                               {'learning_rate': 0.1, 'subsample': 1.0}),
                               ('subsample=0.5', 'blue',
-                               {'learn_rate': 1.0, 'subsample': 0.5}),
-                              ('learn_rate=0.1, subsample=0.5', 'gray',
-                               {'learn_rate': 0.1, 'subsample': 0.5}),
-                              ('learn_rate=0.1, max_features=2', 'magenta',
-                               {'learn_rate': 0.1, 'max_features': 2})]:
+                               {'learning_rate': 1.0, 'subsample': 0.5}),
+                              ('learning_rate=0.1, subsample=0.5', 'gray',
+                               {'learning_rate': 0.1, 'subsample': 0.5}),
+                              ('learning_rate=0.1, max_features=2', 'magenta',
+                               {'learning_rate': 0.1, 'max_features': 2})]:
     params = dict(original_params)
     params.update(setting)
 

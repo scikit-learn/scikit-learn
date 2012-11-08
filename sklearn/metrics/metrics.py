@@ -13,9 +13,9 @@ better
 # License: BSD Style.
 
 import numpy as np
+from scipy.sparse import coo_matrix
 
 from ..utils import check_arrays
-from scipy.sparse import coo_matrix
 
 
 def unique_labels(*lists_of_labels):
@@ -213,14 +213,14 @@ def average_precision_score(y_true, y_score):
     auc_score: Area under the ROC curve
     """
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
-
     return auc(recall, precision)
 
 
 def auc_score(y_true, y_score):
     """Compute Area Under the Curve (AUC) from prediction scores.
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: this implementation is restricted to the binary classification
+    task.
 
     Parameters
     ----------
@@ -246,10 +246,10 @@ def auc_score(y_true, y_score):
     """
 
     fpr, tpr, tresholds = roc_curve(y_true, y_score)
-    return auc(fpr, tpr)
+    return auc(fpr, tpr, reorder=True)
 
 
-def auc(x, y):
+def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general fuction, given points on a curve.
@@ -262,6 +262,11 @@ def auc(x, y):
 
     y : array, shape = [n]
         y coordinates
+
+    reorder : boolean, optional
+        If True, assume that the curve is ascending in the case of ties,
+        as for an ROC curve. With descending curve, you will get false
+        results
 
     Returns
     -------
@@ -283,19 +288,22 @@ def auc(x, y):
 
     """
     x, y = check_arrays(x, y)
-    if x.shape[0] != y.shape[0]:
-        raise ValueError('x and y should have the same shape'
-                         ' to compute area under curve,'
-                         ' but x.shape = %s and y.shape = %s.'
-                         % (x.shape, y.shape))
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
-    # reorder the data points according to the x axis and using y to break ties
-    x, y = np.array(sorted(points for points in zip(x, y))).T
+    if reorder:
+        # reorder the data points according to the x axis and using y to
+        # break ties
+        x, y = np.array(sorted(points for points in zip(x, y))).T
+        h = np.diff(x)
+    else:
+        h = np.diff(x)
+        if np.any(h < 0):
+            h *= -1
+            assert not np.any(h < 0), ("Reordering is not turned on, and "
+                        "The x array is not increasing: %s" % x)
 
-    h = np.diff(x)
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
 
@@ -652,7 +660,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2:
+    elif n_labels == 2 and pos_label != None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))

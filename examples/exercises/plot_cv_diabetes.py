@@ -55,11 +55,15 @@ k_fold = cross_validation.KFold(len(X), 3)
 print "Answer to the bonus question: how much can you trust"
 print "the selection of alpha?"
 print
-print "alpha parameter maximising the generalization score on different"
+print "Alpha parameters maximising the generalization score on different"
 print "subsets of the data:"
-print [lasso_cv.fit(X[train], y[train]).alpha_ for train, _ in k_fold]
+for k, (train, test) in enumerate(k_fold):
+    lasso_cv.fit(X[train], y[train])
+    print "[fold {0}] alpha: {1:.5f}, score: {2:.5f}".\
+        format(k, lasso_cv.alpha_, lasso_cv.score(X[test], y[test]))
 print
-print "Answer: Not very much since alphas for different subsets of data differ"
-print "quite a lot."
+print "Answer: Not very much since we obtained different alphas for different"
+print "subsets of the data and moreover, the scores for these alphas differ"
+print "quite substantially."
 
 pl.show()

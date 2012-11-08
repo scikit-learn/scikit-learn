@@ -14,6 +14,7 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from .k_means_ import k_means
 
+
 def _set_diag(laplacian, value):
     """Set the diagonal of the laplacian matrix and convert it to a
     sparse format well suited for eigenvalue decomposition
@@ -53,6 +54,7 @@ def _set_diag(laplacian, value):
             # arpack
             laplacian = laplacian.tocsr()
     return laplacian
+
 
 def spectral_embedding(adjacency, n_components=8, mode=None,
                        random_state=None, eig_tol=0.0):
@@ -191,7 +193,8 @@ def spectral_embedding(adjacency, n_components=8, mode=None,
             lambdas, diffusion_map = symeig(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
-            laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+            # lobpcg needs native floats
+            laplacian = laplacian.astype(np.float)
             laplacian = _set_diag(laplacian, 1)
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension
@@ -397,8 +400,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None, mode=None,
         The strategy to use to assign labels in the embedding
         space.  There are two ways to assign labels after the laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
-        also be sensitive to initialization.  Discretization is another approach
-        which is less sensitive to random initialization.
+        also be sensitive to initialization. Discretization is another
+        approach which is less sensitive to random initialization.
 
     Returns
     -------
@@ -509,9 +512,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
-        space.  There are two ways to assign labels after the laplacian
-        embedding.  k-means can be applied and is a popular choice. But it can
-        also be sensitive to initialization.  Discretization is another approach
+        space. There are two ways to assign labels after the laplacian
+        embedding. k-means can be applied and is a popular choice. But it can
+        also be sensitive to initialization. Discretization is another approach
         which is less sensitive to random initialization.
 
     Attributes
@@ -583,8 +586,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         """
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
-                          "now constructs an affinity matrix from data. To use "
-                          "a custom affinity matrix, set ``affinity=precomputed``.")
+                          "now constructs an affinity matrix from data. To use"
+                          " a custom affinity matrix, "
+                          "set ``affinity=precomputed``.")
 
         if self.affinity == 'rbf':
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)

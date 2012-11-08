@@ -16,16 +16,16 @@ from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from sklearn.utils import check_random_state
 
 
-def generate_toy_data(n_atoms, n_samples, image_size, random_state=None):
+def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
 
     rng = check_random_state(random_state)
-    U = rng.randn(n_samples, n_atoms)
-    V = rng.randn(n_atoms, n_features)
+    U = rng.randn(n_samples, n_components)
+    V = rng.randn(n_components, n_features)
 
     centers = [(3, 3), (6, 7), (8, 1)]
     sz = [1, 2, 1]
-    for k in range(n_atoms):
+    for k in range(n_components):
         img = np.zeros(image_size)
         xmin, xmax = centers[k][0] - sz[k], centers[k][0] + sz[k]
         ymin, ymax = centers[k][1] - sz[k], centers[k][1] + sz[k]

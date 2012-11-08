@@ -33,7 +33,7 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
 
-    tol: float, optional (default=1e-4)
+    tol : float, optional (default=1e-4)
         Tolerance for stopping criteria
 
     multi_class: string, 'ovr' or 'crammer_singer' (default='ovr')
@@ -155,8 +155,10 @@ class SVC(BaseSVC):
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given, 'rbf' will be used.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+         a callable.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
         Degree of kernel function.
@@ -177,10 +179,10 @@ class SVC(BaseSVC):
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
-    tol: float, optional (default=1e-3)
+    tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
-    cache_size: float, optional
+    cache_size : float, optional
         Specify the size of the kernel cache (in MB)
 
     class_weight : {dict, 'auto'}, optional
@@ -195,7 +197,7 @@ class SVC(BaseSVC):
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter: int, optional (default=-1)
+    max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
@@ -279,8 +281,10 @@ class NuSVC(BaseSVC):
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given 'rbf' will be used.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+         a callable.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
         degree of kernel function
@@ -301,10 +305,10 @@ class NuSVC(BaseSVC):
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
-    tol: float, optional (default=1e-3)
+    tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
-    cache_size: float, optional
+    cache_size : float, optional
         Specify the size of the kernel cache (in MB)
 
     class_weight : {dict, 'auto'}, optional
@@ -319,7 +323,7 @@ class NuSVC(BaseSVC):
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter: int, optional (default=-1)
+    max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
@@ -403,8 +407,10 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given 'rbf' will be used.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+         a callable.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
         degree of kernel function
@@ -425,10 +431,10 @@ class SVR(BaseLibSVM, RegressorMixin):
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
-    tol: float, optional (default=1e-3)
+    tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
-    cache_size: float, optional
+    cache_size : float, optional
         Specify the size of the kernel cache (in MB)
 
     verbose : bool, default: False
@@ -436,7 +442,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter: int, optional (default=-1)
+    max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
@@ -511,8 +517,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'.
-         If none is given 'rbf' will be used.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+         a callable.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
         degree of kernel function
@@ -533,10 +541,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
-    tol: float, optional (default=1e-3)
+    tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
 
-    cache_size: float, optional
+    cache_size : float, optional
         Specify the size of the kernel cache (in MB)
 
     verbose : bool, default: False
@@ -544,7 +552,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter: int, optional (default=-1)
+    max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
@@ -611,10 +619,12 @@ class OneClassSVM(BaseLibSVM):
 
     Parameters
     ----------
-    kernel : string, optional
-        Specifies the kernel type to be used in
-        the algorithm. Can be one of 'linear', 'poly', 'rbf', 'sigmoid',
-        'precomputed'. If none is given 'rbf' will be used.
+    kernel : string, optional (default='rbf')
+         Specifies the kernel type to be used in the algorithm.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+         a callable.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
 
     nu : float, optional
         An upper bound on the fraction of training
@@ -633,13 +643,13 @@ class OneClassSVM(BaseLibSVM):
         Independent term in kernel function. It is only significant in
         poly/sigmoid.
 
-    tol: float, optional
+    tol : float, optional
         Tolerance for stopping criterion.
 
     shrinking: boolean, optional
         Whether to use the shrinking heuristic.
 
-    cache_size: float, optional
+    cache_size : float, optional
         Specify the size of the kernel cache (in MB)
 
     verbose : bool, default: False
@@ -647,7 +657,7 @@ class OneClassSVM(BaseLibSVM):
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter: int, optional (default=-1)
+    max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes

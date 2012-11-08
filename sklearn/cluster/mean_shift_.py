@@ -57,27 +57,27 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Parameters
     ----------
 
-    X : array [n_samples, n_features]
-        Input points
+    X : array-like shape=[n_samples, n_features]
+        Input data.
 
     bandwidth : float, optional
-        kernel bandwidth
+        Kernel bandwidth.
         If bandwidth is not defined, it is set using
-        a heuristic given by the median of all pairwise distances
+        a heuristic given by the median of all pairwise distances.
 
-    seeds: array [n_seeds, n_features]
-        point used as initial kernel locations
+    seeds : array [n_seeds, n_features]
+        Point used as initial kernel locations.
 
-    bin_seeding: boolean
+    bin_seeding : boolean
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
         default value: False
-        Ignored if seeds argument is not None
+        Ignored if seeds argument is not None.
 
-    min_bin_freq: int, optional
+    min_bin_freq : int, optional
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds. If not defined, set to 1.
 
@@ -85,10 +85,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     -------
 
     cluster_centers : array [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers.
 
     labels : array [n_samples]
-        cluster labels for each point
+        Cluster labels for each point.
 
     Notes
     -----
@@ -166,24 +166,24 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     Parameters
     ----------
 
-    X : array [n_samples, n_features]
-        Input points, the same points that will be used in mean_shift
+    X : array-like, shape=[n_samples, n_features]
+        Input points, the same points that will be used in mean_shift.
 
-    bin_size: float
+    bin_size : float
         Controls the coarseness of the binning. Smaller values lead
         to more seeding (which is computationally more expensive). If you're
         not sure how to set this, set it to the value of the bandwidth used
-        in clustering.mean_shift
+        in clustering.mean_shift.
 
-    min_bin_freq: integer, default 1
+    min_bin_freq : integer, default 1
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
         makes mean_shift computationally cheaper.
 
     Returns
     -------
-    bin_seeds : array [n_samples, n_features]
-        points used as initial kernel posistions in clustering.mean_shift
+    bin_seeds : array-like, shape=[n_samples, n_features]
+        Points used as initial kernel posistions in clustering.mean_shift.
     """
 
     # Bin points
@@ -204,18 +204,18 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    bandwidth: float, optional
+    bandwidth : float, optional
         Bandwith used in the RBF kernel
         If not set, the bandwidth is estimated.
-        See clustering.estimate_bandwidth
+        See clustering.estimate_bandwidth.
 
-    seeds: array [n_samples, n_features], optional
+    seeds : array [n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
         other parameters.
 
-    cluster_all: boolean, default True
+    cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
@@ -223,10 +223,10 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     `cluster_centers_` : array, [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers.
 
     `labels_` :
-        Labels of each point
+        Labels of each point.
 
     Notes
     -----
@@ -267,8 +267,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
         Parameters
         -----------
-        X : array [n_samples, n_features]
-            Input points
+        X : array-like, shape=[n_samples, n_features]
+            Input points.
         """
         self.cluster_centers_, self.labels_ = \
                                mean_shift(X,
