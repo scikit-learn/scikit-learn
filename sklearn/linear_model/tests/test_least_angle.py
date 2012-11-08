@@ -1,4 +1,5 @@
 import warnings
+from nose.tools import assert_equal
 
 import numpy as np
 from scipy import linalg
