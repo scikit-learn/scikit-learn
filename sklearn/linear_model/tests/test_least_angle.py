@@ -1,5 +1,6 @@
 import numpy as np
 
+from nose.tools import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -240,6 +241,17 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         assert_less(error, 0.01)
 
 
+def test_lasso_lars_path_length():
+    # Test that the path length of the LassoLars is right
+    lasso = linear_model.LassoLars()
+    lasso.fit(X, y)
+    lasso2 = linear_model.LassoLars(alpha=lasso.alphas_[2])
+    lasso2.fit(X, y)
+    np.testing.assert_array_equal(lasso.alphas_[:3], lasso2.alphas_)
+    # Also check that the sequence of alphas is always decreasing
+    assert_true(np.all(np.diff(lasso.alphas_) < 0))
+
+
 def test_lars_add_features():
     """
     assure that at least some features get added if necessary
@@ -257,7 +269,10 @@ def test_lars_add_features():
 def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
     lars.fit(X, y)
-    assert_true(len(lars.coef_.nonzero()[0]) == 6)
+    assert_equal(len(lars.coef_.nonzero()[0]), 6)
+    # The path should be of length 6 + 1 in a Lars going down to 6
+    # non-zero coefs
+    assert_equal(len(lars.alphas_), 7)
 
 
 def test_multitarget():
@@ -274,10 +289,10 @@ def test_multitarget():
                                       estimator.coef_, estimator.coef_path_)
         for k in xrange(n_targets):
             estimator.fit(X, Y[:, k])
-            assert_array_almost_equal(alphas[k, :], estimator.alphas_)
-            assert_array_almost_equal(active[k, :], estimator.active_)
-            assert_array_almost_equal(coef[k, :], estimator.coef_)
-            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
+            assert_array_almost_equal(alphas[k], estimator.alphas_)
+            assert_array_almost_equal(active[k], estimator.active_)
+            assert_array_almost_equal(coef[k], estimator.coef_)
+            assert_array_almost_equal(path[k], estimator.coef_path_)
 
 
 def test_lars_cv():
