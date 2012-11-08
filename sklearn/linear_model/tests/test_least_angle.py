@@ -339,7 +339,7 @@ def test_lars_drop_for_good():
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
                 + .1 * linalg.norm(cd_coef_, 1))
-    np.testing.assert_allclose(lars_obj, cd_obj)
+    assert_array_almost_equal(lars_obj, cd_obj)
 
 
 def test_lars_add_features():
