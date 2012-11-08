@@ -280,7 +280,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                      est.power_t, est.t_, intercept_decay)
 
 
-class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
+class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -530,7 +530,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier):
+class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -717,113 +717,7 @@ class SGDClassifier(BaseSGDClassifier):
         return np.log(self.predict_proba(X))
 
 
-class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
-    """Linear model fitted by minimizing a regularized empirical loss with SGD
-
-    SGD stands for Stochastic Gradient Descent: the gradient of the loss is
-    estimated each sample at a time and the model is updated along the way with
-    a decreasing strength schedule (aka learning rate).
-
-    The regularizer is a penalty added to the loss function that shrinks model
-    parameters towards the zero vector using either the squared euclidean norm
-    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
-    parameter update crosses the 0.0 value because of the regularizer, the
-    update is truncated to 0.0 to allow for learning sparse models and achieve
-    online feature selection.
-
-    This implementation works with data represented as dense numpy arrays of
-    floating point values for the features.
-
-    Parameters
-    ----------
-    loss : str, 'squared_loss' or 'huber'
-        The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' is an epsilon insensitive
-        loss function for robust regression.
-
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to 'l2'
-        which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
-        not achievable with 'l2'.
-
-    alpha : float
-        Constant that multiplies the regularization term. Defaults to 0.0001
-
-    l1_ratio : float
-        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
-        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-        Defaults to 0.15.
-
-    fit_intercept: bool
-        Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
-
-    n_iter: int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to 5.
-
-    shuffle: bool, optional
-        Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
-
-    random_state: int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-
-    verbose: integer, optional
-        The verbosity level.
-
-    epsilon: float
-        Epsilon in the epsilon-insensitive loss functions;
-        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
-        If the difference between the current prediction and the correct label
-        is below this threshold, the model is not updated.
-
-    learning_rate : string, optional
-        The learning rate:
-        constant: eta = eta0
-        optimal: eta = 1.0/(t+t0)
-        invscaling: eta = eta0 / pow(t, power_t) [default]
-
-    eta0 : double, optional
-        The initial learning rate [default 0.01].
-
-    power_t : double, optional
-        The exponent for inverse scaling learning rate [default 0.25].
-
-    warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_features]
-        Weights asigned to the features.
-
-    `intercept_` : array, shape = [1]
-        The intercept term.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn import linear_model
-    >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor()
-    >>> clf.fit(X, y)
-    SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=None,
-           rho=None, shuffle=False, verbose=0, warm_start=False)
-
-    See also
-    --------
-    Ridge, ElasticNet, Lasso, SVR
-
-    """
+class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     loss_functions = {
         "squared_loss": (SquaredLoss, ),
@@ -845,15 +739,16 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
             self.p = float(p)
             epsilon = p
 
-        super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                           alpha=alpha, l1_ratio=l1_ratio,
-                                           fit_intercept=fit_intercept,
-                                           n_iter=n_iter, shuffle=shuffle,
-                                           verbose=verbose, epsilon=epsilon,
-                                           random_state=random_state, rho=rho,
-                                           learning_rate=learning_rate,
-                                           eta0=eta0, power_t=power_t,
-                                           warm_start=False)
+        super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
+                                               alpha=alpha, l1_ratio=l1_ratio,
+                                               fit_intercept=fit_intercept,
+                                               n_iter=n_iter, shuffle=shuffle,
+                                               verbose=verbose, epsilon=epsilon,
+                                               random_state=random_state,
+                                               rho=rho,
+                                               learning_rate=learning_rate,
+                                               eta0=eta0, power_t=power_t,
+                                               warm_start=False)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
@@ -1015,3 +910,113 @@ class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
                                           intercept_decay)
 
         self.intercept_ = np.atleast_1d(intercept)
+
+
+class SGDRegressor(BaseSGDRegressor, SelectorMixin):
+    """Linear model fitted by minimizing a regularized empirical loss with SGD
+
+    SGD stands for Stochastic Gradient Descent: the gradient of the loss is
+    estimated each sample at a time and the model is updated along the way with
+    a decreasing strength schedule (aka learning rate).
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+    parameter update crosses the 0.0 value because of the regularizer, the
+    update is truncated to 0.0 to allow for learning sparse models and achieve
+    online feature selection.
+
+    This implementation works with data represented as dense numpy arrays of
+    floating point values for the features.
+
+    Parameters
+    ----------
+    loss : str, 'squared_loss' or 'huber'
+        The loss function to be used. Defaults to 'squared_loss' which refers
+        to the ordinary least squares fit. 'huber' is an epsilon insensitive
+        loss function for robust regression.
+
+    penalty : str, 'l2' or 'l1' or 'elasticnet'
+        The penalty (aka regularization term) to be used. Defaults to 'l2'
+        which is the standard regularizer for linear SVM models. 'l1' and
+        'elasticnet' migh bring sparsity to the model (feature selection)
+        not achievable with 'l2'.
+
+    alpha : float
+        Constant that multiplies the regularization term. Defaults to 0.0001
+
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
+        Defaults to 0.15.
+
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered. Defaults to True.
+
+    n_iter: int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to 5.
+
+    shuffle: bool, optional
+        Whether or not the training data should be shuffled after each epoch.
+        Defaults to False.
+
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+    verbose: integer, optional
+        The verbosity level.
+
+    epsilon: float
+        Epsilon in the epsilon-insensitive loss functions;
+        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
+        If the difference between the current prediction and the correct label
+        is below this threshold, the model is not updated.
+
+    learning_rate : string, optional
+        The learning rate:
+        constant: eta = eta0
+        optimal: eta = 1.0/(t+t0)
+        invscaling: eta = eta0 / pow(t, power_t) [default]
+
+    eta0 : double, optional
+        The initial learning rate [default 0.01].
+
+    power_t : double, optional
+        The exponent for inverse scaling learning rate [default 0.25].
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        Weights asigned to the features.
+
+    `intercept_` : array, shape = [1]
+        The intercept term.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import linear_model
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = linear_model.SGDRegressor()
+    >>> clf.fit(X, y)
+    SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
+           l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
+           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=None,
+           rho=None, shuffle=False, verbose=0, warm_start=False)
+
+    See also
+    --------
+    Ridge, ElasticNet, Lasso, SVR
+
+    """
+    pass

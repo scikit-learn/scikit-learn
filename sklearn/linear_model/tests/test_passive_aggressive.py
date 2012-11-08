@@ -110,9 +110,9 @@ def test_classifier_correctness():
         assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
 
 
-def test_predict_proba_undefined():
+def test_classifier_undefined_methods():
     clf = PassiveAggressiveClassifier()
-    for meth in ("predict_proba", "predict_log_proba"):
+    for meth in ("predict_proba", "predict_log_proba", "transform"):
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
 
 
@@ -162,3 +162,9 @@ def test_regressor_correctness():
         reg2.fit(X, y_bin)
 
         assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
+
+
+def test_regressor_undefined_methods():
+    reg = PassiveAggressiveRegressor()
+    for meth in ("transform",):
+        assert_raises(AttributeError, lambda x: getattr(reg, x), meth)

@@ -64,7 +64,7 @@ def test_perceptron_correctness():
     assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
 
 
-def test_predict_proba_undefined():
+def test_undefined_methods():
     clf = Perceptron()
     for meth in ("predict_proba", "predict_log_proba"):
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)

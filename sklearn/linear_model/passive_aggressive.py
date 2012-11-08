@@ -2,7 +2,7 @@
 # License: BSD Style.
 
 from .stochastic_gradient import BaseSGDClassifier
-from .stochastic_gradient import SGDRegressor
+from .stochastic_gradient import BaseSGDRegressor
 from .stochastic_gradient import DEFAULT_EPSILON
 
 
@@ -146,7 +146,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                          coef_init=coef_init, intercept_init=intercept_init)
 
 
-class PassiveAggressiveRegressor(SGDRegressor):
+class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor
 
     Parameters
@@ -212,17 +212,17 @@ class PassiveAggressiveRegressor(SGDRegressor):
                  n_iter=5, shuffle=False, verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON,
                  random_state=None, class_weight=None, warm_start=False):
-        SGDRegressor.__init__(self,
-                              penalty=None,
-                              l1_ratio=0,
-                              epsilon=epsilon,
-                              eta0=1.0,
-                              fit_intercept=fit_intercept,
-                              n_iter=n_iter,
-                              shuffle=shuffle,
-                              verbose=verbose,
-                              random_state=random_state,
-                              warm_start=warm_start)
+        BaseSGDRegressor.__init__(self,
+                                  penalty=None,
+                                  l1_ratio=0,
+                                  epsilon=epsilon,
+                                  eta0=1.0,
+                                  fit_intercept=fit_intercept,
+                                  n_iter=n_iter,
+                                  shuffle=shuffle,
+                                  verbose=verbose,
+                                  random_state=random_state,
+                                  warm_start=warm_start)
         self.C = C
         self.loss = loss
 

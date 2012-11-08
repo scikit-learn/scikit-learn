@@ -2,9 +2,10 @@
 # License: BSD Style.
 
 from .stochastic_gradient import BaseSGDClassifier
+from ..feature_selection.selector_mixin import SelectorMixin
 
 
-class Perceptron(BaseSGDClassifier):
+class Perceptron(BaseSGDClassifier, SelectorMixin):
     """Perceptron
 
     Parameters
