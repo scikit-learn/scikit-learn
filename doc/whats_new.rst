@@ -51,6 +51,10 @@ Changelog
    - :func:`cross_validation.cross_val_score` now works with precomputed kernels
      and affinity matrices, by `Andreas Müller`_.
 
+   - LARS algorithm made more numerically stable with heuristics to drop
+     regressors too correlated as well as too stop the path when
+     numerical noise becomes predominant, by `Gael Varoquaux`_.
+
 
 API changes summary
 -------------------
