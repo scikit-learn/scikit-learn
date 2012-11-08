@@ -7,7 +7,6 @@ Testing for the base module (sklearn.ensemble.base).
 
 from numpy.testing import assert_equal
 from nose.tools import assert_raises, assert_true
-from sklearn.base import clone
 
 from sklearn.ensemble import BaseEnsemble
 from sklearn.tree import DecisionTreeClassifier
