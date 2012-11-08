@@ -409,7 +409,7 @@ class CountVectorizer(BaseEstimator):
             # free memory as we go
             term_count_dict.clear()
 
-        shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
+        shape = (i + 1, max(vocabulary.itervalues()) + 1)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
@@ -451,8 +451,8 @@ class CountVectorizer(BaseEstimator):
             # fit_transform overridable without unwanted side effects in
             # TfidfVectorizer
             analyze = self.build_analyzer()
-            term_counts_per_doc = [Counter(analyze(doc))
-                                   for doc in raw_documents]
+            term_counts_per_doc = (Counter(analyze(doc))
+                                   for doc in raw_documents)
             return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
         self.vocabulary_ = {}
@@ -547,7 +547,7 @@ class CountVectorizer(BaseEstimator):
         # XXX @larsmans tried to parallelize the following loop with joblib.
         # The result was some 20% slower than the serial version.
         analyze = self.build_analyzer()
-        term_counts_per_doc = [Counter(analyze(doc)) for doc in raw_documents]
+        term_counts_per_doc = (Counter(analyze(doc)) for doc in raw_documents)
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def inverse_transform(self, X):
