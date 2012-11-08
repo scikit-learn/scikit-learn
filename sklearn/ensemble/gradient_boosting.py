@@ -137,8 +137,7 @@ class LossFunction(object):
         """
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                sample_mask, learning_rate=1.0, k=0,
-                                learn_rate=None):
+                                sample_mask, learning_rate=1.0, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -156,13 +155,6 @@ class LossFunction(object):
         y_pred : np.ndarray, shape=(n,):
             The predictions.
         """
-
-        if not learn_rate is None:
-            learning_rate = learn_rate
-            warnings.warn("Parameter learn_rate has been renamed to "
-                 'learning_rate'" and will be removed in release 0.14.",
-                  DeprecationWarning, stacklevel=2)
-
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
 
@@ -209,18 +201,11 @@ class LeastSquaresError(RegressionLossFunction):
         return y - pred.ravel()
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
-                                sample_mask, learning_rate=1.0, k=0,
-                                learn_rate=None):
+                                sample_mask, learning_rate=1.0, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
         """
-        if not learn_rate is None:
-            learning_rate = learn_rate
-            warnings.warn("Parameter learn_rate has been renamed to "
-                 'learning_rate'" and will be removed in release 0.14.",
-                  DeprecationWarning, stacklevel=2)
-
         # update predictions
         y_pred[:, k] += learning_rate * tree.predict(X).ravel()
 
@@ -810,16 +795,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0, learn_rate=None):
 
-        if not learn_rate is None:
-            learning_rate = learn_rate
-            warnings.warn("Parameter learn_rate has been renamed to "
-                 'learning_rate'" and will be removed in release 0.14.",
-                  DeprecationWarning, stacklevel=2)
-
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose)
+            random_state, verbose=verbose, learn_rate=learn_rate)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -1050,16 +1029,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, learn_rate=None):
 
-        if not learn_rate is None:
-            learning_rate = learn_rate
-            warnings.warn("Parameter learn_rate has been renamed to "
-                 'learning_rate'" and will be removed in release 0.14.",
-                  DeprecationWarning, stacklevel=2)
-
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose)
+            random_state, alpha, verbose, learn_rate=learn_rate)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
