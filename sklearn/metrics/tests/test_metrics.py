@@ -156,13 +156,12 @@ def test_auc():
 
 
 def test_auc_duplicate_values():
-    """Test Area Under Curve (AUC) computation with duplicate values
+    # Test Area Under Curve (AUC) computation with duplicate values
 
-    auc() was previously sorting the x and y arrays according to the indices
-    from numpy.argsort(x), which was reordering the tied 0's in this example
-    and resulting in an incorrect area computation. This test detects the
-    error.
-    """
+    # auc() was previously sorting the x and y arrays according to the indices
+    # from numpy.argsort(x), which was reordering the tied 0's in this example
+    # and resulting in an incorrect area computation. This test detects the
+    # error.
     x = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.5, 1.]
     y = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
          1., 1., 1., 1., 1., 1., 1., 1.]
@@ -199,6 +198,17 @@ def test_precision_recall_f1_score_binary():
 
     fs = f1_score(y_true, y_pred)
     assert_array_almost_equal(fs, 0.74, 2)
+
+
+def test_average_precision_score_duplicate_values():
+    # Duplicate values with precision-recall require a different
+    # processing than when computing the AUC of a ROC, because the
+    # precision-recall curve is a decreasing curve
+    # The following situtation corresponds to a perfect
+    # test statistic, the average_precision_score should be 1
+    y_true  = [ 0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1]
+    y_score = [ 0, .1, .1, .5, .5, .6, .6, .9, .9,  1,  1]
+    assert_equal(average_precision_score(y_true, y_score), 1)
 
 
 def test_precision_recall_fscore_support_errors():
