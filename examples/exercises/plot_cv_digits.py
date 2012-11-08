@@ -16,8 +16,8 @@ digits = datasets.load_digits()
 X = digits.data
 y = digits.target
 
-svc = svm.SVC()
-C_s = np.logspace(-3, 3, 10)
+svc = svm.SVC(kernel='linear')
+C_s = np.logspace(-10, 0, 10)
 
 scores = list()
 scores_std = list()
@@ -34,7 +34,8 @@ pl.axes([.1, .25, .8, .7])
 pl.semilogx(C_s, scores)
 pl.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 pl.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
-pl.yticks(())
+locs,labels = pl.yticks()
+pl.yticks(locs, map(lambda x: "%g" % x, locs))
 pl.ylabel('CV score')
 pl.xlabel('Parameter C')
 pl.ylim(0, 1.1)
