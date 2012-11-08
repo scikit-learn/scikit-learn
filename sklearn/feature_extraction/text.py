@@ -214,7 +214,7 @@ class CountVectorizer(BaseEstimator):
 
     _white_spaces = re.compile(ur"\s\s+")
 
-    def __init__(self, input='content', charset='utf-8',
+    def __init__(self, input='content', charset='utf8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
@@ -263,7 +263,8 @@ class CountVectorizer(BaseEstimator):
         The decoding strategy depends on the vectorizer parameters.
         """
         if self.input == 'filename':
-            doc = open(doc, 'rb').read()
+            with open(doc, 'rb') as fh:
+                doc = fh.read()
 
         elif self.input == 'file':
             doc = doc.read()
