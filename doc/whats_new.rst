@@ -52,7 +52,7 @@ Changelog
      and affinity matrices, by `Andreas Müller`_.
 
    - LARS algorithm made more numerically stable with heuristics to drop
-     regressors too correlated as well as too stop the path when
+     regressors too correlated as well as to stop the path when
      numerical noise becomes predominant, by `Gael Varoquaux`_.
 
 
