@@ -207,9 +207,20 @@ def test_average_precision_score_duplicate_values():
     # The following situtation corresponds to a perfect
     # test statistic, the average_precision_score should be 1
     y_true  = [ 0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1]
-    y_score = [ 0, .1, .1, .5, .5, .6, .6, .9, .9,  1,  1]
+    y_score = [ 0, .1, .1, .4, .5, .6, .6, .9, .9,  1,  1]
     assert_equal(average_precision_score(y_true, y_score), 1)
 
+def test_average_precision_score_tied_values():
+    # Here if we go from left to right in y_true, the 0 values are
+    # are separated from the 1 values, so it appears that we've
+    # Correctly sorted our classifications. But in fact the first two
+    # values have the same score (0.5) and so the first two values
+    # could be swapped around, creating an imperfect sorting. This
+    # imperfection should come through in the end score, making it less
+    # than one.
+    y_true  = [ 0,  1,  1]
+    y_score = [.5, .5, .6]
+    assert_true(average_precision_score(y_true, y_score) != 1.)
 
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -414,6 +425,13 @@ def test_precision_recall_curve():
     y_true_copy = y_true.copy()
     _test_precision_recall_curve(y_true, probas_pred)
     assert_array_equal(y_true_copy, y_true)
+
+    labels = [1,0,0,1]
+    predict_probas = [1,2,3,4]
+    p, r, t = precision_recall_curve(labels, predict_probas)
+    assert_array_almost_equal(p, np.array([ 0.5 ,  0.33333333,  0.5,  1. ,  1. ]))
+    assert_array_almost_equal(r, np.array([1., 0.5, 0.5, 0.5, 0.]))
+    assert_array_almost_equal(t, np.array([1, 2, 3 ,4]))
 
 
 def _test_precision_recall_curve(y_true, probas_pred):

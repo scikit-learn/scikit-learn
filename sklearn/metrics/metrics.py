@@ -13,6 +13,7 @@ better
 # License: BSD Style.
 
 import numpy as np
+import itertools
 from scipy.sparse import coo_matrix
 
 from ..utils import check_arrays
@@ -213,14 +214,14 @@ def average_precision_score(y_true, y_score):
     auc_score: Area under the ROC curve
     """
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+
     return auc(recall, precision)
 
 
 def auc_score(y_true, y_score):
     """Compute Area Under the Curve (AUC) from prediction scores.
 
-    Note: this implementation is restricted to the binary classification
-    task.
+    Note: this implementation is restricted to the binary classification task.
 
     Parameters
     ----------
@@ -246,10 +247,10 @@ def auc_score(y_true, y_score):
     """
 
     fpr, tpr, tresholds = roc_curve(y_true, y_score)
-    return auc(fpr, tpr, reorder=True)
+    return auc(fpr, tpr)
 
 
-def auc(x, y, reorder=False):
+def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general fuction, given points on a curve.
@@ -262,11 +263,6 @@ def auc(x, y, reorder=False):
 
     y : array, shape = [n]
         y coordinates
-
-    reorder : boolean, optional
-        If True, assume that the curve is ascending in the case of ties,
-        as for an ROC curve. With descending curve, you will get false
-        results
 
     Returns
     -------
@@ -292,18 +288,10 @@ def auc(x, y, reorder=False):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
-    if reorder:
-        # reorder the data points according to the x axis and using y to
-        # break ties
-        x, y = np.array(sorted(points for points in zip(x, y))).T
-        h = np.diff(x)
-    else:
-        h = np.diff(x)
-        if np.any(h < 0):
-            h *= -1
-            assert not np.any(h < 0), ("Reordering is not turned on, and "
-                        "The x array is not increasing: %s" % x)
+    # reorder the data points according to the x axis and using y to break ties
+    x, y = np.array(sorted(points for points in zip(x, y))).T
 
+    h = np.diff(x)
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
 
@@ -854,44 +842,42 @@ def precision_recall_curve(y_true, probas_pred):
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
+    # Sort pred_probas (and corresponding true labels) by pred_proba value
+    sort_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
+    probas_pred = probas_pred[sort_idxs]
+    y_true = y_true[sort_idxs]
+
+    # Find threshold values of pred_probas using shift trick
+    left_shifted  = np.zeros(len(probas_pred) + 1, dtype="f8")
+    left_shifted[0:len(probas_pred)] = probas_pred
+    left_shifted[len(probas_pred)] = probas_pred.max() + 1
+    right_shifted = np.zeros(len(probas_pred) + 1, dtype="f8")
+    right_shifted[1:len(probas_pred) + 1] = probas_pred
+    right_shifted[0] = probas_pred.min() - 1
+    thresh_idxs = np.where(left_shifted != right_shifted)[0]
+
     # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
     tp_count, fp_count = 0., 0.
-    thresholds = []
     precision = [1.]
     recall = [0.]
-    last_recorded_idx = -1
+    thresholds = []
+    # Iterate over thresh_idxs and incrementally calculate precision
+    # and recall
 
-    # Iterate over (predict_prob, true_val) pairs, in order of highest
-    # to lowest predicted probabilities. Incrementally keep track of how
-    # many true and false labels have been encountered. If several of the
-    # predicted probabilities are the same, then create only one new point
-    # in the curve that represents all of these "tied" predictions.
-    # (In other words, add new points only when new values of prob_val
-    # are encountered)
-    sorted_pred_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
-    pairs = np.vstack((probas_pred, y_true)).T
-    last_prob_val = probas_pred[sorted_pred_idxs[0]]
-    smallest_prob_val = probas_pred[sorted_pred_idxs[-1]]
-    for idx, (prob_val, class_val) in enumerate(pairs[sorted_pred_idxs, :]):
-        if class_val:
-            tp_count += 1.
-        else:
-            fp_count += 1.
-        if (prob_val < last_prob_val) and (prob_val > smallest_prob_val):
-            thresholds.append(prob_val)
-            fn_count = float(total_positive - tp_count)
-            precision.append(tp_count / (tp_count + fp_count))
-            recall.append(tp_count / (tp_count + fn_count))
-            last_prob_val = prob_val
-            last_recorded_idx = idx
-    # Don't forget to include the last point in the PR-curve if
-    # it wasn't yet recorded.
-    if last_recorded_idx != idx:
-        recall.append(1.0)
-        precision.append(total_positive / (tp_count + fp_count))
-
-    # Sklearn expects these in reverse order
+    for l_idx, r_idx in pairwise(thresh_idxs):
+        thresh_labels = y_true[l_idx:r_idx]
+        n_thresh = r_idx - l_idx
+        n_pos_thresh = thresh_labels.sum()
+        n_neg_thresh = n_thresh - n_pos_thresh
+        tp_count += n_pos_thresh
+        fp_count += n_neg_thresh
+        fn_count = float(total_positive - tp_count)
+        precision.append(tp_count / (tp_count + fp_count))
+        recall.append(tp_count / (tp_count + fn_count))
+        thresholds.append(probas_pred[l_idx])
+        if tp_count == total_positive:
+            break
     thresholds = np.array(thresholds)[::-1]
     precision = np.array(precision)[::-1]
     recall = np.array(recall)[::-1]
@@ -1070,3 +1056,9 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
     return np.mean(losses)
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return itertools.izip(a, b)
