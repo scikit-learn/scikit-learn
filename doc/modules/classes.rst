@@ -526,6 +526,8 @@ From text
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
    linear_model.OrthogonalMatchingPursuit
+   linear_model.PassiveAggressiveClassifier
+   linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression

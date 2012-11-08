@@ -87,7 +87,7 @@ estimators = [
      True),
 
     ('MiniBatchDictionaryLearning',
-    decomposition.MiniBatchDictionaryLearning(n_atoms=15, alpha=0.1,
+    decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
                                               n_iter=50, chunk_size=3,
                                               random_state=rng),
      True),

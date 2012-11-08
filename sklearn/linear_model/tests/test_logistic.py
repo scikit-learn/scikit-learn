@@ -129,4 +129,3 @@ def test_liblinear_random_state():
     lr2 = logistic.LogisticRegression(random_state=0)
     lr2.fit(X, y)
     assert_array_equal(lr1.coef_, lr2.coef_)
-

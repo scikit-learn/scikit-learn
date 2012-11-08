@@ -13,9 +13,9 @@ better
 # License: BSD Style.
 
 import numpy as np
+from scipy.sparse import coo_matrix
 
 from ..utils import check_arrays
-from scipy.sparse import coo_matrix
 
 
 def unique_labels(*lists_of_labels):
@@ -283,11 +283,6 @@ def auc(x, y):
 
     """
     x, y = check_arrays(x, y)
-    if x.shape[0] != y.shape[0]:
-        raise ValueError('x and y should have the same shape'
-                         ' to compute area under curve,'
-                         ' but x.shape = %s and y.shape = %s.'
-                         % (x.shape, y.shape))
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
@@ -652,7 +647,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2:
+    elif n_labels == 2 and pos_label != None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))

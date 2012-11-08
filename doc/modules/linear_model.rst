@@ -657,6 +657,25 @@ zero) model.
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
+Isotonic regression
+====================
+
+The :class:`IsotonicRegression` fits a non-decreasing function to the data.
+It solves the following problem:
+
+  minimize :math:`\sum_i w_i (y_i - \hat{y}_i)^2`
+
+  subject to :math:`\hat{y}_{min} = \hat{y}_1 \le \hat{y}_2 ... \le \hat{y}_n = \hat{y}_{max}`
+
+where each :math:`w_i` is strictly positive and each :math:`y_i` is an
+arbitrary real number. It yields the vector which is composed of non-decreasing
+elements the closest in terms of mean squared error. In practice this list
+of elements forms a function that is piecewise linear.
+
+.. figure:: ../auto_examples/linear_model/images/plot_isotonic_regression_1.png
+   :target: ../auto_examples/linear_model/images/plot_isotonic_regression.html
+   :align: center
+
 Stochastic Gradient Descent - SGD
 =================================
 
@@ -689,21 +708,24 @@ The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
 sparser.
 
-Isotonic regression
-====================
+Passive Aggressive Algorithms
+=============================
 
-The :class:`IsotonicRegression` fits a non-decreasing function to the data.
-It solves the following problem:
+The passive-aggressive algorithms are a family of algorithms for large-scale
+learning. They are similar to the Pereptron in that they do not require a
+learning rate. However, contrary to the Perceptron, they include a
+regularization parameter ``C``.
 
-  minimize :math:`\sum_i w_i (y_i - \hat{y}_i)^2`
+For classification, :class:`PassiveAggressiveClassifier` can be used with
+``loss='hinge'`` (PA-I) or ``loss='squared_hinge'`` (PA-II).  For regression,
+:class:`PassiveAggressiveRegressor` can be used with
+``loss='epsilon_insensitive'`` (PA-I) or
+``loss='squared_epsilon_insensitive'`` (PA-II).
 
-  subject to :math:`\hat{y}_{min} = \hat{y}_1 \le \hat{y}_2 ... \le \hat{y}_n = \hat{y}_{max}`
+.. topics:: References:
 
-where each :math:`w_i` is strictly positive and each :math:`y_i` is an
-arbitrary real number. It yields the vector which is composed of non-decreasing
-elements the closest in terms of mean squared error. In practice this list
-of elements forms a function that is piecewise linear.
 
-.. figure:: ../auto_examples/linear_model/images/plot_isotonic_regression_1.png
-   :target: ../auto_examples/linear_model/images/plot_isotonic_regression.html
-   :align: center
+ * `"Online Passive-Aggressive Algorithms"
+   <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+   K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+

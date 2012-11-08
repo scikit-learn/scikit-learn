@@ -545,7 +545,7 @@ class MinCovDet(EmpiricalCovariance):
         self.support_fraction = support_fraction
         self.random_state = random_state
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
 
         Parameters
@@ -553,6 +553,7 @@ class MinCovDet(EmpiricalCovariance):
         X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------

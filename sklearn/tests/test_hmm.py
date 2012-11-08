@@ -240,42 +240,6 @@ class GaussianHMMBaseTester(object):
         self.assertRaises(ValueError, hmm.GaussianHMM, 20,
                 'badcovariance_type')
 
-    def _test_attributes(self):
-        # XXX: This test is bugged and creates weird errors -- skipped
-        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
-
-        self.assertEquals(h.n_components, self.n_components)
-        self.assertEquals(h.covariance_type, self.covariance_type)
-
-        h.startprob_ = self.startprob
-        assert_array_almost_equal(h.startprob_, self.startprob)
-        self.assertRaises(ValueError, h.__setattr__, 'startprob_',
-                          2 * self.startprob)
-        self.assertRaises(ValueError, h.__setattr__, 'startprob_', [])
-        self.assertRaises(ValueError, h.__setattr__, 'startprob_',
-                          np.zeros((self.n_components - 2, self.n_features)))
-
-        h.transmat_ = self.transmat
-        assert_array_almost_equal(h.transmat_, self.transmat)
-        self.assertRaises(ValueError, h.__setattr__, 'transmat_',
-                          2 * self.transmat)
-        self.assertRaises(ValueError, h.__setattr__, 'transmat_', [])
-        self.assertRaises(ValueError, h.__setattr__, 'transmat_',
-                          np.zeros((self.n_components - 2, self.n_components)))
-
-        h.means_ = self.means
-        self.assertEquals(h.n_features, self.n_features)
-        self.assertRaises(ValueError, h.__setattr__, 'means_', [])
-        self.assertRaises(ValueError, h.__setattr__, 'means_',
-                          np.zeros((self.n_components - 2, self.n_features)))
-
-        h.covars_ = self.covars[self.covariance_type]
-        assert_array_almost_equal(h.covars_,
-                self.expanded_covars[self.covariance_type])
-        #self.assertRaises(ValueError, h.__setattr__, 'covars', [])
-        #self.assertRaises(ValueError, h.__setattr__, 'covars',
-        #                  np.zeros((self.n_components - 2, self.n_features)))
-
     def test_eval_and_decode(self):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.means_ = self.means
@@ -465,6 +429,29 @@ class MultinomialHMMTestCase(TestCase):
         logprob, state_sequence = self.h.decode(observations)
         self.assertAlmostEqual(np.exp(logprob), 0.01344)
         assert_array_equal(state_sequence, [1, 0, 0])
+
+    def test_decode_map_algorithm(self):
+        observations = [0, 1, 2]
+        h = hmm.MultinomialHMM(
+            self.n_components,
+            startprob=self.startprob,
+            transmat=self.transmat,
+            algorithm="map",
+            )
+        h.emissionprob_ = self.emissionprob
+        logprob, state_sequence = h.decode(observations)
+        assert_array_equal(state_sequence, [1, 0, 0])
+
+    def test_predict(self):
+        observations = [0, 1, 2]
+        state_sequence = self.h.predict(observations)
+        posteriors = self.h.predict_proba(observations)
+        assert_array_equal(state_sequence, [1, 0, 0])
+        assert_array_almost_equal(posteriors, [
+            [0.23170303, 0.76829697],
+            [0.62406281, 0.37593719],
+            [0.86397706, 0.13602294],
+            ])
 
     def test_attributes(self):
         h = hmm.MultinomialHMM(self.n_components)
