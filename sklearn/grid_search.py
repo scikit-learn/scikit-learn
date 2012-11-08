@@ -21,6 +21,86 @@ from .utils import check_arrays, safe_mask
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
 
+class ResultGrid(object):
+    """Provides easy access to grid search results.
+
+    This object is constructed by GridSearchCV and
+    provides an easy interface to evaluate the grid search
+    results.
+
+    Attributes
+    ----------
+    params: list of string
+        Lists parameters adjusted during grid-search
+        This is an alphabetical sorting of the keys
+        of the ``param_grid`` used in the GridSearchCV.
+    values: dict
+        This contains the values of the parameters
+        that were used during grid search.
+    scores: ndarray
+        Contains all the scores of all runs.
+        Each axis corresponds to the setting of one
+        parameter, in the order given in params.
+        The last axis corresponds to the folds.
+    """
+
+    def __init__(self, params, values, scores):
+        self.scores = scores
+        self.params = params
+        self.values = values
+
+    def mean(self):
+        """Returns mean scores over folds for the whole parameter grid."""
+        return np.mean(self.scores, axis=-1)
+
+    def std(self):
+        """Returns standard deviation of scores over folds for the whole
+        parameter grid."""
+        return np.std(self.scores, axis=-1)
+
+    def accumulate(self, param, kind="max"):
+        """Accumulates scores over all but one parameter.
+
+        Useful for grid searches in many parameters, where
+        the whole grid can not easily be visualized.
+
+        Parameters
+        ----------
+        param: string
+            Name of the parameter not to accumulate over.
+        kind: string, 'mean' or 'max'
+            Operation that is used to accumulate over all parameters
+            except ``param``.
+
+        Returns
+        -------
+        scores: ndarray
+            1d array of scores corresponding to the different settings
+            of ``param``.
+        errors: ndarray
+            1d array of standard deviations of scores.
+        """
+        index = self.params.index(param)
+        # make interesting axis the first
+        n_values = len(self.values[param])
+        accumulated_mean = np.rollaxis(self.mean(), index, 0)
+        accumulated_mean = accumulated_mean.reshape(n_values, -1)
+        accumulated_std = np.rollaxis(self.std(), index, 0)
+        accumulated_std = accumulated_std.reshape(n_values, -1)
+        if kind == "mean":
+            accumulated_mean = np.mean(accumulated_mean, axis=-1)
+            accumulated_std = np.mean(accumulated_std, axis=-1)
+        elif kind == "max":
+            max_inds = np.argmax(accumulated_mean, axis=-1)
+            inds = np.indices(max_inds.shape)
+            accumulated_mean = accumulated_mean[inds, max_inds].ravel()
+            accumulated_std = accumulated_std[inds, max_inds].ravel()
+        else:
+            raise ValueError("kind must be 'mean' or 'all', got %s." %
+                    str(kind))
+        return accumulated_mean, accumulated_std
+
+
 class IterGrid(object):
     """Generators on the combination of the various parameter lists given
 
@@ -99,7 +179,6 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     else:
         X_train = X[safe_mask(X, train)]
         X_test = X[safe_mask(X, test)]
-
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
@@ -148,8 +227,8 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter values should be a list.")
 
             if len(v) == 0:
-                raise ValueError("Parameter values should be a non-empty "
-                        "list.")
+                raise ValueError("Parameter values should be "
+                                 "a non-empty list.")
 
 
 def _has_one_grid_point(param_grid):
@@ -265,6 +344,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `scores_`: list of ResultGrid
+        For each dict in ``param_grid`` this holds a ``ResultGrid`` that
+        provides easy analysis of the grid search scores.
 
     Notes
     ------
@@ -437,9 +520,38 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             self.best_estimator_ = best_estimator
             self._set_methods()
 
-        # Store the computed scores
-        # XXX: the name is too specific, it shouldn't have
-        # 'grid' in it. Also, we should be retrieving/storing variance
+        # param grid can be a list
+        # make singleton to list for unified treatment
+        if hasattr(self.param_grid, 'items'):
+            # wrap dictionary in a singleton list
+            param_grid = [self.param_grid]
+        else:
+            param_grid = self.param_grid
+        # for each entry in the param_grid list, we build
+        # an array of scores.
+        # we don't know how long the parts are so we have
+        # to keep track of everything :-/
+        start = 0
+        self.scores_ = []
+        for one_grid in param_grid:
+            sorted_params = sorted(one_grid.keys())
+            # get the number of values for each parameter
+            grid_shape = [len(one_grid[k]) for k in sorted_params]
+            n_entries = np.prod(grid_shape)
+            grid_shape.append(n_folds)
+            # get scores
+            score_array = np.array(cv_scores[start:start + n_entries])
+            # reshape to fit the sequence of values
+            score_array = score_array.reshape(grid_shape)
+            self.scores_.append(ResultGrid(sorted_params, one_grid,
+                                           score_array))
+            start += n_entries
+
+        # often the list is just one grid. Make access easier
+        if len(self.scores_) == 1:
+            self.scores_ = self.scores_[0]
+
+        # old interface
         self.grid_scores_ = [
             (clf_params, score, all_scores)
                     for clf_params, (score, _), all_scores

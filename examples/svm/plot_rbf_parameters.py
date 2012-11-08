@@ -105,21 +105,24 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     pl.axis('tight')
 
 # plot the scores of the grid
-# grid_scores_ contains parameter settings and scores
-score_dict = grid.grid_scores_
-
-# We extract just the scores
-scores = [x[1] for x in score_dict]
-scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+cv_scores = grid.scores_
 
 # draw heatmap of accuracy as a function of gamma and C
 pl.figure(figsize=(8, 6))
 pl.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
-pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
+pl.imshow(cv_scores.mean(), interpolation='nearest', cmap=pl.cm.spectral)
 pl.xlabel('gamma')
 pl.ylabel('C')
-pl.colorbar()
+cb = pl.colorbar()
+cb.set_label("Accuracy")
 pl.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
 pl.yticks(np.arange(len(C_range)), C_range)
+
+fig, axes = pl.subplots(2, 1)
+for ax, param in zip(axes, cv_scores.params):
+    maxs, errors = cv_scores.accumulate(param, 'max')
+    ax.errorbar(np.arange(len(cv_scores.values[param])), maxs,
+            yerr=errors)
+    ax.set_title(param)
 
 pl.show()
