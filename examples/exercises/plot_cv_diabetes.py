@@ -59,7 +59,7 @@ print "Alpha parameters maximising the generalization score on different"
 print "subsets of the data:"
 for k, (train, test) in enumerate(k_fold):
     lasso_cv.fit(X[train], y[train])
-    print "[fold {}] alpha: {:.5f}, score: {:.5f}".\
+    print "[fold {0}] alpha: {1:.5f}, score: {2:.5f}".\
         format(k, lasso_cv.alpha_, lasso_cv.score(X[test], y[test]))
 print
 print "Answer: Not very much since we obtained different alphas for different"
