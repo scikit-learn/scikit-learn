@@ -205,14 +205,6 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
     Ordinary least squares Linear Regression.
 
-    Attributes
-    ----------
-    `coef_` : array
-        Estimated coefficients for the linear regression problem.
-
-    `intercept_` : array
-        Independent term in the linear model.
-
     Parameters
     ----------
     fit_intercept : boolean, optional
@@ -221,6 +213,17 @@ class LinearRegression(LinearModel, RegressorMixin):
         (e.g. data is expected to be already centered).
     normalize : boolean, optional
         If True, the regressors X are normalized
+
+    Attributes
+    ----------
+    `coef_` : array, shape (n_features, ) or (n_targets, n_features)
+        Estimated coefficients for the linear regression problem. If
+        multiple targets are passed during the fit (y 2D), this is a 2D
+        array of shape (n_targets, n_features), while if only one target
+        is passed, this is a 1D array of lenght n_features.
+
+    `intercept_` : array
+        Independent term in the linear model.
 
     Notes
     -----
