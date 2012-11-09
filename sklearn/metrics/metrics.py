@@ -75,7 +75,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_true = y_true[ind]
 
     CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
-                                    (y_true, y_pred)),
+                                (y_true, y_pred)),
                                shape=(n_labels, n_labels),
                                dtype=np.int).todense())
     return CM
@@ -648,7 +648,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2 and pos_label != None:
+    elif n_labels == 2 and pos_label is not None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
@@ -848,11 +848,13 @@ def precision_recall_curve(y_true, probas_pred):
     y_true = y_true[sort_idxs]
 
     # Get indices where values of probas_pred decreases
-    thresh_idxs = np.r_[0, np.where(np.diff(probas_pred))[0] + 1, len(probas_pred)]
+    thresh_idxs = np.r_[0,
+                        np.where(np.diff(probas_pred))[0] + 1,
+                        len(probas_pred)]
 
     # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
-    tp_count, fp_count = 0., 0. # Must remain floats to prevent integer division
+    tp_count, fp_count = 0., 0.  # Must remain floats to prevent int division
     precision = [1.]
     recall = [0.]
     thresholds = []
