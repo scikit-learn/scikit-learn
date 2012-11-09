@@ -12,7 +12,6 @@
 from __future__ import division
 
 import warnings
-import numbers
 
 import numpy as np
 from scipy.optimize import nnls
@@ -410,7 +409,8 @@ class ProjectedGradientNMF(BaseNMF):
     def __init__(self, n_components=None, init=None, sparseness=None, beta=1,
             eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
             random_state=None):
-        BaseNMF.__init__(self, init=init, n_components=n_components)
+        BaseNMF.__init__(self, init=init, n_components=n_components,
+                random_state=random_state)
         self.tol = tol
         if sparseness not in (None, 'data', 'components'):
             raise ValueError(
@@ -678,10 +678,10 @@ class KLdivNMF(BaseNMF):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import KLdivNMF
-    >>> model = KLdivNMF(n_components=2, init='random')
+    >>> model = KLdivNMF(n_components=2, init='random', random_state=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    KLdivNMF(eps=1e-08, init=0, max_iter=200, n_components=2, subit=10,
-        tol=1e-06)
+    KLdivNMF(eps=1e-08, init='random', max_iter=200, n_components=2,
+            random_state=0, subit=10, tol=1e-06)
     >>> model.components_
     array([[ 0.50328164,  0.49671836],
            [ 0.93609814,  0.06390186]])
@@ -694,9 +694,10 @@ class KLdivNMF(BaseNMF):
       matrix factorization. Nature, 1999
     """
 
-    def __init__(self, n_components=None, init=None, tol=1e-6,
+    def __init__(self, n_components=None, init='random', tol=1e-6,
             max_iter=200, eps=1.e-8, subit=10, random_state=None):
-        BaseNMF.__init__(self, init=init, n_components=n_components)
+        BaseNMF.__init__(self, init=init, n_components=n_components,
+                random_state=random_state)
         self.tol = tol
         self.max_iter = max_iter
         self.eps = eps
@@ -726,8 +727,7 @@ class KLdivNMF(BaseNMF):
 
         scale_W: boolean (default: False)
             Whether to force scaling of W during updates. This is only relevant
-            if components are normalized. By default when not fitting this is
-            assumed to be false.
+            if components are normalized.
 
         _fit: if True (default), update the model, else only compute transform
 
@@ -789,10 +789,9 @@ class KLdivNMF(BaseNMF):
 
             scale_W: boolean (default: False)
                 Whether to force scaling of W. This is only relevant if
-                components are normalized. By default when not fitting
-                this is assume false.
+                components are normalized.
         """
-        if _fit or scale_W:
+        if scale_W:
             # This is only relevant if components are normalized.
             # Not always usefull but might improve convergence speed:
             # Scale W lines to have same sum than X lines
