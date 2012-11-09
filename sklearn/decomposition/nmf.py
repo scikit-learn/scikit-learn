@@ -683,8 +683,8 @@ class KLdivNMF(BaseNMF):
     KLdivNMF(eps=1e-08, init='random', max_iter=200, n_components=2,
             random_state=0, subit=10, tol=1e-06)
     >>> model.components_
-    array([[ 0.50328164,  0.49671836],
-           [ 0.93609814,  0.06390186]])
+    array([[ 0.50303234,  0.49696766],
+           [ 0.93326505,  0.06673495]])
 
     Notes
     -----
