@@ -24,12 +24,12 @@ def expected_mutual_information(contingency, int n_samples):
     cdef np.ndarray[double] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_Nnij
     cdef np.ndarray[double] nijs, term1
     cdef np.ndarray[double, ndim=2] log_ab_outer
-    cdef np.ndarray[long] a, b
+    cdef np.ndarray[np.int32_t] a, b
     #cdef np.ndarray[int, ndim=2] start, end
     R, C = contingency.shape
     N = float(n_samples)
-    a = np.sum(contingency, axis=1, dtype=long)
-    b = np.sum(contingency, axis=0, dtype=long)
+    a = np.sum(contingency, axis=1).astype(np.int32)
+    b = np.sum(contingency, axis=0).astype(np.int32)
     # There are three major terms to the EMI equation, which are multiplied to
     # and then summed over varying nij values.
     # While nijs[0] will never be used, having it simplifies the indexing.
