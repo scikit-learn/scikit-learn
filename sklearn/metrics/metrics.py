@@ -12,8 +12,8 @@ better
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
-import numpy as np
 import itertools
+import numpy as np
 from scipy.sparse import coo_matrix
 
 from ..utils import check_arrays
@@ -847,32 +847,26 @@ def precision_recall_curve(y_true, probas_pred):
     probas_pred = probas_pred[sort_idxs]
     y_true = y_true[sort_idxs]
 
-    # Find threshold values of pred_probas using shift trick
-    left_shifted  = np.zeros(len(probas_pred) + 1, dtype="f8")
-    left_shifted[0:len(probas_pred)] = probas_pred
-    left_shifted[len(probas_pred)] = probas_pred.max() + 1
-    right_shifted = np.zeros(len(probas_pred) + 1, dtype="f8")
-    right_shifted[1:len(probas_pred) + 1] = probas_pred
-    right_shifted[0] = probas_pred.min() - 1
-    thresh_idxs = np.where(left_shifted != right_shifted)[0]
+    # Get indices where values of probas_pred decreases
+    thresh_idxs = np.r_[0, np.where(np.diff(probas_pred))[0] + 1, len(probas_pred)]
 
     # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
-    tp_count, fp_count = 0., 0.
+    tp_count, fp_count = 0., 0. # Must remain floats to prevent integer division
     precision = [1.]
     recall = [0.]
     thresholds = []
     # Iterate over thresh_idxs and incrementally calculate precision
     # and recall
 
-    for l_idx, r_idx in pairwise(thresh_idxs):
+    for l_idx, r_idx in itertools.izip(thresh_idxs[:-1], thresh_idxs[1:]):
         thresh_labels = y_true[l_idx:r_idx]
         n_thresh = r_idx - l_idx
         n_pos_thresh = thresh_labels.sum()
         n_neg_thresh = n_thresh - n_pos_thresh
         tp_count += n_pos_thresh
         fp_count += n_neg_thresh
-        fn_count = float(total_positive - tp_count)
+        fn_count = total_positive - tp_count
         precision.append(tp_count / (tp_count + fp_count))
         recall.append(tp_count / (tp_count + fn_count))
         thresholds.append(probas_pred[l_idx])
@@ -1056,9 +1050,3 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
     return np.mean(losses)
-
-def pairwise(iterable):
-    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return itertools.izip(a, b)

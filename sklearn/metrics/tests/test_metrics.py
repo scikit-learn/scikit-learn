@@ -2,7 +2,7 @@ import random
 import warnings
 import numpy as np
 
-from nose.tools import raises
+from nose.tools import raises, assert_not_equal
 from nose.tools import assert_true, assert_raises
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -220,7 +220,7 @@ def test_average_precision_score_tied_values():
     # than one.
     y_true  = [ 0,  1,  1]
     y_score = [.5, .5, .6]
-    assert_true(average_precision_score(y_true, y_score) != 1.)
+    assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
