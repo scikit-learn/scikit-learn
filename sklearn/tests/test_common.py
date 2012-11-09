@@ -31,6 +31,7 @@ from sklearn.svm.base import BaseLibSVM
 # import "special" estimators
 from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
+from sklearn.decomposition.nmf import BaseNMF
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
 from sklearn.ensemble import BaseEnsemble
@@ -50,9 +51,9 @@ from sklearn.linear_model import IsotonicRegression
 
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-        LabelEncoder, TfidfTransformer, IsotonicRegression]
+        LabelEncoder, TfidfTransformer, IsotonicRegression, KLdivNMF]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
-        OneVsRestClassifier, RFE, RFECV]
+        OneVsRestClassifier, RFE, RFECV, BaseNMF]
 
 
 def test_all_estimators():
