@@ -530,7 +530,8 @@ implements the minimization of the Frobenius norm betweeen the data and its
 reconstruction by the matrix product. An implementation of another algorithm
 that minimizes the Kullback-Leibler divergence between the data and its
 reconstruction (see Lee and Seung's 1999 paper) is provided as
-:class:`KLdivNMF`.
+:class:`KLdivNMF`. (This class is optimized to work with sparse matrix with
+large feature dimension.)
 
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to `data` or `components`. Sparse components lead to
