@@ -23,7 +23,7 @@ from ..utils.extmath import randomized_svd, safe_sparse_dot
 
 
 def safe_vstack(Xs):
-    if True in [sp.issparse(X) for X in Xs]:
+    if any(sp.issparse(X) for X in Xs):
         return sp.vstack(Xs)
     else:
         return np.vstack(Xs)
