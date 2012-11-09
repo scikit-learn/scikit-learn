@@ -1,9 +1,9 @@
 # encoding: utf-8
 # cython: cdivision=True
 # cython: boundscheck=False
-# cython: wraparound=False 
+# cython: wraparound=False
 # Authors: Robert Layton <robertlayton@gmail.com>
-           Corey Lynch <coreylynch9@gmail.com>
+#           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD Style.
 
 from scipy.special import gammaln
@@ -18,6 +18,7 @@ cdef extern from "math.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def expected_mutual_information(contingency, int n_samples):
+    """Calculate the expected mutual information for two labelings."""
     cdef int R, C
     cdef float N, gln_N, emi, term2, term3, gln
     cdef np.ndarray[double] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_Nnij
@@ -49,7 +50,7 @@ def expected_mutual_information(contingency, int n_samples):
     gln_Nb = gammaln(N - b + 1)
     gln_N = gammaln(N + 1)
     gln_nij = gammaln(nijs + 1)
-    # start and end values for nij terms for each summation.    
+    # start and end values for nij terms for each summation.
     start = np.array([[v - N + w for w in b] for v in a], dtype='int')
     start = np.maximum(start, 1)
     end = np.minimum(np.resize(a, (C, R)).T, np.resize(b, (R, C))) + 1
@@ -68,9 +69,3 @@ def expected_mutual_information(contingency, int n_samples):
                 term3 = exp(gln)
                 emi += (term1[nij] * term2 * term3)
     return emi
-
-
-
-
-
-
