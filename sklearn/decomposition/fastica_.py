@@ -254,8 +254,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         def g(x, fun_args):
             return fun(x, **fun_args)
 
-        def gprime(x, fun_args):
-            return fun_prime(x, **fun_args)
+        if callable(fun_prime):
+            def gprime(x, fun_args):
+                return fun_prime(x, **fun_args)
     else:
         raise ValueError('fun argument should be either a string '
                          '(one of logcosh, exp or cube) or a function')
