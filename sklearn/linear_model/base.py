@@ -245,11 +245,11 @@ class LinearRegression(LinearModel, RegressorMixin):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
-        y : numpy array of shape [n_samples, n_responses]
+        y : numpy array of shape [n_samples, n_targets]
             Target values
         n_jobs : The number of jobs to use for the computation.
             If -1 all CPUs are used. This will only provide speedup for
-            n_response > 1 and sufficient large problems
+            n_targets > 1 and sufficient large problems
 
         Returns
         -------
