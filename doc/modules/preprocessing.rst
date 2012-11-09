@@ -289,13 +289,16 @@ to be used when the transformer API is not necessary.
   representation upstream.
 
 
-Encoding Categorial Features
-============================
+Encoding categorical features
+=============================
 Often features are not given as continuous values but categorical.
-For example a person could have features ``["male", "female"]``, ``["from Europe", "from US", "from Asia"]``,
+For example a person could have features ``["male", "female"]``,
+``["from Europe", "from US", "from Asia"]``,
 ``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
 Such features can be efficiently coded as integers, for instance
-``["male", "from US", "uses Internet Explorer"]`` could be expressed as ``[0, 1, 3]``.
+``["male", "from US", "uses Internet Explorer"]`` could be expressed as
+``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
+``[1, 2, 1]``.
 
 Such integer representation can not be used directly with scikit-learn estimators, as these
 expect continuous input, and would interpret the categories as being ordered, which is often

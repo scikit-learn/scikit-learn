@@ -46,6 +46,9 @@ Changelog
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
+   - New transformer :class:`preprocessing.OneHotEncoder` to compute
+     binary encodings of categorical features by `Andreas Müller`_.
+
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
    - :func:`cross_validation.cross_val_score` now works with precomputed kernels
