@@ -12,6 +12,7 @@ better
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD Style.
 
+import itertools
 import numpy as np
 from scipy.sparse import coo_matrix
 
@@ -660,7 +661,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2 and pos_label != None:
+    elif n_labels == 2 and pos_label is not None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
@@ -854,42 +855,39 @@ def precision_recall_curve(y_true, probas_pred):
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
 
+
+    # Sort pred_probas (and corresponding true labels) by pred_proba value
+    sort_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
+    probas_pred = probas_pred[sort_idxs]
+    y_true = y_true[sort_idxs]
+
+    # Get indices where values of probas_pred decreases
+    thresh_idxs = np.r_[0,
+                        np.where(np.diff(probas_pred))[0] + 1,
+                        len(probas_pred)]
+
     # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
-    tp_count, fp_count = 0., 0.
-    thresholds = []
+    tp_count, fp_count = 0., 0.  # Must remain floats to prevent int division
     precision = [1.]
     recall = [0.]
-    last_recorded_idx = -1
+    thresholds = []
 
-    # Iterate over (predict_prob, true_val) pairs, in order of highest
-    # to lowest predicted probabilities. Incrementally keep track of how
-    # many true and false labels have been encountered. If several of the
-    # predicted probabilities are the same, then create only one new point
-    # in the curve that represents all of these "tied" predictions.
-    # (In other words, add new points only when new values of prob_val
-    # are encountered)
-    sorted_pred_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
-    pairs = np.vstack((probas_pred, y_true)).T
-    last_prob_val = probas_pred[sorted_pred_idxs[0]]
-    smallest_prob_val = probas_pred[sorted_pred_idxs[-1]]
-    for idx, (prob_val, class_val) in enumerate(pairs[sorted_pred_idxs, :]):
-        if class_val:
-            tp_count += 1.
-        else:
-            fp_count += 1.
-        if (prob_val < last_prob_val) and (prob_val > smallest_prob_val):
-            thresholds.append(prob_val)
-            fn_count = float(total_positive - tp_count)
-            precision.append(tp_count / (tp_count + fp_count))
-            recall.append(tp_count / (tp_count + fn_count))
-            last_prob_val = prob_val
-            last_recorded_idx = idx
-    # Don't forget to include the last point in the PR-curve if
-    # it wasn't yet recorded.
-    if last_recorded_idx != idx:
-        recall.append(1.0)
-        precision.append(total_positive / (tp_count + fp_count))
+    # Iterate over thresh_idxs and incrementally calculate precision
+    # and recall
+    for l_idx, r_idx in itertools.izip(thresh_idxs[:-1], thresh_idxs[1:]):
+        thresh_labels = y_true[l_idx:r_idx]
+        n_thresh = r_idx - l_idx
+        n_pos_thresh = thresh_labels.sum()
+        n_neg_thresh = n_thresh - n_pos_thresh
+        tp_count += n_pos_thresh
+        fp_count += n_neg_thresh
+        fn_count = total_positive - tp_count
+        precision.append(tp_count / (tp_count + fp_count))
+        recall.append(tp_count / (tp_count + fn_count))
+        thresholds.append(probas_pred[l_idx])
+        if tp_count == total_positive:
+            break
 
     # Sklearn expects these in reverse order
     thresholds = np.array(thresholds)[::-1]
