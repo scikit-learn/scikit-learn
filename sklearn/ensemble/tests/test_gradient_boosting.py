@@ -431,6 +431,14 @@ def test_partial_dependence_classifier():
     assert pdp.shape == (1, 4)
     assert axes[0].shape[0] == 4
 
+    # now with our own grid
+    X_ = np.asarray(X)
+    grid = np.unique(X_[:, 0])
+    pdp_2, axes = gradient_boosting.partial_dependence(clf, [0], grid=grid)
+
+    assert axes is None
+    assert_array_equal(pdp, pdp_2)
+
 
 def test_partial_dependence_multiclass():
     """Test partial dependence for multi-class classifier """
@@ -484,3 +492,8 @@ def test_partial_dependecy_input():
 
     assert_raises(ValueError, gradient_boosting.partial_dependence,
                   clf, [100], X=X)
+
+    # wrong ndim for grid
+    grid = np.random.rand(10, 2, 1)
+    assert_raises(ValueError, gradient_boosting.partial_dependence,
+                  clf, [0], grid=grid)
