@@ -1159,8 +1159,8 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
 
 
-class RandomForestHasher(BaseForest):
-    """Use a completely random forest to create sparse, binary representations.
+class RandomForestEmbedding(BaseForest):
+    """Use a totally random forest to create sparse, binary representations.
 
     An unsupervised transformation of a dataset to a high-dimensional
     sparse representation. A datapoint is coded according to which leaf of
@@ -1235,7 +1235,7 @@ class RandomForestHasher(BaseForest):
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        super(RandomForestHasher, self).__init__(
+        super(RandomForestEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1282,7 +1282,7 @@ class RandomForestHasher(BaseForest):
         X = safe_asarray(X)
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomForestHasher, self).fit(X, y)
+        super(RandomForestEmbedding, self).fit(X, y)
         self.one_hot_encoder_ = OneHotEncoder()
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
