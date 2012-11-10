@@ -274,6 +274,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
     if n_nonzero_coefs == None and tol == None:
+        # default for n_nonzero_coefs is 0.1 * n_features
+        # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
     if tol is not None and tol < 0:
         raise ValueError("Epsilon cannot be negative")
@@ -514,6 +516,8 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             y = y[:, np.newaxis]
 
         if self.n_nonzero_coefs == None and self.tol is None:
+            # default for n_nonzero_coefs is 0.1 * n_features
+            # but at least one.
             self.n_nonzero_coefs = max(int(0.1 * n_features), 1)
         if (Gram is not None or Xy is not None) and (self.fit_intercept is True
                                                  or self.normalize is True):
