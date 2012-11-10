@@ -17,9 +17,9 @@ housing dataset. The example is taken from [HTF2009]_.
 The first plot shows four one-dimensional partial dependence plots. The target
 variables are: median income (`MedInc`), avg. occupants per household (`AvgOccup`),
 median house age (`HouseAge`), and avg. rooms per household (`AveRooms`).
-We can clearly see that the median house price shows a linear relationship with the
-median income (top left) and that the house price drops when the avg. occupants
-per household increases (top right).
+We can clearly see that the median house price shows a linear relationship
+with the median income (top left) and that the house price drops when the
+avg. occupants per household increases (top right).
 The lower left plot shows that the house age in a district does not have
 a strong influence on the (median) house price.
 The red tick marks on the x-axis represent the deciles of the feature values
@@ -73,7 +73,7 @@ print("done.")
 print('_' * 80)
 print('One-way partial dependence plots')
 print
-pl.figure()
+fig = pl.figure()
 sub_plots = []
 
 for i, fx in enumerate([0, 5, 1, 2]):
@@ -103,12 +103,16 @@ y_min = min((ax.get_ylim()[0] for ax in sub_plots))
 y_max = max((ax.get_ylim()[1] for ax in sub_plots))
 for ax in sub_plots:
     ax.set_ylim((y_min, y_max))
-pl.tight_layout()
+
+fig.suptitle('Partial dependence of house value on nonlocation features ' \
+             'for the California housing dataset')
 
 print('_' * 80)
 print('Two-way partial dependence plot')
 print
 fig = pl.figure()
+
+
 target_feature = np.array([1, 5], dtype=np.int32)
 pdp, (x_axis, y_axis) = gradient_boosting.partial_dependence(clf,
                                                              target_feature,
@@ -124,4 +128,6 @@ ax.set_zlabel('Partial dependence')
 #  pretty init view
 ax.view_init(elev=22, azim=122)
 pl.colorbar(surf)
+pl.suptitle('Partial dependence of house value on median age and ' \
+            'average occupancy')
 pl.show()
