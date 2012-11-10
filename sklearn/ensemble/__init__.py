@@ -10,3 +10,6 @@ from .forest import ExtraTreesClassifier
 from .forest import ExtraTreesRegressor
 from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
+
+from . import forest
+from . import gradient_boosting
