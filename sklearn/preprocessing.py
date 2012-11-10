@@ -271,7 +271,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
-        X, = check_arrays(X, copy=self.copy, sparse_format="csr")
+        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -279,7 +279,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
             self.mean_ = None
-            _, var = mean_variance_axis0(X)
+            var = mean_variance_axis0(X)[1]
             self.std_ = np.sqrt(var)
             self.std_[var == 0.0] = 1.0
             return self
@@ -298,7 +298,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
-        X, = check_arrays(X, copy=copy, sparse_format="csr")
+        X = check_arrays(X, copy=copy, sparse_format="csr")[0]
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(

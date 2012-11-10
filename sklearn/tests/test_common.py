@@ -273,6 +273,8 @@ def test_estimators_nan_inf():
                     raise AssertionError(error_string_fit, Est)
                 # actually fit
                 if issubclass(Est, ClusterMixin):
+                    # All estimators except clustering algorithm
+                    # support fitting with (optional) y
                     est.fit(X_train_finite)
                 else:
                     est.fit(X_train_finite, y)
