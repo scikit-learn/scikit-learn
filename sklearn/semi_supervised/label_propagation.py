@@ -54,9 +54,10 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
 
-import numpy as np
-from scipy import sparse
+import warnings
 from abc import ABCMeta, abstractmethod
+from scipy import sparse
+import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
