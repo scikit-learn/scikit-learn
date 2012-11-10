@@ -86,6 +86,8 @@ def test_all_estimators():
 
             # test if init does nothing but set parameters
             # this is important for grid_search etc.
+
+            # this comes from getattr. Gets rid of deprecation decorator.
             init = getattr(e.__init__, 'deprecated_original', e.__init__)
             try:
                 args, varargs, kws, defaults = inspect.getargspec(init)
