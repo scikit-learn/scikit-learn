@@ -72,6 +72,10 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
             if isinstance(nonlin, tuple):
                 gwtx, g_wtx = nonlin
             else:
+                if not callable(gprime):
+                    raise ValueError('The function supplied does not return a '
+                                     'tuple. Therefore fun_prime has to be a '
+                                     'function, not %s' % str(type(gprime)))
                 warnings.warn("Passing g and gprime separately is deprecated "
                               "and will be removed in 0.14.",
                               DeprecationWarning, stacklevel=2)
@@ -113,6 +117,10 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
         if isinstance(nonlin, tuple):
             gwtx, g_wtx = nonlin
         else:
+            if not callable(gprime):
+                raise ValueError('The function supplied does not return a '
+                                 'tuple. Therefore fun_prime has to be a '
+                                 'function, not %s' % str(type(gprime)))
             warnings.warn("Passing g and gprime separately is deprecated "
                               "and will be removed in 0.14.",
                               DeprecationWarning, stacklevel=2)
