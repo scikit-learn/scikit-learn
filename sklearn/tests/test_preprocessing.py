@@ -72,7 +72,7 @@ def test_scaler_2d_arrays():
 
     assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-    # Check that X has not been copied
+    # Check that X has been copied
     assert_true(X_scaled is not X)
 
     # check inverse transform

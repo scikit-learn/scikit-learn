@@ -72,6 +72,10 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
             if isinstance(nonlin, tuple):
                 gwtx, g_wtx = nonlin
             else:
+                if not callable(gprime):
+                    raise ValueError('The function supplied does not return a '
+                                     'tuple. Therefore fun_prime has to be a '
+                                     'function, not %s' % str(type(gprime)))
                 warnings.warn("Passing g and gprime separately is deprecated "
                               "and will be removed in 0.14.",
                               DeprecationWarning, stacklevel=2)
@@ -113,6 +117,10 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
         if isinstance(nonlin, tuple):
             gwtx, g_wtx = nonlin
         else:
+            if not callable(gprime):
+                raise ValueError('The function supplied does not return a '
+                                 'tuple. Therefore fun_prime has to be a '
+                                 'function, not %s' % str(type(gprime)))
             warnings.warn("Passing g and gprime separately is deprecated "
                               "and will be removed in 0.14.",
                               DeprecationWarning, stacklevel=2)
@@ -158,7 +166,12 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Supplying the derivative through the `fun_prime` attribute is
+        point. Example:
+
+        def my_g(x):
+            return x ** 3, 3 * x ** 2
+
+        Supplying the derivative through the `fun_prime` attribute is
         still supported, but deprecated.
     fun_prime : empty string ('') or function, optional, deprecated.
         See fun.
@@ -254,8 +267,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         def g(x, fun_args):
             return fun(x, **fun_args)
 
-        def gprime(x, fun_args):
-            return fun_prime(x, **fun_args)
+        if callable(fun_prime):
+            def gprime(x, fun_args):
+                return fun_prime(x, **fun_args)
+
     else:
         raise ValueError('fun argument should be either a string '
                          '(one of logcosh, exp or cube) or a function')
@@ -341,7 +356,12 @@ class FastICA(BaseEstimator, TransformerMixin):
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Supplying the derivative through the `fun_prime` attribute is
+        point. Example:
+
+        def my_g(x):
+            return x ** 3, 3 * x ** 2
+
+        Supplying the derivative through the `fun_prime` attribute is
         still supported, but deprecated.
     fun_prime : empty string ('') or function, optional, deprecated.
         See fun.
@@ -408,6 +428,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         S = X * W.T
         """
+        X = array2d(X)
         return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):

@@ -172,8 +172,8 @@ class LossFunction(object):
                                          y_pred[:, k])
 
         # update predictions (both in-bag and out-of-bag)
-        y_pred[:, k] += learning_rate * tree.value[:, 0, 0].take(terminal_regions,
-                                                              axis=0)
+        y_pred[:, k] += (learning_rate
+                         * tree.value[:, 0, 0].take(terminal_regions, axis=0))
 
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
@@ -430,8 +430,8 @@ class BaseGradientBoosting(BaseEnsemble):
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
-                 min_samples_leaf, max_depth, init, subsample,
-                 max_features, random_state, alpha=0.9, verbose=0, learn_rate=None):
+                 min_samples_leaf, max_depth, init, subsample, max_features,
+                 random_state, alpha=0.9, verbose=0, learn_rate=None):
 
         if not learn_rate is None:
             learning_rate = learn_rate

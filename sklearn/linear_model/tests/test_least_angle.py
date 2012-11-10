@@ -199,12 +199,13 @@ def test_rank_deficient_design():
         # we need to turn off normalization
         lars = linear_model.LassoLars(.1, normalize=False)
         coef_lars_ = lars.fit(X, y).coef_
-        obj_lars = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
+        obj_lars = (1. / (2. * 3.)
+                    * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
                     + .1 * linalg.norm(coef_lars_, 1))
         coord_descent = linear_model.Lasso(.1, tol=1e-6,
                                             normalize=False)
         coef_cd_ = coord_descent.fit(X, y).coef_
-        obj_cd = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
+        obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
                     + .1 * linalg.norm(coef_cd_, 1))
         assert_array_almost_equal(obj_lars, obj_cd)
 
@@ -333,13 +334,13 @@ def test_lars_drop_for_good():
     y = [100, -100, 1]
     lars = linear_model.LassoLars(.001, normalize=False)
     lars_coef_ = lars.fit(X, y).coef_
-    lars_obj = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
+    lars_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
                 + .1 * linalg.norm(lars_coef_, 1))
     coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
-    cd_obj = ((1./ (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
+    cd_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
                 + .1 * linalg.norm(cd_coef_, 1))
-    assert_array_almost_equal(lars_obj, cd_obj)
+    assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
 
 
 def test_lars_add_features():

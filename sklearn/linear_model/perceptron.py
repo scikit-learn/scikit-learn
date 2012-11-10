@@ -85,8 +85,8 @@ class Perceptron(BaseSGDClassifier, SelectorMixin):
     http://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, eta0=1.0,
-                 n_jobs=1, random_state=0, class_weight=None, warm_start=False):
+                 n_iter=5, shuffle=False, verbose=0, eta0=1.0, n_jobs=1,
+                 random_state=0, class_weight=None, warm_start=False):
         super(Perceptron, self).__init__(loss="perceptron",
                                          penalty=penalty,
                                          alpha=alpha, l1_ratio=0,

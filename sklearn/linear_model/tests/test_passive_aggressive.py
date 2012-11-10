@@ -57,7 +57,6 @@ class MyPassiveAggressive(ClassifierMixin):
                 else:
                     step *= np.sign(y[i] - p)
 
-
                 self.w += step * X[i]
                 if self.fit_intercept:
                     self.b += step

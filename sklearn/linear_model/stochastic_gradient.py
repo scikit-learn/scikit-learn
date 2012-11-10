@@ -50,8 +50,9 @@ class BaseSGD(BaseEstimator):
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=0.1, random_state=None, learning_rate="optimal",
-                 eta0=0.0, power_t=0.5, warm_start=False, rho=None):
+                 verbose=0, epsilon=0.1, random_state=None,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 warm_start=False, rho=None):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -297,9 +298,9 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
-                 learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, rho=None):
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
+                 random_state=None, learning_rate="optimal", eta0=0.0,
+                 power_t=0.5, class_weight=None, warm_start=False, rho=None):
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -385,7 +386,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         elif n_classes == 2:
             self._fit_binary(X, y, alpha=alpha, C=C,
                              learning_rate=learning_rate,
-                             sample_weight= sample_weight, n_iter=n_iter)
+                             sample_weight=sample_weight, n_iter=n_iter)
         else:
             raise ValueError("The number of class labels must be "
                              "greater than one.")
@@ -495,7 +496,6 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
-
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             class_weight=None, sample_weight=None):
@@ -743,7 +743,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                alpha=alpha, l1_ratio=l1_ratio,
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose, epsilon=epsilon,
+                                               verbose=verbose,
+                                               epsilon=epsilon,
                                                random_state=random_state,
                                                rho=rho,
                                                learning_rate=learning_rate,
