@@ -310,7 +310,8 @@ The figure below shows the results of applying :class:`GradientBoostingRegressor
 with least squares loss and 500 base learners to the Boston house price dataset
 (:func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
-The train error at each iteration is stored in the :attr:`~GradientBoostingRegressor.train_score_` attribute
+The train error at each iteration is stored in the
+:attr:`~GradientBoostingRegressor.train_score_` attribute
 of the gradient boosting model. The test error at each iterations can be optained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
@@ -490,18 +491,33 @@ can be controled via the ``max_features`` parameter.
 Interpretation
 --------------
 
-Individual decision trees can be interpreted easily by simply visualizing the tree structure. Gradient boosting models, however, comprise hundreds of regression trees thus they cannot be easily interpreted by visual inspection of the individual trees. Fortunately, a number of techniques have been proposed to summarize and interpret gradient boosting models.
+Individual decision trees can be interpreted easily by simply
+visualizing the tree structure. Gradient boosting models, however,
+comprise hundreds of regression trees thus they cannot be easily
+interpreted by visual inspection of the individual trees. Fortunately,
+a number of techniques have been proposed to summarize and interpret
+gradient boosting models.
 
 Feature importance
 ..................
 
-Often features do not contribute equally to predict the target response; in many situations the majority of the features are in fact irrelevant.
-When interpreting a model, the first question usually is: what are those important features and how do they contributing in predicting the target response?
+Often features do not contribute equally to predict the target
+response; in many situations the majority of the features are in fact
+irrelevant.
+When interpreting a model, the first question usually is: what are
+those important features and how do they contributing in predicting
+the target response?
 
 Individual decision trees intrinsically perform feature selection by selecting
-appropriate split points. This information can be used to measure the importance of each feature; the basic idea is: the more often a feature is used in the split points of a tree the more important that feature is. This notion of importance can be extended to decision tree ensembles by simply averaging the feature importance of each tree (see :ref:`random_forest_feature_importance` for more details).
+appropriate split points. This information can be used to measure the
+importance of each feature; the basic idea is: the more often a
+feature is used in the split points of a tree the more important that
+feature is. This notion of importance can be extended to decision tree
+ensembles by simply averaging the feature importance of each tree (see
+:ref:`random_forest_feature_importance` for more details).
 
-The feature importance scores of a fit gradient boosting model can be accessed via the ``feature_importances_`` property::
+The feature importance scores of a fit gradient boosting model can be
+accessed via the ``feature_importances_`` property::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
@@ -544,7 +560,8 @@ two-dimensional partial dependence plot for the California housing dataset.
    :align: center
    :scale: 60
 
-Partial dependence plots can be created via the :func:`gradient_boosting.partial_dependence` function::
+Partial dependence plots can be created via the
+:func:`gradient_boosting.partial_dependence` function::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
@@ -560,7 +577,12 @@ Partial dependence plots can be created via the :func:`gradient_boosting.partial
     >>> axes  # doctest: +ELLIPSIS
     [array([-1.62497054, -1.59201391, ...
 
-The function requires either the argument ``grid`` which specifies the values of the target features on which the partial dependence function should be evaluated or the argument ``X`` which is a convenience mode for automatically creating ``grid`` from the training data. If ``X`` is given, the ``axes`` value returned by the function gives the axis for each target feature.
+The function requires either the argument ``grid`` which specifies the
+values of the target features on which the partial dependence function
+should be evaluated or the argument ``X`` which is a convenience mode
+for automatically creating ``grid`` from the training data. If ``X``
+is given, the ``axes`` value returned by the function gives the axis
+for each target feature.
 
 .. topic:: Examples:
 
