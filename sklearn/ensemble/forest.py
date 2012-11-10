@@ -1216,6 +1216,15 @@ class RandomForestHasher(BaseForest):
     `estimators_`: list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
+           visual codebooks using randomized clustering forests"
+           NIPS 2007
+
+
     """
 
     def __init__(self, n_estimators=10,
