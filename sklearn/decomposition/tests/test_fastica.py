@@ -72,7 +72,7 @@ def test_fastica(add_noise=False):
     center_and_norm(m)
 
     algos = ['parallel', 'deflation']
-    nls = ['logcosh', 'exp', 'cube']
+    nls = ['logcosh', 'exp', 'cube', np.tanh]
     whitening = [True, False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
