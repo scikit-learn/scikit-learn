@@ -7,7 +7,7 @@ Partial dependence plots show the dependence between the target function [1]_
 and a set of 'target' features, marginalizing over the
 values of all other features (the complement features). Due to the limits
 of human perception the size of the target feature set must be small (usually,
-one or two) thus the target features are usually choosen among the most
+one or two) thus the target features are usually chosen among the most
 important features (see :meth:`ensemble.GradientBoostingRegressor.feature_importances_`).
 
 This example shows how to obtain partial dependence plots from a
