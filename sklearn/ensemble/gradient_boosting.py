@@ -1189,7 +1189,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     if gbrt.estimators_.shape[0] == 0:
         raise ValueError('Call %s.fit before partial_dependence' %
                          gbrt.__class__.__name__)
-    if grid is None and X is None:
+    if (grid is None and X is None) or (grid is not None and X is not None):
         raise ValueError('Either grid or X must be specified')
 
     target_variables = np.asarray(target_variables, dtype=np.int32,
