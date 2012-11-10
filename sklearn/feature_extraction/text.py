@@ -263,7 +263,8 @@ class CountVectorizer(BaseEstimator):
         The decoding strategy depends on the vectorizer parameters.
         """
         if self.input == 'filename':
-            doc = open(doc, 'rb').read()
+            with open(doc, 'rb') as fh:
+                doc = fh.read()
 
         elif self.input == 'file':
             doc = doc.read()
