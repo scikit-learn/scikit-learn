@@ -17,6 +17,7 @@ from abc import ABCMeta, abstractmethod
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
+from ..utils.validation import check_arrays
 
 from . import _tree
 
@@ -171,7 +172,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.tree_ = None
         self.feature_importances_ = None
 
-    def fit(self, X, y, sample_mask=None, X_argsorted=None):
+    def fit(self, X, y, sample_mask=None, X_argsorted=None, check_input=True):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -208,6 +209,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
+        if check_input:
+            X, y = check_arrays(X, y)
         self.random_state = check_random_state(self.random_state)
 
         # set min_samples_split sensibly

@@ -208,6 +208,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Set parameters."""
+        X = atleast2d_or_csr(X)
         if self.sample_interval == None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:

@@ -408,6 +408,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         S = X * W.T
         """
+        X = array2d(X)
         return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):

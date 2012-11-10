@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import check_arrays, array2d
+from .utils import check_arrays, array2d, atleast2d_or_csr
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
@@ -271,25 +271,19 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
+        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
-            copy = self.copy
-            if not sp.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
             self.mean_ = None
-            _, var = mean_variance_axis0(X)
+            var = mean_variance_axis0(X)[1]
             self.std_ = np.sqrt(var)
             self.std_[var == 0.0] = 1.0
             return self
         else:
-            X = np.asarray(X)
             warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
@@ -304,23 +298,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
+        X = check_arrays(X, copy=copy, sparse_format="csr")[0]
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
-            if not sp.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
             inplace_csr_column_scale(X, 1 / self.std_)
         else:
-            X = np.asarray(X)
             warn_if_not_float(X, estimator=self)
-            if copy:
-                X = X.copy()
             if self.with_mean:
                 X -= self.mean_
             if self.with_std:
@@ -477,6 +464,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
+        atleast2d_or_csr(X)
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -489,6 +477,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
             in CSR format to avoid an un-necessary copy.
         """
         copy = copy if copy is not None else self.copy
+        atleast2d_or_csr(X)
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 
@@ -574,6 +563,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
+        atleast2d_or_csr(X)
         return self
 
     def transform(self, X, y=None, copy=None):
