@@ -178,6 +178,8 @@ amount of time (e.g., on large datasets).
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 
+.. _random_forest_feature_importance:
+
 Feature importance evaluation
 -----------------------------
 
@@ -287,7 +289,7 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss`` which defaults to least squares (``'ls'``).
+``loss``; the default loss function for regression is least squares (``'ls'``).
 
 ::
 
@@ -305,17 +307,25 @@ for regression which can be specified via the argument
     6.90...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the Boston house-price dataset
-(see :func:`sklearn.datasets.load_boston`).
+with least squares loss and 500 base learners to the Boston house price dataset
+(:func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
-Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be obtained via the ``feature_importances_``
-property.
+The train error at each iteration is stored in the :attr:`~GradientBoostingRegressor.train_score_` attribute
+of the gradient boosting model. The test error at each iterations can be optained
+via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
+generator that yields the predictions at each stage. Plots like these can be used
+to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
+The plot on the right shows the feature importances which can be obtained via
+the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
 
 
 Mathematical formulation
@@ -473,12 +483,87 @@ Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
 can be controled via the ``max_features`` parameter.
 
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+
+Interpretation
+--------------
+
+Individual decision trees can be interpreted easily by simply visualizing the tree structure. Gradient boosting models, however, comprise hundreds of regression trees thus they cannot be easily interpreted by visual inspection of the individual trees. Fortunately, a number of techniques have been proposed to summarize and interpret gradient boosting models.
+
+Feature importance
+..................
+
+Often features do not contribute equally to predict the target response; in many situations the majority of the features are in fact irrelevant.
+When interpreting a model, the first question usually is: what are those important features and how do they contributing in predicting the target response?
+
+Individual decision trees intrinsically perform feature selection by selecting
+appropriate split points. This information can be used to measure the importance of each feature; the basic idea is: the more often a feature is used in the split points of a tree the more important that feature is. This notion of importance can be extended to decision tree ensembles by simply averaging the feature importance of each tree (see :ref:`random_forest_feature_importance` for more details).
+
+The feature importance scores of a fit gradient boosting model can be accessed via the ``feature_importances_`` property::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> clf.feature_importances_  # doctest: +ELLIPSIS
+    array([ 0.11,  0.1 ,  0.11,  ...
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
+
+
+Partial dependence
+..................
+
+Partial dependence plots show the dependence between the target response
+and a set of 'target' features, marginalizing over the
+values of all other features (the complement features). Due to the limits
+of human perception the size of the target feature set must be small (usually,
+one or two) thus the target features are usually chosen among the most
+important features.
+
+The Figure below show four one-dimensional partial dependence plots
+for the California housing dataset (:func:`sklearn.datasets.load_cal_housing`).
+
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+   :target: ../auto_examples/ensemble/plot_partial_dependence.html
+   :align: center
+   :scale: 60
+
+Partial dependence plots with two target features can be used to visualize
+interactions among the two features. The Figure below shows such a
+two-dimensional partial dependence plot for the California housing dataset.
+
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_2.png
+   :target: ../auto_examples/ensemble/plot_partial_dependence.html
+   :align: center
+   :scale: 60
+
+Partial dependence plots can be created via the :func:`gradient_boosting.partial_dependence` function::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble.gradient_boosting import partial_dependence
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> target_features = [0]
+    >>> pdp, axes = partial_dependence(clf, target_features, X=X)
+    >>> pdp  # doctest: +ELLIPSIS
+    array([[ 2.46643157,  2.46643157, ...
+    >>> axes  # doctest: +ELLIPSIS
+    [array([-1.62497054, -1.59201391, ...
+
+The function requires either the argument ``grid`` which specifies the values of the target features on which the partial dependence function should be evaluated or the argument ``X`` which is a convenience mode for automatically creating ``grid`` from the training data. If ``X`` is given, the ``axes`` value returned by the function gives the axis for each target feature.
+
+.. topic:: Examples:
+
  * :ref:`example_ensemble_plot_partial_dependence.py`
 
 
