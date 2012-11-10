@@ -68,7 +68,7 @@ clf = GradientBoostingRegressor(n_estimators=800, max_depth=4,
                                 learning_rate=0.1, loss='huber',
                                 random_state=1)
 clf.fit(X_train, y_train)
-print("fin.")
+print("done.")
 
 print('_' * 80)
 print('One-way partial dependence plots')
@@ -124,3 +124,4 @@ ax.set_zlabel('Partial dependence')
 #  pretty init view
 ax.view_init(elev=22, azim=122)
 pl.colorbar(surf)
+pl.show()
