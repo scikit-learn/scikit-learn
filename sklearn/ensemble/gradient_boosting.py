@@ -482,7 +482,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.verbose = verbose
 
-        self.estimators_ = None
+        self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
