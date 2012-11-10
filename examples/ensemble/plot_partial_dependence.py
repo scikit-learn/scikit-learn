@@ -65,7 +65,7 @@ names = cal_housing.feature_names
 print('_' * 80)
 print("Training GBRT...")
 clf = GradientBoostingRegressor(n_estimators=800, max_depth=4,
-                                learn_rate=0.1, loss='huber',
+                                learning_rate=0.1, loss='huber',
                                 random_state=1)
 clf.fit(X_train, y_train)
 print("fin.")
