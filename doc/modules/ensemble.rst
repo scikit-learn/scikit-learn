@@ -550,7 +550,7 @@ for the California housing dataset
 .. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
-   :scale: 60
+   :scale: 70
 
 Partial dependence plots with two target features can be used to visualize
 interactions among the two features. The Figure below shows such a
@@ -559,7 +559,7 @@ two-dimensional partial dependence plot for the California housing dataset.
 .. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_2.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
-   :scale: 60
+   :scale: 70
 
 Partial dependence plots can be created via the
 :func:`gradient_boosting.partial_dependence` function::
