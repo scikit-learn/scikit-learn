@@ -253,6 +253,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     elif callable(fun):
         def g(x, fun_args):
             return fun(x, **fun_args)
+
         if callable(fun_prime):
             def gprime(x, fun_args):
                 return fun_prime(x, **fun_args)
