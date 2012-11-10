@@ -1128,8 +1128,6 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     if not all(map(lambda x: 0.0 <= x <= 1.0, percentiles)):
         raise ValueError('percentile values must be in [0, 1]')
 
-    emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
-
     axes = []
     for col in range(X.shape[1]):
         uniques = np.unique(X[:, col])
@@ -1137,10 +1135,11 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
             # feature has low resolution use unique vals
             axis = uniques
         else:
+            emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
             # create axis based on percentiles and grid resolution
             axis = np.linspace(emp_percentiles[0, col],
                                emp_percentiles[1, col],
-                               grid_resolution)
+                               num=grid_resolution, endpoint=True)
         axes.append(axis)
 
     return cartesian(axes), axes
@@ -1183,6 +1182,16 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         For regression and binary classification ``n_classes==1``.
     grid : array, shape=(n_points, len(target_variables))
         The grid of target variable values for which ``pdp`` was evaluated.
+
+    Examples
+    --------
+    >>> samples = [[0, 0, 2], [1, 0, 0]]
+    >>> labels = [0, 1]
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> gb = GradientBoostingClassifier().fit(samples, labels)
+    >>> kwargs = dict(X=samples, percentiles=(0, 1), grid_resolution=2)
+    >>> partial_dependence(gb, [0], **kwargs)
+    (array([[-10.72892297,  10.72892297]]), [array([ 0.,  1.])])
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
@@ -1195,7 +1204,12 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     target_variables = np.asarray(target_variables, dtype=np.int32,
                                   order='C').ravel()
 
+    if any([not (0 <= fx < gbrt.n_features) for fx in target_variables]):
+        raise ValueError('target_variables must be in [0, %d]'
+                         % (gbrt.n_features - 1))
+
     if X is not None:
+        X = array2d(X, dtype=DTYPE, order='C')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
 
@@ -1208,6 +1222,6 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k]
             _partial_dependence_tree(tree, grid, target_variables,
-                                     gbrt.learn_rate, pdp[k])
+                                     gbrt.learning_rate, pdp[k])
 
     return pdp, axes
