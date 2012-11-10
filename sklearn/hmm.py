@@ -1120,7 +1120,7 @@ class GMMHMM(_BaseHMM):
         self.n_mix = n_mix
         self._covariance_type = covariance_type
         self.covars_prior = covars_prior
-        self.gmms_ = gmms
+        self.gmms = gmms
         if gmms is None:
             gmms = []
             for x in xrange(self.n_components):
