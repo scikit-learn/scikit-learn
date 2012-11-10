@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomForestHasher
+from sklearn.ensemble import RandomForestEmbedding
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.svm import LinearSVC
@@ -379,12 +379,12 @@ def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
     # even after projected to two pca dimensions
-    hasher = RandomForestHasher(n_estimators=30, random_state=0)
+    hasher = RandomForestEmbedding(n_estimators=30, random_state=0)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
     # test fit and transform:
-    hasher = RandomForestHasher(n_estimators=30, random_state=0)
+    hasher = RandomForestEmbedding(n_estimators=30, random_state=0)
     assert_array_equal(hasher.fit(X).transform(X).toarray(),
                        X_transformed.toarray())
 
