@@ -37,7 +37,7 @@ TARGET_FILENAME = "cal_housing.pkz"
 MODULE_DOCS = __doc__
 
 
-def fetch_cal_housing(data_home=None, download_if_missing=True):
+def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
 
     Parameters

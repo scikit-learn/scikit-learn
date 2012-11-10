@@ -544,7 +544,8 @@ one or two) thus the target features are usually chosen among the most
 important features.
 
 The Figure below show four one-dimensional partial dependence plots
-for the California housing dataset (:func:`sklearn.datasets.load_cal_housing`).
+for the California housing dataset
+(:func:`sklearn.datasets.load_california_housing`).
 
 .. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html

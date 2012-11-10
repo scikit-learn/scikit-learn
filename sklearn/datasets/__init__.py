@@ -44,7 +44,7 @@ from .svmlight_format import load_svmlight_files
 from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
-from .cal_housing import fetch_cal_housing
+from .california_housing import fetch_california_housing
 from ..utils import deprecated
 
 __all__ = ['clear_data_home',

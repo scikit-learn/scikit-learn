@@ -50,10 +50,10 @@ from scipy.stats.mstats import mquantiles
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import gradient_boosting
-from sklearn.datasets.cal_housing import fetch_cal_housing
+from sklearn.datasets.california_housing import fetch_california_housing
 
 # fetch California housing dataset
-cal_housing = fetch_cal_housing()
+cal_housing = fetch_california_housing()
 
 # split 80/20 train-test
 X_train, X_test, y_train, y_test = train_test_split(cal_housing.data,
