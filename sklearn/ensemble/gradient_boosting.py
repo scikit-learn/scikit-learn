@@ -1180,8 +1180,9 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     pdp : array, shape=(n_classes, n_points)
         The partial dependence function evaluated on the ``grid``.
         For regression and binary classification ``n_classes==1``.
-    grid : array, shape=(n_points, len(target_variables))
-        The grid of target variable values for which ``pdp`` was evaluated.
+    axes : seq of ndarray or None
+        The axes with which the grid has been created or None if
+        the grid has been given.
 
     Examples
     --------
@@ -1212,8 +1213,19 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         X = array2d(X, dtype=DTYPE, order='C')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
+    else:
+        assert grid is not None
+        # dont return axes if grid is given
+        axes = None
+        # grid must be 2d
+        if grid.ndim == 1:
+            grid = grid[:, np.newaxis]
+        if grid.ndim != 2:
+            raise ValueError('grid must be 2d but is %dd' % grid.ndim)
 
     grid = np.asarray(grid, dtype=DTYPE, order='C')
+    assert grid.shape[1] == target_variables.shape[0]
+
     n_trees_per_stage = gbrt.estimators_.shape[1]
     n_estimators = gbrt.estimators_.shape[0]
     pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
