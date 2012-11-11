@@ -74,8 +74,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred = y_pred[ind]
     y_true = y_true[ind]
 
-    CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]),
-                                    (y_true, y_pred)),
+    CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]), (y_true, y_pred)),
                                shape=(n_labels, n_labels),
                                dtype=np.int).todense())
     return CM
@@ -303,7 +302,7 @@ def auc(x, y, reorder=False):
         if np.any(h < 0):
             h *= -1
             assert not np.any(h < 0), ("Reordering is not turned on, and "
-                        "The x array is not increasing: %s" % x)
+                                       "The x array is not increasing: %s" % x)
 
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
@@ -854,7 +853,6 @@ def precision_recall_curve(y_true, probas_pred):
         y_true[y_true == -1] = 0
     elif not np.all(labels == np.array([0, 1])):
         raise ValueError("y_true contains non binary labels: %r" % labels)
-
 
     # Sort pred_probas (and corresponding true labels) by pred_proba value
     sort_idxs = np.argsort(probas_pred, kind="mergesort")[::-1]
