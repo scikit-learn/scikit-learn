@@ -176,7 +176,7 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                                int[::1] target_feature,
                                double learn_rate,
                                double[::1] out):
-    """Partial dependence of ``target_feature`` set on the response.
+    """Partial dependence of the response on the ``target_feature`` set.
 
     For each row in ``X`` a tree traversal is performed.
     Each traversal starts from the root with weight 1.0.
