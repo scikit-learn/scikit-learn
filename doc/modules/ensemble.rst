@@ -538,10 +538,16 @@ Partial dependence
 
 Partial dependence plots show the dependence between the target response
 and a set of 'target' features, marginalizing over the
-values of all other features (the complement features). Due to the limits
-of human perception the size of the target feature set must be small (usually,
-one or two) thus the target features are usually chosen among the most
-important features.
+values of all other features (the 'complement' features).
+Intuitively, you can interpret the partial dependence as the expected
+target response [1]_ as a function of the 'target' features [2]_,
+however, in general we are only interested in the shape of the function
+in order to spot non-linear effects hence partial dependence plots
+are often centered such that the mean dependence is zero.
+
+Due to the limits of human perception the size of the target feature
+set must be small (usually, one or two) thus the target features are
+usually chosen among the most important features.
 
 The Figure below show four one-dimensional partial dependence plots
 for the California housing dataset
@@ -584,6 +590,26 @@ should be evaluated or the argument ``X`` which is a convenience mode
 for automatically creating ``grid`` from the training data. If ``X``
 is given, the ``axes`` value returned by the function gives the axis
 for each target feature.
+
+For each value of the 'target' features in the ``grid`` the partial
+dependence function need to marginalize the predictions of a tree over
+all possible values of the 'complement' features. In decision trees
+this function can be evaluated efficiently without reference to the
+training data. For each grid point a weighted tree traversal is
+performed: if a split node involves a 'target' feature, the
+corresponding left or right branch is followed, otherwise both
+branches are followed, each branch is weighted by the fraction of
+training samples that entered that branch. Finally, the partial
+dependence is given by a weighted average of all visited leaves. For
+tree ensembles the results of each individual tree are again
+averaged.
+
+.. [1] For classification with ``loss='deviance'``  the target
+   response is logit(p).
+
+.. [2] Partial dependence plots do not include the ``init`` model thus
+   actually its the expectation of the target response after
+   accounting for the initial model.
 
 .. topic:: Examples:
 
