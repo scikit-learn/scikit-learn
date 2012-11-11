@@ -604,12 +604,14 @@ dependence is given by a weighted average of all visited leaves. For
 tree ensembles the results of each individual tree are again
 averaged.
 
+.. rubric:: Footnotes
+
 .. [1] For classification with ``loss='deviance'``  the target
    response is logit(p).
 
-.. [2] Partial dependence plots do not include the ``init`` model thus
-   actually its the expectation of the target response after
-   accounting for the initial model.
+.. [2] More precisely its the expectation of the target response after
+   accounting for the initial model because partial dependence plots
+   do not include the ``init`` model.
 
 .. topic:: Examples:
 
