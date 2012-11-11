@@ -411,7 +411,7 @@ def cartesian(arrays, out=None):
 
     n = np.prod([x.size for x in arrays])
     if out is None:
-        out = np.zeros([n, len(arrays)], dtype=dtype)
+        out = np.empty([n, len(arrays)], dtype=dtype)
 
     m = n / arrays[0].size
     out[:, 0] = np.repeat(arrays[0], m)
