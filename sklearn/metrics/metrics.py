@@ -873,8 +873,13 @@ def precision_recall_curve(y_true, probas_pred):
     recall = [0.]
     thresholds = []
 
-    # Iterate over thresh_idxs and incrementally calculate precision
-    # and recall
+    # Iterate over indices which indicate distinct values of probas_pred --
+    # each of these distinct values will be represented in the curve with a
+    # coordinate in precision-recall space. To calculate the precision and
+    # recall associated with each point, we use these indices to select all
+    # labels associated with the predictions. By incrementally keeping track
+    # of the number of positive and negative labels seen so far, we can
+    # calculate precision and recall.
     for l_idx, r_idx in itertools.izip(thresh_idxs[:-1], thresh_idxs[1:]):
         thresh_labels = y_true[l_idx:r_idx]
         n_thresh = r_idx - l_idx
