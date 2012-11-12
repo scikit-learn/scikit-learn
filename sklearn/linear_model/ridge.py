@@ -205,13 +205,16 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             A = safe_sparse_dot(X, X.T, dense_output=True)
+            assert (A == A.T).all()
             for i, alpha_line in enumerate(alphas):
                 if alpha_line.shape != n_features:
                     alpha_line = alpha_line * np.ones(y1.shape[1])
 
                 for j, (y_column, alpha_value) in enumerate(
                                                   zip(y1.T, alpha_line)):
+                    assert (A == A.T).all()
                     A.flat[::n_samples + 1] += alpha_value * sample_weight
+                    assert (A == A.T).all()
                     Axy = linalg.solve(A, y_column,
                                        sym_pos=True, overwrite_a=True)
                     coefs[i, j] = safe_sparse_dot(X.T, Axy, dense_output=True)
@@ -230,6 +233,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     coefs[i, j] = linalg.solve(A, Xy[:, j],
                                                sym_pos=True, overwrite_a=True)
                     A.flat[::n_features + 1] -= alpha_value
+                    
     coefs = coefs.reshape(list(alpha.shape[:-1]) + \
                          [coefs.shape[1], coefs.shape[2]])
     if y.ndim == 1:
