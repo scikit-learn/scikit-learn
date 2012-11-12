@@ -97,97 +97,79 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     if has_sw:
         solver = 'dense_cholesky'
 
+    # Preparing the ys:
+    # If y is 0D or a 1D array of 0D targets, i.e. X.shape[0]==1, it won't work
+    # If y is a 1D array, create y1 with an extra dimensions
+    # If y is a 2D array, set y1 = y
+    # An exception for any other condition is not thrown
+
+    if y.ndim == 1:
+        y1 = y[:, np.newaxis]
+    else:
+        y1 = y
+    n_targets = y1.shape[1]
+
+    #
+    # Preparing alphas:
+    # Three actions (the first two correct the input):
+    # 1) If alpha is just one number, make it a 1D array with one entry
+    # 2) If alpha is an array, check if last dimension corresponds to number
+    #    of targets.If not, add singleton dimension to the end for broadcasting
+    # 3) For internal calculations collapse all dimensions before last to one
+    #    in the variable 'alphas'
+
+    if isinstance(alpha, numbers.Number):
+        alpha = np.array([alpha])
+    elif alpha.shape[-1] != n_targets and alpha.shape[-1] != 1:
+        alpha = alpha.copy()[:, np.newaxis]
+    alphas = alpha.reshape(-1, alpha.shape[-1])
+    # number of different penalties per target
+    n_penalties = alphas.shape[0]
+
+    # Prepare the coefficients array
+    coefs = np.empty((n_penalties, n_targets, n_features))
+
     if solver == 'sparse_cg':
         # gradient descent
         X1 = sp_linalg.aslinearoperator(X)
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-
-        if isinstance(alpha, numbers.Number):
-            alpha = np.array([alpha])
-        if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
-            alpha = alpha[:, np.newaxis]
-
-        alphas = alpha.reshape(-1, alpha.shape[-1])
-
-        coefs = np.empty((alphas.shape[0], y1.shape[1], n_features))
 
         for i, alpha_line in enumerate(alphas):
             if alpha_line.shape != n_features:
                 alpha_line = alpha_line * np.ones(y1.shape[1])
-
             for j, (y_column, alpha_value) in enumerate(zip(y1.T, alpha_line)):
+                if n_features > n_samples:
+                    # kernel ridge
+                    # w = X.T * inv(X X^t + alpha*Id) y
+                    def mv(x):
+                        return X1.matvec(X1.rmatvec(x)) + alpha_value * x
 
-                    if n_features > n_samples:
-                        # kernel ridge
-                        # w = X.T * inv(X X^t + alpha*Id) y
-                        def mv(x):
-                            return X1.matvec(X1.rmatvec(x)) + alpha_value * x
+                    C = sp_linalg.LinearOperator(
+                        (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+                    coef, info = sp_linalg.cg(C, y_column, tol=tol)
+                    coefs[i, j] = X1.rmatvec(coef)
+                else:
+                    # ridge
+                    # w = inv(X^t X + alpha*Id) * X.T y
+                    def mv(x):
+                        return X1.rmatvec(X1.matvec(x)) + alpha_value * x
 
-                        C = sp_linalg.LinearOperator(
-                            (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-                        coef, info = sp_linalg.cg(C, y_column, tol=tol)
-                        coefs[i, j] = X1.rmatvec(coef)
-                    else:
-                        # ridge
-                        # w = inv(X^t X + alpha*Id) * X.T y
-                        def mv(x):
-                            return X1.rmatvec(X1.matvec(x)) + alpha_value * x
-
-                        y_column = X1.rmatvec(y_column)
-                        C = sp_linalg.LinearOperator(
-                            (n_features, n_features), matvec=mv, dtype=X.dtype)
-                        coefs[i, j], info = sp_linalg.cg(C,
-                                        y_column, maxiter=max_iter, tol=tol)
-                    if info != 0:
-                        raise ValueError("Failed with error code %d" % info)
-
-        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
-                             [coefs.shape[1], coefs.shape[2]])
-        if y.ndim == 1:
-            return coefs.squeeze()
-
-        return coefs
+                    y_column = X1.rmatvec(y_column)
+                    C = sp_linalg.LinearOperator(
+                        (n_features, n_features), matvec=mv, dtype=X.dtype)
+                    coefs[i, j], info = sp_linalg.cg(C,
+                                    y_column, maxiter=max_iter, tol=tol)
+                if info != 0:
+                    raise ValueError("Failed with error code %d" % info)
     elif solver == "lsqr":
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-
-        if isinstance(alpha, numbers.Number):
-            alpha = np.array([alpha])
-        if alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
-            alpha = alpha[:, np.newaxis]
-
         # According to the lsqr documentation, alpha = damp^2.
-        sqrt_alphas = np.sqrt(alpha).reshape(-1, alpha.shape[-1])
-
-        coefs = np.empty((sqrt_alphas.shape[0], y1.shape[1], n_features))
-
+        sqrt_alphas = np.sqrt(alphas)
         for i, alpha_line in enumerate(sqrt_alphas):
             if alpha_line.shape != n_features:
                 alpha_line = alpha_line * np.ones(y1.shape[1])
             for j, (y_column, sqrt_alpha) in enumerate(zip(y1.T, alpha_line)):
                 coefs[i, j] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
                                     atol=tol, btol=tol, iter_lim=max_iter)[0]
-
-        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
-                             [coefs.shape[1], coefs.shape[2]])
-        if y.ndim == 1:
-            return coefs.squeeze()
-
-        return coefs
     elif solver == "svd":
-        if isinstance(alpha, numbers.Number):
-            alpha = np.array([alpha])
-        if y.ndim == 1:
-            y1 = y[:, np.newaxis]
-        else:
-            y1 = y
-        alpha = np.asanyarray(alpha)
-        alphas = alpha.reshape(-1, alpha.shape[-1])
         U, s, VT = linalg.svd(X, full_matrices=False)
         UT_y = np.dot(U.T, y1)
         isvwp = inv_singular_values_with_penalties = \
@@ -197,24 +179,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
         for i in range(alphas.shape[0]):
             coefs[i] = np.dot(VT.T, isvwp_times_UT_y[i]).T
-
-        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
-                             [coefs.shape[1], coefs.shape[2]])
-
-        if y.ndim == 1:
-            return coefs.squeeze()
-
-        return coefs
-
     elif solver == "eigen":
-        if isinstance(alpha, numbers.Number):
-            alpha = np.array([alpha])
-        if y.ndim == 1:
-            y1 = y[:, np.newaxis]
-        else:
-            y1 = y
-        alpha = np.asanyarray(alpha)
-        alphas = alpha.reshape(-1, alpha.shape[-1])
         if n_features > n_samples:
             d, U = linalg.eigh(np.dot(X, X.T))
             UT_y = np.dot(U.T, y1)
@@ -234,27 +199,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
             for i in range(alphas.shape[0]):
                 coefs[i] = np.dot(V, ievwp_times_V_T_X_T_y[i]).T
-
-        coefs = coefs.reshape(list(alphas.shape[:-1]) + \
-                                 [coefs.shape[1], coefs.shape[2]])
-
-        if y.ndim == 1:
-            return coefs.squeeze()
-
-        return coefs
     else:
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-        if isinstance(alpha, numbers.Number):
-            alpha = np.array([alpha])
-        elif alpha.shape[-1] != y1.shape[1] and alpha.shape[-1] != 1:
-            alpha = alpha[:, np.newaxis]
-
-        alphas = alpha.reshape(-1, alpha.shape[-1])
-        coefs = np.empty((alphas.shape[0], y1.shape[1], n_features))
-
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
             # kernel ridge
@@ -285,13 +230,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     coefs[i, j] = linalg.solve(A, Xy[:, j],
                                                sym_pos=True, overwrite_a=True)
                     A.flat[::n_features + 1] -= alpha_value
-
-        coefs = coefs.reshape(list(alpha.shape[:-1]) + \
-                                 [coefs.shape[1], coefs.shape[2]])
-        if y.ndim == 1:
-            return coefs.squeeze()
-
-        return coefs
+    coefs = coefs.reshape(list(alpha.shape[:-1]) + \
+                         [coefs.shape[1], coefs.shape[2]])
+    if y.ndim == 1:
+        return coefs.squeeze()
+    return coefs
 
 
 class _BaseRidge(LinearModel):
