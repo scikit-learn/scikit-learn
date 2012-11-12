@@ -561,7 +561,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         X = atleast2d_or_csr(X)
         H = np.zeros((X.shape[0], self.n_components))
         for j in xrange(0, X.shape[0]):
-            H[j, :], _ = nnls(self.components_.T, X[j, :])
             #nnls assumes X[j, :] is dense
             if sp.issparse(X):
                 warnings.warn("Data matrix is sparse, converting to dense format")

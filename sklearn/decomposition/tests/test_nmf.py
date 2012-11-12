@@ -148,8 +148,11 @@ def test_sparse_input():
                                   random_state=999).fit_transform(A_sparse)
     assert_array_almost_equal(T1, T2)
 
-    # same with sparseness
+    # throws ValueError without changes from 00021cb80870b7b
+    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',random_state=999)\
+        .fit(A_sparse).transform(A_sparse)
 
+    # same with sparseness
     T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
             sparseness='data', random_state=999).fit_transform(A_sparse)
     T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
