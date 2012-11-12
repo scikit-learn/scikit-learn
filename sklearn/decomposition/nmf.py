@@ -203,8 +203,8 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
         raise ValueError("Negative values in H_init passed to NLS solver.")
 
     H = H_init
-    WtV = safe_sparse_dot(W.T, V, dense_output = True)
-    WtW = safe_sparse_dot(W.T, W, dense_output = True)
+    WtV = safe_sparse_dot(W.T, V, dense_output=True)
+    WtW = safe_sparse_dot(W.T, W, dense_output=True)
 
     # values justified in the paper
     alpha = 1
@@ -398,9 +398,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         if init == 'nndsvd':
             W, H = _initialize_nmf(X, self.n_components)
         elif init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components, variant = 'a')
+            W, H = _initialize_nmf(X, self.n_components, variant='a')
         elif init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components, variant = 'ar')
+            W, H = _initialize_nmf(X, self.n_components, variant='ar')
         elif init == "random":
             rng = check_random_state(random_state)
             W = rng.randn(n_samples, self.n_components)
@@ -425,86 +425,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         elif self.sparseness == 'data':
             W, gradW, iterW = _nls_subproblem(
                 safe_vstack([X.T, np.zeros((1, n_samples))]),
-                safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
-                                                                self
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                .n_components))]),
+                safe_vstack([H.T, np.sqrt(self.beta) * np.ones(
+                    (1, self.n_components))]),
                 W.T, tolW, self.nls_max_iter)
         elif self.sparseness == 'components':
             W, gradW, iterW = _nls_subproblem(
@@ -565,9 +487,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         W, H = self._init(X)
 
         gradW = (np.dot(W, np.dot(H, H.T))
-                 - safe_sparse_dot(X, H.T, dense_output = True))
+                 - safe_sparse_dot(X, H.T, dense_output=True))
         gradH = (np.dot(np.dot(W.T, W), H)
-                 - safe_sparse_dot(W.T, X, dense_output = True))
+                 - safe_sparse_dot(W.T, X, dense_output=True))
         init_grad = norm(np.r_[gradW, gradH.T])
         tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
