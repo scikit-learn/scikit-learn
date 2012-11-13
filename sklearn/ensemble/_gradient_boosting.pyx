@@ -14,6 +14,9 @@ cimport numpy as np
 
 from sklearn.tree._tree cimport Tree
 
+ctypedef np.int32_t int32
+ctypedef np.float64_t float64
+
 # Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
@@ -32,7 +35,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 Py_ssize_t K,
                                                 Py_ssize_t n_samples,
                                                 Py_ssize_t n_features,
-                                                np.float64_t *out):
+                                                float64 *out):
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
     This function operates directly on the data arrays of the tree
@@ -79,8 +82,8 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         shape ``(n_samples, K)``.
     """
     cdef Py_ssize_t i
-    cdef np.int32_t node_id
-    cdef np.int32_t feature_idx
+    cdef int32 node_id
+    cdef int32 feature_idx
     for i in range(n_samples):
         node_id = 0
         # While node_id not a leaf
@@ -97,7 +100,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
 @cython.nonecheck(False)
 def predict_stages(np.ndarray[object, ndim=2] estimators,
                    np.ndarray[DTYPE_t, ndim=2, mode='c'] X, double scale,
-                   np.ndarray[np.float64_t, ndim=2] out):
+                   np.ndarray[float64, ndim=2] out):
     """Add predictions of ``estimators`` to ``out``.
 
     Each estimator is scaled by ``scale`` before its prediction
@@ -126,14 +129,14 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 tree.threshold,
                 tree.value,
                 scale, k, K, n_samples, n_features,
-                <np.float64_t*>((<np.ndarray>out).data))
+                <float64*>((<np.ndarray>out).data))
 
 
 @cython.nonecheck(False)
 def predict_stage(np.ndarray[object, ndim=2] estimators,
                   int stage,
                   np.ndarray[DTYPE_t, ndim=2] X, double scale,
-                  np.ndarray[np.float64_t, ndim=2] out):
+                  np.ndarray[float64, ndim=2] out):
     """Add predictions of ``estimators[stage]`` to ``out``.
 
     Each estimator in the stage is scaled by ``scale`` before
@@ -157,14 +160,14 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
                 tree.threshold,
                 tree.value,
                 scale, k, K, n_samples, n_features,
-                <np.float64_t*>((<np.ndarray>out).data))
+                <float64*>((<np.ndarray>out).data))
 
 
-cdef inline int array_index(int val, int[::1] arr):
+cdef inline int array_index(int32 val, int32[::1] arr):
     """Find index of ``val`` in array ``arr``. """
-    cdef int res = -1
-    cdef int i = 0
-    cdef int n = arr.shape[0]
+    cdef int32 res = -1
+    cdef int32 i = 0
+    cdef int32 n = arr.shape[0]
     for i in range(n):
         if arr[i] == val:
             res = i
@@ -173,7 +176,7 @@ cdef inline int array_index(int val, int[::1] arr):
 
 
 cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
-                               int[::1] target_feature,
+                               int32[::1] target_feature,
                                double learn_rate,
                                double[::1] out):
     """Partial dependence of the response on the ``target_feature`` set.
@@ -217,10 +220,10 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     cdef int *n_samples = tree.n_samples
     cdef int node_count = tree.node_count
 
-    cdef int stack_capacity = node_count * 2
-    cdef int[::1] node_stack = np.zeros((stack_capacity,), dtype=np.int32)
+    cdef int32 stack_capacity = node_count * 2
+    cdef int32[::1] node_stack = np.zeros((stack_capacity,), dtype=np.int32)
     cdef double[::1] weight_stack = np.ones((stack_capacity,), dtype=np.float64)
-    cdef int stack_size = 1
+    cdef int32 stack_size = 1
     cdef double left_sample_frac
     cdef double current_weight
     cdef double total_weight = 0.0
