@@ -205,35 +205,45 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             A = safe_sparse_dot(X, X.T, dense_output=True)
-            assert (A == A.T).all()
-            for i, alpha_line in enumerate(alphas):
-                if alpha_line.shape != n_features:
-                    alpha_line = alpha_line * np.ones(y1.shape[1])
 
-                for j, (y_column, alpha_value) in enumerate(
-                                                  zip(y1.T, alpha_line)):
-                    assert (A == A.T).all()
+            for i, alpha_line in enumerate(alphas):
+                if len(alpha_line) != n_features:
+                    assert (len(alpha_line) == 1)
+                    alpha_value = alpha_line[0]
                     A.flat[::n_samples + 1] += alpha_value * sample_weight
-                    assert (A == A.T).all()
-                    Axy = linalg.solve(A, y_column,
+                    Axy = linalg.solve(A, y1,
                                        sym_pos=True, overwrite_a=True)
-                    coefs[i, j] = safe_sparse_dot(X.T, Axy, dense_output=True)
+                    coefs[i] = safe_sparse_dot(X.T, Axy, dense_output=True).T  # ?
                     A.flat[::n_samples + 1] -= alpha_value * sample_weight
+                else:
+                    for j, (y_column, alpha_value) in enumerate(
+                                                  zip(y1.T, alpha_line)):
+                        A.flat[::n_samples + 1] += alpha_value * sample_weight
+                        Axy = linalg.solve(A, y_column,
+                                       sym_pos=True, overwrite_a=True)
+                        coefs[i, j] = safe_sparse_dot(X.T, Axy, dense_output=True)
+                        A.flat[::n_samples + 1] -= alpha_value * sample_weight
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
             Xy = safe_sparse_dot(X.T, y1, dense_output=True)
             for i, alpha_line in enumerate(alphas):
-                if alpha_line.shape != n_features:
-                    alpha_line = alpha_line * np.ones(y1.shape[1])
-
-                for j, alpha_value in enumerate(alpha_line):
+                if len(alpha_line) != n_features:
+                    assert (len(alpha_line) == 1)
+                    alpha_value = alpha_line[0]
                     A.flat[::n_features + 1] += alpha_value
-                    coefs[i, j] = linalg.solve(A, Xy[:, j],
-                                               sym_pos=True, overwrite_a=True)
+                    coefs[i] = linalg.solve(A, Xy,
+                                            sym_pos=True, overwrite_a=True).T
                     A.flat[::n_features + 1] -= alpha_value
-                    
+
+                else:
+                    for j, alpha_value in enumerate(alpha_line):
+                        A.flat[::n_features + 1] += alpha_value
+                        coefs[i, j] = linalg.solve(A, Xy[:, j],
+                                               sym_pos=True, overwrite_a=True)
+                        A.flat[::n_features + 1] -= alpha_value
+
     coefs = coefs.reshape(list(alpha.shape[:-1]) + \
                          [coefs.shape[1], coefs.shape[2]])
     if y.ndim == 1:
