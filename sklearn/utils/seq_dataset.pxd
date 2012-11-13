@@ -49,6 +49,7 @@ cdef class CSRDataset(SequentialDataset):
     cdef void shuffle(self, seed)
 
 cdef class PairwiseArrayDataset:
+    cdef Py_ssize_t n_samples
     cdef Py_ssize_t n_features
     cdef int current_index
     cdef int stride
