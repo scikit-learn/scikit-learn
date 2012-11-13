@@ -137,7 +137,7 @@ The algorithm can be identified through the concept of `Voronoi diagrams
 of the points is calculated using the current centroids. Each segment in the
 Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
 to the mean of each segment. The algorithm then repeats this until a stopping
-criteria is fulfilled. Usually, as in this implementation, the algorithm stops
+criterion is fulfilled. Usually, as in this implementation, the algorithm stops
 when the relative decrease in the objective function between iterations is less
 than the given tolerance value.
 
