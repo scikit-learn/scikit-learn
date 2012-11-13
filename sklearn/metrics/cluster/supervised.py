@@ -9,19 +9,17 @@ better.
 # License: BSD Style.
 
 from math import log
+
 from scipy.misc import comb
 from scipy.sparse import coo_matrix
-from expected_mutual_info_fast import expected_mutual_information
-
 import numpy as np
 
 from ...utils.fixes import unique
-
-# the exact version if faster for k == 2: use it by default globally in
-# this module instead of the float approximate variant
-
+from .expected_mutual_info_fast import expected_mutual_information
 
 def comb2(n):
+    # the exact version if faster for k == 2: use it by default globally in
+    # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
 
 
