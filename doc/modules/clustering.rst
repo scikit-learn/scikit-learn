@@ -116,10 +116,10 @@ be specified. It scales well to large number of samples and has been used
 across a large range of application areas in many different fields. It is
 also equivalent to the expectation-maximization algorithm when setting the
 covariance matrix to be diagonal, equal and small. The K-means algorithm
-aims to choose centroids :math:`\Theta` that minimise the within cluster sum of 
+aims to choose centroids :math:`C` that minimise the within cluster sum of 
 squares objective function with a dataset :math:`X` with :math:`n` samples:
 
-.. math:: J(X, \Theta) = \sum_{i=0}^{n}\min_{\mu_j \in \Theta}(||x_j - \mu_i||^2)
+.. math:: J(X, C) = \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
 
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
@@ -132,20 +132,21 @@ and the new centroids is the inertia and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
-The algorithm can be identified through the concept of Voronoi diagrams.
-First the Voronoi diagram of the points is calculated using the current
-centroids. Each segment in the Voronoi diagram becomes a separate cluster.
-Secondly, the centroids are updated to the mean of each segment. The algorithm
-then repeats this until a stopping criteria is fulfilled. Usually, as in this
-implementation, the algorithm stops when the relative increment in the results
-between iterations is less than the given tolerance value.
+The algorithm can be identified through the concept of `Voronoi diagrams
+<https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram
+of the points is calculated using the current centroids. Each segment in the
+Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
+to the mean of each segment. The algorithm then repeats this until a stopping
+criteria is fulfilled. Usually, as in this implementation, the algorithm stops
+when the relative decrease in the objective function between iterations is less
+than the given tolerance value.
 
 Given enough time, K-means will always converge, however this may be to a local
-minima. This is highly dependent on the the initialisation of the centroids. As
-a result, the computation is often done several times, with different
+minimum. This is highly dependent on the the initialisation of the centroids.
+As a result, the computation is often done several times, with different
 initialisation of the centroids. One method to help address this issue is the
 k-means++ initialisation algorithm, which has been implemented in
-scikits.learn (use the init='kmeans++' parameter). This initialises the
+scikit-learn (use the ``init='kmeans++'`` parameter). This initialises the
 centroids to be (generally) distant from each other, leading to provably better
 results than random initialisation.
 
