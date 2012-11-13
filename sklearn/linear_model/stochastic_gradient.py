@@ -220,7 +220,7 @@ def _check_fit_data(X, y):
         raise ValueError("Shapes of X and y do not match.")
 
 
-def _make_dataset(X, y_i, sample_weight):
+def _make_dataset(X, y_i, sample_weight, ranking=False):
     """Create ``Dataset`` abstraction for sparse and dense inputs.
 
     This also returns the ``intercept_decay`` which is different
@@ -229,6 +229,9 @@ def _make_dataset(X, y_i, sample_weight):
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
         intercept_decay = SPARSE_INTERCEPT_DECAY
+    elif ranking:
+        dataset = PairwiseDataset(X, y_i, sample_weight)
+        intercept_decay = 1.0
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
         intercept_decay = 1.0
@@ -363,6 +366,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
+        "pairwise_ranking": (Hinge, 1.0),
     }
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
@@ -662,12 +666,18 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
+    if self.loss == "pairwise_ranking":
+        ranking = True
+        dataset, intercept_decay = _make_dataset(X, y_i, sample_weight, ranking)
+        penalty_type = est._get_penalty_type(est.penalty)
+        learning_rate_type = est._get_learning_rate_type(est.learning_rate)
+        return ranking_sgd()
 
-    penalty_type = est._get_penalty_type(est.penalty)
-    learning_rate_type = est._get_learning_rate_type(est.learning_rate)
-
-    return plain_sgd(coef, intercept, est.loss_function,
+    else:
+        dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
+        penalty_type = est._get_penalty_type(est.penalty)
+        learning_rate_type = est._get_learning_rate_type(est.learning_rate)
+        return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, est.alpha, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), est.seed,

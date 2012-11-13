@@ -264,6 +264,13 @@ cdef class EpsilonInsensitive(Regression):
         return EpsilonInsensitive, (self.epsilon,)
 
 
+def stochastic_pairwise_descent()
+    for i in range(num_samples):
+        datset.next_pair(some pointers)
+        w.dot_on_difference(a,b)
+        if err < epsilon 
+            return
+
 def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
@@ -425,6 +432,89 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     w.reset_wscale()
 
     return weights, intercept
+
+def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
+              double intercept,
+              LossFunction loss,
+              int penalty_type,
+              double alpha, double rho,
+              PairwiseDataset dataset,
+              int n_iter, int fit_intercept,
+              int verbose, int shuffle, int seed,
+              double weight_pos, double weight_neg,
+              int learning_rate, double eta0,
+              double power_t,
+              double t=1.0,
+              double intercept_decay=1.0):
+
+    # get the data information into easy vars
+    cdef Py_ssize_t n_samples = dataset.n_samples
+    cdef Py_ssize_t n_features = weights.shape[0]
+
+    cdef WeightVector w = WeightVector(weights)
+
+    cdef DOUBLE *a_data_ptr = NULL
+    cdef DOUBLE *b_data_ptr = NULL
+    cdef INTEGER *x_ind_ptr = NULL
+
+    # helper variable
+    cdef int xnnz
+    cdef double eta = 0.0
+    cdef double p = 0.0
+    cdef double update = 0.0
+    cdef double sumloss = 0.0
+    cdef DOUBLE y_a = 0.0
+    cdef DOUBLE y_b = 0.0
+    cdef DOUBLE sample_weight_pos
+    cdef DOUBLE sample_weight_neg
+    cdef double class_weight = 1.0
+    cdef unsigned int count = 0
+    cdef unsigned int epoch = 0
+    cdef unsigned int i = 0
+
+    # q vector is only used for L1 regularization
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] q = None
+    cdef DOUBLE *q_data_ptr = NULL
+    if penalty_type == L1 or penalty_type == ELASTICNET:
+        q = np.zeros((n_features,), dtype=np.float64, order="c")
+        q_data_ptr = <DOUBLE *> q.data
+    cdef double u = 0.0
+
+    if penalty_type == L2:
+        rho = 1.0
+    elif penalty_type == L1:
+        rho = 0.0
+
+    eta = eta0
+
+    t_start = time()
+    for epoch in range(n_iter):
+        if verbose > 0:
+            print("-- Epoch %d" % (epoch + 1))
+        if shuffle:
+            dataset.shuffle(seed)
+        for i in range(n_samples):
+            dataset.next(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
+                         &xnnz, &y_a, &y_b, &sample_weight_pos,
+                         &sample_weight_neg)
+
+            if learning_rate == OPTIMAL:
+                eta = 1.0 / (alpha * t)
+            elif learning_rate == INVSCALING:
+                eta = eta0 / pow(t, power_t)
+            p = w.dot_on_difference(a_data_ptr, x_ind_ptr, xnnz) + intercept
+
+            if verbose > 0:
+                sumloss += loss.loss(p, y)
+
+            if y > 0.0:
+                class_weight = weight_pos
+            else:
+                class_weight = weight_neg
+
+            update = eta * loss.dloss(p, y) * class_weight * sample_weight
+            if update != 0.0:
+                            
 
 
 cdef inline double max(double a, double b):

@@ -108,7 +108,6 @@ cdef class ArrayDataset(SequentialDataset):
     cdef void shuffle(self, seed):
         np.random.RandomState(seed).shuffle(self.index)
 
-
 cdef class CSRDataset(SequentialDataset):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
 
@@ -174,3 +173,88 @@ cdef class CSRDataset(SequentialDataset):
 
     cdef void shuffle(self, seed):
         np.random.RandomState(seed).shuffle(self.index)
+
+
+cdef class PairwiseDataset(SequentialDataset):
+    """Dataset backed by a two-dimensional numpy array.
+
+    The dtype of the numpy array is expected to be ``np.float64``
+    and C-style memory layout.
+    """
+    def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
+        """A ``PairwiseDataset`` backed by a two-dimensional numpy array.
+
+        Parameters
+        ---------
+        X : ndarray, dtype=np.float64, ndim=2, mode='c'
+            The samples; a two-dimensional c-continuous numpy array of
+            dtype np.float64.
+        Y : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The target values; a one-dimensional c-continuous numpy array of
+            dtype np.float64.
+        sample_weights : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The weight of each sample; a one-dimensional c-continuous numpy
+            array of dtype np.float64.
+        """
+        self.n_samples = X.shape[0]
+        self.n_features = X.shape[1]
+        cdef np.ndarray[INTEGER, ndim=1,
+                        mode='c'] feature_indices = np.arange(0, self.n_features,
+                                                              dtype=np.int32)
+        self.feature_indices = feature_indices
+        self.feature_indices_ptr = <INTEGER *> feature_indices.data
+        self.stride = X.strides[0] / X.strides[1]
+        self.X_data_ptr = <DOUBLE *>X.data
+        self.Y_data_ptr = <DOUBLE *>Y.data
+        self.sample_weight_data = <DOUBLE *>sample_weights.data
+
+        # Create an index of positives and negatives for fast sampling
+        # of disagreeing pairs
+        positives = []
+        negatives = []
+        cdef Py_ssize_t i
+        for i in range(self.n_samples):
+            if Y[i] > 0:
+                positives.append(i)
+            else:
+                negatives.append(i)
+        cdef np.ndarray[INTEGER, ndim=1, mode='c'] pos_index = np.array(positives)
+        cdef np.ndarray[INTEGER, ndim=1, mode='c'] neg_index = np.array(negatives)self.pos_index = pos_index
+        self.neg_index = neg_index        
+        self.pos_index_data_ptr = <INTEGER *> pos_index.data
+        self.neg_index_data_ptr = <INTEGER *> neg_index.data
+        self.n_pos_samples = len(pos_index)
+        self.n_neg_samples = len(neg_index)
+
+    cdef void next(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **x_ind_ptr, int *nnz, DOUBLE *y_a,
+                   DOUBLE *y_b, DOUBLE *sample_weight_pos, DOUBLE *sample_weight_neg):
+
+        current_pos_index = np.random.randint(self.n_pos_samples)
+        current_neg_index = np.random.randint(self.n_neg_samples)
+
+        # For each step, randomly sample one positive and one negative
+        cdef int sample_pos_idx = self.pos_index_data_ptr[current_pos_index]
+        cdef int sample_neg_idx = self.neg_index_data_ptr[current_neg_index]
+        cdef int pos_offset = sample_pos_idx * self.stride
+        cdef int neg_offset = sample_neg_idx * self.stride
+
+        y_a[0] = self.Y_data_ptr[sample_idx]
+        y_b[0] = self.Y_data_ptr[sample_idx]
+        a_data_ptr[0] = self.X_data_ptr + pos_offset
+        b_data_ptr[0] = self.X_data_ptr + neg_offset
+        x_ind_ptr[0] = self.feature_indices_ptr
+        nnz[0] = self.n_features
+
+        sample_weight_pos[0] = self.sample_weight_data[sample_pos_idx]
+        sample_weight_neg[0] = self.sample_weight_data[sample_neg_idx]
+    
+    cdef void shuffle(self, seed):
+        np.random.RandomState(seed).shuffle(self.index)    
+
+
+
+
+

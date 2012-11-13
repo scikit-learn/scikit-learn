@@ -107,6 +107,26 @@ cdef class WeightVector(object):
         innerprod *= self.wscale
         return innerprod
 
+    cdef double dot_on_difference(self, DOUBLE *a_data_ptr, DOUBLE *b_data_ptr):
+        """Computes the dot product of the weight vector and the difference between samples a and b with disagreeing labels.
+
+        Parameters
+        ----------
+        a_data_ptr : double*
+            The array which holds the feature values of the first example in the pair.
+        b_data_ptr : double*
+            The array which holds the feature values of the second example in the pair.            
+
+        Returns
+        -------
+        innerprod_on_difference : double
+            The inner product of ``w`` and the difference between ``a`` and ``b``.
+        """
+        cdef double innerprod_on_difference = 0.0
+        innerprod_on_difference += self.dot(a, x_scale)
+        innerprod_on_difference += self.dot(b, -1.0 * x_scale)
+        return innerprod_on_difference
+
     cdef void scale(self, double c):
         """Scales the weight vector by a constant ``c``.
 

@@ -1,0 +1,11 @@
+implement a pairwise sequential dataset
+	-- handle class imbalance
+
+implement a pairwise_sgd() function in sgd_fast
+
+calls PairwiseSequentialDataset.next()
+to get a new pair
+
+implement a InnerProductOnDifference in weights
+
+user either creates a PairwiseSGDClassifier/Regressor object and calls fit on it or creates an SGDClassifier/Regressor object and specifies pairwise-ROC loss and we switch functionality internally
