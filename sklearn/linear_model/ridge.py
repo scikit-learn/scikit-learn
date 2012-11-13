@@ -250,10 +250,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                                     sym_pos=True, overwrite_a=overwrite_a)
                         A.flat[::n_features + 1] -= alpha_value
 
-    coefs = coefs.reshape(list(alpha.shape[:-1]) + \
-                         [coefs.shape[1], coefs.shape[2]])
-    if y.ndim == 1:
-        return coefs.squeeze()
+    coefs_shape = list(alpha.shape[:-1])
+    if y.ndim > 1:
+        coefs_shape.append(y.shape[1])
+    coefs_shape.append(X.shape[1])
+    coefs = coefs.reshape(coefs_shape)
     return coefs
 
 

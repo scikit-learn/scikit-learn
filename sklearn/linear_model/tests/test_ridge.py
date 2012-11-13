@@ -23,6 +23,9 @@ from sklearn.cross_validation import KFold
 from sklearn.metrics import euclidean_distances
 from sklearn.datasets import make_regression
 
+from itertools import product
+import numbers
+
 rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -146,7 +149,7 @@ def test_ridge_multiple_targets_multiple_penalties():
                           n_penalties_per_target, False)
     alphas = alphas[:, np.newaxis] * (rng.rand(1, n_targets) * 9 + 1)
 
-    concerned_solvers = ["svd", "eigen", "lsqr", "sparse_cg"]
+    concerned_solvers = ["svd", "eigen", "lsqr", "sparse_cg", "dense_cholesky"]
 
     def make_test_case(n_samples, n_features):
         n_informative = int(np.floor(n_features *\
@@ -191,13 +194,9 @@ def test_ridge_multiple_targets_multiple_penalties():
         assert_greater(tolerance, distances.max())
 
 
-
-def test_ridge_regression_with_varying_feature_weights():
+def test_ridge_regression_with_varying_sample_weights():
     pass
 
-def test_ridge_regression_coef_shapes():
-    # Important -- there are many different constellations here
-    pass
 
 def test_ridge_shapes():
     """Test shape of coef_ and intercept_
@@ -221,6 +220,131 @@ def test_ridge_shapes():
     ridge.fit(X, Y)
     assert_equal(ridge.coef_.shape, (2, n_features))
     assert_equal(ridge.intercept_.shape, (2, ))
+
+
+def test_ridge_regression_coef_shapes_individual_penalties():
+    """Test shape of coefficients output by ridge_regression
+       in the presence of multiple targets/
+       multiple individual penalities
+    """
+
+    n_sampless = [5, 10]
+    n_featuress = [10, 5]
+    n_informatives = [2, 2]
+    noise_levels = [.1, .1]
+
+    n_targetss = [1, 2, 5]
+
+    datasets = [make_regression(n_samples=n_samples,
+                                n_features=n_features,
+                                n_informative=n_informative,
+                                noise=noise_level,
+                                random_state=rng,
+                                coef=False,
+                                n_targets=n_targets
+                                )
+                for ((n_samples, n_features, n_informative, noise_level),
+                     n_targets) in
+                     product(
+                        zip(n_sampless, n_featuress,
+                             n_informatives, noise_levels),
+                        n_targetss)]
+
+    solvers = ["sparse_cg", "lsqr", "svd", "eigen", "dense_cholesky"]
+
+    def expected_shape(X, y, alphas):
+
+        if y.ndim == 1:
+            if isinstance(alphas, numbers.Number):
+                expected_shape = (X.shape[1],)
+            elif alphas.shape == (1,):
+                expected_shape = (X.shape[1],)
+            elif alphas.ndim == 1:
+                expected_shape = (alphas.shape[0], X.shape[1])
+            else:
+                if alphas.shape[-1] == 1:
+                    expected_shape = tuple(list(alphas.shape[:-1]) +
+                                           [X.shape[1]])
+                else:
+                    expected_shape = tuple(list(alphas.shape) + [X.shape[1]])
+        else:
+            if isinstance(alphas, numbers.Number):
+                expected_shape = (y.shape[1], X.shape[1])
+            elif alphas.shape[-1] == y.shape[1]:
+                expected_shape = tuple(list(alphas.shape) + [X.shape[1]])
+            elif alphas.shape[-1] == 1:
+                expected_shape = tuple(list(alphas.shape[:-1]) +\
+                                    [y.shape[1], X.shape[1]])
+            else:
+                expected_shape = tuple(list(alphas.shape) +\
+                                    [y.shape[1], X.shape[1]])
+
+        return expected_shape
+
+    def make_alphas(y):
+        alphas = []
+
+        # one number
+        alpha_number = 10.0
+        alphas.append(alpha_number)
+
+        # array with one element and one dimension
+        alpha_1D_1E_array = np.array([11.0])
+        alphas.append(alpha_1D_1E_array)
+
+        # array with one element and two dimensions
+        alpha_2D_1E_array = np.array([[12.0]])
+        alphas.append(alpha_2D_1E_array)
+
+        # if multiple targets
+        if y.ndim == 2:
+            # 1D array with len == n_targets
+            n_targets = y.shape[1]
+            alpha = np.arange(13., 13. + n_targets)
+            alphas.append(alpha)
+
+            # 2D array with last dim == n_targets
+            scale_factors = np.array([[1.], [2.]])
+            alpha2 = scale_factors * alpha[np.newaxis, :]
+            alphas.append(alpha2)
+
+            # 1D array with len != n_targets
+            alpha3 = np.arange(20., 20. + n_targets + 1)
+            alphas.append(alpha3)
+        elif y.ndim == 1:
+            # 1D array with len != 1
+            alpha = np.array([25., 26.])
+            alphas.append(alpha)
+
+        # 2D array with last dim == 1
+        alpha = np.array([[27.], [28.]])
+        alphas.append(alpha)
+
+        # 3D array
+        alpha = np.arange(8).reshape(2, 2, 2)
+        alphas.append(alpha)
+
+        # 3D array with last dim == 1
+        alpha = np.arange(4).reshape(2, 2, 1)
+        alphas.append(alpha)
+
+        return alphas
+
+    def verify_shape(X, y, alpha, solver):
+
+        expected = expected_shape(X, y, alpha)
+        actual = ridge_regression(X, y, alpha, solver=solver).shape
+
+        assert expected == actual
+
+    for solver in solvers:
+        for X, y in datasets:
+            alphas = make_alphas(y)
+            for alpha in alphas:
+                # if one target, check also degenerate 2D y
+                if y.ndim == 1:
+                    verify_shape(X, y[:, np.newaxis], alpha, solver)
+                verify_shape(X, y, alpha, solver)
 
 
 def test_ridge_intercept():
