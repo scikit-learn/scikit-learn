@@ -206,8 +206,8 @@ def test_average_precision_score_duplicate_values():
     # precision-recall curve is a decreasing curve
     # The following situtation corresponds to a perfect
     # test statistic, the average_precision_score should be 1
-    y_true  = [ 0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1]
-    y_score = [ 0, .1, .1, .5, .5, .6, .6, .9, .9,  1,  1]
+    y_true = [0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1]
+    y_score = [0, .1, .1, .5, .5, .6, .6, .9, .9,  1,  1]
     assert_equal(average_precision_score(y_true, y_score), 1)
 
 
