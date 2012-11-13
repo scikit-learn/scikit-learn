@@ -147,6 +147,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                         (n_samples, n_samples), matvec=mv, dtype=X.dtype)
                     coef, info = sp_linalg.cg(C, y_column, tol=tol)
                     coefs[i, j] = X1.rmatvec(coef)
+                    if info != 0:
+                        raise ValueError("Failed with error code %d" % info)
                 else:
                     # ridge
                     # w = inv(X^t X + alpha*Id) * X.T y
@@ -158,13 +160,13 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                         (n_features, n_features), matvec=mv, dtype=X.dtype)
                     coefs[i, j], info = sp_linalg.cg(C,
                                     y_column, maxiter=max_iter, tol=tol)
-                if info != 0:
-                    raise ValueError("Failed with error code %d" % info)
+                    if info != 0:
+                        raise ValueError("Failed with error code %d" % info)
     elif solver == "lsqr":
         # According to the lsqr documentation, alpha = damp^2.
         sqrt_alphas = np.sqrt(alphas)
         for i, alpha_line in enumerate(sqrt_alphas):
-            if alpha_line.shape != n_features:
+            if alpha_line.shape != (n_features,):
                 alpha_line = alpha_line * np.ones(y1.shape[1])
             for j, (y_column, sqrt_alpha) in enumerate(zip(y1.T, alpha_line)):
                 coefs[i, j] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
@@ -205,23 +207,25 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             A = safe_sparse_dot(X, X.T, dense_output=True)
-
             for i, alpha_line in enumerate(alphas):
-                if len(alpha_line) != n_features:
-                    assert (len(alpha_line) == 1)
+                overwrite_a = i == n_penalties
+                if alpha_line.shape != (n_targets,):
+                    assert (alpha_line.shape == (1,))
                     alpha_value = alpha_line[0]
                     A.flat[::n_samples + 1] += alpha_value * sample_weight
                     Axy = linalg.solve(A, y1,
-                                       sym_pos=True, overwrite_a=True)
-                    coefs[i] = safe_sparse_dot(X.T, Axy, dense_output=True).T  # ?
+                                       sym_pos=True, overwrite_a=overwrite_a)
+                    coefs[i] = safe_sparse_dot(X.T, Axy, dense_output=True).T
                     A.flat[::n_samples + 1] -= alpha_value * sample_weight
                 else:
                     for j, (y_column, alpha_value) in enumerate(
                                                   zip(y1.T, alpha_line)):
+                        overwrite_a = (i == n_penalties) and (j == n_targets)
                         A.flat[::n_samples + 1] += alpha_value * sample_weight
                         Axy = linalg.solve(A, y_column,
-                                       sym_pos=True, overwrite_a=True)
-                        coefs[i, j] = safe_sparse_dot(X.T, Axy, dense_output=True)
+                                       sym_pos=True, overwrite_a=overwrite_a)
+                        coefs[i, j] = safe_sparse_dot(X.T, Axy,
+                                                      dense_output=True)
                         A.flat[::n_samples + 1] -= alpha_value * sample_weight
         else:
             # ridge
@@ -229,19 +233,21 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             A = safe_sparse_dot(X.T, X, dense_output=True)
             Xy = safe_sparse_dot(X.T, y1, dense_output=True)
             for i, alpha_line in enumerate(alphas):
-                if len(alpha_line) != n_features:
-                    assert (len(alpha_line) == 1)
+                overwrite_a = i == n_penalties
+                if alpha_line.shape != (n_targets,):
+                    assert (alpha_line.shape == (1,))
                     alpha_value = alpha_line[0]
                     A.flat[::n_features + 1] += alpha_value
                     coefs[i] = linalg.solve(A, Xy,
-                                            sym_pos=True, overwrite_a=True).T
+                                    sym_pos=True, overwrite_a=overwrite_a).T
                     A.flat[::n_features + 1] -= alpha_value
 
                 else:
                     for j, alpha_value in enumerate(alpha_line):
+                        overwrite_a = (i == n_penalties) and (j == n_targets)
                         A.flat[::n_features + 1] += alpha_value
                         coefs[i, j] = linalg.solve(A, Xy[:, j],
-                                               sym_pos=True, overwrite_a=True)
+                                    sym_pos=True, overwrite_a=overwrite_a)
                         A.flat[::n_features + 1] -= alpha_value
 
     coefs = coefs.reshape(list(alpha.shape[:-1]) + \
