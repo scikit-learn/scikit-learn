@@ -691,7 +691,7 @@ class Bootstrap(object):
 
     def __repr__(self):
         return ('%s(%d, n_iter=%d, train_size=%d, test_size=%d, '
-                'random_state=%d)' % (
+                'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iter,

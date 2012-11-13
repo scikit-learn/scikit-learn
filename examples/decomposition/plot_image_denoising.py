@@ -6,8 +6,11 @@ Image denoising using dictionary learning
 An example comparing the effect of reconstructing noisy fragments
 of Lena using online :ref:`DictionaryLearning` and various transform methods.
 
-The dictionary is fitted on the non-distorted left half of the image, and
-subsequently used to reconstruct the right half.
+The dictionary is fitted on the distorted left half of the image, and
+subsequently used to reconstruct the right half. Note that even better
+performance could be achieved by fitting to an undistorted (i.e.
+noiseless) image, but here we start from the assumption that it is not
+available.
 
 A common practice for evaluating the results of image denoising is by looking
 at the difference between the reconstruction and the original image. If the
@@ -55,8 +58,8 @@ print 'Distorting image...'
 distorted = lena.copy()
 distorted[:, height / 2:] += 0.075 * np.random.randn(width, height / 2)
 
-# Extract all clean patches from the left half of the image
-print 'Extracting clean patches...'
+# Extract all reference patches from the left half of the image
+print 'Extracting reference patches...'
 t0 = time()
 patch_size = (7, 7)
 data = extract_patches_2d(distorted[:, :height / 2], patch_size)
@@ -66,7 +69,7 @@ data /= np.std(data, axis=0)
 print 'done in %.2fs.' % (time() - t0)
 
 ###############################################################################
-# Learn the dictionary from clean patches
+# Learn the dictionary from reference patches
 
 print 'Learning the dictionary... '
 t0 = time()
