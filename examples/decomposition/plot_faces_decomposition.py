@@ -75,6 +75,11 @@ estimators = [
                        tol=5e-3, sparseness='components'),
      False),
 
+    ('Non-negative components - KL NMF',
+     decomposition.KLdivNMF(n_components=n_components, init='nndsvdar',
+         tol=1e-4),
+     False),
+
     ('Independent components - FastICA',
      decomposition.FastICA(n_components=n_components, whiten=True,
                            max_iter=10),
