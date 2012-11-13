@@ -493,6 +493,14 @@ def test_one_hot_encoder():
     # test exception on wrong init param
     assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
 
+    enc = OneHotEncoder()
+    # test negative input to fit
+    assert_raises(ValueError, enc.fit, [[0], [-1]])
+
+    # test negative input to transform
+    enc.fit([[0], [1]])
+    assert_raises(ValueError, enc.transform, [[0], [-1]])
+
 
 def test_label_encoder():
     """Test LabelEncoder's transform and inverse_transform methods"""

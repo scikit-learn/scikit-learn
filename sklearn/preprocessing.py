@@ -688,7 +688,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Equivalent to self.fit(X).transform(X), but more convenient and more
         efficient. See fit for the parameters, transform for the return value.
         """
-        X, = check_arrays(X, sparse_format='dense', dtype=np.int)
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
         if self.n_values == 'auto':
             n_values = np.max(X, axis=0) + 1
@@ -738,7 +740,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix, dtype=int
             Transformed input.
         """
-        X, = check_arrays(X, sparse_format='dense', dtype=np.int)
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
 
         indices = self.feature_indices_
