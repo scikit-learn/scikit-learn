@@ -19,7 +19,7 @@ from ..utils import array2d, atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
-from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseArrayDataset
 from .sgd_fast import Hinge
 from .sgd_fast import Log
 from .sgd_fast import ModifiedHuber
@@ -666,7 +666,7 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    if self.loss == "roc_pairwise_ranking":
+    if est.loss == "roc_pairwise_ranking":
         ranking = True
         dataset, intercept_decay = _make_dataset(X, y_i, sample_weight, ranking)
         penalty_type = est._get_penalty_type(est.penalty)

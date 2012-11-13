@@ -175,15 +175,14 @@ cdef class CSRDataset(SequentialDataset):
         np.random.RandomState(seed).shuffle(self.index)
 
 
-cdef class PairwiseArrayDataset(SequentialDataset):
+cdef class PairwiseArrayDataset:
     """Dataset backed by a two-dimensional numpy array. Calling next() returns a random pair of examples with disagreeing labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
     """
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
         """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
 
         Parameters
@@ -219,8 +218,11 @@ cdef class PairwiseArrayDataset(SequentialDataset):
                 positives.append(i)
             else:
                 negatives.append(i)
-        cdef np.ndarray[INTEGER, ndim=1, mode='c'] pos_index = np.array(positives)
-        cdef np.ndarray[INTEGER, ndim=1, mode='c'] neg_index = np.array(negatives)self.pos_index = pos_index
+        cdef np.ndarray[INTEGER, ndim=1,
+                        mode='c'] pos_index = np.array(positives, dtype=np.int32)
+        cdef np.ndarray[INTEGER, ndim=1,
+                        mode='c'] neg_index = np.array(negatives, dtype=np.int32)
+        self.pos_index = pos_index
         self.neg_index = neg_index        
         self.pos_index_data_ptr = <INTEGER *> pos_index.data
         self.neg_index_data_ptr = <INTEGER *> neg_index.data
@@ -240,8 +242,8 @@ cdef class PairwiseArrayDataset(SequentialDataset):
         cdef int pos_offset = sample_pos_idx * self.stride
         cdef int neg_offset = sample_neg_idx * self.stride
 
-        y_a[0] = self.Y_data_ptr[sample_idx]
-        y_b[0] = self.Y_data_ptr[sample_idx]
+        y_a[0] = self.Y_data_ptr[sample_pos_idx]
+        y_b[0] = self.Y_data_ptr[sample_neg_idx]
         a_data_ptr[0] = self.X_data_ptr + pos_offset
         b_data_ptr[0] = self.X_data_ptr + neg_offset
         x_ind_ptr[0] = self.feature_indices_ptr
