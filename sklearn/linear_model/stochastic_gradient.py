@@ -230,7 +230,7 @@ def _make_dataset(X, y_i, sample_weight, ranking=False):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     elif ranking:
-        dataset = PairwiseDataset(X, y_i, sample_weight)
+        dataset = PairwiseArrayDataset(X, y_i)
         intercept_decay = 1.0
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
@@ -366,7 +366,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
-        "pairwise_ranking": (Hinge, 1.0),
+        "roc_pairwise_ranking": (Hinge, 1.0),
     }
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
@@ -666,12 +666,17 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    if self.loss == "pairwise_ranking":
+    if self.loss == "roc_pairwise_ranking":
         ranking = True
         dataset, intercept_decay = _make_dataset(X, y_i, sample_weight, ranking)
         penalty_type = est._get_penalty_type(est.penalty)
         learning_rate_type = est._get_learning_rate_type(est.learning_rate)
-        return ranking_sgd()
+        return ranking_sgd(coef, intercept, est.loss_function,
+                     penalty_type, est.alpha, est.l1_ratio,
+                     dataset, n_iter, int(est.fit_intercept),
+                     int(est.verbose), int(est.shuffle), est.seed,
+                     learning_rate_type, est.eta0,
+                     est.power_t, est.t_, intercept_decay)
 
     else:
         dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)

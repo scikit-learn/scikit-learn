@@ -22,6 +22,8 @@ cdef class WeightVector(object):
                   int xnnz, double c)
     cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
                     int xnnz)
+    cdef double dot_on_difference(self, DOUBLE *a_data_ptr,
+                                  DOUBLE *b_data_ptr)
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
     cdef double norm(self)

@@ -438,15 +438,68 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              PairwiseDataset dataset,
+              PairwiseArrayDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
-              double weight_pos, double weight_neg,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0):
+    """SGD minimizing ROC-SVM pairwise ranking loss.
 
+    Parameters
+    ----------
+    weights : ndarray[double, ndim=1]
+        The allocated coef_ vector.
+    intercept : double
+        The initial intercept.
+    loss : LossFunction
+        A concrete ``LossFunction`` object.
+    penalty_type : int
+        The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
+    alpha : float
+        The regularization parameter.
+    rho : float
+        The elastic net hyperparameter.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
+    n_iter : int
+        The number of iterations (epochs).
+    fit_intercept : int
+        Whether or not to fit the intercept (1 or 0).
+    verbose : int
+        Print verbose output; 0 for quite.
+    shuffle : int
+        Whether to shuffle the training data before each epoch.
+    weight_pos : float
+        The weight of the positive class.
+    weight_neg : float
+        The weight of the negative class.
+    seed : int
+        The seed of the pseudo random number generator to use when
+        shuffling the data
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+    eta0 : double
+        The initial learning rate.
+    power_t : double
+        The exponent for inverse scaling learning rate.
+    t : double
+        Initial state of the learning rate. This value is equal to the
+        iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
+
+    Returns
+    -------
+    weights : array, shape=[n_features]
+        The fitted weight vector.
+    intercept : float
+        The fitted intercept term.
+
+    """
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
@@ -458,15 +511,15 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef INTEGER *x_ind_ptr = NULL
 
     # helper variable
-    cdef int xnnz
+    cdef int xnnz_a
+    cdef int xnnz_b
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef DOUBLE y_a = 0.0
     cdef DOUBLE y_b = 0.0
-    cdef DOUBLE sample_weight_pos
-    cdef DOUBLE sample_weight_neg
+    cdef DOUBLE y = 0.0
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
@@ -495,26 +548,59 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             dataset.shuffle(seed)
         for i in range(n_samples):
             dataset.next(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
-                         &xnnz, &y_a, &y_b, &sample_weight_pos,
-                         &sample_weight_neg)
+                         &xnnz_a, &xnnz_b, &y_a, &y_b,)
 
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = w.dot_on_difference(a_data_ptr, x_ind_ptr, xnnz) + intercept
+
+            # Computes sign(y_a - y_b)
+            if y_a > y_b:
+                y = 1.0
+            elif y_b > y_a:
+                y = -1.0
+            else:
+                y = 0.0
+
+            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr) + intercept
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
-            if y > 0.0:
-                class_weight = weight_pos
-            else:
-                class_weight = weight_neg
+            if penalty_type >= L2:
+                w.scale(1.0 - (rho * eta * alpha))
 
-            update = eta * loss.dloss(p, y) * class_weight * sample_weight
-            if update != 0.0:
-                            
+            if penalty_type == L1 or penalty_type == ELASTICNET:
+                u += ((1.0 - rho) * eta * alpha)
+                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+
+            # If (a - b) has non-zero loss, perform gradient step.
+            if p < 1.0 & y != 0.0:
+                pos_update = eta * y
+                w.add(a_data_ptr, x_ind_ptr, xnnz_a, pos_update)
+                neg_update = -1.0 * eta * y
+                w.add(b_data_ptr, x_ind_ptr, xnnz_b, neg_update)
+            t += 1
+            count += 1            
+        
+        # report epoch information
+        if verbose > 0:
+            print("Norm: %.2f, NNZs: %d, "\
+            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
+                                                    weights.nonzero()[0].shape[0],
+                                                    intercept, count,
+                                                    sumloss / count))
+            print("Total training time: %.2f seconds." % (time() - t_start))
+
+        # floating-point under-/overflow check.
+        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
+           or np.isnan(intercept) or np.isinf(intercept):
+            raise ValueError("floating-point under-/overflow occured.")
+
+    w.reset_wscale()
+
+    return weights, intercept
 
 
 cdef inline double max(double a, double b):

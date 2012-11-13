@@ -175,8 +175,8 @@ cdef class CSRDataset(SequentialDataset):
         np.random.RandomState(seed).shuffle(self.index)
 
 
-cdef class PairwiseDataset(SequentialDataset):
-    """Dataset backed by a two-dimensional numpy array.
+cdef class PairwiseArrayDataset(SequentialDataset):
+    """Dataset backed by a two-dimensional numpy array. Calling next() returns a random pair of examples with disagreeing labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
@@ -184,7 +184,7 @@ cdef class PairwiseDataset(SequentialDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
-        """A ``PairwiseDataset`` backed by a two-dimensional numpy array.
+        """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
 
         Parameters
         ---------
@@ -208,7 +208,6 @@ cdef class PairwiseDataset(SequentialDataset):
         self.stride = X.strides[0] / X.strides[1]
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
-        self.sample_weight_data = <DOUBLE *>sample_weights.data
 
         # Create an index of positives and negatives for fast sampling
         # of disagreeing pairs
@@ -229,8 +228,8 @@ cdef class PairwiseDataset(SequentialDataset):
         self.n_neg_samples = len(neg_index)
 
     cdef void next(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **x_ind_ptr, int *nnz, DOUBLE *y_a,
-                   DOUBLE *y_b, DOUBLE *sample_weight_pos, DOUBLE *sample_weight_neg):
+                   INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
+                   DOUBLE *y_a, DOUBLE *y_b):
 
         current_pos_index = np.random.randint(self.n_pos_samples)
         current_neg_index = np.random.randint(self.n_neg_samples)
@@ -246,15 +245,8 @@ cdef class PairwiseDataset(SequentialDataset):
         a_data_ptr[0] = self.X_data_ptr + pos_offset
         b_data_ptr[0] = self.X_data_ptr + neg_offset
         x_ind_ptr[0] = self.feature_indices_ptr
-        nnz[0] = self.n_features
-
-        sample_weight_pos[0] = self.sample_weight_data[sample_pos_idx]
-        sample_weight_neg[0] = self.sample_weight_data[sample_neg_idx]
+        nnz_a[0] = self.n_features
+        nnz_b[0] = self.n_features
     
     cdef void shuffle(self, seed):
         np.random.RandomState(seed).shuffle(self.index)    
-
-
-
-
-
