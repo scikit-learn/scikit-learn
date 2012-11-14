@@ -54,7 +54,7 @@ trees.fit(X, y)
 
 
 # scatter plot of original and reduced data
-fig = pl.figure(figsize=(8, 8))
+fig = pl.figure(figsize=(9, 8))
 
 ax = pl.subplot(221)
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50)
@@ -100,6 +100,6 @@ ax.set_ylim(-1.4, 1.4)
 ax.set_xlim(-1.4, 1.4)
 ax.set_xticks(())
 ax.set_yticks(())
-fig.subplots_adjust(left=0.02, right=0.98, top=0.94, bottom=0.02)
 
+pl.tight_layout()
 pl.show()
