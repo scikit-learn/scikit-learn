@@ -58,13 +58,14 @@ fig = pl.figure(figsize=(9, 8))
 
 ax = pl.subplot(221)
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50)
-ax.set_title("Original Data")
+ax.set_title("Original Data (2d)")
 ax.set_xticks(())
 ax.set_yticks(())
 
 ax = pl.subplot(222)
 ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, s=50)
-ax.set_title("PCA reduction of transformed data")
+ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
+             X_transformed.shape[1])
 ax.set_xticks(())
 ax.set_yticks(())
 
