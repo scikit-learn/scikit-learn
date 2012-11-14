@@ -173,7 +173,7 @@ class TestBaseHMM(TestCase):
 
         h = self.StubHMM(n_components)
 
-        self.assertEquals(h.n_components, n_components)
+        self.assertEqual(h.n_components, n_components)
 
         h.startprob_ = startprob
         assert_array_almost_equal(h.startprob_, startprob)
@@ -270,7 +270,7 @@ class GaussianHMMBaseTester(object):
         h.startprob_ = self.startprob
 
         samples = h.sample(n)[0]
-        self.assertEquals(samples.shape, (n, self.n_features))
+        self.assertEqual(samples.shape, (n, self.n_features))
 
     def test_fit(self, params='stmc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
@@ -456,7 +456,7 @@ class MultinomialHMMTestCase(TestCase):
     def test_attributes(self):
         h = hmm.MultinomialHMM(self.n_components)
 
-        self.assertEquals(h.n_components, self.n_components)
+        self.assertEqual(h.n_components, self.n_components)
 
         h.startprob_ = self.startprob
         assert_array_almost_equal(h.startprob_, self.startprob)
@@ -479,7 +479,7 @@ class MultinomialHMMTestCase(TestCase):
         self.assertRaises(ValueError, h.__setattr__, 'emissionprob_', [])
         self.assertRaises(ValueError, h.__setattr__, 'emissionprob_',
                           np.zeros((self.n_components - 2, self.n_symbols)))
-        self.assertEquals(h.n_symbols, self.n_symbols)
+        self.assertEqual(h.n_symbols, self.n_symbols)
 
     def test_eval(self):
         idx = np.repeat(range(self.n_components), 10)
@@ -493,8 +493,8 @@ class MultinomialHMMTestCase(TestCase):
 
     def test_sample(self, n=1000):
         samples = self.h.sample(n)[0]
-        self.assertEquals(len(samples), n)
-        self.assertEquals(len(np.unique(samples)), self.n_symbols)
+        self.assertEqual(len(samples), n)
+        self.assertEqual(len(np.unique(samples)), self.n_symbols)
 
     def test_fit(self, params='ste', n_iter=5, verbose=False, **kwargs):
         h = self.h
@@ -586,7 +586,7 @@ class GMMHMMBaseTester(object):
     def test_attributes(self):
         h = hmm.GMMHMM(self.n_components, covariance_type=self.covariance_type)
 
-        self.assertEquals(h.n_components, self.n_components)
+        self.assertEqual(h.n_components, self.n_components)
 
         h.startprob_ = self.startprob
         assert_array_almost_equal(h.startprob_, self.startprob)
@@ -628,7 +628,7 @@ class GMMHMMBaseTester(object):
                        startprob=self.startprob, transmat=self.transmat,
                        gmms=self.gmms)
         samples = h.sample(n)[0]
-        self.assertEquals(samples.shape, (n, self.n_features))
+        self.assertEqual(samples.shape, (n, self.n_features))
 
     def test_fit(self, params='stmwc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GMMHMM(self.n_components, covars_prior=1.0)
