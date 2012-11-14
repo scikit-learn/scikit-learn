@@ -58,6 +58,8 @@ Changelog
    - New estimator :class:`preprocessing.OneHotEncoder` to compute
      binary encodings of categorical features by `Andreas Müller`_.
 
+   - Faster implementation of :func:`metrics.precision_recall_curve` by Conrad Lee.
+
 
 API changes summary
 -------------------
