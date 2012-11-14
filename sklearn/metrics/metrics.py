@@ -861,11 +861,11 @@ def precision_recall_curve(y_true, probas_pred):
 
     # Probas_pred typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
-    # concatenate values onto the ends of the curve.
+    # concatenate values for the beginning and end of the curve.
     distinct_value_indices = np.where(np.diff(probas_pred))[0] + 1
-    threshold_idxs = np.r_[0,
-                           distinct_value_indices,
-                           len(probas_pred)]
+    threshold_idxs = np.hstack([0,
+                                distinct_value_indices,
+                                len(probas_pred)])
 
     # Initialize true and false positive counts, precision and recall
     total_positive = float(y_true.sum())
