@@ -25,7 +25,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import lsqr
 from ..utils.sparsefuncs import (csc_mean_variance_axis0,
                                  inplace_csc_column_scale)
-from cd_fast import sparse_std
+from .cd_fast import sparse_std
 
 
 ###
