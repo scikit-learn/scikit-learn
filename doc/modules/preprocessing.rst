@@ -111,17 +111,15 @@ The formula used to scale features between zero and one is::
 
   >>> min_max_scaler = preprocessing.MinMaxScaler()
   >>> X_zero_one = min_max_scaler.fit_transform(X)
-  >>> np.all(X_zero_one == (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0)))
-  True
-  >>> X.min(axis=0)
-  array([ 0., -1., -1.])
-  >>> X_zero_one.min(axis=0)
-  array([ 0.,  0.,  0.])
+  >>> X_zero_one
+  array([[ 0.5       ,  0.        ,  1.        ],
+         [ 1.        ,  0.5       ,  0.33333333],
+         [ 0.        ,  1.        ,  0.        ]])
 
-  >>> X.max(axis=0)
-  array([ 2.,  1.,  2.])
-  >>> X_zero_one.max(axis=0)
-  array([ 1.,  1.,  1.])
+  >>> X_new = np.array([[ -3., -1.,  4.]])
+  >>> min_max_scaler.transform(X_new)
+  array([[-1.5       ,  0.        ,  1.66666667]])
+
 
 If :class:`MinMaxScaler` is given ``feature_range=(min, max)`` the full
 formula is ::
