@@ -1,5 +1,5 @@
 """
-Non-Negative Garotte
+Non-Negative Garrote
 
 Explain it here
 """
@@ -13,58 +13,53 @@ Explain it here
 #imports
 import numpy as np
 
-#USE RELATIVE INPUTS INSTEAD.. TODO
-from sklearn.linear_model.base import LinearModel
-from sklearn.linear_model import LinearRegression, Lasso, lasso_path
+from .base import LinearModel
+from ..linear_model import LinearRegression, Lasso, lasso_path
 
-def non_negative_garotte(X, y, alpha, tol=0.001):
+def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
+                         normalize=True):
     """
-    TODO - non_negative_garotte docstring
+    Function that implements the Non-negative garrote method
     """
     # Obtain the ordinary least squares coefficients from our data
-    coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
+    coef_ols = LinearRegression(fit_intercept=fit_intercept).fit(X, y).coef_
+    # TODO: check out with Ridge - Ledoit-Wolf in stead of OLS
 
     X = X * coef_ols[np.newaxis, :]
     # find the shrinkage factor by minimising the sum of square residuals
     # under the restriction that it is positive (positive=True)
-    shrink_coef = Lasso(alpha=alpha, fit_intercept=False,
-                        positive=True, normalize=False,
+    shrink_coef = Lasso(alpha=alpha, fit_intercept=fit_intercept,
+                        positive=True, normalize=normalize,
                         tol=tol).fit(X, y).coef_
-
     # Shrunken betas
     coef = coef_ols * shrink_coef
 
-    # Residual Sum of Squares
-    rss = np.sum((y - np.dot(X, coef)) ** 2)
-    return coef, shrink_coef, rss
+    return coef, shrink_coef
 
 
-def non_negative_garotte_path(X, y, alpha):
-    """
-    TODO - non_negative_garotte_path docstring
-    Compute the Non-negative Garotte path
+#def non_negative_garotte_path(X, y, alpha):
+#    """
+#    TODO - non_negative_garotte_path docstring
+#    Compute the Non-negative Garotte path
+#
+#    """
+#
+#    # Obtain the ordinary least squares coefficients from our data
+#    # TODO do it with RIDGE and alpha_ridge=0.0
+#    coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
 
-    """
-
-    # Obtain the ordinary least squares coefficients from our data
-    # TODO do it with RIDGE and alpha_ridge=0.0
-    coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
-
-    X = X * coef_ols[np.newaxis, :]
-    # find the shrinkage factor by minimising the sum of square residuals
-    # under the restriction that it is positive (positive=True)
-    # lasso_path returns a list of models - below is a bit of a hack
-    # to get the coefficients of a model (all are identical if you fix
-    # alpha.. Is there a better way to do this?
-    shrink_coef = lasso_path(X, y, positive=True, alpha=alpha)[0].coef_
-    
-    # Shrunken betas
-    coef_path = coef_ols * shrink_coef
-
-    # Residual Sum of Squares
-    rss = np.sum((y - np.dot(X, coef)) ** 2)
-
-    return coef_path, shrink_coef, rss
+#    X = X * coef_ols[np.newaxis, :]
+#    # find the shrinkage factor by minimising the sum of square residuals
+#    # under the restriction that it is positive (positive=True)
+#    # lasso_path returns a list of models - below is a bit of a hack
+#    # to get the coefficients of a model (all are identical if you fix
+#    # alpha.. Is there a better way to do this?
+#    shrink_coef = lasso_path(X, y, positive=True, alpha=alpha)[0].coef_
+#
+#    # Shrunken betas
+#    coef_path = coef_ols * shrink_coef
+#
+#    return coef_path, shrink_coef
 
 class NonNegativeGarrote(LinearModel):
     """NonNegativeGarrote - TODO description
@@ -75,15 +70,25 @@ class NonNegativeGarrote(LinearModel):
 
     Parameters
     ----------
-    TODO
+    alpha:
+
+    fit_intercept
+
+    tol
+
+    normalize
+
+    copy_X
 
     Attributes
     ----------
-    TODO
+    coef_
+
+    shrink_coef_
 
     Examples
     --------
-    TODO
+    TODO - Link to example
 
     See also
     --------
@@ -121,8 +126,8 @@ class NonNegativeGarrote(LinearModel):
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
                 self.fit_intercept, self.normalize, self.copy_X)
 
-        self.coef_, self.shrink_coef_, self.rss_ = \
-                                    non_negative_garotte(X, y, alpha)
+        self.coef_, self.shrink_coef_ = \
+                                    non_negative_garotte(X, y, self.alpha)
         self._set_intercept(X_mean, y_mean, X_std)
 
 

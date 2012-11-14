@@ -13,22 +13,23 @@ from .base import LinearRegression
 
 from .bayes import BayesianRidge, ARDRegression
 from .least_angle import Lars, LassoLars, lars_path, LarsCV, LassoLarsCV, \
-                         LassoLarsIC
+    LassoLarsIC
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
-                                lasso_path, enet_path, MultiTaskLasso, \
-                                MultiTaskElasticNet
+    lasso_path, enet_path, MultiTaskLasso, \
+    MultiTaskElasticNet
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
-                   ridge_regression
+    ridge_regression
 from .logistic import LogisticRegression
 from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
 from .passive_aggressive import PassiveAggressiveClassifier
 from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 from .randomized_l1 import RandomizedLasso, RandomizedLogisticRegression, \
-                           lasso_stability_path
+    lasso_stability_path
 from .isotonic_regression_ import IsotonicRegression, isotonic_regression
+from .nng import NonNegativeGarrote, non_negative_garotte
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
