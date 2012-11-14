@@ -4,11 +4,18 @@ Manifold learning on handwritten digits: Locally Linear Embedding, Isomap...
 =============================================================================
 
 An illustration of various embeddings on the digits dataset.
+
+The RandomForestEmbedding, from the :mod:`sklearn.ensemble` module, is not
+technically a manifold embedding method, as it learn a high-dimensional
+representation on wich we apply a dimensionality reduction method.
+However, it is often useful to cast a dataset into a representation in
+which the classes are linearly-seperable.
 """
 
 # Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Gael Varoquaux
 # License: BSD, (C) INRIA 2011
 
 print __doc__
@@ -18,7 +25,7 @@ import numpy as np
 import pylab as pl
 from matplotlib import offsetbox
 from sklearn.utils.fixes import qr_economic
-from sklearn import manifold, datasets, decomposition, lda
+from sklearn import manifold, datasets, decomposition, ensemble, lda
 from sklearn.metrics import euclidean_distances
 
 digits = datasets.load_digits(n_class=6)
@@ -177,6 +184,20 @@ X_mds = clf.fit_transform(euclidean_distances(X))
 print "Done. Stress: %f" % clf.stress_
 plot_embedding(X_mds,
     "MDS embedding of the digits (time %.2fs)" %
+    (time() - t0))
+
+#----------------------------------------------------------------------
+# Random Forest embedding of the digits dataset
+print "Computing Random Forest embedding"
+hasher = ensemble.RandomForestEmbedding(n_estimators=200, random_state=0,
+                                        max_depth=5)
+t0 = time()
+X_transformed = hasher.fit_transform(X)
+pca = decomposition.RandomizedPCA(n_components=2)
+X_reduced = pca.fit_transform(X_transformed)
+
+plot_embedding(X_reduced,
+    "Random forest embedding of the digits (time %.2fs)" %
     (time() - t0))
 
 pl.show()
