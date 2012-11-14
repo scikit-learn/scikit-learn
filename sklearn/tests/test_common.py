@@ -50,7 +50,7 @@ from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
         Normalizer, OneHotEncoder
 from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
-from sklearn.linear_model import IsotonicRegression
+from sklearn.isotonic import IsotonicRegression
 
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
