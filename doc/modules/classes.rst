@@ -162,6 +162,7 @@ Loaders
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.dump_svmlight_file
 
 Samples generator
 -----------------
