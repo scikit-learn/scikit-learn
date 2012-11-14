@@ -3,22 +3,22 @@
 Hashing feature transformation using Random Forests
 ===================================================
 
-RandomForestEmbedding provide a way to map data to a
+RandomForestEmbedding provides a way to map data to a
 very high-dimensional, sparse representation, which might
 be beneficial for classification.
 The mapping is completely unsupervised and very efficient.
 
-This example visualizes the partitionings given by several
+This example visualizes the partitions given by several
 trees and shows how the transformation can also be used for
-non-linear dimensionality reduction or manifold learning.
+non-linear dimensionality reduction or non-linear classification.
 
-Points that are neighboring often share the same leaf of a tree will share
-large parts of their hashed representation. This allows to
-separate two circles simply based on the principal components of the
+Points that are neighboring often share the same leaf of a tree and therefore
+share large parts of their hashed representation. This allows to
+separate two concentric circles simply based on the principal components of the
 transformed data.
 
-In the high-dimensional space, a simple classifier if often
-enough for a good fit. For sparse binary data, BernoulliNB
+In high-dimensional spaces, linear classifiers often achieve
+excellent accuracy. For sparse binary data, BernoulliNB
 is particularly well-suited. The bottom row compares the
 decision boundary obtained by BernoulliNB in the transformed
 space with an ExtraTreesClassifier forests learned on the
