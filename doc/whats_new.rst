@@ -41,7 +41,7 @@ Changelog
      of several transformers by `Andreas Müller`_.
 
    - Faster and more robust :func:`metrics.confusion_matrix` and
-     :ref:`clustering_evaluation`_ by Wei Li.
+     :ref:`clustering_evaluation` by Wei Li.
 
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
@@ -54,6 +54,9 @@ Changelog
    - LARS algorithm made more numerically stable with heuristics to drop
      regressors too correlated as well as to stop the path when
      numerical noise becomes predominant, by `Gael Varoquaux`_.
+
+   - New estimator :class:`preprocessing.OneHotEncoder` to compute
+     binary encodings of categorical features by `Andreas Müller`_.
 
 
 API changes summary
