@@ -1224,7 +1224,6 @@ class RandomForestEmbedding(BaseForest):
            visual codebooks using randomized clustering forests"
            NIPS 2007
 
-
     """
 
     def __init__(self, n_estimators=10,
