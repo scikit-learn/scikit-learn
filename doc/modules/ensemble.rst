@@ -218,8 +218,8 @@ the matching feature to the prediction function.
 
 .. _random_hashing:
 
-Random Forest Hashing
----------------------
+Random Forest Embedding
+-----------------------
 :class:`RandomForestEmbedding` implements an unsupervised transformation of the
 data.  Using a forest of completely random trees, :class:`RandomForestEmbedding`
 encodes the data by the indices of the leaves a data point ends up in.  This
