@@ -162,14 +162,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             prev_coef = coefs[n_iter - 1]
 
         alpha[0] = C / n_samples
-        if alpha[0] < alpha_min:  # early stopping
-            # interpolation factor 0 <= ss < 1
-            if n_iter > 0:
-                # In the first iteration, all alphas are zero, the formula
-                # below would make ss a NaN
-                ss = (prev_alpha[0] - alpha_min) / (prev_alpha[0] - alpha[0])
-                coef[:] = prev_coef + ss * (coef - prev_coef)
-            alpha[0] = alpha_min
+        if alpha[0] <= alpha_min:  # early stopping
+            if not alpha[0] == alpha_min:
+                # interpolation factor 0 <= ss < 1
+                if n_iter > 0:
+                    # In the first iteration, all alphas are zero, the formula
+                    # below would make ss a NaN
+                    ss = ((prev_alpha[0] - alpha_min) /
+                            (prev_alpha[0] - alpha[0]))
+                    coef[:] = prev_coef + ss * (coef - prev_coef)
+                alpha[0] = alpha_min
             if return_path:
                 coefs[n_iter] = coef
             break
@@ -193,6 +195,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
             indices[n], indices[m] = indices[m], indices[n]
+            Cov_not_shortened = Cov
             Cov = Cov[1:]  # remove Cov[0]
 
             if Gram is None:
@@ -215,31 +218,67 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             diag = max(np.sqrt(np.abs(c - v)), eps)
             L[n_active, n_active] = diag
 
+            if diag < 1e-7:
+                # The system is becoming too ill-conditioned.
+                # We have degenerate vectors in our active set.
+                # We'll 'drop for good' the last regressor added
+                warnings.warn(('Regressors in active set degenerate. '
+                    'Dropping a regressor, after %i iterations, '
+                    'i.e. alpha=%.3e, '
+                    'with an active set of %i regressors, and '
+                    'the smallest cholesky pivot element being %.3e')
+                    % (n_iter, alphas[n_iter], n_active, diag)
+                    )
+                # XXX: need to figure a 'drop for good' way
+                Cov = Cov_not_shortened
+                Cov[0] = 0
+                Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
+                continue
+
             active.append(indices[n_active])
             n_active += 1
 
             if verbose > 1:
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                             n_active, C)
+
+        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
+            # alpha is increasing. This is because the updates of Cov are
+            # bringing in too much numerical error that is greater than
+            # than the remaining correlation with the
+            # regressors. Time to bail out
+            warnings.warn('Early stopping the lars path, as the residues '
+                'are small and the current value of alpha is no longer '
+                'well controled. %i iterations, alpha=%.3e, previous '
+                'alpha=%.3e, with an active set of %i regressors'
+                    % (n_iter, alpha, prev_alpha, n_active))
+            break
+
         # least squares solution
         least_squares, info = solve_cholesky(L[:n_active, :n_active],
                                sign_active[:n_active], lower=True)
 
-        # is this really needed ?
-        AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
+        if least_squares.size == 1 and least_squares == 0:
+            # This happens because sign_active[:n_active] = 0
+            least_squares[...] = 1
+            AA = 1.
+        else:
+            # is this really needed ?
+            AA = 1. / np.sqrt(np.sum(least_squares * sign_active[:n_active]))
 
-        if not np.isfinite(AA):
-            # L is too ill-conditionned
-            i = 0
-            L_ = L[:n_active, :n_active].copy()
-            while not np.isfinite(AA):
-                L_.flat[::n_active + 1] += (2 ** i) * eps
-                least_squares, info = solve_cholesky(L_,
-                                    sign_active[:n_active], lower=True)
-                tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
-                AA = 1. / np.sqrt(tmp)
-                i += 1
-        least_squares *= AA
+            if not np.isfinite(AA):
+                # L is too ill-conditioned
+                i = 0
+                L_ = L[:n_active, :n_active].copy()
+                while not np.isfinite(AA):
+                    L_.flat[::n_active + 1] += (2 ** i) * eps
+                    least_squares, info = solve_cholesky(L_,
+                                        sign_active[:n_active], lower=True)
+                    tmp = max(np.sum(least_squares * sign_active[:n_active]),
+                              eps)
+                    AA = 1. / np.sqrt(tmp)
+                    i += 1
+            least_squares *= AA
 
         if Gram is None:
             # equiangular direction of variables in the active set
@@ -492,8 +531,6 @@ class Lars(LinearModel, RegressorMixin):
         else:
             max_iter = self.max_iter
 
-        self.coef_ = np.zeros((n_targets, n_features))
-
         precompute = self.precompute
         if not hasattr(precompute, '__array__') and (precompute == True or
            (precompute == 'auto' and X.shape[0] > X.shape[1]) or
@@ -502,10 +539,12 @@ class Lars(LinearModel, RegressorMixin):
         else:
             Gram = self._get_gram()
 
+        self.alphas_ = []
+
         if self.fit_path:
-            self.alphas_ = np.ones((n_targets, max_iter + 1))
-            self.active_ = np.ones((n_targets, max_iter))
-            self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
+            self.coef_ = []
+            self.active_ = []
+            self.coef_path_ = []
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path = lars_path(
@@ -513,25 +552,27 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True)
-                self.alphas_[k, :len(alphas)] = alphas
-                self.active_[k, :len(active)] = active
-                self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
-                self.coef_[k, :] = coef_path[:, -1]
+                self.alphas_.append(alphas)
+                self.active_.append(active)
+                self.coef_path_.append(coef_path)
+                self.coef_.append(coef_path[:, -1])
 
-            self.alphas_, self.active_, self.coef_path_, self.coef_ = (
-                np.squeeze(a) for a in (self.alphas_, self.active_,
-                                        self.coef_path_, self.coef_))
+            if n_targets == 1:
+                self.alphas_, self.active_, self.coef_path_, self.coef_ = [
+                    a[0] for a in (self.alphas_, self.active_,
+                                        self.coef_path_, self.coef_)]
         else:
-            self.alphas_ = np.empty(n_targets)
+            self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
-                self.alphas_[k], _, self.coef_[k, :] = lars_path(
+                alphas, _, self.coef_[k] = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=False)
-            self.alphas_, self.coef_ = (np.squeeze(a) for a in (self.alphas_,
-                                                                self.coef_))
+                self.alphas_.append(alphas)
+            if n_targets == 1:
+                self.alphas_ = self.alphas_[0]
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 

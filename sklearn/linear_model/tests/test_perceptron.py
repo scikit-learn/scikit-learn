@@ -68,4 +68,3 @@ def test_undefined_methods():
     clf = Perceptron()
     for meth in ("predict_proba", "predict_log_proba"):
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
-

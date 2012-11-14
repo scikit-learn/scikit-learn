@@ -34,7 +34,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         shape = [n_samples, n_features]
         Training data
 
-    y : array-like, shape = [n_samples] or [n_samples, n_responses]
+    y : array-like, shape = [n_samples] or [n_samples, n_targets]
         Target values
 
     max_iter : int, optional
@@ -68,7 +68,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
     Returns
     -------
-    coef: array, shape = [n_features] or [n_responses, n_features]
+    coef: array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     Notes
@@ -213,7 +213,7 @@ class Ridge(_BaseRidge, RegressorMixin):
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
     This estimator has built-in support for multi-variate regression
-    (i.e., when y is a 2d-array of shape [n_samples, n_responses]).
+    (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
 
     Parameters
     ----------
@@ -262,7 +262,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     See also
@@ -296,7 +296,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
-        y : array-like, shape = [n_samples] or [n_samples, n_responses]
+        y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
@@ -545,7 +545,7 @@ class _RidgeGCV(LinearModel):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
-        y : array-like, shape = [n_samples] or [n_samples, n_responses]
+        y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
         sample_weight : float or array-like of shape [n_samples]
@@ -659,7 +659,7 @@ class _BaseRidgeCV(LinearModel):
         X : array-like, shape = [n_samples, n_features]
             Training data
 
-        y : array-like, shape = [n_samples] or [n_samples, n_responses]
+        y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
         sample_weight : float or array-like of shape [n_samples]
@@ -759,13 +759,13 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     Attributes
     ----------
     `cv_values_` : array, shape = [n_samples, n_alphas] or \
-        shape = [n_samples, n_responses, n_alphas], optional
+        shape = [n_samples, n_targets, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and \
         `cv=None`). After `fit()` has been called, this attribute will \
         contain the mean squared errors (by default) or the values of the \
         `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     `alpha_` : float
@@ -832,7 +832,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     the mean squared errors (by default) or the values of the \
     `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_responses, n_features]
+    `coef_` : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     `alpha_` : float

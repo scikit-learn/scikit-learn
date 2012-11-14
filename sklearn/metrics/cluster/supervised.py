@@ -9,20 +9,18 @@ better.
 # License: BSD Style.
 
 from math import log
-from scipy.misc import comb
-from scipy.special import gammaln
-from scipy.sparse import coo_matrix
-from expected_mutual_info_fast import expected_mutual_information
 
+from scipy.misc import comb
+from scipy.sparse import coo_matrix
 import numpy as np
 
 from ...utils.fixes import unique
-
-# the exact version if faster for k == 2: use it by default globally in
-# this module instead of the float approximate variant
+from .expected_mutual_info_fast import expected_mutual_information
 
 
 def comb2(n):
+    # the exact version if faster for k == 2: use it by default globally in
+    # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
 
 
@@ -727,6 +725,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
     return nmi
+
 
 def entropy(labels):
     """Calculates the entropy for a labeling."""

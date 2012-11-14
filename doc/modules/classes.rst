@@ -162,6 +162,7 @@ Loaders
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.dump_svmlight_file
 
 Samples generator
 -----------------
@@ -250,6 +251,7 @@ Samples generator
    :template: class.rst
 
    ensemble.RandomForestClassifier
+   ensemble.RandomForestEmbedding
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
@@ -846,6 +848,7 @@ Pairwise metrics
    preprocessing.LabelEncoder
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
+   preprocessing.OneHotEncoder
    preprocessing.StandardScaler
 
 .. autosummary::

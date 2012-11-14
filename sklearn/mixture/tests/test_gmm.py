@@ -185,7 +185,7 @@ class GMMTester():
         g.weights_ = self.weights
 
         samples = g.sample(n)
-        self.assertEquals(samples.shape, (n, self.n_features))
+        self.assertEqual(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components,

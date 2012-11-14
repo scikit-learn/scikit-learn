@@ -67,7 +67,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     ----------
     Online Passive-Aggressive Algorithms
     <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
     def __init__(self, C=1.0, fit_intercept=True,
@@ -181,7 +181,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     loss : string, optional
         The loss function to be used:
         epsilon_insensitive: equivalent to PA-I in the reference paper.
-        squared_epsilon_insensitive: equivalent to PA-II in the reference paper.
+        squared_epsilon_insensitive: equivalent to PA-II in the reference
+        paper.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -205,13 +206,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     ----------
     Online Passive-Aggressive Algorithms
     <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, loss="epsilon_insensitive",
-                 epsilon=DEFAULT_EPSILON,
-                 random_state=None, class_weight=None, warm_start=False):
+    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, loss="epsilon_insensitive",
+                 epsilon=DEFAULT_EPSILON, random_state=None, class_weight=None,
+                 warm_start=False):
         BaseSGDRegressor.__init__(self,
                                   penalty=None,
                                   l1_ratio=0,

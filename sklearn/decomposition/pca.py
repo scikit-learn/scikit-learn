@@ -13,6 +13,7 @@ from math import log
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
+from ..utils import atleast2d_or_csr
 from ..utils.extmath import fast_logdet
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import randomized_svd
@@ -277,6 +278,7 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        X = array2d(X)
         X_transformed = X - self.mean_
         X_transformed = np.dot(X_transformed, self.components_.T)
         return X_transformed
@@ -513,6 +515,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        X = atleast2d_or_csr(X)
         if self.mean_ is not None:
             X = X - self.mean_
 
