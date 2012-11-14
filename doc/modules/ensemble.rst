@@ -237,7 +237,7 @@ the transformation performs an implicit, non-parametric density estimation.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_random_forest_hasher.py`
+ * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
 .. _gradient_boosting:
 
