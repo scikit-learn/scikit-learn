@@ -230,7 +230,7 @@ for other learning tasks.
 The size and sparsity of the code can be influenced by choosing the number of
 trees and the maximum depth per tree. For each tree in the ensemble, the coding
 contains one entry of one. The size of the coding is at most ``n_estimators * 2
-** max_depth``, the maximum number of leafs in the forest.
+** max_depth``, the maximum number of leaves in the forest.
 
 As neighboring data points are more likely to lie within the same leaf of a tree,
 the transformation performs an implicit, non-parametric density estimation.
