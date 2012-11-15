@@ -7,6 +7,7 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import LabelEncoder
 from .utils import check_random_state
+from .utils.fixes import unique
 from .utils.validation import safe_asarray
 
 
@@ -32,8 +33,8 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `label_encoder_` : LabelEncoder object
-        LabelEncoder used internally.
+    `classes_` : array, sha
+        Class labels.
 
     `class_prior_` : array, shape = [n_classes]
         Probability of each class.
@@ -61,8 +62,7 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        self.label_encoder_ = LabelEncoder()
-        y = self.label_encoder_.fit_transform(y)
+        self.classes_, y = unique(y, return_inverse=True)
         self.class_prior_ = np.bincount(y) / float(y.shape[0])
         return self
 
@@ -95,4 +95,4 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
         else:
             raise ValueError("Unknown sampling type.")
 
-        return self.label_encoder_.inverse_transform(ret)
+        return self.classes_[ret]
