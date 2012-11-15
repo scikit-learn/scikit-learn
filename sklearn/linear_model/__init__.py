@@ -28,7 +28,6 @@ from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 from .randomized_l1 import RandomizedLasso, RandomizedLogisticRegression, \
                            lasso_stability_path
-from .isotonic_regression_ import IsotonicRegression, isotonic_regression
 
 __all__ = ['ARDRegression',
            'BayesianRidge',

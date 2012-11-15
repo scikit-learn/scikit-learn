@@ -37,7 +37,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
-from sklearn.ensemble import BaseEnsemble
+from sklearn.ensemble import BaseEnsemble, RandomForestEmbedding
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
 from sklearn.feature_selection import RFE, RFECV, SelectKBest
@@ -47,14 +47,15 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
-        Normalizer
+        Normalizer, OneHotEncoder
 from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
-from sklearn.linear_model import IsotonicRegression
+from sklearn.isotonic import IsotonicRegression
 
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-        LabelEncoder, TfidfTransformer, IsotonicRegression]
+        LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder,
+        RandomForestEmbedding]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 

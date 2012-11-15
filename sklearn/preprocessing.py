@@ -1,9 +1,12 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
+#          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD
+
 from collections import Sequence
 import warnings
+import numbers
 
 import numpy as np
 import scipy.sparse as sp
@@ -590,6 +593,167 @@ def _is_multilabel(y):
     return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
        and not isinstance(y[0], basestring) \
         or _is_label_indicator_matrix(y)
+
+
+class OneHotEncoder(BaseEstimator, TransformerMixin):
+    """Encode categorical integer features using a one-hot aka one-of-K scheme.
+
+    The input to this transformer should be a matrix of integers, denoting
+    the values taken on by categorical (discrete) features. The output will be
+    a sparse matrix were each column corresponds to one possible value of one
+    feature. It is assumed that input features take on values in the range
+    [0, n_values).
+
+    This encoding is needed for feeding categorical data to scikit-learn
+    estimators.
+
+    Parameters
+    ----------
+    n_values : 'auto', int or array of int
+        Number of values per feature.
+        'auto' : determine value range from training data.
+        int : maximum value for all features.
+        array : maximum value per feature.
+
+    dtype : number type, default=np.float
+        Desired dtype of output.
+
+    Attributes
+    ----------
+    `active_features_` : array
+        Indices for active features, meaning values that actually occur in the
+        training set. Only available when n_values is ``'auto'``.
+    `feature_indices_` : array of shape (n_features,)
+        Indices to feature ranges. Feature ``i`` in the original data is mapped
+        to features ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and potentially masked by `active_features_` afterwards)
+    `n_values_` : array of shape (n_features,)
+        Maximum number of values per feature.
+
+    Examples
+    --------
+    Given a dataset with three features and two samples, we let the encoder
+    find the maximum value per feature and transform the data to a binary
+    one-hot encoding.
+
+    >>> from sklearn.preprocessing import OneHotEncoder
+    >>> enc = OneHotEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
+    OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+    >>> enc.n_values_
+    array([2, 3, 4])
+    >>> enc.feature_indices_
+    array([0, 2, 5, 9])
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+
+    See also
+    --------
+    LabelEncoder : performs a one-hot encoding on arbitrary class labels.
+    sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
+      dictionary items (also handles string-valued features).
+    """
+    def __init__(self, n_values="auto", dtype=np.float):
+        self.n_values = n_values
+        self.dtype = dtype
+
+    def fit(self, X, y=None):
+        """Fit OneHotEncoder to X.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_feature)
+            Input array of type int.
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit OneHotEncoder to X, then transform X.
+
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
+        """
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+        if self.n_values == 'auto':
+            n_values = np.max(X, axis=0) + 1
+        elif isinstance(self.n_values, numbers.Integral):
+            n_values = np.empty(n_features, dtype=np.int)
+            n_values.fill(self.n_values)
+        else:
+            try:
+                n_values = np.asarray(self.n_values, dtype=int)
+            except (ValueError, TypeError):
+                raise TypeError("Wrong type for parameter `n_values`."
+                        " Expected 'auto', int or array of ints, got %r"
+                        % type(X))
+            if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
+                raise ValueError("Shape mismatch: if n_values is "
+                        "an array, it has to be of shape (n_features,).")
+        self.n_values_ = n_values
+        n_values = np.hstack([[0], n_values])
+        indices = np.cumsum(n_values)
+        self.feature_indices_ = indices
+
+        column_indices = (X + indices[:-1]).ravel()
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                n_features)
+        data = np.ones(n_samples * n_features)
+        out = sp.coo_matrix((data, (row_indices, column_indices)),
+                shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
+
+        if self.n_values == 'auto':
+            mask = np.array(out.sum(axis=0)).ravel() != 0
+            active_features = np.where(mask)[0]
+            out = out[:, active_features]
+            self.active_features_ = active_features
+
+        return out
+
+    def transform(self, X):
+        """Transform X using one-hot encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, feature_indices_[-1])
+            Input array of type int.
+
+        Returns
+        -------
+        X_out : sparse matrix, dtype=int
+            Transformed input.
+        """
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+
+        indices = self.feature_indices_
+        if n_features != indices.shape[0] - 1:
+            raise ValueError("X has different shape than during fitting."
+                             " Expected %d, got %d."
+                             % (indices.shape[0] - 1, n_features))
+
+        n_values_check = np.max(X, axis=0) + 1
+        if (n_values_check > self.n_values_).any():
+            raise ValueError("Feature out of bounds. Try setting n_values.")
+
+        column_indices = (X + indices[:-1]).ravel()
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                n_features)
+        data = np.ones(n_samples * n_features)
+        out = sp.coo_matrix((data, (row_indices, column_indices)),
+                shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
+        if self.n_values == 'auto':
+            out = out[:, self.active_features_]
+        return out
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):

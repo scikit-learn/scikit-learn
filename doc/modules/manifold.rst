@@ -449,3 +449,10 @@ Tips on practical use
   can attempt to understand the source of the singularity: if it is due to
   disjoint sets, increasing ``n_neighbors`` may help.  If it is due to
   identical points in the dataset, removing these points may help.
+
+.. seealso::
+
+   :ref:`random_hashing` can also be useful to derive non-linear
+   representations of feature space, also it does not perform
+   dimensionality reduction.
+

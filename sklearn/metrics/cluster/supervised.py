@@ -17,6 +17,7 @@ import numpy as np
 from ...utils.fixes import unique
 from .expected_mutual_info_fast import expected_mutual_information
 
+
 def comb2(n):
     # the exact version if faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant

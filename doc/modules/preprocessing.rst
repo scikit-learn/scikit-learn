@@ -111,17 +111,15 @@ The formula used to scale features between zero and one is::
 
   >>> min_max_scaler = preprocessing.MinMaxScaler()
   >>> X_zero_one = min_max_scaler.fit_transform(X)
-  >>> np.all(X_zero_one == (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0)))
-  True
-  >>> X.min(axis=0)
-  array([ 0., -1., -1.])
-  >>> X_zero_one.min(axis=0)
-  array([ 0.,  0.,  0.])
+  >>> X_zero_one
+  array([[ 0.5       ,  0.        ,  1.        ],
+         [ 1.        ,  0.5       ,  0.33333333],
+         [ 0.        ,  1.        ,  0.        ]])
 
-  >>> X.max(axis=0)
-  array([ 2.,  1.,  2.])
-  >>> X_zero_one.max(axis=0)
-  array([ 1.,  1.,  1.])
+  >>> X_new = np.array([[ -3., -1.,  4.]])
+  >>> min_max_scaler.transform(X_new)
+  array([[-1.5       ,  0.        ,  1.66666667]])
+
 
 If :class:`MinMaxScaler` is given ``feature_range=(min, max)`` the full
 formula is ::
@@ -287,6 +285,48 @@ to be used when the transformer API is not necessary.
   representation** (see ``scipy.sparse.csr_matrix``).
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
+
+
+Encoding categorical features
+=============================
+Often features are not given as continuous values but categorical.
+For example a person could have features ``["male", "female"]``,
+``["from Europe", "from US", "from Asia"]``,
+``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
+Such features can be efficiently coded as integers, for instance
+``["male", "from US", "uses Internet Explorer"]`` could be expressed as
+``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
+``[1, 2, 1]``.
+
+Such integer representation can not be used directly with scikit-learn estimators, as these
+expect continuous input, and would interpret the categories as being ordered, which is often
+not desired (i.e. the set of browsers was ordered arbitrarily).
+
+One possibility to convert categorical features to features that can be used
+with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
+implemented in :class:`OneHotEncoder`.  This estimator transforms each
+categorical feature with ``m`` possible values into ``m`` binary features, with
+only one active.
+
+Continuing the example above::
+
+  >>> enc = preprocessing.OneHotEncoder()
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
+  OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+  >>> enc.transform([[0, 1, 3]]).toarray()
+  array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
+
+By default, how many values each feature can take is inferred automatically from the dataset.
+It is possible to specify this explicitly using the parameter ``n_values``. 
+There are two genders, three possible continents and four web browsers in our
+dataset.
+Then we fit the estimator, and transform a data point. 
+In the result, the first two numbers encode the gender, the next set of three
+numbers the continent and the last four the web browser.
+
+See :ref:`dict_feature_extraction` for categorical features that are represented
+as a dict, not as integers.
+
 
 Label preprocessing
 ===================

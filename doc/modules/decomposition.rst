@@ -551,6 +551,6 @@ of the data.
 
     * `"SVD based initialization: A head start for nonnegative
       matrix factorization"
-      <http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf>`_
+      <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 

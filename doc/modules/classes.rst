@@ -162,6 +162,7 @@ Loaders
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.dump_svmlight_file
 
 Samples generator
 -----------------
@@ -250,6 +251,7 @@ Samples generator
    :template: class.rst
 
    ensemble.RandomForestClassifier
+   ensemble.RandomForestEmbedding
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
@@ -432,6 +434,30 @@ From text
    hmm.MultinomialHMM
    hmm.GMMHMM
 
+.. _isotonic_ref:
+
+:mod:`sklearn.isotonic`: Isotonic regression
+============================================
+
+.. automodule:: sklearn.isotonic
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`isotonic` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   isotonic.IsotonicRegression
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   isotonic.isotonic_regression
 
 .. _kernel_approximation_ref:
 
@@ -513,7 +539,6 @@ From text
    linear_model.BayesianRidge
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.IsotonicRegression
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso
@@ -542,7 +567,6 @@ From text
    :toctree: generated/
    :template: function.rst
 
-   linear_model.isotonic_regression
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path
@@ -846,6 +870,7 @@ Pairwise metrics
    preprocessing.LabelEncoder
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
+   preprocessing.OneHotEncoder
    preprocessing.StandardScaler
 
 .. autosummary::
