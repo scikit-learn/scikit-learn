@@ -453,7 +453,8 @@ multiple interfaces):
 
 :Model:
 
-    A model that can give a measure of the fit or a likelihood of unseen
+    A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
+    measure or a likelihood of unseen
     data, implements (higher is better)::
 
       score = obj.score(data)
