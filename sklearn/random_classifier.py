@@ -40,7 +40,7 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
 
     """
 
-    def __init__(self, sampling="stratified", random_state=0):
+    def __init__(self, sampling="stratified", random_state=None):
         self.sampling = sampling
         self.random_state = random_state
 
