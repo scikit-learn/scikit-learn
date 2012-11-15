@@ -17,9 +17,8 @@ Videos
     A three minute video from a very early stage of the scikit, explaining the
     basic idea and approach we are following.
 
-- `Introduction to statistical learning with scikit-learn
-   <http://archive.org/search.php?query=scikit-learn>`_
-   by `Gael Varoquaux`_ at SciPy 2011
+- `Introduction to statistical learning with scikit-learn <http://archive.org/search.php?query=scikit-learn>`_
+  by `Gael Varoquaux`_ at SciPy 2011
 
     An extensive tutorial, consisting of four sessions of one hour.
     The tutorial covers the basics of machine learning,
@@ -45,6 +44,11 @@ Videos
   by `Jake Vanderplas`_ at the 2012 PyData workshop at Google
 
     Interactive demonstration of some scikit-learn features. 75 minutes.
+
+- `scikit-learn tutorial <http://vimeo.com/53062607>`_ by `Jake Vanderplas`_ at PyData NYC 2012
+
+    Presentation using the online tutorial, 45 minutes.
+
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 .. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/

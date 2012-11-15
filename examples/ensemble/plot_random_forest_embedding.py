@@ -3,22 +3,22 @@
 Hashing feature transformation using Random Forests
 ===================================================
 
-RandomForestEmbedding provide a way to map data to a
+RandomForestEmbedding provides a way to map data to a
 very high-dimensional, sparse representation, which might
 be beneficial for classification.
 The mapping is completely unsupervised and very efficient.
 
-This example visualizes the partitionings given by several
+This example visualizes the partitions given by several
 trees and shows how the transformation can also be used for
-non-linear dimensionality reduction or manifold learning.
+non-linear dimensionality reduction or non-linear classification.
 
-Points that are neighboring often share the same leaf of a tree will share
-large parts of their hashed representation. This allows to
-separate two circles simply based on the principal components of the
+Points that are neighboring often share the same leaf of a tree and therefore
+share large parts of their hashed representation. This allows to
+separate two concentric circles simply based on the principal components of the
 transformed data.
 
-In the high-dimensional space, a simple classifier if often
-enough for a good fit. For sparse binary data, BernoulliNB
+In high-dimensional spaces, linear classifiers often achieve
+excellent accuracy. For sparse binary data, BernoulliNB
 is particularly well-suited. The bottom row compares the
 decision boundary obtained by BernoulliNB in the transformed
 space with an ExtraTreesClassifier forests learned on the
@@ -58,13 +58,14 @@ fig = pl.figure(figsize=(9, 8))
 
 ax = pl.subplot(221)
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50)
-ax.set_title("Original Data")
+ax.set_title("Original Data (2d)")
 ax.set_xticks(())
 ax.set_yticks(())
 
 ax = pl.subplot(222)
 ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, s=50)
-ax.set_title("PCA reduction of transformed data")
+ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
+             X_transformed.shape[1])
 ax.set_xticks(())
 ax.set_yticks(())
 

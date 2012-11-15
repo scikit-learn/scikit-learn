@@ -220,6 +220,7 @@ the matching feature to the prediction function.
 
 Random Forest Embedding
 -----------------------
+
 :class:`RandomForestEmbedding` implements an unsupervised transformation of the
 data.  Using a forest of completely random trees, :class:`RandomForestEmbedding`
 encodes the data by the indices of the leaves a data point ends up in.  This
@@ -238,6 +239,15 @@ the transformation performs an implicit, non-parametric density estimation.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
+ 
+  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+    dimensionality reduction technics on handwritten digits.
+
+.. seealso::
+
+   :ref:`manifold` techniques can also be useful to derive non-linear
+   representations of feature space, also these approaches focus also on
+   dimensionality reduction.
 
 .. _gradient_boosting:
 
