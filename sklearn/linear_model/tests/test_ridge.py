@@ -128,6 +128,8 @@ def test_ridge_compare_different_solvers():
             assert_greater(tolerance, distances.max())
 
 
+# TODO: This test doesn't check dense_cholesky, option multiple targets
+# with unique penalty.
 def test_ridge_multiple_targets_multiple_penalties():
     """Tests multiple target, multiple individual penalties feature
 
@@ -331,7 +333,6 @@ def test_ridge_regression_coef_shapes_individual_penalties():
         return alphas
 
     def verify_shape(X, y, alpha, solver):
-
         expected = expected_shape(X, y, alpha)
         actual = ridge_regression(X, y, alpha, solver=solver).shape
 

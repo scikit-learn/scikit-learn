@@ -121,7 +121,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     if isinstance(alpha, numbers.Number):
         alpha = np.array([alpha])
     elif alpha.shape[-1] != n_targets and alpha.shape[-1] != 1:
-        alpha = alpha.copy()[:, np.newaxis]
+        alpha = alpha.copy().reshape(list(alpha.shape) + [1])
     alphas = alpha.reshape(-1, alpha.shape[-1])
     # number of different penalties per target
     n_penalties = alphas.shape[0]
@@ -208,7 +208,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # w = X.T * inv(X X^t + alpha*Id) y
             A = safe_sparse_dot(X, X.T, dense_output=True)
             for i, alpha_line in enumerate(alphas):
-                overwrite_a = i == n_penalties
+                overwrite_a = i == n_penalties - 1
                 if alpha_line.shape != (n_targets,):
                     assert (alpha_line.shape == (1,))
                     alpha_value = alpha_line[0]
@@ -220,7 +220,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 else:
                     for j, (y_column, alpha_value) in enumerate(
                                                   zip(y1.T, alpha_line)):
-                        overwrite_a = (i == n_penalties) and (j == n_targets)
+                        overwrite_a = (i == n_penalties - 1)\
+                            and (j == n_targets - 1)
                         A.flat[::n_samples + 1] += alpha_value * sample_weight
                         Axy = linalg.solve(A, y_column,
                                        sym_pos=True, overwrite_a=overwrite_a)
@@ -231,9 +232,14 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
+            B = A.copy()
             Xy = safe_sparse_dot(X.T, y1, dense_output=True)
             for i, alpha_line in enumerate(alphas):
-                overwrite_a = i == n_penalties
+                overwrite_a = i == n_penalties - 1
+                # if ((y.ndim > 1 and (not isinstance(alpha, numbers.Number) and \
+                #                    y.shape[-1] != alpha.shape[-1])) and\
+                #                    len(alphas) > 1) and overwrite_a:
+                #     stop
                 if alpha_line.shape != (n_targets,):
                     assert (alpha_line.shape == (1,))
                     alpha_value = alpha_line[0]
@@ -241,10 +247,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     coefs[i] = linalg.solve(A, Xy,
                                     sym_pos=True, overwrite_a=overwrite_a).T
                     A.flat[::n_features + 1] -= alpha_value
+                    assert (i == n_penalties - 1 or np.abs(B - A).sum() < 1e-10)
 
                 else:
                     for j, alpha_value in enumerate(alpha_line):
-                        overwrite_a = (i == n_penalties) and (j == n_targets)
+                        overwrite_a = (i == n_penalties - 1)\
+                            and (j == n_targets - 1)
                         A.flat[::n_features + 1] += alpha_value
                         coefs[i, j] = linalg.solve(A, Xy[:, j],
                                     sym_pos=True, overwrite_a=overwrite_a)
