@@ -19,6 +19,7 @@ from ..utils import array2d, atleast2d_or_csr, check_arrays
 from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
+from .sgd_fast import ranking_sgd as ranking_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseArrayDataset
 from .sgd_fast import Hinge
 from .sgd_fast import Log
@@ -670,6 +671,8 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
         ranking = True
         dataset, intercept_decay = _make_dataset(X, y_i, sample_weight, ranking)
         penalty_type = est._get_penalty_type(est.penalty)
+        if est.penalty != "l2":
+            raise ValueError("The penalty %s is not supported for pairwise sgd. " % est.penalty)
         learning_rate_type = est._get_learning_rate_type(est.learning_rate)
         return ranking_sgd(coef, intercept, est.loss_function,
                      penalty_type, est.alpha, est.l1_ratio,
@@ -677,7 +680,6 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      int(est.verbose), int(est.shuffle), est.seed,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
-
     else:
         dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
         penalty_type = est._get_penalty_type(est.penalty)

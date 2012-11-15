@@ -16,7 +16,7 @@ cimport numpy as np
 cimport cython
 
 from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset
+from sklearn.utils.seq_dataset cimport SequentialDataset, PairwiseArrayDataset
 
 
 cdef extern from "math.h":
@@ -263,14 +263,6 @@ cdef class EpsilonInsensitive(Regression):
     def __reduce__(self):
         return EpsilonInsensitive, (self.epsilon,)
 
-
-def stochastic_pairwise_descent()
-    for i in range(num_samples):
-        datset.next_pair(some pointers)
-        w.dot_on_difference(a,b)
-        if err < epsilon 
-            return
-
 def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
@@ -392,7 +384,6 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
             p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
@@ -548,7 +539,7 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             dataset.shuffle(seed)
         for i in range(n_samples):
             dataset.next(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
-                         &xnnz_a, &xnnz_b, &y_a, &y_b,)
+                         &xnnz_a, &xnnz_b, &y_a, &y_b)
 
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
@@ -563,26 +554,38 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             else:
                 y = 0.0
 
-            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr) + intercept
+            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr, x_ind_ptr, xnnz_a, xnnz_b) + intercept
+            print("P: "+str(p))
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
-            if penalty_type >= L2:
-                w.scale(1.0 - (rho * eta * alpha))
+            # L2 Regularization
+            # w.scale(1.0 - (rho * eta * alpha))
 
-            if penalty_type == L1 or penalty_type == ELASTICNET:
-                u += ((1.0 - rho) * eta * alpha)
-                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
-
+            '''
             # If (a - b) has non-zero loss, perform gradient step.
-            if p < 1.0 & y != 0.0:
+            if (p < 1.0) & (y != 0.0):
                 pos_update = eta * y
                 w.add(a_data_ptr, x_ind_ptr, xnnz_a, pos_update)
-                neg_update = -1.0 * eta * y
+                neg_update = -1 * eta * y
                 w.add(b_data_ptr, x_ind_ptr, xnnz_b, neg_update)
+                if fit_intercept == 1:
+                    intercept -= intercept_decay * (pos_update)
+            print("INTERCEPT: "+str(intercept))
+            '''
+
+            update = eta * loss.dloss(p,y)
+            if update != 0.0:
+                w.add(a_data_ptr, x_ind_ptr, xnnz_a, -update)
+                w.add(b_data_ptr, x_ind_ptr, xnnz_b, update)                
+                #if fit_intercept == 1:
+                    #intercept -= intercept_decay * update
+            # L2 Regularization
+            w.scale(1.0 - (rho * eta * alpha))
+
             t += 1
-            count += 1            
+            count += 1
         
         # report epoch information
         if verbose > 0:
