@@ -1159,8 +1159,8 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
 
 
-class RandomForestEmbedding(BaseForest):
-    """Use a totally random forest to create sparse, binary representations.
+class RandomTreesEmbedding(BaseForest):
+    """An ensemble of totally random trees.
 
     An unsupervised transformation of a dataset to a high-dimensional
     sparse representation. A datapoint is coded according to which leaf of
@@ -1234,7 +1234,7 @@ class RandomForestEmbedding(BaseForest):
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
-        super(RandomForestEmbedding, self).__init__(
+        super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1281,7 +1281,7 @@ class RandomForestEmbedding(BaseForest):
         X = safe_asarray(X)
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomForestEmbedding, self).fit(X, y)
+        super(RandomTreesEmbedding, self).fit(X, y)
         self.one_hot_encoder_ = OneHotEncoder()
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 

@@ -251,7 +251,7 @@ Samples generator
    :template: class.rst
 
    ensemble.RandomForestClassifier
-   ensemble.RandomForestEmbedding
+   ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
