@@ -5,8 +5,8 @@
 
 import numpy as np
 from scipy import interpolate
-from ..base import BaseEstimator, TransformerMixin, RegressorMixin
-from ..utils import as_float_array, check_arrays
+from .base import BaseEstimator, TransformerMixin, RegressorMixin
+from .utils import as_float_array, check_arrays
 
 
 def isotonic_regression(y, weight=None, y_min=None, y_max=None):

@@ -20,3 +20,4 @@ Supervised learning
     modules/feature_selection.rst
     modules/label_propagation.rst
     modules/lda_qda.rst
+    modules/isotonic.rst
