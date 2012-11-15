@@ -109,7 +109,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
 
-    http://www.sciencedirect.com/science/article/pii/S0031320307004359
+    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
     """
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
@@ -355,7 +355,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
-    http://www.sciencedirect.com/science/article/pii/S0031320307004359
+    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
 
     """
 
