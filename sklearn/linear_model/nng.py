@@ -37,29 +37,35 @@ def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
     return coef, shrink_coef
 
 
-#def non_negative_garotte_path(X, y, alpha):
-#    """
-#    TODO - non_negative_garotte_path docstring
-#    Compute the Non-negative Garotte path
-#
-#    """
-#
-#    # Obtain the ordinary least squares coefficients from our data
-#    # TODO do it with RIDGE and alpha_ridge=0.0
-#    coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
+def non_negative_garotte_path(n_alphas=100, alphas=None,
+                              precompute='auto', Xy=None, fit_intercept=True,
+                              normalize=False, copy_X=True, verbose=False,
+               **params):
 
-#    X = X * coef_ols[np.newaxis, :]
-#    # find the shrinkage factor by minimising the sum of square residuals
-#    # under the restriction that it is positive (positive=True)
-#    # lasso_path returns a list of models - below is a bit of a hack
-#    # to get the coefficients of a model (all are identical if you fix
-#    # alpha.. Is there a better way to do this?
-#    shrink_coef = lasso_path(X, y, positive=True, alpha=alpha)[0].coef_
-#
-#    # Shrunken betas
-#    coef_path = coef_ols * shrink_coef
-#
-#    return coef_path, shrink_coef
+
+
+    """
+    TODO - non_negative_garotte_path docstring
+    Compute the Non-negative Garotte path
+
+    """
+
+    # Obtain the ordinary least squares coefficients from our data
+    # TODO do it with RIDGE and alpha_ridge=0.0
+    coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
+
+    X = X * coef_ols[np.newaxis, :]
+    # find the shrinkage factor by minimising the sum of square residuals
+    # under the restriction that it is positive (positive=True)
+    # lasso_path returns a list of models - below is a bit of a hack
+    # to get the coefficients of a model (all are identical if you fix
+    # alpha.. Is there a better way to do this?
+    shrink_coef = lasso_path(X, y, positive=True, alpha=alpha)[0].coef_
+
+    # Shrunken betas
+    coef_path = coef_ols * shrink_coef
+
+    return coef_path, shrink_coef
 
 class NonNegativeGarrote(LinearModel):
     """NonNegativeGarrote - TODO description

@@ -1,6 +1,3 @@
-# For now, this is just a script for comparing the paths of the nng and the lasso
-# with a synthetic dataset. Will make a proper example of this later
-# This obtains the same figures as `figure 1` in
 # http://www2.isye.gatech.edu/statistics/papers/05-25.pdf , page 11
 #
 #imports
@@ -52,22 +49,16 @@ for alpha_val, fig_num in ((0.35, 1), (0.45, 2), (0.55, 3), (0.65, 4)):
             y = np.dot(X, coef)
 
             # get the lasso's coefficients
-            #import pdb
-            #pdb.set_trace()
-            alphas, _, coefs_lars = lars_path(X, y, method='lasso')#, alpha_min=alpha_val)#, return_path=False)
-            #coefs = Lasso(alpha=alpha_val, normalize=False, fit_intercept=False,
-            #              tol=0.001).fit(X, y).coef_
-            coefs = coefs_lars
+            _, _, lars_coefs = lars_path(X, y, method='lasso')
+
             # get the non-negative garotte's coefficients
             ng_coefs, _ = non_negative_garotte(X, y, alpha_val, fit_intercept=False)
 
             # test if either model's solution path matches the original model
             if np.any(np.all(ng_coefs.astype(np.bool) == coef.astype(np.bool))):
                 ng_path_correct = ng_path_correct + 1.0
-            if np.any(np.all(coefs.astype(np.bool) == coef.astype(np.bool)[:, np.newaxis], axis=0)):
+            if np.any(np.all(lars_coefs.astype(np.bool) == coef.astype(np.bool)[:, np.newaxis], axis=0)):
                 lars_path_correct = lars_path_correct + 1.0
-            #if np.any(np.all((coefs > 1e-9) == coef.astype(np.bool)[:, np.newaxis], axis=0)):
-            #   lars_path_correct = lars_path_correct + 1.0
 
         hits_pers_lars = lars_path_correct/100
         hits_lars.append(hits_pers_lars)
@@ -75,7 +66,6 @@ for alpha_val, fig_num in ((0.35, 1), (0.45, 2), (0.55, 3), (0.65, 4)):
         hits_pers_ng = ng_path_correct/100
         hits_ng.append(hits_pers_ng)
         ng_path_correct = 0
-
 
     pl.plot(xrange(25, max_samples, 25), hits_lars, 'r-')
     pl.plot(xrange(25, max_samples, 25), hits_ng, 'b-')

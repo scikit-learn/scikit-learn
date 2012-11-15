@@ -49,7 +49,7 @@ def test_less_sample_than_dimentions():
 #    G = np.dot(diabetes.data.T, diabetes.data)
 #    alphas_, active, coef_path_ = linear_model.lars_path(
 #        diabetes.data, diabetes.target, Gram=G, method="lar")
-
+#
 #    for i, coef_ in enumerate(coef_path_.T):
 #        res = y - np.dot(X, coef_)
 #        cov = np.dot(X.T, res)
@@ -200,7 +200,7 @@ def test_less_sample_than_dimentions():
 #    for alpha in np.linspace(1e-2, 1 - 1e-2):
 #        clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
 #        clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
-                                  normalize=False).fit(X, y)
+#                                  normalize=False).fit(X, y)
 #        err = np.linalg.norm(clf1.coef_ - clf2.coef_)
 #        assert_less(err, 1e-3)
 
@@ -208,7 +208,7 @@ def test_less_sample_than_dimentions():
 #    X = diabetes.data
 #    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
 #    lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
-                                  tol=1e-8)
+#                                  tol=1e-8)
 #    for c, a in zip(lasso_path.T, alphas):
 #        if a == 0:
 #            continue
@@ -325,6 +325,6 @@ def test_less_sample_than_dimentions():
 #    assert_less(np.max(nonzero_bic), diabetes.data.shape[1])
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+#if __name__ == '__main__':
+#    import nose
+#    nose.runmodule()
