@@ -52,7 +52,7 @@ def non_negative_garotte_path(n_alphas=100, alphas=None,
 
     # Obtain the ordinary least squares coefficients from our data
     # TODO do it with RIDGE and alpha_ridge=0.0
-    coef_ols = LinearRegression(fit_intercept=False).fit(X, y).coef_
+    coef_ols = LinearRegression(fit_intercept=fit_intercept).fit(X, y).coef_
 
     X = X * coef_ols[np.newaxis, :]
     # find the shrinkage factor by minimising the sum of square residuals
