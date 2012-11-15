@@ -1,6 +1,8 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: 3-clause BSD.
 
+import numbers
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -26,7 +28,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_features : integer
+    n_features : integer, optional
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
@@ -36,8 +38,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         unsigned integer type.
     input_type : string, optional
         Either "pairs" (the default) to accept pairs of (feature_name, value)
-        where feature_name is a string and value a number, or "strings" to
-        accept feature names with an implicit value of 1.
+        where feature_name is a string to be hashed and value a number, or
+        "strings" to accept only feature names with an implicit value of 1.
+        The value's sign might be flipped (but see non_negative, below).
     non_negative : boolean, optional
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
@@ -47,22 +50,28 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_features, input_type="pairs", dtype=np.float64,
-                 non_negative=False):
-        if not isinstance(n_features, (int, np.integer)):
-            raise TypeError("n_features must be integral, got %r (%s)"
-                            % (n_features, type(n_features)))
-        elif n_features < 1:
-            raise ValueError("invalid number of features (%d)" % n_features)
-
-        if input_type not in ("pairs", "strings"):
-            raise ValueError("input_type must be 'pairs' or 'strings', got %r"
-                             % input_type)
+    def __init__(self, n_features=(2 ** 20), input_type="pairs",
+                 dtype=np.float64, non_negative=False):
+        self._validate_params(n_features, input_type)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
         self.non_negative = non_negative
+
+    @staticmethod
+    def _validate_params(n_features, input_type):
+        # strangely, np.int16 instances are not instances of Integral,
+        # while np.int64 instances are...
+        if not isinstance(n_features, (numbers.Integral, np.integer)):
+            raise TypeError("n_features must be integral, got %r (%s)."
+                            % (n_features, type(n_features)))
+        elif n_features < 1:
+            raise ValueError("Invalid number of features (%d)." % n_features)
+
+        if input_type not in ("pairs", "strings"):
+            raise ValueError("input_type must be 'pairs' or 'strings', got %r."
+                             % input_type)
 
     def fit(self, X=None, y=None):
         """No-op.
@@ -75,6 +84,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self : FeatureHasher
 
         """
+        # repeat input validation for grid search (which calls set_params)
+        self._validate_params(self.n_features, self.input_type)
         return self
 
     def transform(self, raw_X, y=None):
@@ -104,7 +115,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
-            raise ValueError("cannot vectorize empty sequence")
+            raise ValueError("Cannot vectorize empty sequence.")
 
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))

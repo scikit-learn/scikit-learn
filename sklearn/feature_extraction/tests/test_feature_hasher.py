@@ -52,8 +52,7 @@ def test_hash_empty_input():
 
 
 def test_hasher_invalid_input():
-    assert_raises(ValueError, FeatureHasher,
-                  input_type="gobbledygook", n_features=256)
+    assert_raises(ValueError, FeatureHasher, input_type="gobbledygook")
     assert_raises(ValueError, FeatureHasher, n_features=-1)
     assert_raises(ValueError, FeatureHasher, n_features=0)
     assert_raises(TypeError, FeatureHasher, n_features='ham')
@@ -62,3 +61,10 @@ def test_hasher_invalid_input():
     assert_raises(ValueError, h.transform, [])
     assert_raises(TypeError, h.transform, [[5.5]])
     assert_raises(TypeError, h.transform, [[None]])
+
+
+def test_hasher_set_params():
+    """Test delayed input validation in fit (useful for grid search)."""
+    hasher = FeatureHasher()
+    hasher.set_params(n_features=np.inf)
+    assert_raises(TypeError, hasher.fit)

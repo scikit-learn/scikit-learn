@@ -136,17 +136,16 @@ or ``chi2`` feature selectors that expect non-negative inputs.
 
 :class:`FeatureHasher` accepts either ``(feature, value)`` or strings,
 depending on the constructor parameter ``input_type``.
-If a feature occurs multiple times in a sample, its value in the output
-will be its frequency (count), so if features are intended to be booleans,
-it is up to the user to assure uniqueness of strings in the input.
-This way, feature hashing can be employed in document classification.
-However, unlike :class:`text.CountVectorizer`,
+Single strings have an implicit value of 1.
+If a feature occurs multiple times in a sample, the values will be summed.
+Feature hashing can be employed in document classification,
+but unlike :class:`text.CountVectorizer`,
 :class:`FeatureHasher` does not do word
 splitting or any other preprocessing except Unicode-to-UTF-8 encoding.
 The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
 in the CSR format.
 
-As an example, consider a word-level NLP classification task
+As an example, consider a word-level natural language processing task
 that needs features extracted from ``(token, part_of_speech)`` pairs.
 One could use a Python generator function to extract features::
 
