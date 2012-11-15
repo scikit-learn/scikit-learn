@@ -32,7 +32,15 @@ Tutorials: From the bottom up with scikit-learn
 
    statistical_inference/index.rst
 
-.. note:: **Videos**
+.. topic:: **External Tutorials**
+    
+    There are several online tutorials available which are geared toward
+    specific subject areas:
+
+    - `Machine Learning for NeuroImaging in Python <http://nisl.github.com/>`_
+    - `Machine Learning for Astronomical Data Analysis <http://astroml.github.com/sklearn_tutorial/>`_
+
+.. topic:: **Videos**
 
     Videos with tutorials can also be found in the :ref:`videos` section.
 

@@ -131,6 +131,13 @@ A parameter can be given to allow K-means to be run in parallel, called
 on. Parallelization generally speeds up computation at the cost of memory (in
 this case, multiple copies of centroids need to be stored, one for each job).
 
+.. warning::
+
+    The parallel version of K-Means is broken on OS X when numpy uses the
+    Accelerate Framework. This is expected behavior: Accelerate can be called
+    after a fork but you need to execv the subprocess with the python binary
+    (which multiprocessing does not do under posix).
+
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
 
@@ -251,14 +258,6 @@ function of the gradient of the image.
 
 .. centered:: |noisy_img| |segmented_img|
 
-.. warning:: Shapeless isotropic data
-
-   When the data is really shapeless (i.e. generated from a random
-   distribution with no clusters), the spectral-clustering problem is
-   ill-conditioned: the different choices are almost equivalent, and 
-   the spectral clustering solver chooses an arbitrary one, putting 
-   the first sample alone in one bin. 
-
 .. warning:: Transforming distance to well-behaved similarities
 
     Note that if the values of your similarity matrix are not well
@@ -279,6 +278,33 @@ function of the gradient of the image.
 
  * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
    to split the image of lena in regions.
+
+.. |lena_kmeans| image:: ../auto_examples/cluster/images/plot_lena_segmentation_1.png
+    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+    :scale: 65
+
+.. |lena_discretize| image:: ../auto_examples/cluster/images/plot_lena_segmentation_2.png
+    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+    :scale: 65
+
+Different label assignement strategies
+---------------------------------------
+
+Different label assignement strategies can be used, corresponding to the
+`assign_labels` parameter of :class:`SpectralClustering`.
+The `kmeans` strategie can match finer details of the data, but it can be
+more unstable. In particular, unless you control the `random_state`, it
+may not be reproducible from run-to-run, as it depends on a random
+initialization. On the other hand, the `discretize` strategy is 100%
+reproducible, but it tends to create parcels of fairly even and
+geometrical shape.
+
+=====================================  =====================================
+ `assign_labels="kmeans"`               `assign_labels="discretize"`
+=====================================  =====================================
+|lena_kmeans|                          |lena_discretize|
+=====================================  =====================================
+
 
 .. topic:: References:
 

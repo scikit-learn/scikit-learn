@@ -33,7 +33,7 @@ X_test, y_test = X[offset:], y[offset:]
 ###############################################################################
 # Fit regression model
 params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 1,
-          'learn_rate': 0.01, 'loss': 'ls'}
+          'learning_rate': 0.01, 'loss': 'ls'}
 clf = ensemble.GradientBoostingRegressor(**params)
 
 clf.fit(X_train, y_train)

@@ -39,14 +39,14 @@ class OutlierDetectionMixin(object):
         self.contamination = contamination
         self.threshold = None
 
-    def decision_function(self, X, raw_mahalanobis=False):
+    def decision_function(self, X, raw_values=False):
         """Compute the decision function of the given observations.
 
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
 
-        raw_mahalanobis: bool
+        raw_values: bool
             Whether or not to consider raw Mahalanobis distances as the
             decision function. Must be False (default) for compatibility
             with the others outlier detection tools.
@@ -55,17 +55,16 @@ class OutlierDetectionMixin(object):
         -------
         decision: array-like, shape (n_samples, )
             The values of the decision function for each observations.
-            It is equal to the Mahalanobis distances if `raw_mahalanobis`
-            is True. By default (``raw_mahalanobis=True``), it is equal
+            It is equal to the Mahalanobis distances if `raw_values`
+            is True. By default (``raw_values=True``), it is equal
             to the cubic root of the shifted Mahalanobis distances.
             In that case, the threshold for being an outlier is 0, which
             ensures a compatibility with other outlier detection tools
             such as the One-Class SVM.
 
         """
-        X_centered = X - self.location_
-        mahal_dist = self.mahalanobis(X_centered)
-        if raw_mahalanobis:
+        mahal_dist = self.mahalanobis(X)
+        if raw_values:
             decision = mahal_dist
         else:
             if self.threshold is None:
@@ -95,10 +94,10 @@ class OutlierDetectionMixin(object):
             raise Exception("Please fit data before predicting")
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
-            values = self.decision_function(X, raw_mahalanobis=True)
+            values = self.decision_function(X, raw_values=True)
             is_inlier[values <= self.threshold] = 1
         else:
-            raise NotImplemented("You must provide a contamination rate.")
+            raise NotImplementedError("You must provide a contamination rate.")
 
         return is_inlier
 
@@ -164,25 +163,25 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
-                 support_fraction=None, contamination=0.1):
+                 support_fraction=None, contamination=0.1,
+                 random_state=None):
         MinCovDet.__init__(self, store_precision=store_precision,
                            assume_centered=assume_centered,
-                           support_fraction=support_fraction)
+                           support_fraction=support_fraction,
+                           random_state=random_state)
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
     def fit(self, X):
         """
         """
         MinCovDet.fit(self, X)
-        X_centered = X - self.location_
-        values = self.mahalanobis(X_centered)
         self.threshold = sp.stats.scoreatpercentile(
-            values, 100. * (1. - self.contamination))
+            self.dist_, 100. * (1. - self.contamination))
 
         return self
 
 
 # Deprecated classes
-@deprecated("Use EllipticEnvelope instead")
+@deprecated("Use EllipticEnvelope instead. To be removed in 0.13.")
 class EllipticEnvelop(EllipticEnvelope):
     pass

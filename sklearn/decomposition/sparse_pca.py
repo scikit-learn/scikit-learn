@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from ..utils import check_random_state
+from ..utils import check_random_state, array2d
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -46,10 +46,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     n_jobs : int,
         Number of parallel jobs to run.
 
-    U_init : array of shape (n_samples, n_atoms),
+    U_init : array of shape (n_samples, n_components),
         Initial values for the loadings for warm restart scenarios.
 
-    V_init : array of shape (n_atoms, n_features),
+    V_init : array of shape (n_components, n_features),
         Initial values for the components for warm restart scenarios.
 
     verbose :
@@ -102,7 +102,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -246,7 +246,7 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
+        X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:

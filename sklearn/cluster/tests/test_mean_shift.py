@@ -4,11 +4,15 @@ Testing for mean shift clustering methods
 """
 
 import numpy as np
-from numpy.testing import assert_equal
-from nose.tools import assert_true
 
-from .. import MeanShift, mean_shift, estimate_bandwidth, get_bin_seeds
-from ...datasets.samples_generator import make_blobs
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
+
+from sklearn.cluster import MeanShift
+from sklearn.cluster import mean_shift
+from sklearn.cluster import estimate_bandwidth
+from sklearn.cluster import get_bin_seeds
+from sklearn.datasets.samples_generator import make_blobs
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10

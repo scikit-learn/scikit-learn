@@ -11,6 +11,7 @@ Generalized Linear Model for a complete discussion.
 
 from math import log
 import sys
+import warnings
 
 import numpy as np
 from scipy import linalg, interpolate
@@ -18,7 +19,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, deprecated
+from ..utils import array2d, arrayfuncs, as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -26,7 +27,7 @@ from ..externals.joblib import Parallel, delayed
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=False):
+              copy_Gram=True, verbose=False, return_path=True):
     """Compute Least Angle Regression and Lasso path
 
     The optimization objective for Lasso is::
@@ -99,8 +100,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     n_samples = y.size
     max_features = min(max_iter, n_features)
 
-    coefs = np.zeros((max_features + 1, n_features))
-    alphas = np.zeros(max_features + 1)
+    if return_path:
+        coefs = np.zeros((max_features + 1, n_features))
+        alphas = np.zeros(max_features + 1)
+    else:
+        coef, prev_coef = np.zeros(n_features), np.zeros(n_features)
+        alpha, prev_alpha = np.array([0.]), np.array([0.])  # better ideas?
+
     n_iter, n_active = 0, 0
     active, indices = list(), np.arange(n_features)
     # holds the sign of covariance
@@ -149,17 +155,23 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         else:
             C = 0.
 
-        alphas[n_iter] = C / n_samples
-        if alphas[n_iter] < alpha_min:  # early stopping
+        if return_path:
+            alpha = alphas[n_iter, np.newaxis]
+            coef = coefs[n_iter]
+            prev_alpha = alphas[n_iter - 1, np.newaxis]
+            prev_coef = coefs[n_iter - 1]
+
+        alpha[0] = C / n_samples
+        if alpha[0] < alpha_min:  # early stopping
             # interpolation factor 0 <= ss < 1
             if n_iter > 0:
                 # In the first iteration, all alphas are zero, the formula
                 # below would make ss a NaN
-                ss = (alphas[n_iter - 1] - alpha_min) / (alphas[n_iter - 1] -
-                                                    alphas[n_iter])
-                coefs[n_iter] = coefs[n_iter - 1] + ss * (coefs[n_iter] -
-                                coefs[n_iter - 1])
-            alphas[n_iter] = alpha_min
+                ss = (prev_alpha[0] - alpha_min) / (prev_alpha[0] - alpha[0])
+                coef[:] = prev_coef + ss * (coef - prev_coef)
+            alpha[0] = alpha_min
+            if return_path:
+                coefs[n_iter] = coef
             break
 
         if n_iter >= max_iter or n_active >= n_features:
@@ -224,8 +236,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 L_.flat[::n_active + 1] += (2 ** i) * eps
                 least_squares, info = solve_cholesky(L_,
                                     sign_active[:n_active], lower=True)
-                AA = 1. / np.sqrt(np.sum(least_squares
-                                         * sign_active[:n_active]))
+                tmp = max(np.sum(least_squares * sign_active[:n_active]), eps)
+                AA = 1. / np.sqrt(tmp)
                 i += 1
         least_squares *= AA
 
@@ -248,7 +260,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         # TODO: better names for these variables: z
         drop = False
-        z = -coefs[n_iter, active] / (least_squares + tiny32)
+        z = -coef[active] / (least_squares + tiny32)
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
@@ -263,14 +275,24 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         n_iter += 1
 
-        if n_iter >= coefs.shape[0]:
-            # resize the coefs and alphas array
-            add_features = 2 * max(1, (max_features - n_active))
-            coefs.resize((n_iter + add_features, n_features))
-            alphas.resize(n_iter + add_features)
+        if return_path:
+            if n_iter >= coefs.shape[0]:
+                del coef, alpha, prev_alpha, prev_coef
+                # resize the coefs and alphas array
+                add_features = 2 * max(1, (max_features - n_active))
+                coefs.resize((n_iter + add_features, n_features))
+                alphas.resize(n_iter + add_features)
+            coef = coefs[n_iter]
+            prev_coef = coefs[n_iter - 1]
+            alpha = alphas[n_iter, np.newaxis]
+            prev_alpha = alphas[n_iter - 1, np.newaxis]
+        else:
+            # mimic the effect of incrementing n_iter on the array references
+            prev_coef = coef
+            prev_alpha[0] = alpha[0]
+            coef = np.zeros_like(coef)
 
-        coefs[n_iter, active] = coefs[n_iter - 1, active] + \
-                                gamma_ * least_squares
+        coef[active] = prev_coef[active] + gamma_ * least_squares
 
         # update correlations
         Cov -= gamma_ * corr_eq_dir
@@ -292,8 +314,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                             indices[i + 1], indices[i]  # yeah this is stupid
 
                 # TODO: this could be updated
-                residual = y - np.dot(X[:, :n_active],
-                                      coefs[n_iter, active])
+                residual = y - np.dot(X[:, :n_active], coef[active])
                 temp = np.dot(X.T[n_active], residual)
 
                 Cov = np.r_[temp, Cov]
@@ -312,7 +333,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # wrong as Xy is not swapped with the rest of variables
 
                 # TODO: this could be updated
-                residual = y - np.dot(X, coefs[n_iter])
+                residual = y - np.dot(X, coef)
                 temp = np.dot(X.T[drop_idx], residual)
                 Cov = np.r_[temp, Cov]
 
@@ -322,11 +343,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
                                                       n_active, abs(temp))
 
-    # resize coefs in case of early stop
-    alphas = alphas[:n_iter + 1]
-    coefs = coefs[:n_iter + 1]
+    if return_path:
+        # resize coefs in case of early stop
+        alphas = alphas[:n_iter + 1]
+        coefs = coefs[:n_iter + 1]
 
-    return alphas, active, coefs.T
+        return alphas, active, coefs.T
+    else:
+        return alpha, active, coef
 
 
 ###############################################################################
@@ -366,14 +390,24 @@ class Lars(LinearModel, RegressorMixin):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    fit_path : boolean
+        If True the full path is stored in the `coef_path_` attribute.
+        If you compute the solution for a large problem or many targets,
+        setting fit_path to False will lead to a speedup, especially
+        with a small alpha.
 
     Attributes
     ----------
+    `coef_path_` : array, shape = [n_features, n_alpha]
+        The varying values of the coefficients along the path. It is not \
+    present if the fit_path parameter is False.
+
+
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        Parameter vector (w in the fomulation formula).
 
     `intercept_` : float
-        independent term in decision function.
+        Independent term in decision function.
 
     Examples
     --------
@@ -381,8 +415,8 @@ class Lars(LinearModel, RegressorMixin):
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Lars(copy_X=True, eps=..., fit_intercept=True, n_nonzero_coefs=1,
-       normalize=True, precompute='auto', verbose=False)
+    Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
+       n_nonzero_coefs=1, normalize=True, precompute='auto', verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
@@ -395,7 +429,7 @@ class Lars(LinearModel, RegressorMixin):
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -404,20 +438,20 @@ class Lars(LinearModel, RegressorMixin):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.eps = eps
         self.copy_X = copy_X
+        self.fit_path = fit_path
 
     def _get_gram(self):
         # precompute if n_samples > n_features
         precompute = self.precompute
         if hasattr(precompute, '__array__'):
-            # copy as it's going to be modified
-            Gram = precompute.copy()
+            Gram = precompute
         elif precompute == 'auto':
             Gram = 'auto'
         else:
             Gram = None
         return Gram
 
-    def fit(self, X, y):
+    def fit(self, X, y, Xy=None):
         """Fit the model using X, y as training data.
 
         parameters
@@ -425,8 +459,12 @@ class Lars(LinearModel, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             training data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_targets]
             target values.
+
+        Xy : array-like, shape = [n_samples] or [n_samples, n_targets], optional
+            Xy = np.dot(X.T, y) that can be precomputed. It is useful
+            only when the Gram matrix is precomputed.
 
         returns
         -------
@@ -435,11 +473,18 @@ class Lars(LinearModel, RegressorMixin):
         """
         X = array2d(X)
         y = np.asarray(y)
+        n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
                                                         self.fit_intercept,
                                                         self.normalize,
                                                         self.copy_X)
+
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        n_targets = y.shape[1]
+
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
             alpha = 0.  # n_nonzero_coefs parametrization takes priority
@@ -447,18 +492,47 @@ class Lars(LinearModel, RegressorMixin):
         else:
             max_iter = self.max_iter
 
-        Gram = self._get_gram()
+        self.coef_ = np.zeros((n_targets, n_features))
 
-        self.alphas_, self.active_, self.coef_path_ = lars_path(X, y,
-                  Gram=Gram, copy_X=self.copy_X,
-                  copy_Gram=False, alpha_min=alpha,
-                  method=self.method, verbose=max(0, self.verbose - 1),
-                  max_iter=max_iter, eps=self.eps)
+        precompute = self.precompute
+        if not hasattr(precompute, '__array__') and (precompute == True or
+           (precompute == 'auto' and X.shape[0] > X.shape[1]) or
+           (precompute == 'auto' and y.shape[1] > 1)):
+            Gram = np.dot(X.T, X)
+        else:
+            Gram = self._get_gram()
 
-        self.coef_ = self.coef_path_[:, -1]
+        if self.fit_path:
+            self.alphas_ = np.ones((n_targets, max_iter + 1))
+            self.active_ = np.ones((n_targets, max_iter))
+            self.coef_path_ = np.zeros((n_targets, n_features, max_iter + 1))
+            for k in xrange(n_targets):
+                this_Xy = None if Xy is None else Xy[:, k]
+                alphas, active, coef_path = lars_path(
+                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
+                    copy_Gram=True, alpha_min=alpha, method=self.method,
+                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
+                    eps=self.eps, return_path=True)
+                self.alphas_[k, :len(alphas)] = alphas
+                self.active_[k, :len(active)] = active
+                self.coef_path_[k, :, :coef_path.shape[1]] = coef_path
+                self.coef_[k, :] = coef_path[:, -1]
 
+            self.alphas_, self.active_, self.coef_path_, self.coef_ = (
+                np.squeeze(a) for a in (self.alphas_, self.active_,
+                                        self.coef_path_, self.coef_))
+        else:
+            self.alphas_ = np.empty(n_targets)
+            for k in xrange(n_targets):
+                this_Xy = None if Xy is None else Xy[:, k]
+                self.alphas_[k], _, self.coef_[k, :] = lars_path(
+                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
+                    copy_Gram=True, alpha_min=alpha, method=self.method,
+                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
+                    eps=self.eps, return_path=False)
+            self.alphas_, self.coef_ = (np.squeeze(a) for a in (self.alphas_,
+                                                                self.coef_))
         self._set_intercept(X_mean, y_mean, X_std)
-
         return self
 
 
@@ -502,14 +576,23 @@ class LassoLars(Lars):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
+    fit_path : boolean
+        If True the full path is stored in the `coef_path_` attribute.
+        If you compute the solution for a large problem or many targets,
+        setting fit_path to False will lead to a speedup, especially
+        with a small alpha.
 
     Attributes
     ----------
+    `coef_path_` : array, shape = [n_features, n_alpha]
+        The varying values of the coefficients along the path. It is not \
+    present if fit_path parameter is False.
+
     `coef_` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        Parameter vector (w in the fomulation formula).
 
     `intercept_` : float
-        independent term in decision function.
+        Independent term in decision function.
 
     Examples
     --------
@@ -518,7 +601,8 @@ class LassoLars(Lars):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
-         max_iter=500, normalize=True, precompute='auto', verbose=False)
+         fit_path=True, max_iter=500, normalize=True, precompute='auto',
+         verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
@@ -536,7 +620,7 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -546,17 +630,7 @@ class LassoLars(Lars):
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
-
-
-# Deprecated classes
-@deprecated("Use Lars instead")
-class LARS(Lars):
-    pass
-
-
-@deprecated("Use LassoLars instead")
-class LassoLARS(LassoLars):
-    pass
+        self.fit_path = fit_path
 
 
 ###############################################################################
@@ -632,7 +706,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         X_train -= X_mean
         X_test -= X_mean
         y_mean = y_train.mean(axis=0)
+        y_train = as_float_array(y_train, copy=False)
         y_train -= y_mean
+        y_test = as_float_array(y_test, copy=False)
         y_test -= y_mean
 
     if normalize:
@@ -702,14 +778,27 @@ class LarsCV(Lars):
         parameter vector (w in the fomulation formula)
 
     `intercept_` : float
-        independent term in decision function.
+        independent term in decision function
 
-    `coef_path`: array, shape = [n_features, n_alpha]
+    `coef_path_`: array, shape = [n_features, n_alpha]
         the varying values of the coefficients along the path
+
+    `alpha_`: float
+        the estimated regularization parameter alpha
+
+    `alphas_`: array, shape = [n_alpha]
+        the different values of alpha along the path
+
+    `cv_alphas_`: array, shape = [n_cv_alphas]
+        all the values of alpha along the path for the different folds
+
+    `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
+        the mean square error on left-out for each fold along the path
+        (alpha values given by cv_alphas)
 
     See also
     --------
-    lars_path, LassoLARS, LassoLarsCV
+    lars_path, LassoLars, LassoLarsCV
     """
 
     method = 'lar'
@@ -745,7 +834,8 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
-        X = np.asarray(X)
+        self.fit_path = True
+        X = array2d(X)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
@@ -793,13 +883,28 @@ class LarsCV(Lars):
         best_alpha = all_alphas[i_best_alpha]
 
         # Store our parameters
-        self.alpha = best_alpha
-        self.cv_alphas = all_alphas
+        self.alpha_ = best_alpha
+        self.cv_alphas_ = all_alphas
         self.cv_mse_path_ = mse_path
 
         # Now compute the full model
+        # it will call a lasso internally when self if LassoLarsCV
+        # as self.method == 'lasso'
         Lars.fit(self, X, y)
         return self
+
+    @property
+    def alpha(self):
+        # impedance matching for the above Lars.fit (should not be documented)
+        return self.alpha_
+
+    @property
+    def cv_alphas(self):
+        warnings.warn("Use cv_alphas_. Using cv_alphas is deprecated"
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=2)
+        return self.cv_alphas_
 
 
 class LassoLarsCV(LarsCV):
@@ -858,19 +963,21 @@ class LassoLarsCV(LarsCV):
     `intercept_` : float
         independent term in decision function.
 
-    `coef_path`: array, shape = [n_features, n_alpha]
+    `coef_path_`: array, shape = [n_features, n_alpha]
         the varying values of the coefficients along the path
+
+    `alpha_`: float
+        the estimated regularization parameter alpha
 
     `alphas_`: array, shape = [n_alpha]
         the different values of alpha along the path
 
-    `cv_alphas`: array, shape = [n_cv_alphas]
+    `cv_alphas_`: array, shape = [n_cv_alphas]
         all the values of alpha along the path for the different folds
 
     `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
         the mean square error on left-out for each fold along the path
         (alpha values given by cv_alphas)
-
 
     Notes
     -----
@@ -1009,6 +1116,7 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
+        self.fit_path = True
         X = array2d(X)
         y = np.asarray(y)
 
@@ -1022,7 +1130,7 @@ class LassoLarsIC(LassoLars):
 
         alphas_, active_, coef_path_ = lars_path(X, y,
                   Gram=Gram, copy_X=copy_X,
-                  copy_Gram=False, alpha_min=0.0,
+                  copy_Gram=True, alpha_min=0.0,
                   method='lasso', verbose=self.verbose,
                   max_iter=max_iter, eps=self.eps)
 

@@ -3,18 +3,30 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD
 from collections import Sequence
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 from .utils import warn_if_not_float
+from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
 from .utils.sparsefuncs import inplace_csr_column_scale
 from .utils.sparsefuncs import mean_variance_axis0
+
+__all__ = ['Binarizer',
+           'KernelCenterer',
+           'LabelBinarizer',
+           'LabelEncoder',
+           'Normalizer',
+           'StandardScaler',
+           'binarize',
+           'normalize',
+           'scale']
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -84,7 +96,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.Scaler` to perform centering and
+    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
@@ -122,7 +134,78 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(BaseEstimator, TransformerMixin):
+    """Standardizes features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    The standardization is given by::
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std / (max - min) + min
+    where min, max = feature_range.
+
+    This standardization is often used as an alternative to zero mean,
+    unit variance scaling.
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array).
+
+    Attributes
+    ----------
+    min_ : ndarray, shape (n_features,)
+        Per feature adjustment for minimum.
+
+    scale_ : ndarray, shape (n_features,)
+        Per feature relative scaling of the data.
+    """
+
+    def __init__(self, feature_range=(0, 1), copy=True):
+        self.feature_range = feature_range
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Compute the minimum and maximum to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to compute the per-feature minimum and maximum
+            used for later scaling along the features axis.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        feature_range = self.feature_range
+        if feature_range[0] >= feature_range[1]:
+            raise ValueError("Minimum of desired feature range must be smaller"
+                             " than maximum. Got %s." % str(feature_range))
+        min_ = np.min(X, axis=0)
+        scale_ = np.max(X, axis=0) - min_
+        self.scale_ = (feature_range[1] - feature_range[0]) / scale_
+        self.min_ = feature_range[0] - min_ / scale_
+        return self
+
+    def transform(self, X):
+        """Scaling features of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X *= self.scale_
+        X += self.min_
+        return X
+
+
+class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -153,7 +236,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         unit standard deviation).
 
     copy : boolean, optional, default is True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
@@ -180,7 +263,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Compute the mean and std to be used for later scaling
+        """Compute the mean and std to be used for later scaling.
 
         Parameters
         ----------
@@ -273,6 +356,13 @@ class Scaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
+
+
+class Scaler(StandardScaler):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        warnings.warn("Scaler was renamed to StandardScaler. The old name "
+                " will be removed in 0.15.", DeprecationWarning)
+        super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
@@ -530,8 +620,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> le.classes_
     array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6])
-    array([0, 0, 1, 2])
+    >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
+    array([0, 0, 1, 2]...)
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
 
@@ -543,8 +633,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
-    >>> le.transform(["tokyo", "tokyo", "paris"])
-    array([2, 2, 1])
+    >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
+    array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
@@ -555,7 +645,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("LabelNormalizer was not fitted yet.")
 
     def fit(self, y):
-        """Fit label normalizer
+        """Fit label encoder
 
         Parameters
         ----------
@@ -568,6 +658,21 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         self.classes_ = np.unique(y)
         return self
+
+    def fit_transform(self, y):
+        """Fit label encoder and return encoded labels
+
+        Parameters
+        ----------
+        y : array-like of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : array-like of shape [n_samples]
+        """
+        self.classes_, y = unique(y, return_inverse=True)
+        return y
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -588,13 +693,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
 
-        y = np.asarray(y)
-        y_new = np.zeros(len(y), dtype=int)
-
-        for i, k in enumerate(self.classes_[1:]):
-            y_new[y == k] = i + 1
-
-        return y_new
+        return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -611,12 +710,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         y = np.asarray(y)
-        y_new = np.zeros(len(y), dtype=self.classes_.dtype)
-
-        for i, k in enumerate(self.classes_):
-            y_new[y == i] = k
-
-        return y_new
+        return self.classes_[y]
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -660,12 +754,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
-    array([[ 1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.]])
+    array([[1, 0, 0, 0],
+           [0, 0, 0, 1]])
 
     >>> lb.fit_transform([(1, 2), (3,)])
-    array([[ 1.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1, 1, 0],
+           [0, 0, 1]])
     >>> lb.classes_
     array([1, 2, 3])
     """
@@ -728,9 +822,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 # nothing to do as y is already a label indicator matrix
                 return y
 
-            Y = np.zeros((len(y), len(self.classes_)))
+            Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
-            Y = np.zeros((len(y), 1))
+            Y = np.zeros((len(y), 1), dtype=np.int)
 
         Y += self.neg_label
 
@@ -833,10 +927,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
     This is equivalent to centering phi(X) with
-    sklearn.preprocessing.Scaler(with_std=False).
+    sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
-    def fit(self, K):
+    def fit(self, K, y=None):
         """Fit KernelCenterer
 
         Parameters
@@ -848,12 +942,13 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+        K = array2d(K)
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
         return self
 
-    def transform(self, K, copy=True):
+    def transform(self, K, y=None, copy=True):
         """Center kernel
 
         Parameters
@@ -865,7 +960,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-
+        K = array2d(K)
         if copy:
             K = K.copy()
 

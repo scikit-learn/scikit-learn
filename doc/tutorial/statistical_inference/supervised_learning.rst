@@ -371,7 +371,7 @@ function, or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, penalty='l2',
-              tol=0.0001)
+              random_state=None, tol=0.0001)
 
 This is known as :class:`LogisticRegression`.
 
@@ -450,9 +450,9 @@ classification --:class:`SVC` (Support Vector Classification).
 
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
-    >>> svc.fit(iris_X_train, iris_y_train)
+    >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='linear', probability=False, shrinking=True, tol=0.001,
+      kernel='linear', max_iter=-1, probability=False, shrinking=True, tol=0.001,
       verbose=False)
 
 

@@ -5,9 +5,9 @@ Tests for DBSCAN clustering algorithm
 import pickle
 
 import numpy as np
-from numpy.testing import assert_equal
 from scipy.spatial import distance
 
+from sklearn.utils.testing import assert_equal
 from sklearn.cluster.dbscan_ import DBSCAN, dbscan
 from .common import generate_clustered_data
 

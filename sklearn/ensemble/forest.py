@@ -37,6 +37,7 @@ Single and multi-output problems are both handled.
 
 import itertools
 import numpy as np
+from warnings import warn
 from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
@@ -44,7 +45,8 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
-from ..utils import check_random_state
+from ..tree._tree import DTYPE, DOUBLE
+from ..utils import array2d, check_random_state, check_arrays
 from ..metrics import r2_score
 
 from .base import BaseEnsemble
@@ -196,7 +198,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -223,8 +225,14 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self : object
             Returns self.
         """
+        self.random_state = check_random_state(self.random_state)
+
         # Precompute some data
-        X = np.atleast_2d(X)
+        X, y = check_arrays(X, y, sparse_format="dense")
+        if getattr(X, "dtype", None) != DTYPE or \
+           X.ndim != 2 or not X.flags.fortran:
+            X = array2d(X, dtype=DTYPE, order="F")
+
         n_samples, self.n_features_ = X.shape
 
         if self.bootstrap:
@@ -240,14 +248,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
             n_jobs, _, starts = _partition_features(self, self.n_features_)
 
-            all_X_argsorted = Parallel(n_jobs=n_jobs)(
+            all_X_argsorted = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_X_argsort)(
                     X[:, starts[i]:starts[i + 1]])
                 for i in xrange(n_jobs))
 
             X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
-        y = np.copy(y)
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -257,11 +264,16 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.n_outputs_ = y.shape[1]
 
         if isinstance(self.base_estimator, ClassifierMixin):
+            y = np.copy(y)
+
             for k in xrange(self.n_outputs_):
                 unique = np.unique(y[:, k])
                 self.classes_.append(unique)
                 self.n_classes_.append(unique.shape[0])
                 y[:, k] = np.searchsorted(unique, y[:, k])
+
+        if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
@@ -305,6 +317,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         predictions[k][mask, :] += p_estimator[k]
 
                 for k in xrange(self.n_outputs_):
+                    if (predictions[k].sum(axis=1) == 0).any():
+                        warn("Some inputs do not have OOB scores. "
+                             "This probably means too few trees were used "
+                             "to compute any reliable oob estimates.")
                     decision = predictions[k] \
                                / predictions[k].sum(axis=1)[:, np.newaxis]
                     self.oob_decision_function_.append(decision)
@@ -333,7 +349,11 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                     predictions[mask, :] += p_estimator
                     n_predictions[mask, :] += 1
-
+                if (n_predictions == 0).any():
+                    warn("Some inputs do not have OOB scores. "
+                         "This probably means too few trees were used "
+                         "to compute any reliable oob estimates.")
+                    n_predictions[n_predictions == 0] = 1
                 predictions /= n_predictions
 
                 self.oob_prediction_ = predictions
@@ -436,13 +456,14 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             ordered by arithmetical order.
         """
         # Check data
-        X = np.atleast_2d(X)
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_p = Parallel(n_jobs=n_jobs)(
+        all_p = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X,
@@ -453,7 +474,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         # Reduce
         p = all_p[0]
 
-        for j in xrange(1, self.n_jobs):
+        for j in xrange(1, len(all_p)):
             for k in xrange(self.n_outputs_):
                 p[k] += all_p[j][k]
 
@@ -542,13 +563,14 @@ class ForestRegressor(BaseForest, RegressorMixin):
             The predicted values.
         """
         # Check data
-        X = np.atleast_2d(X)
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=n_jobs)(
+        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
             for i in xrange(n_jobs))
@@ -636,7 +658,7 @@ class RandomForestClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
@@ -774,7 +796,7 @@ class RandomForestRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
@@ -913,7 +935,7 @@ class ExtraTreesClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
@@ -1055,7 +1077,7 @@ class ExtraTreesRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------

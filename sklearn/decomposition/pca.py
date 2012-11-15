@@ -7,7 +7,9 @@
 # License: BSD Style.
 
 import numpy as np
+import warnings
 from scipy import linalg
+from math import log
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
@@ -44,7 +46,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
     if rank > len(spectrum):
-        raise ValueError("the tested rank cannot exceed the rank of the dataset")
+        raise ValueError("The tested rank cannot exceed the rank of the"
+                " dataset")
     from scipy.special import gammaln
 
     pu = -rank * np.log(2)
@@ -80,7 +83,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
 
 
 def _infer_dimension_(spectrum, n_samples, n_features):
-    """This method infers the dimension of a dataset of shape (n_samples, n_features)
+    """Infers the dimension of a dataset of shape (n_samples, n_features)
 
     The dataset is described by its spectrum `spectrum`.
     """
@@ -309,36 +312,48 @@ class ProbabilisticPCA(PCA):
 
         Parameters
         ----------
-        X : array of shape(n_samples, n_dim)
+        X : array of shape(n_samples, n_features)
             The data to fit
 
         homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
-        self.dim = X.shape[1]
+        n_features = X.shape[1]
+        self._dim = n_features
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
-        if self.dim <= self.n_components:
-            delta = np.zeros(self.dim)
+        if n_features <= self.n_components:
+            delta = np.zeros(n_features)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() * np.ones(self.dim) \
-                    / (n_samples * self.dim)
+            delta = (Xr ** 2).sum() * np.ones(n_features) \
+                    / (n_samples * n_features)
         else:
-            delta = (Xr ** 2).mean(0) / (self.dim - self.n_components)
+            delta = (Xr ** 2).mean(0) / (n_features - self.n_components)
         self.covariance_ = np.diag(delta)
-        for k in range(self.n_components):
+        n_components = self.n_components
+        if n_components is None:
+            n_components = n_features
+        for k in range(n_components):
             add_cov = np.outer(self.components_[k], self.components_[k])
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
+
+    @property
+    def dim(self):
+        warnings.warn("Using dim is deprecated "
+                "since version 0.12, and backward compatibility "
+                "won't be maintained from version 0.14 onward. ",
+                DeprecationWarning, stacklevel=2)
+        return self._dim
 
     def score(self, X, y=None):
         """Return a score associated to new data
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_dim)
+        X: array of shape(n_samples, n_features)
             The data to test
 
         Returns
@@ -347,12 +362,12 @@ class ProbabilisticPCA(PCA):
             log-likelihood of each row of X under the current model
         """
         Xr = X - self.mean_
+        n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(self.covariance_)
-        for i in range(X.shape[0]):
-            log_like[i] = -.5 * np.dot(np.dot(self.precision_, Xr[i]), Xr[i])
-        log_like += fast_logdet(self.precision_) - \
-                                    self.dim / 2 * np.log(2 * np.pi)
+        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
+        log_like -= .5 * (fast_logdet(self.covariance_) + \
+                                    n_features * log(2 * np.pi))
         return log_like
 
 
@@ -409,7 +424,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=3, n_components=2,
-           random_state=<mtrand.RandomState object at 0x...>, whiten=False)
+           random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
@@ -453,16 +468,14 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         if not hasattr(X, 'todense'):
             # not a sparse matrix, ensure this is a 2D array
-            X = array2d(X)
+            X = np.atleast_2d(as_float_array(X, copy=self.copy))
 
         n_samples = X.shape[0]
 
         if not hasattr(X, 'todense'):
-            X = as_float_array(X, copy=self.copy)
-
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
@@ -472,12 +485,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             n_components = self.n_components
 
         U, S, V = randomized_svd(X, n_components,
-                                 n_iterations=self.iterated_power,
-                                 random_state=self.random_state)
+                                 n_iter=self.iterated_power,
+                                 random_state=random_state)
 
-        self.explained_variance_ = (S ** 2) / n_samples
-        self.explained_variance_ratio_ = self.explained_variance_ / \
-                                        self.explained_variance_.sum()
+        self.explained_variance_ = exp_var = (S ** 2) / n_samples
+        self.explained_variance_ratio_ = exp_var / exp_var.sum()
 
         if self.whiten:
             n = X.shape[0]
@@ -488,7 +500,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Apply the dimensionality reduction on X.
+        """Apply dimensionality reduction on X.
 
         Parameters
         ----------
@@ -508,8 +520,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         return X
 
     def inverse_transform(self, X):
-        """Transform data back to its original space, i.e.,
-        return an input X_original whose transform would be X
+        """Transform data back to its original space.
+
+        Returns an array X_original whose transform would be X.
 
         Parameters
         ----------
@@ -524,7 +537,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Notes
         -----
         If whitening is enabled, inverse_transform does not compute the
-        exact inverse operation as transform.
+        exact inverse operation of transform.
         """
         X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:

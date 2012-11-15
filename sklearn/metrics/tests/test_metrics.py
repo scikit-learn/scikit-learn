@@ -1,8 +1,9 @@
 import random
+import warnings
 import numpy as np
 
 from nose.tools import raises
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_raises
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal, assert_almost_equal
@@ -22,6 +23,8 @@ from ..metrics import precision_recall_fscore_support
 from ..metrics import precision_score
 from ..metrics import recall_score
 from ..metrics import roc_curve
+from ..metrics import auc_score
+from ..metrics import average_precision_score
 from ..metrics import zero_one
 from ..metrics import hinge_loss
 
@@ -77,6 +80,7 @@ def test_roc_curve():
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.80, decimal=2)
+    assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
 
 
 def test_roc_returns_consistency():
@@ -165,6 +169,14 @@ def test_auc_duplicate_values():
     assert_array_almost_equal(auc(x, y), 1.)
 
 
+def test_auc_errors():
+    # Incompatible shapes
+    assert_raises(ValueError, auc, [0.0, 0.5, 1.0], [0.1, 0.2])
+
+    # Too few x values
+    assert_raises(ValueError, auc, [0.0], [0.1])
+
+
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -189,6 +201,22 @@ def test_precision_recall_f1_score_binary():
     assert_array_almost_equal(fs, 0.74, 2)
 
 
+def test_precision_recall_fscore_support_errors():
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # Bad beta
+    assert_raises(ValueError, precision_recall_fscore_support,
+                  y_true, y_pred, beta=0.0)
+
+    # Bad pos_label
+    assert_raises(ValueError, precision_recall_fscore_support,
+                  y_true, y_pred, pos_label=2, average='macro')
+
+    # Bad average option
+    assert_raises(ValueError, precision_recall_fscore_support,
+                  [0, 1, 2], [1, 2, 0], average='mega')
+
+
 def test_confusion_matrix_binary():
     """Test confusion matrix - binary classification case"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -209,6 +237,12 @@ def test_confusion_matrix_binary():
     mcc = matthews_corrcoef(y_true, y_pred)
     assert_array_almost_equal(mcc, true_mcc, decimal=2)
     assert_array_almost_equal(mcc, 0.48, decimal=2)
+
+
+def test_matthews_corrcoef_nan():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert_equal(matthews_corrcoef([0], [1]), 0.0)
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -296,6 +330,22 @@ def test_confusion_matrix_multiclass():
                             [5, 20,  5]])
 
 
+def test_confusion_matrix_multiclass_subset_labels():
+    """Test confusion matrix - multi-class case with subset of labels"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute confusion matrix with only first two labels considered
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    assert_array_equal(cm, [[23, 2],
+                            [5,  5]])
+
+    # compute confusion matrix with explicit label ordering for only subset
+    # of labels
+    cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
+    assert_array_equal(cm, [[18,  2],
+                            [20,  5]])
+
+
 def test_classification_report():
     """Test performance report"""
     iris = datasets.load_iris()
@@ -331,17 +381,50 @@ avg / total       0.62      0.61      0.56        75
 
 
 def test_precision_recall_curve():
-    """Test Precision-Recall and aread under PR curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
+    _test_precision_recall_curve(y_true, probas_pred)
 
+    # Use {-1, 1} for labels; make sure original labels aren't modified
+    y_true[np.where(y_true == 0)] = -1
+    y_true_copy = y_true.copy()
+    _test_precision_recall_curve(y_true, probas_pred)
+    assert_array_equal(y_true_copy, y_true)
+
+
+def _test_precision_recall_curve(y_true, probas_pred):
+    """Test Precision-Recall and aread under PR curve"""
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.82, 2)
+    assert_array_almost_equal(precision_recall_auc,
+            average_precision_score(y_true, probas_pred))
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.75, 3)
+
+
+def test_precision_recall_curve_errors():
+    # Contains non-binary labels
+    assert_raises(ValueError, precision_recall_curve,
+                  [0, 1, 2], [[0.0], [1.0], [1.0]])
+
+
+def test_score_scale_invariance():
+    # Test that average_precision_score and auc_score are invariant by
+    # the scaling or shifting of probabilities
+    y_true, _, probas_pred = make_prediction(binary=True)
+    roc_auc = auc_score(y_true, probas_pred)
+    roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
+    roc_auc_shifted = auc_score(y_true, probas_pred - 10)
+    assert_equal(roc_auc, roc_auc_scaled)
+    assert_equal(roc_auc, roc_auc_shifted)
+    pr_auc = average_precision_score(y_true, probas_pred)
+    pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
+    pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
+    assert_equal(pr_auc, pr_auc_scaled)
+    assert_equal(pr_auc, pr_auc_shifted)
 
 
 def test_losses():
@@ -355,16 +438,24 @@ def test_losses():
 
     assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
+    assert_equal(explained_variance_score([0, 0, 0], [0, 1, 1]), 0.0)
 
     assert_almost_equal(r2_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(r2_score(y_true, y_true), 1.00, 2)
+    assert_equal(r2_score([0, 0, 0], [0, 0, 0]), 1.0)
+    assert_equal(r2_score([0, 0, 0], [0, 1, 1]), 0.0)
 
 
 def test_losses_at_limits():
     # test limit cases
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
-    assert_almost_equal(r2_score([0.], [0.]), 1.00, 2)
+    assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
+
+
+def test_r2_one_case_error():
+    # test whether r2_score raises error given one point
+    assert_raises(ValueError, r2_score, [0], [0])
 
 
 def test_symmetry():
@@ -377,9 +468,9 @@ def test_symmetry():
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
     # not symmetric
-    assert_true(explained_variance_score(y_true, y_pred) != \
+    assert_true(explained_variance_score(y_true, y_pred) !=
             explained_variance_score(y_pred, y_true))
-    assert_true(r2_score(y_true, y_pred) != \
+    assert_true(r2_score(y_true, y_pred) !=
             r2_score(y_pred, y_true))
     # FIXME: precision and recall aren't symmetric either
 

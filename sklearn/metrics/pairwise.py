@@ -425,7 +425,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
       'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-      'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeucludean', 'yule']
+      'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics.
 
@@ -621,6 +621,10 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array
         from X and the jth array from Y.
+
+    Notes
+    -----
+    If metric is 'precomputed', Y is ignored and X is returned.
 
     """
     if metric == "precomputed":

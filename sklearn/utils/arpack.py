@@ -1409,7 +1409,7 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vals, vecs = eigsh(id, k=6)
     >>> vals # doctest: +SKIP
     array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
-    >>> vecs.shape
+    >>> print vecs.shape
     (13, 6)
 
     References

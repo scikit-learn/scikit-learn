@@ -16,14 +16,14 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
-from ..utils import array2d, check_random_state, gen_even_slices, deprecated
+from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd
-from ..linear_model import Lasso, orthogonal_mp_gram, lars_path
+from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
-def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_cov=True,
-                  init=None, max_iter=1000):
+def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
+                   regularization=None, copy_cov=True,
+                   init=None, max_iter=1000):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
@@ -33,14 +33,15 @@ def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     X: array of shape (n_samples, n_features)
         Data matrix.
 
-    dictionary: array of shape (n_atoms, n_features)
+    dictionary: array of shape (n_components, n_features)
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows.
 
-    gram: array, shape=(n_atoms, n_atoms)
+    gram: None | array, shape=(n_components, n_components)
         Precomputed Gram matrix, dictionary * dictionary'
+        gram can be None if method is 'threshold'.
 
-    cov: array, shape=(n_atoms, n_samples)
+    cov: array, shape=(n_components, n_samples)
         Precomputed covariance, dictionary * X'
 
     algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
@@ -50,24 +51,15 @@ def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         Lasso solution (linear_model.Lasso). lasso_lars will be faster if
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection dictionary * data'
+        threshold: squashes to zero all coefficients less than regularization
+        from the projection dictionary * data'
 
-    n_nonzero_coefs: int, 0.1 * n_features by default
-        Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+    regularization : int | float
+        The regularization parameter. It corresponds to alpha when
+        algorithm is 'lasso_lars', 'lasso_cd' or 'threshold'.
+        Otherwise it corresponds to n_nonzero_coefs.
 
-    alpha: float, 1. by default
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
-        penalty applied to the L1 norm.
-        If `algorithm='threshold'`, `alpha` is the absolute value of the
-        threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
-
-    init: array of shape (n_samples, n_atoms)
+    init: array of shape (n_samples, n_components)
         Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
 
@@ -90,94 +82,62 @@ def _sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    alpha = float(alpha) if alpha is not None else None
-    dictionary = np.asarray(dictionary)
-    X = np.asarray(X)
     if X.ndim == 1:
         X = X[:, np.newaxis]
     n_samples, n_features = X.shape
-    n_atoms = dictionary.shape[0]
-    # This will always use Gram
-    if gram is None:
-        # I think it's never safe to overwrite Gram when n_features > 1
-        # but I'd like to avoid the complicated logic.
-        # The parameter could be removed in this case. Discuss.
-        gram = np.dot(dictionary, dictionary.T)
     if cov is None and algorithm != 'lasso_cd':
         # overwriting cov is safe
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
     if algorithm == 'lasso_lars':
-        if alpha is None:
-            alpha = 1.
-        alpha /= n_features  # account for scaling
+        alpha = float(regularization) / n_features  # account for scaling
         try:
-            new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in range(n_samples):
-                # A huge amount of time is spent in this loop. It needs to be
-                # tight.
-                _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
-                                             Gram=gram, alpha_min=alpha,
-                                             method='lasso')
-                new_code[k] = coef_path_[:, -1]
+            lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
+                            verbose=False, normalize=False, precompute=gram,
+                            fit_path=False)
+            lasso_lars.fit(dictionary.T, X.T, Xy=cov)
+            new_code = lasso_lars.coef_
         finally:
             np.seterr(**err_mgt)
 
     elif algorithm == 'lasso_cd':
-        if alpha is None:
-            alpha = 1.
-        alpha /= n_features  # account for scaling
-        new_code = np.empty((n_samples, n_atoms))
+        alpha = float(regularization) / n_features  # account for scaling
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=max_iter)
-        for k in xrange(n_samples):
-            # A huge amount of time is spent in this loop. It needs to be
-            # tight
-
-            if init is not None:
-                clf.coef_ = init[k]  # Init with previous value of the code
-            clf.fit(dictionary.T, X[k])
-            new_code[k] = clf.coef_
+        clf.fit(dictionary.T, X.T, Xy=cov, coef_init=init)
+        new_code = clf.coef_
 
     elif algorithm == 'lars':
-        if n_nonzero_coefs is None:
-            n_nonzero_coefs = max(n_features / 10, 1)
         try:
-            new_code = np.empty((n_samples, n_atoms))
             err_mgt = np.seterr(all='ignore')
-            for k in xrange(n_samples):
-                # A huge amount of time is spent in this loop. It needs to be
-                # tight.
-                _, _, coef_path_ = lars_path(dictionary.T, X[k], Xy=cov[:, k],
-                                             Gram=gram, method='lar',
-                                             max_iter=n_nonzero_coefs)
-                new_code[k] = coef_path_[:, -1]
+            lars = Lars(fit_intercept=False, verbose=False, normalize=False,
+                        precompute=gram, n_nonzero_coefs=int(regularization),
+                        fit_path=False)
+            lars.fit(dictionary.T, X.T, Xy=cov)
+            new_code = lars.coef_
         finally:
             np.seterr(**err_mgt)
 
     elif algorithm == 'threshold':
-        if alpha is None:
-            alpha = 1.
-        new_code = (np.sign(cov) * np.maximum(np.abs(cov) - alpha, 0)).T
+        new_code = ((np.sign(cov) *
+                    np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
-        if n_nonzero_coefs is None and alpha is None:
-            n_nonzero_coefs = max(n_features / 10, 1)
         norms_squared = np.sum((X ** 2), axis=1)
-        new_code = orthogonal_mp_gram(gram, cov, n_nonzero_coefs, alpha,
-                                      norms_squared, copy_Xy=copy_cov
-                                      ).T
+        new_code = orthogonal_mp_gram(gram, cov, regularization, None,
+                                      norms_squared, copy_Xy=copy_cov).T
     else:
-        raise NotImplemented('Sparse coding method %s not implemented' %
+        raise NotImplementedError('Sparse coding method %s not implemented' %
                              algorithm)
     return new_code
 
 
+# XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_gram=None,
-                  copy_cov=True, init=None, max_iter=1000, n_jobs=1):
+        n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
+        max_iter=1000, n_jobs=1):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -190,15 +150,15 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     X: array of shape (n_samples, n_features)
         Data matrix
 
-    dictionary: array of shape (n_atoms, n_features)
+    dictionary: array of shape (n_components, n_features)
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows for meaningful
         output.
 
-    gram: array, shape=(n_atoms, n_atoms)
+    gram: array, shape=(n_components, n_components)
         Precomputed Gram matrix, dictionary * dictionary'
 
-    cov: array, shape=(n_atoms, n_samples)
+    cov: array, shape=(n_components, n_samples)
         Precomputed covariance, dictionary' * X
 
     algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
@@ -225,7 +185,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    init: array of shape (n_samples, n_atoms)
+    init: array of shape (n_samples, n_components)
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
@@ -241,7 +201,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     Returns
     -------
-    code: array of shape (n_samples, n_atoms)
+    code: array of shape (n_samples, n_components)
         The sparse codes
 
     See also
@@ -251,24 +211,33 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    if copy_gram is not None:
-        warnings.warn("copy_gram in sparse_encode is deprecated: it"
-            "lead to errors.", DeprecationWarning, stacklevel=2)
-    dictionary = np.asarray(dictionary)
-    X = np.asarray(X)
+    dictionary = array2d(dictionary)
+    X = array2d(X)
     n_samples, n_features = X.shape
-    n_atoms = dictionary.shape[0]
-    if gram is None:
+    n_components = dictionary.shape[0]
+
+    if gram is None and algorithm != 'threshold':
         gram = np.dot(dictionary, dictionary.T)
-    if cov is None and algorithm != 'lasso_cd':
+    if cov is None:
         copy_cov = False
         cov = np.dot(dictionary, X.T)
+
+    if algorithm in ('lars', 'omp'):
+        regularization = n_nonzero_coefs
+        if regularization is None:
+            regularization = max(n_features / 10, 1)
+    else:
+        regularization = alpha
+        if regularization is None:
+            regularization = 1.
+
     if n_jobs == 1 or algorithm == 'threshold':
-        return _sparse_encode(X, dictionary, gram=gram, cov=cov,
-                  algorithm=algorithm, n_nonzero_coefs=n_nonzero_coefs,
-                  alpha=alpha, copy_cov=copy_cov,
-                  init=init, max_iter=max_iter)
-    code = np.empty((n_samples, n_atoms))
+        return _sparse_encode(X, dictionary, gram, cov=cov,
+                  algorithm=algorithm, regularization=regularization,
+                  copy_cov=copy_cov, init=init, max_iter=max_iter)
+
+    # Enter parallel code block
+    code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, n_jobs))
     if cov is None:
         # We cannot keep cov to None: it needs to be slicable
@@ -276,23 +245,17 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
             def __getitem__(self, anything):
                 return None
         cov = StupidSliceable()
+
     code_views = Parallel(n_jobs=n_jobs)(
-                delayed(sparse_encode)(X[this_slice], dictionary, gram,
-                                       cov[:, this_slice], algorithm,
-                                       n_nonzero_coefs, alpha,
-                                       copy_cov=copy_cov,
-                                       init=init[this_slice] if init is not
-                                       None else None,
-                                       max_iter=max_iter)
+                delayed(_sparse_encode)(X[this_slice], dictionary, gram,
+                           cov[:, this_slice], algorithm,
+                           regularization=regularization, copy_cov=copy_cov,
+                           init=init[this_slice] if init is not None else None,
+                           max_iter=max_iter)
                 for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
     return code
-
-
-@deprecated('Use sparse_encode instead')
-def sparse_encode_parallel():
-    pass
 
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
@@ -301,13 +264,13 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     Parameters
     ----------
-    dictionary: array of shape (n_features, n_atoms)
+    dictionary: array of shape (n_features, n_components)
         Value of the dictionary at the previous iteration.
 
     Y: array of shape (n_features, n_samples)
         Data matrix.
 
-    code: array of shape (n_atoms, n_samples)
+    code: array of shape (n_components, n_samples)
         Sparse coding of the data against which to optimize the dictionary.
 
     verbose:
@@ -322,11 +285,11 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     Returns
     -------
-    dictionary: array of shape (n_features, n_atoms)
+    dictionary: array of shape (n_features, n_components)
         Updated dictionary.
 
     """
-    n_atoms = len(code)
+    n_components = len(code)
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
     # Residuals, computed 'in-place' for efficiency
@@ -334,7 +297,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     R += Y
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    for k in xrange(n_atoms):
+    for k in xrange(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
         dictionary[:, k] = np.dot(R, code[k, :].T)
@@ -367,9 +330,10 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     return dictionary
 
 
-def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
+def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None):
+                  callback=None, verbose=False, random_state=None,
+                  n_atoms=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -377,7 +341,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code.
 
@@ -386,7 +350,7 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     X: array of shape (n_samples, n_features)
         Data matrix.
 
-    n_atoms: int,
+    n_components: int,
         Number of dictionary atoms to extract.
 
     alpha: int,
@@ -408,10 +372,10 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     n_jobs: int,
         Number of parallel jobs to run, or -1 to autodetect.
 
-    dict_init: array of shape (n_atoms, n_features),
+    dict_init: array of shape (n_components, n_features),
         Initial value for the dictionary for warm restart scenarios.
 
-    code_init: array of shape (n_samples, n_atoms),
+    code_init: array of shape (n_samples, n_components),
         Initial value for the sparse code for warm restart scenarios.
 
     callback:
@@ -425,10 +389,10 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
 
     Returns
     -------
-    code: array of shape (n_samples, n_atoms)
+    code: array of shape (n_samples, n_components)
         The sparse code factor in the matrix factorization.
 
-    dictionary: array of shape (n_atoms, n_features),
+    dictionary: array of shape (n_components, n_features),
         The dictionary factor in the matrix factorization.
 
     errors: array
@@ -442,6 +406,13 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     SparsePCA
     MiniBatchSparsePCA
     """
+
+    if not n_atoms is None:
+        n_components = n_atoms
+        warnings.warn("Parameter n_atoms has been renamed to"
+            'n_components'" and will be removed in release 0.14.",
+            DeprecationWarning, stacklevel=2)
+
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
     method = 'lasso_' + method
@@ -463,13 +434,13 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
         code, S, dictionary = linalg.svd(X, full_matrices=False)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
-    if n_atoms <= r:  # True even if n_atoms=None
-        code = code[:, :n_atoms]
-        dictionary = dictionary[:n_atoms, :]
+    if n_components <= r:  # True even if n_components=None
+        code = code[:, :n_components]
+        dictionary = dictionary[:n_components, :]
     else:
-        code = np.c_[code, np.zeros((len(code), n_atoms - r))]
+        code = np.c_[code, np.zeros((len(code), n_components - r))]
         dictionary = np.r_[dictionary,
-                           np.zeros((n_atoms - r, dictionary.shape[1]))]
+                           np.zeros((n_components - r, dictionary.shape[1]))]
 
     # Fortran-order dict, as we are going to access its row vectors
     dictionary = np.array(dictionary, order='F')
@@ -521,10 +492,10 @@ def dict_learning(X, n_atoms, alpha, max_iter=100, tol=1e-8,
     return code, dictionary, errors
 
 
-def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
-                         dict_init=None, callback=None, chunk_size=3,
-                         verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None):
+def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
+                return_code=True, dict_init=None, callback=None, chunk_size=3,
+                verbose=False, shuffle=True, n_jobs=1, method='lars',
+                iter_offset=0, random_state=None, n_atoms=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -532,7 +503,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                     with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -543,7 +514,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     X: array of shape (n_samples, n_features)
         data matrix
 
-    n_atoms: int,
+    n_components: int,
         number of dictionary atoms to extract
 
     alpha: int,
@@ -555,7 +526,7 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     return_code: boolean,
         whether to also return the code U or just the dictionary V
 
-    dict_init: array of shape (n_atoms, n_features),
+    dict_init: array of shape (n_components, n_features),
         initial value for the dictionary for warm restart scenarios
 
     callback:
@@ -589,10 +560,10 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 
     Returns
     -------
-    code: array of shape (n_samples, n_atoms),
+    code: array of shape (n_samples, n_components),
         the sparse code (only returned if `return_code=True`)
 
-    dictionary: array of shape (n_atoms, n_features),
+    dictionary: array of shape (n_components, n_features),
         the solutions to the dictionary learning problem
 
     See also
@@ -604,6 +575,13 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     MiniBatchSparsePCA
 
     """
+
+    if not n_atoms is None:
+        n_components = n_atoms
+        warnings.warn("Parameter n_atoms has been renamed to"
+            'n_components'" and will be removed in release 0.14.",
+            DeprecationWarning, stacklevel=2)
+
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
     method = 'lasso_' + method
@@ -621,14 +599,14 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = randomized_svd(X, n_atoms)
+        _, S, dictionary = randomized_svd(X, n_components)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
-    if n_atoms <= r:
-        dictionary = dictionary[:n_atoms, :]
+    if n_components <= r:
+        dictionary = dictionary[:n_components, :]
     else:
         dictionary = np.r_[dictionary,
-                           np.zeros((n_atoms - r, dictionary.shape[1]))]
+                           np.zeros((n_components - r, dictionary.shape[1]))]
     dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
@@ -644,9 +622,9 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
     batches = itertools.cycle(batches)
 
     # The covariance of the dictionary
-    A = np.zeros((n_atoms, n_atoms))
+    A = np.zeros((n_components, n_components))
     # The data approximation
-    B = np.zeros((n_features, n_atoms))
+    B = np.zeros((n_features, n_components))
 
     for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
                                      batches):
@@ -702,11 +680,12 @@ def dict_learning_online(X, n_atoms, alpha, n_iter=100, return_code=True,
 class SparseCodingMixin(TransformerMixin):
     """Sparse coding mixin"""
 
-    def _set_sparse_coding_params(self, n_atoms, transform_algorithm='omp',
+    def _set_sparse_coding_params(self, n_components,
+                                  transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
                                   transform_alpha=None, split_sign=False,
                                   n_jobs=1):
-        self.n_atoms = n_atoms
+        self.n_components = n_components
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
         self.transform_alpha = transform_alpha
@@ -764,7 +743,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     Parameters
     ----------
-    dictionary : array, [n_atoms, n_features]
+    dictionary : array, [n_components, n_features]
         The dictionary atoms used for sparse coding. Lines are assumed to be
         normalized to unit norm.
 
@@ -804,7 +783,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_atoms, n_features]
+    `components_` : array, [n_components, n_features]
         The unchanged dictionary atoms
 
     See also
@@ -844,11 +823,11 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     Parameters
     ----------
-    n_atoms : int,
+    n_components : int,
         number of dictionary elements to extract
 
     alpha : int,
@@ -901,10 +880,10 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_jobs : int,
         number of parallel jobs to run
 
-    code_init : array of shape (n_samples, n_atoms),
+    code_init : array of shape (n_samples, n_components),
         initial value for the code, for warm restart
 
-    dict_init : array of shape (n_atoms, n_features),
+    dict_init : array of shape (n_components, n_features),
         initial values for the dictionary, for warm restart
 
     verbose :
@@ -915,7 +894,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_atoms, n_features]
+    `components_` : array, [n_components, n_features]
         dictionary atoms extracted from the data
 
     `error_` : array
@@ -935,12 +914,19 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     SparsePCA
     MiniBatchSparsePCA
     """
-    def __init__(self, n_atoms=None, alpha=1, max_iter=1000, tol=1e-8,
+    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None):
-        self._set_sparse_coding_params(n_atoms, transform_algorithm,
+                 split_sign=False, random_state=None, n_atoms=None):
+
+        if not n_atoms is None:
+            n_components = n_atoms
+            warnings.warn("Parameter n_atoms has been renamed to"
+                        'n_components'" and will be removed in release 0.14.",
+                         DeprecationWarning, stacklevel=2)
+
+        self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
@@ -967,13 +953,13 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the object itself
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
-        if self.n_atoms is None:
-            n_atoms = X.shape[1]
+        X = array2d(X)
+        if self.n_components is None:
+            n_components = X.shape[1]
         else:
-            n_atoms = self.n_atoms
+            n_components = self.n_components
 
-        V, U, E = dict_learning(X, n_atoms, self.alpha,
+        V, U, E = dict_learning(X, n_components, self.alpha,
                                 tol=self.tol, max_iter=self.max_iter,
                                 method=self.fit_algorithm,
                                 n_jobs=self.n_jobs,
@@ -996,11 +982,11 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_atoms
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     Parameters
     ----------
-    n_atoms : int,
+    n_components : int,
         number of dictionary elements to extract
 
     alpha : int,
@@ -1050,7 +1036,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_jobs : int,
         number of parallel jobs to run
 
-    dict_init : array of shape (n_atoms, n_features),
+    dict_init : array of shape (n_components, n_features),
         initial value of the dictionary for warm restart scenarios
 
     verbose :
@@ -1067,7 +1053,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_atoms, n_features]
+    `components_` : array, [n_components, n_features]
         components extracted from the data
 
     Notes
@@ -1085,13 +1071,20 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_atoms=None, alpha=1, n_iter=1000,
+    def __init__(self, n_components=None, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=1, chunk_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None):
+                 verbose=False, split_sign=False, random_state=None,
+                 n_atoms=None):
 
-        self._set_sparse_coding_params(n_atoms, transform_algorithm,
+        if not n_atoms is None:
+            n_components = n_atoms
+            warnings.warn("Parameter n_atoms has been renamed to"
+                        'n_components'" and will be removed in release 0.14.",
+                         DeprecationWarning, stacklevel=2)
+
+        self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
@@ -1119,13 +1112,13 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        X = np.asarray(X)
-        if self.n_atoms is None:
-            n_atoms = X.shape[1]
+        X = array2d(X)
+        if self.n_components is None:
+            n_components = X.shape[1]
         else:
-            n_atoms = self.n_atoms
+            n_components = self.n_components
 
-        U = dict_learning_online(X, n_atoms, self.alpha,
+        U = dict_learning_online(X, n_components, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs,
@@ -1156,7 +1149,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             dict_init = self.components_
         else:
             dict_init = self.dict_init
-        U = dict_learning_online(X, self.n_atoms, self.alpha,
+        U = dict_learning_online(X, self.n_components, self.alpha,
                                  n_iter=self.n_iter,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs, dict_init=dict_init,

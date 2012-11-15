@@ -150,6 +150,8 @@ You can also check for common programming errors with the following tools:
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
 
+      see also :ref:`testing_coverage`
+
     * No pyflakes warnings, check with::
 
         $ pip install pyflakes
@@ -179,13 +181,13 @@ and Cython optimizations.
   on all new contributions will get the overall code base quality in the
   right direction.
 
-EasyFix Issues
---------------
+Easy Issues
+-----------
 
 A great way to start contributing to scikit-learn is to pick an item from the
-list of `EasyFix issues
-<https://github.com/scikit-learn/scikit-learn/issues?labels=EasyFix>`_
-in the issue tracker.  Resolving these issues allow you to start contributing
+list of `Easy issues
+<https://github.com/scikit-learn/scikit-learn/issues?labels=Easy>`_
+in the issue tracker. Resolving these issues allow you to start contributing
 to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
 their time to concentrate on other issues.
@@ -224,11 +226,74 @@ it.
    slightly differently. To get the best results, you should use version
    1.0.
 
+.. _testing_coverage:
+
+Testing and improving test coverage
+------------------------------------
+
+High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
+is a corner-stone of the sciki-learn development process. For this
+purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
+package. The tests are functions appropriately names, located in `tests`
+subdirectories, that check the validity of the algorithms and the
+different options of the code.
+
+The full scikit-learn tests can be run using 'make' in the root folder.
+Alternatively, running 'nosetests' in a folder will run all the tests of
+the corresponding subpackages.
+
+We expect code coverage of new features to be at least around 90%.
+
+.. note:: **Workflow to improve test coverage**
+
+   To test code coverage, you need to install the `coverage
+   <http://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+
+   1. Run 'make test-coverage'. The output lists for each file the line
+      numbers that are not tested.
+
+   2. Find a low hanging fruit, looking at which lines are not tested,
+      write or adapt a test specifically for these lines.
+
+   3. Loop.
+
+
+
 Developers web site
 -------------------
 
 More information can be found on the `developer's wiki
 <https://github.com/scikit-learn/scikit-learn/wiki>`_.
+
+
+Issue Tracker Tags
+------------------
+All issues and pull requests on the
+`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+should have (at least) one of the following tags:
+
+:Bug / Crash:
+    Something is happening that clearly shouldn't happen.
+    Wrong results as well as unexpected errors from estimators go here.
+
+:Cleanup / Enhancement:
+    Improving performance, usability, consistency.
+
+:Documentation:
+    Missing, incorrect or sub-standard documentations and examples.
+
+:New Feature:
+    Feature requests and pull requests implementing a new feature.
+
+There are two other tags to help new contributors:
+
+:Easy:
+    This issue can be tackled by anyone, no experience needed.
+    Ask for help if the formulation is unclear.
+
+:Moderate:
+    Might need some knowledge of machine learning or the package,
+    but is still approachable for someone new to the project.
 
 
 Other ways to contribute

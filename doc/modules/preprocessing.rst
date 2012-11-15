@@ -38,9 +38,10 @@ The function :func:`scale` provides a quick and easy way to perform this
 operation on a single array-like dataset::
 
   >>> from sklearn import preprocessing
-  >>> X = [[ 1., -1.,  2.],
-  ...      [ 2.,  0.,  0.],
-  ...      [ 0.,  1., -1.]]
+  >>> import numpy as np
+  >>> X = np.array([[ 1., -1.,  2.],
+  ...               [ 2.,  0.,  0.],
+  ...               [ 0.,  1., -1.]])
   >>> X_scaled = preprocessing.scale(X)
 
   >>> X_scaled                                          # doctest: +ELLIPSIS
@@ -64,15 +65,15 @@ Scaled data has zero mean and unit variance::
 ..    >>> print_options = np.set_printoptions(print_options)
 
 The ``preprocessing`` module further provides a utility class
-:class:`Scaler` that implements the ``Transformer`` API to compute
+:class:`StandardScaler` that implements the ``Transformer`` API to compute
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.Scaler().fit(X)
+  >>> scaler = preprocessing.StandardScaler().fit(X)
   >>> scaler
-  Scaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler(copy=True, with_mean=True, with_std=True)
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
@@ -94,8 +95,38 @@ same way it did on the training set::
 
 It is possible to disable either centering or scaling by either
 passing ``with_mean=False`` or ``with_std=False`` to the constructor
-of :class:`Scaler`.
+of :class:`StandardScaler`.
 
+
+Scaling Features to a Range
+---------------------------
+An alternative standardization is scaling features to
+lie between a given minimum and maximum value, often between zero and one.
+This can be achieved using :class:`MinMaxScaler`.
+
+The motivation to use this scaling include robustness to very small
+standard deviations of features and preserving zero entries in sparse data.
+
+The formula used to scale features between zero and one is::
+
+  >>> min_max_scaler = preprocessing.MinMaxScaler()
+  >>> X_zero_one = min_max_scaler.fit_transform(X)
+  >>> np.all(X_zero_one == (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0)))
+  True
+  >>> X.min(axis=0)
+  array([ 0., -1., -1.])
+  >>> X_zero_one.min(axis=0)
+  array([ 0.,  0.,  0.])
+
+  >>> X.max(axis=0)
+  array([ 2.,  1.,  2.])
+  >>> X_zero_one.max(axis=0)
+  array([ 1.,  1.,  1.])
+
+If :class:`MinMaxScaler` is given ``feature_range=(min, max)`` the full
+formula is ::
+
+    X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0)) X_scaled = X_std / (max - min) + min
 
 .. topic:: References:
 
@@ -115,7 +146,7 @@ of :class:`Scaler`.
 
 .. topic:: Sparse input
 
-  :func:`scale` and :class:`Scaler` accept ``scipy.sparse`` matrices
+  :func:`scale` and :class:`StandardScaler` accept ``scipy.sparse`` matrices
   as input **only when with_mean=False is explicitly passed to the
   constructor**. Otherwise a ``ValueError`` will be raised as
   silently centering would break the sparsity and would often crash the
@@ -132,7 +163,7 @@ of :class:`Scaler`.
 
 .. topic:: Scaling target variables in regression
 
-    :func:`scale` and :class:`Scaler` work out-of-the-box with 1d arrays.
+    :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.
     This is very useful for scaling the target / response variables used
     for regression.
 
@@ -243,7 +274,7 @@ It is possible to adjust the threshold of the binarizer::
          [ 1.,  0.,  0.],
          [ 0.,  0.,  0.]])
 
-As for the :class:`Scaler` and :class:`Normalizer` classes, the
+As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 
@@ -272,14 +303,14 @@ matrix from a list of multi-class labels::
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
-    array([[ 1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.]])
+    array([[1, 0, 0, 0],
+           [0, 0, 0, 1]])
 
 :class:`LabelBinarizer` also supports multiple labels per instance::
 
     >>> lb.fit_transform([(1, 2), (3,)])
-    array([[ 1.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1, 1, 0],
+           [0, 0, 1]])
     >>> lb.classes_
     array([1, 2, 3])
 

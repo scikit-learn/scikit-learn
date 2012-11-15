@@ -140,7 +140,9 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
                   for i in range(n)])
     B = np.array([_nearest_cluster_distance(distances[i], labels, i)
                   for i in range(n)])
-    return (B - A) / np.maximum(A, B)
+    sil_samples = (B - A) / np.maximum(A, B)
+    # nan values are for clusters of size 1, and should be 0
+    return np.nan_to_num(sil_samples)
 
 
 def _intra_cluster_distance(distances_row, labels, i):

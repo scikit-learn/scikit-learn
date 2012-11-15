@@ -1,11 +1,11 @@
-
 import numpy as np
+import warnings
 
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal
-from nose.tools import assert_almost_equal
-from nose.tools import assert_true
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -16,6 +16,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
+from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
 
@@ -52,42 +53,60 @@ def multilabel_recall(Y_true, Y_pred):
 
 
 def test_ovr_exceptions():
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
 
 
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes)
 
-    pred2 = LinearSVC().fit(iris.data, iris.target).predict(iris.data)
+    clf = LinearSVC(random_state=0)
+    pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
 
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_true(np.mean(iris.target == pred) >= 0.65)
+    assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_always_present():
+    # Test that ovr works with classes that are always present or absent
+    X = np.ones((10, 2))
+    X[:5, :] = 0
+    y = [[int(i >= 5), 2, 3] for i in xrange(10)]
+    with warnings.catch_warnings(record=True):
+        ovr = OneVsRestClassifier(DecisionTreeClassifier())
+        ovr.fit(X, y)
+        y_pred = ovr.predict(X)
+        assert_array_equal(np.array(y_pred), np.array(y))
 
 
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
+    y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
+         ["ham", "eggs"], ["ham"]]
+    #y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
     Y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    for base_clf in (MultinomialNB(), LinearSVC(),
+    classes = set("ham eggs spam".split())
+
+    for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
         clf = OneVsRestClassifier(base_clf).fit(X, y)
+        assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict([[0, 4, 4]])[0]
-        assert_equal(set(y_pred), set([1, 2]))
+        assert_equal(set(y_pred), set(["spam", "eggs"]))
         assert_true(clf.multilabel_)
 
         # test input as label indicator matrix
@@ -120,13 +139,13 @@ def test_ovr_multilabel_dataset():
         Y_pred = clf.predict(X_test)
         assert_true(clf.multilabel_)
         assert_almost_equal(multilabel_precision(Y_test, Y_pred), prec,
-                            places=2)
+                            decimal=2)
         assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
-                            places=2)
+                            decimal=2)
 
 
 def test_ovr_gridsearch():
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovr, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
@@ -134,8 +153,20 @@ def test_ovr_gridsearch():
     assert_true(best_C in Cs)
 
 
+def test_ovr_pipeline():
+    # test with pipeline with length one
+    # pipeline is a bit weird wrt duck-typing predict_proba and
+    # decision_function
+    clf = Pipeline([("tree", DecisionTreeClassifier())])
+    ovr_pipe = OneVsRestClassifier(clf)
+    ovr_pipe.fit(iris.data, iris.target)
+    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr.fit(iris.data, iris.target)
+    assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
+
+
 def test_ovr_coef_():
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     ovr.fit(iris.data, iris.target)
     shape = ovr.coef_.shape
     assert_equal(shape[0], n_classes)
@@ -144,7 +175,7 @@ def test_ovr_coef_():
 
 def test_ovr_coef_exceptions():
     # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     # lambda is needed because we don't want coef_ to be evaluated right away
     assert_raises(ValueError, lambda x: ovr.coef_, None)
 
@@ -155,13 +186,13 @@ def test_ovr_coef_exceptions():
 
 
 def test_ovo_exceptions():
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovo.predict, [])
 
 
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
@@ -172,7 +203,7 @@ def test_ovo_fit_predict():
 
 
 def test_ovo_gridsearch():
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovo, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
@@ -181,24 +212,26 @@ def test_ovo_gridsearch():
 
 
 def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC())
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
 
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(), code_size=2)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
     # A classifier which implements predict_proba.
-    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2)
+    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC())
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)

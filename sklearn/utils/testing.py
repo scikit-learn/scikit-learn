@@ -1,7 +1,10 @@
 """Testing utilities."""
 
-# Copyright (c) 2011 Pietro Berkes
-# License: Simplified BSD
+# Copyright (c) 2011, 2012
+# Authors: Pietro Berkes,
+#          Andreas Muller
+#          Mathieu Blondel
+# License: BSD
 import inspect
 import pkgutil
 
@@ -13,11 +16,25 @@ from sklearn.base import BaseEstimator
 from .fixes import savemat
 
 
+# Conveniently import all assertions in one place.
+from nose.tools import assert_equal
+from nose.tools import assert_true
+from nose.tools import assert_false
+from nose.tools import assert_raises
+from nose.tools import raises
+from nose import SkipTest
+from nose import with_setup
+
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+
+
 try:
     from nose.tools import assert_in, assert_not_in
 except ImportError:
     # Nose < 1.0.0
-    from nose.tools import assert_true, assert_false
 
     def assert_in(x, container):
         assert_true(x in container, msg="%r in %r" % (x, container))
@@ -136,14 +153,22 @@ def all_estimators():
     # get parent folder
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(path=path,
-        prefix='sklearn.', onerror=lambda x: None):
+                            prefix='sklearn.', onerror=lambda x: None):
         module = __import__(modname, fromlist="dummy")
+        if ".tests." in modname:
+            continue
         classes = inspect.getmembers(module, inspect.isclass)
-        # get rid of abstract base classes
         all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
     estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
+    # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
-    return estimators
+    # We sort in order to have reproducible test failures
+    return sorted(estimators)
+
+
+def set_random_state(estimator, random_state=0):
+    if "random_state" in estimator.get_params().keys():
+        estimator.set_params(random_state=random_state)

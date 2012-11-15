@@ -3,13 +3,14 @@
 import numpy as np
 import warnings
 from scipy import sparse as sp
-from numpy.testing import assert_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from nose import SkipTest
-from nose.tools import assert_almost_equal
-from nose.tools import assert_raises
-from nose.tools import assert_true
+
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -486,6 +487,12 @@ def test_transform():
         for c2 in range(n_clusters):
             if c != c2:
                 assert_greater(X_new[c, c2], 0)
+
+
+def test_fit_transform():
+    X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
+    X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
+    assert_array_equal(X1, X2)
 
 
 def test_n_init():

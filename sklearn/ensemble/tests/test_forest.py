@@ -139,6 +139,8 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities."""
+    olderr = np.seterr(divide="ignore")
+
     # Random forest
     clf = RandomForestClassifier(n_estimators=10, random_state=1,
             max_features=1, max_depth=1)
@@ -156,6 +158,8 @@ def test_probability():
                               np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data),
                               np.exp(clf.predict_log_proba(iris.data)))
+
+    np.seterr(**olderr)
 
 
 def test_importances():
@@ -304,6 +308,7 @@ def test_pickle():
 
 def test_multioutput():
     """Check estimators on multi-output problems."""
+    olderr = np.seterr(divide="ignore")
 
     X = [[-2, -1],
          [-1, -1],
@@ -355,6 +360,8 @@ def test_multioutput():
     y_hat = clf.fit(X, y).predict(T)
     assert_almost_equal(y_hat, y_true)
     assert_equal(y_hat.shape, (4, 2))
+
+    np.seterr(**olderr)
 
 
 if __name__ == "__main__":

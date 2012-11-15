@@ -10,11 +10,10 @@ of Gaussian Mixture Models.
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
 import numpy as np
-import warnings
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, deprecated
-from ..utils.extmath import logsumexp
+from ..utils import check_random_state
+from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
 EPS = np.finfo(float).eps
@@ -308,31 +307,6 @@ class GMM(BaseEstimator):
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
 
-    @deprecated("""will be removed in v0.12;
-    use the score or predict method instead, depending on the question""")
-    def decode(self, X):
-        """Find most likely mixture components for each point in X.
-
-        DEPRECATED IN VERSION 0.10; WILL BE REMOVED IN VERSION 0.12
-        use the score or predict method instead, depending on the question.
-
-        Parameters
-        ----------
-        X : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
-
-        Returns
-        -------
-        logprobs : array_like, shape (n_samples,)
-            Log probability of each point in `obs` under the model.
-
-        components : array_like, shape (n_samples,)
-            Index of the most likelihod mixture components for each observation
-        """
-        logprob, posteriors = self.eval(X)
-        return logprob, posteriors.argmax(axis=1)
-
     def score(self, X):
         """Compute the log probability under the model.
 
@@ -381,16 +355,6 @@ class GMM(BaseEstimator):
         logprob, responsibilities = self.eval(X)
         return responsibilities
 
-    @deprecated("""will be removed in v0.12;
-    use the score or predict method instead, depending on the question""")
-    def rvs(self, n_samples=1, random_state=None):
-        """Generate random samples from the model.
-
-        DEPRECATED IN VERSION 0.11; WILL BE REMOVED IN VERSION 0.12
-        use sample instead
-        """
-        return self.sample(n_samples, random_state)
-
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
@@ -431,7 +395,7 @@ class GMM(BaseEstimator):
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X, **kwargs):
+    def fit(self, X):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
@@ -448,37 +412,21 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         """
         ## initialization step
-        X = np.asarray(X)
+        X = np.asarray(X, dtype=np.float)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.shape[0] < self.n_components:
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
-        if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is"
-                    "deprecated. Set it on initialization instead.",
-                    DeprecationWarning)
-            # initialisations for in case the user still adds parameters to fit
-            # so things don't break
-            if 'n_iter' in kwargs:
-                self.n_iter = kwargs['n_iter']
-            if 'n_init' in kwargs:
-                if kwargs['n_init'] < 1:
-                    raise ValueError('GMM estimation requires at least one run')
-                else:
-                    self.n_init = kwargs['n_init']
-            if 'params' in kwargs:
-                self.params = kwargs['params']
-            if 'init_params' in kwargs:
-                self.init_params = kwargs['init_params']
 
-        max_log_prob = - np.infty
+        max_log_prob = -np.infty
 
         for _ in range(self.n_init):
             if 'm' in self.init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
-                    n_clusters=self.n_components).fit(X).cluster_centers_
+                    n_clusters=self.n_components,
+                    random_state=self.random_state).fit(X).cluster_centers_
 
             if 'w' in self.init_params or not hasattr(self, 'weights_'):
                 self.weights_ = np.tile(1.0 / self.n_components,
@@ -518,6 +466,14 @@ class GMM(BaseEstimator):
                     best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
+        # check the existence of an init param that was not subject to
+        # likelihood computation issue.
+        if np.isneginf(max_log_prob) and self.n_iter:
+            raise RuntimeError(
+                "EM algorithm was never able to compute a valid likelihood " +
+                "given initial parameters. Try different init parameters " +
+                "(or increasing n_init) or check for degenerate data.")
+        # self.n_iter == 0 occurs when using GMM within HMM
         if self.n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
@@ -615,7 +571,7 @@ def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
     from scipy import linalg
     n_samples, n_dim = X.shape
-    icv = linalg.pinv(covars)
+    icv = pinvh(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
                   + np.sum(X * np.dot(X, icv), 1)[:, np.newaxis]
                   - 2 * np.dot(np.dot(X, icv), means.T)

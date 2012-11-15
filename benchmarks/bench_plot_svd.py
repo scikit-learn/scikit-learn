@@ -12,7 +12,7 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
-def compute_bench(samples_range, features_range, n_iterations=3, rank=50):
+def compute_bench(samples_range, features_range, n_iter=3, rank=50):
 
     it = 0
 
@@ -36,19 +36,19 @@ def compute_bench(samples_range, features_range, n_iterations=3, rank=50):
             results['scipy svd'].append(time() - tstart)
 
             gc.collect()
-            print "benching scikit-learn randomized_svd: n_iterations=0"
+            print "benching scikit-learn randomized_svd: n_iter=0"
             tstart = time()
-            randomized_svd(X, rank, n_iterations=0)
-            results['scikit-learn randomized_svd (n_iterations=0)'].append(
+            randomized_svd(X, rank, n_iter=0)
+            results['scikit-learn randomized_svd (n_iter=0)'].append(
                 time() - tstart)
 
             gc.collect()
-            print ("benching scikit-learn randomized_svd: n_iterations=%d "
-                   % n_iterations)
+            print ("benching scikit-learn randomized_svd: n_iter=%d "
+                   % n_iter)
             tstart = time()
-            randomized_svd(X, rank, n_iterations=n_iterations)
-            results['scikit-learn randomized_svd (n_iterations=%d)'
-                    % n_iterations].append(time() - tstart)
+            randomized_svd(X, rank, n_iter=n_iter)
+            results['scikit-learn randomized_svd (n_iter=%d)'
+                    % n_iter].append(time() - tstart)
 
     return results
 
