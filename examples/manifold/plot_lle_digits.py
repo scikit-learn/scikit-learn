@@ -5,7 +5,7 @@ Manifold learning on handwritten digits: Locally Linear Embedding, Isomap...
 
 An illustration of various embeddings on the digits dataset.
 
-The RandomForestEmbedding, from the :mod:`sklearn.ensemble` module, is not
+The RandomTreesEmbedding, from the :mod:`sklearn.ensemble` module, is not
 technically a manifold embedding method, as it learn a high-dimensional
 representation on wich we apply a dimensionality reduction method.
 However, it is often useful to cast a dataset into a representation in
@@ -187,9 +187,9 @@ plot_embedding(X_mds,
     (time() - t0))
 
 #----------------------------------------------------------------------
-# Random Forest embedding of the digits dataset
-print "Computing Random Forest embedding"
-hasher = ensemble.RandomForestEmbedding(n_estimators=200, random_state=0,
+# Random Trees embedding of the digits dataset
+print "Computing Totally Random Trees embedding"
+hasher = ensemble.RandomTreesEmbedding(n_estimators=200, random_state=0,
                                         max_depth=5)
 t0 = time()
 X_transformed = hasher.fit_transform(X)
