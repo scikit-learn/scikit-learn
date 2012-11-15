@@ -1,7 +1,6 @@
 import numpy as np
 
-from sklearn.linear_model.isotonic_regression_ import isotonic_regression
-from sklearn.linear_model import IsotonicRegression
+from sklearn.isotonic import isotonic_regression, IsotonicRegression
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
