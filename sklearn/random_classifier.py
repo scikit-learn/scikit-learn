@@ -96,3 +96,56 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Unknown sampling type.")
 
         return self.classes_[ret]
+
+    def predict_proba(self, X):
+        """
+        Return probability estimates for the test vectors X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Input vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        P : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in
+            the model, where classes are ordered arithmetically.
+        """
+        X = safe_asarray(X)
+        n_samples = X.shape[0]
+        n_classes = len(self.classes_)
+        rs = check_random_state(self.random_state)
+
+        if self.sampling == "most_frequent":
+            ind = np.ones(n_samples, dtype=int) * self.class_prior_.argmax()
+            out = np.zeros((n_samples, n_classes), dtype=np.float64)
+            out[:, ind] = 1.0
+        elif self.sampling == "stratified":
+            out = rs.multinomial(1, self.class_prior_, size=n_samples)
+        elif self.sampling == "uniform":
+            out = np.ones((n_samples, n_classes), dtype=np.float64)
+            out /= n_classes
+        else:
+            raise ValueError("Unknown sampling type.")
+
+        return out
+
+    def predict_log_proba(self, X):
+        """
+        Return log probability estimates for the test vectors X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Input vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        P : array-like, shape = [n_samples, n_classes]
+            Returns the log probability of the sample for each class in
+            the model, where classes are ordered arithmetically.
+        """
+        return np.log(self.predict_proba(X))
