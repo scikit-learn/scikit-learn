@@ -1,3 +1,6 @@
+# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# License: 3-clause BSD.
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -31,6 +34,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The type of feature values. Passed to scipy.sparse matrix constructors
         as the dtype argument. Do not set this to bool, np.boolean or any
         unsigned integer type.
+    input_type : string, optional
+        Either "pairs" (the default) to accept pairs of (feature_name, value)
+        where feature_name is a string and value a number, or "strings" to
+        accept feature names with an implicit value of 1.
     non_negative : boolean, optional
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
@@ -47,6 +54,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
                             % (n_features, type(n_features)))
         elif n_features < 1:
             raise ValueError("invalid number of features (%d)" % n_features)
+
+        if input_type not in ("pairs", "strings"):
+            raise ValueError("input_type must be 'pairs' or 'strings', got %r"
+                             % input_type)
 
         self.dtype = dtype
         self.input_type = input_type
@@ -71,12 +82,12 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        raw_X : iterable over iterable over feature names, length = n_samples
+        raw_X : iterable over iterable over raw features, length = n_samples
             Samples. Each sample must be iterable an (e.g., a list or tuple)
-            containing/generating feature names which will be hashed.
+            containing/generating feature names (and optionally values, see
+            the input_type constructor argument) which will be hashed.
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
-            See the class docstring for allowable feature name types.
         y : (ignored)
 
         Returns

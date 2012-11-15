@@ -26,7 +26,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
     assert n_features > 0
 
     cdef np.int32_t h
-    cdef int value
+    cdef double value
 
     cdef array.array indices
     cdef array.array indptr
@@ -40,7 +40,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
     cdef np.ndarray values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
-        for f in x:
+        for f, v in x:
             if isinstance(f, unicode):
                 f = f.encode("utf-8")
             # Need explicit type check because Murmurhash does not propagate
@@ -51,7 +51,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
-            value = (h >= 0) * 2 - 1
+            value = v
+            value *= (h >= 0) * 2 - 1
             values[size] = value
             size += 1
 
