@@ -577,9 +577,8 @@ function probably is).
 Estimated Attributes
 ^^^^^^^^^^^^^^^^^^^^
 
-After the `fit()` method has been called, any attributes that have been
-estimated from the data must be stored in the object. Their names must
-always end with a trailing underscore, for example the coefficients of
+Attributes that have been estimated from the data must always have a name
+ending with trailing underscore, for example the coefficients of
 some regression estimator would be stored in a `coef_` attribute after
 `fit()` has been called.
 
