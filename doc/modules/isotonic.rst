@@ -6,7 +6,7 @@ Isotonic regression
 
 .. currentmodule:: sklearn.isotonic
 
-The :class:`IsotonicRegression` fits a non-decreasing function to the data.
+The class :class:`IsotonicRegression` fits a non-decreasing function to data.
 It solves the following problem:
 
   minimize :math:`\sum_i w_i (y_i - \hat{y}_i)^2`
