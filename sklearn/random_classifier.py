@@ -25,7 +25,7 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
             * "stratified": generates predictions by respecting the training
               set's class distribution.
             * "most_frequent": always predict the most frequent label in the
-              training set (useful for binary classification).
+              training set.
             * "uniform": generates predictions uniformly at random.
 
     random_state: int seed, RandomState instance, or None (default)
