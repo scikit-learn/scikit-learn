@@ -107,14 +107,21 @@ This can be achieved using :class:`MinMaxScaler`.
 The motivation to use this scaling include robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
 
-The formula used to scale features between zero and one is::
+Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
 
+  >>> X = np.array([[ 1., -1.,  2.],
+  ...               [ 2.,  0.,  0.],
+  ...               [ 0.,  1., -1.]])
+  ...
   >>> min_max_scaler = preprocessing.MinMaxScaler()
   >>> X_zero_one = min_max_scaler.fit_transform(X)
   >>> X_zero_one
   array([[ 0.5       ,  0.        ,  1.        ],
          [ 1.        ,  0.5       ,  0.33333333],
          [ 0.        ,  1.        ,  0.        ]])
+
+The same instance of transformer can then be applied to new test data unseen
+during the fit all to the same scaling operation as done on the train data::
 
   >>> X_new = np.array([[ -3., -1.,  4.]])
   >>> min_max_scaler.transform(X_new)
