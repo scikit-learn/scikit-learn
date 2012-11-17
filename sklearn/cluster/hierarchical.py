@@ -9,7 +9,6 @@ License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
-import sys
 
 import numpy as np
 from scipy import sparse
@@ -25,7 +24,7 @@ from ..utils.sparsetools import connected_components
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from .fast_dict import IntFloatDict, average_merge, min_merge, max_merge,\
-        WeightedEdge
+        WeightedEdge, argmin
 
 
 ###############################################################################
@@ -210,7 +209,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 ###############################################################################
 # Linkage algorithm
 
-#@profile
 def linkage_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None, linkage='complete'):
     """Linkage agglomerative clustering based on a Feature matrix.
@@ -270,7 +268,6 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
 
     linkage_choices = {
                         'complete': (hierarchy.complete, max_merge),
-                        'single':   (hierarchy.single,   min_merge),
                         'average': (hierarchy.weighted, average_merge),
                       }
     try:
@@ -391,6 +388,165 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
             # Here we use the information from coord_col (containing the
             # distances) to update the heap
             heappush(inertia, WeightedEdge(d, k, l))
+        A[k] = coord_col
+        # Clear A[i] and A[j] to save memory
+        A[i] = A[j] = 0
+
+    # Separate leaves in children (empty lists up to now)
+    n_leaves = n_samples
+    children = np.array(children)  # return numpy array for efficient caching
+
+    return children, n_components, n_leaves, parent
+
+
+def min_span_tree(X, connectivity=None, n_components=None, copy=True,
+              n_clusters=None):
+    """Single linkage agglomerative clustering based on a Feature matrix.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        feature matrix  representing n_samples samples to be clustered
+
+    connectivity : sparse matrix.
+        connectivity matrix. Defines for each sample the neigbhoring samples
+        following a given structure of the data. The matrix is assumed to
+        be symmetric and only the upper triangular half is used.
+        Default is None, i.e, the Ward algorithm is unstructured.
+
+    n_components : int (optional)
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+
+    copy : bool (optional)
+        Make a copy of connectivity or work inplace. If connectivity
+        is not of LIL type there will be a copy in any case.
+
+    n_clusters : int (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. In this case, the
+        complete tree is not computed, thus the 'children' output is of
+        limited use, and the 'parents' output should rather be used.
+        This option is valid only when specifying a connectivity matrix.
+
+    Returns
+    -------
+    children : 2D array, shape (n_nodes, 2)
+        list of the children of each nodes.
+        Leaves of the tree have empty list of children.
+
+    n_components : sparse matrix.
+        The number of connected components in the graph.
+
+    n_leaves : int
+        The number of leaves in the tree
+
+    parents : 1D array, shape (n_nodes, ) or None
+        The parent of each node. Only returned when a connectivity matrix
+        is specified, elsewhere 'None' is returned.
+    """
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = np.reshape(X, (-1, 1))
+    n_samples, n_features = X.shape
+
+    if connectivity is None:
+        if n_clusters is not None:
+            warnings.warn('Early stopping is implemented only for '
+                             'structured clustering (i.e. with '
+                             'explicit connectivity.', stacklevel=2)
+        out = scipy_func(X)
+        children_ = out[:, :2].astype(np.int)
+        return children_, 1, n_samples, None
+
+    # Compute the number of nodes
+    if n_components is None:
+        n_components, labels = cs_graph_components(connectivity)
+
+    # We need a coo version of the connectivity to compute distances
+    if not sparse.isspmatrix(connectivity):
+        if copy:
+            connectivity = connectivity.copy()
+        # Put the diagonal to zero
+        connectivity.flat[::n_samples + 1] = 0
+        connectivity = sparse.coo_matrix(connectivity)
+    else:
+        connectivity = connectivity.tocoo(copy=copy)
+        # Put the diagonal to zero
+        diag_mask = (connectivity.row != connectivity.col)
+        connectivity.row = connectivity.row[diag_mask]
+        connectivity.col = connectivity.col[diag_mask]
+        connectivity.data = connectivity.data[diag_mask]
+        del diag_mask
+    distances = X[connectivity.row] - X[connectivity.col]
+    distances **= 2
+    connectivity.data = distances.sum(axis=-1)
+    del distances
+
+    connectivity = connectivity.tolil()
+
+    if n_components > 1:
+        warnings.warn("the number of connected components of the"
+                      " connectivity matrix is %d > 1. Completing it to avoid"
+                      " stopping the tree early."
+                      % n_components)
+        # XXX: should silence the SparseEfficiencyWarning
+        # XXX: should retrieve the fixed indices, to complete the
+        # distances matrix
+        connectivity = _fix_connectivity(X, connectivity,
+                                            n_components, labels)
+        n_components = 1
+
+    if n_clusters is None:
+        n_nodes = 2 * n_samples - n_components
+    else:
+        assert n_clusters <= n_samples
+        n_nodes = 2 * n_samples - n_clusters
+
+    if (connectivity.shape[0] != n_samples or
+        connectivity.shape[1] != n_samples):
+        raise ValueError('Wrong shape for connectivity matrix: %s '
+                         'when X is %s' % (connectivity.shape, X.shape))
+
+    # create inertia heap and connection matrix
+    A = np.empty(n_nodes, dtype=object)
+
+    # XXX: we probably don't need a LIL anymore, but a CSR would do
+    for ind, (data, row)  in enumerate(zip(connectivity.data,
+                                           connectivity.rows)):
+        A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
+                        np.asarray(data, dtype=np.float64))
+        # We keep only the upper triangular for the heap
+        # Generator expressions are faster than arrays on the following
+    del connectivity
+
+    # prepare the main fields
+    parent = np.arange(n_nodes, dtype=np.int)
+    used_node = np.ones(n_nodes, dtype=np.int32)
+    children = []
+
+    # Should this be a deque?
+    available_nodes = range(n_samples)
+
+    # recursive merge loop
+    for k in xrange(n_samples, n_nodes):
+        while True:
+            i = available_nodes.pop(0)
+            if used_node[i]:
+                break
+        j, value = argmin(A[i])
+        while not used_node[j]:
+            # XXX: would be faster to maitain a table of heads
+            print "Go up parents", j
+            j = parent[j]
+        parent[i] = parent[j] = k
+        available_nodes.append(k)
+        children.append((i, j))
+        used_node[i] = used_node[j] = False
+
+        # update the structure matrix A
+        coord_col = min_merge(A[i], A[j], used_node)
         A[k] = coord_col
         # Clear A[i] and A[j] to save memory
         A[i] = A[j] = 0

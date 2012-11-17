@@ -97,13 +97,27 @@ cdef class IntFloatDict:
 
 
 ###############################################################################
+# operation on dict
+
+def argmin(IntFloatDict d):
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = d.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = d.my_map.end()
+    cdef ITYPE_t min_key
+    cdef DTYPE_t min_value = np.inf
+    while it != end:
+        if deref(it).second < min_value:
+            min_value = deref(it).second
+            min_key = deref(it).first
+        inc(it)
+    return min_key, min_value
+
+###############################################################################
 # merge strategies
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def min_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
+              np.ndarray[ITYPE_t, ndim=1] mask):
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
