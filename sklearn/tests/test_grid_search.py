@@ -17,8 +17,8 @@ from sklearn.utils.testing import assert_array_equal
 from scipy.stats import distributions
 
 from sklearn.base import BaseEstimator
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.datasets.samples_generator import make_classification, make_blobs
+from sklearn.grid_search import GridSearchCV, RandomizedSearchCV, ParamSampler
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score, precision_score
@@ -86,7 +86,8 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
+        assert_true(grid_search.estimator_scores_[i][0]
+                    == {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)
 
@@ -296,6 +297,19 @@ def test_bad_estimator():
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   score_func=adjusted_rand_score)
+
+
+def test_param_sampler():
+    # test basic properties of param sampler
+    param_distributions = {"kernel": ["rbf", "linear"],
+                           "C": distributions.uniform(0, 1)}
+    sampler = ParamSampler(param_distributions=param_distributions,
+                           n_iter=10, random_state=0)
+    samples = [x for x in sampler]
+    assert_equal(len(samples), 10)
+    for sample in samples:
+        assert_true(sample["kernel"] in ["rbf", "linear"])
+        assert_true(0 <= sample["C"] <= 1)
 
 
 def test_randomized_search():
