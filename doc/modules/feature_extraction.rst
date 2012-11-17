@@ -134,9 +134,12 @@ This undoes some of the collision handling,
 but allows the output to be passed to estimators like :class:`MultinomialNB`
 or ``chi2`` feature selectors that expect non-negative inputs.
 
-:class:`FeatureHasher` accepts either ``(feature, value)`` or strings,
+:class:`FeatureHasher` accepts either mappings
+(like Python's ``dict`` and its variants in the ``collections`` module),
+``(feature, value)`` pairs, or strings,
 depending on the constructor parameter ``input_type``.
-Single strings have an implicit value of 1.
+Mapping are treated as lists of ``(feature, value)`` pairs,
+while single strings have an implicit value of 1.
 If a feature occurs multiple times in a sample, the values will be summed.
 Feature hashing can be employed in document classification,
 but unlike :class:`text.CountVectorizer`,
@@ -166,11 +169,16 @@ can be constructed using::
 
   raw_X = (token_features(tok, pos_tagger(tok)) for tok in corpus)
 
+and fed to a hasher with::
+
+  hasher = FeatureHasher(input_type=string)
+  X = hasher.transform(raw_X)
+
+to get a ``scipy.sparse`` matrix ``X``.
+
 Note the use of a generator comprehension,
 which introduces laziness into the feature extraction:
-tokens are only processed on demand from the :class:`FeatureHasher`
-(which should be given the constructor parameter ``input_type=strings``
-for this particular example).
+tokens are only processed on demand from the hasher.
 
 
 .. topic:: References:

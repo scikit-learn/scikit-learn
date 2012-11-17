@@ -1,6 +1,7 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: 3-clause BSD.
 
+import itertools
 import numbers
 
 import numpy as np
@@ -8,6 +9,11 @@ import scipy.sparse as sp
 
 from . import _hashing
 from ..base import BaseEstimator, TransformerMixin
+
+
+def _iteritems(d):
+    """Like d.iteritems, but accepts any collections.Mapping."""
+    return d.iteritems() if hasattr(d, "iteritems") else d.items()
 
 
 class FeatureHasher(BaseEstimator, TransformerMixin):
@@ -37,10 +43,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         as the dtype argument. Do not set this to bool, np.boolean or any
         unsigned integer type.
     input_type : string, optional
-        Either "pairs" (the default) to accept pairs of (feature_name, value)
-        where feature_name is a string to be hashed and value a number, or
-        "strings" to accept only feature names with an implicit value of 1.
-        The value's sign might be flipped (but see non_negative, below).
+        Either "dict" (the default) to accept dictionaries over
+        (feature_name, value); "pair" to accept pairs of (feature_name, value);
+        or "string" to accept single strings.
+        feature_name should be a string, while value should be a number.
+        In the case of "string", a value of 1 is implied.
+        The feature_name is hashed to find the appropriate column for the
+        feature. The value's sign might be flipped in the output (but see
+        non_negative, below).
     non_negative : boolean, optional
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
@@ -50,7 +60,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_features=(2 ** 20), input_type="pairs",
+    def __init__(self, n_features=(2 ** 20), input_type="dict",
                  dtype=np.float64, non_negative=False):
         self._validate_params(n_features, input_type)
 
@@ -69,9 +79,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif n_features < 1:
             raise ValueError("Invalid number of features (%d)." % n_features)
 
-        if input_type not in ("pairs", "strings"):
-            raise ValueError("input_type must be 'pairs' or 'strings', got %r."
-                             % input_type)
+        if input_type not in ("dict", "pair", "string"):
+            raise ValueError("input_type must be 'dict', 'pair' or 'string',"
+                             " got %r." % input_type)
 
     def fit(self, X=None, y=None):
         """No-op.
@@ -108,7 +118,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         raw_X = iter(raw_X)
-        if self.input_type == "strings":
+        if self.input_type == "dict":
+            raw_X = (_iteritems(d) for d in raw_X)
+        elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
             _hashing.transform(raw_X, self.n_features, self.dtype)

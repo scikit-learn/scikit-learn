@@ -6,7 +6,7 @@ anything useful with the extracted vectors. See the example scripts
 {document_classification_20newsgroups,clustering}.py for actual learning
 on text documents.
 
-A discrepancy between the number of tokens reported for DictVectorizer and
+A discrepancy between the number of terms reported for DictVectorizer and
 for FeatureHasher is to be expected due to hash collisions.
 """
 
@@ -49,9 +49,12 @@ def token_freqs(doc):
 
 categories = [
     'alt.atheism',
-    'talk.religion.misc',
     'comp.graphics',
+    'comp.sys.ibm.pc.hardware',
+    'misc.forsale',
+    'rec.autos',
     'sci.space',
+    'talk.religion.misc',
 ]
 # Uncomment the following line to use a larger set (11k+ documents)
 #categories=None
@@ -85,14 +88,14 @@ print()
 print("FeatureHasher on frequency dicts")
 t0 = time()
 hasher = FeatureHasher(n_features=n_features)
-X = hasher.transform(token_freqs(d).iteritems() for d in raw_data)
+X = hasher.transform(token_freqs(d) for d in raw_data)
 print("done in %fs" % (time() - t0))
 print("Found %d unique terms" % n_nonzero_columns(X))
 print()
 
 print("FeatureHasher on raw tokens")
 t0 = time()
-hasher = FeatureHasher(n_features=n_features, input_type="strings")
+hasher = FeatureHasher(n_features=n_features, input_type="string")
 X = hasher.transform(tokens(d) for d in raw_data)
 print("done in %fs" % (time() - t0))
 print("Found %d unique terms" % n_nonzero_columns(X))

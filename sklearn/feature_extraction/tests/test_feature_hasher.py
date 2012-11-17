@@ -8,6 +8,17 @@ from numpy.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_in
 
 
+def test_feature_hasher_dicts():
+    h = FeatureHasher()
+    assert_equal("dict", h.input_type)
+
+    raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
+    X1 = FeatureHasher().transform(raw_X)
+    X2 = FeatureHasher(input_type="pair").transform(d.iteritems()
+                                                    for d in raw_X)
+    assert_array_equal(X1.toarray(), X2.toarray())
+
+
 def test_feature_hasher_strings():
     raw_X = [[u"foo", "bar", "baz", "foo"],    # note: duplicate
              [u"bar", "baz", "quux"]]
@@ -17,7 +28,7 @@ def test_feature_hasher_strings():
 
         it = (x for x in raw_X)                 # iterable
 
-        h = FeatureHasher(n_features, non_negative=True, input_type="strings")
+        h = FeatureHasher(n_features, non_negative=True, input_type="string")
         X = h.transform(it)
 
         assert_equal(X.shape[0], len(raw_X))
@@ -33,7 +44,7 @@ def test_feature_hasher_strings():
 def test_feature_hasher_pairs():
     raw_X = (d.iteritems() for d in [{"foo": 1, "bar": 2},
                                      {"baz": 3, "quux": 4, "foo": -1}])
-    h = FeatureHasher(n_features=4096)
+    h = FeatureHasher(n_features=4096, input_type="pair")
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
@@ -45,7 +56,7 @@ def test_hash_empty_input():
     n_features = 16
     raw_X = [[], (), xrange(0)]
 
-    h = FeatureHasher(n_features=n_features, input_type="strings")
+    h = FeatureHasher(n_features=n_features, input_type="string")
     X = h.transform(raw_X)
 
     assert_array_equal(X.A, np.zeros((len(raw_X), n_features)))
@@ -59,8 +70,8 @@ def test_hasher_invalid_input():
 
     h = FeatureHasher(n_features=np.uint16(2**6))
     assert_raises(ValueError, h.transform, [])
-    assert_raises(TypeError, h.transform, [[5.5]])
-    assert_raises(TypeError, h.transform, [[None]])
+    assert_raises(Exception, h.transform, [[5.5]])
+    assert_raises(Exception, h.transform, [[None]])
 
 
 def test_hasher_set_params():
