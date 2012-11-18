@@ -453,6 +453,8 @@ From text
 
    grid_search.GridSearchCV
    grid_search.IterGrid
+   grid_search.ParamSampler
+   grid_search.RandomizedSearchCV
 
 
 .. _hmm_ref:

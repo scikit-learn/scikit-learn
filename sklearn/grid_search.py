@@ -93,6 +93,17 @@ class ParamSampler(object):
     params: dict of string to any
         **Yields** dictionaries mapping each estimator parameter to
         as sampled value.
+
+    Examples
+    --------
+    >>> from sklearn.grid_search import ParamSampler
+    >>> from scipy.stats.distributions import expon
+    >>> param_grid = {'a':[1, 2], 'b': expon()}
+    >>> list(ParamSampler(param_grid, n_iter=4))
+    ..  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    [{'a': ..., 'b': ...}, {'a': ..., 'b': ...},
+     {'a': ..., 'b': ...}, {'a': ..., 'b': ...}]
+
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
@@ -365,9 +376,9 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored.
 
     loss_func: callable, optional
-        function that takes 2 arguments and compares them in
+        Function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
-        if None is passed, the score of the estimator is maximized
+        if None is passed, the score of the estimator is maximized.
 
     score_func: callable, optional
         A function that takes 2 arguments and compares them in
@@ -375,10 +386,10 @@ class GridSearchCV(BaseSearchCV):
         If None is passed, the score of the estimator is maximized.
 
     fit_params : dict, optional
-        parameters to pass to the fit method
+        Parameters to pass to the fit method.
 
     n_jobs: int, optional
-        number of jobs to run in parallel (default 1)
+        Number of jobs to run in parallel (default 1).
 
     pre_dispatch: int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -408,9 +419,9 @@ class GridSearchCV(BaseSearchCV):
         sklearn.cross_validation module for the list of possible objects
 
     refit: boolean
-        refit the best estimator with the entire dataset.
+        Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
-        this GridSearch instance after fitting.
+        this GridSearchCV instance after fitting.
 
     verbose: integer
         Controls the verbosity: the higher, the more messages.
@@ -656,7 +667,120 @@ class RandomizedSearchCV(GridSearchCV):
 
 
 class RandomizedSearchCV(BaseSearchCV):
-    """Randomized search on hyper parameters."""
+    """Randomized search on hyper parameters.
+
+    RandomizedSearchCV implements a "fit" method and a "predict" method like
+    any classifier except that the parameters of the classifier
+    used to predict is optimized by cross-validation.
+
+    In constrast to GridSearchCV, not all parameter values are tried out,
+    but rather a sampled from using a given budget.
+
+    Parameters
+    ----------
+    estimator: object type that implements the "fit" and "predict" methods
+        A object of that type is instantiated for each parameter setting.
+
+    param_distribution: dict
+        Dictionary with parameters names (string) as keys and distributions
+        or lists of parameters to try. Distributions must provide a ``rvs``
+        method for sampling (such as those from scipy.stats.distributions).
+        If a list is given, it is sampled uniformly.
+
+    loss_func: callable, optional
+        function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediciton (small is good)
+        if None is passed, the score of the estimator is maximized
+
+    score_func: callable, optional
+        A function that takes 2 arguments and compares them in
+        order to evaluate the performance of prediction (high is good).
+        If None is passed, the score of the estimator is maximized.
+
+    fit_params : dict, optional
+        parameters to pass to the fit method
+
+    n_jobs: int, optional
+        number of jobs to run in parallel (default 1)
+
+    pre_dispatch: int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    iid: boolean, optional
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
+
+    cv : integer or crossvalidation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific crossvalidation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    refit: boolean
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this RandomizedSearchCV instance after fitting.
+
+    verbose: integer
+        Controls the verbosity: the higher, the more messages.
+
+
+    Attributes
+    ----------
+    `estimator_scores_` : dict of any to float
+        Contains scores for all parameter setting that were sampled
+        during ``fit``.
+
+    `best_estimator_` : estimator
+        Estimator that was choosen by search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
+
+    `best_score_` : float
+        Score of best_estimator on the left out data.
+
+    `best_params_` : dict
+        Parameter setting that gave the best results on the hold out data.
+
+    Notes
+    ------
+    The parameters selected are those that maximize the score of the left out
+    data, unless an explicit score_func is passed in which case it is used
+    instead. If a loss function loss_func is passed, it overrides the score
+    functions and is minimized.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    parameter setting(and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
+    `n_jobs`.
+
+    See Also
+    ---------
+    :class:`GridSearchCV`:
+        Does exhaustive search over a grid of parameters.
+
+    :class:`ParamSampler`:
+        A generator over parameter settins, constructed from
+        param_distributions.
+
+    """
 
     def __init__(self, estimator, param_distributions, n_iter=10,
             loss_func=None, score_func=None, fit_params=None, n_jobs=1,
