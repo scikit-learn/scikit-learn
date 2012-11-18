@@ -9,6 +9,8 @@ of an estimator.
 
 from itertools import product
 import time
+import inspect
+import warnings
 
 import numpy as np
 
@@ -18,6 +20,7 @@ from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import safe_mask, check_arrays
 from .utils.validation import _num_samples
+from .metrics import _score_obj_from_string, _score_obj_from_func
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -109,12 +112,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
         clf.fit(X_train, y_train, **fit_params)
-        if loss_func is not None:
-            y_pred = clf.predict(X_test)
-            this_score = -loss_func(y_test, y_pred)
-        elif score_func is not None:
-            y_pred = clf.predict(X_test)
-            this_score = score_func(y_test, y_pred)
+
+        if score_func is not None:
+            this_score = score_func(clf, X_test, y_test)
         else:
             this_score = clf.score(X_test, y_test)
     else:
@@ -181,15 +181,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored.
 
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediciton (small is good)
-        if None is passed, the score of the estimator is maximized
-
-    score_func: callable, optional
-        A function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (high is good).
-        If None is passed, the score of the estimator is maximized.
+    score_func: string or object, optional
+        Either one of ["zero-one", "f1", "auc"] for classification,
+        ["mse", "r2"] for regression or an object providing a
+        scoreing method.
 
     fit_params : dict, optional
         parameters to pass to the fit method
@@ -269,8 +264,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     ------
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score_func is passed in which case it is used
-    instead. If a loss function loss_func is passed, it overrides the score
-    functions and is minimized.
+    instead.
 
     If `n_jobs` was set to a value higher than one, the data is copied for each
     point in the grid (and not `n_jobs` times). This is done for efficiency
@@ -362,6 +356,34 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             self._set_methods()
             return self
 
+        # parse score_func:
+        score_func = self.score_func
+
+        if self.loss_func is not None:
+            warnings.warn("Passing a loss function is "
+                          "deprecated and will be removed in 0.15. "
+                          "Either use strings or score objects.")
+            score_func = _score_obj_from_func(self.loss_func,
+                                        greater_is_better=False)()
+        elif isinstance(score_func, str):  # FIXME BaseString
+            score_func = _score_obj_from_string(score_func)
+        elif callable(score_func):
+            # Check if "old style" score function or new scoring object.
+            # Old style get (y, y_pred), new style get (estimator, X, y).
+            # XXX we could get rid of this by renaming the new score_func.
+            arg_spec = inspect.getargspec(score_func)
+            if "estimator" not in arg_spec.args:
+                warnings.warn("Passing function as ``score_func`` is "
+                              "deprecated and will be removed in 0.15. "
+                              "Either use strings or score objects.")
+                score_func = _score_obj_from_func(score_func)()
+        elif score_func is None:
+            pass
+        else:
+            raise ValueError("Invalid score_func. "
+                             "Expected string or callable, got %s."
+                             % repr(self.score_func))
+
         pre_dispatch = self.pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                        pre_dispatch=pre_dispatch)(
@@ -398,9 +420,17 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
-        best_score = -np.inf
+        greater_is_better = True
+        if score_func is not None:
+            greater_is_better = score_func.greater_is_better
+        if greater_is_better:
+            best_score = -np.inf
+        else:
+            best_score = np.inf
+
         for score, params in scores:
-            if score > best_score:
+            if ((score > best_score and greater_is_better)
+               or (score < best_score and not greater_is_better)):
                 best_score = score
                 best_params = params
 
