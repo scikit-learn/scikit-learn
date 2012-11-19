@@ -302,13 +302,13 @@ Spectral Embedding
 ====================
 
 Spectral Embedding (also known as Laplacian Eigenmap) is one method
-to calculate nonlinear embedding.  It revolves around a spectral 
-decomposition over graph laplacian. The graph thus generated can be 
-considered as a discrete approximation of the low dimensional manifold 
-in the high dimensional space. Minimization of a cost function based 
-on the graph ensures that points close to each other on the manifold 
-are mapped close to each other in the low dimensional space, preserving 
-local distances. Spectral embedding can be  performed with 
+to calculate nonlinear embedding. It finds low dimensional representation 
+of the data using spectral decomposition over graph laplacian. 
+The graph generated can be considered as a discrete approximation of the 
+low dimensional manifold in the high dimensional space. Minimization of a 
+cost function based on the graph ensures that points close to each other on 
+the manifold are mapped close to each other in the low dimensional space, 
+preserving local distances. Spectral embedding can be  performed with 
 function :func:`spectral_embedding` or its object-oriented counterpart
 :class:`SpectralEmbedding`.
 
@@ -317,11 +317,11 @@ Complexity
 
 The Spectral Embedding algorithm comprises three stages:
 
-1. **Affinity Graph Construction**. Construct the raw input data into
-   graph representation using affinity(adjacency) matrix.
+1. **Weighted Graph Construction**. Transform the raw input data into
+   graph representation using affinity(adjacency) matrix representation.
 
-2. **Graph Laplacian Construction**. Graph laplacian
-   is constructed as :math:`L = D - A` for unnormalized case and 
+2. **Graph Laplacian Construction**. unnormalized Graph laplacian
+   is constructed as :math:`L = D - A` for and normalized one as
    :math:`L = D^{-\frac{1}{2}} (D - A) D^{-\frac{1}{2}}`.  
 
 3. **Partial Eigenvalue Decomposition**. Eigenvalue decomposition is 
@@ -338,7 +338,8 @@ The overall complexity of spectral embedding is
 .. topic:: References:
 
    * `"Laplacian Eigenmaps for Dimensionality Reduction
-     and Data Representation" <http://www.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     and Data Representation" 
+     <http://www.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
 
