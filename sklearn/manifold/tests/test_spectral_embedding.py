@@ -3,6 +3,7 @@ from nose.tools import assert_equal
 
 from scipy import sparse
 from scipy.sparse import csr_matrix
+from scipy.sparse import csc_matrix
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
@@ -176,6 +177,8 @@ def test_connectivity(seed=36):
                       [0, 0, 1, 0, 1],
                       [0, 0, 0, 1, 0]])
     assert_equal(_graph_is_connected(graph), False)
+    assert_equal(_graph_is_connected(csr_matrix(graph)), False)
+    assert_equal(_graph_is_connected(csc_matrix(graph)), False)
     graph = np.array([[0, 1, 0, 0, 0], 
                       [1, 0, 1, 0, 0],
                       [0, 1, 0, 1, 0],
