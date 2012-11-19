@@ -187,7 +187,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    Spectral Embedding was intoduced in:
+
     - A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
