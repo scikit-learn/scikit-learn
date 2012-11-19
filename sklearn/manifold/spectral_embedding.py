@@ -256,6 +256,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
             embedding = diffusion_map.T[1:n_components + 1] * dd
             if embedding.shape[0] == 1:
                 raise ValueError
+
     return embedding.T
 
 

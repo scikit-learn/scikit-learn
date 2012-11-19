@@ -4,6 +4,7 @@ from nose.tools import assert_equal
 from scipy import sparse
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
+
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
@@ -43,6 +44,7 @@ def test_spectral_embedding_two_components(seed=36):
     # second component
     affinity[n_sample::,
              n_sample::] = np.abs(random_state.randn(n_sample, n_sample)) + 2
+
     # connection
     affinity[0, n_sample + 1] = 1
     affinity[n_sample + 1, 0] = 1
