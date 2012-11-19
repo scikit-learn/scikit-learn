@@ -10,6 +10,7 @@ from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
 
 from sklearn.manifold.spectral_embedding import SpectralEmbedding
+from sklearn.manifold.spectral_embedding import _graph_is_connected
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import normalized_mutual_info_score
@@ -41,11 +42,11 @@ def test_spectral_embedding_two_components(seed=36):
     # second component
     affinity[n_sample::,
              n_sample::] = np.abs(random_state.randn(n_sample, n_sample)) + 2
-    affinity = 0.5 * (affinity + affinity.T)
     # connection
     affinity[0, n_sample + 1] = 1
     affinity[n_sample + 1, 0] = 1
     affinity.flat[::2 * n_sample + 1] = 0
+    affinity = 0.5 * (affinity + affinity.T)
 
     true_label = np.zeros(shape=2 * n_sample)
     true_label[0:n_sample] = 1
@@ -165,3 +166,19 @@ def test_spectral_embedding_unknown_affinity(seed=36):
     se_precomp = SpectralEmbedding(n_components=1, affinity="<unknown>",
                                    random_state=np.random.RandomState(seed))
     assert_raises(ValueError, se_precomp.fit, S)
+
+
+def test_connectivity(seed=36):
+    """Test that graph connectivity test works as expected"""
+    graph = np.array([[0, 0, 0, 0, 0], 
+                      [0, 0, 1, 0, 0],
+                      [0, 1, 0, 1, 0],
+                      [0, 0, 1, 0, 1],
+                      [0, 0, 0, 1, 0]])
+    assert_equal(_graph_is_connected(graph), False)
+    graph = np.array([[0, 1, 0, 0, 0], 
+                      [1, 0, 1, 0, 0],
+                      [0, 1, 0, 1, 0],
+                      [0, 0, 1, 0, 1],
+                      [0, 0, 0, 1, 0]])
+    assert_equal(_graph_is_connected(graph), True)
