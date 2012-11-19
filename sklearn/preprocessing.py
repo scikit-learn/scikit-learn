@@ -1156,15 +1156,23 @@ def add_dummy_feature(X, value=1.0):
     shape = (n_samples, n_features + 1)
     if sp.issparse(X):
         if sp.isspmatrix_coo(X):
+            # Shift columns to the right.
             col = X.col + 1
+            # Column indices of dummy feature are 0 everywhere.
             col = np.concatenate((np.zeros(n_samples), col))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
             row = np.concatenate((np.arange(n_samples), X.row))
+            # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.ones(n_samples) * value, X.data))
             return sp.coo_matrix((data, (row, col)), shape)
         elif sp.isspmatrix_csc(X):
+            # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
+            # indptr[0] must be 0.
             indptr = np.concatenate((np.array([0]), indptr))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
             indices = np.concatenate((np.arange(n_samples), X.indices))
+            # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.ones(n_samples) * value, X.data))
             return sp.csc_matrix((data, indices, indptr), shape)
         else:
