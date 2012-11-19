@@ -612,12 +612,14 @@ def test_add_dummy_feature():
 def test_add_dummy_feature_coo():
     X = sp.coo_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
+    assert_true(sp.isspmatrix_coo(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csc():
     X = sp.csc_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
+    assert_true(sp.isspmatrix_csc(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
