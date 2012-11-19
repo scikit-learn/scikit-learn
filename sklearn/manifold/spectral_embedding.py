@@ -27,12 +27,14 @@ def _graph_connected_component(graph, node_id):
     n_node = graph.shape[0]
     if sparse.isspmatrix(graph):
         if graph.format != "csr":
-            graph = graph.to_csr()
+            graph = graph.tocsr()
         for i in range(n_node):
             last_num_component = connected_components.sum()
             curr_nodes = np.where(connected_components)[0]
             for j in curr_nodes:
-                connected_components[graph.indices[graph.indptr[j]:graph.indptr[j+1]]] = True
+                connected_components[graph.indices[
+                                     graph.indptr[j]:graph.indptr[j + 1]]
+                                     ] = True
             if last_num_component >= len(connected_components):
                 break
     else:
@@ -160,8 +162,10 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
 
     n_nodes = adjacency.shape[0]
     # Check that the matrices given is symmetric
-    if ((not sparse.isspmatrix(adjacency) and not np.all((adjacency - adjacency.T) < 1e-10)) or 
-        (sparse.isspmatrix(adjacency) and (adjacency - adjacency.T).nnz>0)):
+    if ((not sparse.isspmatrix(adjacency) and
+         not np.all((adjacency - adjacency.T) < 1e-10)) or
+        (sparse.isspmatrix(adjacency) and
+         (adjacency - adjacency.T).nnz > 0)):
         warnings.warn("Graph adjacency matrix should be symmetric. "
                       "Converted to be symmetric by average with its "
                       "transpose.")
@@ -184,7 +188,8 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
              or n_nodes < 5 * n_components)):
         # lobpcg used with eig_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
-        # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen/lobpcg/lobpcg.py#L237
+        # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
+        # /lobpcg/lobpcg.py#L237
         # or matlab:
         # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
         laplacian = _set_diag(laplacian, 0)
@@ -204,10 +209,10 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
-            lambdas, diffusion_map = eigsh(-laplacian, k=n_components+1,
-                                        sigma=1.0, which='LM',
-                                        tol=eig_tol)
-            embedding = diffusion_map.T[n_components-1::-1] * dd
+            lambdas, diffusion_map = eigsh(-laplacian, k=n_components + 1,
+                                           sigma=1.0, which='LM',
+                                           tol=eig_tol)
+            embedding = diffusion_map.T[n_components - 1::-1] * dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -219,7 +224,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         ml = smoothed_aggregation_solver(laplacian.tocsr())
         M = ml.aspreconditioner()
-        X = random_state.rand(laplacian.shape[0], n_components+1)
+        X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
@@ -237,7 +242,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.todense()
             lambdas, diffusion_map = symeig(laplacian)
-            embedding = diffusion_map.T[1:n_components+1] * dd
+            embedding = diffusion_map.T[1:n_components + 1] * dd
         else:
             # lobpcg needs native floats
             laplacian = laplacian.astype(np.float)
@@ -248,7 +253,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[1:n_components+1] * dd
+            embedding = diffusion_map.T[1:n_components + 1] * dd
             if embedding.shape[0] == 1:
                 raise ValueError
     return embedding.T
