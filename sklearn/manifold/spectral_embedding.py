@@ -19,6 +19,38 @@ from scipy import sparse
 from scipy.sparse.linalg import lobpcg
 
 
+def _graph_connected_component(graph, node_id):
+    """ Return the connected components of a certain node
+    """
+    connected_components = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    connected_components[node_id] = True
+    n_node = graph.shape[0]
+    if sparse.isspmatrix(graph):
+        if graph.format != "csr":
+            graph = graph.to_csr()
+        for i in range(n_node):
+            last_num_component = connected_components.sum()
+            curr_nodes = np.where(connected_components)[0]
+            for j in curr_nodes:
+                connected_components[graph.indices[graph.indptr[j]:graph.indptr[j+1]]] = True
+            if last_num_component >= len(connected_components):
+                break
+    else:
+        for i in range(n_node):
+            last_num_component = connected_components.sum()
+            _, node_to_add = np.where(graph[connected_components] != 0)
+            connected_components[node_to_add] = True
+            if last_num_component >= len(connected_components):
+                break
+    return connected_components
+
+
+def _graph_is_connected(graph):
+    """ Return whether the graph is connected (True) or Not (False)
+    """
+    return np.all(_graph_connected_component(graph, 0))
+
+
 def _set_diag(laplacian, value):
     """Set the diagonal of the laplacian matrix and convert it to a
     sparse format well suited for eigenvalue decomposition
@@ -127,7 +159,18 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
-    # XXX: Should we check that the matrices given is symmetric
+    # Check that the matrices given is symmetric
+    if ((not sparse.isspmatrix(adjacency) and not np.all((adjacency - adjacency.T) < 1e-10)) or 
+        (sparse.isspmatrix(adjacency) and (adjacency - adjacency.T).nnz>0)):
+        warnings.warn("Graph adjacency matrix should be symmetric. "
+                      "Converted to be symmetric by average with its "
+                      "transpose.")
+    adjacency = .5 * (adjacency + adjacency.T)
+
+    if not _graph_is_connected(adjacency):
+        warnings.warn("Graph is not fully connected, spectral embedding"
+                      "may not works as expected.")
+
     if eig_solver is None:
         eig_solver = 'arpack'
     elif not eig_solver in ('arpack', 'lobpcg', 'amg'):
