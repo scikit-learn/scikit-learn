@@ -251,7 +251,7 @@ Samples generator
    :template: class.rst
 
    ensemble.RandomForestClassifier
-   ensemble.RandomForestEmbedding
+   ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
@@ -281,6 +281,7 @@ Samples generator
    :template: class.rst
 
    feature_extraction.DictVectorizer
+   feature_extraction.FeatureHasher
 
 From images
 -----------

@@ -107,24 +107,43 @@ This can be achieved using :class:`MinMaxScaler`.
 The motivation to use this scaling include robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
 
-The formula used to scale features between zero and one is::
+Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
 
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  ...
   >>> min_max_scaler = preprocessing.MinMaxScaler()
-  >>> X_zero_one = min_max_scaler.fit_transform(X)
-  >>> X_zero_one
+  >>> X_train_minmax = min_max_scaler.fit_transform(X_train)
+  >>> X_train_minmax
   array([[ 0.5       ,  0.        ,  1.        ],
          [ 1.        ,  0.5       ,  0.33333333],
          [ 0.        ,  1.        ,  0.        ]])
 
-  >>> X_new = np.array([[ -3., -1.,  4.]])
-  >>> min_max_scaler.transform(X_new)
+The same instance of the transformer can then be applied to some new test data
+unseen during the fit call: the same scaling and shifting operations will be
+applied to be consistent with the transformation performed on the train data::
+
+  >>> X_test = np.array([[ -3., -1.,  4.]])
+  >>> X_test_minmax = min_max_scaler.transform(X_test)
+  >>> X_test_minmax
   array([[-1.5       ,  0.        ,  1.66666667]])
 
+It is possible to introspect the scaler attributes to find about the exact
+nature of the transformation learned on the training data::
 
-If :class:`MinMaxScaler` is given ``feature_range=(min, max)`` the full
-formula is ::
+  >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
+  array([ 0.5       ,  0.5       ,  0.33...])
 
-    X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0)) X_scaled = X_std / (max - min) + min
+  >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
+  array([ 0.        ,  0.5       ,  0.33...])
+
+If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
+full formula is::
+
+    X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+
+    X_scaled = X_std / (max - min) + min
 
 .. topic:: References:
 

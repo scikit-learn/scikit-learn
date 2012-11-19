@@ -97,7 +97,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.eigen_solver = eigen_solver
         self.tol = tol
         self.max_iter = max_iter
-        self.centerer = KernelCenterer()
+        self._centerer = KernelCenterer()
 
     @property
     def _pairwise(self):
@@ -118,7 +118,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     def _fit_transform(self, K):
         """ Fit's using kernel K"""
         # center kernel
-        K = self.centerer.fit_transform(K)
+        K = self._centerer.fit_transform(K)
 
         if self.n_components is None:
             n_components = K.shape[0]
@@ -223,7 +223,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        K = self.centerer.transform(self._get_kernel(X, self.X_fit_))
+        K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
         return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
 
     def inverse_transform(self, X):
