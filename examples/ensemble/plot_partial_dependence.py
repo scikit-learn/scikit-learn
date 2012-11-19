@@ -76,58 +76,64 @@ print
 fig = pl.figure()
 sub_plots = []
 
-for i, fx in enumerate([0, 5, 1, 2]):
-    name = names[fx]
-    target_feature = np.array([fx], dtype=np.int32)
+features = [0, 5, 1, 2, (1, 5)]
 
-    ax = pl.subplot(2, 2, i + 1)
+gradient_boosting.partial_dependence_plots(clf, X_train, features,
+                                           feature_names=names, n_jobs=3,
+                                           verbose=3)
 
-    # plot partial dependence
-    pdp, (axis,) = gradient_boosting.partial_dependence(clf, target_feature,
-                                                        X=X_train)
-    ax.plot(axis, pdp.ravel(), 'g-')
+## for i, fx in enumerate([0, 5, 1, 2]):
+##     name = names[fx]
+##     target_feature = np.array([fx], dtype=np.int32)
 
-    # plot data deciles
-    deciles = mquantiles(X_train[:, fx], prob=np.arange(0.1, 1.0, 0.1))
-    trans = matplotlib.transforms.blended_transform_factory(ax.transData,
-                                                            ax.transAxes)
-    ax.vlines(deciles, 0.0, 0.05, transform=trans, color='red')
+##     ax = pl.subplot(2, 2, i + 1)
 
-    pl.xlabel(name)
-    pl.ylabel('Partial Dependence')
+##     # plot partial dependence
+##     pdp, (axis,) = gradient_boosting.partial_dependence(clf, target_feature,
+##                                                         X=X_train)
+##     ax.plot(axis, pdp.ravel(), 'g-')
 
-    sub_plots.append(ax)
+##     # plot data deciles
+##     deciles = mquantiles(X_train[:, fx], prob=np.arange(0.1, 1.0, 0.1))
+##     trans = matplotlib.transforms.blended_transform_factory(ax.transData,
+##                                                             ax.transAxes)
+##     ax.vlines(deciles, 0.0, 0.05, transform=trans, color='red')
 
-# set common ylim
-y_min = min((ax.get_ylim()[0] for ax in sub_plots))
-y_max = max((ax.get_ylim()[1] for ax in sub_plots))
-for ax in sub_plots:
-    ax.set_ylim((y_min, y_max))
+##     pl.xlabel(name)
+##     pl.ylabel('Partial Dependence')
 
-fig.suptitle('Partial dependence of house value on nonlocation features ' \
-             'for the California housing dataset')
+##     sub_plots.append(ax)
 
-print('_' * 80)
-print('Two-way partial dependence plot')
-print
-fig = pl.figure()
+## # set common ylim
+## y_min = min((ax.get_ylim()[0] for ax in sub_plots))
+## y_max = max((ax.get_ylim()[1] for ax in sub_plots))
+## for ax in sub_plots:
+##     ax.set_ylim((y_min, y_max))
+
+## fig.suptitle('Partial dependence of house value on nonlocation features ' \
+##              'for the California housing dataset')
+
+## print('_' * 80)
+## print('Two-way partial dependence plot')
+## print
+## fig = pl.figure()
 
 
-target_feature = np.array([1, 5], dtype=np.int32)
-pdp, (x_axis, y_axis) = gradient_boosting.partial_dependence(clf,
-                                                             target_feature,
-                                                             X=X_train,
-                                                             grid_resolution=50)
-XX, YY = np.meshgrid(x_axis, y_axis)
-Z = pdp.T.reshape(XX.shape).T
-ax = Axes3D(fig)
-surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=pl.cm.BuPu)
-ax.set_xlabel(names[target_feature[0]])
-ax.set_ylabel(names[target_feature[1]])
-ax.set_zlabel('Partial dependence')
-#  pretty init view
-ax.view_init(elev=22, azim=122)
-pl.colorbar(surf)
-pl.suptitle('Partial dependence of house value on median age and ' \
-            'average occupancy')
-pl.show()
+## target_feature = np.array([1, 5], dtype=np.int32)
+## pdp, (x_axis, y_axis) = gradient_boosting.partial_dependence(clf,
+##                                                              target_feature,
+##                                                              X=X_train,
+##                                                              grid_resolution=50)
+## XX, YY = np.meshgrid(x_axis, y_axis)
+## Z = pdp.T.reshape(XX.shape).T
+## ax = Axes3D(fig)
+## surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=pl.cm.BuPu)
+## ax.set_xlabel(names[target_feature[0]])
+## ax.set_ylabel(names[target_feature[1]])
+## ax.set_zlabel('Partial dependence')
+## #  pretty init view
+## ax.view_init(elev=22, azim=122)
+## pl.colorbar(surf)
+## pl.suptitle('Partial dependence of house value on median age and ' \
+##             'average occupancy')
+## pl.show()
