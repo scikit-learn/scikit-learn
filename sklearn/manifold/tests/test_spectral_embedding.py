@@ -54,6 +54,7 @@ def test_spectral_embedding_two_components(seed=36):
     embedded_corrdinate = np.squeeze(se_precomp.fit_transform(affinity))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_corrdinate < 0, dtype="float")
+    print affinity, true_label, label_, embedded_corrdinate
     assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
 
 
@@ -97,10 +98,26 @@ def test_spectral_embedding_amg_solver(seed=36):
     """Test spectral embedding with amg solver"""
     gamma = 0.9
     se_amg = SpectralEmbedding(n_components=3, affinity="rbf",
-                               gamma=gamma, eigen_solver="amg",
+                               gamma=gamma, eig_solver="amg",
                                random_state=np.random.RandomState(seed))
     se_arpack = SpectralEmbedding(n_components=3, affinity="rbf",
-                                  gamma=gamma, eigen_solver="arpack",
+                                  gamma=gamma, eig_solver="arpack",
+                                  random_state=np.random.RandomState(seed))
+    embed_amg = se_amg.fit_transform(S)
+    embed_arpack = se_arpack.fit_transform(S)
+    assert_array_almost_equal(
+        se_amg.affinity_matrix_, se_arpack.affinity_matrix_)
+    assert_array_almost_equal(np.abs(embed_amg), np.abs(embed_arpack), 2)
+
+
+def test_spectral_embedding_lobpcg_solver(seed=36):
+    """Test spectral embedding with amg solver"""
+    gamma = 0.9
+    se_amg = SpectralEmbedding(n_components=3, affinity="rbf",
+                               gamma=gamma, eig_solver="amg",
+                               random_state=np.random.RandomState(seed))
+    se_arpack = SpectralEmbedding(n_components=3, affinity="rbf",
+                                  gamma=gamma, eig_solver="lobpcg",
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
@@ -141,7 +158,7 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
 
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed),
-                                   eigen_solver="<unknown>")
+                                   eig_solver="<unknown>")
     assert_raises(ValueError, se_precomp.fit, S)
 
 
