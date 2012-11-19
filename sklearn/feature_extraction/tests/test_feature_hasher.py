@@ -9,13 +9,13 @@ from sklearn.utils.testing import assert_in
 
 
 def test_feature_hasher_dicts():
-    h = FeatureHasher()
+    h = FeatureHasher(n_features=16)
     assert_equal("dict", h.input_type)
 
     raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
-    X1 = FeatureHasher().transform(raw_X)
-    X2 = FeatureHasher(input_type="pair").transform(d.iteritems()
-                                                    for d in raw_X)
+    X1 = FeatureHasher(n_features=16).transform(raw_X)
+    gen = (d.iteritems() for d in raw_X)
+    X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
     assert_array_equal(X1.toarray(), X2.toarray())
 
 
@@ -44,7 +44,7 @@ def test_feature_hasher_strings():
 def test_feature_hasher_pairs():
     raw_X = (d.iteritems() for d in [{"foo": 1, "bar": 2},
                                      {"baz": 3, "quux": 4, "foo": -1}])
-    h = FeatureHasher(n_features=4096, input_type="pair")
+    h = FeatureHasher(n_features=16, input_type="pair")
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
