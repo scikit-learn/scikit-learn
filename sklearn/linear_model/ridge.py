@@ -728,6 +728,77 @@ class _RidgeGCV(LinearModel):
         return self.alpha_
 
 
+def _make_alpha_grid(alpha_min, alpha_max, num_steps, logscale):
+
+    if logscale:
+        alpha_min, alpha_max = map(np.log, (alpha_min, alpha_max))
+
+    steps = np.linspace(0., 1., num_steps, endpoint=True)[:, np.newaxis]
+
+    alphas = alpha_min + (alpha_max - alpha_min) * steps
+
+    if logscale:
+        alphas = np.exp(alphas)
+
+    return alphas
+
+
+def _multi_r2_score(y_true, y_pred):
+    pass
+
+
+class _RidgeGridCV(LinearModel):
+
+    class _MultiRidge(LinearModel):
+        def __init__(self, alphas, solver='svd', score_func=None):
+            self.alphas = alphas
+            self.solver = solver
+            self.score_func = score_func or _multi_r2_score
+
+        def fit(self, X, y):
+            self.coef_ = ridge_regression(X, y,
+                                          self.alphas, solver=self.solver)
+            return self
+
+        def predict(self, X):
+            return np.dot(X, self.coef_.reshape(-1, X.shape[1]).T).T.reshape(
+                list(self.coef_.shape[:-1]) + [X.shape[0]])
+
+        def score(self, X, y):
+            return self.score_func(y, self.predict(X))
+
+    def __init__(self, alpha_min=1e-3, alpha_max=1e8, n_grid_points=5,
+                 n_grid_refinements=2, logscale=True, fit_intercept=True,
+                 score_func=None, cv=None, solver='svd'):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.n_grid_points = n_grid_points
+        self.n_grid_refinements = n_grid_refinements
+        self.logscale = logscale
+        self.fit_intercept = fit_intercept
+        self.score_func = score_func
+        self.cv = cv
+        self.solver = solver
+
+    def fit(self, X, y):
+
+        alpha_min = np.atleast_2d(self.alpha_min)
+        alpha_max = np.atleast_2d(self.alpha_max)
+
+        # Broadcast to same shape
+        alpha_min = (alpha_min + alpha_max) - alpha_max
+        alpha_max = (alpha_max - alpha_min) + alpha_max
+
+        self.alphas = _make_alpha_grid(alpha_min, alpha_max,
+                                       self.n_grid_points, self.logscale)
+
+        for i in range(self.n_grid_refinements):
+            self.coefs = ridge_regression(X, y,
+                                          self.alphas, solver=self.solver)
+
+            
+
+
 class _BaseRidgeCV(LinearModel):
 
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
