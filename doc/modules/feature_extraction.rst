@@ -180,12 +180,27 @@ Note the use of a generator comprehension,
 which introduces laziness into the feature extraction:
 tokens are only processed on demand from the hasher.
 
+Implementation details
+----------------------
+
+:class:`FeatureHasher` uses the signed 32-bit variant of Murmurhash3.
+As a result (and because of limitations in ``scipy.sparse``),
+the maximum number of features supported is currently :math:`2^{31} - 1`.
+
+The original formulation of the hashing trick by Weinberger et al.
+used two separate hash functions :math:`h` and :math:`\xi`
+to determine the column index and sign of a feature, respectively.
+The present implementation works under the assumption
+that the sign bit of MurmurHash3 is independent of its other bits.
+
 
 .. topic:: References:
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+
+ * `MurmurHash3 <http://code.google.com/p/smhasher/wiki/MurmurHash3>`.
 
 
 .. _text_feature_extraction:
