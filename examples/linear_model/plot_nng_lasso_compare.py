@@ -5,7 +5,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.linear_model import LinearRegression, Lasso, NonNegativeGarrote
-from sklearn.linear_model import non_negative_garotte
+from sklearn.linear_model import non_negative_garotte_path
 
 from sklearn.utils import check_random_state
 from sklearn.linear_model import lars_path
@@ -52,10 +52,10 @@ for alpha_val, fig_num in ((0.35, 1), (0.45, 2), (0.55, 3), (0.65, 4)):
             _, _, lars_coefs = lars_path(X, y, method='lasso')
 
             # get the non-negative garotte's coefficients
-            ng_coefs, _ = non_negative_garotte(X, y, alpha_val, fit_intercept=False)
+            ng_coefs, _ = non_negative_garotte_path(X, y, n_alphas=3)
 
             # test if either model's solution path matches the original model
-            if np.any(np.all(ng_coefs.astype(np.bool) == coef.astype(np.bool))):
+            if np.any(np.all(ng_coefs.astype(np.bool) == coef.astype(np.bool)[:, np.newaxis], axis=0)):
                 ng_path_correct = ng_path_correct + 1.0
             if np.any(np.all(lars_coefs.astype(np.bool) == coef.astype(np.bool)[:, np.newaxis], axis=0)):
                 lars_path_correct = lars_path_correct + 1.0

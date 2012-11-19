@@ -1,23 +1,142 @@
+# Authors: Jaques Grobler <jaques.grobler@inria.fr>
+# License: BSD Style.
+
+import warnings
+from sys import version_info
+
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_greater
 
-from sklearn import linear_model, datasets
+#from sklearn import datasets
+from sklearn.linear_model.nng import NonNegativeGarrote
+from sklearn.linear_model import LinearRegression
 
-diabetes = datasets.load_diabetes()
-X, y = diabetes.data, diabetes.target
+#diabetes = datasets.load_diabetes()
+#X, y = diabetes.data, diabetes.target
+
+def check_warnings():
+    if version_info < (2, 6):
+        raise SkipTest("Testing for warnings is not supported in versions \
+        older than Python 2.6")
+
+def test_nng_zero():
+    """Check that the nng can handle zero data without crashing"""
+    X = [[0], [0], [0]]
+    y = [0, 0, 0]
+    clf = NonNegativeGarrote(alpha=0.1).fit(X, y)
+    pred = clf.predict([[1], [2], [3]])
+    assert_array_almost_equal(clf.coef_, [0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+
+def test_nng_toy():
+    """
+    Test nng on a toy example for various values of alpha.
+    """
+
+    X = [[-1], [0], [1]]
+    Y = [-1, 0, 1]       # a straight line
+    T = [[2], [3], [4]]  # test sample
+
+    clf = NonNegativeGarrote(alpha=1e-8)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(pred, [2, 3, 4])
+
+    clf = NonNegativeGarrote(alpha=0.1)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [.85])
+    assert_array_almost_equal(pred, [1.7, 2.55, 3.4])
+
+    clf = NonNegativeGarrote(alpha=0.5)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [.25])
+    assert_array_almost_equal(pred, [0.5, 0.75, 1.])
+
+    clf = NonNegativeGarrote(alpha=1)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [.0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+
+def test_nng_alpha_warning():
+    check_warnings()  # Skip if unsupported Python version
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        X = [[-1], [0], [1]]
+        Y = [-1, 0, 1]       # just a straight line
+
+        clf = NonNegativeGarrote(alpha=0)
+        clf.fit(X, Y)
+
+        assert_greater(len(w), 0)  # warnings should be raised
+
+def test_nng_positive_constraint():
+    """
+    Check that the nng performs it's positive constraint on the
+    shrinkage coefficients
+    """
+    X = [[-1], [0], [1]]
+    y = [1, 0, -1]       # just a straight line with negative slope
+
+    nngarrote = NonNegativeGarrote(alpha=0.1, max_iter=1000)
+    nngarrote.fit(X, y)
+    assert_true(min(nngarrote.shrink_coef_) >= 0)
+
+    nngarrote = NonNegativeGarrote(alpha=0.1, max_iter=1000,
+                                   precompute=True)
+    nngarrote.fit(X, y)
+    assert_true(min(nngarrote.shrink_coef_) >= 0)
+
 
 def test_small_alpha():
-    pass
+    """
+    Test to see that if alpha goes small, the coefs will be the same
+    as OLS
+    """
+    X = [[-1], [0], [1]]
+    y = [-1, 0, 1]       # a straight line
+
+    nng_coef = NonNegativeGarrote(alpha=1e-8).fit(X, y).coef_
+    ols_coef = LinearRegression().fit(X, y).coef_
+    assert_array_almost_equal(nng_coef, ols_coef)
+
+def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
+                  n_targets=1):
+    """
+    build an ill-posed linear regression problem with many noisy features and
+    comparatively few samples
+    """
+    random_state = np.random.RandomState(0)
+    if n_targets > 1:
+        w = random_state.randn(n_features, n_targets)
+    else:
+        w = random_state.randn(n_features)
+    w[n_informative_features:] = 0.0
+    X = random_state.randn(n_samples, n_features)
+    y = np.dot(X, w)
+    X_test = random_state.randn(n_samples, n_features)
+    y_test = np.dot(X_test, w)
+    return X, y, X_test, y_test
 
 def test_positive_well_conditioned():
     pass
 
 def test_less_sample_than_dimentions():
     pass
+
+# TODO - redo path tests once path is stable
+
 
 
 #def test_simple():
@@ -325,6 +444,6 @@ def test_less_sample_than_dimentions():
 #    assert_less(np.max(nonzero_bic), diabetes.data.shape[1])
 
 
-#if __name__ == '__main__':
-#    import nose
-#    nose.runmodule()
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

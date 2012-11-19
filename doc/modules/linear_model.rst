@@ -433,6 +433,45 @@ column is always zero.
    by Hastie et al.
 
 
+.. _nng:
+
+Non-negative Garrote
+====================
+
+The :class:`NonNegativeGarrote`: is a method that Leo Breiman[1] proposed for
+doing better subset regression{NEED A LINK}. It basically both shrinks as well as
+zeroes coefficients.
+Normal subset regression is useful for:
+       * Reducing the variance (each additional coefficient adds to the variance
+       of the regression equation).
+       * Simplicity, as it would ideally not lose any valuable information, while
+       reducing the number of features one has to work with.
+The prime competitor against subset regression, is of course :class:`RidgeRegression`,
+which can be more stable and accurate. Its drawbacks are that it's equation is no
+simpler than that of the Ordinary Least Squares problem, as well as not being scale
+invariant{EXPLANATION?}.
+
+The Non-negative Garrote scale invariant while having an accuracy that can compete
+with ridge. It aims to minimize a function similiar to that of the :class:`Lasso`:
+
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X c \beta - y||_2 ^ 2 + \alpha ||w||_1}
+
+where :math:`c`must follow the constraint:
+.. math::  c => 0
+:math:`\beta` are ordinary least square coefficients.
+The new predictor coefficients are thusly obtained by the product of :math:`c` and
+:math:`\beta`.
+
+{code example}
+
+{cross-validation??}
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_nng_and_lasso_compare.py`
+
+  * :ref: {better example}
+
 .. _omp:
 
 Orthogonal Matching Pursuit (OMP)
