@@ -171,7 +171,7 @@ def test_spectral_embedding_unknown_affinity(seed=36):
 
 def test_connectivity(seed=36):
     """Test that graph connectivity test works as expected"""
-    graph = np.array([[0, 0, 0, 0, 0], 
+    graph = np.array([[0, 0, 0, 0, 0],
                       [0, 0, 1, 0, 0],
                       [0, 1, 0, 1, 0],
                       [0, 0, 1, 0, 1],
@@ -179,9 +179,11 @@ def test_connectivity(seed=36):
     assert_equal(_graph_is_connected(graph), False)
     assert_equal(_graph_is_connected(csr_matrix(graph)), False)
     assert_equal(_graph_is_connected(csc_matrix(graph)), False)
-    graph = np.array([[0, 1, 0, 0, 0], 
+    graph = np.array([[0, 1, 0, 0, 0],
                       [1, 0, 1, 0, 0],
                       [0, 1, 0, 1, 0],
                       [0, 0, 1, 0, 1],
                       [0, 0, 0, 1, 0]])
     assert_equal(_graph_is_connected(graph), True)
+    assert_equal(_graph_is_connected(csr_matrix(graph)), True)
+    assert_equal(_graph_is_connected(csc_matrix(graph)), True)
