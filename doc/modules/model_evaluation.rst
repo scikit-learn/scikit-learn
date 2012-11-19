@@ -17,7 +17,7 @@ Dummy estimators
 
 When doing classification, a simple sanity check consists in comparing one's
 classifier against simple rules of thumb.
-:class:`DummyClassifier` implements three such strategies.
+:class:`DummyClassifier` implements three such simple strategies.
 `stratified` generates randomly predictions by respecting the training
 set's class distribution. `most_frequent` always predicts the most frequent
 label in the training set.  `uniform` generates predictions uniformly at
@@ -53,3 +53,6 @@ More generally, when the accuracy of a classifier is too close to random classif
 probably means that something went wrong: features are not helpful, a
 hyparameter is not correctly tuned, the classifier is suffering from class
 imbalance, etc...
+
+:class:`DummyRegressor` implements a simple rule of thumb for regression:
+always predict the mean of the training targets.

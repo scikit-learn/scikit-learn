@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from .base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .preprocessing import LabelEncoder
 from .utils import check_random_state
 from .utils.fixes import unique
@@ -38,7 +38,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     `class_prior_` : array, shape = [n_classes]
         Probability of each class.
-
     """
 
     def __init__(self, strategy="stratified", random_state=None):
@@ -149,3 +148,58 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             the model, where classes are ordered arithmetically.
         """
         return np.log(self.predict_proba(X))
+
+
+class DummyRegressor(BaseEstimator, RegressorMixin):
+    """
+    DummyRegressor is a regressor that always predicts the mean of the training
+    targets.
+
+    This regressor is useful as a simple baseline to compare with other
+    (real) regressors. Do not use it for real problems.
+
+    Attributes
+    ----------
+    `y_mean_` : float
+        Mean of the training targets.
+    """
+
+    def fit(self, X, y):
+        """Fit the random regressor.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self.y_mean_ = np.mean(y)
+        return self
+
+    def predict(self, X):
+        """
+        Perform classification on test vectors X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Input vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        y : array, shape = [n_samples]
+            Predicted target values for X.
+        """
+        X = safe_asarray(X)
+        n_samples = X.shape[0]
+
+        return np.ones(n_samples) * self.y_mean_
