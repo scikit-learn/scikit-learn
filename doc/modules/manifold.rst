@@ -297,16 +297,18 @@ The overall complexity of standard HLLE is
      high-dimensional data" <http://www.pnas.org/content/100/10/5591>`_
      Donoho, D. & Grimes, C. Proc Natl Acad Sci USA. 100:5591 (2003)
 
+
 Spectral Embedding
 ====================
 
 Spectral Embedding (also known as Laplacian Eigenmap) is one method
-to calculate nonlinear embedding .  It revolves around a
-hessian-based quadratic form at each neighborhood which is used to recover
-the locally linear structure.  Though other implementations note its poor
-scaling with data size, ``sklearn`` implements some algorithmic
-improvements which make its cost comparable to that of other LLE variants
-for small output dimension.  Spectral embedding can be  performed with 
+to calculate nonlinear embedding.  It revolves around a spectral 
+decomposition over graph laplacian. The graph thus generated can be 
+considered as a discrete approximation of the low dimensional manifold 
+in the high dimensional space. Minimization of a cost function based 
+on the graph ensures that points close to each other on the manifold 
+are mapped close to each other in the low dimensional space, preserving 
+local distances. Spectral embedding can be  performed with 
 function :func:`spectral_embedding` or its object-oriented counterpart
 :class:`SpectralEmbedding`.
 
@@ -315,15 +317,18 @@ Complexity
 
 The Spectral Embedding algorithm comprises three stages:
 
-1. **Affinity Graph Construction**. Represent the graph as
+1. **Affinity Graph Construction**. Construct the raw input data into
+   graph representation using affinity(adjacency) matrix.
 
-2. **Graph Laplacian Construction**. Normalized graph laplacian
-   is constructed as :math:`L = D^{-\frac{1}{2}}`.  
+2. **Graph Laplacian Construction**. Graph laplacian
+   is constructed as :math:`L = D - A` for unnormalized case and 
+   :math:`L = D^{-\frac{1}{2}} (D - A) D^{-\frac{1}{2}}`.  
 
-3. **Partial Eigenvalue Decomposition**. Same as standard LLE
+3. **Partial Eigenvalue Decomposition**. Eigenvalue decomposition is 
+   done on graph laplacian
 
-The overall complexity of standard HLLE is
-:math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
+The overall complexity of spectral embedding is
+:math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[d N^2]`.
 
 * :math:`N` : number of training data points
 * :math:`D` : input dimension
@@ -332,10 +337,9 @@ The overall complexity of standard HLLE is
 
 .. topic:: References:
 
-   * `"Hessian Eigenmaps: Locally linear embedding techniques for
-     high-dimensional data" <http://www.pnas.org/content/100/10/5591>`_
-     Donoho, D. & Grimes, C. Proc Natl Acad Sci USA. 100:5591 (2003)
-
+   * `"Laplacian Eigenmaps for Dimensionality Reduction
+     and Data Representation" <http://www.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
 
 Local Tangent Space Alignment

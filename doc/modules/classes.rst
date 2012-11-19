@@ -618,12 +618,14 @@ From text
     manifold.LocallyLinearEmbedding
     manifold.Isomap
     manifold.MDS
+    manifold.SpectralEmbedding
 
 .. autosummary::
     :toctree: generated
     :template: function.rst
 
     manifold.locally_linear_embedding
+    manifold.spectral_embedding
 
 
 .. _metrics_ref:
