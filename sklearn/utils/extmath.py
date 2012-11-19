@@ -441,4 +441,6 @@ def svd_flip(u, s, v):
     """
     max_abs_cols = np.argmax(np.abs(u), axis=0)
     signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
-    return u * signs, s, v * signs[:, np.newaxis]
+    u *= signs
+    v *= signs[:, np.newaxis]
+    return u, s, v
