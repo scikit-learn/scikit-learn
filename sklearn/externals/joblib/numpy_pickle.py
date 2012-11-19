@@ -13,21 +13,21 @@ import os
 import zlib
 import warnings
 
+from ._compat import _basestring
+
+from io import BytesIO
+
 if sys.version_info[0] >= 3:
-    from io import BytesIO
-    from pickle import _Unpickler as Unpickler
+    Unpickler = pickle._Unpickler
+    Pickler = pickle._Pickler
 
     def asbytes(s):
         if isinstance(s, bytes):
             return s
         return s.encode('latin1')
 else:
-    try:
-        from io import BytesIO
-    except ImportError:
-        # BytesIO has been added in Python 2.5
-        from cStringIO import StringIO as BytesIO
-    from pickle import Unpickler
+    Unpickler = pickle.Unpickler
+    Pickler = pickle.Pickler
     asbytes = str
 
 _MEGA = 2 ** 20
@@ -85,8 +85,8 @@ def write_zfile(file_handle, data, compress=1):
         # We need to remove the trailing 'L' in the hex representation
         length = length[:-1]
     # Store the length of the data
-    file_handle.write(length.ljust(_MAX_LEN))
-    file_handle.write(zlib.compress(data, compress))
+    file_handle.write(asbytes(length.ljust(_MAX_LEN)))
+    file_handle.write(zlib.compress(asbytes(data), compress))
 
 
 ###############################################################################
@@ -125,6 +125,9 @@ class NDArrayWrapper(object):
             array = new_array
         return array
 
+    #def __reduce__(self):
+    #    return None
+
 
 class ZNDArrayWrapper(NDArrayWrapper):
     """An object to be persisted instead of numpy arrays.
@@ -162,7 +165,7 @@ class ZNDArrayWrapper(NDArrayWrapper):
 ###############################################################################
 # Pickler classes
 
-class NumpyPickler(pickle.Pickler):
+class NumpyPickler(Pickler):
     """A pickler to persist of big data efficiently.
 
         The main features of this object are:
@@ -185,7 +188,7 @@ class NumpyPickler(pickle.Pickler):
             self.file = BytesIO()
         # Count the number of npy files that we have created:
         self._npy_counter = 0
-        pickle.Pickler.__init__(self, self.file,
+        Pickler.__init__(self, self.file,
                                 protocol=pickle.HIGHEST_PROTOCOL)
         # delayed import of numpy, to avoid tight coupling
         try:
@@ -229,7 +232,7 @@ class NumpyPickler(pickle.Pickler):
                 if type(obj) is self.np.memmap:
                     # Pickling doesn't work with memmaped arrays
                     obj = self.np.asarray(obj)
-                return pickle.Pickler.save(self, obj)
+                return Pickler.save(self, obj)
             self._npy_counter += 1
             try:
                 filename = '%s_%02i.npy' % (self._filename,
@@ -240,10 +243,10 @@ class NumpyPickler(pickle.Pickler):
             except:
                 self._npy_counter -= 1
                 # XXX: We should have a logging mechanism
-                print 'Failed to save %s to .npy file:\n%s' % (
+                print('Failed to save %s to .npy file:\n%s' % (
                         type(obj),
-                        traceback.format_exc())
-        return pickle.Pickler.save(self, obj)
+                        traceback.format_exc()))
+        return Pickler.save(self, obj)
 
     def close(self):
         if self.compress:
@@ -291,7 +294,10 @@ class NumpyUnpickler(Unpickler):
             self.stack.append(array)
 
     # Be careful to register our new method.
-    dispatch[pickle.BUILD] = load_build
+    if sys.version_info[0] >= 3:
+        dispatch[pickle.BUILD[0]] = load_build
+    else:
+        dispatch[pickle.BUILD] = load_build
 
 
 class ZipNumpyUnpickler(NumpyUnpickler):
@@ -348,7 +354,7 @@ def dump(value, filename, compress=0, cache_size=100):
     addition, compressed files take extra extra memory during
     dump and load.
     """
-    if not isinstance(filename, basestring):
+    if not isinstance(filename, _basestring):
         # People keep inverting arguments, and the resulting error is
         # incomprehensible
         raise ValueError(

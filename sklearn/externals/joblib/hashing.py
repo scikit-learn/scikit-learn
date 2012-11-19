@@ -13,72 +13,94 @@ import sys
 import types
 import struct
 
-if sys.version_info[0] == 3:
-    # in python3, StringIO does not accept binary data
-    # see http://packages.python.org/six/
-    import io
-    StringIO = io.BytesIO
+import io
+
+if sys.version_info[0] < 3:
+    Pickler = pickle.Pickler
 else:
-    import cStringIO
-    StringIO = cStringIO.StringIO
+    Pickler = pickle._Pickler
 
 
-class Hasher(pickle.Pickler):
+class _ConsistentSet(object):
+    """ Class used to ensure the hash of Sets is preserved
+        whatever the order of its items.
+    """
+    def __init__(self, set_sequence):
+        self._sequence = sorted(set_sequence)
+
+
+class Hasher(Pickler):
     """ A subclass of pickler, to do cryptographic hashing, rather than
         pickling.
     """
 
     def __init__(self, hash_name='md5'):
-        self.stream = StringIO()
-        pickle.Pickler.__init__(self, self.stream, protocol=2)
+        self.stream = io.BytesIO()
+        Pickler.__init__(self, self.stream, protocol=2)
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
 
     def hash(self, obj, return_digest=True):
-        self.dump(obj)
+        try:
+            self.dump(obj)
+        except pickle.PicklingError:
+            pass
+            #self.dump(
         dumps = self.stream.getvalue()
         self._hash.update(dumps)
         if return_digest:
             return self._hash.hexdigest()
 
     def save(self, obj):
-        if isinstance(obj, types.MethodType):
+        if isinstance(obj, (types.MethodType, type({}.pop))):
             # the Pickler cannot pickle instance methods; here we decompose
             # them into components that make them uniquely identifiable
-            func_name = obj.im_func.__name__
-            inst = obj.im_self
-            cls = obj.im_class
+            if hasattr(obj, '__func__'):
+                func_name = obj.__func__.__name__
+            else:
+                func_name = obj.__name__
+            inst = obj.__self__
+            cls = obj.__self__.__class__
             obj = (func_name, inst, cls)
-        pickle.Pickler.save(self, obj)
+        Pickler.save(self, obj)
 
-    if sys.version_info[0] < 3:
-        # The dispatch table of the pickler is not accessible in Python
-        # 3, as these lines are only bugware for IPython, we skip them.
-        def save_global(self, obj, name=None, pack=struct.pack):
-            # We have to override this method in order to deal with objects
-            # defined interactively in IPython that are not injected in
-            # __main__
-            module = getattr(obj, "__module__", None)
-            if module == '__main__':
-                my_name = name
-                if my_name is None:
-                    my_name = obj.__name__
-                mod = sys.modules[module]
-                if not hasattr(mod, my_name):
-                    # IPython doesn't inject the variables define
-                    # interactively in __main__
-                    setattr(mod, my_name, obj)
-            pickle.Pickler.save_global(self, obj, name=name, pack=struct.pack)
+    # The dispatch table of the pickler is not accessible in Python
+    # 3, as these lines are only bugware for IPython, we skip them.
+    def save_global(self, obj, name=None, pack=struct.pack):
+        # We have to override this method in order to deal with objects
+        # defined interactively in IPython that are not injected in
+        # __main__
+        module = getattr(obj, "__module__", None)
+        if module == '__main__':
+            my_name = name
+            if my_name is None:
+                my_name = obj.__name__
+            mod = sys.modules[module]
+            if not hasattr(mod, my_name):
+                # IPython doesn't inject the variables define
+                # interactively in __main__
+                setattr(mod, my_name, obj)
+        Pickler.save_global(self, obj, name=name, pack=struct.pack)
 
-        dispatch = pickle.Pickler.dispatch.copy()
-        # builtin
-        dispatch[type(len)] = save_global
-        # type
-        dispatch[type(object)] = save_global
-        # classobj
-        dispatch[type(pickle.Pickler)] = save_global
-        # function
-        dispatch[type(pickle.dump)] = save_global
+    dispatch = Pickler.dispatch.copy()
+    # builtin
+    dispatch[type(len)] = save_global
+    # type
+    dispatch[type(object)] = save_global
+    # classobj
+    dispatch[type(Pickler)] = save_global
+    # function
+    dispatch[type(pickle.dump)] = save_global
+
+    def _batch_setitems(self, items):
+        # forces order of keys in dict to ensure consistent hash
+        Pickler._batch_setitems(self, iter(sorted(items)))
+
+    def save_set(self, set_items):
+        # forces order of items in Set to ensure consistent hash
+        Pickler.save(self, _ConsistentSet(set_items))
+
+    dispatch[type(set())] = save_set
 
 
 class NumpyHasher(Hasher):
@@ -100,21 +122,25 @@ class NumpyHasher(Hasher):
         # delayed import of numpy, to avoid tight coupling
         import numpy as np
         self.np = np
+        if hasattr(np, 'getbuffer'):
+            self._getbuffer = np.getbuffer
+        else:
+            self._getbuffer = memoryview
 
     def save(self, obj):
         """ Subclass the save method, to hash ndarray subclass, rather
             than pickling them. Off course, this is a total abuse of
             the Pickler class.
         """
-        if isinstance(obj, self.np.ndarray):
+        if isinstance(obj, self.np.ndarray) and not obj.dtype.hasobject:
             # Compute a hash of the object:
             try:
-                self._hash.update(self.np.getbuffer(obj))
-            except TypeError:
+                self._hash.update(self._getbuffer(obj))
+            except (TypeError, BufferError):
                 # Cater for non-single-segment arrays: this creates a
                 # copy, and thus aleviates this issue.
                 # XXX: There might be a more efficient way of doing this
-                self._hash.update(self.np.getbuffer(obj.flatten()))
+                self._hash.update(self._getbuffer(obj.flatten()))
 
             # We store the class, to be able to distinguish between
             # Objects with the same binary content, but different

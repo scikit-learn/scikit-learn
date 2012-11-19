@@ -33,26 +33,41 @@ _bool = bool(1)
 typelist.append(_bool)
 _int = int(1)
 typelist.append(_int)
-_long = long(1)
-typelist.append(_long)
+try:
+    _long = long(1)
+    typelist.append(_long)
+except NameError:
+    # long is not defined in python 3
+    pass
 _float = float(1)
 typelist.append(_float)
 _complex = complex(1)
 typelist.append(_complex)
 _string = str(1)
 typelist.append(_string)
-_unicode = unicode(1)
-typelist.append(_unicode)
+try:
+    _unicode = unicode(1)
+    typelist.append(_unicode)
+except NameError:
+    # unicode is not defined in python 3
+    pass
 _tuple = ()
 typelist.append(_tuple)
 _list = []
 typelist.append(_list)
 _dict = {}
 typelist.append(_dict)
-_file = file
-typelist.append(_file)
-_buffer = buffer
-typelist.append(_buffer)
+try:
+    _file = file
+    typelist.append(_file)
+except NameError:
+    pass # file does not exists in Python 3
+try:
+    _buffer = buffer
+    typelist.append(_buffer)
+except NameError:
+    # buffer does not exists in Python 3
+    pass
 _builtin = len
 typelist.append(_builtin)
 
@@ -91,9 +106,9 @@ def setup_module():
     """
     env['dir'] = mkdtemp()
     env['filename'] = os.path.join(env['dir'], 'test.pkl')
-    print 80 * '_'
-    print 'setup numpy_pickle'
-    print 80 * '_'
+    print(80 * '_')
+    print('setup numpy_pickle')
+    print(80 * '_')
 
 
 def teardown_module():
@@ -102,9 +117,9 @@ def teardown_module():
     shutil.rmtree(env['dir'])
     #del env['dir']
     #del env['filename']
-    print 80 * '_'
-    print 'teardown numpy_pickle'
-    print 80 * '_'
+    print(80 * '_')
+    print('teardown numpy_pickle')
+    print(80 * '_')
 
 
 ###############################################################################
@@ -190,7 +205,7 @@ def test_memmap_persistence():
     numpy_pickle.dump(a, filename)
     b = numpy_pickle.load(filename, mmap_mode='r')
     if np.__version__ >= '1.3':
-        yield nose.tools.assert_true, isinstance(b, np.memmap)
+        nose.tools.assert_true(isinstance(b, np.memmap))
 
 
 @with_numpy
@@ -209,9 +224,9 @@ def test_masked_array_persistence():
 def test_z_file():
     # Test saving and loading data with Zfiles
     filename = env['filename'] + str(random.randint(0, 1000))
-    data = 'Foo, \n Bar, baz, \n\nfoobar'
-    numpy_pickle.write_zfile(file(filename, 'wb'), data)
-    data_read = numpy_pickle.read_zfile(file(filename, 'rb'))
+    data = numpy_pickle.asbytes('Foo, \n Bar, baz, \n\nfoobar')
+    numpy_pickle.write_zfile(open(filename, 'wb'), data)
+    data_read = numpy_pickle.read_zfile(open(filename, 'rb'))
     nose.tools.assert_equal(data, data_read)
 
 ################################################################################
