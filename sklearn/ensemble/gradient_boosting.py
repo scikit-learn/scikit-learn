@@ -22,9 +22,11 @@ The module structure is the following:
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
+from itertools import count, izip
 
 import sys
 import warnings
+import numbers
 
 import numpy as np
 
@@ -38,6 +40,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
 from ..utils.extmath import logsumexp
 from ..utils.extmath import cartesian
+from ..externals.joblib import Parallel, delayed
 
 from ..tree._tree import Tree
 from ..tree._tree import _random_sample_mask
@@ -1237,3 +1240,126 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
                                      gbrt.learning_rate, pdp[k])
 
     return pdp, axes
+
+
+def partial_dependence_plots(gbrt, X, features, feature_names=None,
+                             grid_resolution=100, percentiles=(0.05, 0.95),
+                             n_jobs=1, verbose=0):
+    """Partial dependence plots for ``features``.
+
+    Parameters
+    ----------
+    gbrt : BaseGradientBoosting
+        A fit gradient boosting model.
+    X : array-like, shape=(n_samples, n_features)
+        The data on which ``gbrt`` was trained.
+    features : seq of tuples or ints
+        If seq[i] is an int or a tuple with one int value, a one-way
+        PDP is created; if seq[i] is a tuple of two ints, a two-way
+        PDP is created.
+    feature_names : seq of tuples or str
+        Analogous to ``features`` but contains feature names instead
+        of feature indices.
+    percentiles : (low, high), default=(0.05, 0.95)
+        The lower and upper percentile used create the extreme values
+        for the PDP axes.
+    grid_resolution : int, default=100
+        The number of equally spaced points on the axes.
+    n_jobs : int
+        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
+        Defaults to 1.
+    verbose : int
+        Verbose output during PD computations. Defaults to 0.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib import transforms
+
+    if not isinstance(gbrt, BaseGradientBoosting):
+        raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
+    if gbrt.estimators_.shape[0] == 0:
+        raise ValueError('Call %s.fit before partial_dependence' %
+                         gbrt.__class__.__name__)
+
+    tmp_features = []
+    for fxs in features:
+        if isinstance(fxs, numbers.Integral):
+            fxs = (fxs,)
+        elif isinstance(fxs, basestring):
+            fxs = (feature_names.index(fxs),)
+
+        fx = np.array(fxs)
+        if not (1 <= np.size(fxs) <= 2):
+            raise ValueError('target features must be either one or two')
+
+        tmp_features.append(fxs)
+
+    features = tmp_features
+
+    if not feature_names:
+        max_fx = max(fxs.max() for fxs in features)
+        feature_names = map(str, range(max_fx))
+
+    names = []
+    for fxs in features:
+        names.append([feature_names[i] for i in fxs])
+
+    pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
+        delayed(partial_dependence)(gbrt, fxs, X=X,
+                                    grid_resolution=grid_resolution)
+        for fxs in features)
+
+    # get global min and max values of PD grouped by plot type
+    pdp_lim = {}
+    for pdp, axes in pd_result:
+        min_pd, max_pd = pdp.min(), pdp.max()
+        n_fx = len(axes)
+        old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
+        min_pd = min(min_pd, old_min_pd)
+        max_pd = max(max_pd, old_max_pd)
+        pdp_lim[n_fx] = (min_pd, max_pd)
+
+    if 2 in pdp_lim:
+        Z_level = np.linspace(*pdp_lim[2], num=8)
+
+    ncols = 3
+    nrows = int(np.ceil(len(features) / float(ncols)))
+
+    for i, fx, name, (pdp, axes) in izip(count(), features, names,
+                                         pd_result):
+        ax = plt.subplot(nrows, ncols, i + 1)
+
+        if len(axes) == 1:
+            ax.plot(axes[0], pdp.ravel(), 'g-')
+        else:
+            assert len(axes) == 2
+            XX, YY = np.meshgrid(axes[0], axes[1])
+            Z = pdp.reshape(map(np.size, axes)).T
+            CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors='k')
+            ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
+                        vmin=Z_level[0], alpha=0.75)
+            ax.clabel(CS, fmt='%2.2f', colors='k', fontsize=10, inline=True)
+
+        # plot data deciles + axes labels
+        deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
+        trans = transforms.blended_transform_factory(ax.transData,
+                                                                ax.transAxes)
+        ylim = ax.get_ylim()
+        ax.vlines(deciles, 0.0, 0.05, transform=trans, color='k')
+        ax.set_xlabel(name[0])
+        ax.set_ylim(ylim)
+
+        if len(axes) > 1:
+            deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
+            trans = transforms.blended_transform_factory(ax.transAxes,
+                                                         ax.transData)
+            xlim = ax.get_xlim()
+            ax.hlines(deciles, [0], 0.05, transform=trans, color='k')
+            ax.set_ylabel(name[1])
+            # hline erases xlim
+            ax.set_xlim(xlim)
+
+        if len(axes) == 1:
+            ax.set_ylim(pdp_lim[1])
+
+    plt.tight_layout()
+    plt.show()
