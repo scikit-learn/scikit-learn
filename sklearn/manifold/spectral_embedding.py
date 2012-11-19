@@ -188,13 +188,13 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     elif eig_solver == "lobpcg":
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         if n_nodes < 5 * n_components + 1:
-            # see note above under arpack why lopbcg has problems with small
+            # see note above under arpack why lobpcg has problems with small
             # number of nodes
             # lobpcg will fallback to symeig, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.todense()
             lambdas, diffusion_map = symeig(laplacian)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T[1:n_components+1] * dd
         else:
             # lobpcg needs native floats
             laplacian = laplacian.astype(np.float)
@@ -205,7 +205,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T[1:n_components+1] * dd
             if embedding.shape[0] == 1:
                 raise ValueError
     return embedding.T
