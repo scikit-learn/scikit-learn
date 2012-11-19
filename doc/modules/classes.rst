@@ -232,6 +232,29 @@ Samples generator
    decomposition.dict_learning_online
    decomposition.sparse_encode
 
+.. _dummy_ref:
+
+:mod:`sklearn.dummy`: Dummy estimators
+======================================
+
+.. automodule:: sklearn.dummy
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`model_evaluation` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   dummy.DummyClassifier
+   dummy.DummyRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
 
 .. _ensemble_ref:
 
