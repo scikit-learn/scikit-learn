@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
-from sklearn.decomposition.spectra_embedding import SpectralEmbedding
+from sklearn.manifold.spectra_embedding import SpectralEmbedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import normalized_mutual_info_score
