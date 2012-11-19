@@ -10,18 +10,18 @@ Model evaluation
   =======
 
 
-Random classification accuracy
-=================================
+Dummy estimators
+=================
 
-.. currentmodule:: sklearn.random_classifier
+.. currentmodule:: sklearn.dummy
 
 When doing classification, a simple sanity check consists in comparing one's
-classifier against the accuracy of a purely random classifier.
-:class:`RandomClassifier` implements three different strategies for random
-classification. `stratified` generates predictions by respecting the training
+classifier against simple rules of thumb.
+:class:`DummyClassifier` implements three such strategies.
+`stratified` generates randomly predictions by respecting the training
 set's class distribution. `most_frequent` always predicts the most frequent
 label in the training set.  `uniform` generates predictions uniformly at
-random. To illustrate :class:`RandomClassifier`, first let's create an imbalanced
+random. To illustrate :class:`DummyClassifier`, first let's create an imbalanced
 dataset::
 
   >>> from sklearn.datasets import load_iris
@@ -29,15 +29,14 @@ dataset::
   >>> X, y = iris.data, iris.target
   >>> y[y != 1] = -1
 
-
 Next, let's compare the accuracy of `SVC` and `most_frequent`::
 
-  >>> from sklearn.random_classifier import RandomClassifier
+  >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
   >>> clf = SVC(kernel='linear', C=1).fit(X, y)
   >>> clf.score(X, y)  # doctest: +ELLIPSIS
   0.73...
-  >>> clf = RandomClassifier(sampling='most_frequent', random_state=0).fit(X, y)
+  >>> clf = DummyClassifier(strategy='most_frequent', random_state=0).fit(X, y)
   >>> clf.score(X, y)  # doctest: +ELLIPSIS
   0.66...
 
@@ -47,6 +46,8 @@ the kernel::
   >>> clf = SVC(kernel='rbf', C=1).fit(X, y)
   >>> clf.score(X, y)  # doctest: +ELLIPSIS
   0.99...
+
+We see that the accuracy was boosted to almost 100%.
 
 More generally, when the accuracy of a classifier is too close to random classification, it
 probably means that something went wrong: features are not helpful, a

@@ -11,20 +11,20 @@ from .utils.fixes import unique
 from .utils.validation import safe_asarray
 
 
-class RandomClassifier(BaseEstimator, ClassifierMixin):
+class DummyClassifier(BaseEstimator, ClassifierMixin):
     """
-    RandomClassifier is a dummy classifier that makes predictions randomly.
+    DummyClassifier is a classifier that makes predictions using simple rules.
 
     This classifier is useful as a simple baseline to compare with other
-    (real) classifiers.
+    (real) classifiers. Do not use it for real problems.
 
     Parameters
     ----------
-    sampling: str
+    strategy: str
         Strategy to use to generate predictions.
             * "stratified": generates predictions by respecting the training
               set's class distribution.
-            * "most_frequent": always predict the most frequent label in the
+            * "most_frequent": always predicts the most frequent label in the
               training set.
             * "uniform": generates predictions uniformly at random.
 
@@ -33,7 +33,7 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `classes_` : array, sha
+    `classes_` : array, shape = [n_classes]
         Class labels.
 
     `class_prior_` : array, shape = [n_classes]
@@ -41,8 +41,8 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
 
     """
 
-    def __init__(self, sampling="stratified", random_state=None):
-        self.sampling = sampling
+    def __init__(self, strategy="stratified", random_state=None):
+        self.strategy = strategy
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -85,15 +85,15 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
         n_samples = X.shape[0]
         rs = check_random_state(self.random_state)
 
-        if self.sampling == "most_frequent":
+        if self.strategy == "most_frequent":
             ret = np.ones(n_samples, dtype=int) * self.class_prior_.argmax()
-        elif self.sampling == "stratified":
+        elif self.strategy == "stratified":
             ret = rs.multinomial(1, self.class_prior_,
                                  size=n_samples).argmax(axis=1)
-        elif self.sampling == "uniform":
+        elif self.strategy == "uniform":
             ret = rs.randint(len(self.class_prior_), size=n_samples)
         else:
-            raise ValueError("Unknown sampling type.")
+            raise ValueError("Unknown strategy type.")
 
         return self.classes_[ret]
 
@@ -118,17 +118,17 @@ class RandomClassifier(BaseEstimator, ClassifierMixin):
         n_classes = len(self.classes_)
         rs = check_random_state(self.random_state)
 
-        if self.sampling == "most_frequent":
+        if self.strategy == "most_frequent":
             ind = np.ones(n_samples, dtype=int) * self.class_prior_.argmax()
             out = np.zeros((n_samples, n_classes), dtype=np.float64)
             out[:, ind] = 1.0
-        elif self.sampling == "stratified":
+        elif self.strategy == "stratified":
             out = rs.multinomial(1, self.class_prior_, size=n_samples)
-        elif self.sampling == "uniform":
+        elif self.strategy == "uniform":
             out = np.ones((n_samples, n_classes), dtype=np.float64)
             out /= n_classes
         else:
-            raise ValueError("Unknown sampling type.")
+            raise ValueError("Unknown strategy type.")
 
         return out
 
