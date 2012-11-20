@@ -295,9 +295,9 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
         # plot data deciles + axes labels
         deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
         trans = transforms.blended_transform_factory(ax.transData,
-                                                                ax.transAxes)
+                                                     ax.transAxes)
         ylim = ax.get_ylim()
-        ax.vlines(deciles, 0.0, 0.05, transform=trans, color='k')
+        ax.vlines(deciles, [0], 0.05, transform=trans, color='k')
         ax.set_xlabel(name[0])
         ax.set_ylim(ylim)
 
