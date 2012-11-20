@@ -12,7 +12,8 @@ import hashlib
 import tempfile
 import os
 import gc
-import StringIO
+import io
+import collections
 
 from ..hashing import hash
 from ..func_inspect import filter_args
@@ -22,6 +23,12 @@ from .common import np, with_numpy
 from .test_memory import env as test_memory_env
 from .test_memory import setup_module as test_memory_setup_func
 from .test_memory import teardown_module as test_memory_teardown_func
+
+try:
+    # Python 2/Python 3 compat
+    unicode('str')
+except NameError:
+    unicode = lambda s: s
 
 
 ###############################################################################
@@ -82,11 +89,12 @@ def test_trival_hash():
 
 
 def test_hash_methods():
-    """ Check that hashing instance methods works """
-    a = StringIO.StringIO('a')
-    b = StringIO.StringIO('b')
+    # Check that hashing instance methods works
+    a = io.StringIO(unicode('a'))
     nose.tools.assert_equal(hash(a.flush), hash(a.flush))
-    nose.tools.assert_not_equal(hash(a.flush), hash(b.flush))
+    a1 = collections.deque(range(10))
+    a2 = collections.deque(range(9))
+    nose.tools.assert_not_equal(hash(a1.extend), hash(a2.extend))
 
 
 @with_numpy
@@ -137,7 +145,7 @@ def test_hash_memmap():
             gc.collect()
             try:
                 os.unlink(filename)
-            except OSError, e:
+            except OSError as e:
                 # Under windows, some files don't get erased.
                 if not os.name == 'nt':
                     raise e
@@ -163,7 +171,12 @@ def test_hash_numpy_performance():
     """
     rnd = np.random.RandomState(0)
     a = rnd.random_sample(1000000)
-    md5_hash = lambda x: hashlib.md5(np.getbuffer(x)).hexdigest()
+    if hasattr(np, 'getbuffer'):
+        # Under python 3, there is no getbuffer
+        getbuffer = np.getbuffer
+    else:
+        getbuffer = memoryview
+    md5_hash = lambda x: hashlib.md5(getbuffer(x)).hexdigest()
 
     relative_diff = relative_time(md5_hash, hash, a)
     yield nose.tools.assert_true, relative_diff < 0.1
@@ -197,3 +210,65 @@ def test_bound_cached_methods_hash():
     b = KlassWithCachedMethod()
     nose.tools.assert_equal(hash(filter_args(a.f.func, [], (1, ))),
                             hash(filter_args(b.f.func, [], (1, ))))
+
+
+@with_numpy
+def test_hash_object_dtype():
+    """ Make sure that ndarrays with dtype `object' hash correctly."""
+
+    a = np.array([np.arange(i) for i in range(6)], dtype=object)
+    b = np.array([np.arange(i) for i in range(6)], dtype=object)
+
+    nose.tools.assert_equal(hash(a),
+                            hash(b))
+
+
+def test_dict_hash():
+    # Check that dictionaries hash consistently, eventhough the ordering
+    # of the keys is not garanteed
+    k = KlassWithCachedMethod()
+
+    d = {'#s12069__c_maps.nii.gz': [33],
+         '#s12158__c_maps.nii.gz': [33],
+         '#s12258__c_maps.nii.gz': [33],
+         '#s12277__c_maps.nii.gz': [33],
+         '#s12300__c_maps.nii.gz': [33],
+         '#s12401__c_maps.nii.gz': [33],
+         '#s12430__c_maps.nii.gz': [33],
+         '#s13817__c_maps.nii.gz': [33],
+         '#s13903__c_maps.nii.gz': [33],
+         '#s13916__c_maps.nii.gz': [33],
+         '#s13981__c_maps.nii.gz': [33],
+         '#s13982__c_maps.nii.gz': [33],
+         '#s13983__c_maps.nii.gz': [33]}
+
+    a = k.f(d)
+    b = k.f(a)
+
+    nose.tools.assert_equal(hash(a),
+                            hash(b))
+
+
+def test_set_hash():
+    # Check that sets hash consistently, eventhough their ordering
+    # is not garanteed
+    k = KlassWithCachedMethod()
+
+    s = set(['#s12069__c_maps.nii.gz',
+             '#s12158__c_maps.nii.gz',
+             '#s12258__c_maps.nii.gz',
+             '#s12277__c_maps.nii.gz',
+             '#s12300__c_maps.nii.gz',
+             '#s12401__c_maps.nii.gz',
+             '#s12430__c_maps.nii.gz',
+             '#s13817__c_maps.nii.gz',
+             '#s13903__c_maps.nii.gz',
+             '#s13916__c_maps.nii.gz',
+             '#s13981__c_maps.nii.gz',
+             '#s13982__c_maps.nii.gz',
+             '#s13983__c_maps.nii.gz'])
+
+    a = k.f(s)
+    b = k.f(a)
+
+    nose.tools.assert_equal(hash(a), hash(b))

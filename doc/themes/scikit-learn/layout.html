@@ -19,6 +19,8 @@
 {% endif %}
 
 {% block extrahead %}
+
+{% if theme_google_analytics|tobool %}
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -32,6 +34,8 @@
   })();
 
 </script>
+{% endif %}
+
 {% endblock %}
 
 {%- if pagename == 'index' %}

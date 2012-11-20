@@ -178,9 +178,11 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     estimator: object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each grid point.
 
-    param_grid: dict
+    param_grid: dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
-        parameter settings to try as values.
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored.
 
     loss_func: callable, optional
         function that takes 2 arguments and compares them in

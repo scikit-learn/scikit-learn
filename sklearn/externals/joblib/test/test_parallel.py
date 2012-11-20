@@ -8,19 +8,25 @@ Test the parallel module.
 
 import time
 import sys
+import io
+import os
 try:
     import cPickle as pickle
     PickleError = TypeError
 except:
     import pickle
     PickleError = pickle.PicklingError
-try:
-    from io import BytesIO
-except:
-    from cStringIO import StringIO as BytesIO
+
 
 if sys.version_info[0] == 3:
     PickleError = pickle.PicklingError
+
+try:
+    # Python 2/Python 3 compat
+    unicode('str')
+except NameError:
+    unicode = lambda s: s
+
 
 from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt, \
         multiprocessing, cpu_count
@@ -73,9 +79,13 @@ def test_simple_parallel():
     try:
         # To smoke-test verbosity, we capture stdout
         orig_stdout = sys.stdout
-        sys.stdout = BytesIO()
         orig_stderr = sys.stdout
-        sys.stderr = BytesIO()
+        if sys.version_info[0] == 3:
+            sys.stderr = io.StringIO()
+            sys.stderr = io.StringIO()
+        else:
+            sys.stdout = io.BytesIO()
+            sys.stderr = io.BytesIO()
         for verbose in (2, 11, 100):
                 Parallel(n_jobs=-1, verbose=verbose)(
                         delayed(square)(x) for x in X)
@@ -83,11 +93,13 @@ def test_simple_parallel():
                         delayed(square)(x) for x in X)
                 Parallel(n_jobs=2, verbose=verbose, pre_dispatch=2)(
                         delayed(square)(x) for x in X)
-    except Exception:
-        # Cannot use 'except as' to maintain Python 2.5 compatibility
-        e = sys.exc_info()[1]
-        print sys.stdout.getvalue()
-        print sys.stderr.getvalue()
+    except Exception as e:
+        my_stdout = sys.stdout
+        my_stderr = sys.stderr
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
+        print(unicode(my_stdout.getvalue()))
+        print(unicode(my_stderr.getvalue()))
         raise e
     finally:
         sys.stdout = orig_stdout
@@ -126,9 +138,8 @@ def test_parallel_pickling():
 
 
 def test_error_capture():
-    """ Check that error are captured, and that correct exceptions
-        are raised.
-    """
+    # Check that error are captured, and that correct exceptions
+    # are raised.
     if multiprocessing is not None:
         # A JoblibException will be raised only if there is indeed
         # multiprocessing
@@ -224,6 +235,27 @@ def test_exception_dispatch():
             Parallel(n_jobs=6, pre_dispatch=16, verbose=0),
                     (delayed(exception_raiser)(i) for i in range(30)),
             )
+
+
+def _reload_joblib():
+    # Retrieve the path of the parallel module in a robust way
+    joblib_path = Parallel.__module__.split(os.sep)
+    joblib_path = joblib_path[:1]
+    joblib_path.append('parallel.py')
+    joblib_path = '/'.join(joblib_path)
+    module = __import__(joblib_path)
+    # Reload the module. This should trigger a fail
+    reload(module)
+
+
+def test_multiple_spawning():
+    # Test that attempting to launch a new Python after spawned
+    # subprocesses will raise an error, to avoid infinite loops on
+    # systems that do not support fork
+    if not int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)):
+        raise nose.SkipTest()
+    nose.tools.assert_raises(ImportError, Parallel(n_jobs=2),
+                    [delayed(_reload_joblib)() for i in range(10)])
 
 
 ###############################################################################

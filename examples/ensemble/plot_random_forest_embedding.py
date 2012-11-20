@@ -1,9 +1,9 @@
 """
-===================================================
-Hashing feature transformation using Random Forests
-===================================================
+=========================================================
+Hashing feature transformation using Totally Random Trees
+=========================================================
 
-RandomForestEmbedding provides a way to map data to a
+RandomTreesEmbedding provides a way to map data to a
 very high-dimensional, sparse representation, which might
 be beneficial for classification.
 The mapping is completely unsupervised and very efficient.
@@ -28,15 +28,15 @@ import pylab as pl
 import numpy as np
 
 from sklearn.datasets import make_circles
-from sklearn.ensemble import RandomForestEmbedding, ExtraTreesClassifier
+from sklearn.ensemble import RandomTreesEmbedding, ExtraTreesClassifier
 from sklearn.decomposition import RandomizedPCA
 from sklearn.naive_bayes import BernoulliNB
 
 # make a synthetic dataset
 X, y = make_circles(factor=0.5, random_state=0, noise=0.05)
 
-# use RandomForestEmbedding to transform data
-hasher = RandomForestEmbedding(n_estimators=10, random_state=0, max_depth=3)
+# use RandomTreesEmbedding to transform data
+hasher = RandomTreesEmbedding(n_estimators=10, random_state=0, max_depth=3)
 X_transformed = hasher.fit_transform(X)
 
 # Visualize result using PCA
@@ -77,7 +77,7 @@ y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
         np.arange(y_min, y_max, h))
 
-# transform grid using RandomForestEmbedding
+# transform grid using RandomTreesEmbedding
 transformed_grid = hasher.transform(np.c_[xx.ravel(), yy.ravel()])
 y_grid_pred = nb.predict_proba(transformed_grid)[:, 1]
 
