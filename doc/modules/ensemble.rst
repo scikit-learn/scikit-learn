@@ -241,7 +241,7 @@ the transformation performs an implicit, non-parametric density estimation.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
- 
+
   * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
     dimensionality reduction technics on handwritten digits.
 
@@ -585,7 +585,7 @@ The Figure below show four one-dimensional partial dependence plots
 for the California housing dataset
 (:func:`sklearn.datasets.load_california_housing`).
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -594,17 +594,12 @@ Partial dependence plots with two target features can be used to visualize
 interactions among the two features. The Figure below shows such a
 two-dimensional partial dependence plot for the California housing dataset.
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_2.png
-   :target: ../auto_examples/ensemble/plot_partial_dependence.html
-   :align: center
-   :scale: 70
-
 Partial dependence plots can be created via the
-:func:`gradient_boosting.partial_dependence` function::
+:func:`partial_dependence.partial_dependence` function::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.ensemble.gradient_boosting import partial_dependence
+    >>> from sklearn.ensemble.partial_dependence import partial_dependence
 
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
