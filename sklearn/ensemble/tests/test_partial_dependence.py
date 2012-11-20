@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 
 from nose.tools import assert_raises
 
-from sklearn.ensemble import gradient_boosting
+from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 
@@ -40,7 +40,7 @@ def test_partial_dependence_classifier():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y)
 
-    pdp, axes = gradient_boosting.partial_dependence(clf, [0], X=X,
+    pdp, axes = partial_dependence(clf, [0], X=X,
                                                      grid_resolution=5)
 
     # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
@@ -50,7 +50,7 @@ def test_partial_dependence_classifier():
     # now with our own grid
     X_ = np.asarray(X)
     grid = np.unique(X_[:, 0])
-    pdp_2, axes = gradient_boosting.partial_dependence(clf, [0], grid=grid)
+    pdp_2, axes = partial_dependence(clf, [0], grid=grid)
 
     assert axes is None
     assert_array_equal(pdp, pdp_2)
@@ -63,7 +63,7 @@ def test_partial_dependence_multiclass():
 
     grid_resolution = 25
     n_classes = clf.n_classes_
-    pdp, axes = gradient_boosting.partial_dependence(
+    pdp, axes = partial_dependence(
         clf, [0], X=iris.data, grid_resolution=grid_resolution)
 
     assert pdp.shape == (n_classes, grid_resolution)
@@ -77,7 +77,7 @@ def test_partial_dependence_regressor():
     clf.fit(boston.data, boston.target)
 
     grid_resolution = 25
-    pdp, axes = gradient_boosting.partial_dependence(
+    pdp, axes = partial_dependence(
         clf, [0], X=boston.data, grid_resolution=grid_resolution)
 
     assert pdp.shape == (1, grid_resolution)
@@ -89,27 +89,24 @@ def test_partial_dependecy_input():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y)
 
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
+    assert_raises(ValueError, partial_dependence,
                   clf, [0], grid=None, X=None)
 
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
+    assert_raises(ValueError, partial_dependence,
                   clf, [0], grid=[0, 1], X=X)
 
     # first argument must be an instance of BaseGradientBoosting
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
+    assert_raises(ValueError, partial_dependence,
                   {}, [0], X=X)
 
     # Gradient boosting estimator must be fit
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
+    assert_raises(ValueError, partial_dependence,
                   GradientBoostingClassifier(), [0], X=X)
 
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
-                  clf, [-1], X=X)
+    assert_raises(ValueError, partial_dependence, clf, [-1], X=X)
 
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
-                  clf, [100], X=X)
+    assert_raises(ValueError, partial_dependence, clf, [100], X=X)
 
     # wrong ndim for grid
     grid = np.random.rand(10, 2, 1)
-    assert_raises(ValueError, gradient_boosting.partial_dependence,
-                  clf, [0], grid=grid)
+    assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
