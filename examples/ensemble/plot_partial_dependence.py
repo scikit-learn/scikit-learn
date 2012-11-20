@@ -74,7 +74,7 @@ print('_' * 80)
 print('One-way partial dependence plots')
 print
 
-features = [0, 5, 1, 2, (1, 5)]
+features = [0, 5, 1, 2, (5, 1)]
 
 partial_dependence_plots(clf, X_train, features, feature_names=names,
                          n_jobs=3, verbose=3)
