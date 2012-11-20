@@ -14,3 +14,4 @@ from .gradient_boosting import GradientBoostingRegressor
 
 from . import forest
 from . import gradient_boosting
+from . import partial_dependence
