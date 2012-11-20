@@ -38,6 +38,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from numpy.lib.stride_tricks import as_strided
 
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
@@ -347,6 +348,69 @@ def rbf_kernel(X, Y=None, gamma=0):
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
+    return K
+
+
+def chi_square_kernel(X, Y=None):
+    """
+    Compute the chi square kernel between X and Y::
+
+        K(x, y) = 1 - \sum_i^n 2(x_i - y_i)^2 / (x_i + y_i)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_1, n_features)
+
+    Y : array of shape (n_samples_2, n_features)
+
+    gamma : float
+
+    Returns
+    -------
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    n_samples_1, n_features = X.shape
+    n_samples_2, _ = Y.shape
+    print n_samples_1, n_samples_2, n_features
+    K = np.zeros(shape=(n_samples_1, n_samples_2), dtype=np.float)
+    for i in range(n_samples_1):
+        # K[i] = (2. * ((Y - X[i])**2 / (Y + X[i]))).sum(axis = 1)
+        Yx = Y + X[i]
+        K[i] = (Yx - (4. * X[i] * Y)/(Yx)).sum(axis = 1) * 2
+    K = 1 - K
+    return K
+
+
+def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
+    """
+    Compute the histogram intersection kernel(min kernel) 
+    between X and Y::
+
+        K(x, y) = \sum_i^n min(|x_i|^\alpha, |y_i|^\beta)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_1, n_features)
+
+    Y : array of shape (n_samples_2, n_features)
+
+    gamma : float
+
+    Returns
+    -------
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    if alpha is not None:
+        X = np.abs(X) ** alpha
+    if beta is not None:
+        Y = np.abs(Y) ** beta
+    n_samples_1, n_features = X.shape
+    n_samples_2, _ = Y.shape
+    K = np.zeros(shape=(n_samples_1, n_samples_2), dtype=np.float)
+    for i in range(n_samples_1):
+        K[i] = np.sum(np.minimum(X[i], Y), axis=1)
     return K
 
 
