@@ -49,7 +49,7 @@ from scipy.stats.mstats import mquantiles
 
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import gradient_boosting
+from sklearn.ensemble.partial_dependence import partial_dependence_plots
 from sklearn.datasets.california_housing import fetch_california_housing
 
 # fetch California housing dataset
@@ -64,7 +64,7 @@ names = cal_housing.feature_names
 
 print('_' * 80)
 print("Training GBRT...")
-clf = GradientBoostingRegressor(n_estimators=800, max_depth=4,
+clf = GradientBoostingRegressor(n_estimators=80, max_depth=4,
                                 learning_rate=0.1, loss='huber',
                                 random_state=1)
 clf.fit(X_train, y_train)
@@ -73,15 +73,15 @@ print("done.")
 print('_' * 80)
 print('One-way partial dependence plots')
 print
-fig = pl.figure()
-sub_plots = []
 
 features = [0, 5, 1, 2, (1, 5)]
 
-gradient_boosting.partial_dependence_plots(clf, X_train, features,
-                                           feature_names=names, n_jobs=3,
-                                           verbose=3)
+partial_dependence_plots(clf, X_train, features, feature_names=names,
+                         n_jobs=3, verbose=3)
+pl.show()
 
+## sub_plots = []
+## fig = pl.figure()
 ## for i, fx in enumerate([0, 5, 1, 2]):
 ##     name = names[fx]
 ##     target_feature = np.array([fx], dtype=np.int32)
