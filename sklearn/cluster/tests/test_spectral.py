@@ -26,11 +26,11 @@ def test_spectral_clustering():
                   [0, 0, 0, 1, 2, 4, 1],
                  ])
 
-    for mode in ('arpack', 'lobpcg'):
+    for eig_solver in ('arpack', 'lobpcg'):
         for assign_labels in ('kmeans', 'discretize'):
             for mat in (S, sparse.csr_matrix(S)):
                 model = SpectralClustering(random_state=0, n_clusters=2,
-                        affinity='precomputed', mode=mode,
+                        affinity='precomputed', eig_solver=eig_solver,
                         assign_labels=assign_labels).fit(mat)
                 labels = model.labels_
                 if labels[0] == 0:
@@ -40,7 +40,7 @@ def test_spectral_clustering():
 
                 model_copy = loads(dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
-                assert_equal(model_copy.mode, model.mode)
+                assert_equal(model_copy.eig_solver, model.eig_solver)
                 assert_array_equal(model_copy.random_state.get_state()[1],
                             model.random_state.get_state()[1])
                 assert_array_equal(model_copy.labels_, model.labels_)
@@ -59,7 +59,7 @@ def test_spectral_lobpcg_mode():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     labels = spectral_clustering(S, n_clusters=len(centers),
-                                     random_state=0, mode="lobpcg")
+                                     random_state=0, eig_solver="lobpcg")
     # We don't care too much that it's good, just that it *worked*.
     # There does have to be some lower limit on the performance though.
     assert_greater(np.mean(labels == true_labels), .3)
@@ -84,13 +84,13 @@ def test_spectral_amg_mode():
         amg_loaded = False
     if amg_loaded:
         labels = spectral_clustering(S, n_clusters=len(centers),
-                                     random_state=0, mode="amg")
+                                     random_state=0, eig_solver="amg")
         # We don't care too much that it's good, just that it *worked*.
         # There does have to be some lower limit on the performance though.
         assert_greater(np.mean(labels == true_labels), .3)
     else:
         assert_raises(ValueError, spectral_embedding, S,
-                      n_components=len(centers), random_state=0, mode="amg")
+                      n_components=len(centers), random_state=0, eig_solver="amg")
 
 
 def test_spectral_unknown_mode():
@@ -106,7 +106,7 @@ def test_spectral_unknown_mode():
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
     assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, mode="<unknown>")
+                  random_state=0, eig_solver="<unknown>")
 
 
 def test_spectral_clustering_sparse():

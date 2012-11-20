@@ -18,7 +18,7 @@ from ..metrics.pairwise import pairwise_kernels
 from ..metrics.pairwise import rbf_kernel
 from scipy import sparse
 from scipy.sparse.linalg import lobpcg
-
+from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 def _graph_connected_component(graph, node_id):
     """ Return the connected components of a certain node
@@ -90,7 +90,7 @@ def _set_diag(laplacian, value):
 
 def spectral_embedding(adjacency, n_components=8, eig_solver=None,
                        random_state=None, eig_tol=0.0,
-                       norm_laplacian=True):
+                       norm_laplacian=True, drop_first=True):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -128,6 +128,12 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     eig_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eig_solver.
+        
+    drop_first: bool, optional, default: True
+        Whether to drop the first eigenvector. For spectral embedding, this
+        should be True as the first eigenvector should be constant vecotr for
+        connected graph, but for spectral clustering, this should be kept as 
+        False to retain the first eigenvector.
 
     Returns
     -------
@@ -156,6 +162,9 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
+    # Whether to drop the first eigenvector
+    if drop_first:
+        n_components = n_components + 1
     # Check that the matrices given is symmetric
     if ((not sparse.isspmatrix(adjacency) and
          not np.all((adjacency - adjacency.T) < 1e-10)) or
@@ -204,13 +213,14 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
-            lambdas, diffusion_map = eigsh(-laplacian, k=n_components + 1,
+            lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eig_tol)
-            embedding = diffusion_map.T[n_components - 1::-1] * dd
+            embedding = diffusion_map.T[n_components::-1] * dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
+            print "!!!!!!!!!!!!!!!! RUNTIME ERROR !!!!!!!!!!!!!!!!!!!!!"
             eig_solver = "lobpcg"
 
     if eig_solver == 'amg':
@@ -224,7 +234,6 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
         embedding = diffusion_map.T * dd
-        embedding = embedding[1::]
         if embedding.shape[0] == 1:
             raise ValueError
 
@@ -237,7 +246,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.todense()
             lambdas, diffusion_map = symeig(laplacian)
-            embedding = diffusion_map.T[1:n_components + 1] * dd
+            embedding = diffusion_map.T[:n_components] * dd
         else:
             # lobpcg needs native floats
             laplacian = laplacian.astype(np.float)
@@ -248,10 +257,13 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[1:n_components + 1] * dd
+            embedding = diffusion_map.T[:n_components] * dd
             if embedding.shape[0] == 1:
                 raise ValueError
-    return embedding.T
+    if drop_first:
+        return embedding[1:n_components].T
+    else:
+        return embedding[:n_components].T
 
 
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
