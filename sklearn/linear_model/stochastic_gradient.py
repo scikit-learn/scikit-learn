@@ -263,9 +263,9 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         a margin loss used by standard linear SVM models. The 'log' loss is
         the loss of logistic regression models and can be used for
         probability estimation in binary classifiers. 'modified_huber'
-        is another smooth loss that brings tolerance to outliers. The 
-        'roc_pairwise_ranking' loss forms a ranking model by minimizing hinge  
-        loss on a training set of pairs with disagreeing labels.
+        is another smooth loss that brings tolerance to outliers.
+        The 'roc_pairwise_ranking' loss forms a ranking model by minimizing
+        hinge loss on a training set of pairs with disagreeing labels.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -671,10 +671,12 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     if est.loss == "roc_pairwise_ranking":
         ranking = True
-        dataset, intercept_decay = _make_dataset(X, y_i, sample_weight, ranking)
+        dataset, intercept_decay = _make_dataset(X, y_i,
+                                                 sample_weight, ranking)
         penalty_type = est._get_penalty_type(est.penalty)
         if est.penalty != "l2":
-            raise ValueError("The penalty %s is not supported for pairwise sgd. " % est.penalty)
+            raise ValueError("The penalty %s is not\
+                             supported for pairwise sgd. " % est.penalty)
         learning_rate_type = est._get_learning_rate_type(est.learning_rate)
         return ranking_sgd(coef, intercept, est.loss_function,
                      penalty_type, est.alpha, est.l1_ratio,

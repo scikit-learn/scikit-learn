@@ -107,25 +107,33 @@ cdef class WeightVector(object):
         innerprod *= self.wscale
         return innerprod
 
-    cdef double dot_on_difference(self, DOUBLE *a_data_ptr, DOUBLE *b_data_ptr, INTEGER *x_ind_ptr, int xnnz_a, int xnnz_b):
-        """Computes the dot product of the weight vector and the difference between samples a and b with disagreeing labels.
+    cdef double dot_on_difference(self, DOUBLE *a_data_ptr, 
+                                  DOUBLE *b_data_ptr, INTEGER *x_ind_ptr,
+                                  int xnnz_a, int xnnz_b):
+        """Computes the dot product of the weight vector and the difference
+           between samples a and b with disagreeing labels.
 
         Parameters
         ----------
         a_data_ptr : double*
-            The array which holds the feature values of the first example in the pair.
+            The array which holds the feature values of the first example
+            in the pair.
         b_data_ptr : double*
-            The array which holds the feature values of the second example in the pair.            
+            The array which holds the feature values of the second example
+            in the pair.
 
         Returns
         -------
         innerprod_on_difference : double
-            The inner product of ``w`` and the difference between ``a`` and ``b``.
+            The inner product of ``w`` and the difference between
+            ``a`` and ``b``.
         """
         # <(a - b), w> = <a, w> + <-1.0 * b, w>
         cdef double innerprod_on_difference = 0.0
-        innerprod_on_difference += self.dot(a_data_ptr, x_ind_ptr, xnnz_a)
-        innerprod_on_difference += self.dot(b_data_ptr, x_ind_ptr, xnnz_b) * -1.0
+        innerprod_on_difference += self.dot(a_data_ptr, x_ind_ptr,
+                                            xnnz_a)
+        innerprod_on_difference += self.dot(b_data_ptr, x_ind_ptr,
+                                            xnnz_b) * -1.0
         return innerprod_on_difference
 
     cdef void scale(self, double c):

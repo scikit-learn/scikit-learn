@@ -393,14 +393,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 class_weight = weight_neg
 
             update = eta * loss.dloss(p, y) * class_weight * sample_weight
-
-            print("P: "+str(p))
-            print("eta: "+str(eta))
-            print("dloss: "+str(loss.dloss(p, y)))
-            print("UPDATE: "+str(update))
-            print("WEIGHTS: "+str(np.sum(weights)))
             if update != 0.0:
-                print("ADDING NEG UPDATE ###########################################")
                 w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
                 if fit_intercept == 1:
                     intercept -= update * intercept_decay
@@ -561,7 +554,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             else:
                 y = 0.0
 
-            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr, x_ind_ptr, xnnz_a, xnnz_b)
+            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr, 
+                                        x_ind_ptr, xnnz_a, xnnz_b)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
