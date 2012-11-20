@@ -170,7 +170,7 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     Parameters
     ----------
     gbrt : BaseGradientBoosting
-        A fit gradient boosting model.
+        A fitted gradient boosting model.
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained.
     features : seq of tuples or ints
@@ -207,9 +207,10 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     Examples
     --------
     >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> partial_dependence_plots(clf, X, [0, (0, 1)])
+    >>> fig, axs = partial_dependence_plots(clf, X, [0, (0, 1)])
     ...
     """
     import matplotlib.pyplot as plt
@@ -265,15 +266,14 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     if 2 in pdp_lim:
         Z_level = np.linspace(*pdp_lim[2], num=8)
 
-    ncols = min(3, len(features))
-    nrows = int(np.ceil(len(features) / float(ncols)))
-
     if ax is None:
         fig = plt.figure(**fig_kw)
     else:
         fig = ax.get_figure()
         fig.clear()
 
+    ncols = min(3, len(features))
+    nrows = int(np.ceil(len(features) / float(ncols)))
     axs = []
     for i, fx, name, (pdp, axes) in izip(count(), features, names,
                                          pd_result):
