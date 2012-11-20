@@ -136,8 +136,8 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
 
     Notes
     -----
-    Spectral embedding is most useful when the graph has one connected 
-    component. If there graph has many components, the eigenvectors will 
+    Spectral embedding is most useful when the graph has one connected
+    component. If there graph has many components, the eigenvectors will
     simply uncover the connected components of the graph.
 
     References
