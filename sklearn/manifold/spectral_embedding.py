@@ -10,6 +10,7 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
+from ..utils._csgraph import cs_graph_components
 from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
@@ -25,32 +26,25 @@ def _graph_connected_component(graph, node_id):
     connected_components = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
     connected_components[node_id] = True
     n_node = graph.shape[0]
-    if sparse.isspmatrix(graph):
-        if graph.format != "csr":
-            graph = graph.tocsr()
-        for i in range(n_node):
-            last_num_component = connected_components.sum()
-            curr_nodes = np.where(connected_components)[0]
-            for j in curr_nodes:
-                connected_components[graph.indices[
-                                     graph.indptr[j]:graph.indptr[j + 1]]
-                                     ] = True
-            if last_num_component >= len(connected_components):
-                break
-    else:
-        for i in range(n_node):
-            last_num_component = connected_components.sum()
-            _, node_to_add = np.where(graph[connected_components] != 0)
-            connected_components[node_to_add] = True
-            if last_num_component >= len(connected_components):
-                break
+    for i in range(n_node):
+        last_num_component = connected_components.sum()
+        _, node_to_add = np.where(graph[connected_components] != 0)
+        connected_components[node_to_add] = True
+        if last_num_component >= len(connected_components):
+            break
     return connected_components
 
 
 def _graph_is_connected(graph):
     """ Return whether the graph is connected (True) or Not (False)
     """
-    return np.all(_graph_connected_component(graph, 0))
+    if sparse.isspmatrix(graph):
+        # sparse graph, find all the connected components
+        n_connected_components, _ = cs_graph_components(graph)
+        return n_connected_components == 1
+    else:
+        # dense graph, find all connected components start from node 0
+        return _graph_connected_component(graph, 0).sum() == graph.shape[0]
 
 
 def _set_diag(laplacian, value):
@@ -142,8 +136,9 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
 
     Notes
     -----
-    The graph should contain only one connected component, elsewhere the
-    results make little sense.
+    Spectral embedding is most useful when the graph has one connected 
+    component. If there graph has many components, the eigenvectors will 
+    simply uncover the connected components of the graph.
 
     References
     ----------
