@@ -258,12 +258,14 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'hinge' or 'log' or 'modified_huber'
+    loss : str, 'hinge' or 'log' or 'modified_huber' or 'roc_pairwise_ranking'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is
         a margin loss used by standard linear SVM models. The 'log' loss is
         the loss of logistic regression models and can be used for
         probability estimation in binary classifiers. 'modified_huber'
-        is another smooth loss that brings tolerance to outliers.
+        is another smooth loss that brings tolerance to outliers. The 
+        'roc_pairwise_ranking' loss forms a ranking model by minimizing hinge  
+        loss on a training set of pairs with disagreeing labels.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'

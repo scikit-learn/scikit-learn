@@ -393,7 +393,14 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 class_weight = weight_neg
 
             update = eta * loss.dloss(p, y) * class_weight * sample_weight
+
+            print("P: "+str(p))
+            print("eta: "+str(eta))
+            print("dloss: "+str(loss.dloss(p, y)))
+            print("UPDATE: "+str(update))
+            print("WEIGHTS: "+str(np.sum(weights)))
             if update != 0.0:
+                print("ADDING NEG UPDATE ###########################################")
                 w.add(x_data_ptr, x_ind_ptr, xnnz, -update)
                 if fit_intercept == 1:
                     intercept -= update * intercept_decay
@@ -554,36 +561,18 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             else:
                 y = 0.0
 
-            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr, x_ind_ptr, xnnz_a, xnnz_b) + intercept
-            print("P: "+str(p))
+            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr, x_ind_ptr, xnnz_a, xnnz_b)
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
             # L2 Regularization
-            # w.scale(1.0 - (rho * eta * alpha))
-
-            '''
-            # If (a - b) has non-zero loss, perform gradient step.
-            if (p < 1.0) & (y != 0.0):
-                pos_update = eta * y
-                w.add(a_data_ptr, x_ind_ptr, xnnz_a, pos_update)
-                neg_update = -1 * eta * y
-                w.add(b_data_ptr, x_ind_ptr, xnnz_b, neg_update)
-                if fit_intercept == 1:
-                    intercept -= intercept_decay * (pos_update)
-            print("INTERCEPT: "+str(intercept))
-            '''
-
-            update = eta * loss.dloss(p,y)
-            if update != 0.0:
-                w.add(a_data_ptr, x_ind_ptr, xnnz_a, -update)
-                w.add(b_data_ptr, x_ind_ptr, xnnz_b, update)                
-                #if fit_intercept == 1:
-                    #intercept -= intercept_decay * update
-            # L2 Regularization
             w.scale(1.0 - (rho * eta * alpha))
 
+            # If (a - b) has non-zero loss, perform gradient step.
+            if (p < 1.0) & (y != 0.0):
+                w.add(a_data_ptr, x_ind_ptr, xnnz_a, (eta * y))
+                w.add(b_data_ptr, x_ind_ptr, xnnz_b, -(eta * y))
             t += 1
             count += 1
         

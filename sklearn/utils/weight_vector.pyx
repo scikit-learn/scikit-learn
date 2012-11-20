@@ -125,7 +125,7 @@ cdef class WeightVector(object):
         # <(a - b), w> = <a, w> + <-1.0 * b, w>
         cdef double innerprod_on_difference = 0.0
         innerprod_on_difference += self.dot(a_data_ptr, x_ind_ptr, xnnz_a)
-        innerprod_on_difference -= self.dot(b_data_ptr, x_ind_ptr, xnnz_b)
+        innerprod_on_difference += self.dot(b_data_ptr, x_ind_ptr, xnnz_b) * -1.0
         return innerprod_on_difference
 
     cdef void scale(self, double c):
