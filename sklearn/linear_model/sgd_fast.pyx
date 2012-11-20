@@ -368,13 +368,13 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         rho = 0.0
 
     eta = eta0
-
     t_start = time()
     for epoch in range(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             dataset.shuffle(seed)
+
         for i in range(n_samples):
             dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
                          &sample_weight)
@@ -566,10 +566,10 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             # If (a - b) has non-zero loss, perform gradient step.
             if (p < 1.0) & (y != 0.0):
                 w.add(a_data_ptr, x_ind_ptr, xnnz_a, (eta * y))
-                w.add(b_data_ptr, x_ind_ptr, xnnz_b, -(eta * y))
+                w.add(b_data_ptr, x_ind_ptr, xnnz_b, (-1.0 * eta * y))
             t += 1
             count += 1
-        
+                    
         # report epoch information
         if verbose > 0:
             print("Norm: %.2f, NNZs: %d, "\
