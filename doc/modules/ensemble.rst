@@ -564,16 +564,17 @@ accessed via the ``feature_importances_`` property::
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
 
+.. currentmodule:: sklearn.ensemble.partial_dependence
 
 Partial dependence
 ..................
 
-Partial dependence plots show the dependence between the target response
+Partial dependence plots (PDP) show the dependence between the target response
 and a set of 'target' features, marginalizing over the
 values of all other features (the 'complement' features).
-Intuitively, you can interpret the partial dependence as the expected
+Intuitively, we can interpret the partial dependence as the expected
 target response [1]_ as a function of the 'target' features [2]_,
-however, in general we are only interested in the shape of the function
+however, we are usually only interested in the shape of the function
 in order to spot non-linear effects hence partial dependence plots
 are often centered such that the mean dependence is zero.
 
@@ -581,21 +582,31 @@ Due to the limits of human perception the size of the target feature
 set must be small (usually, one or two) thus the target features are
 usually chosen among the most important features.
 
-The Figure below show four one-dimensional partial dependence plots
+The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset
-(:func:`sklearn.datasets.load_california_housing`).
+(:func:`sklearn.datasets.fetch_california_housing`) created using the
+function
+:func:`partial_dependence_plots`.
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence.png
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70
 
-Partial dependence plots with two target features can be used to visualize
-interactions among the two features. The Figure below shows such a
-two-dimensional partial dependence plot for the California housing dataset.
+While one-way PDPs tell us about the interaction between the target
+response and the target feature (e.g. linear, non-linear,
+no interaction), PDPs with two target features show the
+interactions among the two features. For example, the two-variable PDP in the
+above Figure shows the dependence of median house price on joint
+values of house age and avg. occupants per household. We can clearly
+see an interaction between the two features:
+For an avg. occupancy greather than two, the house price is nearly independent
+of the house age, whereas for values less than two there is a strong dependence
+on age.
 
-Partial dependence plots can be created via the
-:func:`partial_dependence.partial_dependence` function::
+If you need the raw values of the partial dependence function rather
+than the plots you can use the
+:func:`sklearn.ensemble.partial_dependence.partial_dependence` function::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
