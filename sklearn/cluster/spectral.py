@@ -153,8 +153,8 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     return labels
 
 
-def spectral_clustering(affinity, n_clusters=8, n_components=None, 
-                        eig_solver=None, random_state=None, n_init=10, 
+def spectral_clustering(affinity, n_clusters=8, n_components=None,
+                        eig_solver=None, random_state=None, n_init=10,
                         k=None, eig_tol=0.0,
                         assign_labels='kmeans'):
     """Apply clustering to a projection to the normalized laplacian.
@@ -241,8 +241,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     """
     if not assign_labels in ('kmeans', 'discretize'):
         raise ValueError("The 'assign_labels' parameter should be "
-                    "'kmeans' or 'discretize', but '%s' was given"
-                    % assign_labels)
+                         "'kmeans' or 'discretize', but '%s' was given"
+                         % assign_labels)
     if not k is None:
         warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
         n_clusters = k
@@ -365,8 +365,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
       http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
-    def __init__(self, n_clusters=8, eig_solver=None, random_state=None, n_init=10,
-                 gamma=1., affinity='rbf', n_neighbors=10, k=None,
+    def __init__(self, n_clusters=8, eig_solver=None, random_state=None,
+                 n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
                  precomputed=False, eig_tol=0.0, assign_labels='kmeans'):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
@@ -407,15 +407,17 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             self.affinity_matrix_ = X
         else:
             raise ValueError("Invalid 'affinity'. Expected 'rbf', "
-                "'nearest_neighbors' or 'precomputed', got '%s'."
-                % self.affinity)
+                             "'nearest_neighbors' or 'precomputed', got '%s'."
+                             % self.affinity)
 
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
-                            n_clusters=self.n_clusters, eig_solver=self.eig_solver,
-                            random_state=self.random_state, n_init=self.n_init,
-                            eig_tol=self.eig_tol,
-                            assign_labels=self.assign_labels)
+                                           n_clusters=self.n_clusters,
+                                           eig_solver=self.eig_solver,
+                                           random_state=self.random_state,
+                                           n_init=self.n_init,
+                                           eig_tol=self.eig_tol,
+                                           assign_labels=self.assign_labels)
         return self
 
     @property
