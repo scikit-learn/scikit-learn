@@ -20,6 +20,7 @@ from scipy import sparse
 from scipy.sparse.linalg import lobpcg
 from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
+
 def _graph_connected_component(graph, node_id):
     """ Return the connected components of a certain node
     """
@@ -128,11 +129,11 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     eig_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eig_solver.
-        
+
     drop_first: bool, optional, default: True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vecotr for
-        connected graph, but for spectral clustering, this should be kept as 
+        connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
 
     Returns
