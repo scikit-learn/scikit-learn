@@ -364,8 +364,6 @@ def chi_square_kernel(X, Y=None):
 
     Y : array of shape (n_samples_2, n_features)
 
-    gamma : float
-
     Returns
     -------
     Gram matrix : array of shape (n_samples_1, n_samples_2)
@@ -397,7 +395,9 @@ def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
 
     Y : array of shape (n_samples_2, n_features)
 
-    gamma : float
+    alpha : float
+    
+    beta : float
 
     Returns
     -------
