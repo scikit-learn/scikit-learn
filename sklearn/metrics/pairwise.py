@@ -396,7 +396,7 @@ def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
     Y : array of shape (n_samples_2, n_features)
 
     alpha : float
-    
+
     beta : float
 
     Returns
@@ -466,8 +466,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
