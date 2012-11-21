@@ -1149,7 +1149,15 @@ def add_dummy_feature(X, value=1.0):
     -------
 
     X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
-        Same data with dummy feature added as firt column.
+        Same data with dummy feature added as first column.
+
+    Example
+    --------
+
+    >>> from sklearn.preprocessing import add_dummy_feature
+    >>> add_dummy_feature([[0, 1], [1, 0]])
+    array([[ 1.,  0.,  1.],
+           [ 1.,  1.,  0.]])
     """
     X = safe_asarray(X)
     n_samples, n_features = X.shape
