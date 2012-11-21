@@ -509,8 +509,6 @@ class BaseGradientBoosting(BaseEnsemble):
                                                k=k)
             # add tree to ensemble
             self.estimators_[i, k] = tree
-            # add tree to ensemble
-            self.estimators_[i, k] = tree
 
         return y_pred
 
