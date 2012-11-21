@@ -53,10 +53,17 @@ def test_uniform_strategy():
 
 
 def test_regressor():
-    X = [[0], [0], [0], [0]]  # ignored
+    X = [[0]] * 4  # ignored
     y = [1, 2, 1, 1]
 
     clf = DummyRegressor()
     clf.fit(X, y)
     assert_array_equal(clf.predict(X), [5./4] * len(X))
 
+
+def test_string_labels():
+    X = [[0]] * 5
+    y = ["paris", "paris", "tokyo", "amsterdam", "berlin"]
+    clf = DummyClassifier(strategy="most_frequent")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X), ["paris"] * 5)
