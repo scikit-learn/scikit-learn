@@ -18,6 +18,7 @@ from sklearn.linear_model.ridge import RidgeCV
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import ridge_regression
+from sklearn.linear_model.ridge import _RidgeGridCV
 
 from sklearn.cross_validation import KFold
 from sklearn.metrics import euclidean_distances
@@ -634,3 +635,29 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_ridge_grid_cv_object():
+
+    ridge_cv = _RidgeGridCV(n_grid_refinements=10)
+
+    n_samples, n_features = 50, 100
+
+    X = rng.randn(n_samples, n_features)
+
+    beta = np.zeros(n_features)
+    beta[:2] = rng.randn(2) + 1.
+
+    y_0 = np.dot(X, beta)
+
+    noise_levels = np.array([.01, .1, .5, 1., 2., 5., 10., 100., 1000.])
+    noise_proto = rng.randn(n_samples)
+
+    noise = noise_levels[np.newaxis, :] * noise_proto[:, np.newaxis]
+
+    y = y_0[:, np.newaxis] + noise
+    y = np.hstack([y, noise_proto[:, np.newaxis]])
+
+    ridge_cv.fit(X, y)
+
+

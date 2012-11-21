@@ -24,6 +24,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
+from ..cross_validation import cross_val_score
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
@@ -744,10 +745,54 @@ def _make_alpha_grid(alpha_min, alpha_max, num_steps, logscale):
 
 
 def _multi_r2_score(y_true, y_pred):
-    pass
+
+    if y_true.ndim == 1:
+        y_true_ = y_true[:, np.newaxis]
+    else:
+        y_true_ = y_true
+
+    yp = y_pred.reshape([-1] + list(y_true_.shape))
+    yt = y_true.reshape([1] + list(y_true_.shape))
+
+    yt_means = y_true_.mean(0)
+    yt_var = ((y_true_ - yt_means) ** 2).sum(0)
+
+    residue_var = ((yp - yt) ** 2).sum(1)
+
+    r2_score = -np.inf * np.ones_like(residue_var)
+
+    non_zero_denominator = np.abs(yt_var) > 1e-15
+
+    r2_score[:, non_zero_denominator] = 1. - \
+    residue_var[:, non_zero_denominator] / yt_var[:, non_zero_denominator]
+
+    zero_over_zero = np.logical_and(np.logical_not(non_zero_denominator),
+                                    np.abs(residue_var) < 1e-15)
+
+    r2_score[:, zero_over_zero] = 1.
+
+    return r2_score.reshape(list(y_pred.shape[:-2]) + [-1])
 
 
 class _RidgeGridCV(LinearModel):
+
+    def __init__(self, alpha_min=1e-3, alpha_max=1e8, n_grid_points=5,
+                 n_grid_refinements=2, logscale=True, fit_intercept=True,
+                 score_func=None, cv=5, solver='svd', n_jobs=1):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.n_grid_points = n_grid_points
+        print "n_grid_refinements=%d" % n_grid_refinements
+        self.n_grid_refinements = n_grid_refinements
+        self.logscale = logscale
+        self.fit_intercept = fit_intercept
+        self.score_func = score_func
+        self.cv = cv
+        self.solver = solver
+        self.n_jobs = n_jobs
+
+        # TODO
+        self.intercept_ = 0
 
     class _MultiRidge(LinearModel):
         def __init__(self, alphas, solver='svd', score_func=None):
@@ -762,25 +807,18 @@ class _RidgeGridCV(LinearModel):
 
         def predict(self, X):
             return np.dot(X, self.coef_.reshape(-1, X.shape[1]).T).T.reshape(
-                list(self.coef_.shape[:-1]) + [X.shape[0]])
+                list(self.coef_.shape[:-1]) + [X.shape[0]]).transpose(
+                    range(self.coef_.ndim - 2) + [-1, -2])
 
         def score(self, X, y):
             return self.score_func(y, self.predict(X))
 
-    def __init__(self, alpha_min=1e-3, alpha_max=1e8, n_grid_points=5,
-                 n_grid_refinements=2, logscale=True, fit_intercept=True,
-                 score_func=None, cv=None, solver='svd'):
-        self.alpha_min = alpha_min
-        self.alpha_max = alpha_max
-        self.n_grid_points = n_grid_points
-        self.n_grid_refinements = n_grid_refinements
-        self.logscale = logscale
-        self.fit_intercept = fit_intercept
-        self.score_func = score_func
-        self.cv = cv
-        self.solver = solver
-
     def fit(self, X, y):
+
+        if y.ndim == 1:
+            y1 = y[:, np.newaxis]
+        else:
+            y1 = y
 
         alpha_min = np.atleast_2d(self.alpha_min)
         alpha_max = np.atleast_2d(self.alpha_max)
@@ -789,14 +827,86 @@ class _RidgeGridCV(LinearModel):
         alpha_min = (alpha_min + alpha_max) - alpha_max
         alpha_max = (alpha_max - alpha_min) + alpha_max
 
-        self.alphas = _make_alpha_grid(alpha_min, alpha_max,
+        self.current_alphas = _make_alpha_grid(alpha_min, alpha_max,
                                        self.n_grid_points, self.logscale)
+        self.best_alphas = np.inf * np.ones(y1.shape[1])
+        self.best_mean_scores = -np.inf * np.ones(y1.shape[1])
 
-        for i in range(self.n_grid_refinements):
-            self.coefs = ridge_regression(X, y,
-                                          self.alphas, solver=self.solver)
+        print "Fitting with %d grid refinements" % self.n_grid_refinements
+        for i in range(self.n_grid_refinements + 1):
+            print "Grid refinement %d" % (i + 1)
+            print "Grid is %s" % str(self.current_alphas)
+            ridge = _RidgeGridCV._MultiRidge(
+                alphas=self.current_alphas, solver=self.solver)
+            cv_scores = cross_val_score(ridge, X, y1,
+                                        cv=self.cv, n_jobs=self.n_jobs)
+            mean_cv_scores = cv_scores.mean(axis=0)
+            best_mean_score_indices = mean_cv_scores.argmax(axis=0)
+            best_mean_scores = mean_cv_scores.max(axis=0)
 
-            
+            improvement = best_mean_scores > self.best_mean_scores
+            self.best_mean_scores[improvement] = best_mean_scores[improvement]
+            self.best_alphas[improvement] = self.current_alphas[
+                best_mean_score_indices,
+                np.arange(self.current_alphas.shape[1])][improvement]
+
+            if i < self.n_grid_refinements:
+                self.update_alphas(best_mean_score_indices)
+
+        self.coef_ = ridge_regression(X, y,
+                            self.best_alphas, solver=self.solver)
+        return self
+
+    def update_alphas(self, best_indices):
+        print "best indices are %s" % str(best_indices)
+        new_alpha_min_indices = np.maximum(best_indices - 1, 0)
+        new_alpha_max_indices = np.minimum(
+            np.minimum(best_indices + 1, new_alpha_min_indices + 1),
+            self.n_grid_points - 1)
+
+        new_alpha_min = self.current_alphas[new_alpha_min_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        new_alpha_min = self.current_alphas[new_alpha_min_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        new_alpha_max = self.current_alphas[new_alpha_max_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        current_best_alphas = self.current_alphas[best_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        global_best_alphas = self.best_alphas
+
+        alpha_min, alpha_max = self.alpha_min, self.alpha_max
+
+        if self.logscale:
+            global_best_alphas = np.log(global_best_alphas)
+            current_best_alphas = np.log(current_best_alphas)
+            new_alpha_min = np.log(new_alpha_min)
+            new_alpha_max = np.log(new_alpha_max)
+            alpha_min, alpha_max = np.log(alpha_min), np.log(alpha_max)
+
+        rc = recenter_between_current_and_global_max = \
+            (global_best_alphas - current_best_alphas) / 2
+
+        new_alpha_min = np.maximum(alpha_min, new_alpha_min + rc)
+        new_alpha_max = np.minimum(alpha_max, new_alpha_max + rc)
+
+        new_alpha_min = np.minimum(new_alpha_min, alpha_max)
+        new_alpha_max = np.maximum(new_alpha_max, alpha_min)
+
+        margin = (new_alpha_max - new_alpha_min) /\
+            (self.n_grid_points + 1) / 2.
+
+        new_alpha_min += margin
+        new_alpha_max -= margin
+
+        if (new_alpha_max - new_alpha_min <= 0).any():
+            stop
+        if self.logscale:
+            new_alpha_min = np.exp(new_alpha_min)
+            new_alpha_max = np.exp(new_alpha_max)
+
+
+        self.current_alphas = _make_alpha_grid(new_alpha_min, new_alpha_max,
+                                        self.n_grid_points, self.logscale)
 
 
 class _BaseRidgeCV(LinearModel):
