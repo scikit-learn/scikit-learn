@@ -204,8 +204,9 @@ def test_chi_square_kernel():
     K = chi_square_kernel(X, Y)
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
-            assert_almost_equal(K[i,j], 1 - 2 * np.sum((x - y)**2/(x+y)), decimal=10)
-    
+            assert_almost_equal(
+                K[i, j], 1 - 2 * np.sum((x - y) ** 2 / (x + y)), decimal=10)
+
 
 def test_histogram_intersection_kernel():
     rng = np.random.RandomState(0)
@@ -214,13 +215,14 @@ def test_histogram_intersection_kernel():
     K = histogram_intersection_kernel(X, Y)
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
-            assert_almost_equal(K[i,j], np.minimum(x,y).sum(), decimal=10)
+            assert_almost_equal(K[i, j], np.minimum(x, y).sum(), decimal=10)
     alpha = 0.9
-    beta  = 0.8
+    beta = 0.8
     K = histogram_intersection_kernel(X, Y, alpha, beta)
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
-            assert_almost_equal(K[i,j], np.minimum(np.abs(x)**alpha,np.abs(y)**beta).sum(), decimal=10)
+            assert_almost_equal(K[i, j], np.minimum(
+                np.abs(x) ** alpha, np.abs(y) ** beta).sum(), decimal=10)
 
 
 def test_check_dense_matrices():

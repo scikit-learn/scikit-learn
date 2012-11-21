@@ -168,7 +168,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -234,10 +234,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
            [ 1.,  1.]]...)
     """
     X, Y = check_pairwise_arrays(X, Y)
+    if issparse(X) or issparse(Y):
+        raise TypeError("manhattan distances currently does not"
+                        " support sparse matrices.")
     n_samples_X, n_features_X = X.shape
     n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
@@ -374,10 +375,10 @@ def chi_square_kernel(X, Y=None):
     n_samples_2, _ = Y.shape
     print n_samples_1, n_samples_2, n_features
     if issparse(X) or issparse(Y):
-        raise TypeError("chi square kernel currently do not"
+        raise TypeError("chi square kernel currently does not"
                         " support sparse matrices.")
     XY = X[:, np.newaxis, :] + Y[np.newaxis, :, :]
-    K = XY - 4. * X[:, np.newaxis, :] * Y[np.newaxis, :, :]/XY
+    K = XY - 4. * X[:, np.newaxis, :] * Y[np.newaxis, :, :] / XY
     K = K.sum(axis=2) * 2
     K = 1 - K
     return K
@@ -385,7 +386,7 @@ def chi_square_kernel(X, Y=None):
 
 def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
     """
-    Compute the histogram intersection kernel (min kernel) 
+    Compute the histogram intersection kernel (min kernel)
     between X and Y::
 
         K(x, y) = \sum_i^n min(|x_i|^\alpha, |y_i|^\beta)
@@ -412,10 +413,10 @@ def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
     n_samples_1, n_features = X.shape
     n_samples_2, _ = Y.shape
     if issparse(X) or issparse(Y):
-        raise TypeError("histogram intersection kernel currently do not"
+        raise TypeError("histogram intersection kernel currently does not"
                         " support sparse matrices.")
     else:
-        K = np.minimum(X[:, np.newaxis, :], 
+        K = np.minimum(X[:, np.newaxis, :],
                        Y[np.newaxis, :, :]).sum(axis=2)
     return K
 
@@ -429,7 +430,7 @@ pairwise_distance_functions = {
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
     'cityblock': manhattan_distances,
-    }
+}
 
 
 def distance_metrics():
@@ -598,7 +599,7 @@ pairwise_kernel_functions = {
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'linear': linear_kernel
-    }
+}
 
 
 def kernel_metrics():
@@ -701,8 +702,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds \
-                                        if k in kernel_params[metric])
+            kwds = dict((k, kwds[k]) for k in kwds
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
