@@ -18,10 +18,11 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import set_random_state
+from sklearn.utils.testing import assert_greater
 
 import sklearn
-from sklearn.utils.testing import all_estimators, set_random_state
-from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
         TransformerMixin, ClusterMixin
 from sklearn.utils import shuffle
@@ -41,6 +42,7 @@ from sklearn.ensemble import BaseEnsemble, RandomTreesEmbedding
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
 from sklearn.feature_selection import RFE, RFECV, SelectKBest
+from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
 from sklearn.feature_extraction import DictVectorizer, FeatureHasher
@@ -55,7 +57,7 @@ from sklearn.isotonic import IsotonicRegression
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
         LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder,
-        RandomTreesEmbedding, FeatureHasher]
+        RandomTreesEmbedding, FeatureHasher, DummyClassifier, DummyRegressor]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
@@ -508,7 +510,8 @@ def test_classifiers_classes():
         y_pred = clf.predict(X)
         # training set performance
         assert_array_equal(np.unique(y), np.unique(y_pred))
-        assert_greater(zero_one_score(y, y_pred), 0.78)
+        assert_greater(zero_one_score(y, y_pred), 0.78,
+                       "accuracy of %s not greater than 0.78" % str(Clf))
 
 
 def test_regressors_int():
