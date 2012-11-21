@@ -11,7 +11,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import check_arrays, array2d, atleast2d_or_csr
+from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
@@ -1129,3 +1129,63 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         K += self.K_fit_all_
 
         return K
+
+
+def add_dummy_feature(X, value=1.0):
+    """Augment dataset with an additional dummy feature.
+
+    This is useful for fitting an intercept term with implementations which
+    cannot otherwise fit it directly.
+
+    Parameters
+    ----------
+    X : array or scipy.sparse matrix with shape [n_samples, n_features]
+        Data.
+
+    value : float
+        Value to use for the dummy feature.
+
+    Returns
+    -------
+
+    X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
+        Same data with dummy feature added as first column.
+
+    Example
+    --------
+
+    >>> from sklearn.preprocessing import add_dummy_feature
+    >>> add_dummy_feature([[0, 1], [1, 0]])
+    array([[ 1.,  0.,  1.],
+           [ 1.,  1.,  0.]])
+    """
+    X = safe_asarray(X)
+    n_samples, n_features = X.shape
+    shape = (n_samples, n_features + 1)
+    if sp.issparse(X):
+        if sp.isspmatrix_coo(X):
+            # Shift columns to the right.
+            col = X.col + 1
+            # Column indices of dummy feature are 0 everywhere.
+            col = np.concatenate((np.zeros(n_samples), col))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
+            row = np.concatenate((np.arange(n_samples), X.row))
+            # Prepend the dummy feature n_samples times.
+            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            return sp.coo_matrix((data, (row, col)), shape)
+        elif sp.isspmatrix_csc(X):
+            # Shift index pointers since we need to add n_samples elements.
+            indptr = X.indptr + n_samples
+            # indptr[0] must be 0.
+            indptr = np.concatenate((np.array([0]), indptr))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
+            indices = np.concatenate((np.arange(n_samples), X.indices))
+            # Prepend the dummy feature n_samples times.
+            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            return sp.csc_matrix((data, indices, indptr), shape)
+        else:
+            klass = X.__class__
+            X = klass(add_dummy_feature(X.tocoo(), value))
+            return klass(X)
+    else:
+        return np.hstack((np.ones((n_samples, 1)) * value, X))
