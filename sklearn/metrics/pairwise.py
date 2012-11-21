@@ -373,18 +373,19 @@ def chi_square_kernel(X, Y=None):
     n_samples_1, n_features = X.shape
     n_samples_2, _ = Y.shape
     print n_samples_1, n_samples_2, n_features
-    K = np.zeros(shape=(n_samples_1, n_samples_2), dtype=np.float)
-    for i in range(n_samples_1):
-        # K[i] = (2. * ((Y - X[i])**2 / (Y + X[i]))).sum(axis = 1)
-        Yx = Y + X[i]
-        K[i] = (Yx - (4. * X[i] * Y)/(Yx)).sum(axis = 1) * 2
+    if issparse(X) or issparse(Y):
+        raise TypeError("chi square kernel currently do not"
+                        " support sparse matrices.")
+    XY = X[:, np.newaxis, :] + Y[np.newaxis, :, :]
+    K = XY - 4. * X[:, np.newaxis, :] * Y[np.newaxis, :, :]/XY
+    K = K.sum(axis=2) * 2
     K = 1 - K
     return K
 
 
 def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
     """
-    Compute the histogram intersection kernel(min kernel) 
+    Compute the histogram intersection kernel (min kernel) 
     between X and Y::
 
         K(x, y) = \sum_i^n min(|x_i|^\alpha, |y_i|^\beta)
@@ -401,6 +402,8 @@ def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
     -------
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
+    if Y is None and beta is None and alpha is not None:
+        beta = alpha
     X, Y = check_pairwise_arrays(X, Y)
     if alpha is not None:
         X = np.abs(X) ** alpha
@@ -408,9 +411,12 @@ def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
         Y = np.abs(Y) ** beta
     n_samples_1, n_features = X.shape
     n_samples_2, _ = Y.shape
-    K = np.zeros(shape=(n_samples_1, n_samples_2), dtype=np.float)
-    for i in range(n_samples_1):
-        K[i] = np.sum(np.minimum(X[i], Y), axis=1)
+    if issparse(X) or issparse(Y):
+        raise TypeError("histogram intersection kernel currently do not"
+                        " support sparse matrices.")
+    else:
+        K = np.minimum(X[:, np.newaxis, :], 
+                       Y[np.newaxis, :, :]).sum(axis=2)
     return K
 
 
