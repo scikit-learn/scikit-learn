@@ -93,10 +93,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if self.strategy == "most_frequent":
             ret = np.ones(n_samples, dtype=int) * self.class_prior_.argmax()
         elif self.strategy == "stratified":
-            ret = rs.multinomial(1, self.class_prior_,
-                                 size=n_samples).argmax(axis=1)
+            ret = self.predict_proba(X).argmax(axis=1)
         elif self.strategy == "uniform":
-            ret = rs.randint(len(self.class_prior_), size=n_samples)
+            ret = rs.randint(len(self.classes_), size=n_samples)
 
         return self.classes_[ret]
 
