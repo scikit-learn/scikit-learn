@@ -16,7 +16,7 @@ Dummy estimators
 .. currentmodule:: sklearn.dummy
 
 When doing supervised learning, a simple sanity check consists in comparing one's
-classifier against simple rules of thumb.
+estimator against simple rules of thumb.
 :class:`DummyClassifier` implements three such simple strategies for classification:
 
 - `stratified` generates randomly predictions by respecting the training
