@@ -878,9 +878,10 @@ Pairwise metrics
    :toctree: generated/
    :template: function.rst
 
-   preprocessing.scale
-   preprocessing.normalize
+   preprocessing.add_dummy_feature
    preprocessing.binarize
+   preprocessing.normalize
+   preprocessing.scale
 
 
 :mod:`sklearn.qda`: Quadratic Discriminant Analysis
