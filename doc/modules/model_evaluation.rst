@@ -15,13 +15,19 @@ Dummy estimators
 
 .. currentmodule:: sklearn.dummy
 
-When doing classification, a simple sanity check consists in comparing one's
+When doing supervised learning, a simple sanity check consists in comparing one's
 classifier against simple rules of thumb.
-:class:`DummyClassifier` implements three such simple strategies.
-`stratified` generates randomly predictions by respecting the training
-set's class distribution. `most_frequent` always predicts the most frequent
-label in the training set.  `uniform` generates predictions uniformly at
-random. To illustrate :class:`DummyClassifier`, first let's create an imbalanced
+:class:`DummyClassifier` implements three such simple strategies for classification:
+
+- `stratified` generates randomly predictions by respecting the training
+  set's class distribution,
+- `most_frequent` always predicts the most frequent label in the training set,
+- `uniform` generates predictions uniformly at random.
+
+Note that with all these strategies, the `predict` method completely ignores
+the input data!
+
+To illustrate :class:`DummyClassifier`, first let's create an imbalanced
 dataset::
 
   >>> from sklearn.datasets import load_iris
