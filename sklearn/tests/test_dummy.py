@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -52,18 +53,31 @@ def test_uniform_strategy():
     _check_predict_proba(clf, X, y)
 
 
-def test_regressor():
-    X = [[0]] * 4  # ignored
-    y = [1, 2, 1, 1]
-
-    clf = DummyRegressor()
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(X), [5./4] * len(X))
-
-
 def test_string_labels():
     X = [[0]] * 5
     y = ["paris", "paris", "tokyo", "amsterdam", "berlin"]
     clf = DummyClassifier(strategy="most_frequent")
     clf.fit(X, y)
     assert_array_equal(clf.predict(X), ["paris"] * 5)
+
+
+def test_classifier_exceptions():
+    clf = DummyClassifier(strategy="unknown")
+    assert_raises(ValueError, clf.fit, [], [])
+
+    assert_raises(ValueError, clf.predict, [])
+    assert_raises(ValueError, clf.predict_proba, [])
+
+
+def test_regressor():
+    X = [[0]] * 4  # ignored
+    y = [1, 2, 1, 1]
+
+    reg = DummyRegressor()
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [5./4] * len(X))
+
+
+def test_regressor_exceptions():
+    reg = DummyRegressor()
+    assert_raises(ValueError, reg.predict, [])

@@ -61,6 +61,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
+        if self.strategy not in ("most_frequent", "stratified", "uniform"):
+            raise ValueError("Unknown strategy type.")
+
         self.classes_, y = unique(y, return_inverse=True)
         self.class_prior_ = np.bincount(y) / float(y.shape[0])
         return self
@@ -80,6 +83,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Predicted target values for X.
         """
+        if not hasattr(self, "classes_"):
+            raise ValueError("DummyClassifier not fitted.")
+
         X = safe_asarray(X)
         n_samples = X.shape[0]
         rs = check_random_state(self.random_state)
@@ -91,8 +97,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                  size=n_samples).argmax(axis=1)
         elif self.strategy == "uniform":
             ret = rs.randint(len(self.class_prior_), size=n_samples)
-        else:
-            raise ValueError("Unknown strategy type.")
 
         return self.classes_[ret]
 
@@ -112,6 +116,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically.
         """
+        if not hasattr(self, "classes_"):
+            raise ValueError("DummyClassifier not fitted.")
+
         X = safe_asarray(X)
         n_samples = X.shape[0]
         n_classes = len(self.classes_)
@@ -126,8 +133,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         elif self.strategy == "uniform":
             out = np.ones((n_samples, n_classes), dtype=np.float64)
             out /= n_classes
-        else:
-            raise ValueError("Unknown strategy type.")
 
         return out
 
@@ -199,6 +204,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         y : array, shape = [n_samples]
             Predicted target values for X.
         """
+        if not hasattr(self, "y_mean_"):
+            raise ValueError("DummyRegressor not fitted.")
+
         X = safe_asarray(X)
         n_samples = X.shape[0]
 
