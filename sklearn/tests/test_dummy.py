@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -24,22 +25,30 @@ def test_most_frequent_strategy():
 
 
 def test_stratified_strategy():
-    X = [[0], [0], [0], [0], [0]]  # ignored
+    X = [[0]] * 5  # ignored
     y = [1, 2, 1, 1, 2]
-
     clf = DummyClassifier(strategy="stratified", random_state=0)
     clf.fit(X, y)
-    assert_array_equal(clf.predict(X), [1, 2, 2, 1, 1])
+
+    X = [[0]] * 1000
+    y_pred = clf.predict(X)
+    p = np.bincount(y_pred) / float(len(X))
+    assert_almost_equal(p[1], 3./5, decimal=1)
+    assert_almost_equal(p[2], 2./5, decimal=1)
     _check_predict_proba(clf, X, y)
 
 
 def test_uniform_strategy():
-    X = [[0], [0], [0], [0]]  # ignored
+    X = [[0]] * 4  # ignored
     y = [1, 2, 1, 1]
-
     clf = DummyClassifier(strategy="uniform", random_state=0)
     clf.fit(X, y)
-    assert_array_equal(clf.predict(X), [1, 2, 2, 1])
+
+    X = [[0]] * 1000
+    y_pred = clf.predict(X)
+    p = np.bincount(y_pred) / float(len(X))
+    assert_almost_equal(p[1], 0.5, decimal=1)
+    assert_almost_equal(p[2], 0.5, decimal=1)
     _check_predict_proba(clf, X, y)
 
 
