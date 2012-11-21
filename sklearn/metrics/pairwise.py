@@ -599,8 +599,8 @@ pairwise_kernel_functions = {
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'linear': linear_kernel,
-    'histogram_intersection' : histogram_intersection_kernel,
-    'chi_square' : chi_square_kernel
+    'histogram_intersection': histogram_intersection_kernel,
+    'chi_square': chi_square_kernel
 }
 
 
@@ -633,8 +633,8 @@ kernel_params = {
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
     "linear": (),
-    "histogram_intersection" : set(("alpha", "beta")),
-    "chi_square" : set()
+    "histogram_intersection": set(("alpha", "beta")),
+    "chi_square": set()
 }
 
 
@@ -654,7 +654,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'chi_square',
+        'histogram_intersection']
 
     Parameters
     ----------
