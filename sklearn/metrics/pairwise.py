@@ -598,7 +598,9 @@ pairwise_kernel_functions = {
     'sigmoid': sigmoid_kernel,
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
-    'linear': linear_kernel
+    'linear': linear_kernel,
+    'histogram_intersection' : histogram_intersection_kernel,
+    'chi_square' : chi_square_kernel
 }
 
 
@@ -610,15 +612,17 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ============   ==================================
-      metric         Function
-      ============   ==================================
-      'linear'       sklearn.pairwise.linear_kernel
-      'poly'         sklearn.pairwise.polynomial_kernel
-      'polynomial'   sklearn.pairwise.polynomial_kernel
-      'rbf'          sklearn.pairwise.rbf_kernel
-      'sigmoid'      sklearn.pairwise.sigmoid_kernel
-      ============   ==================================
+      ============             ==================================
+      metric                   Function
+      ============             ==================================
+      'linear'                 sklearn.pairwise.linear_kernel
+      'poly'                   sklearn.pairwise.polynomial_kernel
+      'polynomial'             sklearn.pairwise.polynomial_kernel
+      'rbf'                    sklearn.pairwise.rbf_kernel
+      'sigmoid'                sklearn.pairwise.sigmoid_kernel
+      'histogram_intersection' sklearn.pairwise.histogram_intersection_kernel
+      'chi_square'             sklearn.pairwise.chi_square_kernel
+      ============             ==================================
     """
     return pairwise_kernel_functions
 
@@ -628,7 +632,9 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-    "linear": ()
+    "linear": (),
+    "histogram_intersection" : set(("alpha", "beta")),
+    "chi_square" : set()
 }
 
 
