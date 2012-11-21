@@ -2,11 +2,12 @@
 
 .. _model_selection:
 
-Model Selection
------------------------
+Model selection and evaluation
+------------------------------
 
 .. toctree::
 
     modules/cross_validation
     modules/grid_search
     modules/pipeline
+    modules/model_evaluation
