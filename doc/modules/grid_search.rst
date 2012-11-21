@@ -106,7 +106,9 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: References:
 
-    * TODO James Bergstra
+    * Bergstra, J. and Bengio, Y.,
+      Random search for hyper-parameter optimization,
+      The Journal of Machine Learning Research (2012)
 
 
 Alternatives to brute force grid search

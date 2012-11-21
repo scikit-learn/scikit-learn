@@ -1,4 +1,8 @@
 """
+========================================================================
+Comparing randomized search and grid search for hyperparmeter estimation
+========================================================================
+
 Compare randomized search and grid search for optimizing hyper parameters of a
 random forest.
 All parameters that influence the learning are searched simultaneously
@@ -14,6 +18,8 @@ is most likely a noise effect and would not carry over to a hold-out test set.
 Note that in practice, one would not search over this many different parameters
 simulatneously using grid search, but pick only the ones deemed most important.
 """
+print __doc__
+
 from time import time
 from scipy.stats.distributions import randint
 
