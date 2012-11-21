@@ -37,10 +37,9 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
 from ..utils.extmath import logsumexp
 
-from ..tree._tree import Tree
+from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import _random_sample_mask
-from ..tree._tree import MSE
-from ..tree._tree import DTYPE, TREE_LEAF, TREE_SPLIT_BEST
+from ..tree._tree import DTYPE, TREE_LEAF
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -493,17 +492,23 @@ class BaseGradientBoosting(BaseEnsemble):
             residual = loss.negative_gradient(y, y_pred, k=k)
 
             # induce regression tree on residuals
-            tree = Tree(self.n_features, (1,), 1, MSE(1), self.max_depth,
-                        self.min_samples_split, self.min_samples_leaf, 0.0,
-                        self.max_features, TREE_SPLIT_BEST, self.random_state)
+            tree = DecisionTreeRegressor(criterion="mse",
+                max_depth=self.max_depth,
+                min_samples_split=self.min_samples_split,
+                min_samples_leaf=self.min_samples_leaf,
+                min_density=0.0,
+                max_features=self.max_features,
+                compute_importances=False,
+                random_state=self.random_state)
 
-            tree.build(X, residual[:, np.newaxis], sample_mask, X_argsorted)
+            tree.fit(X, residual[:, np.newaxis], sample_mask, X_argsorted)
 
             # update tree leaves
-            self.loss_.update_terminal_regions(tree, X, y, residual, y_pred,
+            self.loss_.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
                                                sample_mask, self.learning_rate,
                                                k=k)
-
+            # add tree to ensemble
+            self.estimators_[i, k] = tree
             # add tree to ensemble
             self.estimators_[i, k] = tree
 
