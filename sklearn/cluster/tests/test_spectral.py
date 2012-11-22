@@ -12,8 +12,11 @@ from sklearn.utils.testing import assert_greater
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
+from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances, adjusted_rand_score
 from sklearn.datasets.samples_generator import make_blobs
+
+from sklearn.preprocessing import LabelBinarizer
 
 
 def test_spectral_clustering():
@@ -149,3 +152,20 @@ def test_affinities():
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
+
+
+def test_discretize(seed=36):
+    # Test the discretize using a noise assignment matrix
+    LB = LabelBinarizer()
+    for n_sample in [50,100,150,500]:
+        for n_class in range(2,10):
+            # random class labels
+            random_state = np.random.RandomState(seed)
+            y_true = random_state.random_integers(0, n_class, n_sample)
+            y_true = np.array(y_true, np.float)
+            # noise class assignment matrix
+            y_true_noisy = (LB.fit_transform(y_true) 
+                            + 0.1 * random_state.randn(n_sample, n_class+1))
+            y_pred = discretize(y_true_noisy)
+            assert_equal(adjusted_rand_score(y_true, y_pred), 1)
+            
