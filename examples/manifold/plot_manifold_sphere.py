@@ -10,8 +10,8 @@ An application of the different :ref:`manifold` techniques
 on a spherical data-set. Here one can see the use of
 dimensionality reduction in order to gain some intuition
 regarding the Manifold learning methods. Regarding the dataset,
-The poles are cut from the sphere, as well as a thin slice down its
-side. This enables the Manifold Learning techniques to
+the poles are cut from the sphere, as well as a thin slice down its
+side. This enables the manifold learning techniques to
 'spread it open' whilst projecting it onto two dimensions.
 
 For a similiar example, where the methods are applied to the
@@ -73,7 +73,7 @@ except:
     ax = fig.add_subplot(241, projection='3d')
     pl.scatter(x, y, z, c=p[indices], cmap=pl.cm.rainbow)
 
-sphere_data = np.array([x, y, z])
+sphere_data = np.array([x, y, z]).T
 
 # Perform Locally Linear Embedding Manifold learning
 methods = ['standard', 'ltsa', 'hessian', 'modified']
@@ -83,10 +83,9 @@ for i, method in enumerate(methods):
     t0 = time()
     trans_data = manifold.LocallyLinearEmbedding(n_neighbors, 2,
                                                 eigen_solver='auto',
-                                                method=method).fit_transform(sphere_data.T)
+                                                method=method).fit_transform(sphere_data).T
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
-    trans_data = trans_data.T
 
     ax = fig.add_subplot(242 + i)
     pl.scatter(trans_data[0], trans_data[1], c=colors, cmap=pl.cm.rainbow)
@@ -97,10 +96,9 @@ for i, method in enumerate(methods):
 
 # Perform Isomap Manifold learning.
 t0 = time()
-trans_data = manifold.Isomap(n_neighbors, n_components=2).fit_transform(sphere_data.T)
+trans_data = manifold.Isomap(n_neighbors, n_components=2).fit_transform(sphere_data).T
 t1 = time()
 print "%s: %.2g sec" % ('ISO', t1 - t0)
-trans_data = trans_data.T
 
 ax = fig.add_subplot(246)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
@@ -112,8 +110,7 @@ pl.axis('tight')
 # Perform Multi-dimensional scaling.
 t0 = time()
 mds = manifold.MDS(2, max_iter=100, n_init=1)
-trans_data = mds.fit_transform(euclidean_distances(sphere_data.T))
-trans_data = trans_data.T
+trans_data = mds.fit_transform(euclidean_distances(sphere_data)).T
 t1 = time()
 print "MDS: %.2g sec" % (t1 - t0)
 
