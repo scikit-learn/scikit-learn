@@ -130,8 +130,7 @@ def test_func_name():
 
 
 def test_func_inspect_errors():
-    """ Check that func_inspect is robust and will work on weird objects
-    """
+    # Check that func_inspect is robust and will work on weird objects
     nose.tools.assert_equal(get_func_name('a'.lower)[-1], 'lower')
     nose.tools.assert_equal(get_func_code('a'.lower)[1:], (None, -1))
     ff = lambda x: x

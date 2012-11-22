@@ -188,6 +188,11 @@ div.sphinxsidebar h4 {
     margin: 25px 20px 0 10px;
 }
 
+div.sphinxsidebar h3 a,
+div.sphinxsidebar h4 a{
+    color: white;
+}
+
 div.sphinxsidebar img {
     margin: 5px;
 }
@@ -270,13 +275,13 @@ div.buttonPrevious, div.buttonNext {
 }
 
 div.buttonPrevious {
-    border-top-right-radius: .8em;		
-    right: 1; 
+    border-top-right-radius: .8em;
+    right: 1;
 }
 
 div.buttonNext {
-    border-top-left-radius: .8em;		
-    right: 0; 
+    border-top-left-radius: .8em;
+    right: 0;
 }
 
 
@@ -298,6 +303,7 @@ div.sphinxsidebar input[type=text]{
 a {
     color: #355F7C;
     text-decoration: none;
+    word-wrap: break-word;
 }
 
 a:hover {
@@ -323,6 +329,7 @@ div.body h3 {
     text-align: center;
     border-radius: 10px;
     font-weight: bold;
+    word-wrap: break-word;
 }
 
 div.body h2,
@@ -332,7 +339,6 @@ div.body h3 {
 
 div.bodywrapper {
     margin: 0 0 0 0;
-    
 }
 
 
@@ -341,7 +347,7 @@ div.bodywrapper h1 {
     text-align: center;
     background-color: #cde8ef;
     font-family: Helvetica, Arial, sans-serif;
-    font-size: 250%;
+    font-size: 190%;
     border-radius: 0 15px 0 15px;
     -moz-border-radius: 0 15px 0 15px;
 }
@@ -568,3 +574,29 @@ div#examples.section .figure img {
 div.body img {
     max-width:805px;
 }
+
+/* ------- alternating colors in table rows -------------------------- */
+table.docutils tr:nth-child(even) {
+    background-color: #F3F3FF;
+}
+table.docutils tr:nth-child(odd) {
+    background-color: #FFFFEE;
+}
+
+table.docutils tr {
+    border-style: solid none solid none;
+    border-width: 1px 0 1px 0;
+    border-color: #AAAAAA;
+}
+
+/* ------- tighter layout in pre -------------------------- */
+pre {
+    padding: 5px 10px 5px 10px;
+    margin: .1em 0 .5em 0;
+}
+
+div.body p {
+    margin-top: 1.2em;
+    margin-bottom: .1em;
+}
+

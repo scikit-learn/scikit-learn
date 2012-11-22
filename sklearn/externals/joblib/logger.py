@@ -8,7 +8,7 @@ This module needs much love to become useful.
 # Copyright (c) 2008 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
-from __future__ import with_statement
+from __future__ import print_function
 
 import time
 import sys
@@ -102,7 +102,7 @@ class PrintTime(object):
             mkdirp(os.path.dirname(logfile))
             if os.path.exists(logfile):
                 # Rotate the logs
-                for i in xrange(1, 9):
+                for i in range(1, 9):
                     try:
                         shutil.move(logfile + '.%i' % i,
                                     logfile + '.%i' % (i + 1))
@@ -138,7 +138,7 @@ class PrintTime(object):
             time_lapse = time.time() - self.start_time
             full_msg = "%s: %.2fs, %.1f min" % (msg, time_lapse,
                                                 time_lapse / 60)
-        print >> sys.stderr, full_msg
+        print(full_msg, file=sys.stderr)
         if self.logfile is not None:
             try:
                 print >> file(self.logfile, 'a'), full_msg

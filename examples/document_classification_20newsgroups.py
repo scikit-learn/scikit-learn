@@ -3,16 +3,16 @@
 Classification of text documents using sparse features
 ======================================================
 
-This is an example showing how the scikit-learn can be used to classify
-documents by topics using a bag-of-words approach. This example uses
-a scipy.sparse matrix to store the features instead of standard numpy arrays
-and demos various classifiers that can efficiently handle sparse matrices.
+This is an example showing how scikit-learn can be used to classify documents
+by topics using a bag-of-words approach. This example uses a scipy.sparse
+matrix to store the features and demonstrates various classifiers that can
+efficiently handle sparse matrices.
 
-The dataset used in this example is the 20 newsgroups dataset which will be
-automatically downloaded and then cached.
+The dataset used in this example is the 20 newsgroups dataset. It will be
+automatically downloaded, then cached.
 
-You can adjust the number of categories by giving their names to the dataset
-loader or setting them to None to get the 20 of them.
+The bar plot indicates the accuracy, training time (normalized) and test time
+(normalized) of each classifier.
 
 """
 
@@ -36,6 +36,7 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
@@ -63,6 +64,9 @@ op.add_option("--top10",
               action="store_true", dest="print_top10",
               help="Print ten most discriminative terms per class"
                    " for every classifier.")
+op.add_option("--all_categories",
+              action="store_true", dest="all_categories",
+              help="Whether to use all categories or not.")
 
 (opts, args) = op.parse_args()
 if len(args) > 0:
@@ -76,14 +80,15 @@ print
 
 ###############################################################################
 # Load some categories from the training set
-categories = [
-    'alt.atheism',
-    'talk.religion.misc',
-    'comp.graphics',
-    'sci.space',
-]
-# Uncomment the following to do the analysis on all the categories
-#categories = None
+if opts.all_categories:
+    categories = None
+else:
+    categories = [
+        'alt.atheism',
+        'talk.religion.misc',
+        'comp.graphics',
+        'sci.space',
+    ]
 
 print "Loading 20 newsgroups dataset for categories:"
 print categories if categories else "all"
@@ -138,7 +143,7 @@ def trim(s):
 
 
 # mapping from integer feature name to original token string
-feature_names = vectorizer.get_feature_names()
+feature_names = np.asarray(vectorizer.get_feature_names())
 
 
 ###############################################################################
@@ -187,8 +192,9 @@ def benchmark(clf):
 
 
 results = []
-for clf, name in ((RidgeClassifier(tol=1e-1), "Ridge Classifier"),
+for clf, name in ((RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
                   (Perceptron(n_iter=50), "Perceptron"),
+                  (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
                   (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
@@ -249,6 +255,8 @@ indices = np.arange(len(results))
 results = [[x[i] for x in results] for i in xrange(4)]
 
 clf_names, score, training_time, test_time = results
+training_time = np.array(training_time) / np.max(training_time)
+test_time = np.array(test_time) / np.max(test_time)
 
 pl.title("Score")
 pl.barh(indices, score, .2, label="score", color='r')

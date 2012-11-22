@@ -2,7 +2,7 @@
 ..
     We are putting the title as a raw HTML so that it doesn't appear in
     the contents
-    
+
 .. raw:: html
 
     <h1>scikit-learn: machine learning in Python</h1>
@@ -13,10 +13,24 @@
     span.linkdescr a {
         color:  #3E4349 ;
     }
+    span.linkdescr {
+        line-height: 1.3em;
+    }
+    div.topic p {
+        margin-top: .2em;
+        line-height: 1.3em;
+    }
+    div.topic {
+        background-color: #FFF0E0;
+        border-color: #FF9C34;
+    }
+    div.warning p {
+        margin-top: .0em;
+    }
     </style>
 
-..  
-   Here we are building a banner: a javascript selects randomly 4 images in 
+..
+   Here we are building a banner: a javascript selects randomly 4 images in
    the list
 
 .. only:: html
@@ -104,10 +118,65 @@
             size--;
             num_choices--;
           }
-          $('#banner').html(replace.html() ); // update our container div 
+          $('#banner').html(replace.html() ); // update our container div
                                               // with the new, randomized divs
         }
         shuffle ($('#banner a.external'));
+
+	function preload_images() {
+	    var img = new Image();
+	    img.src="_static/plusBox.png";
+	    img.src="_static/minBox.png";
+	    img.src="_static/plusBoxHighlight.png";
+	    img.src="_static/minBoxHighlight.png";
+	    img.src="_static/noneBox.png";
+	}
+	preload_images();
+
+	//Function to make the index toctree collapsible
+	$(function () {
+            $('.toctree-l2')
+                .click(function(event){
+                    if (event.target.tagName.toLowerCase() != "a") {
+		        if ($(this).children('ul').length > 0) {
+                            $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBoxHighlight.png)' : 'url(_static/minBoxHighlight.png)');
+                            $(this).children('ul').toggle();
+                        }
+                        return true; //Makes links clickable
+                    }
+		})
+		.mousedown(function(event){ return false; }) //Firefox highlighting fix
+                .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
+                .children('ul').hide();
+            $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+	    $('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+            var sidebarbutton = $('#sidebarbutton');
+            sidebarbutton.css({
+	        'display': 'none'
+            });
+
+	    $('.toctree-l2').hover(
+	        function () {
+		    if ($(this).children('ul').length > 0) {
+		        $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
+		        $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBoxHighlight.png)' : 'url(_static/plusBoxHighlight.png)');
+		    }
+		    else {
+		        $(this).css('background-color', '#F9F9F9');
+		    }
+                },
+                function () {
+                    $(this).css('background-color', 'white').children('ul').css('background-color', 'white');
+		    if ($(this).children('ul').length > 0) {
+		        $(this).css('list-style-image',
+                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBox.png)');
+		    }
+                }
+            );
+	});
+
         </SCRIPT>
 
     |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |banner12| |banner13| |banner14| |end-div|
@@ -115,29 +184,31 @@
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
-    ``scikit-learn`` is a Python module integrating classic machine
-    learning algorithms in the tightly-knit scientific Python
-    world (`numpy <http://numpy.scipy.org>`_, `scipy
-    <http://www.scipy.org>`_, `matplotlib
-    <http://matplotlib.sourceforge.net/>`_).
-    It aims to provide simple and efficient solutions to learning
-    problems, accessible to everybody and reusable in various
-    contexts: **machine-learning as a versatile tool for science and
-    engineering**.
+    Scikit-learn integrates **machine learning** algorithms in the
+    tightly-knit scientific **Python** world, building upon `numpy
+    <http://numpy.scipy.org/>`_, `scipy <http://scipy.org>`_, and
+    `matplotlib <http://matplotlib.org>`_. As a machine-learning module,
+    it provides versatile tools for data mining and analysis in any field
+    of science and engineering. It strives to be **simple and
+    efficient**, accessible to everybody, and reusable in various
+    contexts.
 
 
 .. raw:: html
 
   <table class="contentstable" style="width: 100% ; margin-top: -8px">
-    <tr valign="top"><td width="28%">
+    <tr valign="top">
+    </td><td align="right" width="2%">
+    <td width="28%">
       <p class="biglink"><a class="biglink" href="supervised_learning.html">
                 Supervised learning</a><br/>
          <span class="linkdescr">
                 <a href="modules/svm.html">Support vector machines</a>,
                 <a href="modules/linear_model.html">linear models</a>,
-                <a href="modules/naive_bayes.html">naives Bayes</a>,
-                <a href="modules/gaussian_process.html">Gaussian process</a>...
+                <a href="modules/naive_bayes.html">naive Bayes</a>,
+                <a href="modules/gaussian_process.html">Gaussian processes</a>...
          </span></p>
+    </td><td align="right" width="3%">
     </td><td align="center" width="32%">
       <p class="biglink"><a class="biglink" href="unsupervised_learning.html">
         Unsupervised learning</a><br/>
@@ -148,6 +219,7 @@
                 <a href="modules/decomposition.html">matrix factorization</a>,
                 <a href="modules/covariance.html">covariance</a>...
          </span></p>
+    </td><td align="right" width="3%">
     </td><td align="right" width="30%">
       <p class="biglink"><a class="biglink" href="index.html#user-guide">
         And much more</a><br/>
@@ -159,18 +231,27 @@
     </td></tr>
   </table>
 
+
 **License:** Open source, commercially usable: **BSD license** (3 clause)
 
-.. include:: includes/big_toc_css.rst
+.. raw:: html
+
+   <div class="admonition warning" style="margin: 3px 0; padding: 3px 7px">
 
 Documentation for scikit-learn **version** |release|. For other versions and
 printable format, see :ref:`documentation_resources`.
+
+.. raw:: html
+
+    </div>
+
+.. include:: includes/big_toc_css.rst
 
 User Guide
 ==========
 
 .. toctree::
-   :maxdepth: 2
+   :numbered:
 
    user_guide.rst
 
@@ -186,12 +267,13 @@ Example Gallery
 Development
 ===========
 .. toctree::
-   :maxdepth: 2
+   :numbered:
 
    developers/index
    developers/performance
    developers/utilities
    developers/debugging
+   developers/maintainer
    about
 
 .. toctree::

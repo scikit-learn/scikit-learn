@@ -112,24 +112,56 @@ K-means
 The :class:`KMeans` algorithm clusters data by trying to separate samples
 in n groups of equal variance, minimizing a criterion known as the
 'inertia' of the groups. This algorithm requires the number of cluster to
-be specified. It scales well to large number of samples, however its
-results may be dependent on an initialisation. As a result, the computation is
-often done several times, with different initialisation of the centroids.
+be specified. It scales well to large number of samples and has been used
+across a large range of application areas in many different fields. It is
+also equivalent to the expectation-maximization algorithm when setting the
+covariance matrix to be diagonal, equal and small. The K-means algorithm
+aims to choose centroids :math:`C` that minimise the within cluster sum of 
+squares objective function with a dataset :math:`X` with :math:`n` samples:
 
-K-means is often referred to as Lloyd's algorithm. After initialization,
-k-means consists of looping between two major steps. First the Voronoi diagram
+.. math:: J(X, C) = \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+
+K-means is often referred to as Lloyd's algorithm. In basic terms, the
+algorithm has three steps. The first step chooses the initial centroids, with
+the most basic method being to choose :math:`k` samples from the dataset
+:math:`X`. After initialization, k-means consists of looping between the other
+two major steps. The first steps assigns each sample to its nearest centroid.
+The second step creates new centroids by taking the mean value of all of the
+samples assigned to each previous centroid. The difference between the old
+and the new centroids is the inertia and the algorithm repeats these last two
+steps until this value is less than a threshold. In other words, it repeats
+until the centroids do not move significantly.
+
+The algorithm can be identified through the concept of `Voronoi diagrams
+<https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram
 of the points is calculated using the current centroids. Each segment in the
 Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
 to the mean of each segment. The algorithm then repeats this until a stopping
-criteria is fulfilled. Usually, as in this implementation, the algorithm
-stops when the relative increment in the results between iterations is less than
-the given tolerance value.
+criterion is fulfilled. Usually, as in this implementation, the algorithm stops
+when the relative decrease in the objective function between iterations is less
+than the given tolerance value.
+
+Given enough time, K-means will always converge, however this may be to a local
+minimum. This is highly dependent on the the initialisation of the centroids.
+As a result, the computation is often done several times, with different
+initialisation of the centroids. One method to help address this issue is the
+k-means++ initialisation algorithm, which has been implemented in
+scikit-learn (use the ``init='kmeans++'`` parameter). This initialises the
+centroids to be (generally) distant from each other, leading to provably better
+results than random initialisation.
 
 A parameter can be given to allow K-means to be run in parallel, called
 `n_jobs`. Giving this parameter a positive value uses that many processors 
 (default=1). A value of -1 uses all processors, with -2 using one less, and so 
 on. Parallelization generally speeds up computation at the cost of memory (in
 this case, multiple copies of centroids need to be stored, one for each job).
+
+.. warning::
+
+    The parallel version of K-Means is broken on OS X when numpy uses the
+    Accelerate Framework. This is expected behavior: Accelerate can be called
+    after a fork but you need to execv the subprocess with the python binary
+    (which multiprocessing does not do under posix).
 
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
@@ -147,7 +179,7 @@ Mini Batch K-Means
 The :class:`MiniBatchKMeans` is a variant of the :class:`KMeans` algorithm
 using mini-batches, random subset of the dataset, to compute the centroids.
 
-Althought the :class:`MiniBatchKMeans` converge faster than the KMeans
+Although the :class:`MiniBatchKMeans` converge faster than the KMeans
 version, the quality of the results, measured by the inertia, the sum of
 the distance of each points to the nearest centroid, is not as good as
 the :class:`KMeans` algorithm.
@@ -251,13 +283,18 @@ function of the gradient of the image.
 
 .. centered:: |noisy_img| |segmented_img|
 
-.. warning:: Shapeless isotropic data
+.. warning:: Transforming distance to well-behaved similarities
 
-   When the data is really shapeless (i.e. generated from a random
-   distribution with no clusters), the spectral-clustering problem is
-   ill-conditioned: the different choices are almost equivalent, and 
-   the spectral clustering solver chooses an arbitrary one, putting 
-   the first sample alone in one bin. 
+    Note that if the values of your similarity matrix are not well
+    distributed, e.g. with negative values or with a distance matrix
+    rather than a similarity, the spectral problem will be singular and
+    the problem not solvable. In which case it is advised to apply a
+    transformation to the entries of the matrix. For instance, in the
+    case of a signed distance matrix, is common to apply a heat kernel::
+
+        similarity = np.exp(-beta * distance / distance.std())
+
+    See the examples for such an application.
 
 .. topic:: Examples:
 
@@ -266,6 +303,33 @@ function of the gradient of the image.
 
  * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
    to split the image of lena in regions.
+
+.. |lena_kmeans| image:: ../auto_examples/cluster/images/plot_lena_segmentation_1.png
+    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+    :scale: 65
+
+.. |lena_discretize| image:: ../auto_examples/cluster/images/plot_lena_segmentation_2.png
+    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+    :scale: 65
+
+Different label assignement strategies
+---------------------------------------
+
+Different label assignement strategies can be used, corresponding to the
+`assign_labels` parameter of :class:`SpectralClustering`.
+The `kmeans` strategie can match finer details of the data, but it can be
+more unstable. In particular, unless you control the `random_state`, it
+may not be reproducible from run-to-run, as it depends on a random
+initialization. On the other hand, the `discretize` strategy is 100%
+reproducible, but it tends to create parcels of fairly even and
+geometrical shape.
+
+=====================================  =====================================
+ `assign_labels="kmeans"`               `assign_labels="discretize"`
+=====================================  =====================================
+|lena_kmeans|                          |lena_discretize|
+=====================================  =====================================
+
 
 .. topic:: References:
 
@@ -336,8 +400,8 @@ roll.
 The connectivity constraints are imposed via an connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
-matrix can be constructed from apriori information, for instance if you
-whish to cluster web pages, but only merging pages with a link pointing
+matrix can be constructed from a-priori information, for instance if you
+wish to cluster web pages, but only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in the :ref:`swiss roll
@@ -366,7 +430,7 @@ DBSCAN
 
 The :class:`DBSCAN` algorithm clusters data by finding core points which have
 many neighbours within a given radius. After a core point is found, the cluster
-is expanded by adding its neighbours to the current cluster and recusively
+is expanded by adding its neighbours to the current cluster and recursively
 checking if any are core points. Formally, a point is considered a core point
 if it has more than min_points points which are of a similarity greater than
 the given threshold eps. This is shown in the figure below, where the color
@@ -447,7 +511,7 @@ Presentation and usage
 Given the knowledge of the ground truth class assignments ``labels_true``
 and our clustering algorithm assignments of the same samples
 ``labels_pred``, the **adjusted Rand index** is a function that measures
-the **similarity** of the two assignements, ignoring permutations and **with
+the **similarity** of the two assignments, ignoring permutations and **with
 chance normalization**::
 
   >>> from sklearn import metrics
@@ -488,12 +552,12 @@ Bad (e.g. independent labelings) have negative or close to 0.0 scores::
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignements have a ARI score close to 0.0**
+- **Random (uniform) label assignments have a ARI score close to 0.0**
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Rand index or the V-measure for instance).
 
 - **Bounded range [-1, 1]**: negative values are bad (independent
-  labelings), similar clusterings have a positve ARI, 1.0 is the perfect
+  labelings), similar clusterings have a positive ARI, 1.0 is the perfect
   match score.
 
 - **No assumption is made on the cluster structure**: can be used
@@ -505,11 +569,11 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **ARI requires the knowlege of the ground truth
-  classes** while almost never available in practice or requires manual
+- Contrary to inertia, **ARI requires knowledge of the ground truth
+  classes** while is almost never available in practice or requires manual
   assignment by human annotators (as in the supervised learning setting).
 
-  However ARI can also be useful in purely unsupervised setting as a
+  However ARI can also be useful in a purely unsupervised setting as a
   building block for a Consensus Index that can be used for clustering
   model selection (TODO).
 
@@ -518,13 +582,13 @@ Drawbacks
 
  * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
-   for random assignements.
+   for random assignments.
 
 
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If C is a ground truth class assignement and K the clustering, let us
+If C is a ground truth class assignment and K the clustering, let us
 define :math:`a` and :math:`b` as:
 
 - :math:`a`, the number of pairs of elements that are in the same set
@@ -535,19 +599,19 @@ define :math:`a` and :math:`b` as:
 
 The raw (unadjusted) Rand index is then given by:
 
-.. math:: RI = \frac{a + b}{C_2^{n_{samples}}}
+.. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
 
 Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
 in the dataset (without ordering).
 
-However the RI score does not guarantee that random label assignements
+However the RI score does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
 the same order of magnitude as the number of samples).
 
-To counter this effect we can discount the expected RI of random labelings
-by defining the adjusted Rand index as follows:
+To counter this effect we can discount the expected RI :math:`E[\text{RI}]` of
+random labelings by defining the adjusted Rand index as follows:
 
-.. math:: ARI = \frac{RI - Expected\_RI}{max(RI) - Expected\_RI}
+.. math:: \text{ARI} = \frac{\text{RI} - E[\text{RI}]}{\max(\text{RI}) - E[\text{RI}]}
 
 .. topic:: References
 
@@ -559,17 +623,19 @@ by defining the adjusted Rand index as follows:
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
-Adjusted Mutual Information
----------------------------
+Mutual Information based scores
+-------------------------------
 
 Presentation and usage
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Given the knowledge of the ground truth class assignments ``labels_true``
-and our clustering algorithm assignments of the same samples
-``labels_pred``, the **Adjusted Mutual Information** is a function that 
-measures the **agreement** of the two assignements, ignoring permutations
-and **with chance normalization**::
+Given the knowledge of the ground truth class assignments ``labels_true`` and
+our clustering algorithm assignments of the same samples ``labels_pred``, the
+**Mutual Information** is a function that measures the **agreement** of the two
+assignments, ignoring permutations.  Two different normalized versions of this
+measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
+Mutual Information(AMI)**. NMI is often used in the literature while AMI was
+proposed more recently and is **normalized against chance**::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
@@ -585,9 +651,9 @@ the same score::
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
   0.22504...
 
-Furthermore, :func:`adjusted_mutual_info_score` is **symmetric**: swapping the
-argument does not change the score. It can thus be used as a **consensus
-measure**::
+All, :func:`mutual_info_score`, :func:`adjusted_mutual_info_score` and
+:func:`normalized_mutual_info_score` are symmetric: swapping the argument does
+not change the score. Thus they can be used as a **consensus measure**::
 
   >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
   0.22504...
@@ -597,6 +663,14 @@ Perfect labeling is scored 1.0::
   >>> labels_pred = labels_true[:]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)
   1.0
+
+  >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)
+  1.0
+
+This is not true for ``mutual_info_score``, which is therefore harder to judge::
+
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.69...
 
 Bad (e.g. independent labelings) have non-positive scores::
 
@@ -609,7 +683,7 @@ Bad (e.g. independent labelings) have non-positive scores::
 Advantages
 ~~~~~~~~~~
 
-- **Random (uniform) label assignements have a AMI score close to 0.0**
+- **Random (uniform) label assignments have a AMI score close to 0.0**
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
@@ -628,20 +702,23 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- Contrary to inertia, **AMI requires the knowlege of the ground truth
-  classes** while almost never available in practice or requires manual
-  assignment by human annotators (as in the supervised learning setting).
+- Contrary to inertia, **MI-based measures require the knowledge
+  of the ground truth classes** while almost never available in practice or
+  requires manual assignment by human annotators (as in the supervised learning
+  setting).
 
-  However AMI can also be useful in purely unsupervised setting as a
+  However MI-based measures can also be useful in purely unsupervised setting as a
   building block for a Consensus Index that can be used for clustering
   model selection.
+
+- NMI and MI are not adjusted against chance.
 
 
 .. topic:: Examples:
 
  * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
-   for random assignements. This example also includes the Adjusted Rand 
+   for random assignments. This example also includes the Adjusted Rand 
    Index.
 
 
@@ -651,26 +728,31 @@ Assume two label assignments (of the same data), :math:`U` with :math:`R`
 classes and :math:`V` with :math:`C` classes. The entropy of either is the
 amount of uncertaintly for an array, and can be calculated as:
 
-.. math:: H(U) = \sum_{i=1}^{|R|}P(i)log(P(i))
+.. math:: H(U) = \sum_{i=1}^{|R|}P(i)\log(P(i))
 
 Where P(i) is the number of instances in U that are in class :math:`R_i`.
 Likewise, for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|C|}P'(j)log(P'(j))
+.. math:: H(V) = \sum_{j=1}^{|C|}P'(j)\log(P'(j))
 
 Where P'(j) is the number of instances in V that are in class :math:`C_j`.
 
-The (non-adjusted) mutual information between :math:`U` and :math:`V` is
+The mutual information between :math:`U` and :math:`V` is
 calculated by:
 
-.. math:: MI(U, V) = \sum_{i=1}^{|R|}\sum_{j=1}^{|C|}P(i, j)log(\frac{P(i,j)}{P(i)P'(j)})
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|R|}\sum_{j=1}^{|C|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
 
 Where P(i, j) is the number of instances with label :math:`R_i` 
 and also with label :math:`C_j`.
 
-This value of the mutual information is not adjusted cfor chance and will tend
-to increase as the number of different labels (clusters) increases, regardless
-of the actual amount of "mutual information" between the label assignments.
+The normalized mutual information is defined as
+
+.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\sqrt{H(U)H(V)}}
+
+This value of the mutual information and also the normalized variant is not
+adjusted for chance and will tend to increase as the number of different labels
+(clusters) increases, regardless of the actual amount of "mutual information"
+between the label assignments.
 
 The expected value for the mutual information can be calculated using the
 following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
@@ -678,17 +760,21 @@ following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
 :math:`b_j` is the number of instances with label :math:`V_j`.
 
 
-.. math:: E\{MI(U,V)\}=\sum_{i=1}^R \sum_{j=1}^C \sum_{n_{ij}=(a_i+b_j-N)^+
-   }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log ( \frac{ N.n_{ij}}{a_i b_j})
+.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^R \sum_{j=1}^C \sum_{n_{ij}=(a_i+b_j-N)^+
+   }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
    \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
    (N-a_i-b_j+n_{ij})!}
 
 Using the expected value, the adjusted mutual information can then be 
 calculated using a similar form to that of the adjusted Rand index:
 
-.. math:: AMI = \frac{MI - Expected\_MI}{max(H(U), H(V)) - Expected\_MI}
+.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\max(H(U), H(V)) - E[\text{MI}]}
 
 .. topic:: References
+
+ * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles – a
+   knowledge reuse framework for combining multiple partitions". Journal of
+   Machine Learning Research 3: 583–617. doi:10.1162/153244303321897735
 
  * Vinh, Epps, and Bailey, (2009). "Information theoretic measures 
    for clusterings comparison". Proceedings of the 26th Annual International
@@ -699,6 +785,9 @@ calculated using a similar form to that of the adjusted Rand index:
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance}, JMLR
    http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
+
+ * `Wikipedia entry for the (normalized) Mutual Information
+   <http://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
@@ -741,7 +830,10 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
 
-All three metrics can be computed at once using
+The V-measure is actually equivalent to the mutual information (NMI)
+discussed above normalized by the sum of the label entropies [B2011]_.
+
+Homogeneity, completensess and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
@@ -759,7 +851,7 @@ homogeneous but not complete::
 .. note::
 
   :func:`v_measure_score` is **symmetric**: it can be used to evaluate
-  the **agreement** of two independent assignements on the same dataset.
+  the **agreement** of two independent assignments on the same dataset.
 
   This is not the case for :func:`completeness_score` and
   :func:`homogeneity_score`: both are bound by the relationship::
@@ -802,7 +894,7 @@ Drawbacks
    :align: center
    :scale: 100
 
-- These metrics **require the knowlege of the ground truth classes** while
+- These metrics **require the knowledge of the ground truth classes** while
   almost never available in practice or requires manual assignment by
   human annotators (as in the supervised learning setting).
 
@@ -811,7 +903,7 @@ Drawbacks
 
  * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
-   for random assignements.
+   for random assignments.
 
 
 Mathematical formulation
@@ -827,11 +919,11 @@ where :math:`H(C|K)` is the **conditional entropy of the classes given
 the cluster assignments** and is given by:
 
 .. math:: H(C|K) = - \sum_{c=1}^{|C|} \sum_{k=1}^{|K|} \frac{n_{c,k}}{n}
-          \cdot log(\frac{n_{c,k}}{n_k})
+          \cdot \log\left(\frac{n_{c,k}}{n_k}\right)
 
 and :math:`H(C)` is the **entropy of the classes** and is given by:
 
-.. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot log(\frac{n_c}{n})
+.. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot \log\left(\frac{n_c}{n}\right)
 
 with :math:`n` the total number of samples, :math:`n_c` and :math:`n_k`
 the number of samples respectively belonging to class :math:`c` and
@@ -848,9 +940,13 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- * `V-Measure: A conditional entropy-based external cluster evaluation
+ .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
+
+ .. [B2011] `Identication and Characterization of Events in Social Media
+   <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+   Becker, PhD Thesis. 
 
 .. _silhouette_coefficient:
 
@@ -894,7 +990,7 @@ cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
-  >>> kmeans_model = KMeans(k=3, random_state=1).fit(X)
+  >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS

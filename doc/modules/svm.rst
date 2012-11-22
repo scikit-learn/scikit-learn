@@ -80,12 +80,12 @@ training samples::
 
     >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
-    >>> Y = [0, 1]
+    >>> y = [0, 1]
     >>> clf = svm.SVC()
-    >>> clf.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.5, kernel='rbf', probability=False, shrinking=True, tol=0.001,
-    verbose=False)
+    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
+    tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -123,7 +123,7 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=1.0, kernel='rbf', probability=False, shrinking=True,
+    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
     tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
@@ -137,7 +137,7 @@ two classes, only one model is trained::
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
     intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-    tol=0.0001, verbose=0)
+    random_state=None, tol=0.0001, verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -177,29 +177,29 @@ for these classifiers.
 
 This might be made more clear by an example:
 
-    Consider a three class problem with with class 0 having 3 support vectors
-    :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
-    vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
-    For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
-    Let's call the coefficient of support vector :math:`v^{j}_i` in the
-    classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
-    Then ``dual_coef_`` looks like this:
+Consider a three class problem with with class 0 having 3 support vectors
+:math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
+vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
+For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
+Let's call the coefficient of support vector :math:`v^{j}_i` in the
+classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
+Then ``dual_coef_`` looks like this:
 
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|for SVs           |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|of class 0        |
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|for SVs of class 1|
-    +------------------------+------------------------+------------------+
-    |:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
-    +------------------------+------------------------+                  |
-    |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|for SVs of class 2|
-    +------------------------+------------------------+------------------+
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
++------------------------+------------------------+for SVs of class 0|
+|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|                  |
++------------------------+------------------------+                  |
+|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|                  |
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
++------------------------+------------------------+for SVs of class 1|
+|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|                  |
++------------------------+------------------------+------------------+
+|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
++------------------------+------------------------+for SVs of class 2|
+|:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
++------------------------+------------------------+------------------+
 
 
 Unbalanced problems
@@ -270,8 +270,8 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.5, kernel='rbf', probability=False, shrinking=True,
-    tol=0.001, verbose=False)
+    epsilon=0.1, gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
+    shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -352,10 +352,9 @@ Tips on Practical Use
     set `cache_size` to a higher value than the default of 200(MB),
     such as 500(MB) or 1000(MB).
 
-  * **Setting C**: In constrast to the scaling in LibSVM and LibLinear,
-    the ``C`` parameter in `sklearn.svm` is a per sample penalty.
-    Commonly good values for ``C`` often are very large (i.e. ``10**4``)
-    and seldom below ``1``.
+  * **Setting C**: C is ``1`` by default and it's a reasonable default choice.
+    If you have a lot of noisy observations you should decrease it.
+    It corresponds to regularize more the estimation.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
@@ -468,11 +467,31 @@ vectors and the test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='precomputed', probability=False, shrinking=True,
-    tol=0.001, verbose=False)
+    gamma=0.0, kernel='precomputed', max_iter=-1, probability=False,
+    shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([ 0.,  1.])
+
+Parameters of the RBF Kernel
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When training an SVM with the *Radial Basis Function* (RBF) kernel,
+two parameters must be considered: `C` and `gamma`.  The parameter `C`,
+common to all SVM kernels, trades off misclassification of training
+examples against simplicity of the decision surface. A low `C` makes
+the decision surface smooth, while a high `C` aims at classifying all
+training examples correctly.  `gamma` defines how much influence a
+single training example has.  The larger `gamma` is, the closer other
+examples must be to be affected.
+
+Proper choice of `C` and `gamma` is critical to the SVM's performance.
+One is advised to use :class:`GridSearchCV` with `C` and `gamma` spaced
+exponentially far apart to choose good values.
+
+.. topic:: Examples:
+
+ * :ref:`example_svm_plot_rbf_parameters.py`
 
 .. _svm_mathematical_formulation:
 
@@ -534,7 +553,7 @@ The decision function is:
 
     While SVM models derived from libsvm and liblinear use *C* as regularization
     parameter, most other estimators use *alpha*. The relation between both is
-    :math:`C = \frac{n_samples}{alpha}`.
+    :math:`C = \frac{n\_samples}{alpha}`.
 
 .. TODO multiclass case ?/
 

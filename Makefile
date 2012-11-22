@@ -10,11 +10,11 @@ CTAGS ?= ctags
 all: clean inplace test
 
 clean-pyc:
-	find . -name "*.pyc" | xargs rm -f
+	find sklearn -name "*.pyc" | xargs rm -f
 
 clean-so:
-	find . -name "*.so" | xargs rm -f
-	find . -name "*.pyd" | xargs rm -f
+	find sklearn -name "*.so" | xargs rm -f
+	find sklearn -name "*.pyd" | xargs rm -f
 
 clean-build:
 	rm -rf build
@@ -36,13 +36,14 @@ test-doc:
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
 
 test-coverage:
+	rm -rf coverage .coverage
 	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \
 	--cover-package=sklearn sklearn
 
 test: test-code test-doc
 
 trailing-spaces:
-	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
+	find sklearn -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
 cython:
 	find sklearn -name "*.pyx" | xargs $(CYTHON)
@@ -57,3 +58,7 @@ doc: inplace
 
 doc-noplot: inplace
 	make -C doc html-noplot
+
+code-analysis:
+	flake8 sklearn | grep -v __init__ | grep -v external
+	pylint -E -i y sklearn/ -d E1103,E0611,E1101

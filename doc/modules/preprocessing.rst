@@ -38,9 +38,10 @@ The function :func:`scale` provides a quick and easy way to perform this
 operation on a single array-like dataset::
 
   >>> from sklearn import preprocessing
-  >>> X = [[ 1., -1.,  2.],
-  ...      [ 2.,  0.,  0.],
-  ...      [ 0.,  1., -1.]]
+  >>> import numpy as np
+  >>> X = np.array([[ 1., -1.,  2.],
+  ...               [ 2.,  0.,  0.],
+  ...               [ 0.,  1., -1.]])
   >>> X_scaled = preprocessing.scale(X)
 
   >>> X_scaled                                          # doctest: +ELLIPSIS
@@ -64,15 +65,15 @@ Scaled data has zero mean and unit variance::
 ..    >>> print_options = np.set_printoptions(print_options)
 
 The ``preprocessing`` module further provides a utility class
-:class:`Scaler` that implements the ``Transformer`` API to compute
+:class:`StandardScaler` that implements the ``Transformer`` API to compute
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.Scaler().fit(X)
+  >>> scaler = preprocessing.StandardScaler().fit(X)
   >>> scaler
-  Scaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler(copy=True, with_mean=True, with_std=True)
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
@@ -94,8 +95,55 @@ same way it did on the training set::
 
 It is possible to disable either centering or scaling by either
 passing ``with_mean=False`` or ``with_std=False`` to the constructor
-of :class:`Scaler`.
+of :class:`StandardScaler`.
 
+
+Scaling Features to a Range
+---------------------------
+An alternative standardization is scaling features to
+lie between a given minimum and maximum value, often between zero and one.
+This can be achieved using :class:`MinMaxScaler`.
+
+The motivation to use this scaling include robustness to very small
+standard deviations of features and preserving zero entries in sparse data.
+
+Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
+
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  ...
+  >>> min_max_scaler = preprocessing.MinMaxScaler()
+  >>> X_train_minmax = min_max_scaler.fit_transform(X_train)
+  >>> X_train_minmax
+  array([[ 0.5       ,  0.        ,  1.        ],
+         [ 1.        ,  0.5       ,  0.33333333],
+         [ 0.        ,  1.        ,  0.        ]])
+
+The same instance of the transformer can then be applied to some new test data
+unseen during the fit call: the same scaling and shifting operations will be
+applied to be consistent with the transformation performed on the train data::
+
+  >>> X_test = np.array([[ -3., -1.,  4.]])
+  >>> X_test_minmax = min_max_scaler.transform(X_test)
+  >>> X_test_minmax
+  array([[-1.5       ,  0.        ,  1.66666667]])
+
+It is possible to introspect the scaler attributes to find about the exact
+nature of the transformation learned on the training data::
+
+  >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
+  array([ 0.5       ,  0.5       ,  0.33...])
+
+  >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
+  array([ 0.        ,  0.5       ,  0.33...])
+
+If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
+full formula is::
+
+    X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+
+    X_scaled = X_std / (max - min) + min
 
 .. topic:: References:
 
@@ -115,7 +163,7 @@ of :class:`Scaler`.
 
 .. topic:: Sparse input
 
-  :func:`scale` and :class:`Scaler` accept ``scipy.sparse`` matrices
+  :func:`scale` and :class:`StandardScaler` accept ``scipy.sparse`` matrices
   as input **only when with_mean=False is explicitly passed to the
   constructor**. Otherwise a ``ValueError`` will be raised as
   silently centering would break the sparsity and would often crash the
@@ -132,7 +180,7 @@ of :class:`Scaler`.
 
 .. topic:: Scaling target variables in regression
 
-    :func:`scale` and :class:`Scaler` work out-of-the-box with 1d arrays.
+    :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.
     This is very useful for scaling the target / response variables used
     for regression.
 
@@ -243,7 +291,7 @@ It is possible to adjust the threshold of the binarizer::
          [ 1.,  0.,  0.],
          [ 0.,  0.,  0.]])
 
-As for the :class:`Scaler` and :class:`Normalizer` classes, the
+As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 
@@ -256,6 +304,48 @@ to be used when the transformer API is not necessary.
   representation** (see ``scipy.sparse.csr_matrix``).
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
+
+
+Encoding categorical features
+=============================
+Often features are not given as continuous values but categorical.
+For example a person could have features ``["male", "female"]``,
+``["from Europe", "from US", "from Asia"]``,
+``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
+Such features can be efficiently coded as integers, for instance
+``["male", "from US", "uses Internet Explorer"]`` could be expressed as
+``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
+``[1, 2, 1]``.
+
+Such integer representation can not be used directly with scikit-learn estimators, as these
+expect continuous input, and would interpret the categories as being ordered, which is often
+not desired (i.e. the set of browsers was ordered arbitrarily).
+
+One possibility to convert categorical features to features that can be used
+with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
+implemented in :class:`OneHotEncoder`.  This estimator transforms each
+categorical feature with ``m`` possible values into ``m`` binary features, with
+only one active.
+
+Continuing the example above::
+
+  >>> enc = preprocessing.OneHotEncoder()
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
+  OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+  >>> enc.transform([[0, 1, 3]]).toarray()
+  array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
+
+By default, how many values each feature can take is inferred automatically from the dataset.
+It is possible to specify this explicitly using the parameter ``n_values``. 
+There are two genders, three possible continents and four web browsers in our
+dataset.
+Then we fit the estimator, and transform a data point. 
+In the result, the first two numbers encode the gender, the next set of three
+numbers the continent and the last four the web browser.
+
+See :ref:`dict_feature_extraction` for categorical features that are represented
+as a dict, not as integers.
+
 
 Label preprocessing
 ===================
@@ -272,14 +362,14 @@ matrix from a list of multi-class labels::
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
-    array([[ 1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.]])
+    array([[1, 0, 0, 0],
+           [0, 0, 0, 1]])
 
 :class:`LabelBinarizer` also supports multiple labels per instance::
 
     >>> lb.fit_transform([(1, 2), (3,)])
-    array([[ 1.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1, 1, 0],
+           [0, 0, 1]])
     >>> lb.classes_
     array([1, 2, 3])
 

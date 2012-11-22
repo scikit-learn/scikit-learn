@@ -9,34 +9,69 @@ import sys
 import os
 import shutil
 
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
+
+# This is a bit (!) hackish: we are setting a global variable so that the main
+# sklearn __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.
+builtins.__SKLEARN_SETUP__ = True
+
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 LONG_DESCRIPTION = open('README.rst').read()
-MAINTAINER = 'Fabian Pedregosa'
-MAINTAINER_EMAIL = 'fabian.pedregosa@inria.fr'
-URL = 'http://scikit-learn.sourceforge.net'
+MAINTAINER = 'Andreas Mueller'
+MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
+URL = 'http://scikit-learn.org'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION = '0.12-git'
 
-import setuptools  # we are using a setuptools namespace
+# We can actually import a restricted version of sklearn that
+# does not need the compiled code
+import sklearn
+VERSION = sklearn.__version__
+
+###############################################################################
+# Optional setuptools features
+# We need to import setuptools early, if we want setuptools features,
+# as it monkey-patches the 'setup' function
+
+# For some commands, use setuptools
+if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
+           'bdist_wininst', 'install_egg_info', 'build_sphinx',
+           'egg_info', 'easy_install', 'upload',
+            )).intersection(sys.argv)) > 0:
+    import setuptools
+    extra_setuptools_args = dict(
+            zip_safe=False,  # the package can run out of an .egg file
+            include_package_data=True,
+        )
+else:
+    extra_setuptools_args = dict()
+
+###############################################################################
 from numpy.distutils.core import setup
-
 
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
         os.remove('MANIFEST')
 
     from numpy.distutils.misc_util import Configuration
-    config = Configuration(None, parent_package, top_path,
-        namespace_packages=['scikits'])
+    config = Configuration(None, parent_package, top_path)
 
-    config.add_subpackage('scikits.learn')
-    config.add_data_files('scikits/__init__.py')
+    # Avoid non-useful msg:
+    # "Ignoring attempt to set 'name' (from ... "
+    config.set_options(ignore_setup_xxx_py=True,
+                       assume_default_configuration=True,
+                       delegate_options_to_subpackages=True,
+                       quiet=True)
 
     config.add_subpackage('sklearn')
 
     return config
+
 
 if __name__ == "__main__":
 
@@ -63,12 +98,27 @@ if __name__ == "__main__":
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()  # supress noisy output
-            res = lib2to3.main.main("lib2to3.fixes", ['-x', 'import', '-w', local_path])
+            res = lib2to3.main.main("lib2to3.fixes",
+                                    ['-x', 'import', '-w', local_path])
         finally:
             sys.stdout = _old_stdout
 
         if res != 0:
             raise Exception('2to3 failed, exiting ...')
+
+        # Ugly hack to make pip work with Python 3, see
+        # http://projects.scipy.org/numpy/ticket/1857.
+        # Explanation: pip messes with __file__ which interacts badly with the
+        # change in directory due to the 2to3 conversion.  Therefore we restore
+        # __file__ to what it would have been otherwise.
+        global __file__
+        __file__ = os.path.join(os.curdir, os.path.basename(__file__))
+        if '--egg-base' in sys.argv: 
+            # Change pip-egg-info entry to absolute path, so pip can find it 
+            # after changing directory. 
+            idx = sys.argv.index('--egg-base')
+            if sys.argv[idx + 1] == 'pip-egg-info': 
+                sys.argv[idx + 1] = os.path.join(old_path, 'pip-egg-info') 
 
     os.chdir(local_path)
     sys.path.insert(0, local_path)
@@ -76,7 +126,6 @@ if __name__ == "__main__":
     setup(configuration=configuration,
           name=DISTNAME,
           maintainer=MAINTAINER,
-          include_package_data=True,
           maintainer_email=MAINTAINER_EMAIL,
           description=DESCRIPTION,
           license=LICENSE,
@@ -84,7 +133,6 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
-          zip_safe=False, # the package can run out of an .egg file
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
@@ -97,5 +145,5 @@ if __name__ == "__main__":
               'Operating System :: POSIX',
               'Operating System :: Unix',
               'Operating System :: MacOS'
-             ]
-    )
+             ],
+      **extra_setuptools_args)

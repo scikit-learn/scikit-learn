@@ -33,7 +33,7 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf auto_examples/
-	-rm -rf doc/generated/*
+	-rm -rf generated/*
 	-rm -rf modules/generated/*
 
 html:
@@ -106,4 +106,4 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 download-data:
-	python -c "from scikits.learn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"
+	python -c "from sklearn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"

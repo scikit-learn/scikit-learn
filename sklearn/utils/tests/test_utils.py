@@ -1,13 +1,17 @@
-from nose.tools import assert_equal, assert_raises, assert_true
 import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.linalg import pinv2
+
+from nose.tools import assert_equal, assert_raises, assert_true
+from numpy.testing import assert_almost_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
+from sklearn.utils.extmath import pinvh
 
 
 def test_make_rng():
@@ -87,3 +91,29 @@ def test_safe_mask():
 
     mask = safe_mask(X_csr, mask)
     assert_equal(X_csr[mask].shape[0], 3)
+
+
+def test_pinvh_simple_real():
+    a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.float64)
+    a = np.dot(a, a.T)
+    a_pinv = pinvh(a)
+    assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
+
+
+def test_pinvh_nonpositive():
+    a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float64)
+    a = np.dot(a, a.T)
+    u, s, vt = np.linalg.svd(a)
+    s[0] *= -1
+    a = np.dot(u * s, vt)  # a is now symmetric non-positive and singular
+    a_pinv = pinv2(a)
+    a_pinvh = pinvh(a)
+    assert_almost_equal(a_pinv, a_pinvh)
+
+
+def test_pinvh_simple_complex():
+    a = (np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]])
+         + 1j * np.array([[10, 8, 7], [6, 5, 4], [3, 2, 1]]))
+    a = np.dot(a, a.conj().T)
+    a_pinv = pinvh(a)
+    assert_almost_equal(np.dot(a, a_pinv), np.eye(3))

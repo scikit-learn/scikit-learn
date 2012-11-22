@@ -7,17 +7,18 @@ of an estimator.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
-import copy
 from itertools import product
 import time
 
 import numpy as np
-import scipy.sparse as sp
 
 from .base import BaseEstimator, is_classifier, clone
+from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .utils import deprecated
+from .utils import check_arrays, safe_mask
+
+__all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
 
 class IterGrid(object):
@@ -78,65 +79,51 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
 
+    X, y = check_arrays(X, y, sparse_format="csr")
     # update parameters of the classifier after a copy of its base structure
-    # FIXME we should be doing a clone here
-    clf = copy.deepcopy(base_clf)
+    clf = clone(base_clf)
     clf.set_params(**clf_params)
 
-    if isinstance(X, list) or isinstance(X, tuple):
-        X_train = [X[i] for i, cond in enumerate(train) if cond]
-        X_test = [X[i] for i, cond in enumerate(test) if cond]
+    if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
+        # cannot compute the kernel values with custom function
+        raise ValueError(
+            "Cannot use a custom kernel function. "
+            "Precompute the kernel matrix instead.")
+
+    if getattr(base_clf, "_pairwise", False):
+        # X is a precomputed square kernel matrix
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X should be a square kernel matrix")
+        X_train = X[np.ix_(train, train)]
+        X_test = X[np.ix_(test, train)]
     else:
-        if sp.issparse(X):
-            # For sparse matrices, slicing only works with indices
-            # (no masked array). Convert to CSR format for efficiency and
-            # because some sparse formats don't support row slicing.
-            X = sp.csr_matrix(X)
-            ind = np.arange(X.shape[0])
-            train = ind[train]
-            test = ind[test]
-        if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
-            # cannot compute the kernel values with custom function
-            raise ValueError(
-                "Cannot use a custom kernel function. "
-                "Precompute the kernel matrix instead.")
-        if getattr(base_clf, 'kernel', '') == 'precomputed':
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
+        X_train = X[safe_mask(X, train)]
+        X_test = X[safe_mask(X, test)]
+
+    if y is not None:
+        y_test = y[safe_mask(y, test)]
+        y_train = y[safe_mask(y, train)]
+        clf.fit(X_train, y_train, **fit_params)
+        if loss_func is not None:
+            y_pred = clf.predict(X_test)
+            this_score = -loss_func(y_test, y_pred)
+        elif score_func is not None:
+            y_pred = clf.predict(X_test)
+            this_score = score_func(y_test, y_pred)
         else:
-            X_train = X[train]
-            X_test = X[test]
-    if y is not None:
-        y_test = y[test]
-        y_train = y[train]
-    else:
-        y_test = None
-        y_train = None
-
-    clf.fit(X_train, y_train, **fit_params)
-
-    if loss_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = -loss_func(y_test, y_pred)
-    elif score_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = score_func(y_test, y_pred)
-    else:
-        this_score = clf.score(X_test, y_test)
-
-    if y is not None:
+            this_score = clf.score(X_test, y_test)
         if hasattr(y, 'shape'):
             this_n_test_samples = y.shape[0]
         else:
             this_n_test_samples = len(y)
     else:
+        clf.fit(X_train, **fit_params)
+        this_score = clf.score(X_test)
         if hasattr(X, 'shape'):
             this_n_test_samples = X.shape[0]
         else:
             this_n_test_samples = len(X)
+
     if verbose > 2:
         msg += ", score=%f" % this_score
     if verbose > 1:
@@ -161,7 +148,8 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter values should be a list.")
 
             if len(v) == 0:
-                raise ValueError("Parameter values should be a non-empty list.")
+                raise ValueError("Parameter values should be a non-empty "
+                        "list.")
 
 
 def _has_one_grid_point(param_grid):
@@ -176,7 +164,7 @@ def _has_one_grid_point(param_grid):
     return True
 
 
-class GridSearchCV(BaseEstimator):
+class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     """Grid search on the parameters of a classifier
 
     Important members are fit, predict.
@@ -190,9 +178,11 @@ class GridSearchCV(BaseEstimator):
     estimator: object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each grid point.
 
-    param_grid: dict
+    param_grid: dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
-        parameter settings to try as values.
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored.
 
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
@@ -256,7 +246,7 @@ class GridSearchCV(BaseEstimator):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
         estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
-            gamma=..., kernel='rbf', probability=False,
+            gamma=..., kernel='rbf', max_iter=-1, probability=False,
             shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,
             param_grid=...,
@@ -337,10 +327,10 @@ class GridSearchCV(BaseEstimator):
         self.pre_dispatch = pre_dispatch
 
     def _set_methods(self):
-        if hasattr(self._best_estimator_, 'predict'):
-            self.predict = self._best_estimator_.predict
-        if hasattr(self._best_estimator_, 'predict_proba'):
-            self.predict_proba = self._best_estimator_.predict_proba
+        if hasattr(self.best_estimator_, 'predict'):
+            self.predict = self.best_estimator_.predict
+        if hasattr(self.best_estimator_, 'predict_proba'):
+            self.predict_proba = self.best_estimator_.predict_proba
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
@@ -359,7 +349,9 @@ class GridSearchCV(BaseEstimator):
             None for unsupervised learning.
 
         """
-        self._set_params(**params)
+        return self._fit(X, y)
+
+    def _fit(self, X, y):
         estimator = self.estimator
         cv = self.cv
 
@@ -382,10 +374,13 @@ class GridSearchCV(BaseEstimator):
 
         # Return early if there is only one grid point.
         if _has_one_grid_point(self.param_grid):
-            params = iter(grid).next()
+            params = next(iter(grid))
             base_clf.set_params(**params)
-            base_clf.fit(X, y)
-            self._best_estimator_ = base_clf
+            if y is not None:
+                base_clf.fit(X, y)
+            else:
+                base_clf.fit(X)
+            self.best_estimator_ = base_clf
             self._set_methods()
             return self
 
@@ -430,8 +425,6 @@ class GridSearchCV(BaseEstimator):
                 best_score = score
                 best_params = params
 
-        if best_score is None:
-            raise ValueError('Best score could not be found')
         self.best_score_ = best_score
         self.best_params_ = best_params
 
@@ -439,8 +432,11 @@ class GridSearchCV(BaseEstimator):
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
             best_estimator = clone(base_clf).set_params(**best_params)
-            best_estimator.fit(X, y, **self.fit_params)
-            self._best_estimator_ = best_estimator
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
+            self.best_estimator_ = best_estimator
             self._set_methods()
 
         # Store the computed scores
@@ -461,28 +457,3 @@ class GridSearchCV(BaseEstimator):
                              % self.best_estimator_)
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
-
-    # TODO around 0.13: remove this property, make it an attribute
-    @property
-    def best_estimator_(self):
-        if hasattr(self, '_best_estimator_'):
-            return self._best_estimator_
-        else:
-            raise RuntimeError("Grid search has to be run with 'refit=True'"
-                " to make predictions or obtain an instance  of the best "
-                " estimator. To obtain the best parameter settings, "
-                " use ``best_params_``.")
-
-    @property
-    @deprecated('GridSearchCV.best_estimator is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GridSearchCV.best_estimator_`` instead.')
-    def best_estimator(self):
-        return self.best_estimator_
-
-    @property
-    @deprecated('GridSearchCV.best_score is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GridSearchCV.best_score_`` instead.')
-    def best_score(self):
-        return self.best_score_

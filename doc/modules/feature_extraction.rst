@@ -15,7 +15,7 @@ consisting of formats such as text and image.
 
    Feature extraction is very different from :ref:`feature_selection`:
    the former consists in transforming arbitrary data, such as text or
-   images, into numerical features usable for machine learning. The later
+   images, into numerical features usable for machine learning. The latter
    is a machine learning technique applied on these features.
 
 .. _dict_feature_extraction:
@@ -65,7 +65,7 @@ word of interest.
 For example, suppose that we have a first algorithm that extracts Part of
 Speech (PoS) tags that we want to use as complementary tags for training
 a sequence classifier (e.g. a chunker). The following dict could be
-such a window of feature extracted around the word 'sat' in the sentence
+such a window of features extracted around the word 'sat' in the sentence
 'The cat sat on the mat.'::
 
   >>> pos_window = [
@@ -88,7 +88,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
   <1x6 sparse matrix of type '<type 'numpy.float64'>'
-      with 6 stored elements in COOrdinate format>
+      with 6 stored elements in Compressed Sparse Row format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
   >>> vec.get_feature_names()
@@ -100,6 +100,107 @@ word of a corpus of documents the resulting matrix will be very wide
 of the time. So as to make the resulting data structure able to fit in
 memory the ``DictVectorizer`` class uses a ``scipy.sparse`` matrix by
 default instead of a ``numpy.ndarray``.
+
+
+.. _feature_hashing:
+
+Feature hashing
+===============
+
+.. currentmodule:: sklearn.feature_extraction
+
+The class :class:`FeatureHasher` is a high-speed, low-memory vectorizer that
+uses a technique known as
+`feature hashing <https://en.wikipedia.org/wiki/Feature_hashing>`_,
+or the "hashing trick".
+Instead of building a hash table of the features encountered in training,
+as the vectorizers do, instances of :class:`FeatureHasher`
+apply a hash function to the features
+to determine their column index in sample matrices directly.
+The result is increased speed and reduced memory usage,
+at the expense of inspectability;
+the hasher does not remember what the input features looked like
+and has no ``inverse_transform`` method.
+
+Since the hash function might cause collisions between (unrelated) features,
+a signed hash function is used and the sign of the hash value
+determines the sign of the value stored in the output matrix for a feature;
+this way, collisions are likely to cancel out rather than accumulate error,
+and the expected mean of any output feature's value is zero
+
+If ``non_negative=True`` is passed to the constructor,
+the absolute value is taken.
+This undoes some of the collision handling,
+but allows the output to be passed to estimators like :class:`MultinomialNB`
+or ``chi2`` feature selectors that expect non-negative inputs.
+
+:class:`FeatureHasher` accepts either mappings
+(like Python's ``dict`` and its variants in the ``collections`` module),
+``(feature, value)`` pairs, or strings,
+depending on the constructor parameter ``input_type``.
+Mapping are treated as lists of ``(feature, value)`` pairs,
+while single strings have an implicit value of 1.
+If a feature occurs multiple times in a sample, the values will be summed.
+Feature hashing can be employed in document classification,
+but unlike :class:`text.CountVectorizer`,
+:class:`FeatureHasher` does not do word
+splitting or any other preprocessing except Unicode-to-UTF-8 encoding.
+The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
+in the CSR format.
+
+As an example, consider a word-level natural language processing task
+that needs features extracted from ``(token, part_of_speech)`` pairs.
+One could use a Python generator function to extract features::
+
+  def token_features(token, part_of_speech):
+      if token.isdigit():
+          yield "numeric"
+      else:
+          yield "token={}".format(token.lower())
+          yield "token,pos={},{}".format(token, part_of_speech)
+      if token[0].isupper():
+          yield "uppercase_initial"
+      if token.isupper():
+          yield "all_uppercase"
+      yield "pos={}".format(part_of_speech)
+
+Then, the ``raw_X`` to be fed to ``FeatureHasher.transform``
+can be constructed using::
+
+  raw_X = (token_features(tok, pos_tagger(tok)) for tok in corpus)
+
+and fed to a hasher with::
+
+  hasher = FeatureHasher(input_type=string)
+  X = hasher.transform(raw_X)
+
+to get a ``scipy.sparse`` matrix ``X``.
+
+Note the use of a generator comprehension,
+which introduces laziness into the feature extraction:
+tokens are only processed on demand from the hasher.
+
+Implementation details
+----------------------
+
+:class:`FeatureHasher` uses the signed 32-bit variant of Murmurhash3.
+As a result (and because of limitations in ``scipy.sparse``),
+the maximum number of features supported is currently :math:`2^{31} - 1`.
+
+The original formulation of the hashing trick by Weinberger et al.
+used two separate hash functions :math:`h` and :math:`\xi`
+to determine the column index and sign of a feature, respectively.
+The present implementation works under the assumption
+that the sign bit of MurmurHash3 is independent of its other bits.
+
+
+.. topic:: References:
+
+ * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
+   Josh Attenberg (2009). `Feature hashing for large scale multitask learning
+   <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+
+ * `MurmurHash3 <http://code.google.com/p/smhasher/wiki/MurmurHash3>`.
 
 
 .. _text_feature_extraction:
@@ -148,10 +249,6 @@ or "Bag of n-grams" representation. Documents are described by word
 occurrences while completely ignoring the relative position information
 of the words in the document.
 
-When combined with :ref:`tfidf`, the bag of words encoding is also known
-as the `Vector Space Model
-<https://en.wikipedia.org/wiki/Vector_space_model>`_.
-
 
 Sparsity
 --------
@@ -182,13 +279,14 @@ This model has many parameters, however the default values are quite
 reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
-  >>> vectorizer = CountVectorizer()
-  >>> vectorizer
+  >>> vectorizer = CountVectorizer(min_df=1)
+  >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
-          lowercase=True, max_df=1.0, max_features=None, max_n=1, min_n=1,
-          preprocessor=None, stop_words=None, strip_accents=None,
-          token_pattern=u'\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+          lowercase=True, max_df=1.0, max_features=None, max_n=None, min_df=1,
+          min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
+          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None,
+          vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -244,8 +342,8 @@ we lose the information that the last document is an interogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
-  >>> bigram_vectorizer = CountVectorizer(min_n=1, max_n=2,
-  ...                                     token_pattern=ur'\b\w+\b')
+  >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
+  ...                                     token_pattern=ur'\b\w+\b', min_df=1)
   >>> analyze = bigram_vectorizer.build_analyzer()
   >>> analyze('Bi-grams are cool!')
   [u'bi', u'grams', u'are', u'cool', u'bi grams', u'grams are', u'are cool']
@@ -272,8 +370,8 @@ last document::
 
 .. _tfidf:
 
-TF-IDF normalization
---------------------
+Tf–idf term weighting
+---------------------
 
 In a large text corpus, some words will be very present (e.g. "the", "a",
 "is" in English) hence carrying very little meaningul information about
@@ -340,7 +438,7 @@ class called :class:`TfidfVectorizer` that combines all the option of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
-  >>> vectorizer = TfidfVectorizer()
+  >>> vectorizer = TfidfVectorizer(min_df=1)
   >>> vectorizer.fit_transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
   <4x9 sparse matrix of type '<type 'numpy.float64'>'
@@ -351,7 +449,7 @@ be cases where the binary occurrence markers might offer better
 features. This can be achieved by using the ``binary`` parameter
 of :class:`CountVectorizer`. In particular, some estimators such as
 :ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
-variables. Also very short text are likely to have noisy tf–idf values
+variables. Also, very short text are likely to have noisy tf–idf values
 while the binary occurrence info is more stable.
 
 As usual the only way how to best adjust the feature extraction parameters
@@ -388,8 +486,66 @@ using :ref:`NMF`:
 Limitations of the Bag of Words representation
 ----------------------------------------------
 
+A collection of unigrams (what bag of words is) cannot capture phrases
+and multi-word expressions, effectively disregarding any word order
+dependence. Additionally, bag of words model doesn't account for potential
+misspellings or word derivations.
+
+N-grams to the rescue! Instead of building a simple collection of
+unigrams (n=1), one might prefer a collection of bigrams (n=2), where
+occurences of pairs of consecutive words are counted.
+
+One might alternatively consider a collection of character n-grams, a
+representation resiliant against misspellings and derivations.
+
+For example, let's say we're dealing with a corpus of two documents:
+``['words', 'wprds']``. The second document contains a misspelling
+of the word 'words'.
+A simple bag of words representation would consider these two as
+very distinct documents, differing in both of the two possible features.
+A character 2-gram representation, however, would find the documents
+matching in 4 out of 8 features, which may help the preferred classifier
+decide better::
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
+  >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
+  >>> ngram_vectorizer.get_feature_names()
+  [u' w', u'ds', u'or', u'pr', u'rd', u's ', u'wo', u'wp']
+  >>> counts.toarray().astype(int)
+  array([[1, 1, 1, 0, 1, 1, 1, 0],
+         [1, 1, 0, 1, 1, 1, 0, 1]])
+
+In above example, ``'char_wb`` analyzer is used, which creates n-grams
+only from characters inside word boundaries (padded with space on each
+side). The ``'char'`` analyzer, alternatively, creates n-grams that
+span across words::
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
+  >>> ngram_vectorizer.fit_transform(['jumpy fox'])
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
+  <1x4 sparse matrix of type '<type 'numpy.int64'>'
+     with 4 stored elements in COOrdinate format>
+  >>> ngram_vectorizer.get_feature_names()
+  [u' fox ', u' jump', u'jumpy', u'umpy ']
+
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
+  >>> ngram_vectorizer.fit_transform(['jumpy fox'])
+  ...                                         # doctest: +NORMALIZE_WHITESPACE
+  <1x5 sparse matrix of type '<type 'numpy.int64'>'
+      with 5 stored elements in COOrdinate format>
+  >>> ngram_vectorizer.get_feature_names()
+  [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
+
+The word boundaries-aware variant ``char_wb`` is especially interesting
+for languages that use whitespaces for word separation as it generates
+significantly less noisy features than the raw ``char`` variant in
+that case. For such languages it can increase both the predictive
+accuracy and convergence speed of classifiers trained using such
+features while retaining the robustness w.r.t. misspellings and
+word derivations.
+
 While some local positioning information can be preserved by extracting
-n-grams instead of individual words, Bag of Words and Bag of n-grams
+n-grams instead of individual words, bag of words and bag of n-grams
 destroy most of the inner structure of the document and hence most of
 the meaning carried by that internal structure.
 
@@ -402,8 +558,8 @@ problems which are currently outside of the scope of scikit-learn.
 Customizing the vectorizer classes
 -----------------------------------
 
-It is possible to customize the behavior by passing some callable as
-parameters of the vectorizer::
+It is possible to customize the behavior by passing a callable
+to the vectorizer constructor::
 
   >>> def my_tokenizer(s):
   ...     return s.split()
@@ -431,8 +587,7 @@ parameters it is possible to derive from the class and override the
 factory method instead.
 
 Customizing the vectorizer can be very useful to handle Asian languages
-that do not use an explicit word separator such as the whitespace for
-instance.
+that do not use an explicit word separator such as whitespace.
 
 
 Image feature extraction

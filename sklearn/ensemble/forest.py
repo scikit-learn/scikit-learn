@@ -28,6 +28,8 @@ The module structure is the following:
   ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
   sub-estimator implementations.
 
+Single and multi-output problems are both handled.
+
 """
 
 # Authors: Gilles Louppe, Brian Holt
@@ -35,14 +37,18 @@ The module structure is the following:
 
 import itertools
 import numpy as np
+from warnings import warn
+from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
-from ..utils import check_random_state
+from ..tree._tree import DTYPE, DOUBLE
+from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..metrics import r2_score
+from ..preprocessing import OneHotEncoder
 
 from .base import BaseEnsemble
 
@@ -73,31 +79,41 @@ def _parallel_build_trees(n_trees, forest, X, y,
             n_samples = X.shape[0]
             indices = random_state.randint(0, n_samples, n_samples)
             tree.fit(X[indices], y[indices],
-                     sample_mask=sample_mask, X_argsorted=X_argsorted)
+                     sample_mask=sample_mask, X_argsorted=X_argsorted,
+                     check_input=False)
             tree.indices_ = indices
 
         else:
             tree.fit(X, y,
-                     sample_mask=sample_mask, X_argsorted=X_argsorted)
+                     sample_mask=sample_mask, X_argsorted=X_argsorted,
+                     check_input=False)
 
         trees.append(tree)
 
     return trees
 
 
-def _parallel_predict_proba(trees, X, n_classes):
+def _parallel_predict_proba(trees, X, n_classes, n_outputs):
     """Private function used to compute a batch of predictions within a job."""
-    p = np.zeros((X.shape[0], n_classes))
+    n_samples = X.shape[0]
+    p = []
+
+    for k in xrange(n_outputs):
+        p.append(np.zeros((n_samples, n_classes[k])))
 
     for tree in trees:
-        if n_classes == tree.n_classes_:
-            p += tree.predict_proba(X)
+        p_tree = tree.predict_proba(X)
 
-        else:
-            proba = tree.predict_proba(X)
+        if n_outputs == 1:
+            p_tree = [p_tree]
 
-            for j, c in enumerate(tree.classes_):
-                p[:, c] += proba[:, j]
+        for k in xrange(n_outputs):
+            if n_classes[k] == tree.n_classes_[k]:
+                p[k] += p_tree[k]
+
+            else:
+                for j, c in enumerate(tree.classes_[k]):
+                    p[k][:, c] += p_tree[k][:, j]
 
     return p
 
@@ -164,9 +180,12 @@ class BaseForest(BaseEnsemble, SelectorMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=[],
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
@@ -182,10 +201,32 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
+        self.n_features_ = None
+        self.n_outputs_ = None
+        self.classes_ = None
+        self.n_classes_ = None
         self.feature_importances_ = None
+
         self.verbose = verbose
+
+    def apply(self, X):
+        """Apply trees in the forest to X, return leaf indices.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Input data.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators]
+            For each datapoint x in X and for each tree in the forest,
+            return the index of the leaf x ends up in.
+        """
+        X = array2d(X, dtype=np.float32, order='C')
+        return np.array([est.tree_.apply(X) for est in self.estimators_]).T
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -195,7 +236,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         X : array-like of shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -204,9 +245,15 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self : object
             Returns self.
         """
+        self.random_state = check_random_state(self.random_state)
+
         # Precompute some data
-        X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        X, y = check_arrays(X, y, sparse_format="dense")
+        if getattr(X, "dtype", None) != DTYPE or \
+           X.ndim != 2 or not X.flags.fortran:
+            X = array2d(X, dtype=DTYPE, order="F")
+
+        n_samples, self.n_features_ = X.shape
 
         if self.bootstrap:
             sample_mask = None
@@ -217,21 +264,36 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 raise ValueError("Out of bag estimation only available"
                         " if bootstrap=True")
 
-            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+            sample_mask = np.ones((n_samples,), dtype=np.bool)
 
-            n_jobs, _, starts = _partition_features(self, X.shape[1])
+            n_jobs, _, starts = _partition_features(self, self.n_features_)
 
-            all_X_argsorted = Parallel(n_jobs=n_jobs)(
+            all_X_argsorted = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_X_argsort)(
                     X[:, starts[i]:starts[i + 1]])
                 for i in xrange(n_jobs))
 
             X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
+        y = np.atleast_1d(y)
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        self.classes_ = []
+        self.n_classes_ = []
+        self.n_outputs_ = y.shape[1]
+
         if isinstance(self.base_estimator, ClassifierMixin):
-            self.classes_ = np.unique(y)
-            self.n_classes_ = len(self.classes_)
-            y = np.searchsorted(self.classes_, y)
+            y = np.copy(y)
+
+            for k in xrange(self.n_outputs_):
+                unique = np.unique(y[:, k])
+                self.classes_.append(unique)
+                self.n_classes_.append(unique.shape[0])
+                y[:, k] = np.searchsorted(unique, y[:, k])
+
+        if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
@@ -255,29 +317,74 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         # Calculate out of bag predictions and score
         if self.oob_score:
             if isinstance(self, ClassifierMixin):
-                predictions = np.zeros((X.shape[0], self.n_classes_))
-                for estimator in self.estimators_:
-                    mask = np.ones(X.shape[0], dtype=np.bool)
-                    mask[estimator.indices_] = False
-                    predictions[mask, :] += estimator.predict_proba(X[mask, :])
+                self.oob_decision_function_ = []
+                self.oob_score_ = 0.0
 
-                self.oob_decision_function_ = (predictions
-                        / predictions.sum(axis=1)[:, np.newaxis])
-                self.oob_score_ = np.mean(y == np.argmax(predictions, axis=1))
+                predictions = []
+                for k in xrange(self.n_outputs_):
+                    predictions.append(np.zeros((n_samples,
+                                                 self.n_classes_[k])))
+
+                for estimator in self.estimators_:
+                    mask = np.ones(n_samples, dtype=np.bool)
+                    mask[estimator.indices_] = False
+
+                    p_estimator = estimator.predict_proba(X[mask, :])
+                    if self.n_outputs_ == 1:
+                        p_estimator = [p_estimator]
+
+                    for k in xrange(self.n_outputs_):
+                        predictions[k][mask, :] += p_estimator[k]
+
+                for k in xrange(self.n_outputs_):
+                    if (predictions[k].sum(axis=1) == 0).any():
+                        warn("Some inputs do not have OOB scores. "
+                             "This probably means too few trees were used "
+                             "to compute any reliable oob estimates.")
+                    decision = predictions[k] \
+                               / predictions[k].sum(axis=1)[:, np.newaxis]
+                    self.oob_decision_function_.append(decision)
+
+                    self.oob_score_ += np.mean(y[:, k] \
+                                       == np.argmax(predictions[k], axis=1))
+
+                if self.n_outputs_ == 1:
+                    self.oob_decision_function_ = \
+                        self.oob_decision_function_[0]
+
+                self.oob_score_ /= self.n_outputs_
 
             else:
                 # Regression:
-                predictions = np.zeros(X.shape[0])
-                n_predictions = np.zeros(X.shape[0])
+                predictions = np.zeros((n_samples, self.n_outputs_))
+                n_predictions = np.zeros((n_samples, self.n_outputs_))
+
                 for estimator in self.estimators_:
-                    mask = np.ones(X.shape[0], dtype=np.bool)
+                    mask = np.ones(n_samples, dtype=np.bool)
                     mask[estimator.indices_] = False
-                    predictions[mask] += estimator.predict(X[mask, :])
-                    n_predictions[mask] += 1
+
+                    p_estimator = estimator.predict(X[mask, :])
+                    if self.n_outputs_ == 1:
+                        p_estimator = p_estimator[:, np.newaxis]
+
+                    predictions[mask, :] += p_estimator
+                    n_predictions[mask, :] += 1
+                if (n_predictions == 0).any():
+                    warn("Some inputs do not have OOB scores. "
+                         "This probably means too few trees were used "
+                         "to compute any reliable oob estimates.")
+                    n_predictions[n_predictions == 0] = 1
                 predictions /= n_predictions
 
                 self.oob_prediction_ = predictions
-                self.oob_score_ = r2_score(y, predictions)
+                if self.n_outputs_ == 1:
+                    self.oob_prediction_ = \
+                        self.oob_prediction_.reshape((n_samples, ))
+
+                self.oob_score_ = 0.0
+                for k in xrange(self.n_outputs_):
+                    self.oob_score_ += r2_score(y[:, k], predictions[:, k])
+                self.oob_score_ /= self.n_outputs_
 
         # Sum the importances
         if self.compute_importances:
@@ -294,15 +401,19 @@ class ForestClassifier(BaseForest, ClassifierMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=[],
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
+
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -327,11 +438,25 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
-        return self.classes_.take(
-            np.argmax(self.predict_proba(X), axis=1),  axis=0)
+        n_samples = len(X)
+
+        P = self.predict_proba(X)
+        if self.n_outputs_ == 1:
+            P = [P]
+
+        predictions = np.zeros((n_samples, self.n_outputs_))
+
+        for k in xrange(self.n_outputs_):
+            predictions[:, k] = self.classes_[k].take(np.argmax(P[k], axis=1),
+                                                      axis=0)
+
+        if self.n_outputs_ == 1:
+            predictions = predictions.reshape((n_samples, ))
+
+        return predictions
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -346,27 +471,42 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
         # Check data
-        X = np.atleast_2d(X)
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_p = Parallel(n_jobs=n_jobs)(
+        all_p = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
-                X, self.n_classes_)
+                X,
+                self.n_classes_,
+                self.n_outputs_)
             for i in xrange(n_jobs))
 
         # Reduce
-        p = sum(all_p) / self.n_estimators
+        p = all_p[0]
 
-        return p
+        for j in xrange(1, len(all_p)):
+            for k in xrange(self.n_outputs_):
+                p[k] += all_p[j][k]
+
+        for k in xrange(self.n_outputs_):
+            p[k] /= self.n_estimators
+
+        if self.n_outputs_ == 1:
+            return p[0]
+
+        else:
+            return p
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
@@ -381,11 +521,21 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return np.log(proba)
+
+        else:
+            for k in xrange(self.n_outputs_):
+                proba[k] = np.log(proba[k])
+
+            return proba
 
 
 class ForestRegressor(BaseForest, RegressorMixin):
@@ -394,9 +544,12 @@ class ForestRegressor(BaseForest, RegressorMixin):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=[],
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
@@ -427,17 +580,18 @@ class ForestRegressor(BaseForest, RegressorMixin):
 
         Returns
         -------
-        y: array of shape = [n_samples]
+        y: array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
         # Check data
-        X = np.atleast_2d(X)
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=n_jobs)(
+        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
             for i in xrange(n_jobs))
@@ -525,10 +679,13 @@ class RandomForestClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -660,10 +817,13 @@ class RandomForestRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -796,10 +956,13 @@ class ExtraTreesClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -935,10 +1098,13 @@ class ExtraTreesRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controlls the verbosity of the tree building process.
+        Controls the verbosity of the tree building process.
 
     Attributes
     ----------
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
         The feature mportances (the higher, the more important the feature).
 
@@ -991,3 +1157,145 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
+
+
+class RandomTreesEmbedding(BaseForest):
+    """An ensemble of totally random trees.
+
+    An unsupervised transformation of a dataset to a high-dimensional
+    sparse representation. A datapoint is coded according to which leaf of
+    each tree it is sorted into. Using a one-hot encoding of the leaves,
+    this leads to a binary coding with as many ones as trees in the forest.
+
+    The dimensionality of the resulting representation is approximately
+    ``n_estimators * 2 ** max_depth``.
+
+    Parameters
+    ----------
+    n_estimators : int
+        Number of trees in the forest.
+
+    max_depth : int
+        Maximum depth of each tree.
+
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_density : float, optional (default=0.1)
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
+
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the tree building process.
+
+    Attributes
+    ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
+           visual codebooks using randomized clustering forests"
+           NIPS 2007
+
+    """
+
+    def __init__(self, n_estimators=10,
+                       max_depth=5,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
+                       min_density=0.1,
+                       n_jobs=1,
+                       random_state=None,
+                       verbose=0):
+        super(RandomTreesEmbedding, self).__init__(
+            base_estimator=ExtraTreeRegressor(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
+            bootstrap=False,
+            compute_importances=False,
+            oob_score=False,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose)
+
+        self.criterion = 'mse'
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_density = min_density
+        self.max_features = 1
+
+    def fit(self, X, y=None):
+        """Fit estimator.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data used to build forests.
+        """
+        self.fit_transform(X, y)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit estimator and transform dataset.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data used to build forests.
+
+        Returns
+        -------
+        X_transformed: sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
+        X = safe_asarray(X)
+        rnd = check_random_state(self.random_state)
+        y = rnd.uniform(size=X.shape[0])
+        super(RandomTreesEmbedding, self).fit(X, y)
+        self.one_hot_encoder_ = OneHotEncoder()
+        return self.one_hot_encoder_.fit_transform(self.apply(X))
+
+    def transform(self, X):
+        """Transform dataset.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_transformed: sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
+        return self.one_hot_encoder_.transform(self.apply(X))

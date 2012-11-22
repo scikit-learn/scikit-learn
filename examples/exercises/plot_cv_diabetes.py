@@ -14,12 +14,12 @@ import pylab as pl
 from sklearn import cross_validation, datasets, linear_model
 
 diabetes = datasets.load_diabetes()
-X = diabetes.data
-y = diabetes.target
+X = diabetes.data[:150]
+y = diabetes.target[:150]
 
 lasso = linear_model.Lasso()
 
-alphas = np.logspace(-4, -1, 20)
+alphas = np.logspace(-4, -.5, 30)
 
 scores = list()
 scores_std = list()
@@ -30,19 +30,40 @@ for alpha in alphas:
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
-pl.figure(1, figsize=(2.5, 2))
-pl.clf()
-pl.axes([.1, .25, .8, .7])
+pl.figure(figsize=(4, 3))
 pl.semilogx(alphas, scores)
-pl.semilogx(alphas, np.array(scores) + np.array(scores_std) / 20, 'b--')
-pl.semilogx(alphas, np.array(scores) - np.array(scores_std) / 20, 'b--')
-pl.yticks(())
+# plot error lines showing +/- std. errors of the scores
+pl.semilogx(alphas, np.array(scores) + np.array(scores_std) / np.sqrt(len(X)),
+    'b--')
+pl.semilogx(alphas, np.array(scores) - np.array(scores_std) / np.sqrt(len(X)),
+    'b--')
 pl.ylabel('CV score')
 pl.xlabel('alpha')
 pl.axhline(np.max(scores), linestyle='--', color='.5')
-pl.text(2e-4, np.max(scores) + 1e-4, '.489')
 
 ##############################################################################
 # Bonus: how much can you trust the selection of alpha?
+
+# To answer this question we use the LassoCV object that sets its alpha
+# parameter automatically from the data by internal cross-validation (i.e. it
+# performs cross-validation on the training data it receives).
+# We use external cross-validation to see how much the automatically obtained
+# alphas differ across different cross-validation folds.
+lasso_cv = linear_model.LassoCV(alphas=alphas)
 k_fold = cross_validation.KFold(len(X), 3)
-print [lasso.fit(X[train], y[train]).alpha for train, _ in k_fold]
+
+print "Answer to the bonus question: how much can you trust"
+print "the selection of alpha?"
+print
+print "Alpha parameters maximising the generalization score on different"
+print "subsets of the data:"
+for k, (train, test) in enumerate(k_fold):
+    lasso_cv.fit(X[train], y[train])
+    print "[fold {0}] alpha: {1:.5f}, score: {2:.5f}".\
+        format(k, lasso_cv.alpha_, lasso_cv.score(X[test], y[test]))
+print
+print "Answer: Not very much since we obtained different alphas for different"
+print "subsets of the data and moreover, the scores for these alphas differ"
+print "quite substantially."
+
+pl.show()

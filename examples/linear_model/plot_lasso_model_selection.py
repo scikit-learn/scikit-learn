@@ -86,7 +86,7 @@ def plot_ic_criterion(model, name, color):
             linewidth=3, label='%s criterion' % name)
     pl.axvline(-np.log10(alpha_), color=color,
               linewidth=3, label='alpha: %s estimate' % name)
-    pl.xlabel('-log(lambda)')
+    pl.xlabel('-log(alpha)')
     pl.ylabel('criterion')
 
 pl.figure()
@@ -106,7 +106,7 @@ model = LassoCV(cv=20).fit(X, y)
 t_lasso_cv = time.time() - t1
 
 # Display results
-m_log_alphas = -np.log10(model.alphas)
+m_log_alphas = -np.log10(model.alphas_)
 
 pl.figure()
 ymin, ymax = 2300, 3800
@@ -118,7 +118,7 @@ pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
 
 pl.legend()
 
-pl.xlabel('-log(lambda)')
+pl.xlabel('-log(alpha)')
 pl.ylabel('Mean square error')
 pl.title('Mean square error on each fold: coordinate descent '
          '(train time: %.2fs)' % t_lasso_cv)
@@ -135,7 +135,7 @@ model = LassoLarsCV(cv=20).fit(X, y)
 t_lasso_lars_cv = time.time() - t1
 
 # Display results
-m_log_alphas = -np.log10(model.cv_alphas)
+m_log_alphas = -np.log10(model.cv_alphas_)
 
 pl.figure()
 pl.plot(m_log_alphas, model.cv_mse_path_, ':')
@@ -145,7 +145,7 @@ pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
            label='alpha CV')
 pl.legend()
 
-pl.xlabel('-log(lambda)')
+pl.xlabel('-log(alpha)')
 pl.ylabel('Mean square error')
 pl.title('Mean square error on each fold: Lars (train time: %.2fs)' %
             t_lasso_lars_cv)

@@ -18,6 +18,11 @@ cimport cython
 cimport numpy as np
 import numpy as np
 
+cdef extern from "src/MurmurHash3.h":
+    void MurmurHash3_x86_32(void *key, int len, np.uint32_t seed, void *out)
+    void MurmurHash3_x86_128(void *key, int len, np.uint32_t seed, void *out)
+    void MurmurHash3_x64_128 (void *key, int len, np.uint32_t seed, void *out)
+
 
 cpdef np.uint32_t murmurhash3_int_u32(int key, unsigned int seed):
     """Compute the 32bit murmurhash3 of a int key at seed."""

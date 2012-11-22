@@ -12,8 +12,8 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator
-from ..utils import array2d, as_float_array, check_random_state
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import array2d, as_float_array, check_random_state, deprecated
 
 __all__ = ['fastica', 'FastICA']
 
@@ -68,8 +68,20 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
         lim = tol + 1
         while ((lim > tol) & (n_iterations < (max_iter - 1))):
             wtx = np.dot(w.T, X)
-            gwtx = g(wtx, fun_args)
-            g_wtx = gprime(wtx, fun_args)
+            nonlin = g(wtx, fun_args)
+            if isinstance(nonlin, tuple):
+                gwtx, g_wtx = nonlin
+            else:
+                if not callable(gprime):
+                    raise ValueError('The function supplied does not return a '
+                                     'tuple. Therefore fun_prime has to be a '
+                                     'function, not %s' % str(type(gprime)))
+                warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
+                gwtx = nonlin
+                g_wtx = gprime(wtx, fun_args)
+
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
             _gs_decorrelation(w1, W, j)
@@ -100,8 +112,21 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
     it = 0
     while ((lim > tol) and (it < (max_iter - 1))):
         wtx = np.dot(W, X)
-        gwtx = g(wtx, fun_args)
-        g_wtx = gprime(wtx, fun_args)
+
+        nonlin = g(wtx, fun_args)
+        if isinstance(nonlin, tuple):
+            gwtx, g_wtx = nonlin
+        else:
+            if not callable(gprime):
+                raise ValueError('The function supplied does not return a '
+                                 'tuple. Therefore fun_prime has to be a '
+                                 'function, not %s' % str(type(gprime)))
+            warnings.warn("Passing g and gprime separately is deprecated "
+                              "and will be removed in 0.14.",
+                              DeprecationWarning, stacklevel=2)
+            gwtx = nonlin
+            g_wtx = gprime(wtx, fun_args)
+
         W1 = np.dot(gwtx, X.T) / float(p) \
              - np.dot(np.diag(g_wtx.mean(axis=1)), W)
 
@@ -135,15 +160,23 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         preprocessed: it should be centered, normed and white.
         Otherwise you will get incorrect results.
         In this case the parameter n_components will be ignored.
-    fun : string or function, optional
+    fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
-        You can also provide your own function but in this case, its
-        derivative should be provided via argument fun_prime
-    fun_prime : empty string ('') or function, optional
+        You can also provide your own function. It should return a tuple
+        containing the value of the function, and of its derivative, in the
+        point. Example:
+
+        def my_g(x):
+            return x ** 3, 3 * x ** 2
+
+        Supplying the derivative through the `fun_prime` attribute is
+        still supported, but deprecated.
+    fun_prime : empty string ('') or function, optional, deprecated.
         See fun.
     fun_args: dictionary, optional
+        Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
     max_iter: int, optional
@@ -155,7 +188,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used
     source_only: boolean, optional
-        if True, only the sources matrix is returned
+        If True, only the sources matrix is returned.
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
 
@@ -201,38 +234,32 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     # make interface compatible with other decompositions
     X = array2d(X).T
 
-    algorithm_funcs = {'parallel': _ica_par,
-                       'deflation': _ica_def}
-
     alpha = fun_args.get('alpha', 1.0)
     if (alpha < 1) or (alpha > 2):
         raise ValueError("alpha must be in [1,2]")
 
+    gprime = None
     if isinstance(fun, str):
         # Some standard nonlinear functions
         # XXX: these should be optimized, as they can be a bottleneck.
         if fun == 'logcosh':
             def g(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0)
-                return np.tanh(alpha * x)
-
-            def gprime(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0)
-                return alpha * (1 - (np.tanh(alpha * x)) ** 2)
+                alpha = fun_args.get('alpha', 1.0)  # comment it out?
+                gx = np.tanh(alpha * x)
+                g_x = alpha * (1 - gx ** 2)
+                return gx, g_x
 
         elif fun == 'exp':
             def g(x, fun_args):
-                return x * np.exp(-(x ** 2) / 2)
-
-            def gprime(x, fun_args):
-                return (1 - x ** 2) * np.exp(-(x ** 2) / 2)
+                exp = np.exp(-(x ** 2) / 2)
+                gx = x * exp
+                g_x = (1 - x ** 2) * exp
+                return gx, g_x
 
         elif fun == 'cube':
             def g(x, fun_args):
-                return x ** 3
+                return x ** 3, 3 * x ** 2
 
-            def gprime(x, fun_args):
-                return 3 * x ** 2
         else:
             raise ValueError(
                         'fun argument should be one of logcosh, exp or cube')
@@ -240,8 +267,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         def g(x, fun_args):
             return fun(x, **fun_args)
 
-        def gprime(x, fun_args):
-            return fun_prime(x, **fun_args)
+        if callable(fun_prime):
+            def gprime(x, fun_args):
+                return fun_prime(x, **fun_args)
+
     else:
         raise ValueError('fun argument should be either a string '
                          '(one of logcosh, exp or cube) or a function')
@@ -292,9 +321,13 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
               'max_iter': max_iter,
               'w_init': w_init}
 
-    func = algorithm_funcs.get(algorithm, 'parallel')
-
-    W = func(X1, **kwargs)
+    if algorithm == 'parallel':
+        W = _ica_par(X1, **kwargs)
+    elif algorithm == 'deflation':
+        W = _ica_def(X1, **kwargs)
+    else:
+        raise ValueError('Invalid algorithm: must be either `parallel` or' +
+                         ' `deflation`.')
     del X1
 
     if whiten:
@@ -305,7 +338,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         return None, W, S.T
 
 
-class FastICA(BaseEstimator):
+class FastICA(BaseEstimator, TransformerMixin):
     """FastICA; a fast algorithm for Independent Component Analysis
 
     Parameters
@@ -317,12 +350,25 @@ class FastICA(BaseEstimator):
     whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
-    fun : {'logcosh', 'exp', or 'cube'}, or a callable
-        The non-linear function used in the FastICA loop to approximate
-        negentropy. If a function is passed, it derivative should be
-        passed as the 'fun_prime' argument.
-    fun_prime : None or a callable
-        The derivative of the non-linearity used.
+    fun : string or function, optional. Default: 'logcosh'
+        The functional form of the G function used in the
+        approximation to neg-entropy. Could be either 'logcosh', 'exp',
+        or 'cube'.
+        You can also provide your own function. It should return a tuple
+        containing the value of the function, and of its derivative, in the
+        point. Example:
+
+        def my_g(x):
+            return x ** 3, 3 * x ** 2
+
+        Supplying the derivative through the `fun_prime` attribute is
+        still supported, but deprecated.
+    fun_prime : empty string ('') or function, optional, deprecated.
+        See fun.
+    fun_args: dictionary, optional
+        Arguments to send to the functional form.
+        If empty and if fun='logcosh', fun_args will take value
+        {'alpha' : 1.0}
     max_iter : int, optional
         Maximum number of iterations during fit
     tol : float, optional
@@ -334,8 +380,10 @@ class FastICA(BaseEstimator):
 
     Attributes
     ----------
-    `unmixing_matrix_` : 2D array, [n_components, n_samples]
+    `components_` : 2D array, [n_components, n_features]
         The unmixing matrix
+    `sources_`: 2D array, [n_samples, n_components]
+        The estimated latent sources of the data.
 
     Notes
     -----
@@ -362,27 +410,33 @@ class FastICA(BaseEstimator):
         self.w_init = w_init
         self.random_state = random_state
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         whitening_, unmixing_, sources_ = fastica(X, self.n_components,
                         self.algorithm, self.whiten,
                         self.fun, self.fun_prime, self.fun_args, self.max_iter,
                         self.tol, self.w_init,
                         random_state=self.random_state)
         if self.whiten == True:
-            self.unmixing_matrix_ = np.dot(unmixing_, whitening_)
+            self.components_ = np.dot(unmixing_, whitening_)
         else:
-            self.unmixing_matrix_ = unmixing_
-        self.components_ = sources_
+            self.components_ = unmixing_
+        self.sources_ = sources_
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """Apply un-mixing matrix "W" to X to recover the sources
 
         S = X * W.T
         """
-        return np.dot(X, self.unmixing_matrix_.T)
+        X = array2d(X)
+        return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):
         """Compute the mixing matrix
         """
-        return linalg.pinv(self.unmixing_matrix_)
+        return linalg.pinv(self.components_)
+
+    @property
+    @deprecated("Renamed to ``components_``. This will be removed in 0.14.")
+    def unmixing_matrix_(self):
+        return self.components_

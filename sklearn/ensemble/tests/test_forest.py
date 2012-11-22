@@ -2,7 +2,7 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
-# Authors: Gilles Louppe, Brian Holt
+# Authors: Gilles Louppe, Brian Holt, Andreas Mueller
 # License: BSD 3
 
 import numpy as np
@@ -17,8 +17,11 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.svm import LinearSVC
+from sklearn.decomposition import RandomizedPCA
 from sklearn import datasets
 
 # toy sample
@@ -57,6 +60,10 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
+
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
@@ -68,6 +75,10 @@ def test_classification_toy():
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
+
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
 
 
 def test_iris():
@@ -139,6 +150,8 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities."""
+    olderr = np.seterr(divide="ignore")
+
     # Random forest
     clf = RandomForestClassifier(n_estimators=10, random_state=1,
             max_features=1, max_depth=1)
@@ -156,6 +169,8 @@ def test_probability():
                               np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data),
                               np.exp(clf.predict_log_proba(iris.data)))
+
+    np.seterr(**olderr)
 
 
 def test_importances():
@@ -260,7 +275,7 @@ def test_pickle():
     import pickle
 
     # Random forest
-    obj = RandomForestClassifier()
+    obj = RandomForestClassifier(random_state=0)
     obj.fit(iris.data, iris.target)
     score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
@@ -270,7 +285,7 @@ def test_pickle():
     score2 = obj2.score(iris.data, iris.target)
     assert_true(score == score2)
 
-    obj = RandomForestRegressor()
+    obj = RandomForestRegressor(random_state=0)
     obj.fit(boston.data, boston.target)
     score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
@@ -281,7 +296,7 @@ def test_pickle():
     assert_true(score == score2)
 
     # Extra-trees
-    obj = ExtraTreesClassifier()
+    obj = ExtraTreesClassifier(random_state=0)
     obj.fit(iris.data, iris.target)
     score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
@@ -291,7 +306,7 @@ def test_pickle():
     score2 = obj2.score(iris.data, iris.target)
     assert_true(score == score2)
 
-    obj = ExtraTreesRegressor()
+    obj = ExtraTreesRegressor(random_state=0)
     obj.fit(boston.data, boston.target)
     score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
@@ -300,6 +315,87 @@ def test_pickle():
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
     assert_true(score == score2)
+
+
+def test_multioutput():
+    """Check estimators on multi-output problems."""
+    olderr = np.seterr(divide="ignore")
+
+    X = [[-2, -1],
+         [-1, -1],
+         [-1, -2],
+         [1, 1],
+         [1, 2],
+         [2, 1],
+         [-2, 1],
+         [-1, 1],
+         [-1, 2],
+         [2, -1],
+         [1, -1],
+         [1, -2]]
+
+    y = [[-1, 0],
+         [-1, 0],
+         [-1, 0],
+         [1, 1],
+         [1, 1],
+         [1, 1],
+         [-1, 2],
+         [-1, 2],
+         [-1, 2],
+         [1, 3],
+         [1, 3],
+         [1, 3]]
+
+    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    # toy classification problem
+    clf = ExtraTreesClassifier(random_state=0)
+    y_hat = clf.fit(X, y).predict(T)
+    assert_array_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+    proba = clf.predict_proba(T)
+    assert_equal(len(proba), 2)
+    assert_equal(proba[0].shape, (4, 2))
+    assert_equal(proba[1].shape, (4, 4))
+
+    log_proba = clf.predict_log_proba(T)
+    assert_equal(len(log_proba), 2)
+    assert_equal(log_proba[0].shape, (4, 2))
+    assert_equal(log_proba[1].shape, (4, 4))
+
+    # toy regression problem
+    clf = ExtraTreesRegressor(random_state=5)
+    y_hat = clf.fit(X, y).predict(T)
+    assert_almost_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+    np.seterr(**olderr)
+
+
+def test_random_hasher():
+    # test random forest hashing on circles dataset
+    # make sure that it is linearly separable.
+    # even after projected to two pca dimensions
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    X, y = datasets.make_circles(factor=0.5)
+    X_transformed = hasher.fit_transform(X)
+
+    # test fit and transform:
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    assert_array_equal(hasher.fit(X).transform(X).toarray(),
+                       X_transformed.toarray())
+
+    # one leaf active per data point per forest
+    assert_equal(X_transformed.shape[0], X.shape[0])
+    assert_array_equal(X_transformed.sum(axis=1), hasher.n_estimators)
+    pca = RandomizedPCA(n_components=2)
+    X_reduced = pca.fit_transform(X_transformed)
+    linear_clf = LinearSVC()
+    linear_clf.fit(X_reduced, y)
+    assert_equal(linear_clf.score(X_reduced, y), 1.)
 
 
 if __name__ == "__main__":

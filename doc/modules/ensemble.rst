@@ -50,8 +50,14 @@ target values (class labels) for the training samples::
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
 
+Like :ref:`decision trees <tree>`, forests of trees also extend
+to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
+``[n_samples, n_outputs]``).
+
+
 Random Forests
 --------------
+
 In random forests (see :class:`RandomForestClassifier` and
 :class:`RandomForestRegressor` classes), each tree in the ensemble is
 built from a sample drawn with replacement (i.e., a bootstrap sample)
@@ -95,7 +101,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.978...
+    0.97...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -124,12 +130,12 @@ addition, note that results will stop getting significantly better
 beyond a critical number of trees. The latter is the size of the random
 subsets of features to consider when splitting a node. The lower the
 greater the reduction of variance, but also the greater the increase in
-bias. Empiricial good default values are ``max_features=n_features``
+bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). The best results are also usually reached when setting
 ``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developping the trees). Bear in mind though that these values
+when fully developing the trees). Bear in mind though that these values
 are usually not optimal. The best parameter values should always be cross-
 validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
@@ -159,6 +165,8 @@ amount of time (e.g., on large datasets).
 
  * :ref:`example_ensemble_plot_forest_iris.py`
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
+ * :ref:`example_ensemble_plot_forest_multioutput.py`
+
 
 .. topic:: References
 
@@ -170,8 +178,78 @@ amount of time (e.g., on large datasets).
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 
-.. _gradient_boosting:
+Feature importance evaluation
+-----------------------------
 
+The relative rank (i.e. depth) of a feature used as a decision node in a
+tree can be used to assess the relative importance of that feature with
+respect to the predictability of the target variable. Features used at
+the top of the tree are used contribute to the final prediction decision
+of a larger fraction of the input samples. The **expected fraction of
+the samples** they contribute to can thus be used as an estimate of the
+**relative importance of the features**.
+
+By **averaging** those expected activity rates over several randomized
+trees one can **reduce the variance** of such an estimate and use it
+for feature selection.
+
+The following example shows a color-coded representation of the relative
+importances of each individual pixel for a face recognition task using
+a :class:`ExtraTreesClassifier` model.
+
+.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_1.png
+   :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
+   :align: center
+   :scale: 75
+
+
+In practice those estimates can be computed by explicitly passing
+``compute_importances=True`` to the constructor of the decision trees,
+random forest and extremely randomized trees models. The result is stored
+as an attribute named ``feature_importances_`` on the fitted model. This
+is an array with shape ``(n_features,)`` whose values are positive and sum
+to 1.0. The higher the value, the more important is the contribution of
+the matching feature to the prediction function.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_forest_importances_faces.py`
+ * :ref:`example_ensemble_plot_forest_importances.py`
+
+.. _random_hashing:
+
+Totally Random Trees Embedding
+------------------------------
+
+:class:`RandomTreesEmbedding` implements an unsupervised transformation of the
+data.  Using a forest of completely random trees, :class:`RandomTreesEmbedding`
+encodes the data by the indices of the leaves a data point ends up in.  This
+index is then encoded in a one-of-K manner, leading to a high dimensional,
+sparse binary coding.
+This coding can be computed very efficiently and can then be used as a basis
+for other learning tasks.
+The size and sparsity of the code can be influenced by choosing the number of
+trees and the maximum depth per tree. For each tree in the ensemble, the coding
+contains one entry of one. The size of the coding is at most ``n_estimators * 2
+** max_depth``, the maximum number of leaves in the forest.
+
+As neighboring data points are more likely to lie within the same leaf of a tree,
+the transformation performs an implicit, non-parametric density estimation.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_random_forest_embedding.py`
+ 
+  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+    dimensionality reduction technics on handwritten digits.
+
+.. seealso::
+
+   :ref:`manifold` techniques can also be useful to derive non-linear
+   representations of feature space, also these approaches focus also on
+   dimensionality reduction.
+
+.. _gradient_boosting:
 
 Gradient Tree Boosting
 ======================
@@ -216,18 +294,18 @@ with 100 decision stumps as weak learners::
     >>> X_train, X_test = X[:2000], X[2000:]
     >>> y_train, y_test = y[:2000], y[2000:]
 
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learn_rate=1.0,
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
     0.913...
 
 The number of weak learners (i.e. regression trees) is controlled by the
 parameter ``n_estimators``; The maximum depth of each tree is controlled via
-``max_depth``. The ``learn_rate`` is a hyper-parameter in the range (0.0, 1.0]
+``max_depth``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0]
 that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 
-.. note:: 
-   
+.. note::
+
    Classification with more than 2 classes requires the induction
    of ``n_classes`` regression trees at each at each iteration,
    thus, the total number of induced trees equals
@@ -238,11 +316,10 @@ that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
 Regression
 ----------
 
-:class:`GradientBoostingRegressor` supports a number of different loss
-functions for regression which can be specified via the argument
-``loss``. Currently, supported are least squares (``loss='ls'``) and
-least absolute deviation (``loss='lad'``), which is more robust w.r.t.
-outliers. See [F2001]_ for detailed information.
+:class:`GradientBoostingRegressor` supports a number of
+:ref:`different loss functions <gradient_boosting_loss>`
+for regression which can be specified via the argument
+``loss`` which defaults to least squares (``'ls'``).
 
 ::
 
@@ -254,7 +331,7 @@ outliers. See [F2001]_ for detailed information.
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> clf = GradientBoostingRegressor(n_estimators=100, learn_rate=1.0,
+    >>> clf = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
     >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
     6.90...
@@ -264,7 +341,7 @@ with least squares loss and 500 base learners to the Boston house-price dataset
 (see :func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
 Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be optained via the ``feature_importance``
+shows the feature importances which can be obtained via the ``feature_importances_``
 property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
@@ -296,8 +373,8 @@ a forward stagewise fashion:
 
     F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
 
-At each stage the decision tree :math:`h_m(x)` is choosen that
-minimizes the loss function :math:`L` given the current model
+At each stage the decision tree :math:`h_m(x)` is chosen to
+minimize the loss function :math:`L` given the current model
 :math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
 
   .. math::
@@ -322,7 +399,7 @@ loss function:
     F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
-Where the step length :math:`\gamma_m` is choosen using line search:
+Where the step length :math:`\gamma_m` is chosen using line search:
 
   .. math::
 
@@ -332,6 +409,7 @@ Where the step length :math:`\gamma_m` is choosen using line search:
 The algorithms for regression and classification
 only differ in the concrete loss function used.
 
+.. _gradient_boosting_loss:
 
 Loss Functions
 ...............
@@ -347,6 +425,14 @@ the parameter ``loss``:
     * Least absolute deviation (``'lad'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
+    * Huber (``'huber'``): Another robust loss function that combines
+      least squares and least absolute deviation; use ``alpha`` to
+      control the sensitivity w.r.t. outliers (see [F2001]_ for more
+      details).
+    * Quantile (``'quantile'``): A loss function for quantile regression.
+      Use ``0 < alpha < 1`` to specify the quantile. This loss function
+      can be used to create prediction intervals
+      (see :ref:`example_ensemble_plot_gradient_boosting_quantile.py`).
 
   * Classification
 
@@ -379,17 +465,17 @@ the contribution of each weak learner by a factor :math:`\nu`:
 
 The parameter :math:`\nu` is also called the **learning rate** because
 it scales the step length the the gradient descent procedure; it can
-be set via the ``learn_rate`` parameter.
+be set via the ``learning_rate`` parameter.
 
-The parameter ``learn_rate`` strongly interacts with the parameter
+The parameter ``learning_rate`` strongly interacts with the parameter
 ``n_estimators``, the number of weak learners to fit. Smaller values
-of ``learn_rate`` require larger numbers of weak learners to maintain
+of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
-values of ``learn_rate`` favor better test error. [HTF2009]_
+values of ``learning_rate`` favor better test error. [HTF2009]_
 recommend to set the learning rate to a small constant
-(e.g. ``learn_rate <= 0.1``) and choose ``n_estimators`` by early
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
 stopping. For a more detailed discussion of the interaction between
-``learn_rate`` and ``n_estimators`` see [R2007]_.
+``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
 ............
@@ -397,8 +483,7 @@ Subsampling
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
-the available training data.
-The subsample is drawn without replacement.
+the available training data. The subsample is drawn without replacement.
 A typical value of ``subsample`` is 0.5.
 
 The figure below illustrates the effect of shrinkage and subsampling
@@ -412,11 +497,21 @@ does poorly.
    :align: center
    :scale: 75
 
+For ``subsample < 1``, the deviance on the out-of-bag samples in the i-the iteration
+is stored in the attribute ``oob_score_[i]``. Out-of-bag estimates can be
+used for model selection (e.g. to determine the optimal number of iterations).
+
+Another strategy to reduce the variance is by subsampling the features
+analogous to the random splits in Random Forests. The size of the subsample
+can be controled via the ``max_features`` parameter.
+
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
+
 
 .. topic:: References
 

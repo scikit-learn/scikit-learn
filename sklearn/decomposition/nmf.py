@@ -10,14 +10,23 @@
 
 from __future__ import division
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr, check_random_state
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+import warnings
+import numbers
 
 import numpy as np
 from scipy.optimize import nnls
 import scipy.sparse as sp
-import warnings
+
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import atleast2d_or_csr, check_random_state
+from ..utils.extmath import randomized_svd, safe_sparse_dot
+
+
+def safe_vstack(Xs):
+    if any(sp.issparse(X) for X in Xs):
+        return sp.vstack(Xs)
+    else:
+        return np.vstack(Xs)
 
 
 def _pos(x):
@@ -100,7 +109,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
 
-    http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
+    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
     """
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
@@ -166,28 +175,27 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
 
     Parameters
     ----------
-    V, W:
-        Constant matrices
+    V, W : array-like
+        Constant matrices.
 
-    H_init:
-        Initial guess for the solution
+    H_init : array-like
+        Initial guess for the solution.
 
-    tol:
+    tol : float
         Tolerance of the stopping condition.
 
-    max_iter:
-        Maximum number of iterations before
-        timing out.
+    max_iter : int
+        Maximum number of iterations before timing out.
 
     Returns
     -------
-    H:
-        Solution to the non-negative least squares problem
+    H : array-like
+        Solution to the non-negative least squares problem.
 
-    grad:
+    grad : array-like
         The gradient.
 
-    n_iter:
+    n_iter : int
         The number of iterations done by the algorithm.
 
     """
@@ -251,9 +259,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Number of components, if n_components is not set all components
         are kept
 
-    init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | int | RandomState
+    init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
         Method used to initialize the procedure.
-        Default: 'nndsvdar'
+        Default: 'nndsvdar' if n_components < n_features, otherwise random.
         Valid options::
 
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
@@ -263,7 +271,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             'nndsvdar': NNDSVD with zeros filled with small random values
                 (generally faster, less accurate alternative to NNDSVDa
                 for when sparsity is not desired)
-            int seed or RandomState: non-negative random matrices
+            'random': non-negative random matrices
 
     sparseness: 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
@@ -285,6 +293,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     nls_max_iter: int, default: 2000
         Number of iterations in NLS subproblem.
 
+    random_state : int or RandomState
+        Random number generator seed control.
+
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
@@ -303,20 +314,23 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import ProjectedGradientNMF
-    >>> model = ProjectedGradientNMF(n_components=2, init=0)
+    >>> model = ProjectedGradientNMF(n_components=2, init='random',
+    ...                              random_state=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ProjectedGradientNMF(beta=1, eta=0.1, init=0, max_iter=200, n_components=2,
-                         nls_max_iter=2000, sparseness=None, tol=0.0001)
+    ProjectedGradientNMF(beta=1, eta=0.1, init='random', max_iter=200,
+            n_components=2, nls_max_iter=2000, random_state=0, sparseness=None,
+            tol=0.0001)
     >>> model.components_
     array([[ 0.77032744,  0.11118662],
            [ 0.38526873,  0.38228063]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.00746...
-    >>> model = ProjectedGradientNMF(n_components=2, init=0,
-    ...                              sparseness='components')
+    >>> model = ProjectedGradientNMF(n_components=2,
+    ...              sparseness='components', init='random', random_state=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ProjectedGradientNMF(beta=1, eta=0.1, init=0, max_iter=200, n_components=2,
-               nls_max_iter=2000, sparseness='components', tol=0.0001)
+    ProjectedGradientNMF(beta=1, eta=0.1, init='random', max_iter=200,
+                n_components=2, nls_max_iter=2000, random_state=0,
+                sparseness='components', tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
            [-0.        ,  0.4681982 ]])
@@ -341,12 +355,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
-    http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
+    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
 
     """
 
-    def __init__(self, n_components=None, init="nndsvdar", sparseness=None,
-                 beta=1, eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000):
+    def __init__(self, n_components=None, init=None, sparseness=None, beta=1,
+            eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
+            random_state=None):
         self.n_components = n_components
         self.init = init
         self.tol = tol
@@ -359,32 +374,45 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.eta = eta
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
+        self.random_state = random_state
 
     def _init(self, X):
         n_samples, n_features = X.shape
+        init = self.init
+        if init is None:
+            if self.n_components < n_features:
+                init = 'nndsvd'
+            else:
+                init = 'random'
 
-        if self.init == 'nndsvd':
-            W, H = _initialize_nmf(X, self.n_components)
-        elif self.init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components, variant='a')
-        elif self.init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components, variant='ar')
+        if isinstance(init, (numbers.Integral, np.random.RandomState)):
+            random_state = check_random_state(init)
+            init = "random"
+            warnings.warn("Passing a random seed or generator as init "
+                "is deprecated and will be removed in 0.15. Use "
+                "init='random' and random_state instead.", DeprecationWarning)
         else:
-            try:
-                rng = check_random_state(self.init)
-                W = rng.randn(n_samples, self.n_components)
-                # we do not write np.abs(W, out=W) to stay compatible with
-                # numpy 1.5 and earlier where the 'out' keyword is not
-                # supported as a kwarg on ufuncs
-                np.abs(W, W)
-                H = rng.randn(self.n_components, n_features)
-                np.abs(H, H)
-            except ValueError:
-                raise ValueError(
-                    'Invalid init parameter: got %r instead of one of %r' %
-                    (self.init, (None, 'nndsvd', 'nndsvda', 'nndsvdar',
-                                 int, np.random.RandomState)))
+            random_state = self.random_state
 
+        if init == 'nndsvd':
+            W, H = _initialize_nmf(X, self.n_components)
+        elif init == 'nndsvda':
+            W, H = _initialize_nmf(X, self.n_components, variant='a')
+        elif init == 'nndsvdar':
+            W, H = _initialize_nmf(X, self.n_components, variant='ar')
+        elif init == "random":
+            rng = check_random_state(random_state)
+            W = rng.randn(n_samples, self.n_components)
+            # we do not write np.abs(W, out=W) to stay compatible with
+            # numpy 1.5 and earlier where the 'out' keyword is not
+            # supported as a kwarg on ufuncs
+            np.abs(W, W)
+            H = rng.randn(self.n_components, n_features)
+            np.abs(H, H)
+        else:
+            raise ValueError(
+                'Invalid init parameter: got %r instead of one of %r' %
+                (init, (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random')))
         return W, H
 
     def _update_W(self, X, H, W, tolW):
@@ -395,15 +423,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             W, gradW, iterW = _nls_subproblem(
-                    np.r_[X.T, np.zeros((1, n_samples))],
-                    np.r_[H.T, np.sqrt(self.beta) *
-                          np.ones((1, self.n_components))],
+                    safe_vstack([X.T, np.zeros((1, n_samples))]),
+                    safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
+                                 self.n_components))]),
                     W.T, tolW, self.nls_max_iter)
         elif self.sparseness == 'components':
             W, gradW, iterW = _nls_subproblem(
-                    np.r_[X.T, np.zeros((self.n_components, n_samples))],
-                    np.r_[H.T, np.sqrt(self.eta) *
-                          np.eye(self.n_components)],
+                    safe_vstack([X.T,
+                                 np.zeros((self.n_components, n_samples))]),
+                    safe_vstack([H.T, np.sqrt(self.eta)
+                                      * np.eye(self.n_components)]),
                     W.T, tolW, self.nls_max_iter)
 
         return W, gradW, iterW
@@ -416,15 +445,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             H, gradH, iterH = _nls_subproblem(
-                    np.r_[X, np.zeros((self.n_components, n_features))],
-                    np.r_[W, np.sqrt(self.eta) *
-                          np.eye(self.n_components)],
+                    safe_vstack([X,
+                                 np.zeros((self.n_components, n_features))]),
+                    safe_vstack([W, np.sqrt(self.eta)
+                                    * np.eye(self.n_components)]),
                     H, tolH, self.nls_max_iter)
         elif self.sparseness == 'components':
             H, gradH, iterH = _nls_subproblem(
-                    np.r_[X, np.zeros((1, n_features))],
-                    np.r_[W, np.sqrt(self.beta) *
-                          np.ones((1, self.n_components))],
+                    safe_vstack([X, np.zeros((1, n_features))]),
+                    safe_vstack([W, np.sqrt(self.beta) *
+                          np.ones((1, self.n_components))]),
                     H, tolH, self.nls_max_iter)
 
         return H, gradH, iterH

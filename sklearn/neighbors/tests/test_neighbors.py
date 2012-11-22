@@ -1,6 +1,6 @@
 import warnings
 
-from nose.tools import assert_equal
+from nose.tools import assert_equal, assert_true
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -18,6 +18,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
+# load and shuffle digits
+digits = datasets.load_digits()
+perm = rng.permutation(digits.target.size)
+digits.data = digits.data[perm]
+digits.target = digits.target[perm]
+
 SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
                 lil_matrix)
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
@@ -34,8 +40,8 @@ def _weight_func(dist):
     # Dist could be multidimensional, flatten it so all values
     # can be looped
     with np.errstate(divide='ignore'):
-        retval = 1./dist
-    return retval**2
+        retval = 1. / dist
+    return retval ** 2
 
 
 def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
@@ -168,7 +174,8 @@ def test_kneighbors_classifier(n_samples=40,
     """Test k-neighbors classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y_str = y.astype(str)
 
     weight_func = _weight_func
 
@@ -181,6 +188,52 @@ def test_kneighbors_classifier(n_samples=40,
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
             assert_array_equal(y_pred, y[:n_test_pts])
+            # Test prediction with y_str
+            knn.fit(X, y_str)
+            y_pred = knn.predict(X[:n_test_pts] + epsilon)
+            assert_array_equal(y_pred, y_str[:n_test_pts])
+
+
+def test_kneighbors_classifier_float_labels(n_samples=40,
+                               n_features=5,
+                               n_test_pts=10,
+                               n_neighbors=5,
+                               random_state=0):
+    """Test k-neighbors classification"""
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn.fit(X, y.astype(np.float))
+    epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+    y_pred = knn.predict(X[:n_test_pts] + epsilon)
+    assert_array_equal(y_pred, y[:n_test_pts])
+
+
+def test_kneighbors_classifier_predict_proba():
+    """Test KNeighborsClassifier.predict_proba() method"""
+    X = np.array([[0, 2, 0],
+                  [0, 2, 1],
+                  [2, 0, 0],
+                  [2, 2, 0],
+                  [0, 0, 2],
+                  [0, 0, 1]])
+    y = np.array([4, 4, 5, 5, 1, 1])
+    cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
+    cls.fit(X, y)
+    y_prob = cls.predict_proba(X)
+    real_prob = np.array([[0, 2. / 3, 1. / 3],
+                          [1. / 3, 2. / 3, 0],
+                          [1. / 3, 0, 2. / 3],
+                          [0, 1. / 3, 2. / 3],
+                          [2. / 3, 1. / 3, 0],
+                          [2. / 3, 1. / 3, 0]])
+    assert_array_equal(real_prob, y_prob)
+    # Check that it also works with non integer labels
+    cls.fit(X, y.astype(str))
+    y_prob = cls.predict_proba(X)
+    assert_array_equal(real_prob, y_prob)
 
 
 def test_radius_neighbors_classifier(n_samples=40,
@@ -191,7 +244,8 @@ def test_radius_neighbors_classifier(n_samples=40,
     """Test radius-based classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y_str = y.astype(str)
 
     weight_func = _weight_func
 
@@ -204,6 +258,9 @@ def test_radius_neighbors_classifier(n_samples=40,
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_array_equal(y_pred, y[:n_test_pts])
+            neigh.fit(X, y_str)
+            y_pred = neigh.predict(X[:n_test_pts] + epsilon)
+            assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
 def test_radius_neighbors_classifier_when_no_neighbors():
@@ -285,7 +342,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
 
     SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                     dok_matrix, lil_matrix)
@@ -323,7 +380,7 @@ def test_kneighbors_regressor(n_samples=40,
             knn.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
-            assert np.all(abs(y_pred - y_target) < 0.3)
+            assert_true(np.all(abs(y_pred - y_target) < 0.3))
 
 
 def test_radius_neighbors_regressor(n_samples=40,
@@ -349,7 +406,7 @@ def test_radius_neighbors_regressor(n_samples=40,
             neigh.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
-            assert np.all(abs(y_pred - y_target) < radius / 2)
+            assert_true(np.all(abs(y_pred - y_target) < radius / 2))
 
 
 def test_kneighbors_regressor_sparse(n_samples=40,
@@ -371,8 +428,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
         knn.fit(sparsemat(X), y)
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
-            assert (np.mean(knn.predict(X2).round() == y)
-                    > 0.95)
+            assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
 
 
 def test_neighbors_iris():
@@ -390,13 +446,36 @@ def test_neighbors_iris():
 
         clf.set_params(n_neighbors=9, algorithm=algorithm)
         clf.fit(iris.data, iris.target)
-        assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
+        assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm,
                 warn_on_equidistant=False)
         rgs.fit(iris.data, iris.target)
-        assert np.mean(
-            rgs.predict(iris.data).round() == iris.target) > 0.95
+        assert_true(np.mean(rgs.predict(iris.data).round() == iris.target)
+                    > 0.95)
+
+
+def test_neighbors_digits():
+    """Sanity check on the digits dataset
+
+    the 'brute' algorithm has been observed to fail if the input
+    dtype is uint8 due to overflow in distance calculations.
+    """
+
+    X = digits.data.astype('uint8')
+    Y = digits.target
+    (n_samples, n_features) = X.shape
+    train_test_boundary = int(n_samples * 0.8)
+    train = np.arange(0, train_test_boundary)
+    test = np.arange(train_test_boundary, n_samples)
+    (X_train, Y_train, X_test, Y_test) = X[train], Y[train], X[test], Y[test]
+
+    clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute',
+        warn_on_equidistant=False)
+    score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
+    score_float = clf.fit(X_train.astype(float), Y_train).score(
+        X_test.astype(float), Y_test)
+    assert_equal(score_uint8, score_float)
 
 
 def test_kneighbors_graph():

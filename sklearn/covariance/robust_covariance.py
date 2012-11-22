@@ -8,12 +8,13 @@ Here are implemented estimators that are resistant to outliers.
 #
 # License: BSD Style.
 import warnings
+import numbers
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
-from ..utils.extmath import fast_logdet
+from ..utils.extmath import fast_logdet, pinvh
 from ..utils import check_random_state
 
 
@@ -85,7 +86,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         location = initial_estimates[0]
         covariance = initial_estimates[1]
         # run a special iteration for that case (to get an initial support)
-        precision = linalg.pinv(covariance)
+        precision = pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
@@ -98,15 +99,15 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
     while (det < previous_det) and (remaining_iterations > 0):
-        # compute a new support from the full data set mahalanobis distances
-        precision = linalg.pinv(covariance)
-        X_centered = X - location
-        dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
         previous_det = det
         previous_support = support
+        # compute a new support from the full data set mahalanobis distances
+        precision = pinvh(covariance)
+        X_centered = X - location
+        dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
         support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:n_support]] = True
@@ -116,26 +117,37 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         # update remaining iterations for early stopping
         remaining_iterations -= 1
 
+    previous_dist = dist
+    dist = (np.dot(X - location, precision) \
+                * (X - location)).sum(axis=1)
+    # Catch computation errors
+    if np.isinf(det):
+        raise ValueError(
+            "Singular covariance matrix. "
+            "Please check that the covariance matrix corresponding "
+            "to the dataset is full rank and that MinCovDet is used with "
+            "Gaussian-distributed data (or at least data drawn from a "
+            "unimodal, symetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
         if verbose:
             print "Optimal couple (location, covariance) found before" \
                 "ending iterations (%d left)" % (remaining_iterations)
-        results = location, covariance, det, support
+        results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
         warnings.warn("Warning! det > previous_det (%.15f > %.15f)" \
                           % (det, previous_det), RuntimeWarning)
         results = previous_location, previous_covariance, \
-            previous_det, previous_support
+            previous_det, previous_support, previous_dist
 
     # Check early stopping
     if remaining_iterations == 0:
         if verbose:
             print 'Maximum number of iterations reached'
         det = fast_logdet(covariance)
-        results = location, covariance, det, support
+        results = location, covariance, det, support, dist
 
     return results
 
@@ -207,14 +219,15 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     random_state = check_random_state(random_state)
     n_samples, n_features = X.shape
 
-    if isinstance(n_trials, int):
+    if isinstance(n_trials, numbers.Integral):
         run_from_estimates = False
     elif isinstance(n_trials, tuple):
         run_from_estimates = True
         estimates_list = n_trials
         n_trials = estimates_list[0].shape[0]
     else:
-        raise Exception("Bad 'n_trials' parameter (wrong type)")
+        raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
+                " integer, got %s (%s)" % (n_trials, type(n_trials)))
 
     # compute `n_trials` location and shape estimates candidates in the subset
     all_estimates = []
@@ -235,15 +248,16 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
                     initial_estimates=initial_estimates, verbose=verbose,
                     cov_computation_method=cov_computation_method,
                     random_state=random_state))
-    all_locations_sub, all_covariances_sub, all_dets_sub, all_supports_sub = \
-                                     zip(*all_estimates)
+    all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = \
+        zip(*all_estimates)
     # find the `n_best` best results among the `n_trials` ones
     index_best = np.argsort(all_dets_sub)[:select]
-    best_locations = np.asarray(all_locations_sub)[index_best]
-    best_covariances = np.asarray(all_covariances_sub)[index_best]
+    best_locations = np.asarray(all_locs_sub)[index_best]
+    best_covariances = np.asarray(all_covs_sub)[index_best]
     best_supports = np.asarray(all_supports_sub)[index_best]
+    best_ds = np.asarray(all_ds_sub)[index_best]
 
-    return best_locations, best_covariances, best_supports
+    return best_locations, best_covariances, best_supports, best_ds
 
 
 def fast_mcd(X, support_fraction=None,
@@ -321,17 +335,32 @@ def fast_mcd(X, support_fraction=None,
     # (Rousseeuw, P. J. and Leroy, A. M. (2005) References, in Robust
     #  Regression and Outlier Detection, John Wiley & Sons, chapter 4)
     if n_features == 1:
-        # find the sample shortest halves
-        X_sorted = np.sort(np.ravel(X))
-        diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
-        halves_start = np.where(diff == np.min(diff))[0]
-        # take the middle points' mean to get the robust location estimate
-        location = 0.5 * (X_sorted[n_support + halves_start]
-                          + X_sorted[halves_start]).mean()
-        support = np.zeros(n_samples).astype(bool)
-        support[np.argsort(np.abs(X - location), axis=0)[:n_support]] = True
-        covariance = np.asarray([[np.var(X[support])]])
-        location = np.array([location])
+        if n_support < n_samples:
+            # find the sample shortest halves
+            X_sorted = np.sort(np.ravel(X))
+            diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
+            halves_start = np.where(diff == np.min(diff))[0]
+            # take the middle points' mean to get the robust location estimate
+            location = 0.5 * (X_sorted[n_support + halves_start]
+                              + X_sorted[halves_start]).mean()
+            support = np.zeros(n_samples, dtype=bool)
+            X_centered = X - location
+            support[np.argsort(np.abs(X - location), 0)[:n_support]] = True
+            covariance = np.asarray([[np.var(X[support])]])
+            location = np.array([location])
+            # get precision matrix in an optimized way
+            precision = pinvh(covariance)
+            dist = (np.dot(X_centered, precision) \
+                        * (X_centered)).sum(axis=1)
+        else:
+            support = np.ones(n_samples, dtype=bool)
+            covariance = np.asarray([[np.var(X)]])
+            location = np.asarray([np.mean(X)])
+            X_centered = X - location
+            # get precision matrix in an optimized way
+            precision = pinvh(covariance)
+            dist = (np.dot(X_centered, precision) \
+                        * (X_centered)).sum(axis=1)
 
     ### Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
@@ -343,17 +372,26 @@ def fast_mcd(X, support_fraction=None,
         h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
         # b. perform a total of 500 trials
         n_trials_tot = 500
-        n_trials = n_trials_tot // n_subsets
         # c. select 10 best (location, covariance) for each subset
         n_best_sub = 10
+        n_trials = max(10, n_trials_tot // n_subsets)
         n_best_tot = n_subsets * n_best_sub
         all_best_locations = np.zeros((n_best_tot, n_features))
-        all_best_covariances = np.zeros((n_best_tot, n_features, n_features))
+        try:
+            all_best_covariances = np.zeros((n_best_tot, n_features,
+                                             n_features))
+        except MemoryError:
+            # The above is too big. Let's try with something much small
+            # (and less optimal)
+            all_best_covariances = np.zeros((n_best_tot, n_features,
+                                             n_features))
+            n_best_tot = 10
+            n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets
             high_bound = low_bound + n_samples_subsets
             current_subset = X[samples_shuffle[low_bound:high_bound]]
-            best_locations_sub, best_covariances_sub, _ = select_candidates(
+            best_locations_sub, best_covariances_sub, _, _ = select_candidates(
                 current_subset, h_subset, n_trials,
                 select=n_best_sub, n_iter=2,
                 cov_computation_method=cov_computation_method,
@@ -370,10 +408,11 @@ def fast_mcd(X, support_fraction=None,
         else:
             n_best_merged = 1
         # find the best couples (location, covariance) on the merged set
-        locations_merged, covariances_merged, supports_merged = \
+        selection = random_state.permutation(n_samples)[:n_samples_merged]
+        locations_merged, covariances_merged, supports_merged, d = \
             select_candidates(
-                X[random_state.permutation(n_samples)[:n_samples_merged]],
-                h_merged, n_trials=(all_best_locations, all_best_covariances),
+                X[selection], h_merged,
+                n_trials=(all_best_locations, all_best_covariances),
                 select=n_best_merged,
                 cov_computation_method=cov_computation_method,
                 random_state=random_state)
@@ -382,10 +421,13 @@ def fast_mcd(X, support_fraction=None,
             # directly get the best couple (location, covariance)
             location = locations_merged[0]
             covariance = covariances_merged[0]
-            support = supports_merged[0]
+            support = np.zeros(n_samples, dtype=bool)
+            dist = np.zeros(n_samples)
+            support[selection] = supports_merged[0]
+            dist[selection] = d[0]
         else:
             # select the best couple on the full dataset
-            locations_full, covariances_full, supports_full = \
+            locations_full, covariances_full, supports_full, d = \
                 select_candidates(
                     X, n_support,
                     n_trials=(locations_merged, covariances_merged),
@@ -395,29 +437,39 @@ def fast_mcd(X, support_fraction=None,
             location = locations_full[0]
             covariance = covariances_full[0]
             support = supports_full[0]
+            dist = d[0]
     elif n_features > 1:
         ## 1. Find the 10 best couples (location, covariance)
         ## considering two iterations
         n_trials = 30
         n_best = 10
-        locations_best, covariances_best, _ = select_candidates(
+        locations_best, covariances_best, _, _ = select_candidates(
             X, n_support, n_trials=n_trials, select=n_best, n_iter=2,
             cov_computation_method=cov_computation_method,
             random_state=random_state)
         ## 2. Select the best couple on the full dataset amongst the 10
-        locations_full, covariances_full, supports_full = select_candidates(
+        locations_full, covariances_full, supports_full, d = select_candidates(
             X, n_support, n_trials=(locations_best, covariances_best),
             select=1, cov_computation_method=cov_computation_method,
             random_state=random_state)
         location = locations_full[0]
         covariance = covariances_full[0]
         support = supports_full[0]
+        dist = d[0]
 
-    return location, covariance, support
+    return location, covariance, support, dist
 
 
 class MinCovDet(EmpiricalCovariance):
-    """Minimum Covariance Determinant (MCD): robust estimator of covariance
+    """Minimum Covariance Determinant (MCD): robust estimator of covariance.
+
+    The Minimum Covariance Determinant covariance estimator is to be applied
+    on Gaussian-distributed data, but could still be relevant on data
+    drawn from a unimodal, symetric distribution. It is not meant to be used
+    with multimodal data (the algorithm used to fit a MinCovDet object is
+    likely to fail in such a case).
+    One should consider projection pursuit methods to deal with multimodal
+    datasets.
 
     Parameters
     ----------
@@ -467,6 +519,10 @@ class MinCovDet(EmpiricalCovariance):
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
+    `dist_`: array-like, shape (n_samples,)
+        Mahalanobis distances of the training set (on which `fit` is called)
+        observations.
+
     References
     ----------
 
@@ -489,7 +545,7 @@ class MinCovDet(EmpiricalCovariance):
         self.support_fraction = support_fraction
         self.random_state = random_state
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
 
         Parameters
@@ -497,6 +553,7 @@ class MinCovDet(EmpiricalCovariance):
         X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------
@@ -506,8 +563,12 @@ class MinCovDet(EmpiricalCovariance):
         """
         self.random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
+        # check that the empirical covariance is full rank
+        if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
+            warnings.warn("The covariance matrix associated to your dataset " \
+                              "is not full rank")
         # compute and store raw estimates
-        raw_location, raw_covariance, raw_support = fast_mcd(
+        raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
                 X, support_fraction=self.support_fraction,
                 cov_computation_method=self._nonrobust_covariance,
                 random_state=self.random_state)
@@ -515,11 +576,15 @@ class MinCovDet(EmpiricalCovariance):
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(
                     X[raw_support], assume_centered=True)
+            # get precision matrix in an optimized way
+            precision = pinvh(raw_covariance)
+            raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance
         self.raw_support_ = raw_support
         self.location_ = raw_location
         self.support_ = raw_support
+        self.dist_ = raw_dist
         # obtain consistency at normal models
         self.correct_covariance(X)
         # reweight estimator
@@ -546,13 +611,9 @@ class MinCovDet(EmpiricalCovariance):
           Corrected robust covariance estimate.
 
         """
-        X_centered = data - self.raw_location_
-        dist = np.sum(
-            np.dot(X_centered, linalg.pinv(self.raw_covariance_)) * X_centered,
-            1)
-        correction = np.median(dist) / chi2(data.shape[1]).isf(0.5)
+        correction = np.median(self.dist_) / chi2(data.shape[1]).isf(0.5)
         covariance_corrected = self.raw_covariance_ * correction
-        self._set_estimates(covariance_corrected)
+        self.dist_ /= correction
         return covariance_corrected
 
     def reweight_covariance(self, data):
@@ -581,16 +642,7 @@ class MinCovDet(EmpiricalCovariance):
 
         """
         n_samples, n_features = data.shape
-        X_centered = data - self.location_
-        if self.store_precision:
-            precision = self.precision_
-        else:
-            precision = linalg.pinv(self.covariance_)
-
-        dist = np.sum(
-            np.dot(X_centered, precision) * X_centered,
-            1)
-        mask = dist < chi2(n_features).isf(0.025)
+        mask = self.dist_ < chi2(n_features).isf(0.025)
         if self.assume_centered:
             location_reweighted = np.zeros(n_features)
         else:
@@ -599,7 +651,10 @@ class MinCovDet(EmpiricalCovariance):
             data[mask], assume_centered=self.assume_centered)
         support_reweighted = np.zeros(n_samples).astype(bool)
         support_reweighted[mask] = True
-        self._set_estimates(covariance_reweighted)
+        self._set_covariance(covariance_reweighted)
         self.location_ = location_reweighted
         self.support_ = support_reweighted
+        X_centered = data - self.location_
+        self.dist_ = np.sum(
+            np.dot(X_centered, self.get_precision()) * X_centered, 1)
         return location_reweighted, covariance_reweighted, support_reweighted

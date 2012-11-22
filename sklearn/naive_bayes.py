@@ -24,7 +24,9 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
-from .utils import deprecated
+from .utils import check_arrays
+
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
 
 class BaseNB(BaseEstimator, ClassifierMixin):
@@ -150,8 +152,7 @@ class GaussianNB(BaseNB):
             Returns self.
         """
 
-        X = np.asarray(X)
-        y = np.asarray(y)
+        X, y = check_arrays(X, y, sparse_format='dense')
 
         n_samples, n_features = X.shape
 
@@ -183,27 +184,6 @@ class GaussianNB(BaseNB):
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
-
-    @property
-    @deprecated('GaussianNB.class_prior is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GaussianNB.class_prior_`` instead.')
-    def class_prior(self):
-        return self.class_prior_
-
-    @property
-    @deprecated('GaussianNB.theta is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GaussianNB.theta_`` instead.')
-    def theta(self):
-        return self.theta_
-
-    @property
-    @deprecated('GaussianNB.sigma is deprecated'
-                ' and will be removed in version 0.12.'
-                ' Please use ``GaussianNB.sigma_`` instead.')
-    def sigma(self):
-        return self.sigma_
 
 
 class BaseDiscreteNB(BaseNB):
@@ -286,6 +266,8 @@ class BaseDiscreteNB(BaseNB):
             N_c is the count of all features in all samples of class c;
             N_c_i is the count of feature i in all samples of class c.
         """
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative.")
         N_c_i = safe_sparse_dot(Y.T, X)
         N_c = np.sum(N_c_i, axis=1)
 

@@ -73,7 +73,7 @@ copyright = u'2010–2011, scikit-learn developers (BSD License)'
 # built documents.
 #
 # The short X.Y version.
-version = '0.12-git'
+version = '0.13-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -126,7 +126,8 @@ html_theme = 'scikit-learn'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'oldversion':False, 'collapsiblesidebar': True}
+html_theme_options = {'oldversion':False, 'collapsiblesidebar': True,
+                      'google_analytics':True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -220,6 +221,7 @@ latex_logo = "logos/scikit-learn-logo.png"
 # Additional stuff for the LaTeX preamble.
 latex_preamble = """
 \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
+\usepackage{enumitem} \setlistdepth{10}
 """
 
 # Documents to append as an appendix to all manuals.

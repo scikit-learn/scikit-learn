@@ -2,8 +2,10 @@
 Testing for grid search module (sklearn.grid_search)
 
 """
-from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
 
 import numpy as np
 import scipy.sparse as sp
@@ -13,6 +15,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import f1_score, precision_score
+from sklearn.cross_validation import KFold
 
 
 class MockClassifier(BaseEstimator):
@@ -21,6 +24,7 @@ class MockClassifier(BaseEstimator):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
         return self
 
     def predict(self, T):
@@ -111,7 +115,7 @@ def test_grid_search_sparse():
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    cv.fit(X_[:180], y_[:180])
+    cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
 
@@ -211,3 +215,15 @@ def test_refit():
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
                        score_func=precision_score, refit=True)
     clf.fit(X, y)
+
+
+def test_X_as_list():
+    """Pass X as list in GridSearchCV
+    """
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = MockClassifier()
+    cv = KFold(n=len(X), n_folds=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X.tolist(), y).score(X, y)

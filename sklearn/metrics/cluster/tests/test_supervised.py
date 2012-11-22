@@ -6,9 +6,11 @@ from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import adjusted_mutual_info_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.cluster import entropy
 
 from nose.tools import assert_almost_equal
 from nose.tools import assert_equal
@@ -21,16 +23,18 @@ score_funcs = [
     completeness_score,
     v_measure_score,
     adjusted_mutual_info_score,
+    normalized_mutual_info_score,
 ]
 
 
-def assert_raise_message(exception, message, callable, *args, **kwargs):
+def assert_raise_message(exception, message_start, callable, *args, **kwargs):
     """Helper function to test error messages in exceptions"""
     try:
         callable(*args, **kwargs)
-        raise AssertionError("Should have raised %r" % exception(message))
+        raise AssertionError("Should have raised %r..." %
+                             exception(message_start))
     except exception as e:
-        assert str(e) == message
+        assert str(e).startswith(message_start)
 
 
 def test_error_messages_on_wrong_input():
@@ -40,11 +44,11 @@ def test_error_messages_on_wrong_input():
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1], [1, 1, 1])
 
-        expected = "labels_true must be 1D: shape is (2, 2)"
+        expected = "labels_true must be 1D: shape is (2"
         assert_raise_message(ValueError, expected, score_func,
                              [[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = "labels_pred must be 1D: shape is (2, 2)"
+        expected = "labels_pred must be 1D: shape is (2"
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1, 0], [[1, 1], [0, 0]])
 
@@ -55,6 +59,7 @@ def test_perfect_matches():
         assert_equal(score_func([0], [1]), 1.0)
         assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
         assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
+        assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -158,3 +163,30 @@ def test_adjusted_mutual_info_score():
     ami = adjusted_mutual_info_score(a110, b110)
     # This is not accurate to more than 2 places
     assert_almost_equal(ami, 0.37, 2)
+
+
+def test_entropy():
+    ent = entropy([0, 0, 42.])
+    assert_almost_equal(ent, 0.6365141, 5)
+
+
+def test_exactly_zero_info_score():
+    """Check numerical stabability when information is exactly zero"""
+    for i in np.logspace(1, 4, 4):
+        labels_a, labels_b = np.ones(i, dtype=np.int),\
+            np.arange(i, dtype=np.int)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+
+
+def test_v_measure_and_mutual_information(seed=36):
+    """Check relation between v_measure, entropy and mutual information"""
+    for i in np.logspace(1, 4, 4):
+        random_state = np.random.RandomState(seed)
+        labels_a, labels_b = random_state.random_integers(0, 10, i),\
+            random_state.random_integers(0, 10, i)
+        assert_almost_equal(v_measure_score(labels_a, labels_b),
+                            2.0 * mutual_info_score(labels_a, labels_b) /
+                            (entropy(labels_a) + entropy(labels_b)), 0)

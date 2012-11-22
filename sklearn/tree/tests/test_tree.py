@@ -63,6 +63,34 @@ def test_regression_toy():
     assert_almost_equal(clf.predict(T), true_result)
 
 
+def test_xor():
+    """Check on a XOR problem"""
+    y = np.zeros((10, 10))
+    y[:5, :5] = 1
+    y[5:, 5:] = 1
+
+    gridx, gridy = np.indices(y.shape)
+
+    X = np.vstack([gridx.ravel(), gridy.ravel()]).T
+    y = y.ravel()
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+    clf = tree.DecisionTreeClassifier(max_features=1)
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+    clf = tree.ExtraTreeClassifier()
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+    clf = tree.ExtraTreeClassifier(max_features=1)
+    clf.fit(X, y)
+    assert_equal(clf.score(X, y), 1.0)
+
+
 def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
@@ -180,6 +208,18 @@ def test_arrayrepr():
     clf.fit(X, y)
 
 
+def test_pure_set():
+    """Check when y is pure."""
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y = [1, 1, 1, 1, 1, 1]
+
+    clf = tree.DecisionTreeClassifier().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+    clf = tree.DecisionTreeRegressor().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+
 def test_numerical_stability():
     """Check numerical stability."""
     old_settings = np.geterr()
@@ -199,7 +239,9 @@ def test_numerical_stability():
 
     dt = tree.DecisionTreeRegressor()
     dt.fit(X, y)
+    dt.fit(X, -y)
     dt.fit(-X, y)
+    dt.fit(-X, -y)
 
     np.seterr(**old_settings)
 
@@ -302,21 +344,29 @@ def test_error():
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
 
+    # wrong length of sample mask
+    clf = tree.DecisionTreeClassifier()
+    sample_mask = np.array([1])
+    assert_raises(ValueError, clf.fit, X, y, sample_mask=sample_mask)
+
+    # wrong length of X_argsorted
+    clf = tree.DecisionTreeClassifier()
+    X_argsorted = np.array([1])
+    assert_raises(ValueError, clf.fit, X, y, X_argsorted=X_argsorted)
+
 
 def test_min_samples_leaf():
     """Test if leaves contain more than leaf_count training examples"""
-    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-        clf = tree_class(min_samples_leaf=5).fit(iris.data, iris.target)
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
 
-        # apply tree
-        out = np.empty((iris.data.shape[0], ), dtype=np.int32)
-        X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
-        tree._tree._apply_tree(X, clf.tree_.children, clf.tree_.feature,
-                clf.tree_.threshold, out)
-        # count node occurences
+    for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
+        clf = tree_class(min_samples_leaf=5).fit(X, y)
+
+        out = clf.tree_.apply(X)
         node_counts = np.bincount(out)
-        # drop inner nodes
-        leaf_count = node_counts[node_counts != 0]
+        leaf_count = node_counts[node_counts != 0]  # drop inner nodes
+
         assert np.min(leaf_count) >= 5
 
 
@@ -346,6 +396,85 @@ def test_pickle():
     score2 = obj2.score(boston.data, boston.target)
     assert score == score2, "Failed to generate same score " + \
             " after pickling (regression) "
+
+
+def test_multioutput():
+    """Check estimators on multi-output problems."""
+
+    X = [[-2, -1],
+         [-1, -1],
+         [-1, -2],
+         [1, 1],
+         [1, 2],
+         [2, 1],
+         [-2, 1],
+         [-1, 1],
+         [-1, 2],
+         [2, -1],
+         [1, -1],
+         [1, -2]]
+
+    y = [[-1, 0],
+         [-1, 0],
+         [-1, 0],
+         [1, 1],
+         [1, 1],
+         [1, 1],
+         [-1, 2],
+         [-1, 2],
+         [-1, 2],
+         [1, 3],
+         [1, 3],
+         [1, 3]]
+
+    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    # toy classification problem
+    clf = tree.DecisionTreeClassifier()
+    y_hat = clf.fit(X, y).predict(T)
+    assert_array_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+    proba = clf.predict_proba(T)
+    assert_equal(len(proba), 2)
+    assert_equal(proba[0].shape, (4, 2))
+    assert_equal(proba[1].shape, (4, 4))
+
+    log_proba = clf.predict_log_proba(T)
+    assert_equal(len(log_proba), 2)
+    assert_equal(log_proba[0].shape, (4, 2))
+    assert_equal(log_proba[1].shape, (4, 4))
+
+    # toy regression problem
+    clf = tree.DecisionTreeRegressor()
+    y_hat = clf.fit(X, y).predict(T)
+    assert_almost_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+
+def test_sample_mask():
+    """Test sample_mask argument. """
+    # test list sample_mask
+    clf = tree.DecisionTreeClassifier()
+    sample_mask = [1] * len(X)
+    clf.fit(X, y, sample_mask=sample_mask)
+    assert_array_equal(clf.predict(T), true_result)
+
+    # test different dtype
+    clf = tree.DecisionTreeClassifier()
+    sample_mask = np.ones((len(X),), dtype=np.int32)
+    clf.fit(X, y, sample_mask=sample_mask)
+    assert_array_equal(clf.predict(T), true_result)
+
+
+def test_X_argsorted():
+    """Test X_argsorted argument. """
+    # test X_argsorted with different layout and dtype
+    clf = tree.DecisionTreeClassifier()
+    X_argsorted = np.argsort(np.array(X).T, axis=1).T
+    clf.fit(X, y, X_argsorted=X_argsorted)
+    assert_array_equal(clf.predict(T), true_result)
 
 
 if __name__ == "__main__":

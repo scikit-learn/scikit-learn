@@ -1,6 +1,7 @@
 import itertools
 import unittest
 
+from nose.tools import assert_true
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal, \
      assert_raises
@@ -25,25 +26,25 @@ def test_sample_gaussian():
     samples = mixture.sample_gaussian(
         mu, cv, covariance_type='diag', n_samples=n_samples)
 
-    assert np.allclose(samples.mean(axis), mu, atol=1.3)
-    assert np.allclose(samples.var(axis), cv, atol=1.5)
+    assert_true(np.allclose(samples.mean(axis), mu, atol=1.3))
+    assert_true(np.allclose(samples.var(axis), cv, atol=1.5))
 
     # the same for spherical covariances
     cv = (rng.rand() + 1.0) ** 2
     samples = mixture.sample_gaussian(
         mu, cv, covariance_type='spherical', n_samples=n_samples)
 
-    assert np.allclose(samples.mean(axis), mu, atol=1.5)
-    assert np.allclose(
-        samples.var(axis), np.repeat(cv, n_features), atol=1.5)
+    assert_true(np.allclose(samples.mean(axis), mu, atol=1.5))
+    assert_true(np.allclose(
+        samples.var(axis), np.repeat(cv, n_features), atol=1.5))
 
     # and for full covariances
     A = rng.randn(n_features, n_features)
     cv = np.dot(A.T, A) + np.eye(n_features)
     samples = mixture.sample_gaussian(
         mu, cv, covariance_type='full', n_samples=n_samples)
-    assert np.allclose(samples.mean(axis), mu, atol=1.3)
-    assert np.allclose(np.cov(samples), cv, atol=2.5)
+    assert_true(np.allclose(samples.mean(axis), mu, atol=1.3))
+    assert_true(np.allclose(np.cov(samples), cv, atol=2.5))
 
 
 def _naive_lmvnpdf_diag(X, mu, cv):
@@ -107,8 +108,8 @@ def test_GMM_attributes():
     weights = weights / weights.sum()
     means = rng.randint(-20, 20, (n_components, n_features))
 
-    assert g.n_components == n_components
-    assert g._covariance_type == covariance_type
+    assert_true(g.n_components == n_components)
+    assert_true(g.covariance_type == covariance_type)
 
     g.weights_ = weights
     assert_array_almost_equal(g.weights_, weights)
@@ -128,6 +129,7 @@ def test_GMM_attributes():
 
 class GMMTester():
     do_test_eval = True
+
     def _setUp(self):
         self.n_components = 10
         self.n_features = 4
@@ -183,7 +185,7 @@ class GMMTester():
         g.weights_ = self.weights
 
         samples = g.sample(n)
-        self.assertEquals(samples.shape, (n, self.n_features))
+        self.assertEqual(samples.shape, (n, self.n_features))
 
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components,
@@ -264,20 +266,24 @@ class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
     model = mixture.GMM
     setUp = GMMTester._setUp
 
+
 class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
     covariance_type = 'diag'
     model = mixture.GMM
     setUp = GMMTester._setUp
+
 
 class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
     covariance_type = 'tied'
     model = mixture.GMM
     setUp = GMMTester._setUp
 
+
 class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     covariance_type = 'full'
     model = mixture.GMM
     setUp = GMMTester._setUp
+
 
 def test_multiple_init():
     """Test that multiple inits does not much worse than a single one"""
@@ -288,7 +294,7 @@ def test_multiple_init():
     train1 = g.fit(X).score(X).sum()
     g.n_init = 5
     train2 = g.fit(X).score(X).sum()
-    assert train2 >= train1 - 1.e-2
+    assert_true(train2 >= train1 - 1.e-2)
 
 
 def test_n_parameters():
@@ -300,7 +306,7 @@ def test_n_parameters():
         g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
                         random_state=rng, min_covar=1e-7, n_iter=1)
         g.fit(X)
-        assert g._n_parameters() == n_params[cv_type]
+        assert_true(g._n_parameters() == n_params[cv_type])
 
 
 def test_aic():
@@ -317,8 +323,8 @@ def test_aic():
         bic = (2 * n_samples * SGH * n_dim +
                np.log(n_samples) * g._n_parameters())
         bound = n_dim * 3. / np.sqrt(n_samples)
-        assert np.abs(g.aic(X) - aic) / n_samples < bound
-        assert np.abs(g.bic(X) - bic) / n_samples < bound
+        assert_true(np.abs(g.aic(X) - aic) / n_samples < bound)
+        assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
 
 
 if __name__ == '__main__':
