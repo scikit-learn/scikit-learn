@@ -17,11 +17,12 @@ side. This enables the manifold learning techniques to
 For a similiar example, where the methods are applied to the
 S-curve dataset, see :ref:`example_manifold_plot_compare_methods.py`
 
-Note that the purpose of the MDS is to find a low-dimensional
-representation of the data (here 2D) in which the distances respect well
-the distances in the original high-dimensional space, unlike other
-manifold-learning algorithms, it does not seeks an isotropic
-representation of the data in the low-dimensional space.
+Note that the purpose of the :ref:`MDS <multidimensional_scaling>` is
+to find a low-dimensional representation of the data (here 2D) in
+which the distances respect well the distances in the original
+high-dimensional space, unlike other manifold-learning algorithms,
+it does not seeks an isotropic representation of the data in
+the low-dimensional space.
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
