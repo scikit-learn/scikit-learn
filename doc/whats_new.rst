@@ -64,7 +64,10 @@ Changelog
    - New :class:`feature_extraction.FeatureHasher`, implementing the
      "hashing trick" for fast, low-memory feature extraction from string data
      by `Lars Buitinck`_.
-
+     
+   - New estimator :class:`manifold.SpectralEmbedding` and function 
+     :func:`manifold.spectral_embedding`, implementing the
+     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
 
 API changes summary
 -------------------
@@ -121,6 +124,13 @@ API changes summary
    - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
      store a list of paths in the case of multiple targets, rather than
      an array of paths.
+
+  - :func:`cluster.spectral_embedding` is now in 
+    :func:`manifold.spectral_embedding`
+
+  - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
+    :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
+    to ``eigen_solver``
 
 .. _changes_0_12.1:
 

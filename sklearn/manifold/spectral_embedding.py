@@ -7,6 +7,10 @@
 import warnings
 import numpy as np
 
+from scipy import sparse
+from scipy.sparse.linalg import lobpcg
+from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
 from ..utils.graph import graph_laplacian
@@ -16,9 +20,6 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from ..metrics.pairwise import pairwise_kernels
 from ..metrics.pairwise import rbf_kernel
-from scipy import sparse
-from scipy.sparse.linalg import lobpcg
-from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 
 def _graph_connected_component(graph, node_id):
@@ -89,9 +90,10 @@ def _set_diag(laplacian, value):
     return laplacian
 
 
-def spectral_embedding(adjacency, n_components=8, eig_solver=None,
-                       random_state=None, eig_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
+                       random_state=None, eigen_tol=0.0,
+                       norm_laplacian=True, drop_first=True,
+                       mode=None, eig_tol=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -116,19 +118,19 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     n_components: integer, optional
         The dimension of the projection subspace.
 
-    eig_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when eig_solver == 'amg'. By default
-        arpack is used.
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        By default, arpack is used.
 
-    eig_tol : float, optional, default: 0.0
+    eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eig_solver.
+        when using arpack eigen_solver.
 
     drop_first: bool, optional, default: True
         Whether to drop the first eigenvector. For spectral embedding, this
@@ -156,9 +158,17 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        if eig_solver == "amg":
-            raise ValueError("The eig_solver was set to 'amg', but pyamg is "
+        if eigen_solver == "amg":
+            raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
                              "not available.")
+
+    if not mode is None:
+        warnings.warn("'eig_solver' was renamed to eigen_solver",
+                      DeprecationWarning)
+        eigen_solver = mode
+    if not eig_tol is None:
+        warnings.warn("'eig_tol' was renamed to eigen_tol", DeprecationWarning)
+        eigen_tol = eig_tol
 
     random_state = check_random_state(random_state)
 
@@ -180,18 +190,19 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       "may not works as expected.")
 
-    if eig_solver is None:
-        eig_solver = 'arpack'
-    elif not eig_solver in ('arpack', 'lobpcg', 'amg'):
-        raise ValueError("Unknown value for eig_solver: '%s'."
-                         "Should be 'amg', 'arpack', or 'lobpcg'" % eig_solver)
+    if eigen_solver is None:
+        eigen_solver = 'arpack'
+    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
+        raise ValueError("Unknown value for eigen_solver: '%s'."
+                         "Should be 'amg', 'arpack', or 'lobpcg'"
+                         % eigen_solver)
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
-    if (eig_solver == 'arpack'
-        or eig_solver != 'lobpcg' and
+    if (eigen_solver == 'arpack'
+        or eigen_solver != 'lobpcg' and
             (not sparse.isspmatrix(laplacian)
              or n_nodes < 5 * n_components)):
-        # lobpcg used with eig_solver='amg' has bugs for low number of nodes
+        # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
         # /lobpcg/lobpcg.py#L237
@@ -216,15 +227,15 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         try:
             lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
                                            sigma=1.0, which='LM',
-                                           tol=eig_tol)
+                                           tol=eigen_tol)
             embedding = diffusion_map.T[n_components::-1] * dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
             print "!!!!!!!!!!!!!!!! RUNTIME ERROR !!!!!!!!!!!!!!!!!!!!!"
-            eig_solver = "lobpcg"
+            eigen_solver = "lobpcg"
 
-    if eig_solver == 'amg':
+    if eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
@@ -238,7 +249,7 @@ def spectral_embedding(adjacency, n_components=8, eig_solver=None,
         if embedding.shape[0] == 1:
             raise ValueError
 
-    elif eig_solver == "lobpcg":
+    elif eigen_solver == "lobpcg":
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
@@ -280,14 +291,14 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
-    eig_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
     random_state : int seed, RandomState instance, or None, default : None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when eig_solver == 'amg'.
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
@@ -334,13 +345,13 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, fit_inverse_transform=False,
-                 random_state=None, eig_solver=None, n_neighbors=None):
+                 random_state=None, eigen_solver=None, n_neighbors=None):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
         self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
-        self.eig_solver = eig_solver
+        self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
 
     @property
@@ -412,7 +423,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         """
         if isinstance(self.affinity, str):
             if self.affinity not in \
-                {'precomputed', 'rbf', 'nearest_neighbors'}:
+                    {'precomputed', 'rbf', 'nearest_neighbors'}:
                 raise ValueError(
                     "Only precomputed, rbf,"
                     "nearest_neighbors graph supported.")
@@ -422,7 +433,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         affinity_matrix = self._get_affinity_matrix(X)
         self.embedding_ = spectral_embedding(affinity_matrix,
                                              n_components=self.n_components,
-                                             eig_solver=self.eig_solver,
+                                             eigen_solver=self.eigen_solver,
                                              random_state=self.random_state)
         return self
 
