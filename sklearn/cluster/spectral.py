@@ -1,6 +1,8 @@
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org, Brian Cheung
+# Author: Gael Varoquaux gael.varoquaux@normalesup.org
+#         Brian Cheung
+#         Wei LI <kuantkid@gmail,com>
 # License: BSD
 import warnings
 
@@ -154,9 +156,10 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
-                        eig_solver=None, random_state=None, n_init=10,
-                        k=None, eig_tol=0.0,
-                        assign_labels='kmeans'):
+                        eigen_solver=None, random_state=None, n_init=10,
+                        k=None, eigen_tol=0.0,
+                        assign_labels='kmeans',
+                        mode=None, eig_tol=None):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -185,14 +188,14 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_components: integer, optional, default is k
         Number of eigen vectors to use for the spectral embedding
 
-    eig_solver: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
     random_state: int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eig_solver == 'amg'
+        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
         and by the K-Means initialization.
 
     n_init: int, optional, default: 10
@@ -200,9 +203,9 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    eig_tol : float, optional, default: 0.0
+    eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eig_solver.
+        when using arpack eigen_solver.
 
     assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
@@ -243,14 +246,24 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         raise ValueError("The 'assign_labels' parameter should be "
                          "'kmeans' or 'discretize', but '%s' was given"
                          % assign_labels)
+
     if not k is None:
         warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
         n_clusters = k
+    if not mode is None:
+        warnings.warn("'eig_solver' was renamed to eigen_solver",
+                      DeprecationWarning)
+        eigen_solver = mode
+    if not eig_tol is None:
+        warnings.warn("'eig_tol' was renamed to eigen_tol", DeprecationWarning)
+        eigen_tol = eig_tol
+
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
     maps = spectral_embedding(affinity, n_components=n_components,
-                              eig_solver=eig_solver, random_state=random_state,
-                              eig_tol=eig_tol, drop_first=False)
+                              eigen_solver=eigen_solver,
+                              random_state=random_state,
+                              eigen_tol=eigen_tol, drop_first=False)
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
@@ -298,14 +311,14 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eig_solver: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack' or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eig_solver == 'amg'
+        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
         and by the K-Means initialization.
 
     n_init : int, optional, default: 10
@@ -313,9 +326,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    eig_tol : float, optional, default: 0.0
+    eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eig_solver.
+        when using arpack eigen_solver.
 
     assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
@@ -365,20 +378,29 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
       http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
-    def __init__(self, n_clusters=8, eig_solver=None, random_state=None,
+    def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 precomputed=False, eig_tol=0.0, assign_labels='kmeans'):
+                 precomputed=False, eigen_tol=0.0, assign_labels='kmeans',
+                 mode=None, eig_tol=None):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k
+        if not mode is None:
+            warnings.warn("'eig_solver' was renamed to eigen_solver",
+                          DeprecationWarning)
+            eigen_solver = mode
+        if not eig_tol is None:
+            warnings.warn("'eig_tol' was renamed to eigen_tol",
+                          DeprecationWarning)
+            eigen_tol = eig_tol
         self.n_clusters = n_clusters
-        self.eig_solver = eig_solver
+        self.eigen_solver = eigen_solver
         self.random_state = random_state
         self.n_init = n_init
         self.gamma = gamma
         self.affinity = affinity
         self.n_neighbors = n_neighbors
-        self.eig_tol = eig_tol
+        self.eigen_tol = eigen_tol
         self.assign_labels = assign_labels
 
     def fit(self, X):
@@ -413,10 +435,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
                                            n_clusters=self.n_clusters,
-                                           eig_solver=self.eig_solver,
+                                           eigen_solver=self.eigen_solver,
                                            random_state=self.random_state,
                                            n_init=self.n_init,
-                                           eig_tol=self.eig_tol,
+                                           eigen_tol=self.eigen_tol,
                                            assign_labels=self.assign_labels)
         return self
 

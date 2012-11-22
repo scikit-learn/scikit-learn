@@ -105,10 +105,10 @@ def test_spectral_embedding_amg_solver(seed=36):
 
     gamma = 0.9
     se_amg = SpectralEmbedding(n_components=3, affinity="rbf",
-                               gamma=gamma, eig_solver="amg",
+                               gamma=gamma, eigen_solver="amg",
                                random_state=np.random.RandomState(seed))
     se_arpack = SpectralEmbedding(n_components=3, affinity="rbf",
-                                  gamma=gamma, eig_solver="arpack",
+                                  gamma=gamma, eigen_solver="arpack",
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
@@ -149,7 +149,7 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
 
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed),
-                                   eig_solver="<unknown>")
+                                   eigen_solver="<unknown>")
     assert_raises(ValueError, se_precomp.fit, S)
 
 
