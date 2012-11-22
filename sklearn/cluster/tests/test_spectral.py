@@ -157,15 +157,14 @@ def test_affinities():
 def test_discretize(seed=36):
     # Test the discretize using a noise assignment matrix
     LB = LabelBinarizer()
-    for n_sample in [50,100,150,500]:
-        for n_class in range(2,10):
+    for n_sample in [50, 100, 150, 500]:
+        for n_class in range(2, 10):
             # random class labels
             random_state = np.random.RandomState(seed)
             y_true = random_state.random_integers(0, n_class, n_sample)
             y_true = np.array(y_true, np.float)
             # noise class assignment matrix
-            y_true_noisy = (LB.fit_transform(y_true) 
-                            + 0.1 * random_state.randn(n_sample, n_class+1))
+            y_true_noisy = (LB.fit_transform(y_true)
+                            + 0.1 * random_state.randn(n_sample, n_class + 1))
             y_pred = discretize(y_true_noisy)
             assert_equal(adjusted_rand_score(y_true, y_pred), 1)
-            

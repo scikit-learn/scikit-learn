@@ -2,7 +2,7 @@
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 #         Brian Cheung
-#         Wei LI <kuantkid@gmail,com>
+#         Wei LI <kuantkid@gmail.com>
 # License: BSD
 import warnings
 
