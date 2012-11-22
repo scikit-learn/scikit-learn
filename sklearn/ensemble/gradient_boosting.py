@@ -1004,6 +1004,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
     Examples
     --------
     >>> samples = [[0, 0, 2], [1, 0, 0]]
