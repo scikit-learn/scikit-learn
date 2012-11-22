@@ -35,14 +35,23 @@ Installing from source
 
 Installing from source requires you to have installed python (>= 2.6), numpy
 (>= 1.3), scipy (>= 0.7), setuptools, python development headers and a working
-C++ compiler. Under Debian-based systems you can get all this by executing with
-root privileges::
+C++ compiler. Under Debian-based systems, which include Ubuntu,
+you can install all requirements by::
 
     sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
 
+The above installs the ATLAS linear algebra library.
+On Ubuntu 11.10 and later, it is recommended to instead install OpenBLAS,
+which can provide a significant speedup, especially on multicore hardware::
+
+    # NumPy may not run when both ATLAS and OpenBLAS are installed,
+    # so remove the former.
+    sudo apt-get remove libatlas3gf-base libatlas-dev
+    sudo apt-get install libopenblas-dev
+
 .. note::
 
-    In Order to build the documentation and run the example code contains in
+    In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
         sudo apt-get install python-matplotlib
