@@ -204,6 +204,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             to share the data structure and to avoid re-computation in
             tree ensembles. For maximum efficiency use dtype np.int32.
 
+        check_input: boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
         Returns
         -------
         self : object
