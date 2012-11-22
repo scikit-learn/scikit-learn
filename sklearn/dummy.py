@@ -5,7 +5,6 @@
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .preprocessing import LabelEncoder
 from .utils import check_random_state
 from .utils.fixes import unique
 from .utils.validation import safe_asarray
