@@ -474,9 +474,9 @@ class BaseGradientBoosting(BaseEnsemble):
                 check_input=False)
 
             # update tree leaves
-            self.loss_.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                               sample_mask, self.learning_rate,
-                                               k=k)
+            loss.update_terminal_regions(tree.tree_, X, y, residual,
+                y_pred, sample_mask, self.learning_rate, k=k)
+
             # add tree to ensemble
             self.estimators_[i, k] = tree
 
@@ -503,6 +503,15 @@ class BaseGradientBoosting(BaseEnsemble):
         self : object
             Returns self.
         """
+        # Check input
+        X, y = check_arrays(X, y, sparse_format='dense')
+        X = np.asfortranarray(X, dtype=DTYPE)
+        y = np.ravel(y, order='C')
+
+        # Check parameters
+        n_samples, n_features = X.shape
+        self.n_features = n_features
+
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
 
@@ -511,6 +520,12 @@ class BaseGradientBoosting(BaseEnsemble):
 
         if self.loss not in LOSS_FUNCTIONS:
             raise ValueError("Loss '%s' not supported. " % self.loss)
+
+        loss_class = LOSS_FUNCTIONS[self.loss]
+        if self.loss in ('huber', 'quantile'):
+            self.loss_ = loss_class(self.n_classes_, self.alpha)
+        else:
+            self.loss_ = loss_class(self.n_classes_)
 
         if self.min_samples_split <= 0:
             raise ValueError("min_samples_split must be larger than 0")
@@ -521,6 +536,12 @@ class BaseGradientBoosting(BaseEnsemble):
         if self.subsample <= 0.0 or self.subsample > 1:
             raise ValueError("subsample must be in (0,1]")
 
+        if self.max_features is None:
+            self.max_features = n_features
+
+        if not (0 < self.max_features <= n_features):
+            raise ValueError("max_features must be in (0, n_features]")
+
         if self.max_depth <= 0:
             raise ValueError("max_depth must be larger than 0")
 
@@ -528,36 +549,13 @@ class BaseGradientBoosting(BaseEnsemble):
             if (not hasattr(self.init, 'fit')
                 or not hasattr(self.init, 'predict')):
                 raise ValueError("init must be valid estimator")
+        else:
+            self.init = self.loss_.init_estimator()
 
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
         self.random_state = check_random_state(self.random_state)
-
-        X, y = check_arrays(X, y, sparse_format='dense')
-        X = np.asfortranarray(X, dtype=DTYPE)
-        y = np.ravel(y, order='C')
-
-        n_samples, n_features = X.shape
-        self.n_features = n_features
-
-        if self.max_features is None:
-            self.max_features = n_features
-
-        if not (0 < self.max_features <= n_features):
-            raise ValueError("max_features must be in (0, n_features]")
-
-        loss_class = LOSS_FUNCTIONS[self.loss]
-        if self.loss in ('huber', 'quantile'):
-            loss = loss_class(self.n_classes_, self.alpha)
-        else:
-            loss = loss_class(self.n_classes_)
-
-        # store loss object for future use
-        self.loss_ = loss
-
-        if self.init is None:
-            self.init = loss.init_estimator()
 
         # create argsorted X for fast tree induction
         X_argsorted = np.asfortranarray(
@@ -569,7 +567,7 @@ class BaseGradientBoosting(BaseEnsemble):
         # init predictions
         y_pred = self.init.predict(X)
 
-        self.estimators_ = np.empty((self.n_estimators, loss.K),
+        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
@@ -591,10 +589,10 @@ class BaseGradientBoosting(BaseEnsemble):
 
             # track deviance (= loss)
             if self.subsample < 1.0:
-                self.train_score_[i] = loss(y[sample_mask],
-                                            y_pred[sample_mask])
-                self.oob_score_[i] = loss(y[~sample_mask],
-                                          y_pred[~sample_mask])
+                self.train_score_[i] = self.loss_(y[sample_mask],
+                                                  y_pred[sample_mask])
+                self.oob_score_[i] = self.loss_(y[~sample_mask],
+                                                y_pred[~sample_mask])
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e, "
                           "oob score = %.6e" % (i + 1, self.n_estimators,
@@ -602,7 +600,7 @@ class BaseGradientBoosting(BaseEnsemble):
                                                 self.oob_score_[i]))
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_score_[i] = loss(y, y_pred)
+                self.train_score_[i] = self.loss_(y, y_pred)
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e" %
                           (i + 1, self.n_estimators, self.train_score_[i]))
