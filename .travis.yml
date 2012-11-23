@@ -1,0 +1,10 @@
+language: python
+python:
+    - "2.7"
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq gfortran libatlas-base-dev
+install: 
+    - pip install -q -r requirements.txt --use-mirrors
+    - python setup.py build_ext --inplace
+script: make test

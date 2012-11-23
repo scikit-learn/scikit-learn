@@ -1,3 +1,2 @@
-numpy=1.6.1
-scipy=0.10.1
-
+numpy
+scipy
