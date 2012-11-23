@@ -7,7 +7,5 @@ before_install:
     - sudo apt-get install -qq python-scipy python-nose
     - virtualenv --system-site-packages ~/virtualenv/this
     - source ~/virtualenv/this/bin/activate
-install: 
-    - pip install -q -r requirements.txt --use-mirrors
-    - python setup.py build_ext --inplace
+install: python setup.py build_ext --inplace
 script: make test
