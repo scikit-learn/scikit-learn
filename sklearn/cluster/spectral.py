@@ -11,7 +11,6 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.extmath import norm
-from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 from ..manifold import spectral_embedding
