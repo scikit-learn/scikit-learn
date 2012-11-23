@@ -31,6 +31,18 @@ S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 
 
+def _check_with_col_sign_flipping(A, B, tol=0.0):
+    """ Check array A and B are equal with possible sign flipping on
+    each columns"""
+    sign = True
+    for colid in range(A.shape[1]):
+        sign = sign and (np.all(np.abs(A[:, colid] - B[:, colid]) <= tol) or
+                         np.all(np.abs(A[:, colid] + B[:, colid]) <= tol))
+        if not sign:
+            return sign
+    return sign
+
+
 def test_spectral_embedding_two_components(seed=36):
     """Test spectral embedding with two components"""
     random_state = np.random.RandomState(seed)
@@ -72,7 +84,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_array_almost_equal(np.abs(embed_precomp), np.abs(embed_rbf), 0)
+    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.001))
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -93,7 +105,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
     embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_array_almost_equal(np.abs(embed_rbf), np.abs(embed_callable), 2)
+    assert_true(_check_with_col_sign_flipping(embed_rbf, embed_callable, 0.001))
 
 
 def test_spectral_embedding_amg_solver(seed=36):
@@ -114,7 +126,7 @@ def test_spectral_embedding_amg_solver(seed=36):
     embed_arpack = se_arpack.fit_transform(S)
     assert_array_almost_equal(
         se_amg.affinity_matrix_, se_arpack.affinity_matrix_)
-    assert_array_almost_equal(np.abs(embed_amg), np.abs(embed_arpack), 2)
+    assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.001))
 
 
 def test_pipline_spectral_clustering(seed=36):
@@ -145,7 +157,6 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
     ])
     X, true_labels = make_blobs(n_samples=100, centers=centers,
                                 cluster_std=1., random_state=42)
-    D = rbf_kernel(X)  # Distance matrix
 
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed),
@@ -162,7 +173,6 @@ def test_spectral_embedding_unknown_affinity(seed=36):
     ])
     X, true_labels = make_blobs(n_samples=100, centers=centers,
                                 cluster_std=1., random_state=42)
-    D = rbf_kernel(X)  # Distance matrix
 
     se_precomp = SpectralEmbedding(n_components=1, affinity="<unknown>",
                                    random_state=np.random.RandomState(seed))

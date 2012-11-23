@@ -23,7 +23,24 @@ from ..metrics.pairwise import rbf_kernel
 
 
 def _graph_connected_component(graph, node_id):
-    """ Return the connected components of a certain node
+    """Find the largest graph connected components the contains one 
+    given node
+
+    Parameters
+    ----------
+    graph : array-like, shape: (n_samples, n_samples)
+        adjacency matrix of the graph, non-zero weight means an edge 
+        between the nodes
+
+    node_id : int
+        The index of the query node of the graph
+
+    Returns
+    -------
+    connected_components : array-like, shape: (n_samples,)
+        An array of bool value indicates the indexes of the nodes 
+        belong to the largest connected components of the given query
+        node
     """
     connected_components = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
     connected_components[node_id] = True
@@ -32,13 +49,24 @@ def _graph_connected_component(graph, node_id):
         last_num_component = connected_components.sum()
         _, node_to_add = np.where(graph[connected_components] != 0)
         connected_components[node_to_add] = True
-        if last_num_component >= len(connected_components):
+        if last_num_component >= connected_components.sum():
             break
     return connected_components
 
 
 def _graph_is_connected(graph):
     """ Return whether the graph is connected (True) or Not (False)
+
+    Parameters
+    ----------
+    graph : array-like or sparse matrix, shape: (n_samples, n_samples)
+        adjacency matrix of the graph, non-zero weight means an edge 
+        between the nodes
+
+    Returns
+    -------
+    is_connected : bool
+        True means the graph is fully connected and False means not
     """
     if sparse.isspmatrix(graph):
         # sparse graph, find all the connected components
@@ -55,14 +83,14 @@ def _set_diag(laplacian, value):
 
     Parameters
     ----------
-    laplacian: array or sparse matrix
+    laplacian : array or sparse matrix
         The graph laplacian
-    value: float
+    value : float
         The value of the diagonal
 
     Returns
     -------
-    laplacian: array of sparse matrix
+    laplacian : array or sparse matrix
         An array of matrix in a form that is well suited to fast
         eigenvalue decomposition, depending on the band width of the
         matrix.
@@ -112,18 +140,18 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Parameters
     ----------
-    adjacency: array-like or sparse matrix, shape: (n_samples, n_samples)
+    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
-    n_components: integer, optional
+    n_components : integer, optional
         The dimension of the projection subspace.
 
-    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
         By default, arpack is used.
@@ -132,27 +160,30 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    drop_first: bool, optional, default: True
+    drop_first : bool, optional, default: True
         Whether to drop the first eigenvector. For spectral embedding, this
-        should be True as the first eigenvector should be constant vecotr for
+        should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
 
     Returns
     -------
-    embedding: array, shape: (n_samples, n_components)
+    embedding : array, shape: (n_samples, n_components)
         The reduced samples
 
     Notes
     -----
     Spectral embedding is most useful when the graph has one connected
-    component. If there graph has many components, the eigenvectors will
-    simply uncover the connected components of the graph.
+    component. If there graph has many components, the first few 
+    eigenvectors will simply uncover the connected components of the graph.
 
     References
     ----------
     [1] http://en.wikipedia.org/wiki/LOBPCG
-    [2] LOBPCG: http://dx.doi.org/10.1137%2FS1064827500366124
+    [2] Toward the Optimal Preconditioned Eigensolver: Locally Optimal 
+        Block Preconditioned Conjugate Gradient Method
+        Andrew V. Knyazev
+        http://dx.doi.org/10.1137%2FS1064827500366124
     """
 
     try:
@@ -230,7 +261,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
-            print "!!!!!!!!!!!!!!!! RUNTIME ERROR !!!!!!!!!!!!!!!!!!!!!"
             eigen_solver = "lobpcg"
 
     if eigen_solver == 'amg':
@@ -289,7 +319,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
-    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
@@ -312,9 +342,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
-
-    fit_inverse_transform : bool, optional, default : False
-       Whether to fit the inverse transformation.
 
     Attributes
     ----------
@@ -342,12 +369,11 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
-                 gamma=None, fit_inverse_transform=False,
-                 random_state=None, eigen_solver=None, n_neighbors=None):
+                 gamma=None, random_state=None, eigen_solver=None,
+                 n_neighbors=None):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
-        self.fit_inverse_transform = fit_inverse_transform
         self.random_state = check_random_state(random_state)
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
@@ -405,7 +431,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -425,9 +451,6 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Only precomputed, rbf,"
                     "nearest_neighbors graph supported.")
-        if self.fit_inverse_transform and self.affinity == 'precomputed':
-            raise ValueError(
-                "Cannot fit_inverse_transform with a precomputed kernel.")
         affinity_matrix = self._get_affinity_matrix(X)
         self.embedding_ = spectral_embedding(affinity_matrix,
                                              n_components=self.n_components,
