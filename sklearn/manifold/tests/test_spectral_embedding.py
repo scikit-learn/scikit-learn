@@ -84,7 +84,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.001))
+    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.01))
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -106,7 +106,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.001))
+        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.01))
 
 
 def test_spectral_embedding_amg_solver(seed=36):
@@ -127,7 +127,7 @@ def test_spectral_embedding_amg_solver(seed=36):
     embed_arpack = se_arpack.fit_transform(S)
     assert_array_almost_equal(
         se_amg.affinity_matrix_, se_arpack.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.001))
+    assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.01))
 
 
 def test_pipline_spectral_clustering(seed=36):
