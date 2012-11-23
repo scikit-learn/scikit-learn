@@ -142,11 +142,14 @@ API changes summary
      to adhere more strictly with the API.
 
   - :func:`cluster.spectral_embedding` is now in
-    :func:`manifold.spectral_embedding`
+    :func:`manifold.spectral_embedding`.
 
   - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
     :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
     to ``eigen_solver``
+
+  - Renamed ``mode`` in :func:`manifold.spectral_embedding` and
+    :class:`cluster.SpectralClustering` to ``eigen_solver``.
 
 .. _changes_0_12.1:
 
