@@ -159,7 +159,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         k=None, eigen_tol=0.0,
                         assign_labels='kmeans',
-                        mode=None, eig_tol=None):
+                        mode=None):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -248,15 +248,15 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
                          % assign_labels)
 
     if not k is None:
-        warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
+        warnings.warn("'k' was renamed to n_clusters and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
         n_clusters = k
     if not mode is None:
-        warnings.warn("'eig_solver' was renamed to eigen_solver",
+        warnings.warn("'mode' was renamed to eigen_solver "
+                      "and will be removed in 0.15.",
                       DeprecationWarning)
         eigen_solver = mode
-    if not eig_tol is None:
-        warnings.warn("'eig_tol' was renamed to eigen_tol", DeprecationWarning)
-        eigen_tol = eig_tol
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
@@ -381,18 +381,18 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
                  precomputed=False, eigen_tol=0.0, assign_labels='kmeans',
-                 mode=None, eig_tol=None):
+                 mode=None):
         if not k is None:
-            warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
+            warnings.warn("'k' was renamed to n_clusters and "
+                          "will be removed in 0.15.",
+                          DeprecationWarning)
             n_clusters = k
         if not mode is None:
-            warnings.warn("'eig_solver' was renamed to eigen_solver",
+            warnings.warn("'mode' was renamed to eigen_solver and "
+                          "will be removed in 0.15.",
                           DeprecationWarning)
             eigen_solver = mode
-        if not eig_tol is None:
-            warnings.warn("'eig_tol' was renamed to eigen_tol",
-                          DeprecationWarning)
-            eigen_tol = eig_tol
+
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.random_state = random_state

@@ -93,7 +93,7 @@ def _set_diag(laplacian, value):
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True,
-                       mode=None, eig_tol=None):
+                       mode=None):
     """Project the sample on the first eigen vectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -163,12 +163,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                              "not available.")
 
     if not mode is None:
-        warnings.warn("'eig_solver' was renamed to eigen_solver",
+        warnings.warn("'mode' was renamed to eigen_solver "
+                      "and will be removed in 0.15.",
                       DeprecationWarning)
         eigen_solver = mode
-    if not eig_tol is None:
-        warnings.warn("'eig_tol' was renamed to eigen_tol", DeprecationWarning)
-        eigen_tol = eig_tol
 
     random_state = check_random_state(random_state)
 
