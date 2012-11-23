@@ -340,14 +340,14 @@ class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
     def radius_neighbors(self, X, radius=None, return_distance=True):
-        """Finds the neighbors of a point within a given radius.
+        """Finds the neighbors within a given radius of a point or points.
 
-        Returns distance
+        Returns indices of and distances to the neighbors of each point.
 
         Parameters
         ----------
         X : array-like, last dimension same as that of fit data
-            The new point.
+            The new point or points
 
         radius : float
             Limiting distance of neighbors to return.
@@ -359,8 +359,8 @@ class RadiusNeighborsMixin(object):
         Returns
         -------
         dist : array
-            Array representing the lengths to point, only present if
-            return_distance=True
+            Array representing the euclidean distances to each point,
+            only present if return_distance=True.  
 
         ind : array
             Indices of the nearest points in the population matrix.
@@ -382,9 +382,14 @@ class RadiusNeighborsMixin(object):
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their
         indices.  In general, multiple points can be queried at the same time.
+
+        Notes
+        -----
         Because the number of neighbors of each point is not necessarily
-        equal, `radius_neighbors` returns an array of objects, where each
-        object is a 1D array of indices.
+        equal, the results for multiple query points cannot be fit in a
+        standard data array.
+        For efficiency, `radius_neighbors` returns arrays of objects, where
+        each object is a 1D array of indices or distances.
         """
 
         if self._fit_method == None:
