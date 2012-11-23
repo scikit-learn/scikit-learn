@@ -1,5 +1,5 @@
 .. -*- mode: rst -*-
-[![Build Status](https://secure.travis-ci.org/SnippyHolloW/scikit-learn.png)](http://travis-ci.org/SnippyHolloW/mosileno-web)
+.. image:: https://secure.travis-ci.org/SnippyHolloW/scikit-learn.png
 
 scikit-learn
 ============
