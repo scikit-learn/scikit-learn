@@ -87,10 +87,11 @@ def _check_stop_list(stop):
 
 ###############################################################################
 # These two functions are required for the joblib parallelization of the 
-# CV's analyze function. Since I was some problem with the pickling of lambda 
-# functions, I simply extracted the logic for a single case, word ngrams, with 
-# some default parameters hardcoded. This is NOT meant to be a complete solution, 
-# just the minimal code for my proof of concept.
+# CV's analyze function. Since multiprocessing.Pool was causing me some 
+# trouble with the pickling of instance members and lambda functions, I cut it 
+# short by simply extracting the logic for a single case (word ngrams), 
+# with some default parameters hardcoded. Hence, this is NOT meant to be a 
+# complete solution, just the minimal code for my proof of concept.
 
 def _word_ngrams_single(tokens, stop_words=None):
     """Turn tokens into a sequence of n-grams after stop words filtering"""
