@@ -1,5 +1,6 @@
 cimport cython
-from libc.math cimport exp, fabs, sqrt
+from libc.math cimport exp, fabs, log, sqrt
+from libc.stdint cimport uint64_t
 
 cimport numpy as np
 import numpy as np
@@ -12,18 +13,62 @@ np.import_array()
 @cython.boundscheck(False)
 @cython.cdivision(True)
 @cython.wraparound(False)
-cdef logistic(z):
+cdef void logistic(double[:] z) nogil:
     """Logistic sigmoid: 1. / (1. + np.exp(-x)), computed in-place."""
-    cdef np.ndarray[np.float64_t, ndim=1] x = z.ravel()
-    for i in xrange(x.shape[0]):
-        x[i] = 1. / (1. + exp(-x[i]))
-    return z
+    #cdef np.ndarray[np.float64_t, ndim=1] x = z.ravel()
+    for i in xrange(z.shape[0]):
+        z[i] = 1. / (1. + exp(-z[i]))
 
 
-cdef log_softmax(X):
-    # Computes the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
-    # in the log domain
-    return (X.T - logsumexp(X, axis=1)).T
+@cython.boundscheck(False)
+cdef inline double _logsumexp(double[:] x) nogil:
+    """Fast implementation of 1-d logsumexp for double precision floats.
+
+    Computes log(sum(exp(x))) and stores the result in out.
+    """
+    # XXX this might be interesting for sklearn.utils.extmath,
+    # and maybe even scipy.misc
+
+    cdef double total, vmax
+
+    vmax = x[0]
+    for i in range(1, x.shape[0]):
+        vmax = max(x[i], vmax)
+    total = 0.
+    for i in range(0, x.shape[0]):
+        total += exp(x[i] - vmax)
+    return log(total) + vmax
+
+
+@cython.boundscheck(False)
+cdef void log_softmax(double[:, :] X, double[:, :] log_y_output) nogil:
+    """Logistic K-way softmax (exp(X).T / exp(X).sum(axis=1)).T, in log domain.
+
+    In-place implementation.
+    """
+    cdef double logsum
+
+    for i in range(X.shape[0]):
+        logsum = _logsumexp(X[i, :])
+        for j in range(X.shape[1]):
+            log_y_output[i, j] = X[i, j] - logsum
+
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+cdef double log_loss_multiclass(double[:, :] output, uint64_t[:, :] T) nogil:
+    """Multiclass cross-entropy loss function."""
+    #loss = -np.mean(np.sum(log_y_output * T, axis=1))
+    cdef double total
+
+    log_softmax(output, output)
+
+    total = 0.
+    for i in range(output.shape[0]):
+        for j in range(output.shape[1]):
+            total += output[i, j] * T[i, j]
+
+    return -(total / output.shape[0])
 
 
 @cython.boundscheck(False)
@@ -85,8 +130,8 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
 
     for epoch in xrange(self.max_iter):
         # make predictions
-        z_hidden = safe_sparse_dot(X, w_hidden.T) + bias_hidden
-        y_hidden = logistic(z_hidden)
+        y_hidden = safe_sparse_dot(X, w_hidden.T) + bias_hidden
+        logistic(y_hidden)
         #z_output = np.dot(y_hidden, w_output.T) + bias_output
         np.dot(y_hidden, w_output.T, out=z_output)
 
@@ -94,9 +139,11 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
             for j in xrange(n_targets):
                 z_output[i, j] += bias_output[j]
         if multiclass:
-            log_y_output = log_softmax(z_output)
+            #log_y_output = log_softmax(z_output)
+            log_softmax(z_output, log_y_output)
         else:
-            log_y_output = logistic(z_output)
+            logistic(z_output)
+            log_y_output = z_output
         for i in xrange(n_samples):
             for j in xrange(n_targets):
                 y_output[i, j] = exp(log_y_output[i, j])
