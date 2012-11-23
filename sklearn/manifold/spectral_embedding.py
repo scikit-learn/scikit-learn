@@ -400,15 +400,21 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             self.affinity_matrix_ = X
             return self.affinity_matrix_
         if self.affinity == 'nearest_neighbors':
-            if self.gamma is None:
-                self.gamma = 1.0 / X.shape[1]
-            if self.n_neighbors is None:
-                self.n_neighbors = max(int(X.shape[0] / 10), 1)
-            self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors)
-            # currently only symmetric affinity_matrix supported
-            self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
-                                           self.affinity_matrix_.T)
-            return self.affinity_matrix_
+            if sparse.issparse(X):
+                warnings.warn("Nearest neighbors affinity currently does "
+                              "not support sparse input, falling back to "
+                              "rbf affinity")
+                self.affinity = "rbf"
+            else:
+                if self.gamma is None:
+                    self.gamma = 1.0 / X.shape[1]
+                if self.n_neighbors is None:
+                    self.n_neighbors = max(int(X.shape[0] / 10), 1)
+                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors)
+                # currently only symmetric affinity_matrix supported
+                self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
+                                               self.affinity_matrix_.T)
+                return self.affinity_matrix_
         if self.affinity == 'rbf':
             if self.gamma is None:
                 self.gamma = 1.0 / X.shape[1]
