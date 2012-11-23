@@ -23,13 +23,13 @@ from ..metrics.pairwise import rbf_kernel
 
 
 def _graph_connected_component(graph, node_id):
-    """Find the largest graph connected components the contains one 
+    """Find the largest graph connected components the contains one
     given node
 
     Parameters
     ----------
     graph : array-like, shape: (n_samples, n_samples)
-        adjacency matrix of the graph, non-zero weight means an edge 
+        adjacency matrix of the graph, non-zero weight means an edge
         between the nodes
 
     node_id : int
@@ -38,7 +38,7 @@ def _graph_connected_component(graph, node_id):
     Returns
     -------
     connected_components : array-like, shape: (n_samples,)
-        An array of bool value indicates the indexes of the nodes 
+        An array of bool value indicates the indexes of the nodes
         belong to the largest connected components of the given query
         node
     """
@@ -60,7 +60,7 @@ def _graph_is_connected(graph):
     Parameters
     ----------
     graph : array-like or sparse matrix, shape: (n_samples, n_samples)
-        adjacency matrix of the graph, non-zero weight means an edge 
+        adjacency matrix of the graph, non-zero weight means an edge
         between the nodes
 
     Returns
@@ -95,7 +95,6 @@ def _set_diag(laplacian, value):
         eigenvalue decomposition, depending on the band width of the
         matrix.
     """
-    from scipy import sparse
     n_nodes = laplacian.shape[0]
     # We need all entries in the diagonal to values
     if not sparse.isspmatrix(laplacian):
@@ -174,13 +173,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     Notes
     -----
     Spectral embedding is most useful when the graph has one connected
-    component. If there graph has many components, the first few 
+    component. If there graph has many components, the first few
     eigenvectors will simply uncover the connected components of the graph.
 
     References
     ----------
     [1] http://en.wikipedia.org/wiki/LOBPCG
-    [2] Toward the Optimal Preconditioned Eigensolver: Locally Optimal 
+    [2] Toward the Optimal Preconditioned Eigensolver: Locally Optimal
         Block Preconditioned Conjugate Gradient Method
         Andrew V. Knyazev
         http://dx.doi.org/10.1137%2FS1064827500366124

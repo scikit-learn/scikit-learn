@@ -105,7 +105,8 @@ def test_spectral_embedding_callable_affinity(seed=36):
     embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_rbf, embed_callable, 0.001))
+    assert_true(
+        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.001))
 
 
 def test_spectral_embedding_amg_solver(seed=36):
