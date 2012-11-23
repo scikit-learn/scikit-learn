@@ -1,5 +1,5 @@
 .. -*- mode: rst -*-
-.. image:: https://secure.travis-ci.org/SnippyHolloW/scikit-learn.png
+.. image:: https://secure.travis-ci.org/scikit-learn/scikit-learn.png
 
 scikit-learn
 ============
