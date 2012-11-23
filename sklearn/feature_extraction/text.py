@@ -85,7 +85,12 @@ def _check_stop_list(stop):
         return stop
 
 
-####################################################################################
+###############################################################################
+# These two functions are required for the joblib parallelization of the 
+# CV's analyze function. Since I was some problem with the pickling of lambda 
+# functions, I simply extracted the logic for a single case, word ngrams, with 
+# some default parameters hardcoded. This is NOT meant to be a complete solution, 
+# just the minimal code for my proof of concept.
 
 def _word_ngrams_single(tokens, stop_words=None):
     """Turn tokens into a sequence of n-grams after stop words filtering"""
@@ -111,7 +116,7 @@ def _analyze_single(doc):
     return _word_ngrams_single(token_pattern.findall(doc.decode('utf-8', 'strict')))
 
 
-####################################################################################
+###############################################################################
 
 
 class CountVectorizer(BaseEstimator):
@@ -497,15 +502,17 @@ class CountVectorizer(BaseEstimator):
 
         analyze = self.build_analyzer()
 
-        # TODO: parallelize the following loop with joblib?
-        # (see XXX up ahead)
-            
-        for analysis in Parallel(n_jobs=n_jobs, batch_size=batch_size)(delayed(_analyze_single)(doc) for doc in raw_documents):
+        # Let's see if we can gain some speed by introducing a job batch mechanism        
+        for analysis in Parallel(n_jobs=n_jobs, 
+                                 batch_size=batch_size)(delayed(_analyze_single)(doc) 
+                                                        for doc in raw_documents):
             term_count_current = Counter(analysis)
             term_counts.update(Counter(analysis))
             document_counts.update(term_count_current.iterkeys())
             term_counts_per_doc.append(term_count_current)
             
+        # TODO: parallelize the following loop with joblib?
+        # (see XXX up ahead)
         # for doc in raw_documents:
         #     term_count_current = Counter(analyze(doc))
         #     term_counts.update(term_count_current)
