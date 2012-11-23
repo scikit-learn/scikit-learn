@@ -1,7 +1,12 @@
 language: python
 python:
     - "2.7"
-install: pip install -r requirements.txt --use-mirrors && python setup.py build_ext --inplace
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq atlas3-base-dev
+install: 
+    - pip install -r requirements.txt --use-mirrors
+    - python setup.py build_ext --inplace
 script: make test
 
 
