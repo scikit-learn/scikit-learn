@@ -435,49 +435,18 @@ class BaseGradientBoosting(BaseEnsemble):
                  'learning_rate'" and will be removed in release 0.14.",
                   DeprecationWarning, stacklevel=2)
 
-        if n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than 0")
         self.n_estimators = n_estimators
-
-        if learning_rate <= 0.0:
-            raise ValueError("learning_rate must be greater than 0")
         self.learning_rate = learning_rate
-
-        if loss not in LOSS_FUNCTIONS:
-            raise ValueError("Loss '%s' not supported. " % loss)
         self.loss = loss
-
-        if min_samples_split <= 0:
-            raise ValueError("min_samples_split must be larger than 0")
         self.min_samples_split = min_samples_split
-
-        if min_samples_leaf <= 0:
-            raise ValueError("min_samples_leaf must be larger than 0")
         self.min_samples_leaf = min_samples_leaf
-
-        if subsample <= 0.0 or subsample > 1:
-            raise ValueError("subsample must be in (0,1]")
         self.subsample = subsample
-
         self.max_features = max_features
-
-        if max_depth <= 0:
-            raise ValueError("max_depth must be larger than 0")
         self.max_depth = max_depth
-
-        if init is not None:
-            if not hasattr(init, 'fit') or not hasattr(init, 'predict'):
-                raise ValueError("init must be valid estimator")
         self.init = init
-
         self.random_state = random_state
-
-        if not (0.0 < alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0)")
         self.alpha = alpha
-
         self.verbose = verbose
-
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
@@ -534,6 +503,37 @@ class BaseGradientBoosting(BaseEnsemble):
         self : object
             Returns self.
         """
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than 0")
+
+        if self.learning_rate <= 0.0:
+            raise ValueError("learning_rate must be greater than 0")
+
+        if self.loss not in LOSS_FUNCTIONS:
+            raise ValueError("Loss '%s' not supported. " % self.loss)
+
+        if self.min_samples_split <= 0:
+            raise ValueError("min_samples_split must be larger than 0")
+
+        if self.min_samples_leaf <= 0:
+            raise ValueError("min_samples_leaf must be larger than 0")
+
+        if self.subsample <= 0.0 or self.subsample > 1:
+            raise ValueError("subsample must be in (0,1]")
+
+        if self.max_depth <= 0:
+            raise ValueError("max_depth must be larger than 0")
+
+        if self.init is not None:
+            if (not hasattr(self.init, 'fit')
+                or not hasattr(self.init, 'predict')):
+                raise ValueError("init must be valid estimator")
+
+        if not (0.0 < self.alpha and self.alpha < 1.0):
+            raise ValueError("alpha must be in (0.0, 1.0)")
+
+        self.random_state = check_random_state(self.random_state)
+
         X, y = check_arrays(X, y, sparse_format='dense')
         X = np.asfortranarray(X, dtype=DTYPE)
         y = np.ravel(y, order='C')

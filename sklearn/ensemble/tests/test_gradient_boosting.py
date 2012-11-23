@@ -57,30 +57,44 @@ def test_classification_toy():
 
 def test_parameter_checks():
     """Check input parameter validation."""
-    assert_raises(ValueError, GradientBoostingClassifier, n_estimators=0)
-    assert_raises(ValueError, GradientBoostingClassifier, n_estimators=-1)
 
-    assert_raises(ValueError, GradientBoostingClassifier, learning_rate=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier, learning_rate=-1.0)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(n_estimators=0).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(n_estimators=-1).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingRegressor, loss='foobar')
+    assert_raises(ValueError,
+        GradientBoostingClassifier(learning_rate=0.0).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(learning_rate=-1.0).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier,
-                  min_samples_split=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier,
-                  min_samples_split=-1.0)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(loss='foobar').fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=0)
-    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=-1.)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(min_samples_split=0.0).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(min_samples_split=-1.0).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, subsample=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier, subsample=1.1)
-    assert_raises(ValueError, GradientBoostingClassifier, subsample=-0.1)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, max_depth=-0.1)
-    assert_raises(ValueError, GradientBoostingClassifier, max_depth=0)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(subsample=0.0).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(subsample=1.1).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(subsample=-0.1).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, init={})
+    assert_raises(ValueError,
+        GradientBoostingClassifier(max_depth=-0.1).fit, X, y)
+    assert_raises(ValueError,
+        GradientBoostingClassifier(max_depth=0).fit, X, y)
+
+    assert_raises(ValueError,
+        GradientBoostingClassifier(init={}).fit, X, y)
 
     # test fit before feature importance
     assert_raises(ValueError,
