@@ -18,8 +18,6 @@ from ..utils._csgraph import cs_graph_components
 from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
-from ..metrics.pairwise import pairwise_kernels
-from ..metrics.pairwise import rbf_kernel
 
 
 def _graph_connected_component(graph, node_id):
