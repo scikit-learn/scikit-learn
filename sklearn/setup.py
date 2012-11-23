@@ -36,7 +36,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
     config.add_subpackage('neighbors')
-    config.add_subpackage('neural_networks')
+    config.add_subpackage('neural')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
     config.add_subpackage('mixture')
