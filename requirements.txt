@@ -1,4 +1,2 @@
 numpy
 scipy
-setuptools
-
