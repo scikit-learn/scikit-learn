@@ -97,7 +97,8 @@ def test_pairwise_kernels():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
     # Test with all metrics that should be in pairwise_kernel_functions.
-    test_metrics = ["rbf", "sigmoid", "polynomial", "linear"]
+    test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
+                    "exp_chi2"]
     for metric in test_metrics:
         function = pairwise_kernel_functions[metric]
         # Test with Y=None
@@ -113,6 +114,8 @@ def test_pairwise_kernels():
         Y_tuples = tuple([tuple([v for v in row]) for row in Y])
         K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
         assert_array_almost_equal(K1, K2)
+        if metric in ["chi2", "exp_chi2"]:
+            continue
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)

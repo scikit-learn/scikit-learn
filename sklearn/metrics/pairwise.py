@@ -377,6 +377,13 @@ def exponential_chi2_kernel(X, Y=None, gamma=1.):
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
 
+    References
+    ----------
+    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+      Local features and kernels for classification of texture and object
+      categories: A comprehensive study
+      International Journal of Computer Vision 2007
+
     See also
     --------
     chi2_kernel : The additive version of this kernel

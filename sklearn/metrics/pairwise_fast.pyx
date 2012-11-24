@@ -34,6 +34,14 @@ def chi2_kernel(X, Y=None):
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
 
+    References
+    ----------
+    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+      Local features and kernels for classification of texture and object
+      categories: A comprehensive study
+      International Journal of Computer Vision 2007
+
+
     See also
     --------
     exponential_chi2_kernel : An exponentiated version of this kernel.
@@ -46,13 +54,14 @@ def chi2_kernel(X, Y=None):
     if Y is None:
         # optimize this case!
         Y = X
+
+    X = array2d(X, dtype=np.float)
+    Y = array2d(Y, dtype=np.float)
+
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
                              X.shape[1], Y.shape[1]))
-
-    X = array2d(X, dtype=np.float)
-    Y = array2d(Y, dtype=np.float)
 
     if (X < 0).any():
         raise ValueError("X contains negative values.")
