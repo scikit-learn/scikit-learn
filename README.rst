@@ -1,5 +1,9 @@
 .. -*- mode: rst -*-
-.. image:: https://secure.travis-ci.org/scikit-learn/scikit-learn.png
+
+|Travis|_
+
+.. |Travis| image:: https://secure.travis-ci.org/scikit-learn/scikit-learn.png 
+.. _Travis: https://secure.travis-ci.org/scikit-learn/scikit-learn
 
 scikit-learn
 ============
