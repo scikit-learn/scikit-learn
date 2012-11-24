@@ -243,8 +243,9 @@ def test_cartesian():
 
 
 def test_svd_uniqueness():
-    a = np.eye(2)
+    a = np.array([[2.0, 0.0], [0.0, 1.0]])
     u1, s1, v1 = svd_flip(*randomized_svd(a, 2, random_state=41))
-    u2, s2, v2 = svd_flip(*randomized_svd(a, 2, random_state=42))
-    assert_almost_equal(u1, u2)
-    assert_almost_equal(v1, v2)
+    for seed in xrange(100):
+        u2, s2, v2 = svd_flip(*randomized_svd(a, 2, random_state=seed))
+        assert_almost_equal(u1, u2)
+        assert_almost_equal(v1, v2)
