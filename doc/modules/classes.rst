@@ -708,15 +708,17 @@ Pairwise metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.pairwise.chi2_kernel
+   metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
-   metrics.pairwise.manhattan_distances
+   metrics.pairwise.exponential_chi2_kernel
+   metrics.pairwise.kernel_metrics
    metrics.pairwise.linear_kernel
+   metrics.pairwise.manhattan_distances
+   metrics.pairwise.pairwise_distances
+   metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
-   metrics.pairwise.distance_metrics
-   metrics.pairwise.pairwise_distances
-   metrics.pairwise.kernel_metrics
-   metrics.pairwise.pairwise_kernels
 
 
 .. _mixture_ref:
