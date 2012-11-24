@@ -132,7 +132,8 @@ def randomized_range_finder(A, size, n_iter, random_state=None,
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', random_state=0, n_iterations=None):
+                   transpose='auto', flip_sign=False, random_state=0,
+                   n_iterations=None):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -158,6 +159,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
         case).
+
+    flip_sign: boolean, (False by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
 
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
@@ -202,6 +209,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
     U = np.dot(Q, Uhat)
+
+    if flip_sign:
+        U, s, V = svd_flip(U, s, V)
 
     if transpose:
         # transpose back the results according to the input convention

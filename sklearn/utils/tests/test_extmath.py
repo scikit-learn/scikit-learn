@@ -18,7 +18,6 @@ from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
-from sklearn.utils.extmath import svd_flip
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -242,10 +241,10 @@ def test_cartesian():
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
 
 
-def test_svd_uniqueness():
+def test_randomized_svd_sign_flip():
     a = np.array([[2.0, 0.0], [0.0, 1.0]])
-    u1, s1, v1 = svd_flip(*randomized_svd(a, 2, random_state=41))
+    u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=41)
     for seed in xrange(100):
-        u2, s2, v2 = svd_flip(*randomized_svd(a, 2, random_state=seed))
+        u2, s2, v2 = randomized_svd(a, 2, flip_sign=True, random_state=seed)
         assert_almost_equal(u1, u2)
         assert_almost_equal(v1, v2)
