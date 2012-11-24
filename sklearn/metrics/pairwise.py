@@ -47,6 +47,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
+from .pairwise_fast import chi2_kernel
+
 
 # Utility Functions
 def check_pairwise_arrays(X, Y):
@@ -322,32 +324,69 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     return K
 
 
-def rbf_kernel(X, Y=None, gamma=0):
+def rbf_kernel(X, Y=None, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
-        K(X, Y) = exp(-gamma ||X-Y||^2)
+        K(x, y) = exp(-gamma ||x-y||^2)
+
+    for each pair of rows x in X and y in Y.
 
     Parameters
     ----------
-    X : array of shape (n_samples_1, n_features)
+    X : array of shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_2, n_features)
+    Y : array of shape (n_samples_Y, n_features)
 
     gamma : float
 
     Returns
     -------
-    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
+
+
+def exponential_chi2_kernel(X, Y=None, gamma=1.):
+    """Computes the exponential chi-squared kernel X and Y.
+
+    The chi-squared kernel is computed between each pair of rows in X and Y.  X
+    and Y have to be non-negative. This kernel is most commonly applied to
+    histograms.
+
+    The chi-squared kernel is given by::
+
+        k(x, y) = exp(-gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+
+    It can be interpreted as a weighted difference per entry.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features)
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+
+    See also
+    --------
+    chi2_kernel : The additive version of this kernel
+
+    kernel_approximation.AdditiveChi2Sampler : A Fourier approximation to the
+        additive version of this kernel.
+    """
+    K = chi2_kernel(X, Y)
+    K *= -gamma
+    return np.exp(K, K)
 
 
 # Helper functions - distance
@@ -523,11 +562,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 pairwise_kernel_functions = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
-    'rbf': rbf_kernel,
-    'sigmoid': sigmoid_kernel,
+    'chi2': chi2_kernel,
+    'exp_chi2': exponential_chi2_kernel,
+    'linear': linear_kernel,
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
-    'linear': linear_kernel
+    'rbf': rbf_kernel,
+    'sigmoid': sigmoid_kernel,
     }
 
 
@@ -539,25 +580,29 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ============   ==================================
+      ============   ========================================
       metric         Function
-      ============   ==================================
+      ============   ========================================
+      'chi2'         sklearn.pairwise.chi2_kernel
+      'exp_chi2'     sklearn.pairwise.exponential_chi2_kernel
       'linear'       sklearn.pairwise.linear_kernel
       'poly'         sklearn.pairwise.polynomial_kernel
       'polynomial'   sklearn.pairwise.polynomial_kernel
       'rbf'          sklearn.pairwise.rbf_kernel
       'sigmoid'      sklearn.pairwise.sigmoid_kernel
-      ============   ==================================
+      ============   ========================================
     """
     return pairwise_kernel_functions
 
 
 kernel_params = {
+    "chi2": (),
+    "exp_chi2": set(("gamma", )),
+    "linear": (),
     "rbf": set(("gamma",)),
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-    "linear": ()
 }
 
 
