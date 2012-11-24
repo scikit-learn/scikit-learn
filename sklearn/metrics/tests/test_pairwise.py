@@ -1,6 +1,6 @@
 import numpy as np
 from numpy import linalg
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
@@ -9,6 +9,7 @@ from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from ..pairwise import euclidean_distances
 from ..pairwise import linear_kernel
+from ..pairwise import chi2_kernel, exponential_chi2_kernel
 from ..pairwise import polynomial_kernel
 from ..pairwise import rbf_kernel
 from ..pairwise import sigmoid_kernel
@@ -155,6 +156,21 @@ def test_euclidean_distances():
     Y = csr_matrix(Y)
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+
+
+def test_chi_square_kernel():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((10, 4))
+    K = chi2_kernel(X, Y)
+    gamma = 0.1
+    K_exp = exponential_chi2_kernel(X, Y, gamma=gamma)
+    for i, x in enumerate(X):
+        for j, y in enumerate(Y):
+            chi2 = np.sum((x - y) ** 2 / (x + y))
+            chi2_exp = np.exp(-gamma * chi2)
+            assert_almost_equal(K[i, j], chi2)
+            assert_almost_equal(K_exp[i, j], chi2_exp)
 
 
 def test_kernel_symmetry():
