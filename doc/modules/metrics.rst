@@ -1,0 +1,74 @@
+.. _metrics:
+
+Metrics, Affinities and Kernels
+===============================
+
+The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
+pairwise distances or affinity of sets of samples.
+
+This module contains both distance metrics and kernels. A brief summary is
+given on the two here.
+
+Distance metrics are a function d(a, b) such that d(a, b) < d(a, c) if objects
+a and b are considered "more similar" to objects a and c. Two objects exactly
+alike would have a distance of zero.
+One of the most popular examples is Euclidean distance.
+To be a 'true' metric, it must obey the following four conditions::
+
+    1. d(a, b) >= 0, for all a and b
+    2. d(a, b) == 0, if and only if a = b, positive definiteness
+    3. d(a, b) == d(b, a), symmetry
+    4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
+
+Kernels are measures of similarity, i.e. ``s(a, b) > s(a, c)``
+if objects ``a`` and ``b`` are considered "more similar" to objects
+``a`` and ``c``. A kernel must also be positive semi-definite.
+
+There are a number of ways to convert between a distance metric and a
+similarity measure, such as a kernel. Let D be the distance, and S be the
+kernel:
+
+    1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
+       ``gamma`` is ``1 / num_features``
+    2. ``S = 1. / (D / np.max(D))``
+
+
+.. currentmodule:: sklearn.metrics.pairwise
+
+Chi Squared Kernel
+------------------
+The chi squared kernel is a very popular choice for training non-linear SVMs in
+Computer Vision applications.
+It can be computed using :func:`chi2_kernel` and then passed to an
+:class:`sklearn.svm.SVC` with ``kernel="precomputed"`` or it
+can be directly used as the ``kernel`` argument::
+
+    >>> X = [[0, 1], [1, 0], [.2, .8], [.7, .3]]
+    >>> y = [0, 1, 0, 1]
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.metrics.pairwise import chi2_kernel
+    >>> svm = SVC(kernel=chi2_kernel).fit(X, y)
+    >>> svm.predict(X)
+    array([ 0.,  1.,  0.,  1.])
+
+
+The chi squared kernel is given by
+
+.. math::
+
+        k(x, y) = exp(-\gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+
+The data is assumed to be non-negative, and is often normalized to have an L1-norm of one.
+The normalization is rationalized with the connection to the chi squared distance,
+which is a distance between discrete probability distributions.
+
+The chi squared kernel is most commonly used on histograms (bags) of visual words.
+
+.. topic:: References:
+
+    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+      Local features and kernels for classification of texture and object
+      categories: A comprehensive study
+      International Journal of Computer Vision 2007
+      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+

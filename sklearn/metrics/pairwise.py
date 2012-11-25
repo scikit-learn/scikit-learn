@@ -22,7 +22,7 @@ if objects ``a`` and ``b`` are considered "more similar" to objects
 
 There are a number of ways to convert between a distance metric and a
 similarity measure, such as a kernel. Let D be the distance, and S be the
-kernel::
+kernel:
 
     1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
        ``gamma`` is ``1 / num_features``
