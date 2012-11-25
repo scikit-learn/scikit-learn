@@ -21,6 +21,7 @@ def _chi2_kernel_fast(cython.floating[:,:] X, cython.floating[:,:] Y, cython.flo
             res = 0
             for k in xrange(n_features):
                 denom = (X[i, k] - Y[j, k])
-                nom = (X[i, k] + Y[j, k] + 1e-10)
-                res  += denom * denom / nom
+                nom = (X[i, k] + Y[j, k])
+                if nom != 0:
+                    res  += denom * denom / nom
             result[i, j] = -res
