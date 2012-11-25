@@ -390,14 +390,16 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
+      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
 
 
     See also
     --------
-    chi2_kernel : An exponentiated version of this kernel.
+    chi2_kernel : The exponentiated version of the kernel, which is usually
+        preferrable.
 
-    kernel_approximation.AdditiveChi2Sampler : A Fourier approximation to this
-        kernel.
+    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
+        to this kernel.
     """
     ### once we support sparse matrices, we can use check_pairwise
 
@@ -462,13 +464,14 @@ def chi2_kernel(X, Y=None, gamma=1.):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
+      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
 
     See also
     --------
     additive_chi2_kernel : The additive version of this kernel
 
-    kernel_approximation.AdditiveChi2Sampler : A Fourier approximation to the
-        additive version of this kernel.
+    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
+        to the additive version of this kernel.
     """
     K = additive_chi2_kernel(X, Y)
     K *= gamma
