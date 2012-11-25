@@ -201,8 +201,8 @@ plot_embedding(X_reduced,
                (time() - t0))
 
 #----------------------------------------------------------------------
-# Random Trees embedding of the digits dataset
-print "Computing Totally Random Trees embedding"
+# Spectral embedding of the digits dataset
+print "Computing Spectral embedding"
 hasher = manifold.SpectralEmbedding(n_components=2, random_state=0,
                                     eigen_solver="arpack")
 t0 = time()
