@@ -450,7 +450,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         """
         if isinstance(self.affinity, str):
             if self.affinity not in \
-                    set('precomputed', 'rbf', 'nearest_neighbors'):
+                    set(('precomputed', 'rbf', 'nearest_neighbors')):
                 raise ValueError(
                     "Only precomputed, rbf,"
                     "nearest_neighbors graph supported.")
