@@ -402,8 +402,7 @@ def test_classifiers_train():
     estimators = all_estimators()
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
-    iris = load_iris()
-    X_m, y_m = iris.data, iris.target
+    X_m, y_m = make_blobs(random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
@@ -431,7 +430,7 @@ def test_classifiers_train():
             y_pred = clf.predict(X)
             assert_equal(y_pred.shape, (n_samples,))
             # training set performance
-            assert_greater(zero_one_score(y, y_pred), 0.78)
+            assert_greater(zero_one_score(y, y_pred), 0.85)
 
             # raises error on malformed input for predict
             assert_raises(ValueError, clf.predict, X.T)
