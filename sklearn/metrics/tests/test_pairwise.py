@@ -197,6 +197,8 @@ def test_chi_square_kernel():
     assert_greater(K[0, 0], K[0, 1])
     assert_greater(K[1, 1], K[1, 0])
 
+    assert_raises(ValueError, chi2_kernel, [[0, -1]])
+
 
 def test_kernel_symmetry():
     """ Valid kernels should be symmetric"""

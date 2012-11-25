@@ -40,13 +40,25 @@ Chi Squared Kernel
 The chi squared kernel is a very popular choice for training non-linear SVMs in
 Computer Vision applications.
 It can be computed using :func:`chi2_kernel` and then passed to an
-:class:`sklearn.svm.SVC` with ``kernel="precomputed"`` or it
-can be directly used as the ``kernel`` argument::
+:class:`sklearn.svm.SVC` with ``kernel="precomputed"``::
 
-    >>> X = [[0, 1], [1, 0], [.2, .8], [.7, .3]]
-    >>> y = [0, 1, 0, 1]
     >>> from sklearn.svm import SVC
     >>> from sklearn.metrics.pairwise import chi2_kernel
+    >>> X = [[0, 1], [1, 0], [.2, .8], [.7, .3]]
+    >>> y = [0, 1, 0, 1]
+    >>> K = chi2_kernel(X, gamma=.5)
+    >>> K
+    array([[ 1.        ,  0.36787944,  0.89483932,  0.58364548],
+           [ 0.36787944,  1.        ,  0.51341712,  0.83822343],
+           [ 0.89483932,  0.51341712,  1.        ,  0.7768366 ],
+           [ 0.58364548,  0.83822343,  0.7768366 ,  1.        ]])
+
+    >>> svm = SVC(kernel='precomputed').fit(K, y)
+    >>> svm.predict(K)
+    array([ 0.,  1.,  0.,  1.])
+
+It can also be directly used as the ``kernel`` argument::
+
     >>> svm = SVC(kernel=chi2_kernel).fit(X, y)
     >>> svm.predict(X)
     array([ 0.,  1.,  0.,  1.])
