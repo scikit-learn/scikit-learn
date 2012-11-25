@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_array_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true, assert_greater
 from scipy.sparse import csr_matrix
@@ -177,6 +177,12 @@ def test_chi_square_kernel():
             assert_almost_equal(K_add[i, j], chi2)
             assert_almost_equal(K[i, j], chi2_exp)
 
+    # check diagonal is ones for data with itself
+    K = chi2_kernel(Y)
+    assert_array_equal(np.diag(K), 1)
+    # check off-diagonal is < 1 but > 0:
+    assert_true(np.all(K >= 0))
+    assert_true(np.all(K - np.diag(np.diag(K)) < 1))
     # check that float32 is preserved
     X = rng.random_sample((5, 4)).astype(np.float32)
     Y = rng.random_sample((10, 4)).astype(np.float32)
