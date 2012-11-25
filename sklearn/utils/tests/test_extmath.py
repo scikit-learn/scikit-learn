@@ -213,7 +213,7 @@ def test_randomized_svd_transpose_consistency():
 def test_randomized_svd_sign_flip():
     a = np.array([[2.0, 0.0], [0.0, 1.0]])
     mismatch = False  # At least one pair should lead to mismatch
-    u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=0)
+    u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=41)
     for seed in xrange(100):
         u2, s2, v2 = randomized_svd(a, 2, flip_sign=False, random_state=seed)
         if np.any(np.sign(u1) != np.sign(u2)):
