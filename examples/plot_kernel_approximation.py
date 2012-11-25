@@ -5,21 +5,24 @@ Explicit feature map approximation for RBF kernels
 
 .. currentmodule:: sklearn.kernel_approximation
 
-An example shows how to use :class:`RBFSampler` to appoximate the feature map
-of an RBF kernel for classification with an SVM on the digits dataset.  Results
-using a linear SVM in the original space, a linear SVM using the approximate
-mapping and using a kernelized SVM are compared.  Timings and accuracy for
-varying amounts of Monte Carlo samplings for the approximate mapping are shown.
+An example shows how to use :class:`RBFSampler` and :class:`Nystrom` to
+appoximate the feature map of an RBF kernel for classification with an SVM on
+the digits dataset. Results using a linear SVM in the original space, a linear
+SVM using the approximate mappings and using a kernelized SVM are compared.
+Timings and accuracy for varying amounts of Monte Carlo samplings (in the case
+of :class:`RBFSampler`, which uses random Fourier features) and different sized
+subsets of the training set (for :class:`Nystroem)` for the approximate mapping
+are shown.
 
 Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
-accuracy, given by the parameter n_components.  Note that solving the Linear
+accuracy, given by the parameter n_components. Note that solving the Linear
 SVM and also the approximate kernel SVM could be greatly accelerated by using
 stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`.
 This is not easily possible for the case of the kernelized SVM.
 
 The second plot visualized the decision surfaces of the RBF kernel SVM and
-the linear SVM with approximate kernel map.
+the linear SVM with approximate kernel maps.
 The plot shows decision surfaces of the classifiers projected onto
 the first two principal components of the data. This visualization should
 be taken with a grain of salt since it is just an interesting slice through
@@ -28,14 +31,14 @@ a datapoint (represented as a dot) does not necessarily be classified
 into the region it is lying in, since it will not lie on the plane
 that the first two principal components span.
 
-The usage of :class:`RBFSampler` is described in detail in
-:ref:`kernel_approximation`.
+The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
+in :ref:`kernel_approximation`.
 
 """
 print __doc__
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-#         modified Andreas Mueller
+#         Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: Simplified BSD
 
 # Standard scientific Python imports
@@ -46,7 +49,7 @@ from time import time
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, pipeline
 from sklearn.kernel_approximation import (RBFSampler,
-                                          NystroemKernelApproximation)
+                                          Nystroem)
 from sklearn.decomposition import PCA
 
 # The digits dataset
@@ -73,7 +76,7 @@ linear_svm = svm.LinearSVC()
 # create pipeline from kernel approximation
 # and linear svm
 feature_map_fourier = RBFSampler(gamma=.2, random_state=1)
-feature_map_nystroem = NystroemKernelApproximation(gamma=.2, random_state=1)
+feature_map_nystroem = Nystroem(gamma=.2, random_state=1)
 fourier_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fourier),
                                                ("svm", svm.LinearSVC())])
 
@@ -120,9 +123,9 @@ accuracy = pl.subplot(211)
 # second y axis for timeings
 timescale = pl.subplot(212)
 
-accuracy.plot(sample_sizes, nystroem_scores, label="Nystrom approx. kernel")
+accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
 timescale.plot(sample_sizes, nystroem_times, '--',
-               label='Nystrom approx. kernel')
+               label='Nystroem approx. kernel')
 
 accuracy.plot(sample_sizes, fourier_scores, label="Fourier approx. kernel")
 timescale.plot(sample_sizes, fourier_times, '--',
@@ -174,7 +177,7 @@ flat_grid = grid.reshape(-1, data.shape[1])
 titles = ['SVC with rbf kernel',
           'SVC (linear kernel)\n with Fourier rbf feature map\n'
           'n_components=100',
-          'SVC (linear kernel)\n with Nystrom rbf feature map\n'
+          'SVC (linear kernel)\n with Nystroem rbf feature map\n'
           'n_components=100']
 
 pl.tight_layout()

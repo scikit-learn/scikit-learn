@@ -329,7 +329,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return sp.hstack(X_new)
 
 
-class NystroemKernelApproximation(BaseEstimator, TransformerMixin):
+class Nystroem(BaseEstimator, TransformerMixin):
     def __init__(self, kernel="rbf", gamma=1., n_components=100,
                  random_state=None):
         self.kernel = kernel
