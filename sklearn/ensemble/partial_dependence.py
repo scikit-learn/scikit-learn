@@ -220,12 +220,11 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
 
     Examples
     --------
-    >>> # doctest:skip
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> fig, axs = partial_dependence_plots(clf, X, [0, (0, 1)])
+    >>> fig, axs = partial_dependence_plots(clf, X, [0, (0, 1)]) #doctest: +SKIP
     ...
     """
     import matplotlib.pyplot as plt
