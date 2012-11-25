@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import weighted_mode
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
@@ -211,8 +212,13 @@ def test_randomized_svd_transpose_consistency():
 
 def test_randomized_svd_sign_flip():
     a = np.array([[2.0, 0.0], [0.0, 1.0]])
-    u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=41)
+    mismatch = False  # At least one pair should lead to mismatch
+    u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=0)
     for seed in xrange(100):
-        u2, s2, v2 = randomized_svd(a, 2, flip_sign=True, random_state=seed)
+        u2, s2, v2 = randomized_svd(a, 2, flip_sign=False, random_state=seed)
+        if np.any(np.sign(u1) != np.sign(u2)):
+            mismatch = True
+        u2, s2, v2 = svd_flip(u2, s2, v2)
         assert_almost_equal(u1, u2)
         assert_almost_equal(v1, v2)
+    assert_true(mismatch)
