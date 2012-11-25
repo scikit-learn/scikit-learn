@@ -197,7 +197,13 @@ def test_chi_square_kernel():
     assert_greater(K[0, 0], K[0, 1])
     assert_greater(K[1, 1], K[1, 0])
 
+    # test negative input
     assert_raises(ValueError, chi2_kernel, [[0, -1]])
+    assert_raises(ValueError, chi2_kernel, [[0, -1]], [[-1, -1]])
+    assert_raises(ValueError, chi2_kernel, [[0, 1]], [[-1, -1]])
+
+    # different n_features in X and Y
+    assert_raises(ValueError, chi2_kernel, [[0, 1]], [[.2, .2, .6]])
 
 
 def test_kernel_symmetry():
