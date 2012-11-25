@@ -10,11 +10,13 @@ approximate kernel feature maps base on Fourier transforms.
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import array2d, atleast2d_or_csr, check_random_state
 from .utils.extmath import safe_sparse_dot
+from .metrics.pairwise import pairwise_kernels
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -325,3 +327,34 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             X_new.append(X_step)
 
         return sp.hstack(X_new)
+
+
+class NystroemKernelApproximation(BaseEstimator, TransformerMixin):
+    def __init__(self, kernel="rbf", gamma=1., n_components=100,
+                 random_state=None):
+        self.kernel = kernel
+        self.gamma = gamma
+        self.n_components = n_components
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        rnd = check_random_state(self.random_state)
+        n_samples = X.shape[0]
+
+        # get basis vectors
+        inds = rnd.permutation(n_samples)
+        X_basis = X[inds[:self.n_components]]
+
+        basis_kernel = pairwise_kernels(X_basis, metric=self.kernel,
+                                        gamma=self.gamma)
+
+        # sqrt of kernel matrix
+        U, S, V = svd(basis_kernel)
+        self.normalization = np.dot(U * 1. / np.sqrt(S), V)
+        self.X_basis = X_basis
+        return self
+
+    def transform(self, X):
+        embedded = pairwise_kernels(X, self.X_basis, metric=self.kernel,
+                                    gamma=self.gamma)
+        return np.dot(embedded, self.normalization.T)
