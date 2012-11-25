@@ -3,7 +3,7 @@ from numpy import linalg
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_greater
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
@@ -182,6 +182,20 @@ def test_chi_square_kernel():
     Y = rng.random_sample((10, 4)).astype(np.float32)
     K = chi2_kernel(X, Y)
     assert_equal(K.dtype, np.float32)
+
+    # check integer type gets converted,
+    # check that zeros are handled
+    X = rng.random_sample((10, 4)).astype(np.int32)
+    K = chi2_kernel(X, X)
+    assert_true(np.isfinite(K).all())
+    assert_equal(K.dtype, np.float)
+
+    # check that kernel of similar things is greater than dissimilar ones
+    X = [[.3, .7], [1., 0]]
+    Y = [[0,   1], [.9, .1]]
+    K = chi2_kernel(X, Y)
+    assert_greater(K[0, 0], K[0, 1])
+    assert_greater(K[1, 1], K[1, 0])
 
 
 def test_kernel_symmetry():

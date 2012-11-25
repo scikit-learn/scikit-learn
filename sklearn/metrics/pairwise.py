@@ -422,8 +422,8 @@ def additive_chi2_kernel(X, Y=None):
 
         if X.dtype != np.float32 or Y.dtype != np.float32:
             # if not both are 32bit float, convert to 64bit float
-            X.astype(np.float)
-            Y.astype(np.float)
+            X = X.astype(np.float)
+            Y = Y.astype(np.float)
 
         if (X < 0).any():
             raise ValueError("X contains negative values.")
