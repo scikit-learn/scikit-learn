@@ -355,8 +355,8 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
-def chi2_kernel(X, Y=None):
-    """Computes the chi-squared kernel between observations in X and Y.
+def additive_chi2_kernel(X, Y=None):
+    """Computes the additive chi-squared kernel between observations in X and Y
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -364,9 +364,15 @@ def chi2_kernel(X, Y=None):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i])
+        k(x, y) = -\sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i])
 
     It can be interpreted as a weighted difference per entry.
+
+    Notes
+    -----
+    As the negative of a distance, this kernel is only conditionally positive
+    definite.
+
 
     Parameters
     ----------
@@ -388,7 +394,7 @@ def chi2_kernel(X, Y=None):
 
     See also
     --------
-    exponential_chi2_kernel : An exponentiated version of this kernel.
+    chi2_kernel : An exponentiated version of this kernel.
 
     kernel_approximation.AdditiveChi2Sampler : A Fourier approximation to this
         kernel.
@@ -427,7 +433,7 @@ def chi2_kernel(X, Y=None):
     return result
 
 
-def exponential_chi2_kernel(X, Y=None, gamma=1.):
+def chi2_kernel(X, Y=None, gamma=1.):
     """Computes the exponential chi-squared kernel X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
@@ -459,13 +465,13 @@ def exponential_chi2_kernel(X, Y=None, gamma=1.):
 
     See also
     --------
-    chi2_kernel : The additive version of this kernel
+    additive_chi2_kernel : The additive version of this kernel
 
     kernel_approximation.AdditiveChi2Sampler : A Fourier approximation to the
         additive version of this kernel.
     """
-    K = chi2_kernel(X, Y)
-    K *= -gamma
+    K = additive_chi2_kernel(X, Y)
+    K *= gamma
     return np.exp(K, K)
 
 
@@ -642,8 +648,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 pairwise_kernel_functions = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
+    'additive_chi2': additive_chi2_kernel,
     'chi2': chi2_kernel,
-    'exp_chi2': exponential_chi2_kernel,
     'linear': linear_kernel,
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
@@ -660,17 +666,17 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ============   ========================================
-      metric         Function
-      ============   ========================================
-      'chi2'         sklearn.pairwise.chi2_kernel
-      'exp_chi2'     sklearn.pairwise.exponential_chi2_kernel
-      'linear'       sklearn.pairwise.linear_kernel
-      'poly'         sklearn.pairwise.polynomial_kernel
-      'polynomial'   sklearn.pairwise.polynomial_kernel
-      'rbf'          sklearn.pairwise.rbf_kernel
-      'sigmoid'      sklearn.pairwise.sigmoid_kernel
-      ============   ========================================
+      ==============   ========================================
+      metric           Function
+      ==============   ========================================
+      'additive_chi2'  sklearn.pairwise.additive_chi2_kernel
+      'chi2'           sklearn.pairwise.chi2_kernel
+      'linear'         sklearn.pairwise.linear_kernel
+      'poly'           sklearn.pairwise.polynomial_kernel
+      'polynomial'     sklearn.pairwise.polynomial_kernel
+      'rbf'            sklearn.pairwise.rbf_kernel
+      'sigmoid'        sklearn.pairwise.sigmoid_kernel
+      ==============   ========================================
     """
     return pairwise_kernel_functions
 

@@ -23,4 +23,4 @@ def _chi2_kernel_fast(cython.floating[:,:] X, cython.floating[:,:] Y, cython.flo
                 denom = (X[i, k] - Y[j, k])
                 nom = (X[i, k] + Y[j, k] + 1e-10)
                 res  += denom * denom / nom
-            result[i, j] = res
+            result[i, j] = -res

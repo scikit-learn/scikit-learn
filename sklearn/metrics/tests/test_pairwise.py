@@ -9,7 +9,7 @@ from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from ..pairwise import euclidean_distances
 from ..pairwise import linear_kernel
-from ..pairwise import chi2_kernel, exponential_chi2_kernel
+from ..pairwise import chi2_kernel, additive_chi2_kernel
 from ..pairwise import polynomial_kernel
 from ..pairwise import rbf_kernel
 from ..pairwise import sigmoid_kernel
@@ -98,7 +98,7 @@ def test_pairwise_kernels():
     Y = rng.random_sample((2, 4))
     # Test with all metrics that should be in pairwise_kernel_functions.
     test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
-                    "exp_chi2"]
+                    "additive_chi2"]
     for metric in test_metrics:
         function = pairwise_kernel_functions[metric]
         # Test with Y=None
@@ -114,7 +114,8 @@ def test_pairwise_kernels():
         Y_tuples = tuple([tuple([v for v in row]) for row in Y])
         K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
         assert_array_almost_equal(K1, K2)
-        if metric in ["chi2", "exp_chi2"]:
+        if metric in ["chi2", "additive_chi2"]:
+            # these don't support sparse matrices yet
             continue
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
@@ -165,16 +166,16 @@ def test_chi_square_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((10, 4))
-    K = chi2_kernel(X, Y)
+    K_add = additive_chi2_kernel(X, Y)
     gamma = 0.1
-    K_exp = exponential_chi2_kernel(X, Y, gamma=gamma)
+    K = chi2_kernel(X, Y, gamma=gamma)
     assert_equal(K.dtype, np.float)
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
-            chi2 = np.sum((x - y) ** 2 / (x + y))
-            chi2_exp = np.exp(-gamma * chi2)
-            assert_almost_equal(K[i, j], chi2)
-            assert_almost_equal(K_exp[i, j], chi2_exp)
+            chi2 = -np.sum((x - y) ** 2 / (x + y))
+            chi2_exp = np.exp(gamma * chi2)
+            assert_almost_equal(K_add[i, j], chi2)
+            assert_almost_equal(K[i, j], chi2_exp)
 
     # check that float32 is preserved
     X = rng.random_sample((5, 4)).astype(np.float32)
