@@ -99,10 +99,10 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    skewedness: float
+    skewedness : float
         "skewedness" parameter of the kernel. Needs to be cross-validated.
 
-    n_components: int
+    n_components : int
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
@@ -198,9 +198,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    sample_steps: int, optional
+    sample_steps : int, optional
         Gives the number of (complex) sampling points.
-    sample_interval: float, optional
+    sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
     Notes
@@ -330,6 +330,59 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class Nystroem(BaseEstimator, TransformerMixin):
+    """Approximate a kernel map using a subset of the training data.
+
+    Constructes an approximate feature map for an arbitrary kernel
+    using a subset of the data as basis.
+
+    Parameters
+    ----------
+    kernel : string or callable, default="rbf"
+        Kernel map to be approximated.
+
+    n_components : int
+        Number of features to construct.
+        How many data points will be used to construct the mapping.
+
+    gamma : float, default=1.
+        Parameter for the RBF kernel.
+
+    random_state : {int, RandomState}, optional
+        If int, random_state is the seed used by the random number generator;
+        if RandomState instance, random_state is the random number generator.
+
+
+    Attributes
+    ----------
+    `basis_` : array, shape (n_components, n_features)
+        Subset of training points used to construct the feature map.
+
+    `basis_inds_` : array, shape (n_components)
+        Indices of ``basis_`` in the training set.
+
+    `normalization_` : array, shape (n_components, n_components)
+        Normalization matrix needed for embedding.
+        Square root of the kernel matrix on ``basis_``.
+
+    References
+    ----------
+    * Williams, C.K.I. and Seeger, M.
+      "Using the Nystrom method to speed up kernel machines",
+      Advances in neural information processing systems 2001
+
+    * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
+      "Nystroem Method vs Random Fourier Features: A Theoretical and Empirical
+      Comparison",
+      Advances in Neural Information Processing Systems 2012
+
+
+    See also
+    --------
+    RBFSampler : An approximation to the RBF kernel using random Fourier
+                 features.
+
+    sklearn.metric.pairwise.kernel_metrics : List of build-in kernels.
+    """
     def __init__(self, kernel="rbf", gamma=1., n_components=100,
                  random_state=None):
         self.kernel = kernel
@@ -338,23 +391,58 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
+        """Fit estimator to data.
+
+        Samples a subset of training points, computes kernel
+        on these and computes normalization matrix.
+
+        Parmeters
+        ---------
+        X : array-like, shape=(n_samples, n_feature)
+            Training data.
+        """
+
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
         # get basis vectors
         inds = rnd.permutation(n_samples)
-        X_basis = X[inds[:self.n_components]]
+        basis_inds = inds[:self.n_components]
+        basis = X[basis_inds]
 
-        basis_kernel = pairwise_kernels(X_basis, metric=self.kernel,
-                                        gamma=self.gamma)
+        if callable(self.kernel):
+            basis_kernel = self.kernel(basis, basis)
+        else:
+            basis_kernel = pairwise_kernels(basis, metric=self.kernel,
+                                            gamma=self.gamma)
 
-        # sqrt of kernel matrix
+        # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
-        self.normalization = np.dot(U * 1. / np.sqrt(S), V)
-        self.X_basis = X_basis
+        self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
+        self.basis_ = basis
+        self.basis_inds_ = inds
         return self
 
     def transform(self, X):
-        embedded = pairwise_kernels(X, self.X_basis, metric=self.kernel,
-                                    gamma=self.gamma)
-        return np.dot(embedded, self.normalization.T)
+        """Apply feature map to X.
+
+        Computes an approximate feature map using the kernel
+        between some training points and X.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Data to transform.
+
+        Returns
+        -------
+        X_transformed : array, shape=(n_samples, n_components)
+            Transformed data.
+        """
+
+        if callable(self.kernel):
+            embedded = self.kernel(X, self.basis_)
+        else:
+            embedded = pairwise_kernels(X, self.basis_, metric=self.kernel,
+                                        gamma=self.gamma)
+        return np.dot(embedded, self.normalization_.T)
