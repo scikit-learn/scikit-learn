@@ -318,7 +318,7 @@ Complexity
 The Spectral Embedding algorithm comprises three stages:
 
 1. **Weighted Graph Construction**. Transform the raw input data into
-   graph representation using affinity(adjacency) matrix representation.
+   graph representation using affinity (adjacency) matrix representation.
 
 2. **Graph Laplacian Construction**. unnormalized Graph laplacian
    is constructed as :math:`L = D - A` for and normalized one as
