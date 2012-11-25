@@ -363,16 +363,15 @@ class GaussianHMMBaseTester(object):
                              [0, 0, 0, 0, 1.0]])
 
         h = hmm.GaussianHMM(n_components=5,
-                            covariance_type='full',
-                            startprob=startprob,
-                            transmat=transmat)
+                            covariance_type='full', startprob=startprob,
+                            transmat=transmat, n_iter=100, init_params='st')
 
         h.means_ = np.zeros((5, 10))
         h.covars_ = np.tile(np.identity(10), (5, 1, 1))
 
         obs = [h.sample(10)[0] for _ in range(10)]
 
-        h.fit(obs=obs, n_iter=100, init_params='st')
+        h.fit(obs=obs)
 
 
 class TestGaussianHMMWithSphericalCovars(GaussianHMMBaseTester, TestCase):

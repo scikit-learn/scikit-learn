@@ -69,6 +69,10 @@ Changelog
      "hashing trick" for fast, low-memory feature extraction from string data
      by `Lars Buitinck`_.
 
+   - New dummy estimators :class:`dummy.DummyClassifiers` and
+     :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
+     estimators.
+
 
 API changes summary
 -------------------

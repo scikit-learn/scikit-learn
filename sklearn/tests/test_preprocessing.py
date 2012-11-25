@@ -21,6 +21,7 @@ from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import add_dummy_feature
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -600,3 +601,30 @@ def test_fit_transform():
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)
         assert_array_equal(X_transformed, X_transformed2)
+
+
+def test_add_dummy_feature():
+    X = [[1, 0], [0, 1], [0, 1]]
+    X = add_dummy_feature(X)
+    assert_array_equal(X, [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
+
+
+def test_add_dummy_feature_coo():
+    X = sp.coo_matrix([[1, 0], [0, 1], [0, 1]])
+    X = add_dummy_feature(X)
+    assert_true(sp.isspmatrix_coo(X), X)
+    assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
+
+
+def test_add_dummy_feature_csc():
+    X = sp.csc_matrix([[1, 0], [0, 1], [0, 1]])
+    X = add_dummy_feature(X)
+    assert_true(sp.isspmatrix_csc(X), X)
+    assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
+
+
+def test_add_dummy_feature_csr():
+    X = sp.csr_matrix([[1, 0], [0, 1], [0, 1]])
+    X = add_dummy_feature(X)
+    assert_true(sp.isspmatrix_csr(X), X)
+    assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])

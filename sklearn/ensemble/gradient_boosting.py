@@ -875,7 +875,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             The predicted value of the input samples.
         """
         for score in self.staged_decision_function(X):
-            yield self._score_to_proba(X)
+            yield self._score_to_proba(score)
 
     def predict(self, X):
         """Predict class for X.
