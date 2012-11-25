@@ -168,12 +168,19 @@ def test_chi_square_kernel():
     K = chi2_kernel(X, Y)
     gamma = 0.1
     K_exp = exponential_chi2_kernel(X, Y, gamma=gamma)
+    assert_equal(K.dtype, np.float)
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
             chi2 = np.sum((x - y) ** 2 / (x + y))
             chi2_exp = np.exp(-gamma * chi2)
             assert_almost_equal(K[i, j], chi2)
             assert_almost_equal(K_exp[i, j], chi2_exp)
+
+    # check that float32 is preserved
+    X = rng.random_sample((5, 4)).astype(np.float32)
+    Y = rng.random_sample((10, 4)).astype(np.float32)
+    K = chi2_kernel(X, Y)
+    assert_equal(K.dtype, np.float32)
 
 
 def test_kernel_symmetry():

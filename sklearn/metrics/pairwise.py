@@ -43,11 +43,12 @@ from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import array2d
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import chi2_kernel
+from .pairwise_fast import _chi2_kernel_fast
 
 
 # Utility Functions
@@ -352,6 +353,78 @@ def rbf_kernel(X, Y=None, gamma=None):
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
+
+
+def chi2_kernel(X, Y=None):
+    """Computes the chi-squared kernel between observations in X and Y.
+
+    The chi-squared kernel is computed between each pair of rows in X and Y.  X
+    and Y have to be non-negative. This kernel is most commonly applied to
+    histograms.
+
+    The chi-squared kernel is given by::
+
+        k(x, y) = \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i])
+
+    It can be interpreted as a weighted difference per entry.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features)
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+
+    References
+    ----------
+    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+      Local features and kernels for classification of texture and object
+      categories: A comprehensive study
+      International Journal of Computer Vision 2007
+
+
+    See also
+    --------
+    exponential_chi2_kernel : An exponentiated version of this kernel.
+
+    kernel_approximation.AdditiveChi2Sampler : A Fourier approximation to this
+        kernel.
+    """
+    ### once we support sparse matrices, we can use check_pairwise
+
+    if Y is None:
+        # optimize this case!
+        X = array2d(X)
+        if X.dtype != np.float32:
+            X.astype(np.float)
+        Y = X
+        if (X < 0).any():
+            raise ValueError("X contains negative values.")
+    else:
+        X = array2d(X)
+        Y = array2d(Y)
+
+        if X.shape[1] != Y.shape[1]:
+            raise ValueError("Incompatible dimension for X and Y matrices: "
+                             "X.shape[1] == %d while Y.shape[1] == %d" % (
+                                 X.shape[1], Y.shape[1]))
+
+        if X.dtype != np.float32 or Y.dtype != np.float32:
+            # if not both are 32bit float, convert to 64bit float
+            X.astype(np.float)
+            Y.astype(np.float)
+
+        if (X < 0).any():
+            raise ValueError("X contains negative values.")
+        if (Y < 0).any():
+            raise ValueError("Y contains negative values.")
+
+    result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
+    _chi2_kernel_fast(X, Y, result)
+    return result
 
 
 def exponential_chi2_kernel(X, Y=None, gamma=1.):
