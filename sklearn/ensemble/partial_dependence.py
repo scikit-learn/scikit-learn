@@ -163,9 +163,15 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 
 def partial_dependence_plots(gbrt, X, features, feature_names=None,
-                             grid_resolution=100, percentiles=(0.05, 0.95),
-                             n_jobs=1, verbose=0, ax=None, **fig_kw):
+                             ncols=3, grid_resolution=100,
+                             percentiles=(0.05, 0.95), n_jobs=1,
+                             verbose=0, ax=None, line_kw=None,
+                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
+
+    The ``len(features)`` plots are aranged in a grid with ``ncols``
+    columns. Two-way partial dependence plots are plotted as contour
+    plots.
 
     Parameters
     ----------
@@ -180,6 +186,8 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
+    ncols : int
+        The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used create the extreme values
         for the PDP axes.
@@ -192,6 +200,12 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
         Verbose output during PD computations. Defaults to 0.
     ax : Matplotlib axis object, default None
         An axis object onto which the plots will be drawn.
+    line_kw : dict
+        Dict with keywords passed to the ``pylab.plot`` call.
+        For one-way partial dependence plots.
+    contour_kw : dict
+        Dict with keywords passed to the ``pylab.plot`` call.
+        For two-way partial dependence plots.
     fig_kw : dict
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
@@ -215,12 +229,19 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     """
     import matplotlib.pyplot as plt
     from matplotlib import transforms
+    from matplotlib.ticker import MaxNLocator
+    from matplotlib.ticker import ScalarFormatter
 
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
     if gbrt.estimators_.shape[0] == 0:
         raise ValueError('Call %s.fit before partial_dependence' %
                          gbrt.__class__.__name__)
+
+    if line_kw is None:
+        line_kw = {'color': 'green'}
+    if contour_kw is None:
+        contour_kw = {}
 
     tmp_features = []
     for fxs in features:
@@ -272,7 +293,7 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
         fig = ax.get_figure()
         fig.clear()
 
-    ncols = min(3, len(features))
+    ncols = min(ncols, len(features))
     nrows = int(np.ceil(len(features) / float(ncols)))
     axs = []
     for i, fx, name, (pdp, axes) in izip(count(), features, names,
@@ -280,7 +301,7 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
         ax = fig.add_subplot(nrows, ncols, i + 1)
 
         if len(axes) == 1:
-            ax.plot(axes[0], pdp.ravel(), 'g-')
+            ax.plot(axes[0], pdp.ravel(), **line_kw)
         else:
             # make contour plot
             assert len(axes) == 2
@@ -289,7 +310,7 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
-                        vmin=Z_level[0], alpha=0.75)
+                        vmin=Z_level[0], alpha=0.75, **contour_kw)
             ax.clabel(CS, fmt='%2.2f', colors='k', fontsize=10, inline=True)
 
         # plot data deciles + axes labels
@@ -301,7 +322,14 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
         ax.set_xlabel(name[0])
         ax.set_ylim(ylim)
 
+        # prevent x-axis ticks from overlapping
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=6, prune='lower'))
+        tick_formatter = ScalarFormatter()
+        tick_formatter.set_powerlimits((-3, 4))
+        ax.xaxis.set_major_formatter(tick_formatter)
+
         if len(axes) > 1:
+            # two-way PDP - y-axis deciles + labels
             deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
             trans = transforms.blended_transform_factory(ax.transAxes,
                                                          ax.transData)
