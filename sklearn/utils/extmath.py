@@ -132,7 +132,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None,
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=False, random_state=0,
+                   transpose='auto', flip_sign=True, random_state=0,
                    n_iterations=None):
     """Computes a truncated randomized SVD
 
@@ -160,7 +160,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
         implementation of randomized SVD tend to be a little faster in that
         case).
 
-    flip_sign: boolean, (False by default)
+    flip_sign: boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest
