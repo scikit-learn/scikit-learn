@@ -22,7 +22,9 @@ to find a low-dimensional representation of the data (here 2D) in
 which the distances respect well the distances in the original
 high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
-the low-dimensional space.
+the low-dimensional space. Here the manifold problem matches fairly
+that of representing a flat map of the Earth, as with
+`map projection<http://en.wikipedia.org/wiki/Map_projection>`_
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
@@ -83,7 +85,6 @@ labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 for i, method in enumerate(methods):
     t0 = time()
     trans_data = manifold.LocallyLinearEmbedding(n_neighbors, 2,
-                                                eigen_solver='auto',
                                                 method=method).fit_transform(sphere_data).T
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
