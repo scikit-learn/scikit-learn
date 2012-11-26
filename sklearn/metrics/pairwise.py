@@ -38,6 +38,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from numpy.lib.stride_tricks import as_strided
 
 from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
@@ -167,7 +168,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -233,10 +234,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
            [ 1.,  1.]]...)
     """
     X, Y = check_pairwise_arrays(X, Y)
+    if issparse(X) or issparse(Y):
+        raise TypeError("manhattan distances currently does not"
+                        " support sparse matrices.")
     n_samples_X, n_features_X = X.shape
     n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
@@ -350,6 +352,75 @@ def rbf_kernel(X, Y=None, gamma=0):
     return K
 
 
+def chi_square_kernel(X, Y=None):
+    """
+    Compute the chi square kernel between X and Y::
+
+        K(x, y) = 1 - \sum_i^n 2(x_i - y_i)^2 / (x_i + y_i)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_1, n_features)
+
+    Y : array of shape (n_samples_2, n_features)
+
+    Returns
+    -------
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    n_samples_1, n_features = X.shape
+    n_samples_2, _ = Y.shape
+    print n_samples_1, n_samples_2, n_features
+    if issparse(X) or issparse(Y):
+        raise TypeError("chi square kernel currently does not"
+                        " support sparse matrices.")
+    XY = X[:, np.newaxis, :] + Y[np.newaxis, :, :]
+    K = XY - 4. * X[:, np.newaxis, :] * Y[np.newaxis, :, :] / XY
+    K = K.sum(axis=2) * 2
+    K = 1 - K
+    return K
+
+
+def histogram_intersection_kernel(X, Y=None, alpha=None, beta=None):
+    """
+    Compute the histogram intersection kernel (min kernel)
+    between X and Y::
+
+        K(x, y) = \sum_i^n min(|x_i|^\alpha, |y_i|^\beta)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_1, n_features)
+
+    Y : array of shape (n_samples_2, n_features)
+
+    alpha : float
+
+    beta : float
+
+    Returns
+    -------
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    """
+    if Y is None and beta is None and alpha is not None:
+        beta = alpha
+    X, Y = check_pairwise_arrays(X, Y)
+    if alpha is not None:
+        X = np.abs(X) ** alpha
+    if beta is not None:
+        Y = np.abs(Y) ** beta
+    n_samples_1, n_features = X.shape
+    n_samples_2, _ = Y.shape
+    if issparse(X) or issparse(Y):
+        raise TypeError("histogram intersection kernel currently does not"
+                        " support sparse matrices.")
+    else:
+        K = np.minimum(X[:, np.newaxis, :],
+                       Y[np.newaxis, :, :]).sum(axis=2)
+    return K
+
+
 # Helper functions - distance
 pairwise_distance_functions = {
     # If updating this dictionary, update the doc in both distance_metrics()
@@ -359,7 +430,7 @@ pairwise_distance_functions = {
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
     'cityblock': manhattan_distances,
-    }
+}
 
 
 def distance_metrics():
@@ -395,8 +466,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
@@ -527,8 +598,10 @@ pairwise_kernel_functions = {
     'sigmoid': sigmoid_kernel,
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
-    'linear': linear_kernel
-    }
+    'linear': linear_kernel,
+    'histogram_intersection': histogram_intersection_kernel,
+    'chi_square': chi_square_kernel
+}
 
 
 def kernel_metrics():
@@ -539,15 +612,17 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ============   ==================================
-      metric         Function
-      ============   ==================================
-      'linear'       sklearn.pairwise.linear_kernel
-      'poly'         sklearn.pairwise.polynomial_kernel
-      'polynomial'   sklearn.pairwise.polynomial_kernel
-      'rbf'          sklearn.pairwise.rbf_kernel
-      'sigmoid'      sklearn.pairwise.sigmoid_kernel
-      ============   ==================================
+      ============             ==================================
+      metric                   Function
+      ============             ==================================
+      'linear'                 sklearn.pairwise.linear_kernel
+      'poly'                   sklearn.pairwise.polynomial_kernel
+      'polynomial'             sklearn.pairwise.polynomial_kernel
+      'rbf'                    sklearn.pairwise.rbf_kernel
+      'sigmoid'                sklearn.pairwise.sigmoid_kernel
+      'histogram_intersection' sklearn.pairwise.histogram_intersection_kernel
+      'chi_square'             sklearn.pairwise.chi_square_kernel
+      ============             ==================================
     """
     return pairwise_kernel_functions
 
@@ -557,7 +632,9 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-    "linear": ()
+    "linear": (),
+    "histogram_intersection": set(("alpha", "beta")),
+    "chi_square": set()
 }
 
 
@@ -577,7 +654,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'chi_square',
+        'histogram_intersection']
 
     Parameters
     ----------
@@ -631,8 +709,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds \
-                                        if k in kernel_params[metric])
+            kwds = dict((k, kwds[k]) for k in kwds
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)

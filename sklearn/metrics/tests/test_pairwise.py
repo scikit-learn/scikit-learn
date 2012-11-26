@@ -2,6 +2,7 @@ import numpy as np
 from numpy import linalg
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
+from numpy.testing import assert_almost_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
 from scipy.sparse import csr_matrix
@@ -16,6 +17,8 @@ from .. import pairwise_distances, pairwise_kernels
 from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
 from ..pairwise import _parallel_pairwise
+from ..pairwise import chi_square_kernel
+from ..pairwise import histogram_intersection_kernel
 
 
 def test_pairwise_distances():
@@ -96,7 +99,8 @@ def test_pairwise_kernels():
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
     # Test with all metrics that should be in pairwise_kernel_functions.
-    test_metrics = ["rbf", "sigmoid", "polynomial", "linear"]
+    test_metrics = ["rbf", "sigmoid", "polynomial", "linear",
+                    "histogram_intersection", "chi_square"]
     for metric in test_metrics:
         function = pairwise_kernel_functions[metric]
         # Test with Y=None
@@ -115,8 +119,11 @@ def test_pairwise_kernels():
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
-        K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
-        assert_array_almost_equal(K1, K2)
+        try:
+            K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
+            assert_array_almost_equal(K1, K2)
+        except TypeError:
+            pass
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
@@ -192,6 +199,34 @@ def test_rbf_kernel():
     K = rbf_kernel(X, X)
     # the diagonal elements of a rbf kernel are 1
     assert_array_almost_equal(K.flat[::6], np.ones(5))
+
+
+def test_chi_square_kernel():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((10, 4))
+    K = chi_square_kernel(X, Y)
+    for i, x in enumerate(X):
+        for j, y in enumerate(Y):
+            assert_almost_equal(
+                K[i, j], 1 - 2 * np.sum((x - y) ** 2 / (x + y)), decimal=10)
+
+
+def test_histogram_intersection_kernel():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((10, 4))
+    K = histogram_intersection_kernel(X, Y)
+    for i, x in enumerate(X):
+        for j, y in enumerate(Y):
+            assert_almost_equal(K[i, j], np.minimum(x, y).sum(), decimal=10)
+    alpha = 0.9
+    beta = 0.8
+    K = histogram_intersection_kernel(X, Y, alpha, beta)
+    for i, x in enumerate(X):
+        for j, y in enumerate(Y):
+            assert_almost_equal(K[i, j], np.minimum(
+                np.abs(x) ** alpha, np.abs(y) ** beta).sum(), decimal=10)
 
 
 def test_check_dense_matrices():
