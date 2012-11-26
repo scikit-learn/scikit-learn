@@ -268,7 +268,7 @@ def linear_kernel(X, Y=None):
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
+def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y::
 
@@ -287,7 +287,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -297,7 +297,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
+def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     Compute the sigmoid kernel between X and Y::
 
@@ -316,7 +316,7 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -766,7 +766,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds \
+            kwds = dict((k, kwds[k]) for k in kwds
                                         if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
