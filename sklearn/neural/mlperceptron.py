@@ -38,6 +38,9 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
     ----------
     n_hidden : int
         Number of units in the hidden layer.
+    activation: string, optional
+        Activation function for the hidden layer; either "logistic" for
+        1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
     alpha : float, optional
         L2 penalty (weight decay) parameter.
     learning_rate : float, optional
@@ -58,8 +61,10 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         Whether to print progress messages to stderr.
 
     """
-    def __init__(self, n_hidden, alpha=0, learning_rate=.01, max_iter=100,
-                 momentum=.9, random_state=None, tol=1e-5, verbose=False):
+    def __init__(self, n_hidden, activation="tanh", alpha=0, learning_rate=.01,
+                 max_iter=100, momentum=.9, random_state=None, tol=1e-5,
+                 verbose=False):
+        self.activation = activation
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -101,7 +106,8 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         X = atleast2d_or_csr(X)
         z_hidden = (safe_sparse_dot(X, self.coef_hidden_.T) +
                     self.intercept_hidden_)
-        y_hidden = logistic(z_hidden)
+        y_hidden = logistic(z_hidden) if self.activation == "logistic" \
+                                      else np.tanh(z_hidden)
         y_output = (np.dot(y_hidden, self.coef_output_.T) +
                     self.intercept_output_)
         if y_output.shape[1] == 1:

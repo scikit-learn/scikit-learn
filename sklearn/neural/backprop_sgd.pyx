@@ -1,5 +1,5 @@
 cimport cython
-from libc.math cimport exp, fabs, log, sqrt
+from libc.math cimport exp, fabs, log, sqrt, tanh
 from libc.stdint cimport uint64_t
 
 cimport numpy as np
@@ -15,12 +15,27 @@ np.import_array()
 @cython.wraparound(False)
 cdef void logistic(double[:] z) nogil:
     """Logistic sigmoid: 1. / (1. + np.exp(-x)), computed in-place."""
-    #cdef np.ndarray[np.float64_t, ndim=1] x = z.ravel()
     for i in xrange(z.shape[0]):
         z[i] = 1. / (1. + exp(-z[i]))
 
 
 @cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.wraparound(False)
+cdef void tanh_act(double[:] z) nogil:
+    """tanh activation function with LeCun's (1998) magic constants."""
+    for i in xrange(z.shape[0]):
+        z[i] = 1.7159 * tanh(2./3. * z[i])
+
+
+cdef void tanh_deriv(double[:] y, double[:] d):
+    """Derivative of tanh activation function with LeCun's magic constants."""
+    for i in xrange(y.shape[0]):
+        d[i] = 1.14393333333333 * (1 - tanh(2/3 * y[i]) ** 2)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef inline double _logsumexp(double[:] x) nogil:
     """Fast implementation of 1-d logsumexp for double precision floats.
 
@@ -41,6 +56,7 @@ cdef inline double _logsumexp(double[:] x) nogil:
 
 
 @cython.boundscheck(False)
+@cython.wraparound(False)
 cdef void log_softmax(double[:, :] X, double[:, :] log_y_output) nogil:
     """Logistic K-way softmax (exp(X).T / exp(X).sum(axis=1)).T, in log domain.
 
@@ -56,6 +72,7 @@ cdef void log_softmax(double[:, :] X, double[:, :] log_y_output) nogil:
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
+@cython.wraparound(False)
 cdef double log_loss_multiclass(double[:, :] output, uint64_t[:, :] T) nogil:
     """Multiclass cross-entropy loss function."""
     #loss = -np.mean(np.sum(log_y_output * T, axis=1))
@@ -79,7 +96,7 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
     cdef double loss, penalty, prev_loss, tol
     cdef double lr, momentum
     cdef double sqrt_n_features, sqrt_n_hidden
-    cdef bint multiclass, verbose
+    cdef bint multiclass, use_tanh, verbose
     cdef np.int32_t i, n_features, n_hidden, n_samples, n_targets
 
     cdef np.ndarray[np.float64_t, ndim=2] \
@@ -97,6 +114,7 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
 
     multiclass = n_targets > 1 and not self._lbin.multilabel
 
+    use_tanh = self.activation == "tanh"
     w_hidden = self.coef_hidden_
     w_output = self.coef_output_
     bias_hidden = self.intercept_hidden_
@@ -131,7 +149,13 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
     for epoch in xrange(self.max_iter):
         # make predictions
         y_hidden = safe_sparse_dot(X, w_hidden.T) + bias_hidden
-        logistic(y_hidden)
+        if use_tanh:
+            tanh_act(y_hidden.ravel())
+            y_hidden_deriv = np.empty(y_hidden.shape)
+            tanh_deriv(y_hidden.ravel(), y_hidden_deriv.ravel())
+        else:
+            logistic(y_hidden.ravel())
+            y_hidden_deriv = y_hidden * (1 - y_hidden)
         #z_output = np.dot(y_hidden, w_output.T) + bias_output
         np.dot(y_hidden, w_output.T, out=z_output)
 
@@ -140,6 +164,7 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
                 z_output[i, j] += bias_output[j]
         if multiclass:
             #log_y_output = log_softmax(z_output)
+            log_y_output = np.empty((z_output.shape[0], z_output.shape[1]))
             log_softmax(z_output, log_y_output)
         else:
             logistic(z_output)
@@ -149,8 +174,7 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
                 y_output[i, j] = exp(log_y_output[i, j])
 
         delta_output = y_output - Y
-        delta_hidden = (np.dot(delta_output, w_output)
-                       * (y_hidden * (1 - y_hidden)))
+        delta_hidden = np.dot(delta_output, w_output) * y_hidden_deriv
 
         #output_grad = np.dot(delta_output.T, y_hidden)
         np.dot(delta_output.T, y_hidden, out=output_grad)
