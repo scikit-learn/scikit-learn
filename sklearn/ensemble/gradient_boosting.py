@@ -230,7 +230,7 @@ class LeastAbsoluteError(RegressionLossFunction):
                                 residual, pred):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
-        tree.value[leaf, 0, 0] = np.median(y.take(terminal_region, axis=0) - \
+        tree.value[leaf, 0, 0] = np.median(y.take(terminal_region, axis=0) -
                                            pred.take(terminal_region, axis=0))
 
 
@@ -431,9 +431,10 @@ class BaseGradientBoosting(BaseEnsemble):
 
         if not learn_rate is None:
             learning_rate = learn_rate
-            warnings.warn("Parameter learn_rate has been renamed to "
-                 'learning_rate'" and will be removed in release 0.14.",
-                  DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "Parameter learn_rate has been renamed to "
+                'learning_rate'" and will be removed in release 0.14.",
+                DeprecationWarning, stacklevel=2)
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -461,7 +462,8 @@ class BaseGradientBoosting(BaseEnsemble):
             residual = loss.negative_gradient(y, y_pred, k=k)
 
             # induce regression tree on residuals
-            tree = DecisionTreeRegressor(criterion="mse",
+            tree = DecisionTreeRegressor(
+                criterion="mse",
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
@@ -473,8 +475,8 @@ class BaseGradientBoosting(BaseEnsemble):
             tree.fit(X, residual, sample_mask, X_argsorted, check_input=False)
 
             # update tree leaves
-            loss.update_terminal_regions(tree.tree_, X, y, residual,
-                y_pred, sample_mask, self.learning_rate, k=k)
+            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                         sample_mask, self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -597,6 +599,7 @@ class BaseGradientBoosting(BaseEnsemble):
                           "oob score = %.6e" % (i + 1, self.n_estimators,
                                                 self.train_score_[i],
                                                 self.oob_score_[i]))
+
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = self.loss_(y, y_pred)
@@ -616,7 +619,7 @@ class BaseGradientBoosting(BaseEnsemble):
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, call `fit` " \
+            raise ValueError("Estimator not fitted, call `fit` "
                              "before making predictions`.")
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be %d, not %d." %
@@ -673,7 +676,7 @@ class BaseGradientBoosting(BaseEnsemble):
     @property
     def feature_importances_(self):
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, " \
+            raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:

@@ -154,7 +154,7 @@ def test_probability():
 
     # Random forest
     clf = RandomForestClassifier(n_estimators=10, random_state=1,
-            max_features=1, max_depth=1)
+                                 max_features=1, max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -163,7 +163,7 @@ def test_probability():
 
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1, max_features=1,
-            max_depth=1)
+                               max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -213,7 +213,7 @@ def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
-            random_state=rng)
+                                random_state=rng)
     n_samples = boston.data.shape[0]
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
