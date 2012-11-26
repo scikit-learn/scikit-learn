@@ -113,3 +113,49 @@ def cholesky_delete(np.ndarray L, int go_out):
        m = <int> L.strides[0] / sizeof (float)
        float_cholesky_delete (m, n, <float *> L.data, go_out)
 
+def check_unary_or_binary(np.ndarray X):
+   """
+   Returns True if the given array contains only one or two unique values, and
+   False otherwise.
+   """
+   if X.dtype.name == 'float32':
+      return bool(_float_check_unary_or_binary(<float *> X.data, X.size))
+   elif X.dtype.name == 'float64':
+      return bool(_double_check_unary_or_binary(<double *> X.data, X.size))
+   else:
+      raise ValueError('Unsupported dtype for array X')
+
+cdef int _float_check_unary_or_binary(float *X, Py_ssize_t size):
+   cdef Py_ssize_t i
+   cdef int j
+   cdef float two_values[2]
+   if size < 2:
+      return 1
+   j = 0
+   two_values[j] = X[0]
+   for i in range(1, size):
+      if X[i] != two_values[j]:
+         if j == 0:
+            j += 1
+            two_values[j] = X[i]
+         else:
+            return 0
+   return 1
+
+cdef int _double_check_unary_or_binary(double *X, Py_ssize_t size):
+   cdef Py_ssize_t i
+   cdef int j
+   cdef np.float64_t two_values[2]
+   if size < 2:
+      return 1
+   j = 0
+   two_values[j] = X[0]
+   for i in range(1, size):
+      if X[i] != two_values[j]:
+         if j == 0:
+            j += 1
+            two_values[j] = X[i]
+         else:
+            return 0
+   return 1
+
