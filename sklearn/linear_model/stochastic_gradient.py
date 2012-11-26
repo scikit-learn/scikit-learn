@@ -238,7 +238,6 @@ def _make_dataset(X, y_i, sample_weight, ranking=False):
         intercept_decay = 1.0
     return dataset, intercept_decay
 
-
 class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
@@ -695,6 +694,34 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
+
+
+class RankingSGD(SGDClassifier):
+
+    def __init__(self, loss="roc_pairwise_ranking", penalty='l2', alpha=0.0001,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False, rho=None):
+
+        super(RankingSGD, self).__init__(loss=loss, penalty=penalty,
+                                            alpha=alpha, l1_ratio=l1_ratio,
+                                            fit_intercept=fit_intercept,
+                                            n_iter=n_iter, shuffle=shuffle,
+                                            verbose=verbose, epsilon=epsilon,
+                                            seed=seed, rho=rho,
+                                            learning_rate=learning_rate,
+                                            eta0=eta0, power_t=power_t,
+                                            warm_start=warm_start)
+        self.class_weight = class_weight
+        self.classes_ = None
+        self.n_jobs = int(n_jobs)
+
+    def rank(self,X):
+        order = np.argsort(np.dot(X,self.coef_[0]))
+        order_inv = np.zeros_like(order)
+        order_inv[order] = np.arange(len(order))
+        return order_inv
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
