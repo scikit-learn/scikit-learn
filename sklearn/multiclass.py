@@ -12,7 +12,7 @@ estimator to be provided in their constructor. For example, it is possible to
 use these estimators to turn a binary classifier or a regressor into a
 multiclass classifier. It is also possible to use these estimators with
 multiclass estimators in the hope that their accuracy or runtime performance
-improves.
+improves. It is also possible to do multilabel classification.
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
@@ -84,6 +84,21 @@ def predict_ovr(estimators, label_binarizer, X):
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
+def predict_proba_ovr(estimators, X, is_multilabel):
+    """Estimate probabilities using the one-vs-the-rest strategy. If multilabel
+    is true, returned matrix will not sum to one. Estimators must have a
+    predict_proba method."""
+
+    Y = np.array([est.predict_proba(X)[:,1] for est in  estimators]).T
+
+    #Y[i,j] gives the probability that sample i has the label j.
+    #in the multi-label case, these are not disjoint. In the single-label case,
+    #these are disjoint
+
+    if not multilabel:
+        #then probabilities should be normalized to 1.
+        Y /= np.sum(Y,1)[:,np.newaxis].repeat(Y.shape[1],1 )
+    return Y
 
 class _ConstantPredictor(BaseEstimator):
     def fit(self, X, y):
@@ -165,6 +180,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
+    def _check_has_proba(self):
+        try:
+            self.estimator.predict_proba
+
+
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -181,6 +201,29 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self._check_is_fitted()
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
+
+    def predict_proba(self, X):
+        """Probability estimates.
+
+        The returned estimates for all classes are ordered by label of classes.
+        Note that since this is a multilabel problem, and each sample can have
+        any number of labels, probabilities will *not* sum to unity.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in self.classes_.
+        """
+        self._check_has_proba(self)
+
+        return predict_proba_ovr(self.estimators_, X,
+                                 is_multilabel=self.multilabel_)
+
 
     @property
     def multilabel_(self):
