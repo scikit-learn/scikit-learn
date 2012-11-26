@@ -32,6 +32,7 @@ kernel:
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
+#          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD Style.
 
 import numpy as np

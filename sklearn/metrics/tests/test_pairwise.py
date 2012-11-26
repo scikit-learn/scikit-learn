@@ -181,7 +181,7 @@ def test_chi_square_kernel():
     K = chi2_kernel(Y)
     assert_array_equal(np.diag(K), 1)
     # check off-diagonal is < 1 but > 0:
-    assert_true(np.all(K >= 0))
+    assert_true(np.all(K > 0))
     assert_true(np.all(K - np.diag(np.diag(K)) < 1))
     # check that float32 is preserved
     X = rng.random_sample((5, 4)).astype(np.float32)
