@@ -8,6 +8,8 @@ approximate kernel feature maps base on Fourier transforms.
 #
 # License: BSD Style.
 
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import svd
@@ -368,6 +370,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
+
     References
     ----------
     * Williams, C.K.I. and Seeger, M.
@@ -412,8 +415,18 @@ class Nystroem(BaseEstimator, TransformerMixin):
         n_samples = X.shape[0]
 
         # get basis vectors
+        if self.n_components > n_samples:
+            # XXX should we just bail?
+            n_components = n_samples
+            warnings.warn("n_components > n_samples. This is not possible.\n"
+                          "n_components was set to n_samples, which results"
+                          " in inefficient evaluation of the full kernel.")
+
+        else:
+            n_components = self.n_components
+        n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
-        basis_inds = inds[:self.n_components]
+        basis_inds = inds[:n_components]
         basis = X[basis_inds]
 
         if callable(self.kernel):

@@ -1,12 +1,13 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
+from sklearn.kernel_approximation import Nystroem
 from sklearn.metrics.pairwise import rbf_kernel
 
 # generate data
@@ -97,6 +98,27 @@ def test_input_validation():
 
     X = csr_matrix(X)
     RBFSampler().fit(X).transform(X)
+
+
+def test_nystrom_approximation():
+    # some basic tests
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 4))
+
+    # With n_components = n_samples this is exact
+    X_transformed = Nystroem(n_components=X.shape[0]).fit_transform(X)
+    K = rbf_kernel(X)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+    trans = Nystroem(n_components=2, random_state=rnd)
+    X_transformed = trans.fit(X).transform(X)
+    assert_equal(X_transformed.shape, (X.shape[0], 2))
+
+    # test callable kernel
+    linear_kernel = lambda X, Y: np.dot(X, Y.T)
+    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
+    X_transformed = trans.fit(X).transform(X)
+    assert_equal(X_transformed.shape, (X.shape[0], 2))
 
 
 if __name__ == "__main__":
