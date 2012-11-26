@@ -379,14 +379,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 precomputed=False, eigen_tol=0.0, assign_labels='kmeans',
-                 mode=None):
-        if not k is None:
+                 eigen_tol=0.0, assign_labels='kmeans', mode=None):
+        if k is not None:
             warnings.warn("'k' was renamed to n_clusters and "
                           "will be removed in 0.15.",
                           DeprecationWarning)
             n_clusters = k
-        if not mode is None:
+        if mode is not None:
             warnings.warn("'mode' was renamed to eigen_solver and "
                           "will be removed in 0.15.",
                           DeprecationWarning)
