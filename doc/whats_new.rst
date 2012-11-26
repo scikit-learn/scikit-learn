@@ -69,6 +69,9 @@ Changelog
      :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
      estimators.
 
+   - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
+     in computer vision applications.
+
 
 API changes summary
 -------------------
