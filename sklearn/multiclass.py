@@ -183,6 +183,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _check_has_proba(self):
         try:
             self.estimator.predict_proba
+        except:
+            raise ValueError("The estimator has no predict_proba method")
 
 
     def predict(self, X):
