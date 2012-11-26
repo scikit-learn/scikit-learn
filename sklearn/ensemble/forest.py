@@ -289,6 +289,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         y = np.atleast_1d(y)
         if y.ndim == 1:
+            # reshape is necessary to preserve the data contiguity against vs
+            # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
