@@ -3,10 +3,11 @@ from numpy import linalg
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
 from numpy.testing import assert_equal, assert_array_equal
 from nose.tools import assert_raises
-from nose.tools import assert_true, assert_greater
+from nose.tools import assert_true
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
+from sklearn.utils.testing import assert_greater
 from ..pairwise import euclidean_distances
 from ..pairwise import linear_kernel
 from ..pairwise import chi2_kernel, additive_chi2_kernel
