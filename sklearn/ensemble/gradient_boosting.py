@@ -470,7 +470,7 @@ class BaseGradientBoosting(BaseEnsemble):
                 compute_importances=False,
                 random_state=self.random_state)
 
-            tree.fit(X, residual[:, np.newaxis], sample_mask, X_argsorted,
+            tree.fit(X, residual, sample_mask, X_argsorted,
                 check_input=False)
 
             # update tree leaves

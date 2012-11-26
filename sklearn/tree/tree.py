@@ -232,7 +232,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         y = np.atleast_1d(y)
         if y.ndim == 1:
-            y = y[:, np.newaxis]
+            y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
 
