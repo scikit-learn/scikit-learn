@@ -126,6 +126,10 @@ API changes summary
      store a list of paths in the case of multiple targets, rather than
      an array of paths.
 
+   - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+     to adhere more strictly with the API.
+
+
 .. _changes_0_12.1:
 
 0.12.1
