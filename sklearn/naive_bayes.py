@@ -254,7 +254,7 @@ class BaseDiscreteNB(BaseNB):
 
         self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
                                 - np.log(N_c.reshape(-1, 1)
-                                       + self.alpha * X.shape[1]))
+                                       + self.alpha * N_c.size))
 
         return self
 
@@ -409,7 +409,9 @@ class BernoulliNB(BaseDiscreteNB):
     def _count(self, X, Y):
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        return super(BernoulliNB, self)._count(X, Y)
+        N_c, N_c_i = super(BernoulliNB, self)._count(X, Y)
+        N_c = Y.sum(axis=0)
+        return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
