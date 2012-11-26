@@ -420,14 +420,8 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 self.gamma = 1.0 / X.shape[1]
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
             return self.affinity_matrix_
-        try:
-            self.affinity_matrix_ = self.affinity(X)
-            return self.affinity_matrix_
-        except:
-            raise ValueError(
-                "%s is not a valid graph type. Valid kernels are: "
-                "nearest_neighbors, precomputed and callable."
-                % self.affinity)
+        self.affinity_matrix_ = self.affinity(X)
+        return self.affinity_matrix_
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -448,12 +442,16 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        if isinstance(self.affinity, str):
-            if self.affinity not in \
-                    set(('precomputed', 'rbf', 'nearest_neighbors')):
-                raise ValueError(
-                    "Only precomputed, rbf,"
-                    "nearest_neighbors graph supported.")
+        if isinstance(self.affinity, basestring):
+            if self.affinity not in set(("nearest_neighbors", "rbf",
+                                          "precomputed")):
+                raise ValueError(("%s is not a valid affinity. Expected "
+                                  "'precomputed', 'rbf', 'nearest_neighbors' "
+                                  "or a callable.") % self.affinity)
+        elif not hasattr(self.affinity, "__call__"):
+            raise ValueError(("'affinity' is expected to be an an affinity "
+                              "name or a callable. Got: %s") % self.affinity)
+
         affinity_matrix = self._get_affinity_matrix(X)
         self.embedding_ = spectral_embedding(affinity_matrix,
                                              n_components=self.n_components,
