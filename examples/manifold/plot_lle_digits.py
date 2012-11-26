@@ -203,10 +203,10 @@ plot_embedding(X_reduced,
 #----------------------------------------------------------------------
 # Spectral embedding of the digits dataset
 print "Computing Spectral embedding"
-hasher = manifold.SpectralEmbedding(n_components=2, random_state=0,
-                                    eigen_solver="arpack")
+embedder = manifold.SpectralEmbedding(n_components=2, random_state=0,
+                                      eigen_solver="arpack")
 t0 = time()
-X_se = hasher.fit_transform(X)
+X_se = embedder.fit_transform(X)
 
 plot_embedding(X_se,
                "Spectral embedding of the digits (time %.2fs)" %
