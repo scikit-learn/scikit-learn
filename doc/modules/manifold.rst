@@ -301,14 +301,14 @@ The overall complexity of standard HLLE is
 Spectral Embedding
 ====================
 
-Spectral Embedding (also known as Laplacian Eigenmap) is one method
-to calculate nonlinear embedding. It finds low dimensional representation 
-of the data using spectral decomposition over graph laplacian. 
+Spectral Embedding (also known as Laplacian Eigenmaps) is one method
+to calculate nonlinear embedding. It finds a low dimensional representation
+of the data using a spectral decomposition of the graph Laplacian.
 The graph generated can be considered as a discrete approximation of the 
 low dimensional manifold in the high dimensional space. Minimization of a 
 cost function based on the graph ensures that points close to each other on 
 the manifold are mapped close to each other in the low dimensional space, 
-preserving local distances. Spectral embedding can be  performed with 
+preserving local distances. Spectral embedding can be  performed with the
 function :func:`spectral_embedding` or its object-oriented counterpart
 :class:`SpectralEmbedding`.
 
@@ -320,12 +320,12 @@ The Spectral Embedding algorithm comprises three stages:
 1. **Weighted Graph Construction**. Transform the raw input data into
    graph representation using affinity (adjacency) matrix representation.
 
-2. **Graph Laplacian Construction**. unnormalized Graph laplacian
+2. **Graph Laplacian Construction**. unnormalized Graph Laplacian
    is constructed as :math:`L = D - A` for and normalized one as
    :math:`L = D^{-\frac{1}{2}} (D - A) D^{-\frac{1}{2}}`.  
 
 3. **Partial Eigenvalue Decomposition**. Eigenvalue decomposition is 
-   done on graph laplacian
+   done on graph Laplacian
 
 The overall complexity of spectral embedding is
 :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[d N^2]`.
