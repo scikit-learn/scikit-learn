@@ -301,6 +301,35 @@ def test_staged_predict():
     assert_array_equal(y_pred, y)
 
 
+def test_staged_predict_proba():
+    """Test whether staged predict proba eventually gives
+    the same prediction.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=1200,
+                                     random_state=1)
+    X_train, y_train = X[:200], y[:200]
+    X_test, y_test = X[200:], y[200:]
+    clf = GradientBoostingClassifier(n_estimators=20)
+    # test raise ValueError if not fitted
+    assert_raises(ValueError, lambda X: np.fromiter(
+        clf.staged_predict_proba(X), dtype=np.float64), X_test)
+
+    clf.fit(X_train, y_train)
+
+    # test if prediction for last stage equals ``predict``
+    for y_pred in clf.staged_predict(X_test):
+        assert_equal(y_test.shape, y_pred.shape)
+
+    assert_array_equal(clf.predict(X_test), y_pred)
+
+    # test if prediction for last stage equals ``predict_proba``
+    for staged_proba in clf.staged_predict_proba(X_test):
+        assert_equal(y_test.shape[0], staged_proba.shape[0])
+        assert_equal(2, staged_proba.shape[1])
+
+    assert_array_equal(clf.predict_proba(X_test), staged_proba)
+
+
 def test_serialization():
     """Check model serialization."""
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)

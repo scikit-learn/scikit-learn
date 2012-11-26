@@ -69,6 +69,9 @@ Changelog
      :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
      estimators.
 
+   - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
+     in computer vision applications.
+
 
 API changes summary
 -------------------
@@ -125,6 +128,10 @@ API changes summary
    - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
      store a list of paths in the case of multiple targets, rather than
      an array of paths.
+
+   - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+     to adhere more strictly with the API.
+
 
 .. _changes_0_12.1:
 

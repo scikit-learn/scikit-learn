@@ -62,6 +62,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
+from sklearn.externals.joblib import Memory
 
 op = OptionParser()
 op.add_option("--classifiers",
@@ -70,6 +71,11 @@ op.add_option("--classifiers",
                    "default: %default. available: "
                    "liblinear,GaussianNB,SGD,CART,ExtraTrees,RandomForest")
 
+op.add_option("--n-jobs",
+              dest="n_jobs", default=1, type=int,
+              help="Number of concurrently running workers for models that"
+                   " support parallelism.")
+
 op.print_help()
 
 (opts, args) = op.parse_args()
@@ -77,58 +83,75 @@ if len(args) > 0:
     op.error("this script takes no arguments.")
     sys.exit(1)
 
-######################################################################
-## Download the data, if not already on disk
-if not os.path.exists('covtype.data.gz'):
-    # Download the data
-    import urllib
-    print "Downloading data, Please Wait (11MB)..."
-    opener = urllib.urlopen(
-        'http://archive.ics.uci.edu/ml/'
-        'machine-learning-databases/covtype/covtype.data.gz')
-    open('covtype.data.gz', 'wb').write(opener.read())
+# Memoize the data extraction and memory map the resulting
+# train / test splits in readonly mode
+bench_folder = os.path.dirname(__file__)
+original_archive = os.path.join(bench_folder, 'covtype.data.gz')
+joblib_cache_folder = os.path.join(bench_folder, 'bench_covertype_data')
+m = Memory(joblib_cache_folder, mmap_mode='r')
 
-######################################################################
-## Load dataset
-print("Loading dataset...")
-import gzip
-f = gzip.open('covtype.data.gz')
-X = np.fromstring(f.read().replace(",", " "), dtype=np.float64, sep=" ",
-                  count=-1)
-X = X.reshape((581012, 55))
-f.close()
 
-# class 1 vs. all others.
-y = np.ones(X.shape[0]) * -1
-y[np.where(X[:, -1] == 1)] = 1
-X = X[:, :-1]
+# Load the data, then cache and memmap the train/test split
+@m.cache
+def load_data(dtype=np.float32, order='F'):
+    ######################################################################
+    ## Download the data, if not already on disk
+    if not os.path.exists(original_archive):
+        # Download the data
+        import urllib
+        print "Downloading data, Please Wait (11MB)..."
+        opener = urllib.urlopen(
+            'http://archive.ics.uci.edu/ml/'
+            'machine-learning-databases/covtype/covtype.data.gz')
+        open(original_archive, 'wb').write(opener.read())
 
-######################################################################
-## Create train-test split (as [Joachims, 2006])
-print("Creating train-test split...")
-idx = np.arange(X.shape[0])
-np.random.seed(13)
-np.random.shuffle(idx)
-train_idx = idx[:522911]
-test_idx = idx[522911:]
+    ######################################################################
+    ## Load dataset
+    print("Loading dataset...")
+    import gzip
+    f = gzip.open(original_archive)
+    X = np.fromstring(f.read().replace(",", " "), dtype=dtype, sep=" ",
+                      count=-1)
+    X = X.reshape((581012, 55))
+    if order.lower() == 'f':
+        X = np.asfortranarray(X)
+    f.close()
 
-X_train = X[train_idx]
-y_train = y[train_idx]
-X_test = X[test_idx]
-y_test = y[test_idx]
+    # class 1 vs. all others.
+    y = np.ones(X.shape[0]) * -1
+    y[np.where(X[:, -1] == 1)] = 1
+    X = X[:, :-1]
 
-# free memory
-del X
-del y
+    ######################################################################
+    ## Create train-test split (as [Joachims, 2006])
+    print("Creating train-test split...")
+    idx = np.arange(X.shape[0])
+    np.random.seed(13)
+    np.random.shuffle(idx)
+    train_idx = idx[:522911]
+    test_idx = idx[522911:]
 
-######################################################################
-## Standardize first 10 features (the numerical ones)
-mean = X_train.mean(axis=0)
-std = X_train.std(axis=0)
-mean[10:] = 0.0
-std[10:] = 1.0
-X_train = (X_train - mean) / std
-X_test = (X_test - mean) / std
+    X_train = X[train_idx]
+    y_train = y[train_idx]
+    X_test = X[test_idx]
+    y_test = y[test_idx]
+
+    # free memory
+    del X
+    del y
+
+    ######################################################################
+    ## Standardize first 10 features (the numerical ones)
+    mean = X_train.mean(axis=0)
+    std = X_train.std(axis=0)
+    mean[10:] = 0.0
+    std[10:] = 1.0
+    X_train = (X_train - mean) / std
+    X_test = (X_test - mean) / std
+    return X_train, X_test, y_train, y_test
+
+
+X_train, X_test, y_train, y_test = load_data()
 
 ######################################################################
 ## Print dataset statistics
@@ -139,12 +162,13 @@ print("%s %d" % ("number of features:".ljust(25),
                  X_train.shape[1]))
 print("%s %d" % ("number of classes:".ljust(25),
                  np.unique(y_train).shape[0]))
-print("%s %d (%d, %d)" % ("number of train samples:".ljust(25),
+print("%s %s" % ("data type:".ljust(25), X_train.dtype))
+print("%s %d (pos=%d, neg=%d, size=%dMB)" % ("number of train samples:".ljust(25),
                           X_train.shape[0], np.sum(y_train == 1),
-                          np.sum(y_train == -1)))
-print("%s %d (%d, %d)" % ("number of test samples:".ljust(25),
+                          np.sum(y_train == -1), int(X_train.nbytes / 1e6)))
+print("%s %d (pos=%d, neg=%d, size=%dMB)" % ("number of test samples:".ljust(25),
                           X_test.shape[0], np.sum(y_test == 1),
-                          np.sum(y_test == -1)))
+                          np.sum(y_test == -1), int(X_test.nbytes / 1e6)))
 
 
 classifiers = dict()
@@ -182,6 +206,7 @@ classifiers['GaussianNB'] = GaussianNB()
 sgd_parameters = {
     'alpha': 0.001,
     'n_iter': 2,
+    'n_jobs': opts.n_jobs,
     }
 classifiers['SGD'] = SGDClassifier(**sgd_parameters)
 
@@ -195,14 +220,16 @@ classifiers['CART'] = DecisionTreeClassifier(min_samples_split=5,
 classifiers['RandomForest'] = RandomForestClassifier(n_estimators=20,
                                                      min_samples_split=5,
                                                      max_features=None,
-                                                     max_depth=None)
+                                                     max_depth=None,
+                                                     n_jobs=opts.n_jobs)
 
 ######################################################################
 ## Train Extra-Trees model
 classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
                                                  min_samples_split=5,
                                                  max_features=None,
-                                                 max_depth=None)
+                                                 max_depth=None,
+                                                 n_jobs=opts.n_jobs)
 
 
 selected_classifiers = opts.classifiers.split(',')

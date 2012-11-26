@@ -100,13 +100,14 @@ def test_classifier_correctness():
                                    n_iter=2)
         clf1.fit(X, y_bin)
 
-        clf2 = PassiveAggressiveClassifier(C=1.0,
-                                           loss=loss,
-                                           fit_intercept=True,
-                                           n_iter=2)
-        clf2.fit(X, y_bin)
+        for data in (X, X_csr):
+            clf2 = PassiveAggressiveClassifier(C=1.0,
+                                               loss=loss,
+                                               fit_intercept=True,
+                                               n_iter=2)
+            clf2.fit(data, y_bin)
 
-        assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
+            assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
 
 
 def test_classifier_undefined_methods():
@@ -154,13 +155,14 @@ def test_regressor_correctness():
                                    n_iter=2)
         reg1.fit(X, y_bin)
 
-        reg2 = PassiveAggressiveRegressor(C=1.0,
-                                          loss=loss,
-                                          fit_intercept=True,
-                                          n_iter=2)
-        reg2.fit(X, y_bin)
+        for data in (X, X_csr):
+            reg2 = PassiveAggressiveRegressor(C=1.0,
+                                              loss=loss,
+                                              fit_intercept=True,
+                                              n_iter=2)
+            reg2.fit(data, y_bin)
 
-        assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
+            assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
 
 
 def test_regressor_undefined_methods():

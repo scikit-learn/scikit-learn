@@ -69,7 +69,7 @@ def array2d(X, dtype=None, order=None, copy=False):
     """Returns at least 2-d array with data from X"""
     if sparse.issparse(X):
         raise TypeError('A sparse matrix was passed, but dense data '
-                        'is required. Use X.todense() to convert to dense.')
+                        'is required. Use X.toarray() to convert to dense.')
     X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
     assert_all_finite(X_2d)
     if X is X_2d and copy:
@@ -78,7 +78,7 @@ def array2d(X, dtype=None, order=None, copy=False):
 
 
 def atleast2d_or_csc(X, dtype=None, order=None, copy=False):
-    """Like numpy.atleast_2d, but converts sparse matrices to CSC format
+    """Like numpy.atleast_2d, but converts sparse matrices to CSC format.
 
     Also, converts np.matrix to np.ndarray.
     """

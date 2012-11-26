@@ -559,8 +559,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=8, mode=None, random_state=None, n_init=10,
-                 gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 precomputed=False, eig_tol=0.0, assign_labels='kmeans'):
+                 gamma=1., affinity='rbf', n_neighbors=10, k=None, eig_tol=0.0,
+                 assign_labels='kmeans'):
         if not k is None:
             warnings.warn("'k' was renamed to n_clusters", DeprecationWarning)
             n_clusters = k

@@ -471,7 +471,7 @@ class BaseGradientBoosting(BaseEnsemble):
                 raise ValueError("init must be valid estimator")
         self.init = init
 
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
         if not (0.0 < alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
@@ -485,6 +485,7 @@ class BaseGradientBoosting(BaseEnsemble):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
+        random_state = check_random_state(self.random_state)
 
         for k in range(loss.K):
             if loss.is_multi_class:
@@ -495,7 +496,7 @@ class BaseGradientBoosting(BaseEnsemble):
             # induce regression tree on residuals
             tree = Tree(self.n_features, (1,), 1, MSE(1), self.max_depth,
                         self.min_samples_split, self.min_samples_leaf, 0.0,
-                        self.max_features, TREE_SPLIT_BEST, self.random_state)
+                        self.max_features, TREE_SPLIT_BEST, random_state)
 
             tree.build(X, residual[:, np.newaxis], sample_mask, X_argsorted)
 
@@ -573,7 +574,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
         n_inbag = max(1, int(self.subsample * n_samples))
-
+        random_state = check_random_state(self.random_state)
         # perform boosting iterations
         for i in range(self.n_estimators):
 
@@ -581,7 +582,7 @@ class BaseGradientBoosting(BaseEnsemble):
             if self.subsample < 1.0:
                 # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
-                                                  self.random_state)
+                                                  random_state)
             # fit next stage of trees
             y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
@@ -874,7 +875,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             The predicted value of the input samples.
         """
         for score in self.staged_decision_function(X):
-            yield self._score_to_proba(X)
+            yield self._score_to_proba(score)
 
     def predict(self, X):
         """Predict class for X.

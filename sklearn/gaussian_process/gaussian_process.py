@@ -244,9 +244,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_start = random_start
         self.random_state = random_state
 
-        # Run input checks
-        self._check_params()
-
     def fit(self, X, y):
         """
         The Gaussian Process model fitting method.
@@ -267,6 +264,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A fitted Gaussian Process model object awaiting data to perform
             predictions.
         """
+        # Run input checks
+        self._check_params()
+
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
