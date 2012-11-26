@@ -371,7 +371,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
 
@@ -442,6 +442,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
+        self.random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, basestring):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                           "precomputed")):
