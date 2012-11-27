@@ -301,7 +301,7 @@ partial dependence
    :template: function.rst
 
    ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.partial_dependence_plots
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _feature_extraction_ref:

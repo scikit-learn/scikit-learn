@@ -586,7 +586,7 @@ The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset
 (:func:`sklearn.datasets.fetch_california_housing`) created using the
 function
-:func:`partial_dependence_plots`.
+:func:`plot_partial_dependence`.
 
 .. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
