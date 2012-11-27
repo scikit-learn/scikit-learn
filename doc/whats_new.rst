@@ -75,6 +75,9 @@ Changelog
    - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
 
+   - New estimator :class:`manifold.SpectralEmbedding` and function
+     :func:`manifold.spectral_embedding`, implementing the
+     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
 
 API changes summary
 -------------------
@@ -135,6 +138,15 @@ API changes summary
    - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
      to adhere more strictly with the API.
 
+   - :func:`cluster.spectral_embedding` is now in
+     :func:`manifold.spectral_embedding`.
+
+   - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
+     :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
+     to ``eigen_solver``
+
+   - Renamed ``mode`` in :func:`manifold.spectral_embedding` and
+     :class:`cluster.SpectralClustering` to ``eigen_solver``.
 
 .. _changes_0_12.1:
 

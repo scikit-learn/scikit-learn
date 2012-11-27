@@ -39,7 +39,7 @@ n_components = 2
 
 fig = pl.figure(figsize=(15, 8))
 pl.suptitle("Manifold Learning with %i points, %i neighbors"
-               % (1000, n_neighbors), fontsize=14)
+            % (1000, n_neighbors), fontsize=14)
 
 try:
     # compatibility matplotlib < 1.0
@@ -92,5 +92,18 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 pl.axis('tight')
 
+
+t0 = time()
+se = manifold.SpectralEmbedding(n_components=n_components,
+                                n_neighbors=n_neighbors)
+Y = se.fit_transform(X)
+t1 = time()
+print "SpectralEmbedding: %.2g sec" % (t1 - t0)
+ax = fig.add_subplot(248)
+pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
+pl.title("SpectralEmbedding (%.2g sec)" % (t1 - t0))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.yaxis.set_major_formatter(NullFormatter())
+pl.axis('tight')
 
 pl.show()
