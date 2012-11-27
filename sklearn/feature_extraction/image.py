@@ -302,6 +302,9 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     n_w = i_w - p_w + 1
     all_patches = n_h * n_w
 
+    extracted_patches = extract_patches(image,
+                        patch_shape=(p_h, p_w, n_colors),
+                        extraction_step=1)
     if max_patches:
         if (isinstance(max_patches, (numbers.Integral))
                 and max_patches < all_patches):
@@ -317,15 +320,14 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
         for p, i, j in zip(patches, i_s, j_s):
-            p[:] = image[i:i + p_h, j:j + p_w, :]
+            p[:] = extracted_patches[i, j, 0]
+            # p[:] = image[i:i + p_h, j:j + p_w, :]
     else:
         n_patches = all_patches
-        patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
-        for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
-            p[:] = image[i:i + p_h, j:j + p_w, :]
-        # patches = extract_patches(image, patch_shape=(p_h, p_w, n_colors),
-        #                           extraction_step=1)
-        # patches = patches.reshape(-1, p_h, p_w, n_colors)
+        # patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
+        # for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
+        #     p[:] = image[i:i + p_h, j:j + p_w, :]
+        patches = extracted_patches.reshape(-1, p_h, p_w, n_colors)
 
     # remove the color dimension if useless
     if patches.shape[-1] == 1:
