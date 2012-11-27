@@ -72,6 +72,9 @@ Changelog
    - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
      in computer vision applications.
 
+   - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
+     Shaun Jackman.
+
 
 API changes summary
 -------------------
