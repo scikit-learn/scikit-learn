@@ -39,7 +39,8 @@ on age.
 
 .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
-.. [1] For classification you can think of it as the regression score before the link function.
+.. [1] For classification you can think of it as the regression score before
+       the link function.
 """
 print __doc__
 
@@ -50,7 +51,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble.partial_dependence import partial_dependence_plots
+from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.datasets.california_housing import fetch_california_housing
 
@@ -77,8 +78,8 @@ print('Convenience plot with ``partial_dependence_plots``')
 print
 
 features = [0, 5, 1, 2, (5, 1)]
-fig, axs = partial_dependence_plots(clf, X_train, features, feature_names=names,
-                                    n_jobs=3, grid_resolution=50)
+fig, axs = plot_partial_dependence(clf, X_train, features, feature_names=names,
+                                   n_jobs=3, grid_resolution=50)
 fig.suptitle('Partial dependence of house value on nonlocation features\n' \
              'for the California housing dataset')
 pl.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle

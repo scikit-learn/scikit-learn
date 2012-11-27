@@ -162,14 +162,14 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     return pdp, axes
 
 
-def partial_dependence_plots(gbrt, X, features, feature_names=None,
-                             ncols=3, grid_resolution=100,
-                             percentiles=(0.05, 0.95), n_jobs=1,
-                             verbose=0, ax=None, line_kw=None,
-                             contour_kw=None, **fig_kw):
+def plot_partial_dependence(gbrt, X, features, feature_names=None,
+                            n_cols=3, grid_resolution=100,
+                            percentiles=(0.05, 0.95), n_jobs=1,
+                            verbose=0, ax=None, line_kw=None,
+                            contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
 
-    The ``len(features)`` plots are aranged in a grid with ``ncols``
+    The ``len(features)`` plots are aranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
     plots.
 
@@ -186,7 +186,7 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
-    ncols : int
+    n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used create the extreme values
@@ -224,7 +224,7 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> fig, axs = partial_dependence_plots(clf, X, [0, (0, 1)]) #doctest: +SKIP
+    >>> fig, axs = plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
     ...
     """
     import matplotlib.pyplot as plt
@@ -293,12 +293,12 @@ def partial_dependence_plots(gbrt, X, features, feature_names=None,
         fig = ax.get_figure()
         fig.clear()
 
-    ncols = min(ncols, len(features))
-    nrows = int(np.ceil(len(features) / float(ncols)))
+    n_cols = min(n_cols, len(features))
+    n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
     for i, fx, name, (pdp, axes) in izip(count(), features, names,
                                          pd_result):
-        ax = fig.add_subplot(nrows, ncols, i + 1)
+        ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:
             ax.plot(axes[0], pdp.ravel(), **line_kw)
