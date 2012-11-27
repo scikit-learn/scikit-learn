@@ -13,6 +13,7 @@ from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
+from ..utils.validation import atleast2d_or_csr
 from ..utils.graph import graph_laplacian
 from ..utils._csgraph import cs_graph_components
 from ..utils.arpack import eigsh
@@ -264,7 +265,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
-        ml = smoothed_aggregation_solver(laplacian.tocsr())
+        ml = smoothed_aggregation_solver(atleast2d_or_csr(laplacian))
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
