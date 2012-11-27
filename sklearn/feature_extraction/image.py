@@ -316,18 +316,11 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
 
         rng = check_random_state(random_state)
-        # patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
-        # for p, i, j in zip(patches, i_s, j_s):
-        #     p[:] = extracted_patches[i, j, 0]
-        #     # p[:] = image[i:i + p_h, j:j + p_w, :]
         patches = extracted_patches[i_s, j_s, 0]
     else:
         n_patches = all_patches
-        # patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
-        # for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
-        #     p[:] = image[i:i + p_h, j:j + p_w, :]
         patches = extracted_patches
 
     patches = patches.reshape(-1, p_h, p_w, n_colors)
