@@ -72,15 +72,12 @@ Changelog
    - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
      in computer vision applications.
 
-<<<<<<< HEAD
    - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
 
-=======
    - New estimator :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the
      "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
->>>>>>> RENAME rename eigen_tol and eigen_solver, and warning about using old variable name eig_tol and mode
 
 API changes summary
 -------------------
