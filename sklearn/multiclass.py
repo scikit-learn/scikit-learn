@@ -97,7 +97,7 @@ def predict_proba_ovr(estimators, X, is_multilabel):
 
     if not multilabel:
         #then probabilities should be normalized to 1.
-        Y /= np.sum(Y,1)[:,np.newaxis].repeat(Y.shape[1],1 )
+        Y /= np.sum(Y,axis = 1)[:,np.newaxis]
     return Y
 
 class _ConstantPredictor(BaseEstimator):
