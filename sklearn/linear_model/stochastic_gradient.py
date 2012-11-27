@@ -6,6 +6,7 @@
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import stats
 
 from abc import ABCMeta, abstractmethod
 import warnings
@@ -263,8 +264,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         the loss of logistic regression models and can be used for
         probability estimation in binary classifiers. 'modified_huber'
         is another smooth loss that brings tolerance to outliers.
-        The 'roc_pairwise_ranking' loss forms a ranking model by minimizing
-        hinge loss on a training set of pairs with disagreeing labels.
+        
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -368,7 +368,6 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         "squared_loss": (SquaredLoss, ),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
-        "roc_pairwise_ranking": (Hinge, 1.0),
     }
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
@@ -696,15 +695,134 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      est.power_t, est.t_, intercept_decay)
 
 
-class RankingSGD(SGDClassifier):
+class SGDRanking(SGDClassifier):
+    """Ranking model fitted by minimizing a regularized empirical loss with SGD
+    on a training set of pairs with disagreeing labels. Implements the indexed
+    sampling method of D. Sculley, Large-scale Learning to Rank, NIPS 2011 to 
+    sample disagreeing pairs without constructing the set of all possible pairs
+    explicitly.
 
+    SGD stands for Stochastic Gradient Descent: the gradient of the loss is
+    estimated each sample at a time and the model is updated along the way with
+    a decreasing strength schedule (aka learning rate).
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+    parameter update crosses the 0.0 value because of the regularizer, the
+    update is truncated to 0.0 to allow for learning sparse models and achieve
+    online feature selection.
+
+    This implementation works with data represented as dense or sparse arrays
+    of floating point values for the features.
+
+    Parameters
+    ----------
+    loss : 'roc_pairwise_ranking'
+        The loss function to be used. Defaults to 'roc_pairwise_ranking'
+        which minimizes hinge loss on a training set of pairs with
+        disagreeing labels. Hinge loss is a margin loss used by standard
+        linear SVM models.
+
+    penalty : str, 'l2' or 'l1' or 'elasticnet'
+        The penalty (aka regularization term) to be used. Defaults to 'l2'
+        which is the standard regularizer for linear SVM models. 'l1' and
+        'elasticnet' migh bring sparsity to the model (feature selection)
+        not achievable with 'l2'.
+
+    alpha : float
+        Constant that multiplies the regularization term. Defaults to 0.0001
+
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
+        Defaults to 0.15.
+
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered. Defaults to True.
+
+    n_iter: int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to 5.
+
+    shuffle: bool, optional
+        Whether or not the training data should be shuffled after each epoch.
+        Defaults to False.
+
+    seed: int, optional
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+    verbose: integer, optional
+        The verbosity level
+
+    n_jobs: integer, optional
+        The number of CPUs to use to do the OVA (One Versus All, for
+        multi-class problems) computation. -1 means 'all CPUs'. Defaults
+        to 1.
+
+    learning_rate : string, optional
+        The learning rate:
+        constant: eta = eta0
+        optimal: eta = 1.0/(t+t0) [default]
+        invscaling: eta = eta0 / pow(t, power_t)
+
+    eta0 : double
+        The initial learning rate [default 0.01].
+
+    power_t : double
+        The exponent for inverse scaling learning rate [default 0.25].
+
+    class_weight : dict, {class_label : weight} or "auto" or None, optional
+        Preset for the class_weight fit parameter.
+
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
+    n_features]
+        Weights assigned to the features.
+
+    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+        Constants in decision function.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import linear_model
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> Y = np.array([1, 1, 0, 0])
+    >>> clf = linear_model.SGDRanking()
+    >>> clf.fit(X, Y)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    SGDRanking(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
+      fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
+      loss='roc_pairwise_ranking', n_iter=5, n_jobs=1, penalty='l2',
+      power_t=0.5, rho=None, seed=0, shuffle=False, verbose=0,
+      warm_start=False)
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
+    >>> print(clf.rank(X))
+    [2 3 1 0] 
+
+    """
     def __init__(self, loss="roc_pairwise_ranking", penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, rho=None):
 
-        super(RankingSGD, self).__init__(loss=loss, penalty=penalty,
+        super(SGDRanking, self).__init__(loss=loss, penalty=penalty,
                                             alpha=alpha, l1_ratio=l1_ratio,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
@@ -716,12 +834,49 @@ class RankingSGD(SGDClassifier):
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
+        if self.loss != "roc_pairwise_ranking":
+            raise ValueError("The loss %s is not supported. " % self.loss)
 
-    def rank(self,X):
-        order = np.argsort(np.dot(X,self.coef_[0]))
+    def rank(self, X):
+        """
+        Returns an index that ranks a test set according to the ranking model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Test set.
+
+        Returns
+        -------
+        order_inv : array-like, shape = [n_samples]
+        """
+        order = np.argsort(np.dot(X, self.coef_[0]))
         order_inv = np.zeros_like(order)
         order_inv[order] = np.arange(len(order))
         return order_inv
+
+    def score(self, X, y):
+        """
+        Returns the Kendall's tau correlation coefficient, which is used in the
+        ranking literature (e.g T. Joachims, Optimizing Search Engines using
+        Clickthrough Data, KDD 2002) to compare the ordering of a model to a
+        given ordering given test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Test set.
+
+        y : array-like, shape = [n_samples]
+            Labels for X.
+
+        Returns
+        -------
+        z : float
+
+        """
+        tau, _ = stats.kendalltau(np.dot(X, self.coef_[0]), y)
+        return np.abs(tau)
 
 
 class SGDRegressor(BaseSGD, RegressorMixin, SelectorMixin):
