@@ -5,13 +5,14 @@ Testing for the partial dependence module.
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from nose.tools import assert_raises
-
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import if_matplotlib
 from sklearn.ensemble.partial_dependence import partial_dependence
+from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
-
 from sklearn import datasets
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -110,3 +111,16 @@ def test_partial_dependecy_input():
     # wrong ndim for grid
     grid = np.random.rand(10, 2, 1)
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
+
+
+@if_matplotlib
+def test_plot_partial_dependence():
+    """Test partial dependence plot function. """
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf.fit(boston.data, boston.target)
+
+    grid_resolution = 25
+    fig, axs = plot_partial_dependence(clf, boston.data, [0, 1, (0, 1)],
+                                       grid_resolution=grid_resolution)
+    assert len(axs) == 3
+    assert all(ax.has_data for ax in axs)
