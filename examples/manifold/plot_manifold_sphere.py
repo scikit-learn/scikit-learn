@@ -3,7 +3,7 @@
 
 """
 =========================================
-Manifold Learning methods on a sphere
+Manifold Learning methods on a severed sphere
 =========================================
 
 An application of the different :ref:`manifold` techniques
