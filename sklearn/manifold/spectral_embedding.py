@@ -264,6 +264,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
+        if not sparse.issparse(laplacian):
+            warnings.warn("AMG works for sparse matrices better")
+            laplacian = sparse.csr_matrix(laplacian)
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         ml = smoothed_aggregation_solver(atleast2d_or_csr(laplacian))
         M = ml.aspreconditioner()
@@ -446,7 +449,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self.random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, basestring):
             if self.affinity not in set(("nearest_neighbors", "rbf",
-                                          "precomputed")):
+                                         "precomputed")):
                 raise ValueError(("%s is not a valid affinity. Expected "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
