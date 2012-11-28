@@ -95,9 +95,10 @@ def predict_proba_ovr(estimators, X, is_multilabel):
     #in the multi-label case, these are not disjoint. In the single-label case,
     #these are disjoint
 
-    if not multilabel:
+    if not is_multilabel:
         #then probabilities should be normalized to 1.
-        Y /= np.sum(Y,axis = 1)[:,np.newaxis]
+        Y /= np.sum(Y,axis = 1)[:,np.newaxis] 
+        #could use Y.T instead of np.newaxis, but I'd lose succintness and gain little clairity.
     return Y
 
 class _ConstantPredictor(BaseEstimator):
@@ -208,8 +209,14 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """Probability estimates.
 
         The returned estimates for all classes are ordered by label of classes.
-        Note that since this is a multilabel problem, and each sample can have
-        any number of labels, probabilities will *not* sum to unity.
+
+        Note that in the multilabel case, each sample can have any number of
+        labels. This returns the marginal probability that the given sample has
+        the label in question. For example, it is entirely consistent that two
+        labels both have a 90% probability of applying to a given sample.
+
+        In the single label multiclass case, the rows of the returned matrix
+        should sum to unity.
 
         Parameters
         ----------
@@ -221,7 +228,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in self.classes_.
         """
-        self._check_has_proba(self)
+        self._check_has_proba()
 
         return predict_proba_ovr(self.estimators_, X,
                                  is_multilabel=self.multilabel_)
