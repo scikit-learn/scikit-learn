@@ -146,13 +146,11 @@ def test_ovr_multilabel_dataset():
 def test_ovr_multilabel_predict_proba():
     #shamelessly coppied from test_ovr_multilable_dataset.
     base_clf = MultinomialNB(alpha=1)
-    n_samples = 100
-    n_classes = 5
     for au in (False, True):
         X, Y = datasets.make_multilabel_classification(n_samples=100,
                                                 n_features=20,
                                                 n_classes=5,
-                                                n_labels=3 
+                                                n_labels=3 ,
                                                 length=50,
                                                 allow_unlabeled=au,
                                                 random_state=0)
@@ -182,7 +180,6 @@ def test_ovr_single_label_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     n_samples = 100
     n_classes = 5
-    multilabel=False
     X,Y = iris.data, iris.target
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
@@ -198,8 +195,8 @@ def test_ovr_single_label_predict_proba():
     assert_almost_equal(Y_proba.sum(axis=1), 1.0)
     #predict assigns a label if the probability that the
     #sample has the label is greater than than 0.5.
-    pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
-    assert_equal(pred, Y_pred)
+    pred = np.array([l.argmax() for l in Y_proba])
+    assert_true(not (pred-Y_pred).any())
 
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
