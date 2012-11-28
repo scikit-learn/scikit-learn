@@ -52,20 +52,20 @@ n_samples = 1000
 
 # Create our sphere.
 random_state = check_random_state(0)
-p = random_state.rand(n_samples)*(2*np.pi-0.55)
-t = random_state.rand(n_samples)*np.pi
+p = random_state.rand(n_samples) * (2 * np.pi - 0.55)
+t = random_state.rand(n_samples) * np.pi
 
 # Sever the poles from the sphere.
-indices = ((t < (np.pi-(np.pi/8))) & (t > ((np.pi/8))))
+indices = ((t < (np.pi - (np.pi / 8))) & (t > ((np.pi / 8))))
 colors = p[indices]
-x, y, z = np.sin(t[indices])*np.cos(p[indices]), \
-    np.sin(t[indices])*np.sin(p[indices]), \
+x, y, z = np.sin(t[indices]) * np.cos(p[indices]), \
+    np.sin(t[indices]) * np.sin(p[indices]), \
     np.cos(t[indices])
 
 # Plot our dataset.
 fig = pl.figure(figsize=(15, 8))
 pl.suptitle("Manifold Learning with %i points, %i neighbors"
-               % (1000, n_neighbors), fontsize=14)
+            % (1000, n_neighbors), fontsize=14)
 
 ax = fig.add_subplot(241, projection='3d')
 ax.scatter(x, y, z, c=p[indices], cmap=pl.cm.rainbow)
@@ -83,8 +83,9 @@ labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 for i, method in enumerate(methods):
     t0 = time()
-    trans_data = manifold.LocallyLinearEmbedding(n_neighbors, 2,
-                                                method=method).fit_transform(sphere_data).T
+    trans_data = manifold\
+        .LocallyLinearEmbedding(n_neighbors, 2,
+                                method=method).fit_transform(sphere_data).T
     t1 = time()
     print "%s: %.2g sec" % (methods[i], t1 - t0)
 
@@ -97,7 +98,8 @@ for i, method in enumerate(methods):
 
 # Perform Isomap Manifold learning.
 t0 = time()
-trans_data = manifold.Isomap(n_neighbors, n_components=2).fit_transform(sphere_data).T
+trans_data = manifold.Isomap(n_neighbors, n_components=2)\
+    .fit_transform(sphere_data).T
 t1 = time()
 print "%s: %.2g sec" % ('ISO', t1 - t0)
 
@@ -123,4 +125,3 @@ ax.yaxis.set_major_formatter(NullFormatter())
 pl.axis('tight')
 
 pl.show()
-
