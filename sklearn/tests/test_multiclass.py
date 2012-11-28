@@ -143,6 +143,44 @@ def test_ovr_multilabel_dataset():
         assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
                             decimal=2)
 
+def test_ovr_predict_proba():
+    #shamelessly coppied from test_ovr_multilable_dataset.
+    base_clf = MultinomialNB(alpha=1)
+    n_samples = 100
+    n_classes = 5
+    for multilabel in (False, True):
+        for au in (False, True):
+            if multilabel:
+                X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                    n_features=20,
+                                                    n_classes=5,
+                                                    n_labels=3 
+                                                    length=50,
+                                                    allow_unlabeled=au,
+                                                    random_state=0)
+            else:
+                X,Y = iris.data, iris.target
+            X_train, Y_train = X[:80], Y[:80]
+            X_test, Y_test = X[80:], Y[80:]
+            clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+
+            #decision function only estimator. Fails in current implementation.
+            decision_only_base = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+            assert_raises(ValueError, decision_only_base.predict_proba, X_test)
+
+            Y_pred = clf.predict(X_test)
+            Y_proba = clf.predict_proba(X_test)
+
+            if not multilabel: 
+                assert_almost_equal(Y_proba.sum(axis=1), 1.0)
+
+            #predict assigns a label if the probability that the
+            #sample has the label is greater than than 0.5.
+            pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
+            assert_equal(pred, Y_pred)
+
+            #I'm also supposed to check for malformed input but it seems like
+            #that should happen in the base estimator to me 
 
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
