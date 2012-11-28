@@ -12,8 +12,16 @@ estimator to be provided in their constructor. For example, it is possible to
 use these estimators to turn a binary classifier or a regressor into a
 multiclass classifier. It is also possible to use these estimators with
 multiclass estimators in the hope that their accuracy or runtime performance
-improves. It is also possible to do multilabel classification.
-"""
+improves.
+
+The one-vs-the-rest meta-classifier also implements a `predic_proba` method, so
+long as such a method is implemented by the base classifier. This method
+returns probabilities of class membership in both the single label and
+multilabel case.  Note that in the multilabel case, probabilities are the
+marginal probability that a given sample falls in the given class. As such, in
+the multilable case the sum of these probabilities over all possible labels
+for a given sample *will not* sum to unity, as they do in the single label
+case.  """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #
@@ -85,9 +93,10 @@ def predict_ovr(estimators, label_binarizer, X):
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 def predict_proba_ovr(estimators, X, is_multilabel):
-    """Estimate probabilities using the one-vs-the-rest strategy. If multilabel
-    is true, returned matrix will not sum to one. Estimators must have a
-    predict_proba method."""
+    """Estimate probabilities using the one-vs-the-rest strategy. 
+
+    If multilabel is true, returned matrix will not sum to one.  Estimators
+    must have a predict_proba method."""
 
     Y = np.array([est.predict_proba(X)[:,1] for est in  estimators]).T
 
