@@ -181,12 +181,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
-    def _check_has_proba(self):
-        try:
-            self.estimator.predict_proba
-        except:
-            raise ValueError("The estimator has no predict_proba method")
-
 
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
@@ -228,8 +222,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in self.classes_.
         """
-        self._check_has_proba()
-
         return predict_proba_ovr(self.estimators_, X,
                                  is_multilabel=self.multilabel_)
 
