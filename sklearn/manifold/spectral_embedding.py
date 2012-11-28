@@ -265,9 +265,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
-            warnings.warn("AMG works for sparse matrices better")
-            laplacian = sparse.csr_matrix(laplacian)
+            warnings.warn("AMG works better for sparse matrices")
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        laplacian = _set_diag(laplacian, 1)
         ml = smoothed_aggregation_solver(atleast2d_or_csr(laplacian))
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
