@@ -440,7 +440,7 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0,
-              int sampling_type=1):
+              int sampling_type):
     """SGD minimizing ROC-SVM pairwise ranking loss.
 
     Parameters
@@ -457,8 +457,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         The regularization parameter.
     rho : float
         The elastic net hyperparameter.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+    dataset : PairwiseArrayDataset
+        A concrete ``PairwiseArrayDataset`` object.
     n_iter : int
         The number of iterations (epochs).
     fit_intercept : int
@@ -540,10 +540,10 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     for epoch in range(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
-        if shuffle:
-            dataset.shuffle(seed)
+        #if shuffle:
+        #    dataset.shuffle(seed)
         for i in range(n_samples):
-            dataset.next(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
+            dataset.next_pair(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
                          &xnnz_a, &xnnz_b, &y_a, &y_b)
 
             if learning_rate == OPTIMAL:

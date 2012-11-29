@@ -182,28 +182,22 @@ cdef class CSRDataset(SequentialDataset):
 cdef class PairwiseArrayDataset:
     """Dataset backed by a two-dimensional numpy array. 
 
-    Calling next() returns a random pair of examples with disagreeing labels.
+    Calling next_pair() returns a random pair of examples with disagreeing labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
     """
-    def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
-                  int sampling_type, np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
-        """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
 
-        Parameters
-        ---------
-        X : ndarray, dtype=np.float64, ndim=2, mode='c'
-            The samples; a two-dimensional c-continuous numpy array of
-            dtype np.float64.
-        Y : ndarray, dtype=np.float64, ndim=1, mode='c'
-            The target values; a one-dimensional c-continuous numpy array of
-            dtype np.float64.
-        sample_weights : ndarray, dtype=np.float64, ndim=1, mode='c'
-            The weight of each sample; a one-dimensional c-continuous numpy
-            array of dtype np.float64.
-        """
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
+                   DOUBLE *y_a, DOUBLE *y_b):
+        raise NotImplementedError()
+
+
+cdef class PairwiseArrayDatasetRoc(PairwiseArrayDataset):
+    def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
+        
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
         cdef np.ndarray[INTEGER, ndim=1,
@@ -214,19 +208,7 @@ cdef class PairwiseArrayDataset:
         self.stride = X.strides[0] / X.strides[1]
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
-
-        # must declare in the cinit as closures inside cdef functions not yet supported
-        self.group_id_y_to_index = collections.defaultdict(lambda: \
-                                                           collections.defaultdict(list))
-        self.query_data_ptr = <DOUBLE *>query_id.data
-
-        self.sampling_type = sampling_type
-        if sampling_type == 1:
-            self.init_roc()
-        elif sampling_type == 2:
-            self.init_rank(Y)
-
-    cdef void init_roc(self):
+        
         # Create an index of positives and negatives for fast sampling
         # of disagreeing pairs
         positives = []
@@ -248,29 +230,13 @@ cdef class PairwiseArrayDataset:
         self.n_pos_samples = len(pos_index)
         self.n_neg_samples = len(neg_index)
 
-
-    cdef void init_rank(self, Y):
-        self.group_id_y_to_count = collections.counter(Y)
-        cdef Py_ssize_t i
-        cdef DOUBLE query_data_ptr_idx
-        for i in range(self.n_samples):
-            query_data_ptr_idx = self.query_data_ptr[i]
-            self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i)        
-    
-    cdef void next(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
                    DOUBLE *y_a, DOUBLE *y_b):
 
         x_ind_ptr[0] = self.feature_indices_ptr
         nnz_a[0] = self.n_features
         nnz_b[0] = self.n_features
-        if self.sampling_type == 1:
-            self.next_roc(a_data_ptr, b_data_ptr, y_a, y_b)
-        elif self.sampling_type == 2:
-            self.next_rank(a_data_ptr, b_data_ptr, y_a, y_b)
-
-    cdef void next_roc(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                       DOUBLE *y_a, DOUBLE *y_b):
 
         current_pos_index = rand() % self.n_pos_samples
         current_neg_index = rand() % self.n_neg_samples
@@ -285,9 +251,43 @@ cdef class PairwiseArrayDataset:
         y_b[0] = self.Y_data_ptr[sample_neg_idx]
         a_data_ptr[0] = self.X_data_ptr + pos_offset
         b_data_ptr[0] = self.X_data_ptr + neg_offset
-    
-    cdef void next_rank(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                        DOUBLE *y_a, DOUBLE *y_b):
+
+cdef class PairwiseArrayDatasetRank(PairwiseArrayDataset):
+    def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
+                  int sampling_type, np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
+
+        self.n_samples = X.shape[0]
+        self.n_features = X.shape[1]
+        cdef np.ndarray[INTEGER, ndim=1,
+                        mode='c'] feature_indices = np.arange(0, self.n_features,
+                                                              dtype=np.int32)
+        self.feature_indices = feature_indices
+        self.feature_indices_ptr = <INTEGER *> feature_indices.data
+        self.stride = X.strides[0] / X.strides[1]
+        self.X_data_ptr = <DOUBLE *>X.data
+        self.Y_data_ptr = <DOUBLE *>Y.data
+        
+        self.group_id_y_to_count = <dict> collections.Counter(Y)
+        cdef Py_ssize_t i
+        cdef DOUBLE query_data_ptr_idx
+        for i in range(self.n_samples):
+            query_data_ptr_idx = self.query_data_ptr[i]
+            self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i)        
+        # must declare in the cinit as closures inside cdef functions not yet supported
+        self.group_id_y_to_index = <dict> collections.defaultdict(lambda: \
+                                                           collections.defaultdict(list))
+        self.query_data_ptr = <DOUBLE *>query_id.data
+
+        self.sampling_type = sampling_type
+
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
+                   DOUBLE *y_a, DOUBLE *y_b):
+
+        x_ind_ptr[0] = self.feature_indices_ptr
+        nnz_a[0] = self.n_features
+        nnz_b[0] = self.n_features
 
         cdef int a_idx = rand() % self.n_samples
         cdef int a_offset = a_idx * self.stride
@@ -308,6 +308,3 @@ cdef class PairwiseArrayDataset:
                 b_offset = b_idx * self.stride
                 b_data_ptr[0] = self.X_data_ptr + b_offset
                 break
-
-    cdef void shuffle(self, seed):
-        np.random.RandomState(seed).shuffle(self.index)    

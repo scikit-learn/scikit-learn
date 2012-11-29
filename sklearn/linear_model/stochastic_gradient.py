@@ -21,7 +21,8 @@ from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
 from .sgd_fast import ranking_sgd as ranking_sgd
-from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseArrayDataset
+from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseArrayDataset,\
+PairwiseArrayDatasetRoc, PairwiseArrayDatasetRank
 from .sgd_fast import Hinge
 from .sgd_fast import Log
 from .sgd_fast import ModifiedHuber
@@ -147,13 +148,6 @@ class BaseSGD(BaseEstimator):
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
-    def _get_sampling_type(self, sampling):
-        try:
-            return SAMPLING_TYPES[sampling]
-        except KeyError:
-            raise ValueError("sampling type %s"
-                             "is not supported. " % sampling)
-
     def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
         if sample_weight is None:
@@ -241,8 +235,12 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     elif sampling is not None:
-        if query_id is None:
-            query_id = np.ones(X.shape[0])
+        if sampling == 1:
+            dataset = PairwiseArrayDatasetRoc(X, y_i)
+        elif sampling == 2:
+            if query_id is None:
+                query_id = np.ones(X.shape[0])
+            dataset = PairwiseArrayDatasetRank(X, y_i, sampling, query_id)
         dataset = PairwiseArrayDataset(X, y_i, sampling, query_id)
         intercept_decay = 1.0
     else:
@@ -652,7 +650,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
             self.intercept_[i] = intercept
 
 
-def _prepare_fit_binary(est, y, i):
+def _prepare_fit_binary(est, y, i, query_id=None):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept.
@@ -667,7 +665,11 @@ def _prepare_fit_binary(est, y, i):
         coef = est.coef_[i]
         intercept = est.intercept_[i]
 
-    return y_i, coef, intercept
+    if query_id is not None:
+        query_id_i = np.ones(query_id.shape, dtype=np.float64, order="C")
+        return y_i, coef, intercept, query_id_i    
+    else:
+        return y_i, coef, intercept
 
 
 def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
@@ -688,6 +690,27 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
+
+def fit_binary_ranking(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
+                   sample_weight):
+    """Fit a single binary classifier.
+    
+    The i'th class is considered the "positive" class.
+    """
+    y_i, coef, intercept, query_id_i = _prepare_fit_binary(est, y, i, query_id)
+    assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]\
+           == query_id_i.shape[0]
+    sampling_type = est._get_sampling_type(est.sampling)
+    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight,
+                                             query_id_i, sampling_type)
+    penalty_type = est._get_penalty_type(est.penalty)
+    learning_rate_type = est._get_learning_rate_type(est.learning_rate)
+    return ranking_sgd(coef, intercept, est.loss_function,
+                       penalty_type, est.alpha, est.l1_ratio,
+                       dataset, n_iter, int(est.fit_intercept),
+                       int(est.verbose), int(est.shuffle), est.seed,
+                       learning_rate_type, est.eta0,
+                       est.power_t, est.t_, intercept_decay, sampling_type)    
 
 
 class SGDRanking(SGDClassifier):
@@ -839,12 +862,18 @@ class SGDRanking(SGDClassifier):
                                          seed=seed, rho=rho,
                                          learning_rate=learning_rate,
                                          eta0=eta0, power_t=power_t,
-                                         warm_start=warm_start,
-                                         sampling=sampling)
+                                         warm_start=warm_start)
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
         self.sampling = sampling
+
+    def _get_sampling_type(self, sampling):
+        try:
+            return SAMPLING_TYPES[sampling]
+        except KeyError:
+            raise ValueError("sampling type %s"
+                             "is not supported. " % sampling)
 
     def _partial_fit(self, X, y, query_id, n_iter, classes=None, sample_weight=None,
                      coef_init=None, intercept_init=None):
@@ -991,7 +1020,7 @@ class SGDRanking(SGDClassifier):
 
     def _fit_binary(self, X, y, query_id, sample_weight, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, intercept = fit_binary(self, 1, X, y, query_id, n_iter,
+        coef, intercept = fit_binary_ranking(self, 1, X, y, query_id, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
                                      sample_weight)
@@ -999,7 +1028,7 @@ class SGDRanking(SGDClassifier):
         self.coef_ = coef.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.atleast_1d(intercept)
-
+ 
 
     def _fit_multiclass(self, X, y, query_id, sample_weight, n_iter):
         """Fit a multi-class classifier by combining binary classifiers
@@ -1009,7 +1038,7 @@ class SGDRanking(SGDClassifier):
         """
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary)(self, i, X, y, query_id, n_iter,
+            delayed(fit_binary_ranking)(self, i, X, y, query_id, n_iter,
                                 self._expanded_class_weight[i], 1.,
                                 sample_weight)
             for i in xrange(len(self.classes_)))
@@ -1018,25 +1047,6 @@ class SGDRanking(SGDClassifier):
             self.coef_[i] = coef
             self.intercept_[i] = intercept
 
-    def fit_binary(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
-                   sample_weight):
-        """Fit a single binary classifier.
-    
-        The i'th class is considered the "positive" class.
-        """
-        y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-        assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-        dataset, intercept_decay = _make_dataset(X, y_i, sample_weight,
-                                                 query_id, self.sampling)
-        penalty_type = est._get_penalty_type(est.penalty)
-        learning_rate_type = est._get_learning_rate_type(est.learning_rate)
-        sampling_type = est._get_sampling_type(est.sampling)
-        return ranking_sgd(coef, intercept, est.loss_function,
-                           penalty_type, est.alpha, est.l1_ratio,
-                           dataset, n_iter, int(est.fit_intercept),
-                           int(est.verbose), int(est.shuffle), est.seed,
-                           learning_rate_type, est.eta0,
-                           est.power_t, est.t_, intercept_decay, sampling_type)    
 
     def decision_function(self, X):
         """Predict using the ranking model
