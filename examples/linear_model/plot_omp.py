@@ -14,18 +14,18 @@ from sklearn.linear_model import orthogonal_mp
 from sklearn.datasets import make_sparse_coded_signal
 
 n_components, n_features = 512, 100
-n_components = 17
+n_nonzero_coefs = 17
 
 # generate the data
 ###################
 
 # y = Dx
-# |x|_0 = n_components
+# |x|_0 = n_nonzero_coefs
 
 y, D, x = make_sparse_coded_signal(n_samples=1,
                                    n_components=n_components,
                                    n_features=n_features,
-                                   n_nonzero_coefs=n_components,
+                                   n_nonzero_coefs=n_nonzero_coefs,
                                    random_state=0)
 
 idx, = x.nonzero()
@@ -43,7 +43,7 @@ pl.stem(idx, x[idx])
 
 # plot the noise-free reconstruction
 ####################################
-x_r = orthogonal_mp(D, y, n_components)
+x_r = orthogonal_mp(D, y, n_nonzero_coefs)
 idx_r, = x_r.nonzero()
 pl.subplot(3, 1, 2)
 pl.xlim(0, 512)
@@ -52,7 +52,7 @@ pl.stem(idx_r, x_r[idx_r])
 
 # plot the noisy reconstruction
 ###############################
-x_r = orthogonal_mp(D, y_noisy, n_components)
+x_r = orthogonal_mp(D, y_noisy, n_nonzero_coefs)
 idx_r, = x_r.nonzero()
 pl.subplot(3, 1, 3)
 pl.xlim(0, 512)
