@@ -55,6 +55,13 @@ def configuration(parent_package='', top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        'manifold/lpp_util',
+        sources=['manifold/lpp_util.c'],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+    )
+
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
