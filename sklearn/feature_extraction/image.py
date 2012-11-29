@@ -207,7 +207,6 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
 
     Returns
     -------
-
     patches: strided ndarray
         2n-dimensional array indexing patches on first n dimensions and
         containing patches on the last n dimensions. These dimensions

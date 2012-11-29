@@ -254,11 +254,11 @@ def test_extract_patches_strided():
 
         ndim = len(image_shape)
 
-        assert patches.shape[:ndim] == expected_view
+        assert_true(patches.shape[:ndim] == expected_view)
         last_patch_slices = [slice(i, i + j, None) for i, j in
                              zip(last_patch, patch_size)]
-        assert (patches[[slice(-1, None, None)] * ndim] ==
-                image[last_patch_slices].squeeze()).all()
+        assert_true((patches[[slice(-1, None, None)] * ndim] ==
+                    image[last_patch_slices].squeeze()).all())
 
 
 if __name__ == '__main__':
