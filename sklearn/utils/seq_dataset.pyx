@@ -8,9 +8,13 @@
 # License: BSD Style.
 
 import numpy as np
+import collections
 
 cimport numpy as np
 cimport cython
+
+cdef extern from "stdlib.h":
+    int rand()
 
 
 cdef class SequentialDataset:
@@ -176,13 +180,16 @@ cdef class CSRDataset(SequentialDataset):
 
 
 cdef class PairwiseArrayDataset:
-    """Dataset backed by a two-dimensional numpy array. Calling next() returns a random pair of examples with disagreeing labels.
+    """Dataset backed by a two-dimensional numpy array. 
+
+    Calling next() returns a random pair of examples with disagreeing labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
     """
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
+                  int sampling_type, np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
         """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
 
         Parameters
@@ -208,13 +215,25 @@ cdef class PairwiseArrayDataset:
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
 
+        # must declare in the cinit as closures inside cdef functions not yet supported
+        self.group_id_y_to_index = collections.defaultdict(lambda: \
+                                                           collections.defaultdict(list))
+        self.query_data_ptr = <DOUBLE *>query_id.data
+
+        self.sampling_type = sampling_type
+        if sampling_type == 1:
+            self.init_roc()
+        elif sampling_type == 2:
+            self.init_rank(Y)
+
+    cdef void init_roc(self):
         # Create an index of positives and negatives for fast sampling
         # of disagreeing pairs
         positives = []
         negatives = []
         cdef Py_ssize_t i
         for i in range(self.n_samples):
-            if Y[i] > 0:
+            if self.Y_data_ptr[i] > 0:
                 positives.append(i)
             else:
                 negatives.append(i)
@@ -229,12 +248,32 @@ cdef class PairwiseArrayDataset:
         self.n_pos_samples = len(pos_index)
         self.n_neg_samples = len(neg_index)
 
+
+    cdef void init_rank(self, Y):
+        self.group_id_y_to_count = collections.counter(Y)
+        cdef Py_ssize_t i
+        cdef DOUBLE query_data_ptr_idx
+        for i in range(self.n_samples):
+            query_data_ptr_idx = self.query_data_ptr[i]
+            self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i)        
+    
     cdef void next(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
                    DOUBLE *y_a, DOUBLE *y_b):
 
-        current_pos_index = np.random.randint(self.n_pos_samples)
-        current_neg_index = np.random.randint(self.n_neg_samples)
+        x_ind_ptr[0] = self.feature_indices_ptr
+        nnz_a[0] = self.n_features
+        nnz_b[0] = self.n_features
+        if self.sampling_type == 1:
+            self.next_roc(a_data_ptr, b_data_ptr, y_a, y_b)
+        elif self.sampling_type == 2:
+            self.next_rank(a_data_ptr, b_data_ptr, y_a, y_b)
+
+    cdef void next_roc(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                       DOUBLE *y_a, DOUBLE *y_b):
+
+        current_pos_index = rand() % self.n_pos_samples
+        current_neg_index = rand() % self.n_neg_samples
 
         # For each step, randomly sample one positive and one negative
         cdef int sample_pos_idx = self.pos_index_data_ptr[current_pos_index]
@@ -246,9 +285,29 @@ cdef class PairwiseArrayDataset:
         y_b[0] = self.Y_data_ptr[sample_neg_idx]
         a_data_ptr[0] = self.X_data_ptr + pos_offset
         b_data_ptr[0] = self.X_data_ptr + neg_offset
-        x_ind_ptr[0] = self.feature_indices_ptr
-        nnz_a[0] = self.n_features
-        nnz_b[0] = self.n_features
     
+    cdef void next_rank(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                        DOUBLE *y_a, DOUBLE *y_b):
+
+        cdef int a_idx = rand() % self.n_samples
+        cdef int a_offset = a_idx * self.stride
+        a_data_ptr[0] = self.X_data_ptr + a_offset
+        cdef DOUBLE group_id = self.query_data_ptr[a_idx]
+        y_a[0] = self.Y_data_ptr[a_idx]
+        y_to_list = self.group_id_y_to_count[group_id]
+        cdef int y_range = self.group_id_y_to_count[group_id] - self.group_id_y_to_index[group_id][y_a[0]].size()
+
+        cdef unsigned int random_int = rand() % y_range
+        cdef int b_idx
+        cdef int b_offset
+        for b_y, idx_list in y_to_list.items():
+            if y_a[0] == b_y:
+                continue
+            if random_int < idx_list.size():
+                b_idx = idx_list[random_int]
+                b_offset = b_idx * self.stride
+                b_data_ptr[0] = self.X_data_ptr + b_offset
+                break
+
     cdef void shuffle(self, seed):
         np.random.RandomState(seed).shuffle(self.index)    

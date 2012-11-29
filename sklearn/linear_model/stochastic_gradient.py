@@ -34,6 +34,8 @@ LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3}
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
+SAMPLING_TYPES = {"roc": 1, "rank": 2}
+
 SPARSE_INTERCEPT_DECAY = 0.01
 """For sparse data intercept updates are scaled by this decay factor to avoid
 intercept oscillation."""
@@ -145,6 +147,13 @@ class BaseSGD(BaseEstimator):
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
 
+    def _get_sampling_type(self, sampling):
+        try:
+            return SAMPLING_TYPES[sampling]
+        except KeyError:
+            raise ValueError("sampling type %s"
+                             "is not supported. " % sampling)
+
     def _validate_sample_weight(self, sample_weight, n_samples):
         """Set the sample weight array."""
         if sample_weight is None:
@@ -222,7 +231,7 @@ def _check_fit_data(X, y):
         raise ValueError("Shapes of X and y do not match.")
 
 
-def _make_dataset(X, y_i, sample_weight, ranking=False):
+def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
     """Create ``Dataset`` abstraction for sparse and dense inputs.
 
     This also returns the ``intercept_decay`` which is different
@@ -231,8 +240,10 @@ def _make_dataset(X, y_i, sample_weight, ranking=False):
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
         intercept_decay = SPARSE_INTERCEPT_DECAY
-    elif ranking:
-        dataset = PairwiseArrayDataset(X, y_i)
+    elif sampling is not None:
+        if query_id is None:
+            query_id = np.ones(X.shape[0])
+        dataset = PairwiseArrayDataset(X, y_i, sampling, query_id)
         intercept_decay = 1.0
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
@@ -258,7 +269,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'hinge' or 'log' or 'modified_huber' or 'roc_pairwise_ranking'
+    loss : str, 'hinge' or 'log' or 'modified_huber'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is
         a margin loss used by standard linear SVM models. The 'log' loss is
         the loss of logistic regression models and can be used for
@@ -667,26 +678,10 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    if est.loss == "roc_pairwise_ranking":
-        ranking = True
-        dataset, intercept_decay = _make_dataset(X, y_i,
-                                                 sample_weight, ranking)
-        penalty_type = est._get_penalty_type(est.penalty)
-        if est.penalty != "l2":
-            raise ValueError("The penalty %s is not\
-                             supported for pairwise sgd. " % est.penalty)
-        learning_rate_type = est._get_learning_rate_type(est.learning_rate)
-        return ranking_sgd(coef, intercept, est.loss_function,
-                     penalty_type, est.alpha, est.l1_ratio,
-                     dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), est.seed,
-                     learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay)
-    else:
-        dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
-        penalty_type = est._get_penalty_type(est.penalty)
-        learning_rate_type = est._get_learning_rate_type(est.learning_rate)
-        return plain_sgd(coef, intercept, est.loss_function,
+    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
+    penalty_type = est._get_penalty_type(est.penalty)
+    learning_rate_type = est._get_learning_rate_type(est.learning_rate)
+    return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, est.alpha, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), est.seed,
@@ -696,11 +691,12 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
 
 
 class SGDRanking(SGDClassifier):
-    """Ranking model fitted by minimizing a regularized empirical loss with SGD
-    on a training set of pairs with disagreeing labels. Implements the indexed
-    sampling method of D. Sculley, Large-scale Learning to Rank, NIPS 2011 to 
-    sample disagreeing pairs without constructing the set of all possible pairs
-    explicitly.
+    """Performs pairwise ranking with an underlying SGDClassifer model.
+
+    SGDRanking fits a ranking model on a training set of pairs with disagreeing 
+    labels. Implements the indexed sampling method of D. Sculley, Large-scale
+    Learning to Rank, NIPS 2011 to sample disagreeing pairs without constructing
+    the set of all possible pairs explicitly.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -718,11 +714,12 @@ class SGDRanking(SGDClassifier):
 
     Parameters
     ----------
-    loss : 'roc_pairwise_ranking'
-        The loss function to be used. Defaults to 'roc_pairwise_ranking'
-        which minimizes hinge loss on a training set of pairs with
-        disagreeing labels. Hinge loss is a margin loss used by standard
-        linear SVM models.
+    loss : str, 'hinge' or 'log' or 'modified_huber'
+        The loss function to be used. Defaults to 'hinge'. The hinge loss is
+        a margin loss used by standard linear SVM models. The 'log' loss is
+        the loss of logistic regression models and can be used for
+        probability estimation in binary classifiers. 'modified_huber'
+        is another smooth loss that brings tolerance to outliers.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -816,30 +813,250 @@ class SGDRanking(SGDClassifier):
     [2 3 1 0] 
 
     """
-    def __init__(self, loss="roc_pairwise_ranking", penalty='l2', alpha=0.0001,
+
+    loss_functions = {
+        "hinge": (Hinge, 1.0),
+        "perceptron": (Hinge, 0.0),
+        "log": (Log, ),
+        "modified_huber": (ModifiedHuber, ),
+        "squared_loss": (SquaredLoss, ),
+        "huber": (Huber, DEFAULT_EPSILON),
+        "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
+    }
+
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, 
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1, seed=0,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, rho=None):
+                 class_weight=None, warm_start=False, rho=None, 
+                 sampling='roc'):
 
         super(SGDRanking, self).__init__(loss=loss, penalty=penalty,
-                                            alpha=alpha, l1_ratio=l1_ratio,
-                                            fit_intercept=fit_intercept,
-                                            n_iter=n_iter, shuffle=shuffle,
-                                            verbose=verbose, epsilon=epsilon,
-                                            seed=seed, rho=rho,
-                                            learning_rate=learning_rate,
-                                            eta0=eta0, power_t=power_t,
-                                            warm_start=warm_start)
+                                         alpha=alpha, l1_ratio=l1_ratio,
+                                         fit_intercept=fit_intercept,
+                                         n_iter=n_iter, shuffle=shuffle,
+                                         verbose=verbose, epsilon=epsilon,
+                                         seed=seed, rho=rho,
+                                         learning_rate=learning_rate,
+                                         eta0=eta0, power_t=power_t,
+                                         warm_start=warm_start,
+                                         sampling=sampling)
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
-        if self.loss != "roc_pairwise_ranking":
-            raise ValueError("The loss %s is not supported. " % self.loss)
+        self.sampling = sampling
 
-    def rank(self, X):
+    def _partial_fit(self, X, y, query_id, n_iter, classes=None, sample_weight=None,
+                     coef_init=None, intercept_init=None):
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y = np.asarray(y).ravel()
+
+        n_samples, n_features = X.shape
+        _check_fit_data(X, y)
+
+        self._validate_params()
+
+        if self.classes_ is None and classes is None:
+            raise ValueError("classes must be passed on the first call "
+                             "to partial_fit.")
+        elif classes is not None and self.classes_ is not None:
+            if not np.all(self.classes_ == np.unique(classes)):
+                raise ValueError("`classes` is not the same as on last call "
+                                 "to partial_fit.")
+        elif classes is not None:
+            self.classes_ = classes
+
+        n_classes = self.classes_.shape[0]
+
+        # Allocate datastructures from input arguments
+        self._set_class_weight(self.class_weight, self.classes_, y)
+        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+
+        if self.coef_ is None:
+            self._allocate_parameter_mem(n_classes, n_features,
+                                         coef_init, intercept_init)
+
+        self.loss_function = self._get_loss_function(self.loss)
+        if self.t_ is None:
+            self._init_t(self.loss_function)
+
+        # delegate to concrete training procedure
+        if n_classes > 2:
+            self._fit_multiclass(X, y, query_id, sample_weight, n_iter)
+        elif n_classes == 2:
+            self._fit_binary(X, y, query_id, sample_weight, n_iter)
+        else:
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+
+        self.t_ += n_iter * n_samples
+
+        return self
+
+    def partial_fit(self, X, y, query_id=None, classes=None, sample_weight=None):
+        """Fit linear model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Subset of the training data
+
+        y : numpy array of shape [n_samples]
+            Subset of the target values
+
+        classes : array, shape = [n_classes]
+            Classes across all calls to partial_fit.
+            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that y doesn't need to contain all labels in `classes`.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
         """
-        Returns an index that ranks a test set according to the ranking model.
+        if query_id is None:
+            query_id = np.ones(X.shape[0])
+        return self._partial_fit(X, y, query_id, n_iter=1, classes=classes,
+                                 sample_weight=sample_weight)
+
+    def fit(self, X, y, query_id=None, coef_init=None, intercept_init=None,
+            class_weight=None, sample_weight=None):
+        """Fit ranking model with Stochastic Gradient Descent.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training data
+
+        y : numpy array of shape [n_samples]
+            Target values
+
+        coef_init : array, shape = [n_classes,n_features]
+            The initial coeffients to warm-start the optimization.
+
+        intercept_init : array, shape = [n_classes]
+            The initial intercept to warm-start the optimization.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples.
+            If not provided, uniform weights are assumed.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if class_weight is not None:
+            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
+                          "method is deprecated and will be removed in 0.13. "
+                          "Set it on initialization instead.",
+                          DeprecationWarning, stacklevel=2)
+
+            self.class_weight = class_weight
+
+        if query_id is None:
+            query_id = np.ones(X.shape[0])
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        n_samples, n_features = X.shape
+
+        # labels can be encoded as float, int, or string literals
+        # np.unique sorts in asc order; largest class id is positive class
+        classes = np.unique(y)
+
+        if self.warm_start and self.coef_ is not None:
+            if coef_init is None:
+                coef_init = self.coef_
+            if intercept_init is None:
+                intercept_init = self.intercept_
+        else:
+            self.coef_ = None
+            self.intercept_ = None
+
+        # Clear iteration count for multiple call to fit.
+        self.t_ = None
+
+        self._partial_fit(X, y, query_id, self.n_iter, classes,
+                          sample_weight, coef_init, intercept_init)
+
+        # fitting is over, we can now transform coef_ to fortran order
+        # for faster predictions
+        self._set_coef(self.coef_)
+
+        return self
+
+    def _fit_binary(self, X, y, query_id, sample_weight, n_iter):
+        """Fit a binary classifier on X and y. """
+        coef, intercept = fit_binary(self, 1, X, y, query_id, n_iter,
+                                     self._expanded_class_weight[1],
+                                     self._expanded_class_weight[0],
+                                     sample_weight)
+        # need to be 2d
+        self.coef_ = coef.reshape(1, -1)
+        # intercept is a float, need to convert it to an array of length 1
+        self.intercept_ = np.atleast_1d(intercept)
+
+
+    def _fit_multiclass(self, X, y, query_id, sample_weight, n_iter):
+        """Fit a multi-class classifier by combining binary classifiers
+
+        Each binary classifier predicts one class versus all others. This
+        strategy is called OVA: One Versus All.
+        """
+        # Use joblib to fit OvA in parallel
+        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+            delayed(fit_binary)(self, i, X, y, query_id, n_iter,
+                                self._expanded_class_weight[i], 1.,
+                                sample_weight)
+            for i in xrange(len(self.classes_)))
+
+        for i, (coef, intercept) in enumerate(result):
+            self.coef_[i] = coef
+            self.intercept_[i] = intercept
+
+    def fit_binary(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
+                   sample_weight):
+        """Fit a single binary classifier.
+    
+        The i'th class is considered the "positive" class.
+        """
+        y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+        assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
+        dataset, intercept_decay = _make_dataset(X, y_i, sample_weight,
+                                                 query_id, self.sampling)
+        penalty_type = est._get_penalty_type(est.penalty)
+        learning_rate_type = est._get_learning_rate_type(est.learning_rate)
+        sampling_type = est._get_sampling_type(est.sampling)
+        return ranking_sgd(coef, intercept, est.loss_function,
+                           penalty_type, est.alpha, est.l1_ratio,
+                           dataset, n_iter, int(est.fit_intercept),
+                           int(est.verbose), int(est.shuffle), est.seed,
+                           learning_rate_type, est.eta0,
+                           est.power_t, est.t_, intercept_decay, sampling_type)    
+
+    def decision_function(self, X):
+        """Predict using the ranking model
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Returns predicted values.
+        """
+        X = atleast2d_or_csr(X)
+        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return scores.ravel()
+
+    def predict(self, X):
+        """Returns an index that ranks a test set according to the ranking
+        model.
 
         Parameters
         ----------
@@ -856,11 +1073,15 @@ class SGDRanking(SGDClassifier):
         return order_inv
 
     def score(self, X, y):
-        """
-        Returns the Kendall's tau correlation coefficient, which is used in the
-        ranking literature (e.g T. Joachims, Optimizing Search Engines using
-        Clickthrough Data, KDD 2002) to compare the ordering of a model to a
-        given ordering given test data and labels.
+        """Returns the Kendall's tau correlation coefficient
+
+        The Kendall's tau correlation is used to evaluate the quality of a
+        ranking prediction. It compares the ordering predicted by the model to
+        a given ordering.
+
+        Reference
+        T. Joachims, Optimizing Search Engines using Clickthrough Data, KDD
+        2002
 
         Parameters
         ----------

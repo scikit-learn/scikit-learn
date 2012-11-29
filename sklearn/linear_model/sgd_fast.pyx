@@ -29,7 +29,7 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
 
 
-# Penalty constans
+# Penalty constants
 DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
@@ -39,6 +39,10 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
+
+# Sampling type constants
+DEF ROC = 1
+DEF RANK = 2
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -435,7 +439,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0):
+              double intercept_decay=1.0,
+              int sampling_type=1):
     """SGD minimizing ROC-SVM pairwise ranking loss.
 
     Parameters
