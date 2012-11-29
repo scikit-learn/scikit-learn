@@ -192,25 +192,29 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
 
     Parameters
     ----------
-    arr: ndarray, n-dimensional array of which patches are to be extracted
+    arr: ndarray
+        n-dimensional array of which patches are to be extracted
 
-    patch_shape: integer or tuple, indicates the shape of the patches to be
-        extracted. If an integer is given, the shape will be a hypercube of
+    patch_shape: integer or tuple of length arr.ndim
+        Indicates the shape of the patches to be extracted. If an
+        integer is given, the shape will be a hypercube of
         sidelength given by its value.
 
-    extraction_step: integer or tuple, indicates step size at which extraction
-        shall be performed. If integer is given, then the step is uniform in
-        all dimensions.
+    extraction_step: integer or tuple of length arr.ndim
+        Indicates step size at which extraction shall be performed.
+        If integer is given, then the step is uniform in all dimensions.
 
 
     Returns
     -------
 
-    patches: strided ndarray, 2n-dimensional array indexing patches on first
-        n dimensions and containing patches on the last n dimensions. These
-        dimensions are fake, but this way no data is copied. A simple reshape
-        invokes a copying operation to obtain a list of patches:
-        result.reshape([-1] + list(patch_shape))"""
+    patches: strided ndarray
+        2n-dimensional array indexing patches on first n dimensions and
+        containing patches on the last n dimensions. These dimensions
+        are fake, but this way no data is copied. A simple reshape invokes
+        a copying operation to obtain a list of patches:
+        result.reshape([-1] + list(patch_shape))
+    """
 
     arr_ndim = arr.ndim
 
@@ -224,8 +228,8 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
     slices = [slice(None, None, st) for st in extraction_step]
     indexing_strides = arr[slices].strides
 
-    patch_indices_shape = (np.array(arr.shape) - np.array(patch_shape)) /\
-        np.array(extraction_step) + 1
+    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) /
+        np.array(extraction_step)) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
     strides = tuple(list(indexing_strides) + list(patch_strides))
