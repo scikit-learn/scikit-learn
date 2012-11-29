@@ -17,9 +17,15 @@ from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
-
+from sklearn.linear_model.ridge import ridge_regression
+from sklearn.linear_model.ridge import _RidgeGridCV
 
 from sklearn.cross_validation import KFold
+from sklearn.metrics import euclidean_distances
+from sklearn.datasets import make_regression
+
+from itertools import product
+import numbers
 
 rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
@@ -46,7 +52,7 @@ def test_ridge():
     """
     alpha = 1.0
 
-    for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
+    for solver in ("sparse_cg", "dense_cholesky", "lsqr", "svd", "eigen"):
         # With more samples than features
         n_samples, n_features = 6, 5
         y = rng.randn(n_samples)
@@ -72,6 +78,129 @@ def test_ridge():
         assert_greater(ridge.score(X, y), 0.9)
 
 
+def test_ridge_compare_different_solvers():
+    """Compares regression results for all solvers
+
+    This test covers the cases n_samples > n_features
+    and n_samples < n_features using different penalties
+    on a noisy linear model with exactly one target.
+    """
+
+    tolerance = 0.02
+    # sparse_cg solver differs significantly from the others. Is this
+    # tolerance too permissive? (We are checking for general correctness
+    # of solution, nothing more)
+    # Somehow even with a fixed random seed in the data, sparse_cg seems
+    # to output different results each time. I guess this is due to design
+    # (randomness in gradient descent?). Set tolerance to e.g 0.007 and the
+    # tests will not pass every time. (Even 0.02 doesn't pass every time)
+
+    alphas = [0., .01, .1, 1., 10.]
+
+    solvers = ["sparse_cg", "dense_cholesky", "lsqr", "svd", "eigen"]
+
+    N, P = 20, 50
+    noise_level = .1
+
+    # N = n_samples < n_features = P
+    X_1 = rng.randn(N, P)
+    beta_1 = rng.randn(P)
+    noise_1 = noise_level * rng.randn(N)
+    y_1 = np.dot(X_1, beta_1) + noise_1
+
+    # P = n_samples > n_features = N
+    X_2 = rng.randn(P, N)
+    beta_2 = rng.randn(N)
+    noise_2 = noise_level * rng.randn(P)
+    y_2 = np.dot(X_2, beta_2) + noise_2
+
+    test_cases = [(X_1, y_1), (X_2, y_2)]
+
+    for i, (X, y) in enumerate(test_cases):
+        for alpha in alphas:
+            coef_vectors = [ridge_regression(X, y, alpha, solver=solver)
+                            for solver in solvers]
+
+            # pairwise comparison using sklearn.metric.euclidean_distances
+            coef_vectors = np.array(coef_vectors)
+            distances = euclidean_distances(coef_vectors)
+
+            # make sure these distances are close to 0
+            assert_greater(tolerance, distances.max())
+
+
+# TODO: This test doesn't check dense_cholesky, option multiple targets
+# with unique penalty.
+def test_ridge_multiple_targets_multiple_penalties():
+    """Tests multiple target, multiple individual penalties feature
+
+    against standard cholesky solver applied to each combination
+    individually"""
+
+    tolerance = 0.01  # 1e-10 works with svd and eigen
+    matrix_shapes = [(20, 50), (50, 20)]
+    n_targets = 10
+    n_penalties_per_target = 4
+    noise_level = .01
+    relevant_features_proportion = 0.25
+
+    # for each target generate penalties on a logarithmic scale
+    # and multiply them by a target-dependent value to individualize
+    lowest_penalty_exponent = 2
+    alphas = np.logspace(lowest_penalty_exponent,
+                         lowest_penalty_exponent + n_penalties_per_target,
+                          n_penalties_per_target, False)
+    alphas = alphas[:, np.newaxis] * (rng.rand(1, n_targets) * 9 + 1)
+
+    concerned_solvers = ["svd", "eigen", "lsqr", "sparse_cg", "dense_cholesky"]
+
+    def make_test_case(n_samples, n_features):
+        n_informative = int(np.floor(n_features *\
+                                     relevant_features_proportion))
+        return make_regression(n_samples=n_samples,
+                               n_features=n_features,
+                               n_informative=n_informative,
+                               n_targets=n_targets,
+                               noise=noise_level,
+                               random_state=rng,
+                               coef=False)
+
+    test_cases = [make_test_case(n_samples, n_features)
+                  for n_samples, n_features in matrix_shapes]
+
+    # Calculate everything individually using standard solver
+    standard_solutions = []
+    for X, y in test_cases:
+        case_solutions = np.empty([alphas.shape[0],
+                                   alphas.shape[1], X.shape[1]])
+        for i, alpha_line in enumerate(alphas):
+            for j, (target, alpha) in enumerate(zip(y.T, alpha_line)):
+                case_solutions[i, j, :] = ridge_regression(
+                    X, target, alpha, solver="dense_cholesky")
+        standard_solutions.append(case_solutions)
+
+    # now do the same with multiple targets/individual penalties
+    new_solutions = []
+    for X, y in test_cases:
+        case_solutions = np.empty([len(concerned_solvers),
+                        alphas.shape[0], alphas.shape[1], X.shape[1]])
+        for s, solver in enumerate(concerned_solvers):
+            case_solutions[s] = ridge_regression(X, y, alphas, solver=solver)
+        new_solutions.append(case_solutions)
+
+    # Compare all these solutions, distances on each target individually
+    for standard_solution, new_solution in \
+                    zip(standard_solutions, new_solutions):
+        distances = (
+            (standard_solution[np.newaxis, :] - new_solution) ** 2).sum(-1)
+
+        assert_greater(tolerance, distances.max())
+
+
+def test_ridge_regression_with_varying_sample_weights():
+    pass
+
+
 def test_ridge_shapes():
     """Test shape of coef_ and intercept_
     """
@@ -94,6 +223,130 @@ def test_ridge_shapes():
     ridge.fit(X, Y)
     assert_equal(ridge.coef_.shape, (2, n_features))
     assert_equal(ridge.intercept_.shape, (2, ))
+
+
+def test_ridge_regression_coef_shapes_individual_penalties():
+    """Test shape of coefficients output by ridge_regression
+       in the presence of multiple targets/
+       multiple individual penalities
+    """
+
+    n_sampless = [5, 10]
+    n_featuress = [10, 5]
+    n_informatives = [2, 2]
+    noise_levels = [.1, .1]
+
+    n_targetss = [1, 2, 5]
+
+    datasets = [make_regression(n_samples=n_samples,
+                                n_features=n_features,
+                                n_informative=n_informative,
+                                noise=noise_level,
+                                random_state=rng,
+                                coef=False,
+                                n_targets=n_targets
+                                )
+                for ((n_samples, n_features, n_informative, noise_level),
+                     n_targets) in
+                     product(
+                        zip(n_sampless, n_featuress,
+                             n_informatives, noise_levels),
+                        n_targetss)]
+
+    solvers = ["sparse_cg", "lsqr", "svd", "eigen", "dense_cholesky"]
+
+    def expected_shape(X, y, alphas):
+
+        if y.ndim == 1:
+            if isinstance(alphas, numbers.Number):
+                expected_shape = (X.shape[1],)
+            elif alphas.shape == (1,):
+                expected_shape = (X.shape[1],)
+            elif alphas.ndim == 1:
+                expected_shape = (alphas.shape[0], X.shape[1])
+            else:
+                if alphas.shape[-1] == 1:
+                    expected_shape = tuple(list(alphas.shape[:-1]) +
+                                           [X.shape[1]])
+                else:
+                    expected_shape = tuple(list(alphas.shape) + [X.shape[1]])
+        else:
+            if isinstance(alphas, numbers.Number):
+                expected_shape = (y.shape[1], X.shape[1])
+            elif alphas.shape[-1] == y.shape[1]:
+                expected_shape = tuple(list(alphas.shape) + [X.shape[1]])
+            elif alphas.shape[-1] == 1:
+                expected_shape = tuple(list(alphas.shape[:-1]) +\
+                                    [y.shape[1], X.shape[1]])
+            else:
+                expected_shape = tuple(list(alphas.shape) +\
+                                    [y.shape[1], X.shape[1]])
+
+        return expected_shape
+
+    def make_alphas(y):
+        alphas = []
+
+        # one number
+        alpha_number = 10.0
+        alphas.append(alpha_number)
+
+        # array with one element and one dimension
+        alpha_1D_1E_array = np.array([11.0])
+        alphas.append(alpha_1D_1E_array)
+
+        # array with one element and two dimensions
+        alpha_2D_1E_array = np.array([[12.0]])
+        alphas.append(alpha_2D_1E_array)
+
+        # if multiple targets
+        if y.ndim == 2:
+            # 1D array with len == n_targets
+            n_targets = y.shape[1]
+            alpha = np.arange(13., 13. + n_targets)
+            alphas.append(alpha)
+
+            # 2D array with last dim == n_targets
+            scale_factors = np.array([[1.], [2.]])
+            alpha2 = scale_factors * alpha[np.newaxis, :]
+            alphas.append(alpha2)
+
+            # 1D array with len != n_targets
+            alpha3 = np.arange(20., 20. + n_targets + 1)
+            alphas.append(alpha3)
+        elif y.ndim == 1:
+            # 1D array with len != 1
+            alpha = np.array([25., 26.])
+            alphas.append(alpha)
+
+        # 2D array with last dim == 1
+        alpha = np.array([[27.], [28.]])
+        alphas.append(alpha)
+
+        # 3D array
+        alpha = np.arange(8).reshape(2, 2, 2)
+        alphas.append(alpha)
+
+        # 3D array with last dim == 1
+        alpha = np.arange(4).reshape(2, 2, 1)
+        alphas.append(alpha)
+
+        return alphas
+
+    def verify_shape(X, y, alpha, solver):
+        expected = expected_shape(X, y, alpha)
+        actual = ridge_regression(X, y, alpha, solver=solver).shape
+
+        assert expected == actual
+
+    for solver in solvers:
+        for X, y in datasets:
+            alphas = make_alphas(y)
+            for alpha in alphas:
+                # if one target, check also degenerate 2D y
+                if y.ndim == 1:
+                    verify_shape(X, y[:, np.newaxis], alpha, solver)
+                verify_shape(X, y, alpha, solver)
 
 
 def test_ridge_intercept():
@@ -382,3 +635,29 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_ridge_grid_cv_object():
+
+    ridge_cv = _RidgeGridCV(n_grid_refinements=10)
+
+    n_samples, n_features = 50, 100
+
+    X = rng.randn(n_samples, n_features)
+
+    beta = np.zeros(n_features)
+    beta[:2] = rng.randn(2) + 1.
+
+    y_0 = np.dot(X, beta)
+
+    noise_levels = np.array([.01, .1, .5, 1., 2., 5., 10., 100., 1000.])
+    noise_proto = rng.randn(n_samples)
+
+    noise = noise_levels[np.newaxis, :] * noise_proto[:, np.newaxis]
+
+    y = y_0[:, np.newaxis] + noise
+    y = np.hstack([y, noise_proto[:, np.newaxis]])
+
+    ridge_cv.fit(X, y)
+
+

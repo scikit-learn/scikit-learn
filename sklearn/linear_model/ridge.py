@@ -16,12 +16,15 @@ from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
+import numbers
+
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
+from ..cross_validation import cross_val_score
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
@@ -95,83 +98,173 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     if has_sw:
         solver = 'dense_cholesky'
 
+    # Preparing the ys:
+    # If y is 0D or a 1D array of 0D targets, i.e. X.shape[0]==1, it won't work
+    # If y is a 1D array, create y1 with an extra dimensions
+    # If y is a 2D array, set y1 = y
+    # An exception for any other condition is not thrown
+
+    if y.ndim == 1:
+        y1 = y[:, np.newaxis]
+    else:
+        y1 = y
+    n_targets = y1.shape[1]
+
+    #
+    # Preparing alphas:
+    # Three actions (the first two correct the input):
+    # 1) If alpha is just one number, make it a 1D array with one entry
+    # 2) If alpha is an array, check if last dimension corresponds to number
+    #    of targets.If not, add singleton dimension to the end for broadcasting
+    # 3) For internal calculations collapse all dimensions before last to one
+    #    in the variable 'alphas'
+
+    if isinstance(alpha, numbers.Number):
+        alpha = np.array([alpha])
+    elif alpha.shape[-1] != n_targets and alpha.shape[-1] != 1:
+        alpha = alpha.copy().reshape(list(alpha.shape) + [1])
+    alphas = alpha.reshape(-1, alpha.shape[-1])
+    # number of different penalties per target
+    n_penalties = alphas.shape[0]
+
+    # Prepare the coefficients array
+    coefs = np.empty((n_penalties, n_targets, n_features))
+
     if solver == 'sparse_cg':
         # gradient descent
         X1 = sp_linalg.aslinearoperator(X)
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-        coefs = np.empty((y1.shape[1], n_features))
 
-        if n_features > n_samples:
-            def mv(x):
-                return X1.matvec(X1.rmatvec(x)) + alpha * x
-        else:
-            def mv(x):
-                return X1.rmatvec(X1.matvec(x)) + alpha * x
+        for i, alpha_line in enumerate(alphas):
+            if alpha_line.shape != n_features:
+                alpha_line = alpha_line * np.ones(y1.shape[1])
+            for j, (y_column, alpha_value) in enumerate(zip(y1.T, alpha_line)):
+                if n_features > n_samples:
+                    # kernel ridge
+                    # w = X.T * inv(X X^t + alpha*Id) y
+                    def mv(x):
+                        return X1.matvec(X1.rmatvec(x)) + alpha_value * x
 
-        for i in range(y1.shape[1]):
-            y_column = y1[:, i]
-            if n_features > n_samples:
-                # kernel ridge
-                # w = X.T * inv(X X^t + alpha*Id) y
-                C = sp_linalg.LinearOperator(
-                    (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
-                coefs[i] = X1.rmatvec(coef)
-            else:
-                # ridge
-                # w = inv(X^t X + alpha*Id) * X.T y
-                y_column = X1.rmatvec(y_column)
-                C = sp_linalg.LinearOperator(
-                    (n_features, n_features), matvec=mv, dtype=X.dtype)
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                              tol=tol)
-            if info != 0:
-                raise ValueError("Failed with error code %d" % info)
+                    C = sp_linalg.LinearOperator(
+                        (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+                    coef, info = sp_linalg.cg(C, y_column, tol=tol)
+                    coefs[i, j] = X1.rmatvec(coef)
+                    if info != 0:
+                        raise ValueError("Failed with error code %d" % info)
+                else:
+                    # ridge
+                    # w = inv(X^t X + alpha*Id) * X.T y
+                    def mv(x):
+                        return X1.rmatvec(X1.matvec(x)) + alpha_value * x
 
-        if y.ndim == 1:
-            coefs = np.ravel(coefs)
-
-        return coefs
+                    y_column = X1.rmatvec(y_column)
+                    C = sp_linalg.LinearOperator(
+                        (n_features, n_features), matvec=mv, dtype=X.dtype)
+                    coefs[i, j], info = sp_linalg.cg(C,
+                                    y_column, maxiter=max_iter, tol=tol)
+                    if info != 0:
+                        raise ValueError("Failed with error code %d" % info)
     elif solver == "lsqr":
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-        coefs = np.empty((y1.shape[1], n_features))
-
         # According to the lsqr documentation, alpha = damp^2.
-        sqrt_alpha = np.sqrt(alpha)
-
-        for i in range(y1.shape[1]):
-            y_column = y1[:, i]
-            coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
-                                      atol=tol, btol=tol, iter_lim=max_iter)[0]
-
-        if y.ndim == 1:
-            coefs = np.ravel(coefs)
-
-        return coefs
+        sqrt_alphas = np.sqrt(alphas)
+        for i, alpha_line in enumerate(sqrt_alphas):
+            if alpha_line.shape != (n_features,):
+                alpha_line = alpha_line * np.ones(y1.shape[1])
+            for j, (y_column, sqrt_alpha) in enumerate(zip(y1.T, alpha_line)):
+                coefs[i, j] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
+                                    atol=tol, btol=tol, iter_lim=max_iter)[0]
+    elif solver == "svd":
+        U, s, VT = linalg.svd(X, full_matrices=False)
+        UT_y = np.dot(U.T, y1)
+        isvwp = inv_singular_values_with_penalties = \
+            s[np.newaxis, :, np.newaxis] /\
+            (s[np.newaxis, :, np.newaxis] ** 2 + alphas[:, np.newaxis, :])
+        isvwp_times_UT_y = isvwp * UT_y[np.newaxis, :, :]
+        coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
+        for i in range(alphas.shape[0]):
+            coefs[i] = np.dot(VT.T, isvwp_times_UT_y[i]).T
+    elif solver == "eigen":
+        if n_features > n_samples:
+            d, U = linalg.eigh(np.dot(X, X.T))
+            UT_y = np.dot(U.T, y1)
+            XT_U = np.dot(X.T, U)
+            ievwp = inv_eigenvalues_with_penalties = \
+                1. / (d[np.newaxis, :, np.newaxis] + alphas[:, np.newaxis, :])
+            ievwp_times_UT_y = ievwp * UT_y[np.newaxis, :, :]
+            coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
+            for i in range(alphas.shape[0]):
+                coefs[i] = np.dot(XT_U, ievwp_times_UT_y[i]).T
+        else:
+            d, V = linalg.eigh(np.dot(X.T, X))
+            V_T_X_T_y = np.dot(V.T, np.dot(X.T, y1))
+            ievwp = inv_eigenvalues_with_penalties = \
+                1. / (d[np.newaxis, :, np.newaxis] + alphas[:, np.newaxis, :])
+            ievwp_times_V_T_X_T_y = ievwp * V_T_X_T_y[np.newaxis, :, :]
+            coefs = np.empty([alphas.shape[0], y1.shape[1], X.shape[1]])
+            for i in range(alphas.shape[0]):
+                coefs[i] = np.dot(V, ievwp_times_V_T_X_T_y[i]).T
     else:
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             A = safe_sparse_dot(X, X.T, dense_output=True)
-            A.flat[::n_samples + 1] += alpha * sample_weight
-            Axy = linalg.solve(A, y, sym_pos=True, overwrite_a=True)
-            coef = safe_sparse_dot(X.T, Axy, dense_output=True)
+            for i, alpha_line in enumerate(alphas):
+                overwrite_a = i == n_penalties - 1
+                if alpha_line.shape != (n_targets,):
+                    assert (alpha_line.shape == (1,))
+                    alpha_value = alpha_line[0]
+                    A.flat[::n_samples + 1] += alpha_value * sample_weight
+                    Axy = linalg.solve(A, y1,
+                                       sym_pos=True, overwrite_a=overwrite_a)
+                    coefs[i] = safe_sparse_dot(X.T, Axy, dense_output=True).T
+                    A.flat[::n_samples + 1] -= alpha_value * sample_weight
+                else:
+                    for j, (y_column, alpha_value) in enumerate(
+                                                  zip(y1.T, alpha_line)):
+                        overwrite_a = (i == n_penalties - 1)\
+                            and (j == n_targets - 1)
+                        A.flat[::n_samples + 1] += alpha_value * sample_weight
+                        Axy = linalg.solve(A, y_column,
+                                       sym_pos=True, overwrite_a=overwrite_a)
+                        coefs[i, j] = safe_sparse_dot(X.T, Axy,
+                                                      dense_output=True)
+                        A.flat[::n_samples + 1] -= alpha_value * sample_weight
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
-            A.flat[::n_features + 1] += alpha
-            Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            coef = linalg.solve(A, Xy, sym_pos=True, overwrite_a=True)
+            B = A.copy()
+            Xy = safe_sparse_dot(X.T, y1, dense_output=True)
+            for i, alpha_line in enumerate(alphas):
+                overwrite_a = i == n_penalties - 1
+                # if ((y.ndim > 1 and (not isinstance(alpha, numbers.Number) and \
+                #                    y.shape[-1] != alpha.shape[-1])) and\
+                #                    len(alphas) > 1) and overwrite_a:
+                #     stop
+                if alpha_line.shape != (n_targets,):
+                    assert (alpha_line.shape == (1,))
+                    alpha_value = alpha_line[0]
+                    A.flat[::n_features + 1] += alpha_value
+                    coefs[i] = linalg.solve(A, Xy,
+                                    sym_pos=True, overwrite_a=overwrite_a).T
+                    A.flat[::n_features + 1] -= alpha_value
+                    assert (i == n_penalties - 1 or np.abs(B - A).sum() < 1e-10)
 
-        return coef.T
+                else:
+                    for j, alpha_value in enumerate(alpha_line):
+                        overwrite_a = (i == n_penalties - 1)\
+                            and (j == n_targets - 1)
+                        A.flat[::n_features + 1] += alpha_value
+                        coefs[i, j] = linalg.solve(A, Xy[:, j],
+                                    sym_pos=True, overwrite_a=overwrite_a)
+                        A.flat[::n_features + 1] -= alpha_value
+
+    coefs_shape = list(alpha.shape[:-1])
+    if y.ndim > 1:
+        coefs_shape.append(y.shape[1])
+    coefs_shape.append(X.shape[1])
+    coefs = coefs.reshape(coefs_shape)
+    return coefs
 
 
 class _BaseRidge(LinearModel):
@@ -634,6 +727,186 @@ class _RidgeGCV(LinearModel):
                 "won't be maintained from version 0.14 onward. ",
                 DeprecationWarning, stacklevel=2)
         return self.alpha_
+
+
+def _make_alpha_grid(alpha_min, alpha_max, num_steps, logscale):
+
+    if logscale:
+        alpha_min, alpha_max = map(np.log, (alpha_min, alpha_max))
+
+    steps = np.linspace(0., 1., num_steps, endpoint=True)[:, np.newaxis]
+
+    alphas = alpha_min + (alpha_max - alpha_min) * steps
+
+    if logscale:
+        alphas = np.exp(alphas)
+
+    return alphas
+
+
+def _multi_r2_score(y_true, y_pred):
+
+    if y_true.ndim == 1:
+        y_true_ = y_true[:, np.newaxis]
+    else:
+        y_true_ = y_true
+
+    yp = y_pred.reshape([-1] + list(y_true_.shape))
+    yt = y_true.reshape([1] + list(y_true_.shape))
+
+    yt_means = y_true_.mean(0)
+    yt_var = ((y_true_ - yt_means) ** 2).sum(0)
+
+    residue_var = ((yp - yt) ** 2).sum(1)
+
+    r2_score = -np.inf * np.ones_like(residue_var)
+
+    non_zero_denominator = np.abs(yt_var) > 1e-15
+
+    r2_score[:, non_zero_denominator] = 1. - \
+    residue_var[:, non_zero_denominator] / yt_var[:, non_zero_denominator]
+
+    zero_over_zero = np.logical_and(np.logical_not(non_zero_denominator),
+                                    np.abs(residue_var) < 1e-15)
+
+    r2_score[:, zero_over_zero] = 1.
+
+    return r2_score.reshape(list(y_pred.shape[:-2]) + [-1])
+
+
+class _RidgeGridCV(LinearModel):
+
+    def __init__(self, alpha_min=1e-3, alpha_max=1e8, n_grid_points=5,
+                 n_grid_refinements=2, logscale=True, fit_intercept=True,
+                 score_func=None, cv=5, solver='svd', n_jobs=1):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.n_grid_points = n_grid_points
+        print "n_grid_refinements=%d" % n_grid_refinements
+        self.n_grid_refinements = n_grid_refinements
+        self.logscale = logscale
+        self.fit_intercept = fit_intercept
+        self.score_func = score_func
+        self.cv = cv
+        self.solver = solver
+        self.n_jobs = n_jobs
+
+        # TODO
+        self.intercept_ = 0
+
+    class _MultiRidge(LinearModel):
+        def __init__(self, alphas, solver='svd', score_func=None):
+            self.alphas = alphas
+            self.solver = solver
+            self.score_func = score_func or _multi_r2_score
+
+        def fit(self, X, y):
+            self.coef_ = ridge_regression(X, y,
+                                          self.alphas, solver=self.solver)
+            return self
+
+        def predict(self, X):
+            return np.dot(X, self.coef_.reshape(-1, X.shape[1]).T).T.reshape(
+                list(self.coef_.shape[:-1]) + [X.shape[0]]).transpose(
+                    range(self.coef_.ndim - 2) + [-1, -2])
+
+        def score(self, X, y):
+            return self.score_func(y, self.predict(X))
+
+    def fit(self, X, y):
+
+        if y.ndim == 1:
+            y1 = y[:, np.newaxis]
+        else:
+            y1 = y
+
+        alpha_min = np.atleast_2d(self.alpha_min)
+        alpha_max = np.atleast_2d(self.alpha_max)
+
+        # Broadcast to same shape
+        alpha_min = (alpha_min + alpha_max) - alpha_max
+        alpha_max = (alpha_max - alpha_min) + alpha_max
+
+        self.current_alphas = _make_alpha_grid(alpha_min, alpha_max,
+                                       self.n_grid_points, self.logscale)
+        self.best_alphas = np.inf * np.ones(y1.shape[1])
+        self.best_mean_scores = -np.inf * np.ones(y1.shape[1])
+
+        print "Fitting with %d grid refinements" % self.n_grid_refinements
+        for i in range(self.n_grid_refinements + 1):
+            print "Grid refinement %d" % (i + 1)
+            print "Grid is %s" % str(self.current_alphas)
+            ridge = _RidgeGridCV._MultiRidge(
+                alphas=self.current_alphas, solver=self.solver)
+            cv_scores = cross_val_score(ridge, X, y1,
+                                        cv=self.cv, n_jobs=self.n_jobs)
+            mean_cv_scores = cv_scores.mean(axis=0)
+            best_mean_score_indices = mean_cv_scores.argmax(axis=0)
+            best_mean_scores = mean_cv_scores.max(axis=0)
+
+            improvement = best_mean_scores > self.best_mean_scores
+            self.best_mean_scores[improvement] = best_mean_scores[improvement]
+            self.best_alphas[improvement] = self.current_alphas[
+                best_mean_score_indices,
+                np.arange(self.current_alphas.shape[1])][improvement]
+
+            if i < self.n_grid_refinements:
+                self.update_alphas(best_mean_score_indices)
+
+        self.coef_ = ridge_regression(X, y,
+                            self.best_alphas, solver=self.solver)
+        return self
+
+    def update_alphas(self, best_indices):
+        print "best indices are %s" % str(best_indices)
+        new_alpha_min_indices = np.maximum(best_indices - 1, 0)
+        new_alpha_max_indices = np.minimum(
+            np.minimum(best_indices + 1, new_alpha_min_indices + 1),
+            self.n_grid_points - 1)
+
+        new_alpha_min = self.current_alphas[new_alpha_min_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        new_alpha_min = self.current_alphas[new_alpha_min_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        new_alpha_max = self.current_alphas[new_alpha_max_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        current_best_alphas = self.current_alphas[best_indices,
+                                    np.arange(self.current_alphas.shape[1])]
+        global_best_alphas = self.best_alphas
+
+        alpha_min, alpha_max = self.alpha_min, self.alpha_max
+
+        if self.logscale:
+            global_best_alphas = np.log(global_best_alphas)
+            current_best_alphas = np.log(current_best_alphas)
+            new_alpha_min = np.log(new_alpha_min)
+            new_alpha_max = np.log(new_alpha_max)
+            alpha_min, alpha_max = np.log(alpha_min), np.log(alpha_max)
+
+        rc = recenter_between_current_and_global_max = \
+            (global_best_alphas - current_best_alphas) / 2
+
+        new_alpha_min = np.maximum(alpha_min, new_alpha_min + rc)
+        new_alpha_max = np.minimum(alpha_max, new_alpha_max + rc)
+
+        new_alpha_min = np.minimum(new_alpha_min, alpha_max)
+        new_alpha_max = np.maximum(new_alpha_max, alpha_min)
+
+        margin = (new_alpha_max - new_alpha_min) /\
+            (self.n_grid_points + 1) / 2.
+
+        new_alpha_min += margin
+        new_alpha_max -= margin
+
+        if (new_alpha_max - new_alpha_min <= 0).any():
+            stop
+        if self.logscale:
+            new_alpha_min = np.exp(new_alpha_min)
+            new_alpha_max = np.exp(new_alpha_max)
+
+
+        self.current_alphas = _make_alpha_grid(new_alpha_min, new_alpha_max,
+                                        self.n_grid_points, self.logscale)
 
 
 class _BaseRidgeCV(LinearModel):
