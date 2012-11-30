@@ -620,8 +620,8 @@ PDPs should be created via the ``label`` argument::
 
     >>> from sklearn.datasets import load_iris
     >>> iris = load_iris()
-    >>> mc_clf = GradientBoostingClassifier(n_estimators=10, max_depth=1)
-    >>> mc_clf.fit(iris.data, iris.target)
+    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+    ...     max_depth=1).fit(iris.data, iris.target)
     >>> features = [3, 2, (3, 2)]
     >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0) #doctest: +SKIP
 
