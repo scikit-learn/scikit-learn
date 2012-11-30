@@ -163,7 +163,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
-                            n_cols=3, grid_resolution=100,
+                            label=None, n_cols=3, grid_resolution=100,
                             percentiles=(0.05, 0.95), n_jobs=1,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
@@ -186,6 +186,9 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
+    label : object
+        The class label for which the PDPs should be computed.
+        Only if gbrt is a multi-class model. Must be in gbrt.classes_ .
     n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
@@ -237,6 +240,17 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     if gbrt.estimators_.shape[0] == 0:
         raise ValueError('Call %s.fit before partial_dependence' %
                          gbrt.__class__.__name__)
+
+    # set label_idx for multi-class GBRT
+    if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:
+        if label is None:
+            raise ValueError('label is not given for multi-class PDP')
+        label_idx = np.searchsorted(gbrt.classes_, label)
+        if gbrt.classes_[label_idx] != label:
+            raise ValueError('label %s not in gbrt.classes_' % str(label))
+    else:
+        # regression and binary classification
+        label_idx = 0
 
     X = array2d(X, dtype=DTYPE, order='C')
     if gbrt.n_features != X.shape[1]:
@@ -296,7 +310,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
     for pdp, axes in pd_result:
-        min_pd, max_pd = pdp.min(), pdp.max()
+        min_pd, max_pd = pdp[label_idx].min(), pdp[label_idx].max()
         n_fx = len(axes)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
@@ -321,12 +335,12 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:
-            ax.plot(axes[0], pdp.ravel(), **line_kw)
+            ax.plot(axes[0], pdp[label_idx].ravel(), **line_kw)
         else:
             # make contour plot
             assert len(axes) == 2
             XX, YY = np.meshgrid(axes[0], axes[1])
-            Z = pdp.reshape(map(np.size, axes)).T
+            Z = pdp[label_idx].reshape(map(np.size, axes)).T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],

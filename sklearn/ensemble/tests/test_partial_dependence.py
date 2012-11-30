@@ -174,11 +174,34 @@ def test_plot_partial_dependence_input():
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
     """Test partial dependence plot function on multi-class input. """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
 
     grid_resolution = 25
-    fig, axs = plot_partial_dependence(clf, iris.data, [0, 1, (0, 1)],
+    fig, axs = plot_partial_dependence(clf, iris.data, [0, 1],
+                                       label=0,
                                        grid_resolution=grid_resolution)
-    assert len(axs) == 3
+    assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
+
+    # now with symbol labels
+    target = iris.target_names[iris.target]
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    clf.fit(iris.data, target)
+
+    grid_resolution = 25
+    fig, axs = plot_partial_dependence(clf, iris.data, [0, 1],
+                                       label='setosa',
+                                       grid_resolution=grid_resolution)
+    assert len(axs) == 2
+    assert all(ax.has_data for ax in axs)
+
+    # label not in gbrt.classes_
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, iris.data, [0, 1], label='foobar',
+                  grid_resolution=grid_resolution)
+
+    # label not provided
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, iris.data, [0, 1],
+                  grid_resolution=grid_resolution)
