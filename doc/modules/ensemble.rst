@@ -613,7 +613,7 @@ features::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1, (0, 1)]
-    >>> fig, axs = plot_partial_dependence(clf, X, features)
+    >>> fig, axs = plot_partial_dependence(clf, X, features) #doctest: +SKIP
 
 For multi-class models, you need to set the class label for which the
 PDPs should be created via the ``label`` argument::
@@ -623,7 +623,7 @@ PDPs should be created via the ``label`` argument::
     >>> mc_clf = GradientBoostingClassifier(n_estimators=10, max_depth=1)
     >>> mc_clf.fit(iris.data, iris.target)
     >>> features = [3, 2, (3, 2)]
-    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0)
+    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0) #doctest: +SKIP
 
 If you need the raw values of the partial dependence function rather
 than the plots you can use the
