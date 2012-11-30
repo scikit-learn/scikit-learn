@@ -19,7 +19,7 @@ long as such a method is implemented by the base classifier. This method
 returns probabilities of class membership in both the single label and
 multilabel case.  Note that in the multilabel case, probabilities are the
 marginal probability that a given sample falls in the given class. As such, in
-the multilable case the sum of these probabilities over all possible labels
+the multilabel case the sum of these probabilities over all possible labels
 for a given sample *will not* sum to unity, as they do in the single label
 case.  """
 
