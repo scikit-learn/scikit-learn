@@ -485,7 +485,6 @@ class BaseGradientBoosting(BaseEnsemble):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
-        random_state = check_random_state(self.random_state)
 
         for k in range(loss.K):
             if loss.is_multi_class:
@@ -496,7 +495,7 @@ class BaseGradientBoosting(BaseEnsemble):
             # induce regression tree on residuals
             tree = Tree(self.n_features, (1,), 1, MSE(1), self.max_depth,
                         self.min_samples_split, self.min_samples_leaf, 0.0,
-                        self.max_features, TREE_SPLIT_BEST, random_state)
+                        self.max_features, TREE_SPLIT_BEST, self.random_state)
 
             tree.build(X, residual[:, np.newaxis], sample_mask, X_argsorted)
 
@@ -574,7 +573,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
         n_inbag = max(1, int(self.subsample * n_samples))
-        random_state = check_random_state(self.random_state)
+        self.random_state = check_random_state(self.random_state)
         # perform boosting iterations
         for i in range(self.n_estimators):
 
@@ -582,7 +581,7 @@ class BaseGradientBoosting(BaseEnsemble):
             if self.subsample < 1.0:
                 # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
-                                                  random_state)
+                                                  self.random_state)
             # fit next stage of trees
             y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
