@@ -240,16 +240,25 @@ def test_feature_union_weights():
     y = iris.target
     pca = RandomizedPCA(n_components=2, random_state=0)
     select = SelectKBest(k=1)
+    # test using fit followed by transform
     fs = FeatureUnion([("pca", pca), ("select", select)],
             transformer_weights={"pca": 10})
     fs.fit(X, y)
     X_transformed = fs.transform(X)
+    # test using fit_transform
+    fs = FeatureUnion([("pca", pca), ("select", select)],
+            transformer_weights={"pca": 10})
+    X_fit_transformed = fs.fit_transform(X, y)
     # check against expected result
 
     # We use a different pca object to control the random_state stream
     assert_array_almost_equal(X_transformed[:, :-1],
                     10 * pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
+            select.fit_transform(X, y).ravel())
+    assert_array_almost_equal(X_fit_transformed[:, :-1],
+                    10 * pca.fit_transform(X))
+    assert_array_equal(X_fit_transformed[:, -1],
             select.fit_transform(X, y).ravel())
 
 
