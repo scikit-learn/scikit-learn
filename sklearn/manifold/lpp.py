@@ -42,7 +42,7 @@ def laplacian_matrix(afn_mat):
     afn_mat.setdiag(col_sum)
     return afn_mat.tocsr(), col_sum
 
-def auto_dsygv(M, N, k, k_skip=0, eigen_solver='autoack', tol=1E-6,
+def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
                   max_iter=100, random_state=None):
     """
     Find the null space of a matrix M.
@@ -111,16 +111,16 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='autoack', tol=1E-6,
         if hasattr(N, 'toarray'):
             N = N.toarray()
         eigen_values, eigen_vectors = eigh(
-            M, N, eigvals=(0, k + k_skip - 1), overwrite_a=True)
+            M, N, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True)
 #        index = np.argsort(np.abs(eigen_values))
 #        return eigen_vectors[:, index], eigen_values
         return eigen_vectors, eigen_values
     else:
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
-def lpp(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=1.0,
-        k=2, eigen_solver='arpack', tol=1E-6, max_iter=100,
-               random_state=None):
+def lpp(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=10.0,
+        k=2, eigen_solver='auto', tol=1E-6, max_iter=100,
+               random_state=None, use_ext=True):
     print "making adjacency matrix"
     W = adjacency_matrix(X, n_neighbors, mode)
     print "making affinity matrix"
@@ -134,8 +134,8 @@ def lpp(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=1.0,
 
 class LPP(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
-                 kernel_func="heat", kernel_param=1.0, eigen_solver='arpack',
-                 tol=1E-6, max_iter=100, random_state=None):
+                 kernel_func="heat", kernel_param=1.0, eigen_solver='auto',
+                 tol=1E-6, max_iter=100, random_state=None, use_ext=True):
         self._n_neighbors = n_neighbors
         self._n_components = n_components
         self._mode = mode
@@ -145,6 +145,7 @@ class LPP(BaseEstimator, TransformerMixin):
         self._tol = tol
         self._max_iter = max_iter
         self._random_state = random_state
+        self._use_ext = use_ext
         self._components = None
 
     def fit(self, X, y=None):
@@ -156,7 +157,7 @@ class LPP(BaseEstimator, TransformerMixin):
                                   self._kernel_func, self._kernel_param,
                                   self._n_components, self._eigen_solver,
                                   self._tol, self._max_iter,
-                                  self._random_state)
+                                  self._random_state, self._use_ext)
         return self
 
     def transform(self, X):
@@ -164,8 +165,8 @@ class LPP(BaseEstimator, TransformerMixin):
 
 
 def lem(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=1.0,
-        k=2, eigen_solver='arpack', tol=1E-6, max_iter=100,
-               random_state=None):
+        k=2, eigen_solver='auto', tol=1E-6, max_iter=100,
+               random_state=None, use_ext=True):
     W = adjacency_matrix(X, n_neighbors, mode)
     W = affinity_matrix(W, kernel_func, kernel_param)
     L, D = laplacian_matrix(W)
@@ -177,8 +178,8 @@ def lem(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=1.0,
 
 class LEM(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
-                 kernel_func="heat", kernel_param=1.0, eigen_solver='arpack',
-                 tol=1E-6, max_iter=100, random_state=None):
+                 kernel_func="heat", kernel_param=10.0, eigen_solver='auto',
+                 tol=1E-6, max_iter=100, random_state=None, use_ext=True):
         self._n_neighbors = n_neighbors
         self._n_components = n_components
         self._mode = mode
@@ -188,6 +189,7 @@ class LEM(BaseEstimator, TransformerMixin):
         self._tol = tol
         self._max_iter = max_iter
         self._random_state = random_state
+        self._use_ext = use_ext
         self._components = None
 
     def fit(self, X, y=None):
@@ -199,7 +201,7 @@ class LEM(BaseEstimator, TransformerMixin):
                                   self._kernel_func, self._kernel_param,
                                   self._n_components, self._eigen_solver,
                                   self._tol, self._max_iter,
-                                  self._random_state)
+                                  self._random_state, self._use_ext)
         return self
 
     def transform(self, X):
