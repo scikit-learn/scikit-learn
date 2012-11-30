@@ -92,13 +92,14 @@ def predict_ovr(estimators, label_binarizer, X):
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
+
 def predict_proba_ovr(estimators, X, is_multilabel):
-    """Estimate probabilities using the one-vs-the-rest strategy. 
+    """Estimate probabilities using the one-vs-the-rest strategy.
 
     If multilabel is true, returned matrix will not sum to one.  Estimators
     must have a predict_proba method."""
 
-    Y = np.array([est.predict_proba(X)[:,1] for est in  estimators]).T
+    Y = np.array([est.predict_proba(X)[:, 1] for est in estimators]).T
 
     #Y[i,j] gives the probability that sample i has the label j.
     #in the multi-label case, these are not disjoint. In the single-label case,
@@ -106,9 +107,9 @@ def predict_proba_ovr(estimators, X, is_multilabel):
 
     if not is_multilabel:
         #then probabilities should be normalized to 1.
-        Y /= np.sum(Y,axis = 1)[:,np.newaxis] 
-        #could use Y.T instead of np.newaxis, but I'd lose succintness and gain little clairity.
+        Y /= np.sum(Y, axis=1)[:, np.newaxis]
     return Y
+
 
 class _ConstantPredictor(BaseEstimator):
     def fit(self, X, y):
@@ -190,7 +191,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if not hasattr(self, "estimators_"):
             raise ValueError("The object hasn't been fitted yet!")
 
-
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -233,7 +233,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         return predict_proba_ovr(self.estimators_, X,
                                  is_multilabel=self.multilabel_)
-
 
     @property
     def multilabel_(self):
@@ -283,7 +282,7 @@ def fit_ovo(estimator, X, y):
     classes = np.unique(y)
     n_classes = classes.shape[0]
     estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
-                    for i in range(n_classes) for j in range(i + 1, n_classes)]
+                  for i in range(n_classes) for j in range(i + 1, n_classes)]
 
     return estimators, classes
 
@@ -421,7 +420,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
     Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
-            dtype=np.int)
+                 dtype=np.int)
 
     estimators = [_fit_binary(estimator, X, Y[:, i])
                   for i in range(Y.shape[1])]
