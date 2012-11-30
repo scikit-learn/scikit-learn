@@ -14,15 +14,14 @@ magnitude faster to train::
     [..]
     Classification performance:
     ===========================
-
     Classifier   train-time test-time error-rate
     --------------------------------------------
-    Liblinear     11.8977s   0.0285s     0.2305
-    GaussianNB    3.5931s    0.6645s     0.3633
-    SGD           0.2924s    0.0114s     0.2300
-    CART          39.9829s   0.0345s     0.0476
-    RandomForest  794.6232s  1.0526s     0.0249
-    Extra-Trees   1401.7051s 1.1181s     0.0230
+    liblinear     15.9744s    0.0705s     0.2305
+    GaussianNB    3.0666s     0.3884s     0.4841
+    SGD           1.0558s     0.1152s     0.2300
+    CART          79.4296s    0.0523s     0.0469
+    RandomForest  1190.1620s  0.5881s     0.0243
+    ExtraTrees    640.3194s   0.6495s     0.0198
 
 The same task has been used in a number of papers including:
 
@@ -63,6 +62,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
+from sklearn.utils import check_random_state
 
 op = OptionParser()
 op.add_option("--classifiers",
@@ -75,6 +75,13 @@ op.add_option("--n-jobs",
               dest="n_jobs", default=1, type=int,
               help="Number of concurrently running workers for models that"
                    " support parallelism.")
+
+# Each number generator use the same seed to avoid coupling issue between
+# estimators.
+op.add_option("--random-seed",
+              dest="random_seed", default=13, type=int,
+              help="Common seed used by random number generator."
+              )
 
 op.print_help()
 
@@ -89,6 +96,9 @@ bench_folder = os.path.dirname(__file__)
 original_archive = os.path.join(bench_folder, 'covtype.data.gz')
 joblib_cache_folder = os.path.join(bench_folder, 'bench_covertype_data')
 m = Memory(joblib_cache_folder, mmap_mode='r')
+
+# Set seed for rng
+rng = check_random_state(opts.random_seed)
 
 
 # Load the data, then cache and memmap the train/test split
@@ -126,8 +136,7 @@ def load_data(dtype=np.float32, order='F'):
     ## Create train-test split (as [Joachims, 2006])
     print("Creating train-test split...")
     idx = np.arange(X.shape[0])
-    np.random.seed(13)
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     train_idx = idx[:522911]
     test_idx = idx[522911:]
 
@@ -194,6 +203,7 @@ liblinear_parameters = {
     'C': 1000,
     'dual': False,
     'tol': 1e-3,
+    "random_state": opts.random_seed,
     }
 classifiers['liblinear'] = LinearSVC(**liblinear_parameters)
 
@@ -207,21 +217,27 @@ sgd_parameters = {
     'alpha': 0.001,
     'n_iter': 2,
     'n_jobs': opts.n_jobs,
+    "random_state": opts.random_seed,
     }
 classifiers['SGD'] = SGDClassifier(**sgd_parameters)
 
 ######################################################################
 ## Train CART model
 classifiers['CART'] = DecisionTreeClassifier(min_samples_split=5,
-                                             max_depth=None)
+                                             max_depth=None,
+                                             random_state=opts.random_seed)
 
 ######################################################################
 ## Train RandomForest model
-classifiers['RandomForest'] = RandomForestClassifier(n_estimators=20,
-                                                     min_samples_split=5,
-                                                     max_features=None,
-                                                     max_depth=None,
-                                                     n_jobs=opts.n_jobs)
+rf_parameters = {
+    "n_estimators": 20,
+    "min_samples_split": 5,
+    "max_features": None,
+    "max_depth": None,
+    "n_jobs": opts.n_jobs,
+    "random_state": opts.random_seed,
+}
+classifiers['RandomForest'] = RandomForestClassifier(**rf_parameters)
 
 ######################################################################
 ## Train Extra-Trees model
@@ -229,7 +245,8 @@ classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
                                                  min_samples_split=5,
                                                  max_features=None,
                                                  max_depth=None,
-                                                 n_jobs=opts.n_jobs)
+                                                 n_jobs=opts.n_jobs,
+                                                 random_state=opts.random_seed)
 
 
 selected_classifiers = opts.classifiers.split(',')

@@ -108,10 +108,17 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         if RandomState instance, random_state is the random number generator.
 
-    Notes
-    -----
+    References
+    ----------
     See "Random Fourier Approximations for Skewed Multiplicative Histogram
     Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
+
+    See also
+    --------
+    AdditiveChi2Sampler : A different approach for approximating an additive
+        variant of the chi squared kernel.
+
+    sklearn.metrics.chi2_kernel : The exact chi squared kernel.
     """
 
     def __init__(self, skewedness=1., n_components=100, random_state=None):
@@ -196,6 +203,21 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    This estimator approximates a slightly different version of the additive
+    chi squared kernel then ``metric.additive_chi2`` computes.
+
+    See also
+    --------
+    SkewedChi2Sampler : A Fourier-approximation to a non-additive variant of
+        the chi squared kernel.
+
+    sklearn.metrics.chi2_kernel : The exact chi squared kernel.
+
+    sklearn.metrics.additive_chi2_kernel : The exact additive chi squared
+        kernel.
+
+    References
+    ----------
     See `"Efficient additive kernels via explicit feature maps"
     <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
     Vedaldi, A. and Zisserman, A., Computer Vision and Pattern Recognition 2010

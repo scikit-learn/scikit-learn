@@ -219,6 +219,24 @@ or::
 depending on the version of Python you want to use.
 
 
+Archlinux
+---------
+
+Archlinux's package is provided at 
+`Arch User Repository (AUR) <https://aur.archlinux.org/>`_ with name
+`python2-scikit-learn` for latest stable version and `python2-scikit-learn-git`
+for building from git version. If `yaourt` is available, it can be installed
+by typing the following command::
+
+     sudo yaourt -S python2-scikit-learn
+
+or::
+
+     sudo yaourt -S python2-scikit-learn-git
+
+depending on the version of scikit-learn you want to use.
+
+
 NetBSD
 ------
 

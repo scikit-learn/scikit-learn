@@ -636,12 +636,14 @@ From text
     manifold.LocallyLinearEmbedding
     manifold.Isomap
     manifold.MDS
+    manifold.SpectralEmbedding
 
 .. autosummary::
     :toctree: generated
     :template: function.rst
 
     manifold.locally_linear_embedding
+    manifold.spectral_embedding
 
 
 .. _metrics_ref:
@@ -726,15 +728,17 @@ Pairwise metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.pairwise.additive_chi2_kernel
+   metrics.pairwise.chi2_kernel
+   metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
-   metrics.pairwise.manhattan_distances
+   metrics.pairwise.kernel_metrics
    metrics.pairwise.linear_kernel
+   metrics.pairwise.manhattan_distances
+   metrics.pairwise.pairwise_distances
+   metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
-   metrics.pairwise.distance_metrics
-   metrics.pairwise.pairwise_distances
-   metrics.pairwise.kernel_metrics
-   metrics.pairwise.pairwise_kernels
 
 
 .. _mixture_ref:

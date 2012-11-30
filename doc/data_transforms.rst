@@ -10,3 +10,4 @@ Dataset transformations
     modules/preprocessing
     modules/feature_extraction
     modules/kernel_approximation
+    modules/metrics

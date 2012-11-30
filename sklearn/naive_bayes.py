@@ -250,28 +250,13 @@ class BaseDiscreteNB(BaseNB):
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
+        # N_c_i is the count of feature i in all samples of class c.
+        # N_c is the denominator.
         N_c, N_c_i = self._count(X, Y)
 
-        self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
-                                - np.log(N_c.reshape(-1, 1)
-                                       + self.alpha * X.shape[1]))
+        self.feature_log_prob_ = np.log(N_c_i) - np.log(N_c.reshape(-1, 1))
 
         return self
-
-    @staticmethod
-    def _count(X, Y):
-        """Count feature occurrences.
-
-        Returns (N_c, N_c_i), where
-            N_c is the count of all features in all samples of class c;
-            N_c_i is the count of feature i in all samples of class c.
-        """
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative.")
-        N_c_i = safe_sparse_dot(Y.T, X)
-        N_c = np.sum(N_c_i, axis=1)
-
-        return N_c, N_c_i
 
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
@@ -341,6 +326,15 @@ class MultinomialNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
 
+    def _count(self, X, Y):
+        """Count and smooth feature occurrences."""
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative.")
+        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
+        N_c = np.sum(N_c_i, axis=1)
+
+        return N_c, N_c_i
+
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         X = atleast2d_or_csr(X)
@@ -407,9 +401,12 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
 
     def _count(self, X, Y):
+        """Count and smooth feature occurrences."""
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        return super(BernoulliNB, self)._count(X, Y)
+        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
+        N_c = Y.sum(axis=0) + self.alpha * Y.shape[1]
+        return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
