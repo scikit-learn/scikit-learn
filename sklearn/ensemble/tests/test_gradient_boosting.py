@@ -279,6 +279,22 @@ def test_check_max_features():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+def test_max_feature_regression():
+    """Test to make sure random state is set properly. """
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+
+    X_train, X_test = X[:2000], X[2000:]
+    y_train, y_test = y[:2000], y[2000:]
+
+    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=5,
+                                      max_depth=2, learning_rate=.1,
+                                      max_features=2, random_state=1)
+    gbrt.fit(X_train, y_train)
+    deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
+    assert deviance < 0.5, \
+           "GB failed with deviance %.4f" % deviance
+
+
 def test_staged_predict():
     """Test whether staged decision function eventually gives
     the same prediction.
