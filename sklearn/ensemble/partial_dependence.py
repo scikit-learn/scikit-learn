@@ -238,19 +238,40 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         raise ValueError('Call %s.fit before partial_dependence' %
                          gbrt.__class__.__name__)
 
+    X = array2d(X, dtype=DTYPE, order='C')
+    if gbrt.n_features != X.shape[1]:
+        raise ValueError('X.shape[1] does not match gbrt.n_features')
+
     if line_kw is None:
         line_kw = {'color': 'green'}
     if contour_kw is None:
         contour_kw = {}
 
+    # convert feature_names to list
+    if feature_names is None:
+        # if not feature_names use fx indices as name
+        feature_names = map(str, range(gbrt.n_features))
+    elif isinstance(feature_names, np.ndarray):
+        feature_names = feature_names.tolist()
+
+    def convert_feature(fx):
+        if isinstance(fx, basestring):
+            try:
+                fx = feature_names.index(fx)
+            except ValueError:
+                raise ValueError('Feature %s not in feature_names' % fx)
+        return fx
+
+    # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, numbers.Integral):
+        if isinstance(fxs, (numbers.Integral, basestring)):
             fxs = (fxs,)
-        elif isinstance(fxs, basestring):
-            fxs = (feature_names.index(fxs),)
-
-        fxs = np.array(fxs)
+        try:
+            fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)
+        except TypeError:
+            raise ValueError('features must be either int, str, or tuple '
+                             'of int/str')
         if not (1 <= np.size(fxs) <= 2):
             raise ValueError('target features must be either one or two')
 
@@ -258,14 +279,13 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     features = tmp_features
 
-    # use fx indices as names
-    if not feature_names:
-        max_fx = max(fxs.max() for fxs in features)
-        feature_names = map(str, range(max_fx + 1))
-
     names = []
-    for fxs in features:
-        names.append([feature_names[i] for i in fxs])
+    try:
+        for fxs in features:
+            names.append([feature_names[i] for i in fxs])
+    except IndexError:
+        raise ValueError('features[i] must be in [0, n_features) '
+                         'but was %d' % i)
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(

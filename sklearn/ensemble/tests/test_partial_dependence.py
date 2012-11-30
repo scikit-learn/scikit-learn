@@ -20,25 +20,16 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
-rng = np.random.RandomState(0)
 # also load the boston dataset
-# and randomly permute it
 boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
 
 # also load the iris dataset
-# and randomly permute it
 iris = datasets.load_iris()
-perm = rng.permutation(iris.target.size)
-iris.data = iris.data[perm]
-iris.target = iris.target[perm]
 
 
 def test_partial_dependence_classifier():
     """Test partial dependence for classifier """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
     pdp, axes = partial_dependence(clf, [0], X=X,
@@ -59,7 +50,7 @@ def test_partial_dependence_classifier():
 
 def test_partial_dependence_multiclass():
     """Test partial dependence for multi-class classifier """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
 
     grid_resolution = 25
@@ -74,7 +65,7 @@ def test_partial_dependence_multiclass():
 
 def test_partial_dependence_regressor():
     """Test partial dependence for regressor """
-    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
 
     grid_resolution = 25
@@ -87,7 +78,7 @@ def test_partial_dependence_regressor():
 
 def test_partial_dependecy_input():
     """Test input validation of partial dependence. """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
     assert_raises(ValueError, partial_dependence,
@@ -116,11 +107,78 @@ def test_partial_dependecy_input():
 @if_matplotlib
 def test_plot_partial_dependence():
     """Test partial dependence plot function. """
-    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
 
     grid_resolution = 25
     fig, axs = plot_partial_dependence(clf, boston.data, [0, 1, (0, 1)],
+                                       grid_resolution=grid_resolution,
+                                       feature_names=boston.feature_names)
+    assert len(axs) == 3
+    assert all(ax.has_data for ax in axs)
+
+    # check with str features and array feature names
+    fig, axs = plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
+                                                          ('CRIM', 'ZN')],
+                                       grid_resolution=grid_resolution,
+                                       feature_names=boston.feature_names)
+
+    assert len(axs) == 3
+    assert all(ax.has_data for ax in axs)
+
+    # check with list feature_names
+    feature_names = boston.feature_names.tolist()
+    fig, axs = plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
+                                                          ('CRIM', 'ZN')],
+                                       grid_resolution=grid_resolution,
+                                       feature_names=feature_names)
+    assert len(axs) == 3
+    assert all(ax.has_data for ax in axs)
+
+
+@if_matplotlib
+def test_plot_partial_dependence_input():
+    """Test partial dependence plot function input checks. """
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+
+    # not fitted yet
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [0])
+
+    clf.fit(X, y)
+
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, np.array(X)[:, :0], [0])
+
+    # first argument must be an instance of BaseGradientBoosting
+    assert_raises(ValueError, plot_partial_dependence,
+                  {}, X, [0])
+
+    # must be larger than -1
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [-1])
+
+    # too large feature value
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [100])
+
+    # str feature but no feature_names
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, ['foobar'])
+
+    # not valid features value
+    assert_raises(ValueError, plot_partial_dependence,
+                  clf, X, [{'foo': 'bar'}])
+
+
+@if_matplotlib
+def test_plot_partial_dependence_multiclass():
+    """Test partial dependence plot function on multi-class input. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(iris.data, iris.target)
+
+    grid_resolution = 25
+    fig, axs = plot_partial_dependence(clf, iris.data, [0, 1, (0, 1)],
                                        grid_resolution=grid_resolution)
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
