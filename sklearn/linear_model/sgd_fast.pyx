@@ -440,7 +440,7 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0,
-              int sampling_type):
+              int sampling_type=ROC):
     """SGD minimizing ROC-SVM pairwise ranking loss.
 
     Parameters
@@ -487,6 +487,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    sampling : int
+        The pairwise sampling scheme. 1 for roc, 2 for rank.
 
     Returns
     -------
@@ -559,19 +561,37 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             else:
                 y = 0.0
 
-            p = y * w.dot_on_difference(a_data_ptr, b_data_ptr, 
-                                        x_ind_ptr, xnnz_a, xnnz_b)
+            p = w.dot_on_difference(a_data_ptr, b_data_ptr, 
+                                        x_ind_ptr, xnnz_a, xnnz_b) + intercept
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
             # L2 Regularization
-            w.scale(1.0 - (rho * eta * alpha))
+            #w.scale(1.0 - (rho * eta * alpha))
 
+
+            update = y * -eta * loss.dloss(p, y) * class_weight
+            #print("update:%.9f p:%.6f dloss:%.4f class_weight:%.1f" % \
+            #(update, p, loss.dloss(p, y), class_weight))            
+            if update != 0.0:
+                w.add(a_data_ptr, x_ind_ptr, xnnz_a, update)
+                w.add(b_data_ptr, x_ind_ptr, xnnz_b, -update)
+                if fit_intercept == 1:
+                    intercept += update * intercept_decay
+            if penalty_type >= L2:
+                w.scale(1.0 - (rho * eta * alpha))
+
+            #if penalty_type == L1 or penalty_type == ELASTICNET:
+            #    u += ((1.0 - rho) * eta * alpha)
+            #    l1penalty(w, q_data_ptr, x_ind_ptr, xnnz_a, u)
+
+            """
             # If (a - b) has non-zero loss, perform gradient step.
             if (p < 1.0) & (y != 0.0):
                 w.add(a_data_ptr, x_ind_ptr, xnnz_a, (eta * y))
                 w.add(b_data_ptr, x_ind_ptr, xnnz_b, (-1.0 * eta * y))
+            """
             t += 1
             count += 1
                     

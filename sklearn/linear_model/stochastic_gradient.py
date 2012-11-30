@@ -240,8 +240,7 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
         elif sampling == 2:
             if query_id is None:
                 query_id = np.ones(X.shape[0])
-            dataset = PairwiseArrayDatasetRank(X, y_i, sampling, query_id)
-        dataset = PairwiseArrayDataset(X, y_i, sampling, query_id)
+            dataset = PairwiseArrayDatasetRank(X, y_i, query_id)
         intercept_decay = 1.0
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
@@ -666,7 +665,8 @@ def _prepare_fit_binary(est, y, i, query_id=None):
         intercept = est.intercept_[i]
 
     if query_id is not None:
-        query_id_i = np.ones(query_id.shape, dtype=np.float64, order="C")
+        #query_id_i = np.array(query_id.shape, dtype=np.float64, order="C")
+        query_id_i = np.array(query_id, dtype=np.float64, order="C")
         return y_i, coef, intercept, query_id_i    
     else:
         return y_i, coef, intercept

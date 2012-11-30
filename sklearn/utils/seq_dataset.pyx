@@ -180,8 +180,9 @@ cdef class CSRDataset(SequentialDataset):
 
 
 cdef class PairwiseArrayDataset:
-    """Dataset backed by a two-dimensional numpy array. 
+    """Base class for datasets with sequential access to pairs."""
 
+    """
     Calling next_pair() returns a random pair of examples with disagreeing labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
@@ -191,13 +192,51 @@ cdef class PairwiseArrayDataset:
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
                    DOUBLE *y_a, DOUBLE *y_b):
+
+        """Get the next pair of examples ``a`` and ``b`` from the dataset.
+
+        Parameters
+        ----------
+        a_data_ptr : np.float64**
+            A pointer to the double array which holds the feature
+            values of the first example in the pair.
+        b_data_ptr : np.float64**
+            A pointer to the double array which holds the feature
+            values of the second example in the pair.
+        x_ind_ptr : np.int32**
+            A pointer to the int32 array which holds the feature
+            indices of the next example.
+        nnz_a : int*
+            A pointer to an int holding the number of non-zero
+            values of the first example in the pair.
+        nnz_b : int*
+            A pointer to an int holding the number of non-zero
+            values of the second example in the pair.
+        y_a : np.float64*
+            The target value of first example in the pair.
+        y_b : np.float64*
+            The target value of second example in the pair.
+        """
+
         raise NotImplementedError()
 
 
 cdef class PairwiseArrayDatasetRoc(PairwiseArrayDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
-        
+
+        """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
+
+        Paramters
+        ---------
+        X : ndarray, dtype=np.float64, ndim=2, mode='c'
+            The samples; a two-dimensional c-continuous numpy array of
+            dtype np.float64.
+        Y : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The target values; a one-dimensional c-continuous numpy array of
+            dtype np.float64.
+        """
+
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
         cdef np.ndarray[INTEGER, ndim=1,
@@ -255,7 +294,22 @@ cdef class PairwiseArrayDatasetRoc(PairwiseArrayDataset):
 cdef class PairwiseArrayDatasetRank(PairwiseArrayDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
-                  int sampling_type, np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
+
+        """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
+
+        Paramters
+        ---------
+        X : ndarray, dtype=np.float64, ndim=2, mode='c'
+            The samples; a two-dimensional c-continuous numpy array of
+            dtype np.float64.
+        Y : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The target values; a one-dimensional c-continuous numpy array of
+            dtype np.float64.
+        query_id: ndarray, dtype=np.float64, ndim=1, mode='c'
+            The query values; a one-dimensional c-continuous numpy array of
+            dtype np.float64
+        """
 
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
@@ -267,19 +321,20 @@ cdef class PairwiseArrayDatasetRank(PairwiseArrayDataset):
         self.stride = X.strides[0] / X.strides[1]
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
-        
-        self.group_id_y_to_count = <dict> collections.Counter(Y)
-        cdef Py_ssize_t i
-        cdef DOUBLE query_data_ptr_idx
-        for i in range(self.n_samples):
-            query_data_ptr_idx = self.query_data_ptr[i]
-            self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i)        
+      
+        self.group_id_y_to_count = <dict> collections.defaultdict(int)
+
         # must declare in the cinit as closures inside cdef functions not yet supported
         self.group_id_y_to_index = <dict> collections.defaultdict(lambda: \
                                                            collections.defaultdict(list))
         self.query_data_ptr = <DOUBLE *>query_id.data
 
-        self.sampling_type = sampling_type
+        cdef Py_ssize_t i
+        cdef DOUBLE query_data_ptr_idx
+        for i in range(self.n_samples):
+            query_data_ptr_idx = self.query_data_ptr[i]
+            self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i) 
+            self.group_id_y_to_count[query_data_ptr_idx]+=1   
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **x_ind_ptr, int *nnz_a, int *nnz_b, 
@@ -289,21 +344,30 @@ cdef class PairwiseArrayDatasetRank(PairwiseArrayDataset):
         nnz_a[0] = self.n_features
         nnz_b[0] = self.n_features
 
-        cdef int a_idx = rand() % self.n_samples
-        cdef int a_offset = a_idx * self.stride
-        a_data_ptr[0] = self.X_data_ptr + a_offset
-        cdef DOUBLE group_id = self.query_data_ptr[a_idx]
-        y_a[0] = self.Y_data_ptr[a_idx]
-        y_to_list = self.group_id_y_to_count[group_id]
-        cdef int y_range = self.group_id_y_to_count[group_id] - self.group_id_y_to_index[group_id][y_a[0]].size()
-
+        cdef int num_chances = 1000
+        cdef Py_ssize_t i
+        cdef int a_idx
+        cdef int a_offset
+        cdef DOUBLE group_id
+        cdef int y_range
+        
+        for i in range(num_chances):
+            a_idx = rand() % self.n_samples
+            a_offset = a_idx * self.stride
+            a_data_ptr[0] = self.X_data_ptr + a_offset
+            group_id = self.query_data_ptr[a_idx]
+            y_a[0] = self.Y_data_ptr[a_idx]
+            y_to_list = self.group_id_y_to_index[group_id]
+            y_range = self.group_id_y_to_count[group_id] - len(self.group_id_y_to_index[group_id][y_a[0]])
+            if (y_range==0):
+                continue
         cdef unsigned int random_int = rand() % y_range
         cdef int b_idx
         cdef int b_offset
         for b_y, idx_list in y_to_list.items():
             if y_a[0] == b_y:
                 continue
-            if random_int < idx_list.size():
+            if random_int < len(idx_list):
                 b_idx = idx_list[random_int]
                 b_offset = b_idx * self.stride
                 b_data_ptr[0] = self.X_data_ptr + b_offset
