@@ -214,9 +214,16 @@ def _fit_transform_one(transformer, name, X, y, transformer_weights,
                        **fit_params):
     if transformer_weights is not None and name in transformer_weights:
         # if we have a weight for this transformer, muliply output
-        return (transformer.fit_transform(X, y, **fit_params)
-                * transformer_weights[name])
-    return transformer.fit_transform(X, y, **fit_params)
+        if hasattr(transformer, 'fit_transform'):
+            return (transformer.fit_transform(X, y, **fit_params)
+                    * transformer_weights[name])
+        else:
+            return (transformer.fit(X, y, **fit_params).transform(X)
+                    * transformer_weights[name])
+    if hasattr(transformer, 'fit_transform'):
+        return transformer.fit_transform(X, y, **fit_params)
+    else:
+        return transformer.fit(X, y, **fit_params).transform(X)
 
 
 class FeatureUnion(BaseEstimator, TransformerMixin):
@@ -275,7 +282,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all tranformers using X, transform the data and concatenate
-        results. Valid only if all transformers implement fit_transform.
+        results.
 
         Parameters
         ----------
