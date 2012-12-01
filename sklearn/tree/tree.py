@@ -14,7 +14,7 @@ from __future__ import division
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, is_multilabel
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays
@@ -153,7 +153,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                        min_density,
                        max_features,
                        compute_importances,
-                       random_state):
+                       random_state,
+                       classes):
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -162,11 +163,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.max_features = max_features
         self.compute_importances = compute_importances
         self.random_state = random_state
+        self.classes = np.asarray(classes) if classes is not None else None
 
-        self.n_features_ = None
-        self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
+        #self.n_features_ = None
+        #self.n_outputs_ = None
         self.find_split_ = _tree.TREE_SPLIT_BEST
 
         self.tree_ = None
@@ -224,26 +224,18 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         n_samples, self.n_features_ = X.shape
 
-        is_classification = isinstance(self, ClassifierMixin)
-
         y = np.atleast_1d(y)
         if y.ndim == 1:
             y = y[:, np.newaxis]
 
-        self.classes_ = []
-        self.n_classes_ = []
-        self.n_outputs_ = y.shape[1]
+        is_classification = isinstance(self, ClassifierMixin)
+
 
         if is_classification:
             y = np.copy(y)
-
-            for k in xrange(self.n_outputs_):
-                unique = np.unique(y[:, k])
-                self.classes_.append(unique)
-                self.n_classes_.append(unique.shape[0])
-                y[:, k] = np.searchsorted(unique, y[:, k])
-
+            y = self._prepare_classes(y)
         else:
+            self.n_outputs_ = y.shape[1]
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
@@ -471,7 +463,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                        min_density=0.1,
                        max_features=None,
                        compute_importances=False,
-                       random_state=None):
+                       random_state=None,
+                       classes=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
                                                      min_samples_split,
@@ -479,7 +472,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      min_density,
                                                      max_features,
                                                      compute_importances,
-                                                     random_state)
+                                                     random_state,
+                                                     classes)
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -663,7 +657,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     min_density,
                                                     max_features,
                                                     compute_importances,
-                                                    random_state)
+                                                    random_state,
+                                                    classes=None)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -695,7 +690,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                        min_density=0.1,
                        max_features="auto",
                        compute_importances=False,
-                       random_state=None):
+                       random_state=None,
+                       classes=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
                                                   min_samples_split,
@@ -703,7 +699,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                                                   min_density,
                                                   max_features,
                                                   compute_importances,
-                                                  random_state)
+                                                  random_state,
+                                                  classes)
 
         self.find_split_ = _tree.TREE_SPLIT_RANDOM
 

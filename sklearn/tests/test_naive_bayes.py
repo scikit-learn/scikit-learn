@@ -12,6 +12,9 @@ from sklearn.utils.testing import assert_raises
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
+from nose.tools import raises
+
+
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 y = np.array([1, 1, 1, 2, 2, 2])
@@ -44,6 +47,21 @@ def test_gnb():
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
+def test_gnb_classes():
+    """
+    Gaussian Naive Bayes classification.
+
+    Same as above, except with extra classes that are never seen.
+    """
+    clf = GaussianNB([1,2,3,4,5])
+    y_pred = clf.fit(X, y).predict(X)
+    assert_array_equal(y_pred, y)
+
+    y_pred_proba = clf.predict_proba(X)
+    y_pred_log_proba = clf.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+
 def test_gnb_prior():
     """Test whether class priors are properly set. """
     clf = GaussianNB().fit(X, y)
@@ -54,12 +72,33 @@ def test_gnb_prior():
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
 
-def test_discrete_prior():
+def test_gnb_prior_classes():
     """Test whether class priors are properly set. """
+    clf = GaussianNB(classes=[0,1,2,3,4,5]).fit(X, y)
+    assert_array_almost_equal(np.array([0, 3, 3, 0, 0, 0]) / 6.0,
+                                       clf.class_prior_, 8)
+    clf.fit(X1, y1)
+    # Check that the class priors sum to 1
+    assert_array_almost_equal(clf.class_prior_.sum(), 1)
+
+
+@raises(ValueError)
+def test_class_mismatch():
+    """Test whether y1 contains classes that we are not looking for."""
+    clf = GaussianNB(classes=[1,2,3]).fit(X1, y1)
+
+
+def test_discrete_prior():
+    """Test whether class priors are properly set with known classes."""
+    classes = [None, [1,2,3,4]]
+    priors = [np.array([2,2,2]), np.array([2,2,2,0])]
+
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls().fit(X2, y2)
-        assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
-                                  clf.class_log_prior_, 8)
+        for i in xrange(len(classes)):
+            clf = cls(classes=classes[i])
+            clf.fit(X2, y2)
+            assert_array_almost_equal(np.log(priors[i]/6.0),
+                                        clf.class_log_prior_, 8)
 
 
 def test_mnnb():
@@ -70,33 +109,39 @@ def test_mnnb():
     correct values for a simple toy dataset.
     """
 
+    classes = [None, [0,1,2,3,4,5]]
+    
+
     for X in [X2, scipy.sparse.csr_matrix(X2)]:
-        # Check the ability to predict the learning set.
-        clf = MultinomialNB()
-        assert_raises(ValueError, clf.fit, -X, y2)
-        y_pred = clf.fit(X, y2).predict(X)
+        for i in xrange(len(classes)):
+            # Check the ability to predict the learning set.
+            clf = MultinomialNB(classes=classes[i])
+            assert_raises(ValueError, clf.fit, -X, y2)
+            y_pred = clf.fit(X, y2).predict(X)
 
-        assert_array_equal(y_pred, y2)
+            assert_array_equal(y_pred, y2)
 
-        # Verify that np.log(clf.predict_proba(X)) gives the same results as
-        # clf.predict_log_proba(X)
-        y_pred_proba = clf.predict_proba(X)
-        y_pred_log_proba = clf.predict_log_proba(X)
-        assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+            # Verify that np.log(clf.predict_proba(X)) gives the same results as
+            # clf.predict_log_proba(X)
+            y_pred_proba = clf.predict_proba(X)
+            y_pred_log_proba = clf.predict_log_proba(X)
+            assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
 
+    classes = [None, [0,1,2,3,4,5,6,7]]
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
-        clf = cls().fit(X2, y2)
-        y_pred = clf.predict(X2)
+        for i in xrange(len(classes)):
+            clf = cls(classes=classes[i]).fit(X2, y2)
+            y_pred = clf.predict(X2)
 
-        store = BytesIO()
-        pickle.dump(clf, store)
-        clf = pickle.load(BytesIO(store.getvalue()))
+            store = BytesIO()
+            pickle.dump(clf, store)
+            clf = pickle.load(BytesIO(store.getvalue()))
 
-        assert_array_equal(y_pred, clf.predict(X2))
+            assert_array_equal(y_pred, clf.predict(X2))
 
 
 def test_input_check():
@@ -113,50 +158,66 @@ def test_discretenb_predict_proba():
     # FIXME: write a test to show this.
     X_bernoulli = [[1, 100, 0], [0, 1, 0], [0, 100, 1]]
     X_multinomial = [[0, 1], [1, 3], [4, 0]]
+    # Test without,with classes
+    classes = [None, [0,1,2,3,4,5]]
+    shapes = [(1,2), (1,6)]
 
     # test binary case (1-d output)
     y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
-        clf = cls().fit(X, y)
-        assert_equal(clf.predict(X[-1]), 2)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 2))
-        assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
-                                  np.array([1., 1.]), 6)
+        for i in xrange(len(classes)):
+            clf = cls(classes=classes[i]).fit(X, y)
+            assert_equal(clf.predict(X[-1]), 2)
+            assert_equal(clf.predict_proba(X[0]).shape, shapes[i])
+            assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
+                                      np.array([1., 1.]), 6)
 
+    shapes1 = [(1,3), (1,6)]
+    shapes2 = [(2,3), (2,6)]
     # test multiclass case (2-d output, must sum to one)
     y = [0, 1, 2]
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
-        clf = cls().fit(X, y)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 3))
-        assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
-        assert_almost_equal(np.sum(clf.predict_proba(X[1])), 1)
-        assert_almost_equal(np.sum(clf.predict_proba(X[-1])), 1)
-        assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
-        assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
+        for i in xrange(len(classes)):
+            clf = cls(classes=classes[i]).fit(X, y)
+            assert_equal(clf.predict_proba(X[0]).shape, shapes1[i])
+            assert_equal(clf.predict_proba(X[:2]).shape, shapes2[i])
+            assert_almost_equal(np.sum(clf.predict_proba(X[1])), 1)
+            assert_almost_equal(np.sum(clf.predict_proba(X[-1])), 1)
+            assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
+            assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
 def test_discretenb_uniform_prior():
-    """Test whether discrete NB classes fit a uniform prior
-       when fit_prior=False and class_prior=None"""
+    """
+    Test whether discrete NB classes fit a uniform prior when
+    fit_prior=False and class_prior=None.
+    Passing classes should also yield uniform priors.
+    """
 
+    classes = [None, [0,1,2,3]]
+    priors = [np.array([.5, .5]), np.array([.25, .25, .25, .25])]
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls()
-        clf.set_params(fit_prior=False)
-        clf.fit([[0], [0], [1]], [0, 0, 1])
-        prior = np.exp(clf.class_log_prior_)
-        assert_array_equal(prior, np.array([.5, .5]))
+        for i in xrange(len(classes)):
+            clf = cls(classes=classes[i])
+            clf.set_params(fit_prior=False)
+            clf.fit([[0], [0], [1]], [0, 0, 1])
+            prior = np.exp(clf.class_log_prior_)
+            assert_array_equal(prior, priors[i])
 
 
 def test_discretenb_provide_prior():
     """Test whether discrete NB classes use provided prior"""
 
+    classes = [None, [0,1,2,3]]
+    priors = [np.array([.25, .75]), np.array([.30, .20, .10, .40])]
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls()
-        clf.fit([[0], [0], [1]], [0, 0, 1], class_prior=[0.5, 0.5])
-        prior = np.exp(clf.class_log_prior_)
-        assert_array_equal(prior, np.array([.5, .5]))
+        for i in xrange(len(classes)):
+            clf = cls(classes=classes[i])
+            clf.fit([[0], [0], [1]], [0, 0, 1], class_prior=priors[i])
+            prior = np.exp(clf.class_log_prior_)
+            assert_array_almost_equal(prior, priors[i], 8)
 
 
 def test_sample_weight():
@@ -168,3 +229,13 @@ def test_sample_weight():
     positive_prior = np.exp(clf.intercept_)
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
+
+
+def test_sample_weight_classes():
+    clf = MultinomialNB(classes=[0,1,2,3,4])
+    clf.fit([[1, 2], [1, 2], [1, 0]],
+            [0, 0, 1],
+            sample_weight=[1, 1, 4])
+    assert_array_equal(clf.predict([1, 0]), [1])
+    positive_prior = np.exp(clf.intercept_)
+    assert_array_almost_equal(positive_prior, np.array([1/3., 2/3., 0, 0, 0]))

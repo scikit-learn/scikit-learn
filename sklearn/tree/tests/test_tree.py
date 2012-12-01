@@ -9,6 +9,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 from nose.tools import assert_true
+from nose.tools import raises
 
 from sklearn import tree
 from sklearn import datasets
@@ -34,19 +35,21 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+classes = [None, [-3, -2, -1, 0, 1, 2, 3]]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
+    for c in classes:
+        clf = tree.DecisionTreeClassifier(classes=c)
+        clf.fit(X, y)
 
-    assert_array_equal(clf.predict(T), true_result)
+        assert_array_equal(clf.predict(T), true_result)
 
-    # With subsampling
-    clf = tree.DecisionTreeClassifier(max_features=1, random_state=1)
-    clf.fit(X, y)
+        # With subsampling
+        clf = tree.DecisionTreeClassifier(max_features=1, random_state=1, classes=c)
+        clf.fit(X, y)
 
-    assert_array_equal(clf.predict(T), true_result)
+        assert_array_equal(clf.predict(T), true_result)
 
 
 def test_regression_toy():
@@ -74,21 +77,22 @@ def test_xor():
     X = np.vstack([gridx.ravel(), gridy.ravel()]).T
     y = y.ravel()
 
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
-    assert_equal(clf.score(X, y), 1.0)
+    for c in classes:
+        clf = tree.DecisionTreeClassifier(classes=c)
+        clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0)
 
-    clf = tree.DecisionTreeClassifier(max_features=1)
-    clf.fit(X, y)
-    assert_equal(clf.score(X, y), 1.0)
+        clf = tree.DecisionTreeClassifier(max_features=1, classes=c)
+        clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0)
 
-    clf = tree.ExtraTreeClassifier()
-    clf.fit(X, y)
-    assert_equal(clf.score(X, y), 1.0)
+        clf = tree.ExtraTreeClassifier(classes=c)
+        clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0)
 
-    clf = tree.ExtraTreeClassifier(max_features=1)
-    clf.fit(X, y)
-    assert_equal(clf.score(X, y), 1.0)
+        clf = tree.ExtraTreeClassifier(max_features=1, classes=c)
+        clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0)
 
 
 def test_graphviz_toy():
@@ -185,18 +189,24 @@ def test_boston():
 
 def test_probability():
     """Predict probabilities using DecisionTreeClassifier."""
-    clf = tree.DecisionTreeClassifier(max_depth=1, max_features=1,
-            random_state=42)
-    clf.fit(iris.data, iris.target)
+    for c in classes:
+        clf = tree.DecisionTreeClassifier(max_depth=1, max_features=1,
+                random_state=42, classes=c)
+        clf.fit(iris.data, iris.target)
 
-    prob_predict = clf.predict_proba(iris.data)
-    assert_array_almost_equal(
-        np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
-    assert np.mean(np.argmax(prob_predict, 1)
-                   == clf.predict(iris.data)) > 0.9
+        prob_predict = clf.predict_proba(iris.data)
+        assert_array_almost_equal(
+            np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
 
-    assert_almost_equal(clf.predict_proba(iris.data),
-                        np.exp(clf.predict_log_proba(iris.data)), 8)
+        if c is not None:
+            assert np.mean(np.asarray(c)[np.argmax(prob_predict, 1)]
+                       == clf.predict(iris.data)) > 0.9
+        else:
+            assert np.mean(np.argmax(prob_predict, 1)
+                       == clf.predict(iris.data)) > 0.9
+
+        assert_almost_equal(clf.predict_proba(iris.data),
+                            np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
 def test_arrayrepr():
@@ -214,6 +224,12 @@ def test_pure_set():
     y = [1, 1, 1, 1, 1, 1]
 
     clf = tree.DecisionTreeClassifier().fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+    clf = tree.DecisionTreeClassifier(classes=[1]).fit(X, y)
+    assert_array_equal(clf.predict(X), y)
+
+    clf = tree.DecisionTreeClassifier(classes=[-1,1]).fit(X, y)
     assert_array_equal(clf.predict(X), y)
 
     clf = tree.DecisionTreeRegressor().fit(X, y)
@@ -255,21 +271,21 @@ def test_importances():
                                         n_repeated=0,
                                         shuffle=False,
                                         random_state=0)
+    for c in classes:
+        clf = tree.DecisionTreeClassifier(compute_importances=True, classes=c)
+        clf.fit(X, y)
+        importances = clf.feature_importances_
+        n_important = sum(importances > 0.1)
 
-    clf = tree.DecisionTreeClassifier(compute_importances=True)
-    clf.fit(X, y)
-    importances = clf.feature_importances_
-    n_important = sum(importances > 0.1)
+        assert_equal(importances.shape[0], 10)
+        assert_equal(n_important, 3)
 
-    assert_equal(importances.shape[0], 10)
-    assert_equal(n_important, 3)
+        X_new = clf.transform(X, threshold="mean")
+        assert 0 < X_new.shape[1] < X.shape[1]
 
-    X_new = clf.transform(X, threshold="mean")
-    assert 0 < X_new.shape[1] < X.shape[1]
-
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
+        clf = tree.DecisionTreeClassifier(classes=c)
+        clf.fit(X, y)
+        assert_true(clf.feature_importances_ is None)
 
 
 def test_error():
@@ -361,29 +377,31 @@ def test_min_samples_leaf():
     y = iris.target
 
     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-        clf = tree_class(min_samples_leaf=5).fit(X, y)
+        for c in classes:
+            clf = tree_class(min_samples_leaf=5, classes=c).fit(X, y)
 
-        out = clf.tree_.apply(X)
-        node_counts = np.bincount(out)
-        leaf_count = node_counts[node_counts != 0]  # drop inner nodes
+            out = clf.tree_.apply(X)
+            node_counts = np.bincount(out)
+            leaf_count = node_counts[node_counts != 0]  # drop inner nodes
 
-        assert np.min(leaf_count) >= 5
+            assert np.min(leaf_count) >= 5
 
 
 def test_pickle():
     import pickle
 
     # classification
-    obj = tree.DecisionTreeClassifier()
-    obj.fit(iris.data, iris.target)
-    score = obj.score(iris.data, iris.target)
-    s = pickle.dumps(obj)
+    for c in classes:
+        obj = tree.DecisionTreeClassifier(classes=c)
+        obj.fit(iris.data, iris.target)
+        score = obj.score(iris.data, iris.target)
+        s = pickle.dumps(obj)
 
-    obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
-    score2 = obj2.score(iris.data, iris.target)
-    assert score == score2, "Failed to generate same score " + \
-            " after pickling (classification) "
+        obj2 = pickle.loads(s)
+        assert_equal(type(obj2), obj.__class__)
+        score2 = obj2.score(iris.data, iris.target)
+        assert score == score2, "Failed to generate same score " + \
+                " after pickling (classification) "
 
     # regression
     obj = tree.DecisionTreeRegressor()
@@ -398,41 +416,42 @@ def test_pickle():
             " after pickling (regression) "
 
 
+X_multi = [[-2, -1],
+     [-1, -1],
+     [-1, -2],
+     [1, 1],
+     [1, 2],
+     [2, 1],
+     [-2, 1],
+     [-1, 1],
+     [-1, 2],
+     [2, -1],
+     [1, -1],
+     [1, -2]]
+
+y_multi = [[-1, 0],
+     [-1, 0],
+     [-1, 0],
+     [1, 1],
+     [1, 1],
+     [1, 1],
+     [-1, 2],
+     [-1, 2],
+     [-1, 2],
+     [1, 3],
+     [1, 3],
+     [1, 3]]
+
+
 def test_multioutput():
     """Check estimators on multi-output problems."""
-
-    X = [[-2, -1],
-         [-1, -1],
-         [-1, -2],
-         [1, 1],
-         [1, 2],
-         [2, 1],
-         [-2, 1],
-         [-1, 1],
-         [-1, 2],
-         [2, -1],
-         [1, -1],
-         [1, -2]]
-
-    y = [[-1, 0],
-         [-1, 0],
-         [-1, 0],
-         [1, 1],
-         [1, 1],
-         [1, 1],
-         [-1, 2],
-         [-1, 2],
-         [-1, 2],
-         [1, 3],
-         [1, 3],
-         [1, 3]]
 
     T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
     y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
 
     # toy classification problem
     clf = tree.DecisionTreeClassifier()
-    y_hat = clf.fit(X, y).predict(T)
+    y_hat = clf.fit(X_multi, y_multi).predict(T)
     assert_array_equal(y_hat, y_true)
     assert_equal(y_hat.shape, (4, 2))
 
@@ -446,11 +465,49 @@ def test_multioutput():
     assert_equal(log_proba[0].shape, (4, 2))
     assert_equal(log_proba[1].shape, (4, 4))
 
+
+    clf = tree.DecisionTreeClassifier(classes=[[-1,1],[0,1,2,3,4]])
+    y_hat = clf.fit(X_multi, y_multi).predict(T)
+    assert_array_equal(y_hat, y_true)
+    assert_equal(y_hat.shape, (4, 2))
+
+    proba = clf.predict_proba(T)
+    assert_equal(len(proba), 2)
+    assert_equal(proba[0].shape, (4, 2))
+    assert_equal(proba[1].shape, (4, 5))
+
+    log_proba = clf.predict_log_proba(T)
+    assert_equal(len(log_proba), 2)
+    assert_equal(log_proba[0].shape, (4, 2))
+    assert_equal(log_proba[1].shape, (4, 5))
+
+
     # toy regression problem
     clf = tree.DecisionTreeRegressor()
-    y_hat = clf.fit(X, y).predict(T)
+    y_hat = clf.fit(X_multi, y_multi).predict(T)
     assert_almost_equal(y_hat, y_true)
     assert_equal(y_hat.shape, (4, 2))
+
+@raises(ValueError)
+def test_fit_mismatch():
+    """Check that unknown labels in y in fit() throws an exception."""
+    clf = tree.DecisionTreeClassifier(classes=[[-1,1],[0,1,2]])
+    y_hat = clf.fit(X_multi, y_multi)
+
+@raises(ValueError)
+def test_duplicate_labels():
+    """Check that the duplicate labels case throws an exception."""
+    clf = tree.DecisionTreeClassifier(classes=[[-1,1,1],[0,1,2]])
+    y_hat = clf.fit(X_multi, y_multi)
+
+
+@raises(ValueError)
+def test_classes_shape():
+    """Check that all multi-output classes are lists."""
+    clf = tree.DecisionTreeClassifier(classes=[[-1,1],9])
+    y_hat = clf.fit(X_multi, y_multi)
+
+
 
 
 def test_sample_mask():

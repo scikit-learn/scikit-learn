@@ -34,6 +34,9 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
     __metaclass__ = ABCMeta
 
+    def __init__(self, classes=None):
+        self.classes = np.asarray(classes) if classes is not None else None
+
     @abstractmethod
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
@@ -134,6 +137,9 @@ class GaussianNB(BaseNB):
     [1]
     """
 
+    def __init__(self, classes=None):
+        super(GaussianNB, self).__init__(classes)
+
     def fit(self, X, y):
         """Fit Gaussian Naive Bayes according to X, y
 
@@ -159,14 +165,13 @@ class GaussianNB(BaseNB):
         if n_samples != y.shape[0]:
             raise ValueError("X and y have incompatible shapes")
 
-        self.classes_ = unique_y = np.unique(y)
-        n_classes = unique_y.shape[0]
+        self._prepare_classes(y)
 
-        self.theta_ = np.zeros((n_classes, n_features))
-        self.sigma_ = np.zeros((n_classes, n_features))
-        self.class_prior_ = np.zeros(n_classes)
+        self.theta_ = np.zeros((self.n_classes_, n_features))
+        self.sigma_ = np.zeros((self.n_classes_, n_features))
+        self.class_prior_ = np.zeros(self.n_classes_)
         epsilon = 1e-9
-        for i, y_i in enumerate(unique_y):
+        for i, y_i in enumerate(self.classes_):
             self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
             self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
             self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
@@ -183,6 +188,7 @@ class GaussianNB(BaseNB):
             joint_log_likelihood.append(jointi + n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
+        joint_log_likelihood[np.isnan(joint_log_likelihood)] = -np.inf
         return joint_log_likelihood
 
 
@@ -194,6 +200,9 @@ class BaseDiscreteNB(BaseNB):
     __init__
     _joint_log_likelihood(X) as per BaseNB
     """
+    def __init__(self, classes=None):
+        super(BaseDiscreteNB, self).__init__(classes)
+
 
     def fit(self, X, y, sample_weight=None, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
@@ -221,10 +230,11 @@ class BaseDiscreteNB(BaseNB):
         """
         X = atleast2d_or_csr(X)
 
-        labelbin = LabelBinarizer()
+        labelbin = LabelBinarizer(classes=self.classes)
         Y = labelbin.fit_transform(y)
+        self._check_found_classes(labelbin.classes_)
         self.classes_ = labelbin.classes_
-        n_classes = len(self.classes_)
+        self.n_classes_ = len(self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
@@ -238,8 +248,8 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
-        if class_prior:
-            if len(class_prior) != n_classes:
+        if class_prior is not None:
+            if len(class_prior) != self.n_classes_:
                 raise ValueError(
                         "Number of priors must match number of classes")
             self.class_log_prior_ = np.log(class_prior)
@@ -248,7 +258,7 @@ class BaseDiscreteNB(BaseNB):
             y_freq = Y.sum(axis=0)
             self.class_log_prior_ = np.log(y_freq) - np.log(y_freq.sum())
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.class_log_prior_ = np.zeros(self.n_classes_) - np.log(self.n_classes_)
 
         # N_c_i is the count of feature i in all samples of class c.
         # N_c is the denominator.
@@ -322,7 +332,8 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
+    def __init__(self, alpha=1.0, fit_prior=True, classes=None):
+        super(MultinomialNB, self).__init__(classes)
         self.alpha = alpha
         self.fit_prior = fit_prior
 
@@ -395,7 +406,8 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True, classes=None):
+        super(BernoulliNB, self).__init__(classes)
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior

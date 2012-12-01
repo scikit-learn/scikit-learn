@@ -5,9 +5,11 @@
 import copy
 import inspect
 import numpy as np
+from collections import Sequence
 from scipy import sparse
 
 from .metrics import r2_score
+from .utils.fixes import unique
 
 
 ###############################################################################
@@ -258,8 +260,115 @@ class BaseEstimator(object):
 
 
 ###############################################################################
+def is_label_indicator_matrix(y):
+    return hasattr(y, "shape") and len(y.shape) == 2
+
+
+def is_multilabel(y):
+    # the explicit check for ndarray is for forward compatibility; future
+    # versions of Numpy might want to register ndarray as a Sequence
+    return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
+       and not isinstance(y[0], basestring) \
+        or is_label_indicator_matrix(y)
+
+
+def is_iterable(y):
+    """Check if an item implements the __iter__ protocol."""
+    try:
+        iter(y)
+        return True
+    except:
+        return False
+
+
+###############################################################################
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn"""
+
+    def _check_classes(self, classes):
+        """Common error checking for the prepare functions below."""
+        if len(classes) is 0:
+            raise ValueError("no output classes")
+        if is_multilabel(classes):
+            for c in classes:
+                if len(c) != len(set(c)):
+                    raise ValueError("duplicate class label")
+        else:
+            if len(classes) != len(np.unique(classes)):
+                raise ValueError("duplicate class label")
+
+    def _prepare_single_label_classes(self, y):
+        """Set self.classes and self.y_inverse_"""
+        if self.classes is None:
+            self.classes_, self.y_inverse_ = unique(y, return_inverse=True)
+            self.n_classes_ = len(self.classes_)
+        else:
+            self._check_classes(self.classes)
+            self.classes_ = self.classes
+            classidx = dict((v,k) for k,v in enumerate(self.classes))
+            # check that all y classes are expected
+            y_inverse = np.array([classidx.get(k, None) for k in y])
+            if any(y is None for y in y_inverse):
+                bad_classes = [classidx[k] for k in np.unique(self.classes[y_inverse == None])]
+                raise ValueError("unknown classes in y vector: %s" % bad_classes)
+            self.y_inverse_ = y_inverse
+            self.n_classes_ = len(self.classes_)
+        return self.y_inverse_
+
+    def _prepare_multilabel_classes(self, y):
+        """Ensure that none of the output classes are different from
+        the ones that we expect if the constructor had a classes parameter.
+        """
+        y_classes = []
+        y_n_classes = []
+        self.n_outputs_ = y.shape[1]
+
+        for k in xrange(self.n_outputs_):
+            unique = np.unique(y[:, k])
+            y_classes.append(unique)
+            y_n_classes.append(unique.shape[0])
+
+        # discover classes
+        if self.classes is None:
+            self.classes_ = np.asarray(y_classes)
+            self.n_classes_ = np.asarray(y_n_classes)
+            self.n_outputs_ = len(y_classes)
+
+        # check known classes
+        else:
+            if is_multilabel(self.classes):
+                self.classes_ = self.classes
+            else:
+                self.classes_ = np.asarray([self.classes])
+
+            for x in self.classes_:
+                if not is_iterable(x):
+                    raise ValueError("classes in a multilabel class list must be sequences")
+
+            self.classes_ = [np.unique(x) for x in self.classes_]
+            self.n_classes_ = np.asarray([len(x) for x in self.classes_])
+            self.n_outputs_ = len(self.classes_)
+            for i in xrange(self.n_outputs_):
+                diff = set(y_classes[i]) - set(self.classes_[i])
+                if len(diff) > 0:
+                    raise ValueError("classes to constructor and fit don't match each other: %s" % diff)
+
+        for k in xrange(self.n_outputs_):
+            y[:, k] = np.searchsorted(self.classes_[k], y[:, k])
+        return y
+
+    def _prepare_classes(self, y):
+        """Return y."""
+        if is_multilabel(y):
+            return self._prepare_multilabel_classes(y)
+        else:
+            return self._prepare_single_label_classes(y)
+
+    def _check_found_classes(self, found_classes):
+        if self.classes is not None:
+            diff = set(found_classes) - set(self.classes)
+            if len(diff) > 0:
+                raise ValueError("unknown classes in y vector: %s" % diff)
 
     def score(self, X, y):
         """Returns the mean accuracy on the given test data and labels.

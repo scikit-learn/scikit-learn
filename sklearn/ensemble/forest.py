@@ -74,6 +74,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
         tree = forest._make_estimator(append=False)
         tree.set_params(compute_importances=forest.compute_importances)
         tree.set_params(random_state=check_random_state(seed))
+        tree.classes = forest.classes
 
         if forest.bootstrap:
             n_samples = X.shape[0]
@@ -190,6 +191,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
+                       classes=None,
                        random_state=None,
                        verbose=0):
         super(BaseForest, self).__init__(
@@ -202,11 +204,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.classes = np.asarray(classes) if classes is not None else None
 
         self.n_features_ = None
         self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
         self.feature_importances_ = None
 
         self.verbose = verbose
@@ -285,12 +286,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         if isinstance(self.base_estimator, ClassifierMixin):
             y = np.copy(y)
-
-            for k in xrange(self.n_outputs_):
-                unique = np.unique(y[:, k])
-                self.classes_.append(unique)
-                self.n_classes_.append(unique.shape[0])
-                y[:, k] = np.searchsorted(unique, y[:, k])
+            y = self._prepare_classes(y)
 
         if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -411,6 +407,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
+                       classes=None,
                        random_state=None,
                        verbose=0):
 
@@ -422,6 +419,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             compute_importances=compute_importances,
             oob_score=oob_score,
             n_jobs=n_jobs,
+            classes=classes,
             random_state=random_state,
             verbose=verbose)
 
@@ -565,6 +563,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
+            classes=None,
             verbose=verbose)
 
     def predict(self, X):
@@ -718,6 +717,7 @@ class RandomForestClassifier(ForestClassifier):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
+                       classes=None,
                        verbose=0):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -730,6 +730,7 @@ class RandomForestClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
+            classes=classes,
             verbose=verbose)
 
         self.criterion = criterion
@@ -997,6 +998,7 @@ class ExtraTreesClassifier(ForestClassifier):
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
+                       classes=None,
                        verbose=0):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -1009,6 +1011,7 @@ class ExtraTreesClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
+            classes=classes,
             verbose=verbose)
 
         self.criterion = criterion
