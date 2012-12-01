@@ -68,5 +68,3 @@ datasets:
     ...                      data_home=custom_data_home)
     >>> iris3 = fetch_mldata('datasets-UCI iris', target_name='class',
     ...                      data_name='double0', data_home=custom_data_home)
-
-
