@@ -210,6 +210,22 @@ def _transform_one(transformer, name, X, transformer_weights):
     return transformer.transform(X)
 
 
+def _fit_transform_one(transformer, name, X, y, transformer_weights,
+                       **fit_params):
+    if transformer_weights is not None and name in transformer_weights:
+        # if we have a weight for this transformer, muliply output
+        if hasattr(transformer, 'fit_transform'):
+            return (transformer.fit_transform(X, y, **fit_params)
+                    * transformer_weights[name])
+        else:
+            return (transformer.fit(X, y, **fit_params).transform(X)
+                    * transformer_weights[name])
+    if hasattr(transformer, 'fit_transform'):
+        return transformer.fit_transform(X, y, **fit_params)
+    else:
+        return transformer.fit(X, y, **fit_params).transform(X)
+
+
 class FeatureUnion(BaseEstimator, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
@@ -263,6 +279,31 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         Parallel(n_jobs=self.n_jobs)(delayed(_fit_one_transformer)(trans, X, y)
                 for name, trans in self.transformer_list)
         return self
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit all tranformers using X, transform the data and concatenate
+        results.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_transform_one)(trans, name, X, y,
+                                        self.transformer_weights, **fit_params)
+            for name, trans in self.transformer_list)
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
