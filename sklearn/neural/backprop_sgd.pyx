@@ -10,7 +10,7 @@ from libc.stdint cimport uint64_t
 cimport numpy as np
 import numpy as np
 
-from ..utils.extmath import logsumexp, safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
 np.import_array()
@@ -32,6 +32,18 @@ cdef void logistic(double[:] z) nogil:
     """Logistic sigmoid: 1. / (1. + np.exp(-x)), computed in-place."""
     for i in xrange(z.shape[0]):
         z[i] = 1. / (1. + exp(-z[i]))
+
+
+cdef void relu_act(double[:] z) nogil:
+    """Rectified linear activation function."""
+    for i in xrange(z.shape[0]):
+        z[i] = max(0, z[i])
+
+
+cdef void softplus(double[:] z) nogil:
+    """Softplus activation function (smooth approx. to rectified linear)."""
+    for i in xrange(z.shape[0]):
+        z[i] = log(1 + exp(z[i]))
 
 
 cdef void tanh_act(double[:] z) nogil:
@@ -98,9 +110,15 @@ def backprop_sgd(self, SequentialDataset X, np.ndarray[np.int64_t, ndim=2] Y):
     cdef double loss, penalty, prev_loss, tol
     cdef double lr, momentum
     cdef double sqrt_n_features, sqrt_n_hidden
+
     cdef bint multiclass, use_tanh, verbose
     cdef np.int32_t batchsize, epoch, n_features, n_hidden, n_samples, \
                     n_targets, samples_left
+
+    cdef double x_weight
+    cdef double *x_data_ptr
+    cdef int *x_ind_ptr
+    cdef int nnz
 
     cdef np.ndarray[np.float64_t, ndim=2] \
         w_hidden, w_output, output_grad, \
