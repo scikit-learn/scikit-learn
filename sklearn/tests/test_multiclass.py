@@ -159,15 +159,15 @@ def test_ovr_multilabel_predict_proba():
         X_test, Y_test = X[80:], Y[80:]
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
-        #decision function only estimator. Fails in current implementation.
+        # decision function only estimator. Fails in current implementation.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
         assert_raises(AttributeError, decision_only.predict_proba, X_test)
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
 
-        #predict assigns a label if the probability that the
-        #sample has the label is greater than than 0.5.
+        # predict assigns a label if the probability that the
+        # sample has the label is greater than 0.5.
         pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
         assert_equal(pred, Y_pred)
 
@@ -179,7 +179,7 @@ def test_ovr_single_label_predict_proba():
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
-    #decision function only estimator. Fails in current implementation.
+    # decision function only estimator. Fails in current implementation.
     decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
     assert_raises(AttributeError, decision_only.predict_proba, X_test)
 
@@ -187,8 +187,8 @@ def test_ovr_single_label_predict_proba():
     Y_proba = clf.predict_proba(X_test)
 
     assert_almost_equal(Y_proba.sum(axis=1), 1.0)
-    #predict assigns a label if the probability that the
-    #sample has the label is greater than than 0.5.
+    # predict assigns a label if the probability that the
+    # sample has the label is greater than 0.5.
     pred = np.array([l.argmax() for l in Y_proba])
     assert_false((pred - Y_pred).any())
 
@@ -203,9 +203,9 @@ def test_ovr_gridsearch():
 
 
 def test_ovr_pipeline():
-    # test with pipeline with length one
-    # pipeline is a bit weird wrt duck-typing predict_proba and
-    # decision_function
+    # Test with pipeline of length one
+    # This test is needed because the multiclass estimators may fail to detect
+    # the presence of predict_proba or decision_function.
     clf = Pipeline([("tree", DecisionTreeClassifier())])
     ovr_pipe = OneVsRestClassifier(clf)
     ovr_pipe.fit(iris.data, iris.target)
