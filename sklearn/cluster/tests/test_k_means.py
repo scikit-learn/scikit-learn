@@ -207,7 +207,7 @@ def _get_mac_os_version():
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _get_mac_os_version() == '10.7':
+    if _get_mac_os_version() >= '10.7':
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
     k_means = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
