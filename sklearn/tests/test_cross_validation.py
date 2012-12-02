@@ -178,7 +178,7 @@ def test_stratified_shuffle_split_iter_no_indices():
     sss2 = cval.StratifiedShuffleSplit(y, indices=True, random_state=0)
     train_indices, test_indices = iter(sss2).next()
 
-    assert_array_equal(sorted(test_indices), np.where(test_mask == True)[0])
+    assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
 
 
 def test_cross_val_score():
