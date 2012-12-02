@@ -360,7 +360,7 @@ class RadiusNeighborsMixin(object):
         -------
         dist : array
             Array representing the euclidean distances to each point,
-            only present if return_distance=True.  
+            only present if return_distance=True.
 
         ind : array
             Indices of the nearest points in the population matrix.

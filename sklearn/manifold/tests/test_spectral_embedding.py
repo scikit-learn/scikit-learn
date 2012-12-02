@@ -1,11 +1,10 @@
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
-from scipy import sparse
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal
 
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
@@ -13,9 +12,8 @@ from nose.plugins.skip import SkipTest
 from sklearn.manifold.spectral_embedding import SpectralEmbedding
 from sklearn.manifold.spectral_embedding import _graph_is_connected
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.pipeline import Pipeline
 from sklearn.metrics import normalized_mutual_info_score
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -84,7 +82,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.01))
+    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.02))
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -105,8 +103,9 @@ def test_spectral_embedding_callable_affinity(seed=36):
     embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
+    assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
     assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.01))
+        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.02))
 
 
 def test_spectral_embedding_amg_solver(seed=36):
@@ -116,17 +115,14 @@ def test_spectral_embedding_amg_solver(seed=36):
     except ImportError:
         raise SkipTest
 
-    gamma = 0.9
-    se_amg = SpectralEmbedding(n_components=3, affinity="rbf",
-                               gamma=gamma, eigen_solver="amg",
+    se_amg = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
+                               eigen_solver="amg", n_neighbors=5,
                                random_state=np.random.RandomState(seed))
-    se_arpack = SpectralEmbedding(n_components=3, affinity="rbf",
-                                  gamma=gamma, eigen_solver="arpack",
+    se_arpack = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
+                                  eigen_solver="arpack", n_neighbors=5,
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert_array_almost_equal(
-        se_amg.affinity_matrix_, se_arpack.affinity_matrix_)
     assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.01))
 
 
@@ -151,33 +147,17 @@ def test_pipline_spectral_clustering(seed=36):
 
 def test_spectral_embedding_unknown_eigensolver(seed=36):
     """Test that SpectralClustering fails with an unknown eigensolver"""
-    centers = np.array([
-        [0., 0., 0.],
-        [10., 10., 10.],
-        [20., 20., 20.],
-    ])
-    X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=1., random_state=42)
-
-    se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
-                                   random_state=np.random.RandomState(seed),
-                                   eigen_solver="<unknown>")
-    assert_raises(ValueError, se_precomp.fit, S)
+    se = SpectralEmbedding(n_components=1, affinity="precomputed",
+                           random_state=np.random.RandomState(seed),
+                           eigen_solver="<unknown>")
+    assert_raises(ValueError, se.fit, S)
 
 
 def test_spectral_embedding_unknown_affinity(seed=36):
     """Test that SpectralClustering fails with an unknown affinity type"""
-    centers = np.array([
-        [0., 0., 0.],
-        [10., 10., 10.],
-        [20., 20., 20.],
-    ])
-    X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=1., random_state=42)
-
-    se_precomp = SpectralEmbedding(n_components=1, affinity="<unknown>",
-                                   random_state=np.random.RandomState(seed))
-    assert_raises(ValueError, se_precomp.fit, S)
+    se = SpectralEmbedding(n_components=1, affinity="<unknown>",
+                           random_state=np.random.RandomState(seed))
+    assert_raises(ValueError, se.fit, S)
 
 
 def test_connectivity(seed=36):

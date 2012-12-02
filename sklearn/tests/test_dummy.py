@@ -15,6 +15,7 @@ def _check_predict_proba(clf, X, y):
     assert_equal(out.shape[1], len(np.unique(y)))
     assert_array_equal(out.sum(axis=1), np.ones(len(X)))
 
+
 def test_most_frequent_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [1, 2, 1, 1]
@@ -34,8 +35,8 @@ def test_stratified_strategy():
     X = [[0]] * 1000
     y_pred = clf.predict(X)
     p = np.bincount(y_pred) / float(len(X))
-    assert_almost_equal(p[1], 3./5, decimal=1)
-    assert_almost_equal(p[2], 2./5, decimal=1)
+    assert_almost_equal(p[1], 3. / 5, decimal=1)
+    assert_almost_equal(p[2], 2. / 5, decimal=1)
     _check_predict_proba(clf, X, y)
 
 
@@ -75,7 +76,7 @@ def test_regressor():
 
     reg = DummyRegressor()
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [5./4] * len(X))
+    assert_array_equal(reg.predict(X), [5. / 4] * len(X))
 
 
 def test_regressor_exceptions():

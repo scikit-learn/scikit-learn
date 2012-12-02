@@ -359,7 +359,7 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
-   
+
 Complexity
 ----------
 
@@ -393,7 +393,8 @@ The overall complexity of standard LTSA is
 Multi-dimensional Scaling (MDS)
 ===============================
 
-Multidimensional scaling (:class:`MDS`) seeks a low-dimensional
+`Multidimensional scaling <http://en.wikipedia.org/wiki/Multidimensional_scaling>`_
+(:class:`MDS`) seeks a low-dimensional
 representation of the data in which the distances respect well the
 distances in the original high-dimensional space.
 
