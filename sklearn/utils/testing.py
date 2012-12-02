@@ -184,7 +184,8 @@ def if_matplotlib(func):
     def run_test(*args, **kwargs):
         try:
             import matplotlib
-        except ImportError:
+            matplotlib.use('Agg', warn=False)
+        except:
             raise SkipTest('Matplotlib not available.')
         else:
             return func(*args, **kwargs)
