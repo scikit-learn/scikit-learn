@@ -99,14 +99,12 @@ def predict_proba_ovr(estimators, X, is_multilabel):
     If multilabel is true, returned matrix will not sum to one.  Estimators
     must have a predict_proba method."""
 
+    # Y[i,j] gives the probability that sample i has the label j.
+    # In the multi-label case, these are not disjoint.
     Y = np.array([est.predict_proba(X)[:, 1] for est in estimators]).T
 
-    #Y[i,j] gives the probability that sample i has the label j.
-    #in the multi-label case, these are not disjoint. In the single-label case,
-    #these are disjoint
-
     if not is_multilabel:
-        #then probabilities should be normalized to 1.
+        # Then, probabilities should be normalized to 1.
         Y /= np.sum(Y, axis=1)[:, np.newaxis]
     return Y
 
@@ -219,7 +217,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         labels both have a 90% probability of applying to a given sample.
 
         In the single label multiclass case, the rows of the returned matrix
-        should sum to unity.
+        sum to 1.
 
         Parameters
         ----------
