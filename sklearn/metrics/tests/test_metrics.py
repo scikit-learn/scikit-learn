@@ -538,7 +538,7 @@ def test_roc_curve_one_label():
     with warnings.catch_warnings(True) as w:
         fpr, tpr, thresholds = roc_curve(y_true, y_pred)
         assert_equal(len(w), 1)
-    # all true labels, all fpr except at zero should be nan
+    # all true labels, all fpr should be nan
     assert_array_equal(fpr,
                        np.nan * np.ones(len(thresholds) + 1))
     # assert there are warnings
@@ -546,6 +546,6 @@ def test_roc_curve_one_label():
         fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
                                          y_pred)
         assert_equal(len(w), 1)
-    # all true labels, all fpr except at zero should be nan
+    # all negative labels, all tpr should be nan
     assert_array_equal(tpr,
                        np.nan * np.ones(len(thresholds) + 1))
