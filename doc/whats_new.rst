@@ -79,6 +79,9 @@ Changelog
      :func:`manifold.spectral_embedding`, implementing the
      "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
 
+   - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
+     Andrew Winterman.
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
