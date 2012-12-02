@@ -1,11 +1,10 @@
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
-from scipy import sparse
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal
 
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
@@ -13,9 +12,8 @@ from nose.plugins.skip import SkipTest
 from sklearn.manifold.spectral_embedding import SpectralEmbedding
 from sklearn.manifold.spectral_embedding import _graph_is_connected
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.pipeline import Pipeline
 from sklearn.metrics import normalized_mutual_info_score
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -84,7 +82,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.01))
+    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.02))
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -105,8 +103,9 @@ def test_spectral_embedding_callable_affinity(seed=36):
     embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
+    assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
     assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.01))
+        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.02))
 
 
 def test_spectral_embedding_amg_solver(seed=36):
