@@ -1,3 +1,5 @@
+import warnings
+
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
@@ -64,10 +66,21 @@ def test_spectral_embedding_two_components(seed=36):
 
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
-    embedded_corrdinate = np.squeeze(se_precomp.fit_transform(affinity))
+    embedded_coordinate = se_precomp.fit_transform(affinity)
     # thresholding on the first components using 0.
-    label_ = np.array(embedded_corrdinate < 0, dtype="float")
+    label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
     assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
+
+    # test that we can still import spectral embedding
+
+    from sklearn.cluster import spectral_embedding as se_deprecated
+    with warnings.catch_warnings(record=True) as warning_list:
+        embedded_depr = se_deprecated(affinity, n_components=1,
+                                      random_state=np.random.RandomState(seed))
+    assert_equal(len(warning_list), 1)
+
+    assert_true(_check_with_col_sign_flipping(embedded_coordinate,
+                                              embedded_depr, 0.01))
 
 
 def test_spectral_embedding_precomputed_affinity(seed=36):
