@@ -81,7 +81,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def roc_curve(y_true, y_score, pos_label = None):
+def roc_curve(y_true, y_score, pos_label=None):
     """compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
@@ -90,7 +90,8 @@ def roc_curve(y_true, y_score, pos_label = None):
     ----------
 
     y_true : array, shape = [n_samples]
-        true binary labels
+        true binary labels in range {0,1} or {-1,1}
+        if not binary label, pos_label should be explictly given
 
     y_score : array, shape = [n_samples]
         target scores, can either be probability estimates of
@@ -122,7 +123,7 @@ def roc_curve(y_true, y_score, pos_label = None):
     >>> from sklearn import metrics
     >>> y = np.array([1, 1, 2, 2])
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores)
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
 
@@ -133,14 +134,15 @@ def roc_curve(y_true, y_score, pos_label = None):
     """
     y_true = np.ravel(y_true)
     y_score = np.ravel(y_score)
-
     classes = np.unique(y_true)
 
     # ROC only for binary classification if pos_label not given
     if (pos_label is None and
-        not (np.all(classes==[0,1]) or
-             np.all(classes==[0]) or
-             np.all(classes==[1]))):
+        not (np.all(classes == [0, 1]) or
+             np.all(classes == [-1, 1]) or
+             np.all(classes == [0]) or
+             np.all(classes == [-1]) or
+             np.all(classes == [1]))):
         raise ValueError("ROC is defined for binary classification only or "
                          "pos_label should be explicitly given")
     elif pos_label is None:
@@ -150,7 +152,7 @@ def roc_curve(y_true, y_score, pos_label = None):
     y_true = (y_true == pos_label)
     n_pos = float(y_true.sum())
     n_neg = y_true.shape[0] - n_pos
-    
+
     if n_pos == 0:
         warnings.warn("No positive samples in y_true, "
                       "true positve value should be meaningless")
@@ -305,7 +307,7 @@ def auc(x, y, reorder=False):
     >>> from sklearn import metrics
     >>> y = np.array([1, 1, 2, 2])
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
 
