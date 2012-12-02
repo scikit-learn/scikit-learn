@@ -129,8 +129,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         new_code = orthogonal_mp_gram(gram, cov, regularization, None,
                                       norms_squared, copy_Xy=copy_cov).T
     else:
-        raise NotImplementedError('Sparse coding method %s not implemented' %
-                             algorithm)
+        raise ValueError('Sparse coding method must be "lasso_lars" '
+                         '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
+                         % algorithm)
     return new_code
 
 
@@ -233,18 +234,13 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     if n_jobs == 1 or algorithm == 'threshold':
         return _sparse_encode(X, dictionary, gram, cov=cov,
-                  algorithm=algorithm, regularization=regularization,
-                  copy_cov=copy_cov, init=init, max_iter=max_iter)
+                              algorithm=algorithm,
+                              regularization=regularization, copy_cov=copy_cov,
+                              init=init, max_iter=max_iter)
 
     # Enter parallel code block
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, n_jobs))
-    if cov is None:
-        # We cannot keep cov to None: it needs to be slicable
-        class StupidSliceable(object):
-            def __getitem__(self, anything):
-                return None
-        cov = StupidSliceable()
 
     code_views = Parallel(n_jobs=n_jobs)(
                 delayed(_sparse_encode)(X[this_slice], dictionary, gram,

@@ -69,6 +69,12 @@ def test_kfold_valueerrors():
     # Error when number of folds is <= 0
     assert_raises(ValueError, cval.KFold, 2, 0)
 
+    # When n is not integer:
+    assert_raises(ValueError, cval.KFold, 2.5, 1)
+
+    # When n_folds is not integer:
+    assert_raises(ValueError, cval.KFold, 5, 1.5)
+
 
 def test_kfold_indices():
     # Check all indices are returned in the test folds
@@ -202,6 +208,10 @@ def test_cross_val_score_precomputed():
     svm = SVC(kernel="linear")
     score_linear = cval.cross_val_score(svm, X, y)
     assert_array_equal(score_precomputed, score_linear)
+
+    # Error raised for non-square X
+    svm = SVC(kernel="precomputed")
+    assert_raises(ValueError, cval.cross_val_score, svm, X, y)
 
 
 def test_cross_val_score_fit_params():

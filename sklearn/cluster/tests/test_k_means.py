@@ -257,7 +257,7 @@ def test_k_means_perfect_init():
 
 def test_mb_k_means_plus_plus_init_dense_array():
     mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
-                                 random_state=42, verbose=1)
+                                 random_state=42)
     mb_k_means.fit(X)
     _check_fitted_model(mb_k_means)
 
