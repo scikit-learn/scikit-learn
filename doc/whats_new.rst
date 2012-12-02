@@ -7,6 +7,10 @@
 
 Changelog
 ---------
+
+   - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
+     `Peter Prettenhofer`_.
+
    - New estimators :class:`linear_model.PassiveAggressiveClassifier` and
      :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
      `Mathieu Blondel`_.

@@ -479,9 +479,9 @@ class BaseGradientBoosting(BaseEnsemble):
 
         self.verbose = verbose
 
-        self.estimators_ = None
+        self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
+    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -583,7 +583,7 @@ class BaseGradientBoosting(BaseEnsemble):
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   self.random_state)
             # fit next stage of trees
-            y_pred = self.fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
+            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
@@ -594,13 +594,14 @@ class BaseGradientBoosting(BaseEnsemble):
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e, "
                           "oob score = %.6e" % (i + 1, self.n_estimators,
-                           self.train_score_[i], self.oob_score_[i]))
+                                                self.train_score_[i],
+                                                self.oob_score_[i]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss(y, y_pred)
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e" %
-                        (i + 1, self.n_estimators, self.train_score_[i]))
+                          (i + 1, self.n_estimators, self.train_score_[i]))
             if self.verbose == 1:
                 print(end='.')
                 sys.stdout.flush()

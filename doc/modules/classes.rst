@@ -159,6 +159,7 @@ Loaders
    datasets.load_linnerud
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_california_housing
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -284,6 +285,23 @@ Samples generator
 .. autosummary::
    :toctree: generated/
    :template: function.rst
+
+
+partial dependence
+------------------
+
+.. automodule:: sklearn.ensemble.partial_dependence
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _feature_extraction_ref:
