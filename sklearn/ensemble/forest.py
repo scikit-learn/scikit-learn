@@ -77,14 +77,19 @@ def _parallel_build_trees(n_trees, forest, X, y, sample_weight,
 
         if forest.bootstrap:
             n_samples = X.shape[0]
-            indices = random_state.randint(0, n_samples, n_samples)
-            if sample_weight is not None:
-                curr_sample_weight = sample_weight[indices]
+            if sample_weight is None:
+                curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
             else:
-                curr_sample_weight = None
-            tree.fit(X[indices], y[indices],
-                     sample_weight=curr_sample_weight,
-                     sample_mask=sample_mask,
+                curr_sample_weight = sample_weight.copy()
+
+            indices = random_state.randint(0, n_samples, n_samples)
+            sample_counts = np.bincount(indices, minlength=n_samples)
+            curr_sample_weight *= sample_counts
+            curr_sample_mask = sample_mask.copy()
+            curr_sample_mask[sample_counts == 0] = False
+
+            tree.fit(X, y,
+                     sample_mask=curr_sample_mask,
                      X_argsorted=X_argsorted,
                      check_input=False)
             tree.indices_ = indices
@@ -280,25 +285,20 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         n_samples, self.n_features_ = X.shape
 
-        if self.bootstrap:
-            sample_mask = None
-            X_argsorted = None
+        if not self.bootstrap and self.oob_score:
+            raise ValueError("Out of bag estimation only available"
+                             " if bootstrap=True")
 
-        else:
-            if self.oob_score:
-                raise ValueError("Out of bag estimation only available"
-                                 " if bootstrap=True")
+        sample_mask = np.ones((n_samples,), dtype=np.bool)
 
-            sample_mask = np.ones((n_samples,), dtype=np.bool)
+        n_jobs, _, starts = _partition_features(self, self.n_features_)
 
-            n_jobs, _, starts = _partition_features(self, self.n_features_)
+        all_X_argsorted = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_parallel_X_argsort)(
+                X[:, starts[i]:starts[i + 1]])
+            for i in xrange(n_jobs))
 
-            all_X_argsorted = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-                delayed(_parallel_X_argsort)(
-                    X[:, starts[i]:starts[i + 1]])
-                for i in xrange(n_jobs))
-
-            X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
+        X_argsorted = np.asfortranarray(np.hstack(all_X_argsorted))
 
         y = np.atleast_1d(y)
         if y.ndim == 1:
