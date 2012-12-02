@@ -185,6 +185,8 @@ def if_matplotlib(func):
         try:
             import matplotlib
             matplotlib.use('Agg', warn=False)
+            # this fails if no $DISPLAY specified
+            matplotlib.pylab.figure()
         except:
             raise SkipTest('Matplotlib not available.')
         else:
