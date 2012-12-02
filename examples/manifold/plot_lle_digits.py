@@ -4,11 +4,18 @@ Manifold learning on handwritten digits: Locally Linear Embedding, Isomap...
 =============================================================================
 
 An illustration of various embeddings on the digits dataset.
+
+The RandomTreesEmbedding, from the :mod:`sklearn.ensemble` module, is not
+technically a manifold embedding method, as it learn a high-dimensional
+representation on wich we apply a dimensionality reduction method.
+However, it is often useful to cast a dataset into a representation in
+which the classes are linearly-seperable.
 """
 
 # Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Gael Varoquaux
 # License: BSD, (C) INRIA 2011
 
 print __doc__
@@ -18,7 +25,7 @@ import numpy as np
 import pylab as pl
 from matplotlib import offsetbox
 from sklearn.utils.fixes import qr_economic
-from sklearn import manifold, datasets, decomposition, lda
+from sklearn import manifold, datasets, decomposition, ensemble, lda
 from sklearn.metrics import euclidean_distances
 
 digits = datasets.load_digits(n_class=6)
@@ -90,8 +97,8 @@ print "Computing PCA projection"
 t0 = time()
 X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
 plot_embedding(X_pca,
-    "Principal Components projection of the digits (time %.2fs)" %
-    (time() - t0))
+               "Principal Components projection of the digits (time %.2fs)" %
+               (time() - t0))
 
 #----------------------------------------------------------------------
 # Projection on to the first 2 linear discriminant components
@@ -102,8 +109,8 @@ X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
 X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
 plot_embedding(X_lda,
-    "Linear Discriminant projection of the digits (time %.2fs)" %
-    (time() - t0))
+               "Linear Discriminant projection of the digits (time %.2fs)" %
+               (time() - t0))
 
 
 #----------------------------------------------------------------------
@@ -113,8 +120,8 @@ t0 = time()
 X_iso = manifold.Isomap(n_neighbors, n_components=2).fit_transform(X)
 print "Done."
 plot_embedding(X_iso,
-    "Isomap projection of the digits (time %.2fs)" %
-    (time() - t0))
+               "Isomap projection of the digits (time %.2fs)" %
+               (time() - t0))
 
 
 #----------------------------------------------------------------------
@@ -126,8 +133,8 @@ t0 = time()
 X_lle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 plot_embedding(X_lle,
-    "Locally Linear Embedding of the digits (time %.2fs)" %
-    (time() - t0))
+               "Locally Linear Embedding of the digits (time %.2fs)" %
+               (time() - t0))
 
 
 #----------------------------------------------------------------------
@@ -139,8 +146,8 @@ t0 = time()
 X_mlle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 plot_embedding(X_mlle,
-    "Modified Locally Linear Embedding of the digits (time %.2fs)" %
-    (time() - t0))
+               "Modified Locally Linear Embedding of the digits (time %.2fs)" %
+               (time() - t0))
 
 
 #----------------------------------------------------------------------
@@ -152,8 +159,8 @@ t0 = time()
 X_hlle = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 plot_embedding(X_hlle,
-    "Hessian Locally Linear Embedding of the digits (time %.2fs)" %
-    (time() - t0))
+               "Hessian Locally Linear Embedding of the digits (time %.2fs)" %
+               (time() - t0))
 
 
 #----------------------------------------------------------------------
@@ -165,8 +172,8 @@ t0 = time()
 X_ltsa = clf.fit_transform(X)
 print "Done. Reconstruction error: %g" % clf.reconstruction_error_
 plot_embedding(X_ltsa,
-    "Local Tangent Space Alignment of the digits (time %.2fs)" %
-    (time() - t0))
+               "Local Tangent Space Alignment of the digits (time %.2fs)" %
+               (time() - t0))
 
 #----------------------------------------------------------------------
 # MDS  embedding of the digits dataset
@@ -176,7 +183,33 @@ t0 = time()
 X_mds = clf.fit_transform(euclidean_distances(X))
 print "Done. Stress: %f" % clf.stress_
 plot_embedding(X_mds,
-    "MDS embedding of the digits (time %.2fs)" %
-    (time() - t0))
+               "MDS embedding of the digits (time %.2fs)" %
+               (time() - t0))
+
+#----------------------------------------------------------------------
+# Random Trees embedding of the digits dataset
+print "Computing Totally Random Trees embedding"
+hasher = ensemble.RandomTreesEmbedding(n_estimators=200, random_state=0,
+                                       max_depth=5)
+t0 = time()
+X_transformed = hasher.fit_transform(X)
+pca = decomposition.RandomizedPCA(n_components=2)
+X_reduced = pca.fit_transform(X_transformed)
+
+plot_embedding(X_reduced,
+               "Random forest embedding of the digits (time %.2fs)" %
+               (time() - t0))
+
+#----------------------------------------------------------------------
+# Spectral embedding of the digits dataset
+print "Computing Spectral embedding"
+embedder = manifold.SpectralEmbedding(n_components=2, random_state=0,
+                                      eigen_solver="arpack")
+t0 = time()
+X_se = embedder.fit_transform(X)
+
+plot_embedding(X_se,
+               "Spectral embedding of the digits (time %.2fs)" %
+               (time() - t0))
 
 pl.show()

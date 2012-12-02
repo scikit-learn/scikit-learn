@@ -274,7 +274,9 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
     if n_nonzero_coefs == None and tol == None:
-        n_nonzero_coefs = int(0.1 * X.shape[1])
+        # default for n_nonzero_coefs is 0.1 * n_features
+        # but at least one.
+        n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
     if tol is not None and tol < 0:
         raise ValueError("Epsilon cannot be negative")
     if tol is None and n_nonzero_coefs <= 0:
@@ -365,7 +367,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     """
     Gram = array2d(Gram, order='F', copy=copy_Gram)
     Xy = np.asarray(Xy)
-    if Xy.ndim > 1 and Xy.shape[1] > 1:  # or subsequent target will be affected
+    if Xy.ndim > 1 and Xy.shape[1] > 1:
+        # or subsequent target will be affected
         copy_Gram = True
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
@@ -513,7 +516,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             y = y[:, np.newaxis]
 
         if self.n_nonzero_coefs == None and self.tol is None:
-            self.n_nonzero_coefs = int(0.1 * n_features)
+            # default for n_nonzero_coefs is 0.1 * n_features
+            # but at least one.
+            self.n_nonzero_coefs = max(int(0.1 * n_features), 1)
         if (Gram is not None or Xy is not None) and (self.fit_intercept is True
                                                  or self.normalize is True):
             warnings.warn('Mean subtraction (fit_intercept) and '

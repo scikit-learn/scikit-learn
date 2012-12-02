@@ -72,7 +72,7 @@ print "n_classes: %d" % n_classes
 
 # split into a training and testing set
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_fraction=0.25)
+    X, y, test_size=0.25)
 
 
 ###############################################################################

@@ -18,6 +18,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
 from ..metrics import euclidean_distances
+from ..utils import array2d
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -344,6 +345,7 @@ class Ward(BaseEstimator, ClusterMixin):
         self
         """
         memory = self.memory
+        X = array2d(X)
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 

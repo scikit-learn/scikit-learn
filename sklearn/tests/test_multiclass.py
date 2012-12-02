@@ -1,11 +1,12 @@
 import numpy as np
 import warnings
 
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal
-from nose.tools import assert_almost_equal
-from nose.tools import assert_true
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -16,6 +17,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
+from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
 
@@ -52,23 +54,24 @@ def multilabel_recall(Y_true, Y_pred):
 
 
 def test_ovr_exceptions():
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
 
 
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes)
 
-    pred2 = LinearSVC().fit(iris.data, iris.target).predict(iris.data)
+    clf = LinearSVC(random_state=0)
+    pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
 
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_true(np.mean(iris.target == pred) >= 0.65)
+    assert_greater(np.mean(iris.target == pred), 0.65)
 
 
 def test_ovr_always_present():
@@ -97,7 +100,7 @@ def test_ovr_multilabel():
 
     classes = set("ham eggs spam".split())
 
-    for base_clf in (MultinomialNB(), LinearSVC(),
+    for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
@@ -137,13 +140,61 @@ def test_ovr_multilabel_dataset():
         Y_pred = clf.predict(X_test)
         assert_true(clf.multilabel_)
         assert_almost_equal(multilabel_precision(Y_test, Y_pred), prec,
-                            places=2)
+                            decimal=2)
         assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
-                            places=2)
+                            decimal=2)
+
+
+def test_ovr_multilabel_predict_proba():
+    base_clf = MultinomialNB(alpha=1)
+    for au in (False, True):
+        X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                       n_features=20,
+                                                       n_classes=5,
+                                                       n_labels=3,
+                                                       length=50,
+                                                       allow_unlabeled=au,
+                                                       random_state=0)
+        X_train, Y_train = X[:80], Y[:80]
+        X_test, Y_test = X[80:], Y[80:]
+        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+
+        # decision function only estimator. Fails in current implementation.
+        decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
+        Y_pred = clf.predict(X_test)
+        Y_proba = clf.predict_proba(X_test)
+
+        # predict assigns a label if the probability that the
+        # sample has the label is greater than 0.5.
+        pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
+        assert_equal(pred, Y_pred)
+
+
+def test_ovr_single_label_predict_proba():
+    base_clf = MultinomialNB(alpha=1)
+    X, Y = iris.data, iris.target
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+
+    # decision function only estimator. Fails in current implementation.
+    decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+    assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
+    Y_pred = clf.predict(X_test)
+    Y_proba = clf.predict_proba(X_test)
+
+    assert_almost_equal(Y_proba.sum(axis=1), 1.0)
+    # predict assigns a label if the probability that the
+    # sample has the label is greater than 0.5.
+    pred = np.array([l.argmax() for l in Y_proba])
+    assert_false((pred - Y_pred).any())
 
 
 def test_ovr_gridsearch():
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovr, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
@@ -151,8 +202,20 @@ def test_ovr_gridsearch():
     assert_true(best_C in Cs)
 
 
+def test_ovr_pipeline():
+    # Test with pipeline of length one
+    # This test is needed because the multiclass estimators may fail to detect
+    # the presence of predict_proba or decision_function.
+    clf = Pipeline([("tree", DecisionTreeClassifier())])
+    ovr_pipe = OneVsRestClassifier(clf)
+    ovr_pipe.fit(iris.data, iris.target)
+    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr.fit(iris.data, iris.target)
+    assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
+
+
 def test_ovr_coef_():
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     ovr.fit(iris.data, iris.target)
     shape = ovr.coef_.shape
     assert_equal(shape[0], n_classes)
@@ -161,7 +224,7 @@ def test_ovr_coef_():
 
 def test_ovr_coef_exceptions():
     # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC())
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     # lambda is needed because we don't want coef_ to be evaluated right away
     assert_raises(ValueError, lambda x: ovr.coef_, None)
 
@@ -172,13 +235,13 @@ def test_ovr_coef_exceptions():
 
 
 def test_ovo_exceptions():
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovo.predict, [])
 
 
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
@@ -189,7 +252,7 @@ def test_ovo_fit_predict():
 
 
 def test_ovo_gridsearch():
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovo, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
@@ -198,13 +261,14 @@ def test_ovo_gridsearch():
 
 
 def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC())
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
 
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(), code_size=2, random_state=0)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
@@ -215,7 +279,8 @@ def test_ecoc_fit_predict():
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC(), random_state=0)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)

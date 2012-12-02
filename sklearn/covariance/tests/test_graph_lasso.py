@@ -6,6 +6,9 @@ from StringIO import StringIO
 import numpy as np
 from scipy import linalg
 
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_less
+
 from sklearn.covariance import graph_lasso, GraphLasso, GraphLassoCV, \
             empirical_covariance
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
@@ -30,13 +33,13 @@ def test_graph_lasso(random_state=0):
             covs[method] = cov_
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease
-            np.testing.assert_array_less(np.diff(costs), 0)
+            assert_array_less(np.diff(costs), 0)
         # Check that the 2 approaches give similar results
-        np.testing.assert_array_almost_equal(covs['cd'], covs['lars'])
+        assert_array_almost_equal(covs['cd'], covs['lars'])
 
     # Smoke test the estimator
     model = GraphLasso(alpha=.1).fit(X)
-    np.testing.assert_array_almost_equal(model.covariance_, covs['cd'])
+    assert_array_almost_equal(model.covariance_, covs['cd'])
 
 
 def test_graph_lasso_cv(random_state=1):

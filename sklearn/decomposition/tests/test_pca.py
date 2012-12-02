@@ -1,18 +1,18 @@
 import numpy as np
-from nose.tools import assert_true
-from nose.tools import assert_equal
-
 from scipy.sparse import csr_matrix
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less, assert_greater
 
-from ... import datasets
-from .. import PCA
-from .. import ProbabilisticPCA
-from .. import RandomizedPCA
-from ..pca import _assess_dimension_
-from ..pca import _infer_dimension_
+from sklearn import datasets
+from sklearn.decomposition import PCA
+from sklearn.decomposition import ProbabilisticPCA
+from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition.pca import _assess_dimension_
+from sklearn.decomposition.pca import _infer_dimension_
 
 iris = datasets.load_iris()
 

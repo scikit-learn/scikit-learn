@@ -10,9 +10,10 @@ at which the fixe is no longer needed.
 # License: BSD
 
 import collections
-import numpy as np
 from operator import itemgetter
+import inspect
 
+import numpy as np
 
 try:
     Counter = collections.Counter
@@ -99,11 +100,34 @@ def _unique(ar, return_index=False, return_inverse=False):
         flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
-np_version = np.__version__.split('.')
-if int(np_version[0]) < 2 and int(np_version[1]) < 5:
+np_version = []
+for x in np.__version__.split('.'):
+    try:
+        np_version.append(int(x))
+    except ValueError:
+        # x may be of the form dev-1ea1592
+        np_version.append(x)
+np_version = tuple(np_version)
+
+if np_version[:2] < (1, 5):
     unique = _unique
 else:
     unique = np.unique
+
+
+def _bincount(X, weights=None, minlength=None):
+    """Replacing np.bincount in numpy < 1.6 to provide minlength."""
+    result = np.bincount(X, weights)
+    if len(result) >= minlength:
+        return result
+    out = np.zeros(minlength, np.int)
+    out[:len(result)] = result
+    return out
+
+if np_version[:2] < (1, 6):
+    bincount = _bincount
+else:
+    bincount = np.bincount
 
 
 def _copysign(x1, x2):
@@ -176,3 +200,13 @@ try:
 except ImportError:
     def count_nonzero(X):
         return len(np.flatnonzero(X))
+
+# little danse to see if np.copy has an 'order' keyword argument
+if 'order' in inspect.getargspec(np.copy)[0]:
+    def safe_copy(X):
+        # Copy, but keep the order
+        return np.copy(X, order='K')
+else:
+    # Before an 'order' argument was introduced, numpy wouldn't muck with
+    # the ordering
+    safe_copy = np.copy

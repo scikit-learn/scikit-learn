@@ -3,9 +3,11 @@
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from nose.tools import assert_true, assert_equal
-from nose.tools import assert_raises
-from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
 from sklearn.utils.fixes import unique
 
 from sklearn import cross_validation as cval
@@ -19,7 +21,6 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
-from sklearn.svm.sparse import SVC as SparseSVC
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -31,7 +32,7 @@ class MockClassifier(BaseEstimator):
     def __init__(self, a=0):
         self.a = a
 
-    def fit(self, X, Y, sample_weight=None, class_prior=None):
+    def fit(self, X, Y=None, sample_weight=None, class_prior=None):
         if sample_weight is not None:
             assert_true(sample_weight.shape[0] == X.shape[0],
             'MockClassifier extra fit_param sample_weight.shape[0] is {0}, '
@@ -57,12 +58,17 @@ y = np.arange(10) / 2
 # Tests
 
 
-def test_kfold():
+def test_kfold_valueerrors():
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cval.KFold, 3, 4)
     y = [0, 0, 1, 1, 2]
     assert_raises(ValueError, cval.StratifiedKFold, y, 3)
 
+    # Error when number of folds is <= 0
+    assert_raises(ValueError, cval.KFold, 2, 0)
+
+
+def test_kfold_indices():
     # Check all indices are returned in the test folds
     kf = cval.KFold(300, 3)
     all_folds = None
@@ -115,7 +121,7 @@ def test_shuffle_split():
         assert_array_equal(t3[1], t4[1])
 
 
-def test_stratified_shuffle_split():
+def test_stratified_shuffle_split_init():
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
     # Check that error is raised if there is a class with only one sample
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.2)
@@ -132,6 +138,12 @@ def test_stratified_shuffle_split():
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 8, 0.6)
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.6, 8)
 
+    # Train size or test size too small
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, train_size=2)
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, test_size=2)
+
+
+def test_stratified_shuffle_split_iter():
     ys = [
         np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
         np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
@@ -157,6 +169,18 @@ def test_stratified_shuffle_split():
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
+def test_stratified_shuffle_split_iter_no_indices():
+    y = np.asarray([0, 1, 2] * 10)
+
+    sss1 = cval.StratifiedShuffleSplit(y, indices=False, random_state=0)
+    train_mask, test_mask = iter(sss1).next()
+
+    sss2 = cval.StratifiedShuffleSplit(y, indices=True, random_state=0)
+    train_indices, test_indices = iter(sss2).next()
+
+    assert_array_equal(sorted(test_indices), np.where(test_mask == True)[0])
+
+
 def test_cross_val_score():
     clf = MockClassifier()
     for a in range(-10, 10):
@@ -169,6 +193,18 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, y))
 
 
+def test_cross_val_score_precomputed():
+    # test for svm with precomputed kernel
+    svm = SVC(kernel="precomputed")
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    linear_kernel = np.dot(X, X.T)
+    score_precomputed = cval.cross_val_score(svm, linear_kernel, y)
+    svm = SVC(kernel="linear")
+    score_linear = cval.cross_val_score(svm, X, y)
+    assert_array_equal(score_precomputed, score_linear)
+
+
 def test_cross_val_score_fit_params():
     clf = MockClassifier()
     n_samples = X.shape[0]
@@ -176,6 +212,35 @@ def test_cross_val_score_fit_params():
     fit_params = {'sample_weight': np.ones(n_samples),
                   'class_prior': np.ones(n_classes) / n_classes}
     cval.cross_val_score(clf, X, y, fit_params=fit_params)
+
+
+def test_cross_val_score_score_func():
+    clf = MockClassifier()
+    _score_func1_args = []
+    _score_func2_args = []
+
+    def score_func1(data):
+        _score_func1_args.append(data)
+        return 1.0
+
+    def score_func2(y_test, y_predict):
+        _score_func2_args.append((y_test, y_predict))
+        return 1.0
+
+    score1 = cval.cross_val_score(clf, X, score_func=score_func1)
+    assert_array_equal(score1, [1.0, 1.0, 1.0])
+    assert len(_score_func1_args) == 3
+
+    score2 = cval.cross_val_score(clf, X, y, score_func=score_func2)
+    assert_array_equal(score2, [1.0, 1.0, 1.0])
+    assert len(_score_func2_args) == 3
+
+
+def test_cross_val_score_errors():
+    class BrokenEstimator:
+        pass
+
+    assert_raises(TypeError, cval.cross_val_score, BrokenEstimator(), X)
 
 
 def test_train_test_split_errors():
@@ -275,7 +340,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SparseSVC(kernel='linear')
+    svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, zero_one_score, cv_sparse,
@@ -336,6 +401,12 @@ def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
 
 
+def test_bootstrap_test_sizes():
+    assert_equal(cval.Bootstrap(10, test_size=0.2).test_size, 2)
+    assert_equal(cval.Bootstrap(10, test_size=2).test_size, 2)
+    assert_equal(cval.Bootstrap(10, test_size=None).test_size, 5)
+
+
 def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=2.0)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=1.0)
@@ -345,6 +416,7 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8,
             train_size=3)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
 
 
 def test_shufflesplit_reproducible():

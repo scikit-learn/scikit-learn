@@ -1,5 +1,10 @@
 .. -*- mode: rst -*-
 
+|Travis|_
+
+.. |Travis| image:: https://secure.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
+.. _Travis: https://secure.travis-ci.org/scikit-learn/scikit-learn
+
 scikit-learn
 ============
 
@@ -72,12 +77,12 @@ Testing
 -------
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have nosetest installed)::
+source directory (you will need to have nosetests installed)::
 
-    python -c "import sklearn; sklearn.test()"
+   $ nosetests --exe sklearn
 
-See web page http://scikit-learn.org/stable/install.html#testing
+See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.
 
-    Random number generation can be controled during testing by setting
-    the SKLEARN_SEED environment variable
+    Random number generation can be controlled during testing by setting
+    the ``SKLEARN_SEED`` environment variable.

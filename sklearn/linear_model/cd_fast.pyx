@@ -145,7 +145,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     R = y - np.dot(X, w)
 
-    tol = tol * linalg.norm(y) ** 2
+    tol = tol * np.dot(y, y)
 
     for n_iter in range(max_iter):
         w_max = 0.0
@@ -198,19 +198,18 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             else:
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
-            # TODO: use squared L2 norm directly
-            R_norm = linalg.norm(R)
-            w_norm = linalg.norm(w, 2)
+            R_norm2 = np.dot(R, R)
+            w_norm2 = np.dot(w, w)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
-                A_norm = R_norm * const
-                gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+                A_norm2 = R_norm2 * (const**2)
+                gap = 0.5 * (R_norm2 + A_norm2)
             else:
                 const = 1.0
-                gap = R_norm ** 2
+                gap = R_norm2
 
             gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+                  0.5 * beta * (1 + const ** 2) * (w_norm2)
 
             if gap < tol:
                 # return if we reached desired tolerance
@@ -279,7 +278,7 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         if center:
             R += X_mean[ii] * w[ii]
 
-    tol = tol * linalg.norm(y) ** 2
+    tol = tol * np.dot(y, y)
 
     for n_iter in range(max_iter):
 
@@ -354,19 +353,18 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             else:
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
-            # TODO: use squared L2 norm directly
-            R_norm = linalg.norm(R)
-            w_norm = linalg.norm(w, 2)
+            R_norm2 = np.dot(R, R)
+            w_norm2 = np.dot(w, w)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
-                A_norm = R_norm * const
-                gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+                A_norm2 = R_norm2 * const**2
+                gap = 0.5 * (R_norm2 + A_norm2)
             else:
                 const = 1.0
-                gap = R_norm ** 2
+                gap = R_norm2
 
             gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+                  0.5 * beta * (1 + const ** 2) * (w_norm2)
 
             if gap < tol:
                 # return if we reached desired tolerance
@@ -415,7 +413,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int ii
     cdef unsigned int n_iter
 
-    cdef double y_norm2 = linalg.norm(y) ** 2
+    cdef double y_norm2 = np.dot(y, y)
     tol = tol * y_norm2
 
     if alpha == 0:
@@ -473,7 +471,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
             R_norm2 = y_norm2 + np.sum(w * H) - 2.0 * q_dot_w
-            w_norm = linalg.norm(w, 2)
+            w_norm2 = np.dot(w, w)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
                 A_norm2 = R_norm2 * (const ** 2)
@@ -485,7 +483,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
             gap += alpha * linalg.norm(w, 1) \
                    - const * y_norm2 \
                    + const * q_dot_w + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+                  0.5 * beta * (1 + const ** 2) * (w_norm2)
 
             if gap < tol:
                 # return if we reached desired tolerance

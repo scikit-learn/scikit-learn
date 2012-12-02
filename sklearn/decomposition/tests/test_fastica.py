@@ -2,17 +2,19 @@
 Test the fastica algorithm.
 """
 import warnings
-import numpy as np
-from numpy.testing import assert_almost_equal
-from nose.tools import assert_true
-
-from scipy import stats
 import itertools
 
+import numpy as np
+from scipy import stats
+
+from nose.tools import assert_raises
+
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 
-from .. import FastICA, fastica, PCA
-from ..fastica_ import _gs_decorrelation
+from sklearn.decomposition import FastICA, fastica, PCA
+from sklearn.decomposition.fastica_ import _gs_decorrelation
 
 
 def center_and_norm(x, axis=-1):
@@ -71,16 +73,24 @@ def test_fastica(add_noise=False):
 
     center_and_norm(m)
 
+    # function as fun arg
+    def g_test(x):
+        return x ** 3, 3 * x ** 2
+
     algos = ['parallel', 'deflation']
-    nls = ['logcosh', 'exp', 'cube']
+    nls = ['logcosh', 'exp', 'cube', g_test]
     whitening = [True, False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
+            assert_raises(ValueError, fastica, m.T, fun=np.tanh,
+                          algorithm=algo)
         else:
             X = PCA(n_components=2, whiten=True).fit_transform(m.T)
             k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo,
                                      whiten=False)
+            assert_raises(ValueError, fastica, X, fun=np.tanh,
+                          algorithm=algo)
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
         if whiten:
@@ -109,6 +119,9 @@ def test_fastica(add_noise=False):
     ica.get_mixing_matrix()
     assert_true(ica.components_.shape == (2, 2))
     assert_true(ica.sources_.shape == (1000, 2))
+
+    ica = FastICA(fun=np.tanh, algorithm=algo, random_state=0)
+    assert_raises(ValueError, ica.fit, m.T)
 
 
 def test_fastica_nowhiten():

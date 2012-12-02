@@ -1,8 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_true
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
@@ -44,7 +45,7 @@ class MyPerceptron(object):
 
 def test_perceptron_accuracy():
     for data in (X, X_csr):
-        clf = Perceptron(n_iter=30, shuffle=False, seed=0)
+        clf = Perceptron(n_iter=30, shuffle=False)
         clf.fit(data, y)
         score = clf.score(data, y)
         assert_true(score >= 0.7)
@@ -57,7 +58,13 @@ def test_perceptron_correctness():
     clf1 = MyPerceptron(n_iter=2)
     clf1.fit(X, y_bin)
 
-    clf2 = Perceptron(n_iter=2)
+    clf2 = Perceptron(n_iter=2, shuffle=False)
     clf2.fit(X, y_bin)
 
     assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
+
+
+def test_undefined_methods():
+    clf = Perceptron()
+    for meth in ("predict_proba", "predict_log_proba"):
+        assert_raises(AttributeError, lambda x: getattr(clf, x), meth)

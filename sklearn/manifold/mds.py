@@ -14,7 +14,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
-from ..linear_model.isotonic_regression_ import isotonic_regression
+from ..isotonic import isotonic_regression
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,
@@ -256,7 +256,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
                         verbose=verbose, eps=eps,
                         random_state=seed)
                 for seed in seeds)
-        positions, stress = zip(results)
+        positions, stress = zip(*results)
         best = np.argmin(stress)
         best_stress = stress[best]
         best_pos = positions[best]
@@ -354,14 +354,7 @@ class MDS(BaseEstimator):
             if None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array
         """
-        self.embedding_, self.stress_ = smacof(X, metric=self.metric,
-                                     n_components=self.n_components,
-                                     init=init,
-                                     n_init=self.n_init,
-                                     max_iter=self.max_iter,
-                                     verbose=self.verbose,
-                                     eps=self.eps,
-                                     random_state=self.random_state)
+        self.fit_transform(X, init=init)
         return self
 
     def fit_transform(self, X, init=None, y=None):
@@ -382,8 +375,10 @@ class MDS(BaseEstimator):
                                      n_components=self.n_components,
                                      init=init,
                                      n_init=self.n_init,
+                                     n_jobs=self.n_jobs,
                                      max_iter=self.max_iter,
                                      verbose=self.verbose,
-                                     eps=self.eps)
+                                     eps=self.eps,
+                                     random_state=self.random_state)
 
         return self.embedding_

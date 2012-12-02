@@ -132,15 +132,16 @@ class EmpiricalCovariance(BaseEstimator):
             precision = pinvh(self.covariance_)
         return precision
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+        X: array-like, shape = [n_samples, n_features]
+          Training data, where n_samples is the number of samples and
+          n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------
@@ -158,17 +159,18 @@ class EmpiricalCovariance(BaseEstimator):
 
         return self
 
-    def score(self, X_test):
+    def score(self, X_test, y=None):
         """Computes the log-likelihood of a gaussian data set with
         `self.covariance_` as an estimator of its covariance matrix.
 
         Parameters
         ----------
-        X_test : array-like, shape = [n_samples, n_features]
+        X_test: array-like, shape = [n_samples, n_features]
           Test data of which we compute the likelihood, where n_samples is
           the number of samples and n_features is the number of features.
           X_test is assumed to be drawn from the same distribution than
           tha data used in fit (including centering).
+        y: not used, present for API consistence purpose.
 
         Returns
         -------

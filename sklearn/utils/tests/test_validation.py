@@ -81,3 +81,20 @@ def test_memmap():
             X[:] = 1
             assert_array_equal(X.ravel(), M)
             X[:] = 0
+
+
+def test_ordering():
+    # Check that ordering is enforced correctly by the different
+    # validation utilities
+    # We need to check each validation utility, because a 'copy' without
+    # 'order=K' will kill the ordering
+    X = np.ones((10, 5))
+    for A in X, X.T:
+        for validator in (array2d, atleast2d_or_csr, atleast2d_or_csc):
+            for copy in (True, False):
+                B = validator(A, order='C', copy=copy)
+                assert_true(B.flags['C_CONTIGUOUS'])
+                B = validator(A, order='F', copy=copy)
+                assert_true(B.flags['F_CONTIGUOUS'])
+                if copy:
+                    assert_false(A is B)

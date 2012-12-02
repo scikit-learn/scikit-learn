@@ -3,13 +3,14 @@
 import numpy as np
 import warnings
 from scipy import sparse as sp
-from numpy.testing import assert_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from nose import SkipTest
-from nose.tools import assert_almost_equal
-from nose.tools import assert_raises
-from nose.tools import assert_true
+
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -206,7 +207,7 @@ def _get_mac_os_version():
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _get_mac_os_version() == '10.7':
+    if _get_mac_os_version() >= '10.7':
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
     k_means = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
@@ -486,6 +487,12 @@ def test_transform():
         for c2 in range(n_clusters):
             if c != c2:
                 assert_greater(X_new[c, c2], 0)
+
+
+def test_fit_transform():
+    X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
+    X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
+    assert_array_equal(X1, X2)
 
 
 def test_n_init():

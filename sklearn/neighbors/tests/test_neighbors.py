@@ -175,6 +175,7 @@ def test_kneighbors_classifier(n_samples=40,
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y_str = y.astype(str)
 
     weight_func = _weight_func
 
@@ -187,6 +188,27 @@ def test_kneighbors_classifier(n_samples=40,
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
             assert_array_equal(y_pred, y[:n_test_pts])
+            # Test prediction with y_str
+            knn.fit(X, y_str)
+            y_pred = knn.predict(X[:n_test_pts] + epsilon)
+            assert_array_equal(y_pred, y_str[:n_test_pts])
+
+
+def test_kneighbors_classifier_float_labels(n_samples=40,
+                               n_features=5,
+                               n_test_pts=10,
+                               n_neighbors=5,
+                               random_state=0):
+    """Test k-neighbors classification"""
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn.fit(X, y.astype(np.float))
+    epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+    y_pred = knn.predict(X[:n_test_pts] + epsilon)
+    assert_array_equal(y_pred, y[:n_test_pts])
 
 
 def test_kneighbors_classifier_predict_proba():
@@ -208,6 +230,10 @@ def test_kneighbors_classifier_predict_proba():
                           [2. / 3, 1. / 3, 0],
                           [2. / 3, 1. / 3, 0]])
     assert_array_equal(real_prob, y_prob)
+    # Check that it also works with non integer labels
+    cls.fit(X, y.astype(str))
+    y_prob = cls.predict_proba(X)
+    assert_array_equal(real_prob, y_prob)
 
 
 def test_radius_neighbors_classifier(n_samples=40,
@@ -219,6 +245,7 @@ def test_radius_neighbors_classifier(n_samples=40,
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y_str = y.astype(str)
 
     weight_func = _weight_func
 
@@ -231,6 +258,9 @@ def test_radius_neighbors_classifier(n_samples=40,
             epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_array_equal(y_pred, y[:n_test_pts])
+            neigh.fit(X, y_str)
+            y_pred = neigh.predict(X[:n_test_pts] + epsilon)
+            assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
 def test_radius_neighbors_classifier_when_no_neighbors():

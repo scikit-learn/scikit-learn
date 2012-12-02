@@ -115,5 +115,3 @@ Examples
 --------
 
 :ref:`example_applications_face_recognition.py`
-
-

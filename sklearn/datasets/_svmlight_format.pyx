@@ -25,7 +25,7 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
+def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_id):
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
     cdef np.int32_t idx, prev_idx
@@ -34,6 +34,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     data = ArrayBuilder(dtype=dtype)
     indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
     indices = ArrayBuilder(dtype=_INDICES_DTYPE)
+    query_values = ArrayBuilder(dtype=np.int)
     if multilabel:
         labels = []
     else:
@@ -60,7 +61,16 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
         indptr.append(len(data))
 
         prev_idx = -1
-        for i in xrange(1, len(line_parts)):
+        n_features = len(features)
+
+        if n_features and line_parts[1].startswith('qid'):
+            _, value = line_parts[1].split(COLON, 1)
+            if query_id:
+                query_values.append(int(value))
+            line_parts.pop(1)
+            n_features -= 1
+
+        for i in xrange(1, n_features + 1):
             idx_s, value = line_parts[i].split(COLON, 1)
             # XXX if we replace int with np.int32 in the line below, this
             # function becomes twice as slow.
@@ -80,8 +90,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based):
     indptr = indptr.get()
     data = data.get()
     indices = indices.get()
+    query_values = query_values.get()
 
     if not multilabel:
         labels = labels.get()
 
-    return data, indices, indptr, labels
+    return data, indices, indptr, labels, query_values

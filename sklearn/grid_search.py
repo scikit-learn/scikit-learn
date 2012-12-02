@@ -103,31 +103,27 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
-    else:
-        y_test = None
-        y_train = None
-
-    clf.fit(X_train, y_train, **fit_params)
-
-    if loss_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = -loss_func(y_test, y_pred)
-    elif score_func is not None:
-        y_pred = clf.predict(X_test)
-        this_score = score_func(y_test, y_pred)
-    else:
-        this_score = clf.score(X_test, y_test)
-
-    if y is not None:
+        clf.fit(X_train, y_train, **fit_params)
+        if loss_func is not None:
+            y_pred = clf.predict(X_test)
+            this_score = -loss_func(y_test, y_pred)
+        elif score_func is not None:
+            y_pred = clf.predict(X_test)
+            this_score = score_func(y_test, y_pred)
+        else:
+            this_score = clf.score(X_test, y_test)
         if hasattr(y, 'shape'):
             this_n_test_samples = y.shape[0]
         else:
             this_n_test_samples = len(y)
     else:
+        clf.fit(X_train, **fit_params)
+        this_score = clf.score(X_test)
         if hasattr(X, 'shape'):
             this_n_test_samples = X.shape[0]
         else:
             this_n_test_samples = len(X)
+
     if verbose > 2:
         msg += ", score=%f" % this_score
     if verbose > 1:
@@ -182,9 +178,11 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     estimator: object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each grid point.
 
-    param_grid: dict
+    param_grid: dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
-        parameter settings to try as values.
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored.
 
     loss_func: callable, optional
         function that takes 2 arguments and compares them in
@@ -248,7 +246,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
         estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
-            gamma=..., kernel='rbf', probability=False,
+            gamma=..., kernel='rbf', max_iter=-1, probability=False,
             shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,
             param_grid=...,
@@ -329,10 +327,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         self.pre_dispatch = pre_dispatch
 
     def _set_methods(self):
-        if hasattr(self._best_estimator_, 'predict'):
-            self.predict = self._best_estimator_.predict
-        if hasattr(self._best_estimator_, 'predict_proba'):
-            self.predict_proba = self._best_estimator_.predict_proba
+        if hasattr(self.best_estimator_, 'predict'):
+            self.predict = self.best_estimator_.predict
+        if hasattr(self.best_estimator_, 'predict_proba'):
+            self.predict_proba = self.best_estimator_.predict_proba
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters
@@ -378,8 +376,11 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         if _has_one_grid_point(self.param_grid):
             params = next(iter(grid))
             base_clf.set_params(**params)
-            base_clf.fit(X, y)
-            self._best_estimator_ = base_clf
+            if y is not None:
+                base_clf.fit(X, y)
+            else:
+                base_clf.fit(X)
+            self.best_estimator_ = base_clf
             self._set_methods()
             return self
 
@@ -424,8 +425,6 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                 best_score = score
                 best_params = params
 
-        if best_score is None:
-            raise ValueError('Best score could not be found')
         self.best_score_ = best_score
         self.best_params_ = best_params
 
@@ -433,8 +432,11 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
             best_estimator = clone(base_clf).set_params(**best_params)
-            best_estimator.fit(X, y, **self.fit_params)
-            self._best_estimator_ = best_estimator
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
+            self.best_estimator_ = best_estimator
             self._set_methods()
 
         # Store the computed scores
@@ -455,14 +457,3 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                              % self.best_estimator_)
         y_predicted = self.predict(X)
         return self.score_func(y, y_predicted)
-
-    # TODO around 0.13: remove this property, make it an attribute
-    @property
-    def best_estimator_(self):
-        if hasattr(self, '_best_estimator_'):
-            return self._best_estimator_
-        else:
-            raise RuntimeError("Grid search has to be run with 'refit=True'"
-                " to make predictions or obtain an instance  of the best "
-                " estimator. To obtain the best parameter settings, "
-                " use ``best_params_``.")

@@ -5,9 +5,9 @@ import tempfile
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
 
-from nose.tools import assert_false
-from nose.tools import assert_true
-from nose.tools import assert_equals
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -22,7 +22,7 @@ def teardown_module():
 def test_data_home():
     # get_data_home will point to a pre-existing folder
     data_home = get_data_home(data_home=DATA_HOME)
-    assert_equals(data_home, DATA_HOME)
+    assert_equal(data_home, DATA_HOME)
     assert_true(os.path.exists(data_home))
 
     # clear_data_home will delete both the content and the folder it-self

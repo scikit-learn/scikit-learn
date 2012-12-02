@@ -1,10 +1,11 @@
 # Author: Mathieu Blondel
 # License: BSD Style.
 
-from .stochastic_gradient import SGDClassifier
+from .stochastic_gradient import BaseSGDClassifier
+from ..feature_selection.selector_mixin import SelectorMixin
 
 
-class Perceptron(SGDClassifier):
+class Perceptron(BaseSGDClassifier, SelectorMixin):
     """Perceptron
 
     Parameters
@@ -29,7 +30,7 @@ class Perceptron(SGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    seed: int, optional
+    random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -84,16 +85,16 @@ class Perceptron(SGDClassifier):
     http://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, eta0=1.0,
-                 n_jobs=1, seed=0, class_weight=None, warm_start=False):
+                 n_iter=5, shuffle=False, verbose=0, eta0=1.0, n_jobs=1,
+                 random_state=0, class_weight=None, warm_start=False):
         super(Perceptron, self).__init__(loss="perceptron",
                                          penalty=penalty,
-                                         alpha=alpha, rho=0,
+                                         alpha=alpha, l1_ratio=0,
                                          fit_intercept=fit_intercept,
                                          n_iter=n_iter,
                                          shuffle=shuffle,
                                          verbose=verbose,
-                                         seed=seed,
+                                         random_state=random_state,
                                          learning_rate="constant",
                                          eta0=eta0,
                                          power_t=0.5,

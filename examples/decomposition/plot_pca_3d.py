@@ -13,13 +13,13 @@ would come in to choose a direction that is not flat.
 """
 print __doc__
 
-# Code source: Gael Varoqueux
+# Code source: Gael Varoquaux
 # Modified for Documentation merge by Jaques Grobler
 # License: BSD
 
 import pylab as pl
 import numpy as np
-from scipy import stats
+from scipy import stats, linalg
 from mpl_toolkits.mplot3d import Axes3D
 
 e = np.exp(1)
@@ -58,7 +58,7 @@ def plot_figs(fig_num, elev, azim):
     ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+',
             alpha=.4)
     Y = np.c_[a, b, c]
-    U, pca_score, V = np.linalg.svd(Y, full_matrices=False)
+    U, pca_score, V = linalg.svd(Y, full_matrices=False)
     x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()
 
     x_pca_axis, y_pca_axis, z_pca_axis = 3 * V.T

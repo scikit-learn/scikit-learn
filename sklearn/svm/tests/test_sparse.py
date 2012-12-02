@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
@@ -5,8 +6,11 @@ from numpy.testing import assert_array_almost_equal, \
      assert_array_equal, assert_equal
 
 from nose.tools import assert_raises, assert_true
+from nose.tools import assert_equal as nose_assert_equal
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.svm.tests import test_svm
+from sklearn.utils import ConvergenceWarning
+from sklearn.utils.extmath import safe_sparse_dot
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -37,8 +41,8 @@ iris.data = sparse.csr_matrix(iris.data)
 def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
 
-    clf = svm.SVC(kernel='linear').fit(X, Y)
-    sp_clf = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf = svm.SVC(kernel='linear', probability=True).fit(X, Y)
+    sp_clf = svm.SVC(kernel='linear', probability=True).fit(X_sp, Y)
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
@@ -61,6 +65,14 @@ def test_svc():
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
+    assert_array_almost_equal(clf.predict_proba(T2), sp_clf.predict_proba(T2), 4)
+
+
+def test_svc_with_custom_kernel():
+    kfunc = lambda x, y: safe_sparse_dot(x, y.T)
+    clf_lin = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf_mylin = svm.SVC(kernel=kfunc).fit(X_sp, Y)
+    assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
 
 
 def test_svc_iris():
@@ -205,7 +217,8 @@ def test_sparse_realdata():
 def test_sparse_svc_clone_with_callable_kernel():
     # first, test that we raise a value error for "sparse kernels"
     # this test is only relevant for the deprecated sparse.SVC class.
-    sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    with warnings.catch_warnings(record=True):
+        sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
     assert_raises(ValueError, sp.fit, X_sp, Y)
 
     # Test that the "dense_fit" is called even though we use sparse input
@@ -222,6 +235,17 @@ def test_sparse_svc_clone_with_callable_kernel():
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
+
+
+def test_timeout():
+    sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
+            max_iter=1)
+    with warnings.catch_warnings(record=True) as foo:
+        sp.fit(X_sp, Y)
+        nose_assert_equal(len(foo), 1,
+            msg=foo)
+        nose_assert_equal(foo[0].category, ConvergenceWarning,
+            msg=foo[0].category)
 
 
 if __name__ == '__main__':

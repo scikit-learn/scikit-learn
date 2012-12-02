@@ -6,13 +6,13 @@ Test the memory module.
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
-from __future__ import with_statement
-
 import shutil
 import os
 from tempfile import mkdtemp
 import pickle
 import warnings
+import io
+import sys
 
 import nose
 
@@ -42,26 +42,26 @@ def setup_module():
     if os.path.exists(cachedir):
         shutil.rmtree(cachedir)
     # Don't make the cachedir, Memory should be able to do that on the fly
-    print 80 * '_'
-    print 'test_memory setup'
-    print 80 * '_'
+    print(80 * '_')
+    print('test_memory setup')
+    print(80 * '_')
 
 
 def _rmtree_onerror(func, path, excinfo):
-    print '!' * 79
-    print 'os function failed:', repr(func)
-    print 'file to be removed:', path
-    print 'exception was:', excinfo[1]
-    print '!' * 79
+    print('!' * 79)
+    print('os function failed: %r' % func)
+    print('file to be removed: %s' % path)
+    print('exception was: %r' % excinfo[1])
+    print('!' * 79)
 
 
 def teardown_module():
     """ Test teardown.
     """
     shutil.rmtree(env['dir'], False, _rmtree_onerror)
-    print 80 * '_'
-    print 'test_memory teardown'
-    print 80 * '_'
+    print(80 * '_')
+    print('test_memory teardown')
+    print(80 * '_')
 
 
 ###############################################################################
@@ -101,18 +101,35 @@ def test_memory_integration():
 
     # Now test clearing
     for compress in (False, True):
-        memory = Memory(cachedir=env['dir'], verbose=0, compress=compress)
-        # First clear the cache directory, to check that our code can
-        # handle that
-        # NOTE: this line would raise an exception, as the database file is
-        # still open; we ignore the error since we want to test what happens if
-        # the directory disappears
-        shutil.rmtree(env['dir'], ignore_errors=True)
-        g = memory.cache(f)
-        g(1)
-        g.clear(warn=False)
-        current_accumulator = len(accumulator)
-        out = g(1)
+        # We turn verbosity on to smoke test the verbosity code, however,
+        # we capture it, as it is ugly
+        try:
+            # To smoke-test verbosity, we capture stdout
+            orig_stdout = sys.stdout
+            orig_stderr = sys.stdout
+            if sys.version_info[0] == 3:
+                sys.stderr = io.StringIO()
+                sys.stderr = io.StringIO()
+            else:
+                sys.stdout = io.BytesIO()
+                sys.stderr = io.BytesIO()
+
+            memory = Memory(cachedir=env['dir'], verbose=10, compress=compress)
+            # First clear the cache directory, to check that our code can
+            # handle that
+            # NOTE: this line would raise an exception, as the database file is
+            # still open; we ignore the error since we want to test what
+            # happens if the directory disappears
+            shutil.rmtree(env['dir'], ignore_errors=True)
+            g = memory.cache(f)
+            g(1)
+            g.clear(warn=False)
+            current_accumulator = len(accumulator)
+            out = g(1)
+        finally:
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
+
         yield nose.tools.assert_equal, len(accumulator), \
                     current_accumulator + 1
         # Also, check that Memory.eval works similarly
@@ -212,37 +229,37 @@ def test_memory_name_collision():
 
 
 def test_memory_warning_lambda_collisions():
-    " Check that multiple use of lambda will raise collisions"
+    # Check that multiple use of lambda will raise collisions
     memory = Memory(cachedir=env['dir'], verbose=0)
+    # For isolation with other tests
+    memory.clear()
     a = lambda x: x
     a = memory.cache(a)
     b = lambda x: x + 1
     b = memory.cache(b)
 
-    if not hasattr(warnings, 'catch_warnings'):
-        # catch_warnings is new in Python 2.6
-        return
-
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        a(1)
+        a(0)
         b(1)
+        a(1)
 
-        yield nose.tools.assert_equal, len(w), 2
-        yield nose.tools.assert_true, "collision" in str(w[-1].message)
-        yield nose.tools.assert_true, "collision" in str(w[-2].message)
+    # In recent Python versions, we can retrieve the code of lambdas,
+    # thus nothing is raised
+    yield nose.tools.assert_equal, len(w), 0
 
 
 def test_memory_warning_collision_detection():
-    """ Check that collisions impossible to detect will raise appropriate
-        warnings.
-    """
+    # Check that collisions impossible to detect will raise appropriate
+    # warnings.
     memory = Memory(cachedir=env['dir'], verbose=0)
-    a = eval('lambda x: x')
-    a = memory.cache(a)
-    b = eval('lambda x: x+1')
-    b = memory.cache(b)
+    # For isolation with other tests
+    memory.clear()
+    a1 = eval('lambda x: x')
+    a1 = memory.cache(a1)
+    b1 = eval('lambda x: x+1')
+    b1 = memory.cache(b1)
 
     if not hasattr(warnings, 'catch_warnings'):
         # catch_warnings is new in Python 2.6
@@ -251,10 +268,11 @@ def test_memory_warning_collision_detection():
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        a(1)
-        b(1)
+        a1(1)
+        b1(1)
+        a1(0)
 
-        yield nose.tools.assert_equal, len(w), 1
+        yield nose.tools.assert_equal, len(w), 2
         yield nose.tools.assert_true, \
                 "cannot detect" in str(w[-1].message).lower()
 
@@ -375,8 +393,7 @@ def test_memory_ignore():
 
 
 def test_func_dir():
-    """ Test the creation of the memory cache directory for the function.
-    """
+    # Test the creation of the memory cache directory for the function.
     memory = Memory(cachedir=env['dir'], verbose=0)
     path = __name__.split('.')
     path.append('f')
@@ -404,8 +421,7 @@ def test_func_dir():
 
 
 def test_persistence():
-    """ Test the memorized functions can be pickled and restored.
-    """
+    # Test the memorized functions can be pickled and restored.
     memory = Memory(cachedir=env['dir'], verbose=0)
     g = memory.cache(f)
     output = g(1)
@@ -423,14 +439,14 @@ def test_persistence():
 
 
 def test_format_signature():
-    """ Test the signature formatting.
-    """
+    # Test the signature formatting.
     func = MemorizedFunc(f, cachedir=env['dir'])
-    path, sgn = func.format_signature(f, range(10))
+    path, sgn = func.format_signature(f, list(range(10)))
     yield nose.tools.assert_equal, \
                 sgn, \
                 'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'
-    path, sgn = func.format_signature(f, range(10), y=range(10))
+    path, sgn = func.format_signature(f, list(range(10)),
+                                      y=list(range(10)))
     yield nose.tools.assert_equal, \
                 sgn, \
         'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], y=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'

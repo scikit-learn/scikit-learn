@@ -7,11 +7,12 @@ from sys import version_info
 
 import numpy as np
 from scipy import interpolate
-from numpy.testing import assert_array_almost_equal, assert_almost_equal, \
-                          assert_equal
-from nose import SkipTest
-from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
@@ -79,7 +80,7 @@ def test_lasso_toy():
 
 def test_enet_toy():
     """
-    Test ElasticNet for various parameters of alpha and rho.
+    Test ElasticNet for various parameters of alpha and l1_ratio.
 
     Actualy, the parameters alpha = 0 should not be alowed. However,
     we test it as a border case.
@@ -92,14 +93,14 @@ def test_enet_toy():
     T = [[2.], [3.], [4.]]  # test sample
 
     # this should be the same as lasso
-    clf = ElasticNet(alpha=1e-8, rho=1.0)
+    clf = ElasticNet(alpha=1e-8, l1_ratio=1.0)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, rho=0.3, max_iter=100,
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=100,
                      precompute=False)
     clf.fit(X, Y)
     pred = clf.predict(T)
@@ -121,7 +122,7 @@ def test_enet_toy():
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, rho=0.5)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
@@ -186,17 +187,17 @@ def test_enet_path():
         # Here we have a small number of iterations, and thus the
         # ElasticNet might not converge. This is to speed up tests
         warnings.simplefilter("ignore", UserWarning)
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.9, 0.95], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
         assert_almost_equal(clf.alpha_, 0.002, 2)
-        assert_equal(clf.rho_, 0.95)
+        assert_equal(clf.l1_ratio_, 0.95)
 
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, rho=[0.9, 0.95], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.9, 0.95], cv=3,
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
     assert_almost_equal(clf.alpha_, 0.002, 2)
-    assert_equal(clf.rho_, 0.95)
+    assert_equal(clf.l1_ratio_, 0.95)
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
@@ -207,9 +208,9 @@ def test_path_parameters():
     max_iter = 50
 
     clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
-                       rho=0.5)
+                       l1_ratio=0.5)
     clf.fit(X, y)  # new params
-    assert_almost_equal(0.5, clf.rho)
+    assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(50, clf.n_alphas)
     assert_equal(50, len(clf.alphas_))
 

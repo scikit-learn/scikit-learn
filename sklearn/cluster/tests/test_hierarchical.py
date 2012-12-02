@@ -6,11 +6,13 @@ Several basic tests for hierarchical clustering procedures
 # License: BSD-like
 import warnings
 
-from nose.tools import assert_true, assert_raises, assert_equal
-
 import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
+
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut

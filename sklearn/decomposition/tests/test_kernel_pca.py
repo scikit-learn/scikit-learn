@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -135,7 +135,7 @@ def test_gridsearch_pipeline():
                         random_state=0)
     kpca = KernelPCA(kernel="rbf", n_components=2)
     pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
-    param_grid = dict(kernel_pca__gamma=10. ** np.arange(-2, 2))
+    param_grid = dict(kernel_pca__gamma=2. ** np.arange(-2, 2))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     grid_search.fit(X, y)
     assert_equal(grid_search.best_score_, 1)
@@ -150,7 +150,7 @@ def test_gridsearch_pipeline_precomputed():
     pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
     param_grid = dict(Perceptron__n_iter=np.arange(1, 5))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
-    X_kernel = rbf_kernel(X, gamma=10)
+    X_kernel = rbf_kernel(X, gamma=2.)
     grid_search.fit(X_kernel, y)
     assert_equal(grid_search.best_score_, 1)
 
@@ -170,7 +170,7 @@ def test_nested_circles():
     # and the gamma value has to be updated, the Kernel PCA example will
     # have to be updated too.
     kpca = KernelPCA(kernel="rbf", n_components=2,
-                     fit_inverse_transform=True, gamma=10.)
+                     fit_inverse_transform=True, gamma=2.)
     X_kpca = kpca.fit_transform(X)
 
     # The data is perfectly linearly separable in that space

@@ -57,7 +57,7 @@ The `sklearn` exposes cross-validation generators to generate list
 of indices for this purpose::
 
     >>> from sklearn import cross_validation
-    >>> k_fold = cross_validation.KFold(n=6, k=3, indices=True)
+    >>> k_fold = cross_validation.KFold(n=6, n_folds=3, indices=True)
     >>> for train_indices, test_indices in k_fold:
     ...      print 'Train: %s | test: %s' % (train_indices, test_indices)
     Train: [2 3 4 5] | test: [0 1]
@@ -66,7 +66,7 @@ of indices for this purpose::
 
 The cross-validation can then be implemented easily::
 
-    >>> kfold = cross_validation.KFold(len(X_digits), k=3)
+    >>> kfold = cross_validation.KFold(len(X_digits), n_folds=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in kfold]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
@@ -107,22 +107,22 @@ of the computer.
 
 .. currentmodule:: sklearn.svm
 
-.. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
-   :target: ../../auto_examples/exercises/plot_cv_digits.html
-   :align: right
-   :scale: 100
-
 .. topic:: **Exercise**
    :class: green
 
+   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
+        :target: ../../auto_examples/exercises/plot_cv_digits.html
+        :align: right
+        :scale: 90
+
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an RBF kernel as a function of parameter `C` (use a
+   estimator with an linear kernel as a function of parameter `C` (use a
    logarithmic grid of points, from `1` to `10`).
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_digits.py`
+   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
 
 
 
@@ -212,8 +212,8 @@ appended to their name.
    **Bonus**: How much can you trust the selection of alpha?
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
-       :lines: 11-23
+       :lines: 11-22
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_diabetes.py`
+   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
 
 

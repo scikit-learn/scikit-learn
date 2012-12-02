@@ -18,13 +18,11 @@ cdef extern from "src/liblinear/linear.h":
 
 cdef extern from "src/liblinear/liblinear_helper.c":
     void copy_w(void *, model *, int)
-    parameter *set_parameter (int, double, double, int,
-                             char *, char *)
+    parameter *set_parameter(int, double, double, int, char *, char *, int)
     problem *set_problem (char *, char *, np.npy_intp *, double)
     problem *csr_set_problem (char *values, np.npy_intp *n_indices,
         char *indices, np.npy_intp *n_indptr, char *indptr, char *Y,
         np.npy_intp n_features, double bias)
-    parameter *set_parameter(int, double, double, int, char *, char *)
 
     model *set_model(parameter *, char *, np.npy_intp *, char *, double)
 

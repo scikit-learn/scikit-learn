@@ -63,6 +63,7 @@ struct svm_parameter
 	double p;	/* for EPSILON_SVR */
 	int shrinking;	/* use the shrinking heuristics */
 	int probability; /* do probability estimates */
+	int max_iter; /* ceiling on Solver runtime */
 };
 
 //
@@ -118,7 +119,7 @@ struct svm_csr_model
 };
 
 
-struct svm_model *svm_train(const struct svm_problem *prob, const struct svm_parameter *param);
+struct svm_model *svm_train(const struct svm_problem *prob, const struct svm_parameter *param, int *status);
 void svm_cross_validation(const struct svm_problem *prob, const struct svm_parameter *param, int nr_fold, double *target);
 
 int svm_save_model(const char *model_file_name, const struct svm_model *model);
@@ -149,7 +150,7 @@ void svm_destroy_model(struct svm_model *model_ptr);
 
 /* sparse version */
 
-struct svm_csr_model *svm_csr_train(const struct svm_csr_problem *prob, const struct svm_parameter *param);
+struct svm_csr_model *svm_csr_train(const struct svm_csr_problem *prob, const struct svm_parameter *param, int *status);
 void svm_csr_cross_validation(const struct svm_csr_problem *prob, const struct svm_parameter *param, int nr_fold, double *target);
 
 int svm_csr_get_svm_type(const struct svm_csr_model *model);

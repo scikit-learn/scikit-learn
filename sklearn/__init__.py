@@ -1,6 +1,6 @@
 """
-Machine Learning module in python
-=================================
+Machine learning module for Python
+==================================
 
 sklearn is a Python module integrating classical machine
 learning algorithms in the tightly-knit world of scientific Python
@@ -10,7 +10,7 @@ It aims to provide simple and efficient solutions to learning problems
 that are accessible to everybody and reusable in various contexts:
 machine-learning as a versatile tool for science and engineering.
 
-See http://scikit-learn.sourceforge.net for complete documentation.
+See http://scikit-learn.org for complete documentation.
 """
 import sys
 __version__ = '0.13-git'
@@ -67,7 +67,8 @@ else:
                'feature_selection', 'semi_supervised',
                'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls']
+               'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls',
+               'isotonic']
 
 
 def setup_module(module):
@@ -81,8 +82,8 @@ def setup_module(module):
     # It could have been provided in the environment
     _random_seed = os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
-        _random_seed = np.random.uniform()*(2**31-1)
+        _random_seed = np.random.uniform() * (2 ** 31 - 1)
     _random_seed = int(_random_seed)
-    print "I: Seeding RNGs with %r" % _random_seed
+    print("I: Seeding RNGs with %r" % _random_seed)
     np.random.seed(_random_seed)
     random.seed(_random_seed)

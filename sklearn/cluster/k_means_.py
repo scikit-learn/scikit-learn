@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, ClusterMixin
+from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils import check_arrays
@@ -155,7 +155,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     Parameters
     ----------
-    X: array-like of floats, shape (n_samples, n_features)
+    X: array-like or sparse matrix, shape (n_samples, n_features)
         The observations to cluster.
 
     n_clusters: int
@@ -232,8 +232,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     if not k is None:
         n_clusters = k
-        warnings.warn("Parameter k was renamed to n_clusters",
-                DeprecationWarning)
+        warnings.warn("Parameter k has been renamed to 'n_clusters'"
+                " and will be removed in release 0.14.",
+                DeprecationWarning, stacklevel=2)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -384,7 +385,11 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
                                 distances=distances)
 
         # computation of the means is also called the M-step of EM
-        centers = _centers(X, labels, n_clusters, distances)
+        if sp.issparse(X):
+            centers = _k_means._centers_sparse(X, labels, n_clusters,
+                    distances)
+        else:
+            centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
             print 'Iteration %i, inertia %s' % (i, inertia)
@@ -416,7 +421,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
     k = centers.shape[0]
     distances = euclidean_distances(centers, X, x_squared_norms,
                                     squared=True)
-    labels = np.empty(n_samples, dtype=np.int)
+    labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
@@ -475,53 +480,6 @@ def _labels_inertia(X, x_squared_norms, centers,
     return labels, inertia
 
 
-def _centers(X, labels, n_clusters, distances):
-    """M step of the K-means EM algorithm
-
-    Computation of cluster centers / means.
-
-    Parameters
-    ----------
-    X: array, shape (n_samples, n_features)
-
-    labels: array of integers, shape (n_samples)
-        Current label assignment
-
-    n_clusters: int
-        Number of desired clusters
-
-    Returns
-    -------
-    centers: array, shape (n_clusters, n_features)
-        The resulting centers
-    """
-    # TODO: add support for CSR input
-    n_features = X.shape[1]
-
-    # TODO: explicit dtype handling
-    centers = np.empty((n_clusters, n_features))
-    far_from_centers = None
-    reallocated_idx = 0
-    sparse_X = sp.issparse(X)
-
-    for center_id in range(n_clusters):
-        center_mask = labels == center_id
-        if sparse_X:
-            center_mask = np.arange(len(labels))[center_mask]
-        if not np.any(center_mask):
-            # Reassign empty cluster center to sample far from any cluster
-            if far_from_centers is None:
-                far_from_centers = distances.argsort()[::-1]
-            new_centers = X[far_from_centers[reallocated_idx]]
-            if sparse_X:
-                new_centers = new_centers.todense().ravel()
-            centers[center_id] = new_centers
-            reallocated_idx += 1
-        else:
-            centers[center_id] = X[center_mask].mean(axis=0)
-    return centers
-
-
 def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
                     init_size=None):
     """Compute the initial centroids
@@ -573,7 +531,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         n_samples = X.shape[0]
     elif n_samples < k:
             raise ValueError(
-                "n_samples=%d should be larger than k=%d" % (init_size, k))
+                "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
     if init == 'k-means++':
         centers = _k_init(X, k,
@@ -596,7 +554,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-class KMeans(BaseEstimator, ClusterMixin):
+class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """K-Means clustering
 
     Parameters
@@ -736,11 +694,17 @@ class KMeans(BaseEstimator, ClusterMixin):
             raise AttributeError("Model has not been trained yet.")
 
     def fit(self, X, y=None):
-        """Compute k-means"""
+        """Compute k-means clustering.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        """
 
         if not self.k is None:
             n_clusters = self.k
-            warnings.warn("Parameter k was renamed to n_clusters",
+            warnings.warn("Parameter k has been renamed by 'n_clusters'"
+                    " and will be removed in release 0.14.",
                     DeprecationWarning, stacklevel=2)
             self.n_clusters = n_clusters
         else:
@@ -765,8 +729,20 @@ class KMeans(BaseEstimator, ClusterMixin):
         """
         return self.fit(X).labels_
 
+    def fit_transform(self, X, y=None):
+        """Compute clustering and transform X to cluster-distance space.
+
+        Equivalent to fit(X).transform(X), but more efficiently implemented.
+        """
+        # Currently, this just skips a copy of the data if it is not in
+        # np.array or CSR format already.
+        # XXX This skips _check_test_data, which may change the dtype;
+        # we should refactor the input validation.
+        X = self._check_fit_data(X)
+        return self.fit(X)._transform(X)
+
     def transform(self, X, y=None):
-        """Transform the data to a cluster-distance space
+        """Transform X to a cluster-distance space
 
         In the new space, each dimension is the distance to the cluster
         centers.  Note that even if X is sparse, the array returned by
@@ -784,6 +760,10 @@ class KMeans(BaseEstimator, ClusterMixin):
         """
         self._check_fitted()
         X = self._check_test_data(X)
+        return self._transform(X)
+
+    def _transform(self, X):
+        """guts of transform method; no input validation"""
         return euclidean_distances(X, self.cluster_centers_)
 
     def predict(self, X):
@@ -895,7 +875,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     return inertia, squared_diff
 
 
-def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
+def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
                             n_samples, centers_squared_diff, batch_inertia,
                             context, verbose=0):
     """Helper function to encapsulte the early stopping logic"""
@@ -924,7 +904,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
         progress_msg = (
             'Minibatch iteration %d/%d:'
             'mean batch inertia: %f, ewa inertia: %f ' % (
-                iteration_idx + 1, n_iterations, batch_inertia,
+                iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
         print progress_msg
 
@@ -933,7 +913,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
     if tol > 0.0 and ewa_diff < tol:
         if verbose:
             print 'Converged (small centers change) at iteration %d/%d' % (
-                iteration_idx + 1, n_iterations)
+                iteration_idx + 1, n_iter)
         return True
 
     # Early stopping heuristic due to lack of improvement on smoothed inertia
@@ -950,7 +930,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iterations, tol,
         if verbose:
             print ('Converged (lack of improvement in inertia)'
                    ' at iteration %d/%d' % (
-                       iteration_idx + 1, n_iterations))
+                       iteration_idx + 1, n_iter))
         return True
 
     # update the convergence context to maintain state across sucessive calls:
@@ -1068,6 +1048,11 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         self.random_state = check_random_state(self.random_state)
+        if self.k is not None:
+            warnings.warn("Parameter k has been replaced by 'n_clusters'"
+                " and will be removed in release 0.14.",
+                DeprecationWarning, stacklevel=2)
+            self.n_clusters = self.k
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
@@ -1095,7 +1080,7 @@ class MiniBatchKMeans(KMeans):
 
         distances = np.zeros(self.batch_size, dtype=np.float64)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-        n_iterations = int(self.max_iter * n_batches)
+        n_iter = int(self.max_iter * n_batches)
 
         init_size = self.init_size
         if init_size is None:
@@ -1149,11 +1134,11 @@ class MiniBatchKMeans(KMeans):
         # Empty context to be used inplace by the convergence check routine
         convergence_context = {}
 
-        # Perform the iterative optimization untill the final convergence
+        # Perform the iterative optimization until the final convergence
         # criterion
-        for iteration_idx in xrange(n_iterations):
+        for iteration_idx in xrange(n_iter):
 
-            # Sample the minibatch from the full dataset
+            # Sample a minibatch from the full dataset
             minibatch_indices = self.random_state.random_integers(
                 0, n_samples - 1, self.batch_size)
 
@@ -1163,9 +1148,9 @@ class MiniBatchKMeans(KMeans):
                 self.cluster_centers_, self.counts_,
                 old_center_buffer, tol > 0.0, distances=distances)
 
-            # Monitor the convergence and do early stopping if necessary
+            # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
-                self, iteration_idx, n_iterations, tol, n_samples,
+                self, iteration_idx, n_iter, tol, n_samples,
                 centers_squared_diff, batch_inertia, convergence_context,
                 verbose=self.verbose):
                 break

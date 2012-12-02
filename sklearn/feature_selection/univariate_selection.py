@@ -15,9 +15,22 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, atleast2d_or_csr, check_arrays, safe_asarray,
-                     safe_sqr, safe_mask)
+from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
+                     safe_asarray, safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
+
+
+def _clean_nans(scores):
+    """
+    Fixes Issue #1240: NaNs can't be properly compared, so change them to the
+    smallest value of scores's dtype. -inf seems to be unreliable.
+    """
+    # XXX where should this function be called? fit? scoring functions
+    # themselves?
+    scores = as_float_array(scores, copy=True)
+    scores[np.isnan(scores)] = np.finfo(scores.dtype).min
+    return scores
+
 
 ######################################################################
 # Scoring functions
@@ -126,9 +139,9 @@ def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
     This score can be used to select the n_features features with the
-    highest values for the χ² (chi-square) statistic from either boolean or
-    multinomially distributed data (e.g., term counts in document
-    classification) relative to the classes.
+    highest values for the χ² (chi-square) statistic from X, which must
+    contain booleans or frequencies (e.g., term counts in document
+    classification), relative to the classes.
 
     Recall that the χ² statistic measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
@@ -158,6 +171,9 @@ def chi2(X, y):
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
     X = atleast2d_or_csr(X)
+    if np.any((X.data if issparse(X) else X) < 0):
+        raise ValueError("Input X must be non-negative.")
+
     Y = LabelBinarizer().fit_transform(y)
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
@@ -238,7 +254,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
         """
         if not callable(score_func):
             raise TypeError(
-                "The score function should be a callable, %r "
+                "The score function should be a callable, %s (%s) "
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
@@ -293,7 +309,7 @@ class _AbstractUnivariateFilter(BaseEstimator, TransformerMixin):
 ######################################################################
 
 class SelectPercentile(_AbstractUnivariateFilter):
-    """Filter: Select the best percentile of the p-values.
+    """Select features according to a percentile of the highest scores.
 
     Parameters
     ----------
@@ -331,24 +347,26 @@ class SelectPercentile(_AbstractUnivariateFilter):
         if percentile > 100:
             raise ValueError("percentile should be between 0 and 100"
                              " (%f given)" % (percentile))
-        # Cater for Nans
+        # Cater for NaNs
         if percentile == 100:
-            return np.ones(len(self.pvalues_), dtype=np.bool)
+            return np.ones(len(self.scores_), dtype=np.bool)
         elif percentile == 0:
-            return np.zeros(len(self.pvalues_), dtype=np.bool)
-        alpha = stats.scoreatpercentile(self.pvalues_, percentile)
+            return np.zeros(len(self.scores_), dtype=np.bool)
+        scores = _clean_nans(self.scores_)
+
+        alpha = stats.scoreatpercentile(scores, 100 - percentile)
         # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(self.pvalues_ <= alpha)[0]
-        # if we selected to many because of equal p-values,
+        inds = np.where(scores >= alpha)[0]
+        # if we selected too many features because of equal scores,
         # we throw them away now
-        inds = inds[:len(self.pvalues_) * percentile // 100]
-        mask = np.zeros(self.pvalues_.shape, dtype=np.bool)
+        inds = inds[:len(scores) * percentile // 100]
+        mask = np.zeros(scores.shape, dtype=np.bool)
         mask[inds] = True
         return mask
 
 
 class SelectKBest(_AbstractUnivariateFilter):
-    """Filter: Select the k lowest p-values.
+    """Select features according to the k highest scores.
 
     Parameters
     ----------
@@ -369,7 +387,7 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     Notes
     -----
-    Ties between features with equal p-values will be broken in an unspecified
+    Ties between features with equal scores will be broken in an unspecified
     way.
 
     """
@@ -380,15 +398,16 @@ class SelectKBest(_AbstractUnivariateFilter):
 
     def _get_support_mask(self):
         k = self.k
-        if k > len(self.pvalues_):
+        if k > len(self.scores_):
             raise ValueError("cannot select %d features among %d"
-                             % (k, len(self.pvalues_)))
+                             % (k, len(self.scores_)))
 
+        scores = _clean_nans(self.scores_)
         # XXX This should be refactored; we're getting an array of indices
         # from argsort, which we transform to a mask, which we probably
         # transform back to indices later.
-        mask = np.zeros(self.pvalues_.shape, dtype=bool)
-        mask[np.argsort(self.pvalues_)[:k]] = 1
+        mask = np.zeros(scores.shape, dtype=bool)
+        mask[np.argsort(scores)[-k:]] = 1
         return mask
 
 
@@ -529,7 +548,7 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
         if mode not in self._selection_modes:
             raise ValueError(
-                "The mode passed should be one of %s, %r "
+                "The mode passed should be one of %s, %r, (type %s) "
                 "was passed." % (
                         self._selection_modes.keys(),
                         mode, type(mode)))

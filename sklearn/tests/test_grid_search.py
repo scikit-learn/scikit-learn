@@ -2,8 +2,10 @@
 Testing for grid search module (sklearn.grid_search)
 
 """
-from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
 
 import numpy as np
 import scipy.sparse as sp
@@ -222,6 +224,6 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = MockClassifier()
-    cv = KFold(n=len(X), k=3)
+    cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)

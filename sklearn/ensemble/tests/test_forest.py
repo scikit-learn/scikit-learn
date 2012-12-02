@@ -2,7 +2,7 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
-# Authors: Gilles Louppe, Brian Holt
+# Authors: Gilles Louppe, Brian Holt, Andreas Mueller
 # License: BSD 3
 
 import numpy as np
@@ -17,8 +17,11 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.svm import LinearSVC
+from sklearn.decomposition import RandomizedPCA
 from sklearn import datasets
 
 # toy sample
@@ -57,6 +60,10 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
+
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
@@ -68,6 +75,10 @@ def test_classification_toy():
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
+
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
 
 
 def test_iris():
@@ -362,6 +373,29 @@ def test_multioutput():
     assert_equal(y_hat.shape, (4, 2))
 
     np.seterr(**olderr)
+
+
+def test_random_hasher():
+    # test random forest hashing on circles dataset
+    # make sure that it is linearly separable.
+    # even after projected to two pca dimensions
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    X, y = datasets.make_circles(factor=0.5)
+    X_transformed = hasher.fit_transform(X)
+
+    # test fit and transform:
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    assert_array_equal(hasher.fit(X).transform(X).toarray(),
+                       X_transformed.toarray())
+
+    # one leaf active per data point per forest
+    assert_equal(X_transformed.shape[0], X.shape[0])
+    assert_array_equal(X_transformed.sum(axis=1), hasher.n_estimators)
+    pca = RandomizedPCA(n_components=2)
+    X_reduced = pca.fit_transform(X_transformed)
+    linear_clf = LinearSVC()
+    linear_clf.fit(X_reduced, y)
+    assert_equal(linear_clf.score(X_reduced, y), 1.)
 
 
 if __name__ == "__main__":

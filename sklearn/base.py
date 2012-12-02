@@ -196,6 +196,7 @@ class BaseEstimator(object):
         out = dict()
         for key in self._get_param_names():
             value = getattr(self, key, None)
+            # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -227,12 +228,6 @@ class BaseEstimator(object):
                     raise ValueError('Invalid parameter %s for estimator %s'
                             % (name, self))
                 sub_object = valid_params[name]
-                if not hasattr(sub_object, 'get_params'):
-                    raise TypeError(
-                    'Parameter %s of %s is not an estimator, cannot set '
-                    'sub parameter %s' %
-                        (sub_name, self.__class__.__name__, sub_name)
-                    )
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
@@ -318,8 +313,6 @@ class ClusterMixin(object):
     def fit_predict(self, X, y=None):
         """Performs clustering on X and returns cluster labels.
 
-        This is a non-optimized default implementation.
-
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
@@ -330,6 +323,8 @@ class ClusterMixin(object):
         y : ndarray, shape (n_samples,)
             cluster labels
         """
+        # non-optimized default implementation; override when a better
+        # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
 
@@ -357,13 +352,9 @@ class TransformerMixin(object):
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
 
-        Notes
-        -----
-        This method just calls fit and transform consecutively, i.e., it is not
-        an optimized implementation of fit_transform, unlike other transformers
-        such as PCA.
-
         """
+        # non-optimized default implementation; override when a better
+        # method is possible for a given clustering algorithm
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
             return self.fit(X, **fit_params).transform(X)
