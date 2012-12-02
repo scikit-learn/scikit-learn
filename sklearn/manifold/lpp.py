@@ -12,6 +12,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import array2d, check_random_state, check_arrays
 from scipy.linalg import eigh
 from ..utils.arpack import eigsh
+from ..decomposition import PCA
 
 from .lpp_util import toSymmetrixMat
 
@@ -121,21 +122,22 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
 def lpp(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=10.0,
         k=2, eigen_solver='auto', tol=1E-6, max_iter=100,
                random_state=None, use_ext=True):
-    print "making adjacency matrix"
+#    print "making adjacency matrix"
     W = adjacency_matrix(X, n_neighbors, mode)
-    print "making affinity matrix"
+#    print "making affinity matrix"
     W = affinity_matrix(W, kernel_func, kernel_param)
-    print "making laplacian matrix"
+#    print "making laplacian matrix"
     L, D = laplacian_matrix(W)
-    print "eigen map"
+#    print "eigen map"
     L = safe_sparse_dot(X.T, safe_sparse_dot(L, X))
     D = np.dot(X.T, D[:, np.newaxis] * X)
     return auto_dsygv(L, D, k, 0, eigen_solver, tol, max_iter, random_state)
 
 class LPP(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
-                 kernel_func="heat", kernel_param=1.0, eigen_solver='auto',
-                 tol=1E-6, max_iter=100, random_state=None, use_ext=True):
+                 kernel_func="heat", kernel_param=10.0, eigen_solver='auto',
+                 tol=1E-6, max_iter=100, random_state=None, use_ext=True,
+                 pca_preprocess=True):
         self._n_neighbors = n_neighbors
         self._n_components = n_components
         self._mode = mode
@@ -147,8 +149,13 @@ class LPP(BaseEstimator, TransformerMixin):
         self._random_state = random_state
         self._use_ext = use_ext
         self._components = None
+        self._pca_preprocess = pca_preprocess
 
     def fit(self, X, y=None):
+        if self._pca_preprocess:
+            _pca = PCA(n_components=0.9)
+            X = _pca.fit_transform(X)
+            
         if self._kernel_func == "heat" and self._kernel_param is None:
             self._kernel_param = 1.0 / X.shape[1]
         if self._n_neighbors is None:
@@ -158,6 +165,10 @@ class LPP(BaseEstimator, TransformerMixin):
                                   self._n_components, self._eigen_solver,
                                   self._tol, self._max_iter,
                                   self._random_state, self._use_ext)
+
+        if self._pca_preprocess:
+            self._components = safe_sparse_dot(_pca.components_.T, self._components)
+        
         return self
 
     def transform(self, X):
