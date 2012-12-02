@@ -126,12 +126,17 @@ def test_min_max_scaler():
     assert_array_equal(X_trans.min(axis=0), 1)
     assert_array_equal(X_trans.max(axis=0), 2)
 
+    # raises on invalid range
+    scaler = MinMaxScaler(feature_range=(2, 1))
+    assert_raises(ValueError, scaler.fit, X)
+
 
 def test_scaler_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
 
     scaler = StandardScaler(with_mean=False).fit(X)
     X_scaled = scaler.transform(X, copy=True)
@@ -141,8 +146,15 @@ def test_scaler_without_centering():
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert_false(np.any(np.isnan(X_csr_scaled.data)))
 
+    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
+    X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
+    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+
     assert_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.std_, scaler_csr.std_)
+
+    assert_equal(scaler.mean_, scaler_csc.mean_)
+    assert_array_almost_equal(scaler.std_, scaler_csc.std_)
 
     assert_array_almost_equal(
         X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
@@ -164,7 +176,12 @@ def test_scaler_without_centering():
     X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
     assert_true(X_csr_scaled_back is not X_csr)
     assert_true(X_csr_scaled_back is not X_csr_scaled)
-    assert_array_almost_equal(X_scaled_back, X)
+    assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
+
+    X_csc_scaled_back = scaler_csr.inverse_transform(X_csc_scaled.tocsc())
+    assert_true(X_csc_scaled_back is not X_csc)
+    assert_true(X_csc_scaled_back is not X_csc_scaled)
+    assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
 def test_scaler_without_copy():
@@ -212,8 +229,15 @@ def test_scale_function_without_centering():
     X_csr_scaled = scale(X_csr, with_mean=False)
     assert_false(np.any(np.isnan(X_csr_scaled.data)))
 
-    assert_array_almost_equal(
-        X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
+    # test csc has same outcome
+    X_csc_scaled = scale(X_csr.tocsc(), with_mean=False)
+    assert_array_almost_equal(X_scaled, X_csc_scaled.toarray())
+
+    # raises value error on axis != 0
+    assert_raises(ValueError, scale, X_csr, with_mean=False, axis=1)
+
+    assert_array_almost_equal(X_scaled.mean(axis=0),
+                              [0., -0.01,  2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert_true(X_scaled is not X)
@@ -463,8 +487,8 @@ def test_one_hot_encoder():
 
     # check outcome
     assert_array_equal(X_trans,
-              [[0., 1., 0., 1., 1.],
-               [1., 0., 1., 0., 1.]])
+                       [[0., 1., 0., 1., 1.],
+                        [1., 0., 1., 0., 1.]])
 
     # max value given as 3
     enc = OneHotEncoder(n_values=4)

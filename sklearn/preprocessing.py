@@ -33,7 +33,7 @@ __all__ = ['Binarizer',
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
-    """Compute mean and std dev for centering, scaling
+    """Compute mean and std deviation for centering, scaling.
 
     Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
