@@ -703,7 +703,7 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
 ``loss='epsilon_insensitive'`` (PA-I) or
 ``loss='squared_epsilon_insensitive'`` (PA-II).
 
-.. topics:: References:
+.. topic:: References:
 
 
  * `"Online Passive-Aggressive Algorithms"
