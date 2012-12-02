@@ -90,23 +90,23 @@ def roc_curve(y_true, y_score, pos_label=None):
     ----------
 
     y_true : array, shape = [n_samples]
-        true binary labels in range {0,1} or {-1,1}
-        if not binary label, pos_label should be explictly given
+        true binary labels in range {0, 1} or {-1, 1}.
+        If not binary label, pos_label should be explictly given.
 
     y_score : array, shape = [n_samples]
         target scores, can either be probability estimates of
         the positive class, confidence values, or binary decisions.
 
-    pos_label : integer
-        label considered as postive and others are negative
+    pos_label : int
+        label considered as postive and others are considered negative.
 
     Returns
     -------
     fpr : array, shape = [>2]
-        False Positive Rates
+        False Positive Rates.
 
     tpr : array, shape = [>2]
-        True Positive Rates
+        True Positive Rates.
 
     thresholds : array, shape = [>2]
         Thresholds on y_score used to compute fpr and tpr.
@@ -146,7 +146,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         raise ValueError("ROC is defined for binary classification only or "
                          "pos_label should be explicitly given")
     elif pos_label is None:
-        pos_label = 1
+        pos_label = 1.
 
     # y_true will be transformed into a boolean vector
     y_true = (y_true == pos_label)
