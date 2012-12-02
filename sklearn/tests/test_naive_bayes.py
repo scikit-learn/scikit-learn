@@ -3,7 +3,6 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-from cStringIO import StringIO
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
