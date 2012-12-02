@@ -347,7 +347,7 @@ class Ward(BaseEstimator, ClusterMixin):
         memory = self.memory
         X = array2d(X)
         if isinstance(memory, basestring):
-            memory = Memory(cachedir=memory)
+            memory = Memory(cachedir=memory, verbose=0)
 
         if not self.connectivity is None:
             if not sparse.issparse(self.connectivity):

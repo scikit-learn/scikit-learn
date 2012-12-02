@@ -115,6 +115,22 @@ def test_spectral_unknown_mode():
                   random_state=0, eigen_solver="<unknown>")
 
 
+def test_spectral_unknown_assign_labels():
+    # Test that SpectralClustering fails with an unknown mode set.
+    centers = np.array([
+        [0., 0., 0.],
+        [10., 10., 10.],
+        [20., 20., 20.],
+    ])
+    X, true_labels = make_blobs(n_samples=100, centers=centers,
+                                cluster_std=1., random_state=42)
+    D = pairwise_distances(X)  # Distance matrix
+    S = np.max(D) - D  # Similarity matrix
+    S = sparse.coo_matrix(S)
+    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
+                  random_state=0, assign_labels="<unknown>")
+
+
 def test_spectral_clustering_sparse():
     # We need a large matrice, or the lobpcg solver will fallback to its
     # non-sparse and buggy mode
@@ -152,6 +168,10 @@ def test_affinities():
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
+
+    # raise error on unknown affinity
+    sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
+    assert_raises(ValueError, sp.fit, X)
 
 
 def test_discretize(seed=36):
