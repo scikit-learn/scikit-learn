@@ -108,8 +108,8 @@ cdef class WeightVector(object):
         return innerprod
 
     cdef double dot_on_difference(self, DOUBLE *a_data_ptr, 
-                                  DOUBLE *b_data_ptr, INTEGER *x_ind_ptr,
-                                  int xnnz_a, int xnnz_b):
+                                  DOUBLE *b_data_ptr, INTEGER *a_ind_ptr,
+                                  INTEGER *b_ind_ptr, int xnnz_a, int xnnz_b):
         """Computes the dot product of the weight vector and the difference
            between samples a and b with disagreeing labels.
 
@@ -130,9 +130,9 @@ cdef class WeightVector(object):
         """
         # <(a - b), w> = <a, w> + <-1.0 * b, w>
         cdef double innerprod_on_difference = 0.0
-        innerprod_on_difference += self.dot(a_data_ptr, x_ind_ptr,
+        innerprod_on_difference += self.dot(a_data_ptr, a_ind_ptr,
                                             xnnz_a)
-        innerprod_on_difference += self.dot(b_data_ptr, x_ind_ptr,
+        innerprod_on_difference += self.dot(b_data_ptr, b_ind_ptr,
                                             xnnz_b) * -1.0
         return innerprod_on_difference
 

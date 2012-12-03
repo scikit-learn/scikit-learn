@@ -21,8 +21,9 @@ from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
 from .sgd_fast import ranking_sgd as ranking_sgd
-from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseArrayDataset,\
-PairwiseArrayDatasetRoc, PairwiseArrayDatasetRank
+from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseDataset,\
+PairwiseArrayDatasetRoc, PairwiseArrayDatasetRank, PairwiseCSRDatasetRoc, \
+PairwiseCSRDatasetRank
 from .sgd_fast import Hinge
 from .sgd_fast import Log
 from .sgd_fast import ModifiedHuber
@@ -231,21 +232,33 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
     This also returns the ``intercept_decay`` which is different
     for sparse datasets.
     """
-    if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
-        intercept_decay = SPARSE_INTERCEPT_DECAY
-    elif sampling is not None:
+    if sampling is not None:
         if sampling == 1:
-            dataset = PairwiseArrayDatasetRoc(X, y_i)
-        elif sampling == 2:
+            if sp.issparse(X):
+                dataset = PairwiseCSRDatasetRoc(X.data, X.indptr, X.indices,
+                                                y_i)#, sample_weight)
+                intercept_decay = SPARSE_INTERCEPT_DECAY
+            else:
+                dataset = PairwiseArrayDatasetRoc(X, y_i)
+                intercept_decay = 1.0
+        else:
             if query_id is None:
                 query_id = np.ones(X.shape[0])
-            dataset = PairwiseArrayDatasetRank(X, y_i, query_id)
-        intercept_decay = 1.0
+            if sp.issparse(X):
+                dataset = PairwiseCSRDatasetRank(X.data, X.indptr, X.indices,
+                                                 y_i)#, sample_weight)
+                intercept_decay = SPARSE_INTERCEPT_DECAY
+            else:
+                dataset = PairwiseArrayDatasetRank(X, y_i)
+                intercept_decay = 1.0
+    elif sp.issparse(X):
+        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i)#, sample_weight)
+        intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
         intercept_decay = 1.0
     return dataset, intercept_decay
+
 
 class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
@@ -691,8 +704,9 @@ def fit_binary(est, i, X, y, n_iter, pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
+
 def fit_binary_ranking(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
-                   sample_weight):
+                       sample_weight):
     """Fit a single binary classifier.
     
     The i'th class is considered the "positive" class.
@@ -710,16 +724,16 @@ def fit_binary_ranking(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
                        dataset, n_iter, int(est.fit_intercept),
                        int(est.verbose), int(est.shuffle), est.seed,
                        learning_rate_type, est.eta0,
-                       est.power_t, est.t_, intercept_decay, sampling_type)    
+                       est.power_t, est.t_, intercept_decay, sampling_type)
 
 
 class SGDRanking(SGDClassifier):
     """Performs pairwise ranking with an underlying SGDClassifer model.
 
-    SGDRanking fits a ranking model on a training set of pairs with disagreeing 
-    labels. Implements the indexed sampling method of D. Sculley, Large-scale
-    Learning to Rank, NIPS 2011 to sample disagreeing pairs without constructing
-    the set of all possible pairs explicitly.
+    SGDRanking fits a ranking model on a training set of pairs with
+    disagreeing labels. Implements the indexed sampling method of D. Sculley,
+    Large-scale Learning to Rank, NIPS 2011 to sample disagreeing pairs
+    without constructing the set of all possible pairs explicitly.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
@@ -867,6 +881,8 @@ class SGDRanking(SGDClassifier):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
         self.sampling = sampling
+        if class_weight is not None:
+            self.class_weight = class_weight
 
     def _get_sampling_type(self, sampling):
         try:
@@ -933,6 +949,9 @@ class SGDRanking(SGDClassifier):
         y : numpy array of shape [n_samples]
             Subset of the target values
 
+        query_id: numpy array of shape [n_samples]
+            Query values of X
+
         classes : array, shape = [n_classes]
             Classes across all calls to partial_fit.
             Can be obtained by via `np.unique(y_all)`, where y_all is the
@@ -980,14 +999,6 @@ class SGDRanking(SGDClassifier):
         -------
         self : returns an instance of self.
         """
-        if class_weight is not None:
-            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
-                          "Set it on initialization instead.",
-                          DeprecationWarning, stacklevel=2)
-
-            self.class_weight = class_weight
-
         if query_id is None:
             query_id = np.ones(X.shape[0])
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")

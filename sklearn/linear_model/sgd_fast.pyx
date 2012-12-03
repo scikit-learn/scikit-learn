@@ -16,7 +16,7 @@ cimport numpy as np
 cimport cython
 
 from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset, PairwiseArrayDataset
+from sklearn.utils.seq_dataset cimport SequentialDataset, PairwiseDataset
 
 
 cdef extern from "math.h":
@@ -433,7 +433,7 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               LossFunction loss,
               int penalty_type,
               double alpha, double rho,
-              PairwiseArrayDataset dataset,
+              PairwiseDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, int seed,
               int learning_rate, double eta0,
@@ -506,7 +506,9 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     cdef DOUBLE *a_data_ptr = NULL
     cdef DOUBLE *b_data_ptr = NULL
-    cdef INTEGER *x_ind_ptr = NULL
+    #cdef INTEGER *x_ind_ptr = NULL
+    cdef INTEGER *a_ind_ptr = NULL
+    cdef INTEGER *b_ind_ptr = NULL
 
     # helper variable
     cdef int xnnz_a
@@ -545,8 +547,11 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         #if shuffle:
         #    dataset.shuffle(seed)
         for i in range(n_samples):
-            dataset.next_pair(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
-                         &xnnz_a, &xnnz_b, &y_a, &y_b)
+            #dataset.next_pair(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
+            #             &xnnz_a, &xnnz_b, &y_a, &y_b)
+
+            dataset.next_pair(&a_data_ptr, &b_data_ptr, &a_ind_ptr,
+                              &b_ind_ptr, &xnnz_a, &xnnz_b, &y_a, &y_b)
 
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
@@ -561,8 +566,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             else:
                 y = 0.0
 
-            p = w.dot_on_difference(a_data_ptr, b_data_ptr, 
-                                        x_ind_ptr, xnnz_a, xnnz_b) + intercept
+            p = w.dot_on_difference(a_data_ptr, b_data_ptr, a_ind_ptr,
+                                    b_ind_ptr, xnnz_a, xnnz_b) + intercept
 
             if verbose > 0:
                 sumloss += loss.loss(p, y)
@@ -575,8 +580,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             #print("update:%.9f p:%.6f dloss:%.4f class_weight:%.1f" % \
             #(update, p, loss.dloss(p, y), class_weight))            
             if update != 0.0:
-                w.add(a_data_ptr, x_ind_ptr, xnnz_a, update)
-                w.add(b_data_ptr, x_ind_ptr, xnnz_b, -update)
+                w.add(a_data_ptr, a_ind_ptr, xnnz_a, update)
+                w.add(b_data_ptr, b_ind_ptr, xnnz_b, -update)
                 if fit_intercept == 1:
                     intercept += update * intercept_decay
             if penalty_type >= L2:
@@ -586,12 +591,6 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             #    u += ((1.0 - rho) * eta * alpha)
             #    l1penalty(w, q_data_ptr, x_ind_ptr, xnnz_a, u)
 
-            """
-            # If (a - b) has non-zero loss, perform gradient step.
-            if (p < 1.0) & (y != 0.0):
-                w.add(a_data_ptr, x_ind_ptr, xnnz_a, (eta * y))
-                w.add(b_data_ptr, x_ind_ptr, xnnz_b, (-1.0 * eta * y))
-            """
             t += 1
             count += 1
                     
