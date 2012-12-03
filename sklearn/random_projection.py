@@ -97,8 +97,8 @@ def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
     if density is 'auto':
         density = min(1 / math.sqrt(n_features), 1 / 3.)
-    elif density <= 0 or density > 1 / float(3):
-        raise ValueError("Expected density in range (0, 1/3], got: %r"
+    elif density <= 0 or density > 1:
+        raise ValueError("Expected density in range (0, 1], got: %r"
                          % density)
     return density
 
@@ -245,7 +245,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    density : float in range (0, 1/3], optional
+    density : float in range (0, 1], optional
         Ratio of non-zero component in the random projection matrix.
 
         By default the value is set to the minimum density as recommended
