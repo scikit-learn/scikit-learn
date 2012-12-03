@@ -39,7 +39,7 @@ from sklearn.utils import atleast2d_or_csr
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
-
+from sklearn.utils.testing import assert_equal
 
 def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
@@ -353,6 +353,12 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             self.n_components_, n_features, density=self.density,
             random_state=self.random_state)
 
+        assert_equal(
+            self.components_.shape,
+            (self.n_components_, n_features),
+            msg='An error has occured the produced projection matrix has'
+                    'not the proper shape.')
+
         return self
 
     def transform(self, X, y=None):
@@ -371,6 +377,15 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
             Projected array.
 
         """
+        if not hasattr(self, 'components_'):
+            raise ValueError('No random projection matrix has been fit.')
+
+        if X.shape[1] != self.components_.shape[1]:
+            raise ValueError('''Impossible to perform projection:
+            basis doesn't have the same number of dimension as sample
+            n_components != n_features (%s != %s)''' %
+            (X.shape[1], self.components_.shape[1]))
+
         if not sp.issparse(X):
             X = np.atleast_2d(X)
 
