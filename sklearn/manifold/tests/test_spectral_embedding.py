@@ -36,8 +36,10 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
     each columns"""
     sign = True
     for colid in range(A.shape[1]):
-        sign = sign and (np.all(np.abs(A[:, colid] - B[:, colid]) <= tol) or
-                         np.all(np.abs(A[:, colid] + B[:, colid]) <= tol))
+        a = A[:, colid]
+        b = B[:, colid]
+        sign = sign and ((((A[:, colid] - B[:, colid])**2).mean() <= tol**2) or
+                         (((A[:, colid] + B[:, colid])**2).mean() <= tol**2))
         if not sign:
             return sign
     return sign
@@ -46,7 +48,7 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
 def test_spectral_embedding_two_components(seed=36):
     """Test spectral embedding with two components"""
     random_state = np.random.RandomState(seed)
-    n_sample = 10
+    n_sample = 100
     affinity = np.zeros(shape=[n_sample * 2,
                                n_sample * 2])
     # first component
@@ -72,13 +74,11 @@ def test_spectral_embedding_two_components(seed=36):
     assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
 
     # test that we can still import spectral embedding
-
     from sklearn.cluster import spectral_embedding as se_deprecated
     with warnings.catch_warnings(record=True) as warning_list:
         embedded_depr = se_deprecated(affinity, n_components=1,
                                       random_state=np.random.RandomState(seed))
     assert_equal(len(warning_list), 1)
-
     assert_true(_check_with_col_sign_flipping(embedded_coordinate,
                                               embedded_depr, 0.01))
 
@@ -86,28 +86,28 @@ def test_spectral_embedding_two_components(seed=36):
 def test_spectral_embedding_precomputed_affinity(seed=36):
     """Test spectral embedding with precomputed kernel"""
     gamma = 1.0
-    se_precomp = SpectralEmbedding(n_components=3, affinity="precomputed",
+    se_precomp = SpectralEmbedding(n_components=2, affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
-    se_rbf = SpectralEmbedding(n_components=3, affinity="rbf",
+    se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
     embed_precomp = se_precomp.fit_transform(rbf_kernel(S, gamma=gamma))
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.02))
+    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.01))
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
     """Test spectral embedding with callable affinity"""
     gamma = 0.9
     kern = rbf_kernel(S, gamma=gamma)
-    se_callable = SpectralEmbedding(n_components=3,
+    se_callable = SpectralEmbedding(n_components=2,
                                     affinity=(
                                         lambda x: rbf_kernel(x, gamma=gamma)),
                                     gamma=gamma,
                                     random_state=np.random.RandomState(seed))
-    se_rbf = SpectralEmbedding(n_components=3, affinity="rbf",
+    se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
     embed_rbf = se_rbf.fit_transform(S)
@@ -118,7 +118,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
     assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.02))
+        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.01))
 
 
 def test_spectral_embedding_amg_solver(seed=36):
@@ -128,10 +128,10 @@ def test_spectral_embedding_amg_solver(seed=36):
     except ImportError:
         raise SkipTest
 
-    se_amg = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
+    se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,
                                random_state=np.random.RandomState(seed))
-    se_arpack = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
+    se_arpack = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                   eigen_solver="arpack", n_neighbors=5,
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
