@@ -1154,20 +1154,21 @@ def check_cv(cv, X=None, y=None, classifier=False):
         stratified KFold will be used.
     """
     is_sparse = sp.issparse(X)
+    needs_indices = is_sparse or isinstance(X, list) or isinstance(X, tuple)
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=is_sparse)
+            cv = StratifiedKFold(y, cv, indices=needs_indices)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv, indices=is_sparse)
-    if is_sparse and not getattr(cv, "indices", True):
-        raise ValueError("Sparse data require indices-based cross validation"
-                         " generator, got: %r", cv)
+            cv = KFold(n_samples, cv, indices=needs_indices)
+    if needs_indices and not getattr(cv, "indices", True):
+        raise ValueError("Sparse data and lists require indices-based cross"
+                         " validation generator, got: %r", cv)
     return cv
 
 

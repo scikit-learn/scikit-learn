@@ -11,12 +11,13 @@ from itertools import product
 import time
 
 import numpy as np
+from scipy import sparse
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .utils import check_arrays, safe_mask
+from .utils import safe_mask
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -78,8 +79,6 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                                 for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
-
-    X, y = check_arrays(X, y, sparse_format="csr")
     # update parameters of the classifier after a copy of its base structure
     clf = clone(base_clf)
     clf.set_params(**clf_params)
@@ -90,15 +89,22 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             "Cannot use a custom kernel function. "
             "Precompute the kernel matrix instead.")
 
-    if getattr(base_clf, "_pairwise", False):
-        # X is a precomputed square kernel matrix
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X should be a square kernel matrix")
-        X_train = X[np.ix_(train, train)]
-        X_test = X[np.ix_(test, train)]
+    if isinstance(X, list) or isinstance(X, tuple):
+        if getattr(base_clf, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_train = [X[idx] for idx in train]
+        X_test = [X[idx] for idx in test]
     else:
-        X_train = X[safe_mask(X, train)]
-        X_test = X[safe_mask(X, test)]
+        if getattr(base_clf, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            X_train = X[np.ix_(train, train)]
+            X_test = X[np.ix_(test, train)]
+        else:
+            X_train = X[safe_mask(X, train)]
+            X_test = X[safe_mask(X, test)]
 
     if y is not None:
         y_test = y[safe_mask(y, test)]
@@ -348,9 +354,6 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             None for unsupervised learning.
 
         """
-        return self._fit(X, y)
-
-    def _fit(self, X, y):
         estimator = self.estimator
         cv = self.cv
 
@@ -366,6 +369,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
             y = np.asarray(y)
+
+        if sparse.issparse(X):
+            X = X.tocsr()
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         grid = IterGrid(self.param_grid)
