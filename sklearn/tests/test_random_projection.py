@@ -105,13 +105,6 @@ class MaterializedRandomProjection(unittest.TestCase):
         rp = SparseRandomProjection(n_components=-10)
         assert_raises(ValueError, rp.fit, data)
 
-    def test_input_dimension_inconsistency(self):
-        expected_msg = ("n_components=20000 should be smaller "
-                        "than n_features=1000")
-        rp = SparseRandomProjection(
-            n_components=20000, materialize=self.materialize)
-        assert_raise_message(ValueError, expected_msg, rp.fit, data)
-
     def test_too_many_samples_to_find_a_safe_embedding(self):
         data, _ = make_sparse_random_data(1000, 100, 1000)
         rp = SparseRandomProjection(

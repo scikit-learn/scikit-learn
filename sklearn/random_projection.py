@@ -501,10 +501,6 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
                     'n_features=%d' % (self.eps, n_samples, self.n_components_,
                                        n_features))
         else:
-            if self.n_components > n_features:
-                raise ValueError(
-                    "n_components=%d should be smaller than n_features=%d"
-                    % (self.n_components, n_features))
             self.n_components_ = self.n_components
 
         self.density_ = _check_density(self.density, n_features)
