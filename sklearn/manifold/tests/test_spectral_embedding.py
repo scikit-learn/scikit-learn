@@ -36,10 +36,10 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
     each columns"""
     sign = True
     for colid in range(A.shape[1]):
-        a = A[:, colid]
-        b = B[:, colid]
-        sign = sign and ((((A[:, colid] - B[:, colid])**2).mean() <= tol**2) or
-                         (((A[:, colid] + B[:, colid])**2).mean() <= tol**2))
+        sign = sign and ((((A[:, colid] -
+                            B[:, colid]) ** 2).mean() <= tol ** 2) or
+                         (((A[:, colid] +
+                            B[:, colid]) ** 2).mean() <= tol ** 2))
         if not sign:
             return sign
     return sign
