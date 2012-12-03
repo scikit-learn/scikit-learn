@@ -13,7 +13,7 @@ import numpy as np
 from ..utils import array2d
 
 from .base import LinearModel
-from ..linear_model import LinearRegression, Lasso, lars_path
+from ..linear_model import LinearRegression, Lasso, lars_path, lasso_path
 
 def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
                          normalize=True, max_iter=1000, precompute='auto'):
@@ -47,22 +47,23 @@ def non_negative_garotte_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     Compute the Non-negative Garotte path
 
     """
-
+    
     # Obtain the ordinary least squares coefficients from our data
     # TODO do it with RIDGE and alpha_ridge=0.0
     coef_ols = LinearRegression(fit_intercept=fit_intercept).fit(X, y).coef_
 
     X = X * coef_ols[np.newaxis, :]
-    _, _, shrink_coef_path = lars_path(X, y, method='lasso')
-    #shrink_coef = lasso_path(X, y, positive=True)[0].coef_
+    #_, _, shrink_coef_path = lars_path(X, y, method='lasso')
+    shrink_coef_path = lasso_path(X, y, positive=True)[0].coef_
     #models = lasso_path(X, y, eps, n_alphas, alphas=alphas,
-    #                    precompute=precompute, fit_intercept=fit_intercept)
+    #                    precompute=precompute, fit_intercept=fit_intercept, positive=True)
     #shrink_coef_path = np.array([m.coef_ for m in models]).T
 
     #shrink_coef = lasso_path(X, y, positive=True, alpha=alpha)[0].coef_
 
     # Shrunken betas
     coef_path = shrink_coef_path * coef_ols[:, None]
+    print coef_path
     #coef_path = coef_ols * shrink_coef_path
 
     return coef_path, shrink_coef_path
@@ -178,7 +179,6 @@ class NonNegativeGarrote(LinearModel):
 
         return self
 
-# TODO add score?
-# cv version?
+
 
 
