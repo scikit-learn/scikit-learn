@@ -518,7 +518,8 @@ class CountVectorizer(BaseEstimator):
         vocab = dict(((t, i) for i, t in enumerate(sorted(terms))))
         if not vocab:
             raise ValueError("empty vocabulary; training set may have"
-                             " contained only stop words")
+                             " contained only stop words or min_df (resp. "
+                             "max_df) may be too high (resp. too low).")
         self.vocabulary_ = vocab
 
         # the term_counts and document_counts might be useful statistics, are

@@ -5,8 +5,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
-
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raises
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -60,6 +60,12 @@ def test_dict_learning_nonzero_coefs():
     assert_equal(len(np.flatnonzero(code)), 3)
 
 
+def test_dict_learning_unknown_fit_algorithm():
+    n_components = 5
+    dico = DictionaryLearning(n_components, fit_algorithm='<unknown>')
+    assert_raises(ValueError, dico.fit, X)
+
+
 def test_dict_learning_split():
     n_components = 5
     dico = DictionaryLearning(n_components, transform_algorithm='threshold')
@@ -67,7 +73,7 @@ def test_dict_learning_split():
     dico.split_sign = True
     split_code = dico.transform(X)
 
-    assert_array_equal(split_code[:, :n_components] - \
+    assert_array_equal(split_code[:, :n_components] -
                        split_code[:, n_components:], code)
 
 
@@ -82,9 +88,27 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(code, dictionary).shape, X.shape)
 
 
+def test_dict_learning_online_verbosity():
+    n_components = 5
+    # test verbosity
+    from cStringIO import StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1)
+    dico.fit(X)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2)
+    dico.fit(X)
+    dict_learning_online(X, n_components=n_components, alpha=1, verbose=1)
+    dict_learning_online(X, n_components=n_components, alpha=1, verbose=2)
+    sys.stdout = old_stdout
+    assert_true(dico.components_.shape == (n_components, n_features))
+
+
 def test_dict_learning_online_estimator_shapes():
     n_components = 5
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20).fit(X)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20)
+    dico.fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
@@ -98,7 +122,7 @@ def test_dict_learning_online_initialization():
     n_components = 12
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(n_components, n_iter=0,
-                                        dict_init=V).fit(X)
+                                       dict_init=V).fit(X)
     assert_array_equal(dico.components_, V)
 
 
@@ -119,7 +143,7 @@ def test_dict_learning_online_partial_fit():
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
         # if ii == 1: break
     assert_true(not np.all(sparse_encode(X, dico1.components_, alpha=100) ==
-        0))
+                           0))
     assert_array_equal(dico1.components_, dico2.components_)
 
 
@@ -139,6 +163,12 @@ def test_sparse_encode_error():
     code = sparse_encode(X, V, alpha=0.001)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_unknown_method():
+    n_components = 12
+    V = rng.randn(n_components, n_features)  # random init
+    assert_raises(ValueError, sparse_encode, X, V, algorithm="<unknown>")
 
 
 def test_sparse_coder_estimator():

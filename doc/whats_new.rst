@@ -7,6 +7,10 @@
 
 Changelog
 ---------
+
+   - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
+     `Peter Prettenhofer`_.
+
    - New estimators :class:`linear_model.PassiveAggressiveClassifier` and
      :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
      `Mathieu Blondel`_.
@@ -65,6 +69,22 @@ Changelog
      "hashing trick" for fast, low-memory feature extraction from string data
      by `Lars Buitinck`_.
 
+   - New dummy estimators :class:`dummy.DummyClassifiers` and
+     :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
+     estimators.
+
+   - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
+     in computer vision applications.
+
+   - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
+     Shaun Jackman.
+
+   - New estimator :class:`manifold.SpectralEmbedding` and function
+     :func:`manifold.spectral_embedding`, implementing the
+     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
+
+   - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
+     Andrew Winterman.
 
 API changes summary
 -------------------
@@ -121,6 +141,19 @@ API changes summary
    - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
      store a list of paths in the case of multiple targets, rather than
      an array of paths.
+
+   - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+     to adhere more strictly with the API.
+
+   - :func:`cluster.spectral_embedding` is now in
+     :func:`manifold.spectral_embedding`.
+
+   - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
+     :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
+     to ``eigen_solver``
+
+   - Renamed ``mode`` in :func:`manifold.spectral_embedding` and
+     :class:`cluster.SpectralClustering` to ``eigen_solver``.
 
 .. _changes_0_12.1:
 

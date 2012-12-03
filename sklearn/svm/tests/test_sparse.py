@@ -65,7 +65,7 @@ def test_svc():
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
-    assert_array_almost_equal(clf.predict_proba(T2), sp_clf.predict_proba(T2))
+    assert_array_almost_equal(clf.predict_proba(T2), sp_clf.predict_proba(T2), 4)
 
 
 def test_svc_with_custom_kernel():
@@ -217,7 +217,8 @@ def test_sparse_realdata():
 def test_sparse_svc_clone_with_callable_kernel():
     # first, test that we raise a value error for "sparse kernels"
     # this test is only relevant for the deprecated sparse.SVC class.
-    sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    with warnings.catch_warnings(record=True):
+        sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
     assert_raises(ValueError, sp.fit, X_sp, Y)
 
     # Test that the "dense_fit" is called even though we use sparse input

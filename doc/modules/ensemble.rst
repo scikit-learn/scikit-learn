@@ -178,6 +178,8 @@ amount of time (e.g., on large datasets).
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 
+.. _random_forest_feature_importance:
+
 Feature importance evaluation
 -----------------------------
 
@@ -239,7 +241,7 @@ the transformation performs an implicit, non-parametric density estimation.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
- 
+
   * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
     dimensionality reduction technics on handwritten digits.
 
@@ -319,7 +321,7 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss`` which defaults to least squares (``'ls'``).
+``loss``; the default loss function for regression is least squares (``'ls'``).
 
 ::
 
@@ -337,17 +339,26 @@ for regression which can be specified via the argument
     6.90...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the Boston house-price dataset
-(see :func:`sklearn.datasets.load_boston`).
+with least squares loss and 500 base learners to the Boston house price dataset
+(:func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
-Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be obtained via the ``feature_importances_``
-property.
+The train error at each iteration is stored in the
+:attr:`~GradientBoostingRegressor.train_score_` attribute
+of the gradient boosting model. The test error at each iterations can be optained
+via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
+generator that yields the predictions at each stage. Plots like these can be used
+to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
+The plot on the right shows the feature importances which can be obtained via
+the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
 
 
 Mathematical formulation
@@ -505,12 +516,163 @@ Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
 can be controled via the ``max_features`` parameter.
 
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+
+Interpretation
+--------------
+
+Individual decision trees can be interpreted easily by simply
+visualizing the tree structure. Gradient boosting models, however,
+comprise hundreds of regression trees thus they cannot be easily
+interpreted by visual inspection of the individual trees. Fortunately,
+a number of techniques have been proposed to summarize and interpret
+gradient boosting models.
+
+Feature importance
+..................
+
+Often features do not contribute equally to predict the target
+response; in many situations the majority of the features are in fact
+irrelevant.
+When interpreting a model, the first question usually is: what are
+those important features and how do they contributing in predicting
+the target response?
+
+Individual decision trees intrinsically perform feature selection by selecting
+appropriate split points. This information can be used to measure the
+importance of each feature; the basic idea is: the more often a
+feature is used in the split points of a tree the more important that
+feature is. This notion of importance can be extended to decision tree
+ensembles by simply averaging the feature importance of each tree (see
+:ref:`random_forest_feature_importance` for more details).
+
+The feature importance scores of a fit gradient boosting model can be
+accessed via the ``feature_importances_`` property::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> clf.feature_importances_  # doctest: +ELLIPSIS
+    array([ 0.11,  0.1 ,  0.11,  ...
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
+
+.. currentmodule:: sklearn.ensemble.partial_dependence
+
+Partial dependence
+..................
+
+Partial dependence plots (PDP) show the dependence between the target response
+and a set of 'target' features, marginalizing over the
+values of all other features (the 'complement' features).
+Intuitively, we can interpret the partial dependence as the expected
+target response [1]_ as a function of the 'target' features [2]_.
+
+Due to the limits of human perception the size of the target feature
+set must be small (usually, one or two) thus the target features are
+usually chosen among the most important features.
+
+The Figure below shows four one-way and one two-way partial dependence plots
+for the California housing dataset:
+
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+   :target: ../auto_examples/ensemble/plot_partial_dependence.html
+   :align: center
+   :scale: 70
+
+One-way PDPs tell us about the interaction between the target
+response and the target feature (e.g. linear, non-linear).
+The upper left plot in the above Figure shows the effect of the
+median income in a district on the median house price; we can
+clearly see a linear relationship among them.
+
+PDPs with two target features show the
+interactions among the two features. For example, the two-variable PDP in the
+above Figure shows the dependence of median house price on joint
+values of house age and avg. occupants per household. We can clearly
+see an interaction between the two features:
+For an avg. occupancy greather than two, the house price is nearly independent
+of the house age, whereas for values less than two there is a strong dependence
+on age.
+
+The module :mod:`partial_dependence` provides a convenience function
+:func:`~sklearn.ensemble.partial_dependence.plot_partial_dependence`
+to create one-way and two-way partial dependence plots. In the below example
+we show how to create a grid of partial dependence plots: two one-way
+PDPs for the features ``0`` and ``1`` and a two-way PDP between the two
+features::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble.partial_dependence import plot_partial_dependence
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> features = [0, 1, (0, 1)]
+    >>> fig, axs = plot_partial_dependence(clf, X, features) #doctest: +SKIP
+
+For multi-class models, you need to set the class label for which the
+PDPs should be created via the ``label`` argument::
+
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+    ...     max_depth=1).fit(iris.data, iris.target)
+    >>> features = [3, 2, (3, 2)]
+    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0) #doctest: +SKIP
+
+If you need the raw values of the partial dependence function rather
+than the plots you can use the
+:func:`~sklearn.ensemble.partial_dependence.partial_dependence` function::
+
+    >>> from sklearn.ensemble.partial_dependence import partial_dependence
+
+    >>> pdp, axes = partial_dependence(clf, [0], X=X)
+    >>> pdp  # doctest: +ELLIPSIS
+    array([[ 2.46643157,  2.46643157, ...
+    >>> axes  # doctest: +ELLIPSIS
+    [array([-1.62497054, -1.59201391, ...
+
+The function requires either the argument ``grid`` which specifies the
+values of the target features on which the partial dependence function
+should be evaluated or the argument ``X`` which is a convenience mode
+for automatically creating ``grid`` from the training data. If ``X``
+is given, the ``axes`` value returned by the function gives the axis
+for each target feature.
+
+For each value of the 'target' features in the ``grid`` the partial
+dependence function need to marginalize the predictions of a tree over
+all possible values of the 'complement' features. In decision trees
+this function can be evaluated efficiently without reference to the
+training data. For each grid point a weighted tree traversal is
+performed: if a split node involves a 'target' feature, the
+corresponding left or right branch is followed, otherwise both
+branches are followed, each branch is weighted by the fraction of
+training samples that entered that branch. Finally, the partial
+dependence is given by a weighted average of all visited leaves. For
+tree ensembles the results of each individual tree are again
+averaged.
+
+.. rubric:: Footnotes
+
+.. [1] For classification with ``loss='deviance'``  the target
+   response is logit(p).
+
+.. [2] More precisely its the expectation of the target response after
+   accounting for the initial model; partial dependence plots
+   do not include the ``init`` model.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_partial_dependence.py`
 
 
 .. topic:: References

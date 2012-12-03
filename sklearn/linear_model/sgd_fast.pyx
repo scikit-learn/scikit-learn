@@ -525,10 +525,10 @@ cdef inline double min(double a, double b):
 
 cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double x_norm = 0.0
-    cdef int j = 0
+    cdef int j
+    cdef double z
     for j in range(xnnz):
-        idx = x_ind_ptr[j]
-        z = x_data_ptr[idx]
+        z = x_data_ptr[j]
         x_norm += z * z
     return x_norm
 

@@ -155,22 +155,22 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     Parameters
     ----------
-    X: array-like or sparse matrix, shape (n_samples, n_features)
+    X : array-like or sparse matrix, shape (n_samples, n_features)
         The observations to cluster.
 
-    n_clusters: int
+    n_clusters : int
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter: int, optional, default 300
+    max_iter : int, optional, default 300
         Maximum number of iterations of the k-means algorithm to run.
 
-    n_init: int, optional, default: 10
+    n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    init: {'k-means++', 'random', or ndarray, or a callable}, optional
+    init : {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -186,25 +186,25 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    tol: float, optional
+    tol : float, optional
         The relative increment in the results before declaring convergence.
 
-    verbose: boolean, optional
-        Verbosity mode
+    verbose : boolean, optional
+        Verbosity mode.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    copy_x: boolean, optional
+    copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True, then the original data is not
         modified.  If False, the original data is modified, and put back before
         the function returns, but small numerical differences may be introduced
         by subtracting and then adding the data mean.
 
-    n_jobs: int
+    n_jobs : int
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -216,14 +216,14 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     Returns
     -------
-    centroid: float ndarray with shape (k, n_features)
+    centroid : float ndarray with shape (k, n_features)
         Centroids found at the last iteration of k-means.
 
-    label: integer ndarray with shape (n_samples,)
+    label : integer ndarray with shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
-    inertia: float
+    inertia : float
         The final value of the inertia criterion (sum of squared distances to
         the closest centroid for all observations in the training set).
 

@@ -28,16 +28,6 @@ if multiprocessing:
     except ImportError:
         multiprocessing = None
 
-already_forked = int(os.environ.get('__JOBLIB_SPAWNED_PARALLEL__', 0))
-if already_forked:
-    raise ImportError('[joblib] Attempting to do parallel computing'
-            'without protecting your import on a system that does '
-            'not support forking. To use parallel-computing in a '
-            'script, you must protect you main loop using "if '
-            "__name__ == '__main__'"
-            '". Please see the joblib documentation on Parallel '
-            'for more information'
-        )
 
 # 2nd stage: validate that locking is available on the system and
 #            issue a warning if not
@@ -482,6 +472,17 @@ class Parallel(Logger):
                     'Parallel loops cannot be nested, setting n_jobs=1',
                     stacklevel=2)
             else:
+                already_forked = int(os.environ.get('__JOBLIB_SPAWNED_PARALLEL__', 0))
+                if already_forked:
+                    raise ImportError('[joblib] Attempting to do parallel computing'
+                            'without protecting your import on a system that does '
+                            'not support forking. To use parallel-computing in a '
+                            'script, you must protect you main loop using "if '
+                            "__name__ == '__main__'"
+                            '". Please see the joblib documentation on Parallel '
+                            'for more information'
+                        )
+
                 # Set an environment variable to avoid infinite loops
                 os.environ['__JOBLIB_SPAWNED_PARALLEL__'] = '1'
                 self._pool = multiprocessing.Pool(n_jobs)

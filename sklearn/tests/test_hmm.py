@@ -363,16 +363,15 @@ class GaussianHMMBaseTester(object):
                              [0, 0, 0, 0, 1.0]])
 
         h = hmm.GaussianHMM(n_components=5,
-                            covariance_type='full',
-                            startprob=startprob,
-                            transmat=transmat)
+                            covariance_type='full', startprob=startprob,
+                            transmat=transmat, n_iter=100, init_params='st')
 
         h.means_ = np.zeros((5, 10))
         h.covars_ = np.tile(np.identity(10), (5, 1, 1))
 
         obs = [h.sample(10)[0] for _ in range(10)]
 
-        h.fit(obs=obs, n_iter=100, init_params='st')
+        h.fit(obs=obs)
 
 
 class TestGaussianHMMWithSphericalCovars(GaussianHMMBaseTester, TestCase):
@@ -577,9 +576,9 @@ class GMMHMMBaseTester(object):
         self.transmat /= np.tile(self.transmat.sum(axis=1)[:, np.newaxis],
                                  (1, self.n_components))
 
-        self.gmms = []
+        self.gmms_ = []
         for state in xrange(self.n_components):
-            self.gmms.append(create_random_gmm(
+            self.gmms_.append(create_random_gmm(
                 self.n_mix, self.n_features, self.covariance_type,
                 prng=self.prng))
 
@@ -605,15 +604,15 @@ class GMMHMMBaseTester(object):
                           np.zeros((self.n_components - 2, self.n_components)))
 
     def test_eval_and_decode(self):
-        h = hmm.GMMHMM(self.n_components, gmms=self.gmms)
+        h = hmm.GMMHMM(self.n_components, gmms=self.gmms_)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
-        for g in h.gmms:
+        for g in h.gmms_:
             g.means_ *= 20
 
         refstateseq = np.repeat(range(self.n_components), 5)
         nobs = len(refstateseq)
-        obs = [h.gmms[x].sample(1).flatten() for x in refstateseq]
+        obs = [h.gmms_[x].sample(1).flatten() for x in refstateseq]
 
         ll, posteriors = h.eval(obs)
 
@@ -626,7 +625,7 @@ class GMMHMMBaseTester(object):
     def test_sample(self, n=1000):
         h = hmm.GMMHMM(self.n_components, self.covariance_type,
                        startprob=self.startprob, transmat=self.transmat,
-                       gmms=self.gmms)
+                       gmms=self.gmms_)
         samples = h.sample(n)[0]
         self.assertEqual(samples.shape, (n, self.n_features))
 
@@ -635,7 +634,7 @@ class GMMHMMBaseTester(object):
         h.startprob_ = self.startprob
         h.transmat_ = hmm.normalize(
             self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
-        h.gmms = self.gmms
+        h.gmms_ = self.gmms_
 
         # Create training data by sampling from the HMM.
         train_obs = [h.sample(n=10,

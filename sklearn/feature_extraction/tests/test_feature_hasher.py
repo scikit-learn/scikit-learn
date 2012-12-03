@@ -1,11 +1,9 @@
 import numpy as np
-import scipy.sparse as sp
 
 from sklearn.feature_extraction import FeatureHasher
 
 from nose.tools import assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_equal
-from sklearn.utils.testing import assert_in
 
 
 def test_feature_hasher_dicts():
@@ -68,7 +66,7 @@ def test_hasher_invalid_input():
     assert_raises(ValueError, FeatureHasher, n_features=0)
     assert_raises(TypeError, FeatureHasher, n_features='ham')
 
-    h = FeatureHasher(n_features=np.uint16(2**6))
+    h = FeatureHasher(n_features=np.uint16(2 ** 6))
     assert_raises(ValueError, h.transform, [])
     assert_raises(Exception, h.transform, [[5.5]])
     assert_raises(Exception, h.transform, [[None]])

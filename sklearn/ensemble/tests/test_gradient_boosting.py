@@ -12,6 +12,7 @@ from nose.tools import assert_raises
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state
 
+from sklearn.ensemble import gradient_boosting
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 
@@ -278,6 +279,22 @@ def test_check_max_features():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+def test_max_feature_regression():
+    """Test to make sure random state is set properly. """
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+
+    X_train, X_test = X[:2000], X[2000:]
+    y_train, y_test = y[:2000], y[2000:]
+
+    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=5,
+                                      max_depth=2, learning_rate=.1,
+                                      max_features=2, random_state=1)
+    gbrt.fit(X_train, y_train)
+    deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
+    assert deviance < 0.5, \
+           "GB failed with deviance %.4f" % deviance
+
+
 def test_staged_predict():
     """Test whether staged decision function eventually gives
     the same prediction.
@@ -299,6 +316,35 @@ def test_staged_predict():
         assert_equal(y.shape, y_pred.shape)
 
     assert_array_equal(y_pred, y)
+
+
+def test_staged_predict_proba():
+    """Test whether staged predict proba eventually gives
+    the same prediction.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=1200,
+                                     random_state=1)
+    X_train, y_train = X[:200], y[:200]
+    X_test, y_test = X[200:], y[200:]
+    clf = GradientBoostingClassifier(n_estimators=20)
+    # test raise ValueError if not fitted
+    assert_raises(ValueError, lambda X: np.fromiter(
+        clf.staged_predict_proba(X), dtype=np.float64), X_test)
+
+    clf.fit(X_train, y_train)
+
+    # test if prediction for last stage equals ``predict``
+    for y_pred in clf.staged_predict(X_test):
+        assert_equal(y_test.shape, y_pred.shape)
+
+    assert_array_equal(clf.predict(X_test), y_pred)
+
+    # test if prediction for last stage equals ``predict_proba``
+    for staged_proba in clf.staged_predict_proba(X_test):
+        assert_equal(y_test.shape[0], staged_proba.shape[0])
+        assert_equal(2, staged_proba.shape[1])
+
+    assert_array_equal(clf.predict_proba(X_test), staged_proba)
 
 
 def test_serialization():

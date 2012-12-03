@@ -9,8 +9,10 @@ import inspect
 import pkgutil
 
 import urllib2
-from StringIO import StringIO
 import scipy as sp
+from StringIO import StringIO
+from functools import wraps
+
 import sklearn
 from sklearn.base import BaseEstimator
 from .fixes import savemat
@@ -18,6 +20,7 @@ from .fixes import savemat
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
+from nose.tools import assert_not_equal
 from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_raises
@@ -172,3 +175,20 @@ def all_estimators():
 def set_random_state(estimator, random_state=0):
     if "random_state" in estimator.get_params().keys():
         estimator.set_params(random_state=random_state)
+
+
+def if_matplotlib(func):
+    """Test decorator that skips test if matplotlib not installed. """
+
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        try:
+            import matplotlib
+            matplotlib.use('Agg', warn=False)
+            # this fails if no $DISPLAY specified
+            matplotlib.pylab.figure()
+        except:
+            raise SkipTest('Matplotlib not available.')
+        else:
+            return func(*args, **kwargs)
+    return run_test
