@@ -42,6 +42,10 @@ class MaterializedRandomProjection(unittest.TestCase):
     def setUp(self):
         self.rp = SparseRandomProjection(n_components='auto', random_state=0)
 
+    def test_try_to_transform_before_fit(self):
+        rp = SparseRandomProjection(n_components='auto', random_state=0)
+        assert_raises(ValueError, rp.transform, data)
+
     def test_sparse_random_project_invalid_input(self):
         rp_11 = SparseRandomProjection(density=1.1)
         assert_raises(ValueError, rp_11.fit, data)
@@ -139,5 +143,3 @@ class MaterializedRandomProjection(unittest.TestCase):
 
         # ouput for sparse output will be sparse:
         assert sp.issparse(rp.transform(sparse_data))
-
-
