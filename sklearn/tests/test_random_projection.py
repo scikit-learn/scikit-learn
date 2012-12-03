@@ -68,8 +68,7 @@ class MaterializedRandomProjection(unittest.TestCase):
         assert_equal(rp.n_components_, 110)
         assert_equal(rp.density, 'auto')
         assert_almost_equal(rp.density_, 0.03, 2)
-        if self.materialize:
-            assert_equal(rp.components_.shape, (110, n_features))
+        assert_equal(rp.components_.shape, (110, n_features))
 
         projected_1 = rp.transform(data)
         assert_equal(projected_1.shape, (n_samples, 110))
