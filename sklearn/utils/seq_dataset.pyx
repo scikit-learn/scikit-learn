@@ -118,6 +118,7 @@ cdef class ArrayDataset(SequentialDataset):
     cdef void shuffle(self, seed):
         np.random.RandomState(seed).shuffle(self.index)
 
+
 cdef class CSRDataset(SequentialDataset):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
 
@@ -187,16 +188,55 @@ cdef class CSRDataset(SequentialDataset):
 
 cdef class PairwiseDataset:
     """Base class for datasets with sequential access to pairs."""
-
     """
     Calling next_pair() returns a random pair of examples with disagreeing labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
     """
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+
+        """Get the next pair of examples ``a`` and ``b`` from the dataset.
+
+        Parameters
+        ----------
+        a_data_ptr : np.float64**
+            A pointer to the double array which holds the feature
+            values of the first example in the pair.
+        b_data_ptr : np.float64**
+            A pointer to the double array which holds the feature
+            values of the second example in the pair.
+        x_ind_ptr : np.int32**
+            A pointer to the int32 array which holds the feature
+            indices of the next example.
+        nnz_a : int*
+            A pointer to an int holding the number of non-zero
+            values of the first example in the pair.
+        nnz_b : int*
+            A pointer to an int holding the number of non-zero
+            values of the second example in the pair.
+        y_a : np.float64*
+            The target value of first example in the pair.
+        y_b : np.float64*
+            The target value of second example in the pair.
+        """
+
+        raise NotImplementedError()    
+
+
+cdef class PairwiseRocDataset:
+    """Base class for datasets with sequential access to pairs.
+
+    Implements a sample index of
+    D. Sculley, Large-scale Learning to Rank, NIPS 2011
+    Calling next_pair() returns a random pair of examples with disagreeing labels.
+
+    The dtype of the numpy array is expected to be ``np.float64``
+    and C-style memory layout.
     """
+
     cdef void init_roc_index(self):
-        print("in init_roc_index")
         # Create an index of positives and negatives for fast sampling
         # of disagreeing pairs
         # FIXME use arrays of size n_samples and shrink afterwards
@@ -216,7 +256,7 @@ cdef class PairwiseDataset:
         self.neg_index = neg_index
         self.n_pos_samples = pos_index.shape[0]
         self.n_neg_samples = neg_index.shape[0]  
-    """
+    
     cdef void draw_roc_sample(self, INTEGER *a_idx, INTEGER *b_idx,
                           DOUBLE *y_a, DOUBLE *y_b):
 
@@ -266,14 +306,13 @@ cdef class PairwiseDataset:
         y_b : np.float64*
             The target value of second example in the pair.
         """
-
         raise NotImplementedError()
 
-cdef class PairwiseArrayDatasetRoc(PairwiseDataset):
+cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
 
-        """A ``PairwiseDataset`` backed by a two-dimensional numpy array.
+        """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
 
         Parameters
         ---------
@@ -297,7 +336,9 @@ cdef class PairwiseArrayDatasetRoc(PairwiseDataset):
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
         self.stride = X.strides[0] / X.strides[1]
         
-        #self.init_roc_index()
+        self.init_roc_index()
+        
+        """
         # Create an index of positives and negatives for fast sampling
         # of disagreeing pairs
         # FIXME use arrays of size n_samples and shrink afterwards
@@ -317,6 +358,7 @@ cdef class PairwiseArrayDatasetRoc(PairwiseDataset):
         self.neg_index = neg_index
         self.n_pos_samples = pos_index.shape[0]
         self.n_neg_samples = neg_index.shape[0]  
+        """
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
@@ -339,7 +381,50 @@ cdef class PairwiseArrayDatasetRoc(PairwiseDataset):
         b_data_ptr[0] = self.X_data_ptr + neg_offset
 
 
-cdef class PairwiseArrayDatasetRank(PairwiseDataset):
+cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
+    def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] X_data,
+                  np.ndarray[INTEGER, ndim=1, mode='c'] X_indptr,
+                  np.ndarray[INTEGER, ndim=1, mode='c'] X_indices,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
+
+        self.n_samples = Y.shape[0]
+
+        self.X_data_ptr = <DOUBLE *>X_data.data
+        self.Y_data_ptr = <DOUBLE *>Y.data
+
+        self.X_indptr_ptr = <INTEGER *>X_indptr.data
+        self.X_indices_ptr = <INTEGER *>X_indices.data
+
+        self.init_roc_index()
+
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, 
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+        
+        cdef INTEGER sample_a_idx
+        cdef INTEGER sample_b_idx
+        self.draw_roc_sample(&sample_a_idx, &sample_b_idx, y_a, y_b)
+        
+        # set vector a
+        cdef int offset = self.X_indptr_ptr[sample_a_idx]        
+        a_data_ptr[0] = self.X_data_ptr + offset
+        a_ind_ptr[0] = self.X_indices_ptr + offset
+        nnz_a[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset
+
+        # set vector b
+        offset = self.X_indptr_ptr[sample_b_idx]
+        b_data_ptr[0] = self.X_data_ptr + offset
+        b_ind_ptr[0] = self.X_indices_ptr + offset
+        nnz_b[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset        
+
+
+cdef class PairwiseRankDataset(PairwiseDataset):
+
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
+
+cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
@@ -422,65 +507,7 @@ cdef class PairwiseArrayDatasetRank(PairwiseDataset):
                 break
 
 
-cdef class PairwiseCSRDatasetRoc(PairwiseDataset):
-    def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] X_data,
-                  np.ndarray[INTEGER, ndim=1, mode='c'] X_indptr,
-                  np.ndarray[INTEGER, ndim=1, mode='c'] X_indices,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
-
-        self.n_samples = Y.shape[0]
-
-        self.X_data_ptr = <DOUBLE *>X_data.data
-        self.Y_data_ptr = <DOUBLE *>Y.data
-
-        self.X_indptr_ptr = <INTEGER *>X_indptr.data
-        self.X_indices_ptr = <INTEGER *>X_indices.data
-
-
-        #self.init_roc_index()
-
-        print("in init_roc_index")
-        # Create an index of positives and negatives for fast sampling
-        # of disagreeing pairs
-        # FIXME use arrays of size n_samples and shrink afterwards
-        positives = []
-        negatives = []
-        cdef Py_ssize_t i
-        for i in range(self.n_samples):
-            if self.Y_data_ptr[i] > 0:
-                positives.append(i)
-            else:
-                negatives.append(i)
-        cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] pos_index = np.array(positives, dtype=np.int32)
-        cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] neg_index = np.array(negatives, dtype=np.int32)
-        self.pos_index = pos_index
-        self.neg_index = neg_index
-        self.n_pos_samples = pos_index.shape[0]
-        self.n_neg_samples = neg_index.shape[0]  
-
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, 
-                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
-        
-        cdef INTEGER sample_a_idx
-        cdef INTEGER sample_b_idx
-        self.draw_roc_sample(&sample_a_idx, &sample_b_idx, y_a, y_b)
-        
-        # set vector a
-        cdef int offset = self.X_indptr_ptr[sample_a_idx]        
-        a_data_ptr[0] = self.X_data_ptr + offset
-        a_ind_ptr[0] = self.X_indices_ptr + offset
-        nnz_a[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset
-
-        # set vector b
-        offset = self.X_indptr_ptr[sample_b_idx]
-        b_data_ptr[0] = self.X_data_ptr + offset
-        b_ind_ptr[0] = self.X_indices_ptr + offset
-        nnz_b[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset        
-
-cdef class PairwiseCSRDatasetRank(PairwiseDataset):
+cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] X_data,
                   np.ndarray[INTEGER, ndim=1, mode='c'] X_indptr,
                   np.ndarray[INTEGER, ndim=1, mode='c'] X_indices,
@@ -491,7 +518,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseDataset):
 
         self.X_data_ptr = <DOUBLE *>X_data.data
         self.Y_data_ptr = <DOUBLE *>Y.data
-        
+
         self.X_indptr_ptr = <INTEGER *>X_indptr.data
         self.X_indices_ptr = <INTEGER *>X_indices.data
 
@@ -520,7 +547,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseDataset):
         # set vector a
         for i in range(num_chances):
             a_idx = rand() % self.n_samples
-            a_offset = a_idx * self.stride
+            a_offset = self.X_indptr_ptr[a_idx]
             a_data_ptr[0] = self.X_data_ptr + a_offset
             a_ind_ptr[0] = self.X_indices_ptr + a_offset
             nnz_a[0] = self.X_indptr_ptr[a_idx + 1] - a_offset
@@ -540,7 +567,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseDataset):
                 continue
             if random_int < len(idx_list):
                 b_idx = idx_list[random_int]
-                b_offset = b_idx * self.stride
+                b_offset = self.X_indptr_ptr[b_idx]
                 b_data_ptr[0] = self.X_data_ptr + b_offset
                 b_ind_ptr[0] = self.X_indices_ptr + b_offset
                 nnz_b[0] = self.X_indptr_ptr[b_idx + 1] - b_offset

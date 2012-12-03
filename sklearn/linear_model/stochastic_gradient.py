@@ -21,8 +21,8 @@ from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
 from .sgd_fast import ranking_sgd as ranking_sgd
-from ..utils.seq_dataset import ArrayDataset, CSRDataset, PairwiseDataset,\
-PairwiseArrayDatasetRoc, PairwiseArrayDatasetRank, PairwiseCSRDatasetRoc, \
+from ..utils.seq_dataset import ArrayDataset, CSRDataset,\
+PairwiseArrayDatasetRoc, PairwiseCSRDatasetRoc, PairwiseArrayDatasetRank, \
 PairwiseCSRDatasetRank
 from .sgd_fast import Hinge
 from .sgd_fast import Log
@@ -246,10 +246,10 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
                 query_id = np.ones(X.shape[0])
             if sp.issparse(X):
                 dataset = PairwiseCSRDatasetRank(X.data, X.indptr, X.indices,
-                                                 y_i)#, sample_weight)
+                                                 y_i, query_id)#, sample_weight)
                 intercept_decay = SPARSE_INTERCEPT_DECAY
             else:
-                dataset = PairwiseArrayDatasetRank(X, y_i)
+                dataset = PairwiseArrayDatasetRank(X, y_i, query_id)
                 intercept_decay = 1.0
     elif sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices, y_i)#, sample_weight)
@@ -1117,7 +1117,9 @@ class SGDRanking(SGDClassifier):
         z : float
 
         """
-        tau, _ = stats.kendalltau(np.dot(X, self.coef_[0]), y)
+        scores = safe_sparse_dot(X,self.coef_.T) + self.intercept_
+        scores = scores.ravel()
+        tau, _ = stats.kendalltau(scores, y)
         return np.abs(tau)
 
 

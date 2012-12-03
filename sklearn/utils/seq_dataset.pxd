@@ -48,12 +48,22 @@ cdef class CSRDataset(SequentialDataset):
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
     cdef void shuffle(self, seed)
 
+
 cdef class PairwiseDataset:
     cdef Py_ssize_t n_samples
-    cdef DOUBLE *X_data_ptr
-    cdef DOUBLE *Y_data_ptr
 
-    #cdef void init_roc_index(self)
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr,
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
+
+cdef class PairwiseRocDataset(PairwiseDataset):
+    cdef DOUBLE *Y_data_ptr
+    cdef INTEGER[::1] pos_index
+    cdef INTEGER[::1] neg_index
+    cdef int n_pos_samples
+    cdef int n_neg_samples
+
+    cdef void init_roc_index(self)
     cdef void draw_roc_sample(self, INTEGER *a_idx, INTEGER *b_idx,
                           DOUBLE *y_a, DOUBLE *y_b)
 
@@ -61,49 +71,62 @@ cdef class PairwiseDataset:
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr,
                    int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
 
-
-cdef class PairwiseArrayDatasetRoc(PairwiseDataset):
+cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
+    
     cdef Py_ssize_t n_features
+    cdef DOUBLE *X_data_ptr
+    cdef int stride
     cdef np.ndarray feature_indices
     cdef INTEGER *feature_indices_ptr
-
-    cdef int stride
-
-    cdef INTEGER[::1] pos_index
-    cdef INTEGER[::1] neg_index
-    cdef int n_pos_samples
-    cdef int n_neg_samples
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
                    int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
 
-cdef class PairwiseArrayDatasetRank(PairwiseDataset):
+
+cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
+    cdef DOUBLE *X_data_ptr
+    cdef INTEGER *X_indptr_ptr
+    cdef INTEGER *X_indices_ptr
+
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
+
+
+cdef class PairwiseRankDataset(PairwiseDataset):
+    cdef DOUBLE *Y_data_ptr
+    
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
+
+
+cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
     cdef Py_ssize_t n_features
+    cdef DOUBLE *X_data_ptr
     cdef int stride
     cdef np.ndarray feature_indices
     cdef INTEGER *feature_indices_ptr
 
     cdef dict group_id_y_to_index
     cdef dict group_id_y_to_count
-    cdef DOUBLE *query_data_ptr
+    cdef DOUBLE *query_data_ptr    
+
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
 
 
-cdef class PairwiseCSRDatasetRoc(PairwiseDataset):
-    cdef INTEGER *X_indptr_ptr
-    cdef INTEGER *X_indices_ptr
-
-    cdef INTEGER[::1] pos_index
-    cdef INTEGER[::1] neg_index
-    cdef int n_pos_samples
-    cdef int n_neg_samples
-
-cdef class PairwiseCSRDatasetRank(PairwiseDataset):
-
+cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
+    cdef DOUBLE *X_data_ptr
     cdef INTEGER *X_indptr_ptr
     cdef INTEGER *X_indices_ptr
 
     cdef dict group_id_y_to_index
     cdef dict group_id_y_to_count
-    cdef int sampling_type
-    cdef DOUBLE *query_data_ptr
+    cdef DOUBLE *query_data_ptr    
+
+    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
