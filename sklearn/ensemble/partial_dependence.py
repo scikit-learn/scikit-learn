@@ -379,5 +379,6 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             ax.set_ylim(pdp_lim[1])
         axs.append(ax)
 
-    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
+                        hspace=0.3)
     return fig, axs
