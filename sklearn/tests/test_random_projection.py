@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.metrics import euclidean_distances
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import random_dot
 
 from sklearn.utils.testing import (assert_false, assert_less,
                                    assert_raises, assert_raise_message,
@@ -36,55 +35,6 @@ def test_invalid_jl_domain():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
-
-
-def test_random_dot():
-    n_components = 300
-    density = 0.01
-
-    # random dot with dense array input (and output)
-    projected_array_array = random_dot(data, n_components, density,
-                                        random_state=0)
-    assert_equal(projected_array_array.shape, (n_samples, n_components))
-    assert_almost_equal(projected_array_array.mean(), 0.0, 2)
-
-    # random dot with CSR input and dense array output
-    projected_csr_array = random_dot(data_csr, n_components, density,
-                                      random_state=0, dense_output=True)
-    assert_equal(projected_csr_array.shape, (n_samples, n_components))
-
-    # random dot with CSR input and sparse matrix output
-    projected_csr_coo = random_dot(data_csr, n_components, density,
-                                    random_state=0, dense_output=False)
-    assert_equal(projected_csr_coo.shape, (n_samples, n_components))
-
-    # check that the projections are identical
-    assert_array_almost_equal(projected_array_array, projected_csr_array)
-    assert_array_almost_equal(projected_array_array,
-                              projected_csr_coo.toarray())
-
-
-def test_random_dot_invalid_input():
-    assert_raises(ValueError, random_dot, data, -10)
-
-
-def test_random_dot_preallocated_out():
-    n_components = 10
-    # check value error on invalid output shape
-    assert_raises(ValueError, random_dot, data, n_components, out=data)
-
-    # compare out and no out
-    array_no_out = random_dot(data, n_components, random_state=0)
-
-    array_out = np.ones((data.shape[0], n_components), dtype=data.dtype)
-    random_dot(data, n_components, random_state=0, out=array_out)
-
-    assert_array_almost_equal(array_no_out, array_out)
-
-    # check with sparse input as well
-    array_out.fill(1.0)
-    random_dot(data_csr, n_components, random_state=0, out=array_out)
-    assert_array_almost_equal(array_no_out, array_out)
 
 
 class MaterializedRandomProjection(unittest.TestCase):
@@ -147,12 +97,9 @@ class MaterializedRandomProjection(unittest.TestCase):
                                     materialize=self.materialize)
         projected = rp.fit_transform(data)
         assert_equal(projected.shape, (n_samples, 100))
-        if self.materialize:
-            assert_equal(rp.components_.shape, (100, n_features))
-            assert_less(rp.components_.nnz, 110)  # close to 1% density
-            assert_less(90, rp.components_.nnz)  # close to 1% density
-        else:
-            assert_false(hasattr(rp, 'components_'))
+        assert_equal(rp.components_.shape, (100, n_features))
+        assert_less(rp.components_.nnz, 110)  # close to 1% density
+        assert_less(90, rp.components_.nnz)  # close to 1% density
 
     def test_sparse_projection_embedding_quality(self):
         eps = 0.1
