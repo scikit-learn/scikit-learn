@@ -26,6 +26,30 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 
+class MockListClassifier(BaseEstimator):
+    """Dummy classifier to test the cross-validation.
+
+    Checks that GridSearchCV didn't convert X to array.
+    """
+    def __init__(self, foo_param=0):
+        self.foo_param = foo_param
+
+    def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
+        assert_true(isinstance(X, list))
+        return self
+
+    def predict(self, T):
+        return T.shape[0]
+
+    def score(self, X=None, Y=None):
+        if self.foo_param > 1:
+            score = 1.
+        else:
+            score = 0.
+        return score
+
+
 class MockClassifier(BaseEstimator):
     """Dummy classifier to test the cross-validation"""
 
@@ -196,6 +220,10 @@ def test_cross_val_score():
 
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+    # test with X as list
+    clf = MockListClassifier()
+    scores = cval.cross_val_score(clf, X.tolist(), y)
 
 
 def test_cross_val_score_precomputed():
