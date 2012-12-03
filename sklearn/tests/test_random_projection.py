@@ -7,20 +7,12 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import random_dot
 
-from sklearn.utils.testing import assert_raise_message
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_equal
-from nose.tools import assert_almost_equal
-from nose.tools import assert_raises
-from nose.tools import assert_false
-
-
-def assert_lower(a, b, details=None):
-    message = "%r is not lower than %r" % (a, b)
-    if details is not None:
-        message += ": " + details
-    assert a < b, message
+from sklearn.utils.testing import (assert_false, assert_less,
+                                   assert_raises, assert_raise_message,
+                                   assert_array_equal,
+                                   assert_array_almost_equal,
+                                   assert_equal, assert_almost_equal
+                                   )
 
 
 # Make a some random data with uniformly located non zero entries with
@@ -164,8 +156,8 @@ class MaterializedRandomProjection(unittest.TestCase):
         assert_equal(projected.shape, (n_samples, 100))
         if self.materialize:
             assert_equal(rp.components_.shape, (100, n_features))
-            assert_lower(rp.components_.nnz, 110)  # close to 1% density
-            assert_lower(90, rp.components_.nnz)  # close to 1% density
+            assert_less(rp.components_.nnz, 110)  # close to 1% density
+            assert_less(90, rp.components_.nnz)  # close to 1% density
         else:
             assert_false(hasattr(rp, 'components_'))
 
@@ -194,8 +186,8 @@ class MaterializedRandomProjection(unittest.TestCase):
         # check that the automatically tuned values for the density respect the
         # contract for eps: pairwise distances are preserved according to the
         # Johnson Lindenstrauss bound
-        assert_lower(distances_ratio.max(), 1 + eps)
-        assert_lower(1 - eps, distances_ratio.min())
+        assert_less(distances_ratio.max(), 1 + eps)
+        assert_less(1 - eps, distances_ratio.min())
 
     def test_output_representation(self):
         # when using sparse input, the projected data can be forced to be a
