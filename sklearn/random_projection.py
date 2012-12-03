@@ -222,8 +222,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     much more memory efficient and allowing faster computation of the
     projected data.
 
-    The implementation uses either a materialized random CSR matrix or
-    a simulated dot product by a random matrix implicitly defined by a
+    The implementation uses either a random CSR matrix defined by a
     hashing function and a seed.
 
     If we note `s = 1 / density` the components of the random matrix are:
@@ -284,7 +283,7 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
         Concrete number of components computed when n_components="auto".
 
     components_: CSR matrix with shape [n_components, n_features]
-        Random matrix used for the projection if materialize=True.
+        Random matrix used for the projection.
 
     density_: float in range 0.0 - 1.0
         Concrete density computed from when density="auto".
@@ -301,13 +300,12 @@ class SparseRandomProjection(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components='auto', density='auto', eps=0.5,
-                 materialize=True, dense_output=False, random_state=None):
+                 dense_output=False, random_state=None):
         self.n_components = n_components
         self.density = density
         self.eps = eps
         self.dense_output = dense_output
         self.random_state = random_state
-        self.materialize = materialize
 
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix
