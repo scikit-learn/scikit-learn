@@ -43,7 +43,7 @@ class MaterializedRandomProjection(unittest.TestCase):
         self.rp = SparseRandomProjection(n_components='auto', random_state=0)
 
     def test_sparse_random_project_invalid_input(self):
-        rp_08 = SparseRandomProjection(density=0.8)
+        rp_08 = SparseRandomProjection(density=1.1)
         assert_raises(ValueError, rp_08.fit, data)
         assert_raises(ValueError, self.rp.fit, [0, 1, 2])
 
