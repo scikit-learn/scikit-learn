@@ -39,16 +39,11 @@ def test_invalid_jl_domain():
 
 class MaterializedRandomProjection(unittest.TestCase):
 
-    materialize = True
-
     def setUp(self):
-        self.rp = SparseRandomProjection(n_components='auto',
-                                         materialize=self.materialize,
-                                         random_state=0)
+        self.rp = SparseRandomProjection(n_components='auto', random_state=0)
 
     def test_sparse_random_project_invalid_input(self):
-        rp_08 = SparseRandomProjection(
-            density=0.8, materialize=self.materialize)
+        rp_08 = SparseRandomProjection(density=0.8)
         assert_raises(ValueError, rp_08.fit, data)
         assert_raises(ValueError, self.rp.fit, [0, 1, 2])
 
@@ -57,8 +52,7 @@ class MaterializedRandomProjection(unittest.TestCase):
 
     def test_too_many_samples_to_find_a_safe_embedding(self):
         data, _ = make_sparse_random_data(1000, 100, 1000)
-        rp = SparseRandomProjection(
-            n_components='auto', eps=0.1, materialize=self.materialize)
+        rp = SparseRandomProjection(n_components='auto', eps=0.1)
         expected_msg = (
             'eps=0.100000 and n_samples=1000 lead to a target dimension'
             ' of 5920 which is larger than the original space with'
@@ -85,16 +79,14 @@ class MaterializedRandomProjection(unittest.TestCase):
         assert_array_equal(projected_1, projected_2)
 
         # fit transform with same random seed will lead to the same results
-        rp2 = SparseRandomProjection(materialize=self.materialize,
-                                     random_state=0)
+        rp2 = SparseRandomProjection(random_state=0)
         projected_3 = rp2.fit_transform(data)
         assert_array_equal(projected_1, projected_3)
 
         # it is also possible to fix the number of components and the density
         # level
         rp = SparseRandomProjection(n_components=100, density=0.001,
-                                    random_state=0,
-                                    materialize=self.materialize)
+                                    random_state=0)
         projected = rp.fit_transform(data)
         assert_equal(projected.shape, (n_samples, 100))
         assert_equal(rp.components_.shape, (100, n_features))
@@ -105,8 +97,7 @@ class MaterializedRandomProjection(unittest.TestCase):
         eps = 0.1
         data, _ = make_sparse_random_data(10, 5000, 10000)
         rp = SparseRandomProjection(n_components='auto', density='auto',
-                                    materialize=self.materialize, eps=eps,
-                                    random_state=0)
+                                    eps=eps, random_state=0)
         projected = rp.fit_transform(data)
 
         original_distances = euclidean_distances(data, squared=True)
@@ -133,7 +124,6 @@ class MaterializedRandomProjection(unittest.TestCase):
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
         rp = SparseRandomProjection(n_components=100, dense_output=True,
-                                    materialize=self.materialize,
                                     random_state=0)
         rp.fit(data)
         assert isinstance(rp.transform(data), np.ndarray)
@@ -143,7 +133,6 @@ class MaterializedRandomProjection(unittest.TestCase):
 
         # the output can be left to a sparse matrix instead
         rp = SparseRandomProjection(n_components=100, dense_output=False,
-                                    materialize=self.materialize,
                                     random_state=0)
         rp = rp.fit(data)
         # output for dense input will stay dense:
@@ -153,7 +142,3 @@ class MaterializedRandomProjection(unittest.TestCase):
         assert sp.issparse(rp.transform(sparse_data))
 
 
-class HashingSparseRandomProjection(MaterializedRandomProjection):
-    """Same tests as above but without allocating the projection matrix"""
-
-    materialize = False
