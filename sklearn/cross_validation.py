@@ -1036,8 +1036,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
     """Inner loop for cross validation"""
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
     fit_params = dict([(k, np.asarray(v)[train]
-                        if hasattr(v, '__len__')
-                        and len(v) == n_samples else v)
+                       if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
     if not hasattr(X, "shape"):
         if getattr(estimator, "_pairwise", False):
