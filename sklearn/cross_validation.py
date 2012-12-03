@@ -1026,15 +1026,22 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
     fit_params = dict([(k, np.asarray(v)[train] if hasattr(v, '__len__') and
                         len(v) == n_samples else v)
                        for k, v in fit_params.items()])
-    if getattr(estimator, "_pairwise", False):
-        # X is a precomputed square kernel matrix
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X should be a square kernel matrix")
-        X_train = X[np.ix_(train, train)]
-        X_test = X[np.ix_(test, train)]
+    if isinstance(X, list) or isinstance(X, tuple):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_train = [X[idx] for idx in train]
+        X_test = [X[idx] for idx in test]
     else:
-        X_train = X[safe_mask(X, train)]
-        X_test = X[safe_mask(X, test)]
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            X_train = X[np.ix_(train, train)]
+            X_test = X[np.ix_(test, train)]
+        else:
+            X_train = X[safe_mask(X, train)]
+            X_test = X[safe_mask(X, test)]
 
     if y is None:
         estimator.fit(X_train, **fit_params)
