@@ -46,8 +46,9 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import array2d, check_random_state, check_arrays
+from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..metrics import r2_score
+from ..preprocessing import OneHotEncoder
 
 from .base import BaseEnsemble
 
@@ -78,12 +79,14 @@ def _parallel_build_trees(n_trees, forest, X, y,
             n_samples = X.shape[0]
             indices = random_state.randint(0, n_samples, n_samples)
             tree.fit(X[indices], y[indices],
-                     sample_mask=sample_mask, X_argsorted=X_argsorted)
+                     sample_mask=sample_mask, X_argsorted=X_argsorted,
+                     check_input=False)
             tree.indices_ = indices
 
         else:
             tree.fit(X, y,
-                     sample_mask=sample_mask, X_argsorted=X_argsorted)
+                     sample_mask=sample_mask, X_argsorted=X_argsorted,
+                     check_input=False)
 
         trees.append(tree)
 
@@ -182,7 +185,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
     @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=[],
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
@@ -207,6 +210,23 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.feature_importances_ = None
 
         self.verbose = verbose
+
+    def apply(self, X):
+        """Apply trees in the forest to X, return leaf indices.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Input data.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators]
+            For each datapoint x in X and for each tree in the forest,
+            return the index of the leaf x ends up in.
+        """
+        X = array2d(X, dtype=np.float32, order='C')
+        return np.array([est.tree_.apply(X) for est in self.estimators_]).T
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -386,13 +406,14 @@ class ForestClassifier(BaseForest, ClassifierMixin):
     @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=[],
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
                        n_jobs=1,
                        random_state=None,
                        verbose=0):
+
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -528,7 +549,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
     @abstractmethod
     def __init__(self, base_estimator,
                        n_estimators=10,
-                       estimator_params=[],
+                       estimator_params=tuple(),
                        bootstrap=False,
                        compute_importances=False,
                        oob_score=False,
@@ -1136,3 +1157,145 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
+
+
+class RandomTreesEmbedding(BaseForest):
+    """An ensemble of totally random trees.
+
+    An unsupervised transformation of a dataset to a high-dimensional
+    sparse representation. A datapoint is coded according to which leaf of
+    each tree it is sorted into. Using a one-hot encoding of the leaves,
+    this leads to a binary coding with as many ones as trees in the forest.
+
+    The dimensionality of the resulting representation is approximately
+    ``n_estimators * 2 ** max_depth``.
+
+    Parameters
+    ----------
+    n_estimators : int
+        Number of trees in the forest.
+
+    max_depth : int
+        Maximum depth of each tree.
+
+    min_samples_split : integer, optional (default=1)
+        The minimum number of samples required to split an internal node.
+        Note: this parameter is tree-specific.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples in newly created leaves.  A split is
+        discarded if after the split, one of the leaves would contain less then
+        ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_density : float, optional (default=0.1)
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
+
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the tree building process.
+
+    Attributes
+    ----------
+    `estimators_`: list of DecisionTreeClassifier
+        The collection of fitted sub-estimators.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
+           visual codebooks using randomized clustering forests"
+           NIPS 2007
+
+    """
+
+    def __init__(self, n_estimators=10,
+                       max_depth=5,
+                       min_samples_split=1,
+                       min_samples_leaf=1,
+                       min_density=0.1,
+                       n_jobs=1,
+                       random_state=None,
+                       verbose=0):
+        super(RandomTreesEmbedding, self).__init__(
+            base_estimator=ExtraTreeRegressor(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                "min_samples_leaf", "min_density", "max_features",
+                "random_state"),
+            bootstrap=False,
+            compute_importances=False,
+            oob_score=False,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose)
+
+        self.criterion = 'mse'
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_density = min_density
+        self.max_features = 1
+
+    def fit(self, X, y=None):
+        """Fit estimator.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data used to build forests.
+        """
+        self.fit_transform(X, y)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit estimator and transform dataset.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data used to build forests.
+
+        Returns
+        -------
+        X_transformed: sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
+        X = safe_asarray(X)
+        rnd = check_random_state(self.random_state)
+        y = rnd.uniform(size=X.shape[0])
+        super(RandomTreesEmbedding, self).fit(X, y)
+        self.one_hot_encoder_ = OneHotEncoder()
+        return self.one_hot_encoder_.fit_transform(self.apply(X))
+
+    def transform(self, X):
+        """Transform dataset.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_transformed: sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
+        return self.one_hot_encoder_.transform(self.apply(X))

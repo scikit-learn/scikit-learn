@@ -1,7 +1,6 @@
 import numpy as np
 
-from sklearn.linear_model.isotonic_regression_ import isotonic_regression
-from sklearn.linear_model import IsotonicRegression
+from sklearn.isotonic import isotonic_regression, IsotonicRegression
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
@@ -21,7 +20,8 @@ def test_isotonic_regression():
     # check that it is immune to permutation
     perm = np.random.permutation(len(y))
     ir = IsotonicRegression(y_min=0., y_max=1.)
-    assert_array_equal(ir.fit_transform(x[perm], y[perm]), ir.fit_transform(x, y)[perm])
+    assert_array_equal(ir.fit_transform(x[perm], y[perm]),
+                       ir.fit_transform(x, y)[perm])
     assert_array_equal(ir.transform(x[perm]), ir.transform(x)[perm])
 
 

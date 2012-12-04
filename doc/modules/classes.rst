@@ -159,9 +159,11 @@ Loaders
    datasets.load_linnerud
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_california_housing
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.dump_svmlight_file
 
 Samples generator
 -----------------
@@ -231,6 +233,29 @@ Samples generator
    decomposition.dict_learning_online
    decomposition.sparse_encode
 
+.. _dummy_ref:
+
+:mod:`sklearn.dummy`: Dummy estimators
+======================================
+
+.. automodule:: sklearn.dummy
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`model_evaluation` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   dummy.DummyClassifier
+   dummy.DummyRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
 
 .. _ensemble_ref:
 
@@ -250,6 +275,7 @@ Samples generator
    :template: class.rst
 
    ensemble.RandomForestClassifier
+   ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
@@ -259,6 +285,23 @@ Samples generator
 .. autosummary::
    :toctree: generated/
    :template: function.rst
+
+
+partial dependence
+------------------
+
+.. automodule:: sklearn.ensemble.partial_dependence
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _feature_extraction_ref:
@@ -279,6 +322,7 @@ Samples generator
    :template: class.rst
 
    feature_extraction.DictVectorizer
+   feature_extraction.FeatureHasher
 
 From images
 -----------
@@ -432,6 +476,30 @@ From text
    hmm.MultinomialHMM
    hmm.GMMHMM
 
+.. _isotonic_ref:
+
+:mod:`sklearn.isotonic`: Isotonic regression
+============================================
+
+.. automodule:: sklearn.isotonic
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`isotonic` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   isotonic.IsotonicRegression
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   isotonic.isotonic_regression
 
 .. _kernel_approximation_ref:
 
@@ -513,7 +581,6 @@ From text
    linear_model.BayesianRidge
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.IsotonicRegression
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso
@@ -526,6 +593,8 @@ From text
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
    linear_model.OrthogonalMatchingPursuit
+   linear_model.PassiveAggressiveClassifier
+   linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
@@ -540,7 +609,6 @@ From text
    :toctree: generated/
    :template: function.rst
 
-   linear_model.isotonic_regression
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path
@@ -568,12 +636,14 @@ From text
     manifold.LocallyLinearEmbedding
     manifold.Isomap
     manifold.MDS
+    manifold.SpectralEmbedding
 
 .. autosummary::
     :toctree: generated
     :template: function.rst
 
     manifold.locally_linear_embedding
+    manifold.spectral_embedding
 
 
 .. _metrics_ref:
@@ -658,15 +728,17 @@ Pairwise metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.pairwise.additive_chi2_kernel
+   metrics.pairwise.chi2_kernel
+   metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
-   metrics.pairwise.manhattan_distances
+   metrics.pairwise.kernel_metrics
    metrics.pairwise.linear_kernel
+   metrics.pairwise.manhattan_distances
+   metrics.pairwise.pairwise_distances
+   metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
-   metrics.pairwise.distance_metrics
-   metrics.pairwise.pairwise_distances
-   metrics.pairwise.kernel_metrics
-   metrics.pairwise.pairwise_kernels
 
 
 .. _mixture_ref:
@@ -844,15 +916,17 @@ Pairwise metrics
    preprocessing.LabelEncoder
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
+   preprocessing.OneHotEncoder
    preprocessing.StandardScaler
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   preprocessing.scale
-   preprocessing.normalize
+   preprocessing.add_dummy_feature
    preprocessing.binarize
+   preprocessing.normalize
+   preprocessing.scale
 
 
 :mod:`sklearn.qda`: Quadratic Discriminant Analysis

@@ -20,7 +20,8 @@ import numpy as np
 import pylab as pl
 from matplotlib.collections import LineCollection
 
-from sklearn.linear_model import IsotonicRegression, LinearRegression
+from sklearn.linear_model import LinearRegression
+from sklearn.isotonic import IsotonicRegression
 from sklearn.utils import check_random_state
 
 n = 100

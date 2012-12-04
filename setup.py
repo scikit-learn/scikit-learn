@@ -106,6 +106,20 @@ if __name__ == "__main__":
         if res != 0:
             raise Exception('2to3 failed, exiting ...')
 
+        # Ugly hack to make pip work with Python 3, see
+        # http://projects.scipy.org/numpy/ticket/1857.
+        # Explanation: pip messes with __file__ which interacts badly with the
+        # change in directory due to the 2to3 conversion.  Therefore we restore
+        # __file__ to what it would have been otherwise.
+        global __file__
+        __file__ = os.path.join(os.curdir, os.path.basename(__file__))
+        if '--egg-base' in sys.argv: 
+            # Change pip-egg-info entry to absolute path, so pip can find it 
+            # after changing directory. 
+            idx = sys.argv.index('--egg-base')
+            if sys.argv[idx + 1] == 'pip-egg-info': 
+                sys.argv[idx + 1] = os.path.join(old_path, 'pip-egg-info') 
+
     os.chdir(local_path)
     sys.path.insert(0, local_path)
 

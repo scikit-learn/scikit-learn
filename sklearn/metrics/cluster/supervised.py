@@ -9,19 +9,18 @@ better.
 # License: BSD Style.
 
 from math import log
-from scipy.misc import comb
-from scipy.special import gammaln
-from scipy.sparse import coo_matrix
 
+from scipy.misc import comb
+from scipy.sparse import coo_matrix
 import numpy as np
 
 from ...utils.fixes import unique
-
-# the exact version if faster for k == 2: use it by default globally in
-# this module instead of the float approximate variant
+from .expected_mutual_info_fast import expected_mutual_information
 
 
 def comb2(n):
+    # the exact version if faster for k == 2: use it by default globally in
+    # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
 
 
@@ -726,53 +725,6 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
     return nmi
-
-
-def expected_mutual_information(contingency, n_samples):
-    """Calculate the expected mutual information for two labelings."""
-    R, C = contingency.shape
-    N = float(n_samples)
-    a = np.sum(contingency, axis=1, dtype='int')
-    b = np.sum(contingency, axis=0, dtype='int')
-    # There are three major terms to the EMI equation, which are multiplied to
-    # and then summed over varying nij values.
-    # While nijs[0] will never be used, having it simplifies the indexing.
-    nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
-    nijs[0] = 1  # Stops divide by zero warnings. As its not used, no issue.
-    # term1 is nij / N
-    term1 = nijs / N
-    # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
-    # term2 uses the outer product
-    log_ab_outer = np.log(np.outer(a, b))
-    # term2 uses N * nij
-    log_Nnij = np.log(N * nijs)
-    # term3 is large, and involved many factorials. Calculate these in log
-    # space to stop overflows.
-    gln_a = gammaln(a + 1)
-    gln_b = gammaln(b + 1)
-    gln_Na = gammaln(N - a + 1)
-    gln_Nb = gammaln(N - b + 1)
-    gln_N = gammaln(N + 1)
-    gln_nij = gammaln(nijs + 1)
-    # start and end values for nij terms for each summation.
-    start = np.array([[v - N + w for w in b] for v in a], dtype='int')
-    start = np.maximum(start, 1)
-    end = np.minimum(np.resize(a, (C, R)).T, np.resize(b, (R, C))) + 1
-    # emi itself is a summation over the various values.
-    emi = 0
-    for i in range(R):
-        for j in range(C):
-            for nij in range(start[i][j], end[i][j]):
-                term2 = log_Nnij[nij] - log_ab_outer[i][j]
-                # Numerators are positive, denominators are negative.
-                gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
-                       - gln_N - gln_nij[nij] - gammaln(a[i] - nij + 1)
-                       - gammaln(b[j] - nij + 1)
-                       - gammaln(N - a[i] - b[j] + nij + 1))
-                term3 = np.exp(gln)
-                # Add the product of all terms.
-                emi += (term1[nij] * term2 * term3)
-    return emi
 
 
 def entropy(labels):

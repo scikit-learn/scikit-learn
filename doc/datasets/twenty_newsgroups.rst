@@ -9,7 +9,7 @@ and the other one for testing (or for performance evaluation). The split
 between the train and test set is based upon a messages posted before
 and after a specific date.
 
-This module contains two loaders. The first one, 
+This module contains two loaders. The first one,
 ``sklearn.datasets.fetch_20newsgroups``,
 returns a list of the raw text files that can be fed to text feature
 extractors such as :class:`sklearn.feature_extraction.text.Vectorizer`
@@ -100,7 +100,7 @@ zero features)::
   >>> vectors.nnz / vectors.shape[0]
   118
 
-``sklearn.datasets.fetch_20newsgroups_vectorized`` is a function which returns 
+``sklearn.datasets.fetch_20newsgroups_vectorized`` is a function which returns
 ready-to-use tfidf features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
@@ -112,5 +112,3 @@ ready-to-use tfidf features instead of file names.
    * :ref:`example_grid_search_text_feature_extraction.py`
 
    * :ref:`example_document_classification_20newsgroups.py`
-
-

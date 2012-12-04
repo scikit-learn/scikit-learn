@@ -17,10 +17,18 @@ GridSearchCV
 The main class for implementing hyperparameters grid search in
 scikit-learn is :class:`grid_search.GridSearchCV`. This class is passed
 a base model instance (for example ``sklearn.svm.SVC()``) along with a
-grid of potential hyper-parameter values such as::
+grid of potential hyper-parameter values specified with the `param_grid`
+attribute. For instace the following `param_grid`::
 
-  [{'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
-   {'C': [1, 10, 100, 1000], 'kernel': ['linear']}]
+  param_grid = [
+    {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+    {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+   ]
+
+specifies that two grids should be explored: one with a linear kernel and
+C values in [1, 10, 100, 1000], and the second one with an RBG kernel,
+and the cross-product of C values ranging in [1, 10, 100, 1000] and gamma
+values in [0.001, 0.0001].
 
 The :class:`grid_search.GridSearchCV` instance implements the usual
 estimator API: when "fitting" it on a dataset all the possible

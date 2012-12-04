@@ -5,8 +5,8 @@
 
 import numpy as np
 from scipy import interpolate
-from ..base import BaseEstimator, TransformerMixin, RegressorMixin
-from ..utils import as_float_array, check_arrays
+from .base import BaseEstimator, TransformerMixin, RegressorMixin
+from .utils import as_float_array, check_arrays
 
 
 def isotonic_regression(y, weight=None, y_min=None, y_max=None):
@@ -110,7 +110,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     where:
         - y[i] are inputs (real numbers)
         - y_[i] are fitted
-        - X specifies the order. If X is non-decreasing then y_ is non-decreasing.
+        - X specifies the order.
+          If X is non-decreasing then y_ is non-decreasing.
         - w[i] are optional strictly positive weights (default to 1.0)
 
     Parameters

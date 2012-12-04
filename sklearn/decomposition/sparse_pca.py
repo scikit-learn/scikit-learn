@@ -46,10 +46,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     n_jobs : int,
         Number of parallel jobs to run.
 
-    U_init : array of shape (n_samples, n_atoms),
+    U_init : array of shape (n_samples, n_components),
         Initial values for the loadings for warm restart scenarios.
 
-    V_init : array of shape (n_atoms, n_features),
+    V_init : array of shape (n_components, n_features),
         Initial values for the components for warm restart scenarios.
 
     verbose :

@@ -23,10 +23,11 @@ from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
                    ridge_regression
 from .logistic import LogisticRegression
 from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
+from .passive_aggressive import PassiveAggressiveClassifier
+from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 from .randomized_l1 import RandomizedLasso, RandomizedLogisticRegression, \
                            lasso_stability_path
-from .isotonic_regression_ import IsotonicRegression, isotonic_regression
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -48,6 +49,8 @@ __all__ = ['ARDRegression',
            'MultiTaskElasticNet',
            'MultiTaskLasso',
            'OrthogonalMatchingPursuit',
+           'PassiveAggressiveClassifier',
+           'PassiveAggressiveRegressor',
            'Perceptron',
            'RandomizedLasso',
            'RandomizedLogisticRegression',

@@ -1,7 +1,7 @@
 .. _introduction:
 
-An Introduction to machine learning with scikit-learn
-=======================================================================
+An introduction to machine learning with scikit-learn
+=====================================================
 
 .. topic:: Section contents
 
@@ -12,7 +12,7 @@ An Introduction to machine learning with scikit-learn
 
 
 Machine learning: the problem setting
----------------------------------------
+-------------------------------------
 
 In general, a learning problem considers a set of n 
 `samples <http://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
@@ -27,7 +27,7 @@ We can separate learning problems in a few large categories:
  * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_, 
    in which the data comes with additional attributes that we want to predict 
    (:ref:`Click here <supervised-learning>`
-   to go to the Scikit-Learn supervised learning page).This problem 
+   to go to the scikit-learn supervised learning page).This problem 
    can be either:
 
     * `classification 
@@ -130,20 +130,20 @@ learn::
     the `scikit-learn`.
 
 
-Learning and Predicting
+Learning and predicting
 ------------------------
 
-In the case of the digits dataset, the task is to predict the value of a
-hand-written digit from an image. We are given samples of each of the 10
-possible classes on which we *fit* an 
+In the case of the digits dataset, the task is to predict, given an image,
+which digit it represents. We are given samples of each of the 10
+possible classes (the digits zero through nine) on which we *fit* an 
 `estimator <http://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
-the labels corresponding to new data.
+the classes to which unseen samples belong.
 
-In `scikit-learn`, an **estimator** is just a plain Python class that
-implements the methods `fit(X, Y)` and `predict(T)`.
+In `scikit-learn`, an estimator for classification is a Python object that
+implements the methods `fit(X, y)` and `predict(T)`.
 
 An example of estimator is the class ``sklearn.svm.SVC`` that
-implements `Support Vector Classification
+implements `support vector classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
 model, but for the time being, we will consider the estimator as a black

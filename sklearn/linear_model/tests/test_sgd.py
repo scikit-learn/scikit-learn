@@ -5,7 +5,6 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -179,11 +178,12 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_sgd(self):
         """Check that SGD gives any results :-)"""
 
-        clf = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
-                      n_iter=10, shuffle=True)
-        clf.fit(X, Y)
-        #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
-        assert_array_equal(clf.predict(T), true_result)
+        for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
+            clf = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
+                               loss=loss, n_iter=10, shuffle=True)
+            clf.fit(X, Y)
+            #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
+            assert_array_equal(clf.predict(T), true_result)
 
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
@@ -519,6 +519,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_regression_losses(self):
         clf = self.factory(alpha=0.01, learning_rate="constant",
                            eta0=0.1, loss="epsilon_insensitive")
+        clf.fit(X, Y)
+        assert_equal(1.0, np.mean(clf.predict(X) == Y))
+
+        clf = self.factory(alpha=0.01, learning_rate="constant",
+                           eta0=0.1, loss="squared_epsilon_insensitive")
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
 

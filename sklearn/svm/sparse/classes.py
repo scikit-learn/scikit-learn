@@ -1,4 +1,4 @@
-from .. import LinearSVC
+from .. import LinearSVC as GeneralLinearSVC
 from ..base import BaseSVC
 from ...base import RegressorMixin
 from .base import SparseBaseLibSVM
@@ -184,5 +184,5 @@ class OneClassSVM(SparseBaseLibSVM):
 
 @deprecated("""to be removed in v0.14;
 use sklearn.svm.LinearSVC instead""")
-class LinearSVC(LinearSVC):
+class LinearSVC(GeneralLinearSVC):
     pass

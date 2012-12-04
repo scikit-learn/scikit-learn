@@ -19,7 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import check_arrays, check_random_state
+from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 
@@ -258,7 +258,7 @@ class KFold(object):
 
     def __init__(self, n, n_folds=3, indices=True, shuffle=False,
             random_state=None, k=None):
-        if k is not None:
+        if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                     " removed in 0.15.", DeprecationWarning)
             n_folds = k
@@ -351,7 +351,7 @@ class StratifiedKFold(object):
     """
 
     def __init__(self, y, n_folds=3, indices=True, k=None):
-        if k is not None:
+        if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                     " removed in 0.15.", DeprecationWarning)
             n_folds = k
@@ -642,7 +642,7 @@ class Bootstrap(object):
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
                  random_state=None, n_bootstraps=None):
         self.n = n
-        if n_bootstraps is not None:
+        if n_bootstraps is not None:  # pragma: no cover
             warnings.warn("n_bootstraps was renamed to n_iter and will "
                           "be removed in 0.16.", DeprecationWarning)
             n_iter = n_bootstraps
@@ -659,8 +659,7 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if (isinstance(test_size, numbers.Real) and test_size >= 0.0
-                    and test_size <= 1.0):
+        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
             self.test_size = ceil(test_size * n)
         elif isinstance(test_size, numbers.Integral):
             self.test_size = test_size
@@ -692,7 +691,7 @@ class Bootstrap(object):
 
     def __repr__(self):
         return ('%s(%d, n_iter=%d, train_size=%d, test_size=%d, '
-                'random_state=%d)' % (
+                'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iter,
@@ -776,7 +775,7 @@ class ShuffleSplit(object):
             indices=True, random_state=None, n_iterations=None):
         self.n = n
         self.n_iter = n_iter
-        if n_iterations is not None:
+        if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency "
                     " and will be removed in 0.16.")
             self.n_iter = n_iterations
@@ -962,7 +961,7 @@ class StratifiedShuffleSplit(object):
         self.y = np.array(y)
         self.n = self.y.size
         self.n_iter = n_iter
-        if n_iterations is not None:
+        if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency "
                    " and will be removed in 0.16.")
             self.n_iter = n_iterations
@@ -1029,18 +1028,28 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
     fit_params = dict([(k, np.asarray(v)[train]
                     if hasattr(v, '__len__') and len(v) == n_samples else v)
                     for k, v in fit_params.items()])
-    if y is None:
-        estimator.fit(X[train], **fit_params)
-        if score_func is None:
-            score = estimator.score(X[test])
-        else:
-            score = score_func(X[test])
+    if getattr(estimator, "_pairwise", False):
+        # X is a precomputed square kernel matrix
+        if X.shape[0] != X.shape[1]:
+            raise ValueError("X should be a square kernel matrix")
+        X_train = X[np.ix_(train, train)]
+        X_test = X[np.ix_(test, train)]
     else:
-        estimator.fit(X[train], y[train], **fit_params)
+        X_train = X[safe_mask(X, train)]
+        X_test = X[safe_mask(X, test)]
+
+    if y is None:
+        estimator.fit(X_train, **fit_params)
         if score_func is None:
-            score = estimator.score(X[test], y[test])
+            score = estimator.score(X_test)
         else:
-            score = score_func(y[test], estimator.predict(X[test]))
+            score = score_func(X_test)
+    else:
+        estimator.fit(X_train, y[train], **fit_params)
+        if score_func is None:
+            score = estimator.score(X_test, y[test])
+        else:
+            score = score_func(y[test], estimator.predict(X_test))
     if verbose > 1:
         print("score: %f" % score)
     return score

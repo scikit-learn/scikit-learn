@@ -12,7 +12,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 from .utils.fixes import unique
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 
 __all__ = ['QDA']
 
@@ -117,14 +117,14 @@ class QDA(BaseEstimator, ClassifierMixin):
         return self
 
     @property
-    def classes(self):
+    def classes(self):  # pragma: no cover
         warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
                       "Use QDA.classes_ instead.", DeprecationWarning,
                       stacklevel=2)
         return self.classes_
 
     def _decision_function(self, X):
-        X = np.asarray(X)
+        X = array2d(X)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations[i]

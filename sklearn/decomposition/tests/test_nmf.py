@@ -143,10 +143,17 @@ def test_sparse_input():
     T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
                                   random_state=999).fit_transform(A)
 
-    A = csr_matrix(A)
+    A_sparse = csr_matrix(A)
     T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-                                  random_state=999).fit_transform(A)
+                                  random_state=999).fit_transform(A_sparse)
     assert_array_almost_equal(T1, T2)
+
+    # same with sparseness
+
+    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
+            sparseness='data', random_state=999).fit_transform(A_sparse)
+    T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
+            sparseness='data', random_state=999).fit_transform(A)
 
 
 if __name__ == '__main__':
