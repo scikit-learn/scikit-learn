@@ -634,8 +634,6 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     for epoch in range(n_iter):
         if verbose > 0:
             print("-- Epoch %d" % (epoch + 1))
-        #if shuffle:
-        #    dataset.shuffle(seed)
         for i in range(n_samples):
 
             dataset.next_pair(&a_data_ptr, &b_data_ptr, &a_ind_ptr,
@@ -659,13 +657,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
-            # L2 Regularization
-            #w.scale(1.0 - (rho * eta * alpha))
-
-
             update = y * -eta * loss.dloss(p, y) * class_weight
-            #print("update:%.9f p:%.6f dloss:%.4f class_weight:%.1f" % \
-            #(update, p, loss.dloss(p, y), class_weight))            
+                        
             if update != 0.0:
                 w.add(a_data_ptr, a_ind_ptr, xnnz_a, update)
                 w.add(b_data_ptr, b_ind_ptr, xnnz_b, -update)
@@ -673,10 +666,6 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                     intercept += update * intercept_decay
             if penalty_type >= L2:
                 w.scale(1.0 - (rho * eta * alpha))
-
-            #if penalty_type == L1 or penalty_type == ELASTICNET:
-            #    u += ((1.0 - rho) * eta * alpha)
-            #    l1penalty(w, q_data_ptr, x_ind_ptr, xnnz_a, u)
 
             t += 1
             count += 1
