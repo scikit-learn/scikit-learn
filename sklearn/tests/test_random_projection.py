@@ -9,13 +9,14 @@ from sklearn.random_projection import (johnson_lindenstrauss_min_dim,
                                        bernouilli_random_matrix,
                                        BernouilliRandomProjection,
                                        GaussianRandomProjection,
+                                       BaseRandomProjection,
                                        )
 
 from sklearn.utils.testing import (assert_less,
                                    assert_raises, assert_raise_message,
                                    assert_array_equal,
                                    assert_equal, assert_almost_equal,
-                                   assert_in, assert_not_in
+                                   assert_in,
                                    )
 
 from numpy.testing import assert_allclose
@@ -32,7 +33,7 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros):
     data_coo = sp.coo_matrix(
         (rng.randn(n_nonzeros),
         (rng.randint(n_samples, size=n_nonzeros),
-        rng.randint(n_features, size=n_nonzeros))),
+         rng.randint(n_features, size=n_nonzeros))),
         shape=(n_samples, n_features))
     return data_coo.toarray(), data_coo.tocsr()
 
@@ -164,7 +165,7 @@ def test_random_projection_transformer_invalid_input():
 def test_try_to_transform_before_fit():
     for RandomProjection in all_random_projection:
         assert_raises(ValueError,
-            RandomProjection(n_components='auto').transform, data)
+                      RandomProjection(n_components='auto').transform, data)
 
 
 def test_too_many_samples_to_find_a_safe_embedding():
@@ -210,26 +211,33 @@ def test_random_projection_embedding_quality():
         assert_less(1 - eps, distances_ratio.min())
 
 
+def test_BaseRandomProjection_set_with_wrong_distribution():
+    assert_raises(
+        ValueError,
+        BaseRandomProjection(distribution="not_implemented").fit, data)
+
+
 def test_BernouilliRandomProjection_output_representation():
-    # when using sparse input, the projected data can be forced to be a
-    # dense numpy array
-    rp = BernouilliRandomProjection(n_components=10, dense_output=True,
-                          random_state=0)
-    rp.fit(data)
-    assert isinstance(rp.transform(data), np.ndarray)
+    for RandomProjection in sparse_random_projection:
+        # when using sparse input, the projected data can be forced to be a
+        # dense numpy array
+        rp = RandomProjection(n_components=10, dense_output=True,
+                              random_state=0)
+        rp.fit(data)
+        assert isinstance(rp.transform(data), np.ndarray)
 
-    sparse_data = sp.csr_matrix(data)
-    assert isinstance(rp.transform(sparse_data), np.ndarray)
+        sparse_data = sp.csr_matrix(data)
+        assert isinstance(rp.transform(sparse_data), np.ndarray)
 
-    # the output can be left to a sparse matrix instead
-    rp = BernouilliRandomProjection(n_components=10, dense_output=False,
-                                random_state=0)
-    rp = rp.fit(data)
-    # output for dense input will stay dense:
-    assert isinstance(rp.transform(data), np.ndarray)
+        # the output can be left to a sparse matrix instead
+        rp = RandomProjection(n_components=10, dense_output=False,
+                              random_state=0)
+        rp = rp.fit(data)
+        # output for dense input will stay dense:
+        assert isinstance(rp.transform(data), np.ndarray)
 
-    # ouput for sparse output will be sparse:
-    assert sp.issparse(rp.transform(sparse_data))
+        # ouput for sparse output will be sparse:
+        assert sp.issparse(rp.transform(sparse_data))
 
 
 def test_random_projection_dimensions():
@@ -258,6 +266,9 @@ def test_random_projection_dimensions():
         rp2 = RandomProjection(random_state=0)
         projected_3 = rp2.fit_transform(data)
         assert_array_equal(projected_1, projected_3)
+
+        # Try to transform with an input X of size different from fitted.
+        assert_raises(ValueError, rp.transform, data[:, 1:5])
 
         # it is also possible to fix the number of components and the density
         # level
