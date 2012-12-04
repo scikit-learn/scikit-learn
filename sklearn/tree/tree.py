@@ -230,12 +230,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         if y.ndim == 1:
             y = y[:, np.newaxis]
 
-        self.classes_ = []
-        self.n_classes_ = []
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
             y = np.copy(y)
+
+            self.classes_ = []
+            self.n_classes_ = []
 
             for k in xrange(self.n_outputs_):
                 unique = np.unique(y[:, k])
@@ -357,28 +358,29 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        P = self.tree_.predict(X)
+        P_ = self.tree_.predict(X)
 
+        # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
-                return self.classes_.take(np.argmax(P[:, 0], axis=1), axis=0)
+                return self.classes_.take(np.argmax(P_[:, 0], axis=1), axis=0)
 
             else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
+                P = np.zeros((n_samples, self.n_outputs_))
 
                 for k in xrange(self.n_outputs_):
-                    predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k],
-                                                                        axis=1),
+                    P[:, k] = self.classes_[k].take(np.argmax(P_[:, k], axis=1),
                                                               axis=0)
 
-                return predictions
+                return P
 
+        # Regression
         else:
             if self.n_outputs_ == 1:
-                return P[:, 0, 0]
+                return P_[:, 0, 0]
 
             else:
-                return P[:, :, 0]
+                return P_[:, :, 0]
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
@@ -520,10 +522,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        P = self.tree_.predict(X)
+        P_ = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            P = P[:, 0, :self.n_classes_]
+            P = P_[:, 0, :self.n_classes_]
             normalizer = P.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             P /= normalizer
@@ -534,7 +536,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             proba = []
 
             for k in xrange(self.n_outputs_):
-                P_k = P[:, k, :self.n_classes_[k]]
+                P_k = P_[:, k, :self.n_classes_[k]]
                 normalizer = P_k.sum(axis=1)[:, np.newaxis]
                 normalizer[normalizer == 0.0] = 1.0
                 P_k /= normalizer

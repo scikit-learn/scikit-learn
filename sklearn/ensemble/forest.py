@@ -96,24 +96,36 @@ def _parallel_build_trees(n_trees, forest, X, y,
 def _parallel_predict_proba(trees, X, n_classes, n_outputs):
     """Private function used to compute a batch of predictions within a job."""
     n_samples = X.shape[0]
-    p = []
 
-    for k in xrange(n_outputs):
-        p.append(np.zeros((n_samples, n_classes[k])))
+    if n_outputs == 1:
+        p = np.zeros((n_samples, n_classes))
 
-    for tree in trees:
-        p_tree = tree.predict_proba(X)
+        for tree in trees:
+            p_tree = tree.predict_proba(X)
 
-        if n_outputs == 1:
-            p_tree = [p_tree]
-
-        for k in xrange(n_outputs):
-            if n_classes[k] == tree.n_classes_[k]:
-                p[k] += p_tree[k]
+            if n_classes == tree.n_classes_:
+                p += p_tree
 
             else:
-                for j, c in enumerate(tree.classes_[k]):
-                    p[k][:, c] += p_tree[k][:, j]
+                for j, c in enumerate(tree.classes_):
+                    p[:, c] += p_tree[:, j]
+
+    else:
+        p = []
+
+        for k in xrange(n_outputs):
+            p.append(np.zeros((n_samples, n_classes[k])))
+
+        for tree in trees:
+            p_tree = tree.predict_proba(X)
+
+            for k in xrange(n_outputs):
+                if n_classes[k] == tree.n_classes_[k]:
+                    p[k] += p_tree[k]
+
+                else:
+                    for j, c in enumerate(tree.classes_[k]):
+                        p[k][:, c] += p_tree[k][:, j]
 
     return p
 
@@ -279,18 +291,33 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         if y.ndim == 1:
             y = y[:, np.newaxis]
 
-        self.classes_ = []
-        self.n_classes_ = []
         self.n_outputs_ = y.shape[1]
 
         if isinstance(self.base_estimator, ClassifierMixin):
             y = np.copy(y)
 
-            for k in xrange(self.n_outputs_):
-                unique = np.unique(y[:, k])
-                self.classes_.append(unique)
-                self.n_classes_.append(unique.shape[0])
-                y[:, k] = np.searchsorted(unique, y[:, k])
+            if self.n_outputs_ == 1:
+                self.classes_ = np.unique(y)
+                self.n_classes_ = len(self.classes_)
+
+            else:
+                self.classes_ = []
+                self.n_classes_ = []
+
+                for k in xrange(self.n_outputs_):
+                    unique = np.unique(y[:, k])
+                    self.classes_.append(unique)
+                    self.n_classes_.append(unique.shape[0])
+                    y[:, k] = np.searchsorted(unique, y[:, k])
+
+        else:
+            if self.n_outputs_ == 1:
+                self.classes_ = None
+                self.n_classes_ = 1
+
+            else:
+                self.classes_ = [None] * self.n_outputs_
+                self.n_classes_ = [1] * self.n_outputs_
 
         if getattr(y, "dtype", None) != DTYPE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -320,16 +347,24 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 self.oob_decision_function_ = []
                 self.oob_score_ = 0.0
 
+                n_classes_ = self.n_classes_
+                classes_ = self.classes_
+
+                if self.n_outputs_ == 1:
+                    n_classes_ = [n_classes_]
+                    classes_ = [classes_]
+
                 predictions = []
+
                 for k in xrange(self.n_outputs_):
                     predictions.append(np.zeros((n_samples,
-                                                 self.n_classes_[k])))
+                                                 n_classes_[k])))
 
                 for estimator in self.estimators_:
                     mask = np.ones(n_samples, dtype=np.bool)
                     mask[estimator.indices_] = False
-
                     p_estimator = estimator.predict_proba(X[mask, :])
+
                     if self.n_outputs_ == 1:
                         p_estimator = [p_estimator]
 
@@ -341,12 +376,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                         warn("Some inputs do not have OOB scores. "
                              "This probably means too few trees were used "
                              "to compute any reliable oob estimates.")
-                    decision = predictions[k] \
-                               / predictions[k].sum(axis=1)[:, np.newaxis]
-                    self.oob_decision_function_.append(decision)
 
-                    self.oob_score_ += np.mean(y[:, k] \
-                                       == np.argmax(predictions[k], axis=1))
+                    decision = predictions[k] / predictions[k].sum(axis=1)[:, np.newaxis]
+                    self.oob_decision_function_.append(decision)
+                    self.oob_score_ += np.mean(y[:, k] == classes_[k].take(np.argmax(predictions[k], axis=1), axis=0))
 
                 if self.n_outputs_ == 1:
                     self.oob_decision_function_ = \
@@ -442,21 +475,18 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             The predicted classes.
         """
         n_samples = len(X)
-
-        P = self.predict_proba(X)
-        if self.n_outputs_ == 1:
-            P = [P]
-
-        predictions = np.zeros((n_samples, self.n_outputs_))
-
-        for k in xrange(self.n_outputs_):
-            predictions[:, k] = self.classes_[k].take(np.argmax(P[k], axis=1),
-                                                      axis=0)
+        probas = self.predict_proba(X)
 
         if self.n_outputs_ == 1:
-            predictions = predictions.reshape((n_samples, ))
+            return self.classes_.take(np.argmax(probas, axis=1), axis=0)
 
-        return predictions
+        else:
+            predictions = np.zeros((n_samples, self.n_outputs_))
+
+            for k in xrange(self.n_outputs_):
+                predictions[:, k] = self.classes_[k].take(np.argmax(probas[k], axis=1), axis=0)
+
+            return predictions
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -495,18 +525,22 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         # Reduce
         p = all_p[0]
 
-        for j in xrange(1, len(all_p)):
-            for k in xrange(self.n_outputs_):
-                p[k] += all_p[j][k]
-
-        for k in xrange(self.n_outputs_):
-            p[k] /= self.n_estimators
-
         if self.n_outputs_ == 1:
-            return p[0]
+            for j in xrange(1, len(all_p)):
+                p += all_p[j]
+
+            p /= self.n_estimators
 
         else:
-            return p
+            for j in xrange(1, len(all_p)):
+                for k in xrange(self.n_outputs_):
+                    p[k] += all_p[j][k]
+
+            for k in xrange(self.n_outputs_):
+                p[k] /= self.n_estimators
+
+        return p
+
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
