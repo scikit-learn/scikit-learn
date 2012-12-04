@@ -377,9 +377,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                              "This probably means too few trees were used "
                              "to compute any reliable oob estimates.")
 
-                    decision = predictions[k] / predictions[k].sum(axis=1)[:, np.newaxis]
+                    decision = (predictions[k] /
+                                predictions[k].sum(axis=1)[:, np.newaxis])
                     self.oob_decision_function_.append(decision)
-                    self.oob_score_ += np.mean(y[:, k] == classes_[k].take(np.argmax(predictions[k], axis=1), axis=0))
+                    self.oob_score_ += (np.mean(y[:, k] ==
+                                        classes_[k].take(
+                                            np.argmax(predictions[k], axis=1),
+                                            axis=0)))
 
                 if self.n_outputs_ == 1:
                     self.oob_decision_function_ = \
@@ -484,7 +488,9 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             predictions = np.zeros((n_samples, self.n_outputs_))
 
             for k in xrange(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(probas[k], axis=1), axis=0)
+                predictions[:, k] = self.classes_[k].take(np.argmax(probas[k],
+                                                                    axis=1),
+                                                          axis=0)
 
             return predictions
 
@@ -540,7 +546,6 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                 p[k] /= self.n_estimators
 
         return p
-
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.

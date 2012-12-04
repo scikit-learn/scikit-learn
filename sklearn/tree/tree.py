@@ -297,8 +297,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
             if sample_mask.shape[0] != n_samples:
                 raise ValueError("Length of sample_mask=%d does not match "
-                                 "number of samples=%d" % (sample_mask.shape[0],
-                                                           n_samples))
+                                 "number of samples=%d"
+                                 % (sample_mask.shape[0], n_samples))
 
         if X_argsorted is not None:
             X_argsorted = np.asarray(X_argsorted, dtype=np.int32,
@@ -369,8 +369,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                 P = np.zeros((n_samples, self.n_outputs_))
 
                 for k in xrange(self.n_outputs_):
-                    P[:, k] = self.classes_[k].take(np.argmax(P_[:, k], axis=1),
-                                                              axis=0)
+                    P[:, k] = self.classes_[k].take(np.argmax(P_[:, k],
+                                                              axis=1),
+                                                    axis=0)
 
                 return P
 
