@@ -100,7 +100,7 @@ class ParamSampler(object):
     >>> from scipy.stats.distributions import expon
     >>> param_grid = {'a':[1, 2], 'b': expon()}
     >>> list(ParamSampler(param_grid, n_iter=4))
-    ..  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ...  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     [{'a': ..., 'b': ...}, {'a': ..., 'b': ...},
      {'a': ..., 'b': ...}, {'a': ..., 'b': ...}]
 
