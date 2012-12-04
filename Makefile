@@ -31,7 +31,7 @@ inplace:
 test-code: in
 	$(NOSETESTS) -s sklearn
 test-doc:
-	$(NOSETESTS) -s doc/ doc/modules/ doc/datasets/ \
+	$(NOSETESTS) -s --doctest-fixtures=_fixture doc/ doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
 
 test-coverage:
