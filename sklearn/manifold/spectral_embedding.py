@@ -235,7 +235,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # /lobpcg/lobpcg.py#L237
         # or matlab:
         # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
-        laplacian = _set_diag(laplacian, 0)
+        laplacian = _set_diag(laplacian, 1)
 
         # Here we'll use shift-invert mode for fast eigenvalues
         # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
