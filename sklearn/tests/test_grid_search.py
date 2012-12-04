@@ -267,7 +267,6 @@ def test_X_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    #clf = MockClassifier()
     clf = MockListClassifier()
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
