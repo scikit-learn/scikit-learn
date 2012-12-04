@@ -82,9 +82,7 @@ def test_basic_property_of_random_matrix():
 
 def test_gaussian_random_matrix():
     """Check some statical properties of gaussian random matrix"""
-    # Check by a monte carlo estimator that each element of the random matrix
-    # follow the distribution.
-    #
+    # Check that the random matrix follow the proper distribution.
     # Let's say that each element of a_{ij} of A is taken from
     #   a_ij ~ N(0.0, 1 / n_components).
     #
@@ -120,9 +118,7 @@ def test_bernouilli_random_matrix():
             assert_in(0., values)
             assert_equal(np.size(values), 3)
 
-        # Check by a monte carlo estimator that each element of the
-        # random matrix follow the proper distribution.
-        #
+        # Check that the random matrix follow the proper distribution.
         # Let's say that each element of a_{ij} of A is taken from
         #
         # - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
